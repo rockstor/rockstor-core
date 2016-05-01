@@ -8,7 +8,20 @@
       </tr>
     </thead>
     <tbody>
-      {{print_cb_tbody}}
+      {{#each configBackup}}
+        <tr>
+            <td>{{this.filename}}</td>
+            <td>{{humanReadableSize this.size}}</td>
+            <td>
+                <a href="#" class="cb-delete" id="delete_cb_{{this.filename}}" data-id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete backup">
+                <i class="glyphicon glyphicon-trash"></i></a>&nbsp;&nbsp;
+                <a href="/static/config-backups/{{this.filename}}" title="Download the config backup to your computer">
+                <i class="glyphicon glyphicon-cloud-download"></i></a>&nbsp;&nbsp;
+                <a href="#" class="cb-restore" id="cb-restore" data-id="{{this.id}}" rel="tooltip" title="Restore config from this backup.">
+                <i class="glyphicon glyphicon-play"></i></a>
+            </td>
+        </tr>
+      {{/each}}
     </tbody>
   </table>
   <div>

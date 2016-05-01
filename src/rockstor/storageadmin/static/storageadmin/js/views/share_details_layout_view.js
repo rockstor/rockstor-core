@@ -186,7 +186,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		_this.$('#delete-share-modal').modal();
 		return false;
 	},
-	
+
 	confirmShareDelete: function(event) {
 		var _this = this;
 		var button = $(event.currentTarget);
@@ -215,7 +215,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		if (event) event.preventDefault();
 		app_router.navigate('shares', {trigger: true})
 	},
-	
+
 	renderAcl: function() {
 		this.$("#ph-access-control").html(this.shareAclTemplate({
 			share: this.share,
@@ -229,10 +229,10 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 	editAcl: function(event) {
 		event.preventDefault();
 		this.$("#ph-access-control").html(this.shareAclEditTemplate({
-			share: this.share,
+			share: this.share.toJSON(),
 			permStr: this.parsePermStr(this.share.get("perms")),
-			users: this.users,
-			groups: this.groups,
+			users: this.users.toJSON(),
+			groups: this.groups.toJSON(),
 			sharePerms: this.share.get("perms"),
 		}));
 	},
@@ -461,32 +461,18 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			return new Handlebars.SafeString(html);
 		});
 
-		Handlebars.registerHelper('display_owner_options', function(){
-			var html = '',
-			_this = this;
-			this.users.each(function(user) { 
-				if(user.get('username') == _this.share.get('owner')){ 
-					html += '<option value="' + user.get('username') + '" selected="selected" >' + user.get('username') + '</option>';
-				}else{ 
-					html += '<option value="' + user.get('username') + '" >' + user.get('username') + '</option>';
-				} 
-			});
-			return new Handlebars.SafeString(html);
+
+		Handlebars.registerHelper('showOwnerOption', function(userName, shareOwner){
+			if(userName == shareOwner){
+				return 'selected = "selected"';
+			}
 		});
 
-		Handlebars.registerHelper('display_group_options', function(){
-			var html = '',
-			_this = this;
-			this.groups.each(function(group) { 
-				if(group.get('groupname') == _this.share.get('group')){
-				html += '<option value="' + group.get('groupname') + '" selected="selected" >' + group.get('groupname') + '</option>';
-				}else{
-				html += '<option value="' + group.get('groupname') + '">' + group.get('groupname') + '</option>';
-				} 
-				});
-				return new Handlebars.SafeString(html);
+		Handlebars.registerHelper('showGroupOption', function(groupName, shareGroup){
+			if(groupName == shareGroup){
+				return 'selected = "selected"';
+			}
 		});
-
 
 		Handlebars.registerHelper('edit_read_permissions', function(){
 			var html = '';

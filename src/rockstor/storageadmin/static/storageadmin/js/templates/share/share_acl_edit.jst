@@ -5,7 +5,9 @@
     <td>
     <div class="col-md-3">
       <select id="share-owner" class="form-control">
-        {{display_owner_options}}
+        {{#each users}}
+             <option value="{{this.username}}" {{showOwnerOption this.username ../share.owner}}>{{this.username}}</option> 
+        {{/each}}
       </select>
       </div>
     </td>
@@ -15,7 +17,9 @@
     <td>
     <div class="col-md-3">
       <select id="share-group" class="form-control">
-      {{display_group_options}}
+      {{#each groups}}
+             <option value="{{this.groupname}}" {{showGroupOption this.groupname ../share.group}}>{{this.groupname}}</option> 
+        {{/each}}
       </select>
       </div>
     </td>

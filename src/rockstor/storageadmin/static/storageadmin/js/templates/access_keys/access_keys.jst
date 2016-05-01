@@ -35,7 +35,16 @@
             <th></th>
           </tr>
           <tbody>
-          {{display_accessKeys_table}}
+          {{#each accessKeys}}
+            <tr>
+            <td>{{this.name}}</td>
+            <td>{{this.client_id}}</td>
+            <td>{{this.client_secret}}</td>
+            <td><a id="delete-access-key" data-id="{{this.id}}" data-name="{{this.name}}" data-action="delete" rel="tooltip" title="Delete access key">
+            <i class="glyphicon glyphicon-trash"></i></a>
+            </td>
+          </tr>
+          {{/each}}
           </tbody>
         </table>
 

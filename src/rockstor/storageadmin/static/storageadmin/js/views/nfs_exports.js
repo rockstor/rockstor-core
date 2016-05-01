@@ -58,6 +58,7 @@ NFSExportsView  = RockstorLayoutView.extend({
 		});
 		$(this.el).html(this.template({
 			collection: this.collection,
+			nfsCollection: this.collection.toJSON(),
 			collectionNotEmpty: !this.collection.isEmpty(),
 			service: this.service,
 			currentAppliance: currentAppliance,
@@ -170,44 +171,14 @@ NFSExportsView  = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_nfs_sharesTable', function(){
-			var html = '';
-
-			this.collection.each(function(n) {
-				var nfsExports = n.get('exports'),
-					nfsId = n.id;
-				html += '<tr>';
-				html += '<td>' + n.get("host_str") + '</td>';
-				html += '<td>';
-				_.each(nfsExports, function(e, i) { 
-					if (i < (nfsExports.length - 1)) { 
-						html += e.share + ',';
-					} else { 
-						html += e.share;
-					}
-				});
-				html += '</td>';
-				html += '<td>';
-				if (n.get("editable") == 'rw') {
-					html += 'Writable';
-				} else { 
-					html += 'Read-only';
+		Handlebars.registerHelper('showNfsShares', function(index, nfsExports){
+				if (index < (nfsExports.length - 1)) { 
+					return ',';
 				}
-				html += '</td>';
-				html += '<td>' + n.get("syncable") + '</td>';
-				html += '<td><a href="#nfs-exports/edit/' + nfsId + '"><i class="glyphicon glyphicon-edit"></i></a>&nbsp;';
-				html += '<a href="#" class="delete-nfs-export" data-id="' + nfsId + '"><i class="glyphicon glyphicon-trash"></i></a>';
-				html += '</td>';
-				html += '</tr>';
-			});
-
-
-
-
-
-
-
-			return new Handlebars.SafeString(html);
+		});
+		
+		Handlebars.registerHelper('showWritableOption', function(editable){
+			return editable == 'rw' ? 'Writable' : 'Read-only'
 		});
 	}
 

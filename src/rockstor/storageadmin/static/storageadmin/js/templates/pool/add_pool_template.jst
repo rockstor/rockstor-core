@@ -78,7 +78,16 @@
                 </tr>
               </thead>
               <tbody>
-                {{show_disks}}
+                {{#each disks}}
+                    <tr>
+                        <td>{{mathHelper @index}}</td>
+                        <td>{{this.name}}</td>
+                        <td>{{humanReadableSize this.size}}</td>
+                        <td>
+                            <input type="checkbox" class="disk" name="{{this.name}}" id="{{this.id}}" value="{{this.name}}" />
+                        </td>
+                    </tr>
+                {{/each}}
               </tbody>
             </table>
             </div><!--poolDiskTableScroll-->

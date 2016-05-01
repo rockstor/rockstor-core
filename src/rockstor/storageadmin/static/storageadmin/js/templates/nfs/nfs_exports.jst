@@ -50,7 +50,21 @@
           </tr>
         </thead>
         <tbody>
-          {{display_nfs_sharesTable}}
+          {{#each nfsCollection}}
+            <tr>
+                <td>{{this.host_str}}</td>
+                <td>
+                {{#each this.exports}}
+                    {{this.share}} {{showNfsShares @index ../this.exports}}
+                {{/each}}
+                </td>
+                <td>{{showWritableOption this.editable}}</td>
+                <td>{{this.syncable}}</td>
+                <td><a href="#nfs-exports/edit/{{this.id}}"><i class="glyphicon glyphicon-edit"></i></a>&nbsp;
+                <a href="#" class="delete-nfs-export" data-id="{{this.id}}"><i class="glyphicon glyphicon-trash"></i></a>
+                </td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
       <div>{{pagination}}</div>
