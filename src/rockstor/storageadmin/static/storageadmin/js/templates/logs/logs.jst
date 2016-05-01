@@ -30,9 +30,10 @@
 				<form class="form-inline">
 					<div class="form-group">
 					<input type="button" id="live-log" class="btn btn-primary" value="Read log">
-					<select class="form-control" id="read_type" name="read_type" rel="tooltip" title="Read log with cat - full file - or tail last 30 lines">
+					<select class="form-control" id="read_type" name="read_type" rel="tooltip" title="Read log with tail last 200 lines(default), tail last 30 lines or cat(full file read)">
+                                                <option value="tail200"> tail -n 200</option>
+						<option value="tail30"> tail -n 30</option>
               					<option value="cat"> cat -n</option>
-						<option value="tail"> tail -n 30</option>
             				</select>
                                         <select class="form-control" id="logs_options" name="logs_options" rel="tooltip" title="Select which log to read">
                                         {{print_logs_options}}

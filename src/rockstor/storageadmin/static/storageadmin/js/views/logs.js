@@ -41,11 +41,17 @@ LogsView = RockstorLayoutView.extend({
 	this.$el.html(this.template);
 	this.$('[rel=tooltip]').tooltip({ placement: 'top'});
 	RockStorSocket.addListener(this.getData, this, 'logReader:logcontent');
+	RockStorSocket.addListener(this.getLogSize, this, 'logReader:logsize');
 	return this;
     },
 
     getData: function(data) {
-	$('#system_log').text(data);		
+	$('#system_log').append(data);
+	$('#system_log').closest('pre').scrollTop($('#system_log').closest('pre')[0].scrollHeight+100);
+    },
+
+    getLogSize: function(data) {
+	console.log(data);
     },
 
     cleanup: function() {
@@ -70,9 +76,11 @@ LogsView = RockstorLayoutView.extend({
 	var read_tool = $('#read_type option:selected').text();
 	var modal_title = '<b>Selected log:</b>&nbsp; ' + log_file;
 	modal_title += '<br/><b>Reader type:</b>&nbsp;' + read_tool;
-	$("#LogReaderLabel").html(modal_title);  
-        RockStorSocket.logReader.emit('readlog', read_type, logs_options);
+	$("#LogReaderLabel").html(modal_title);
+	$('#system_log').empty();
         _this.ShowLogReader();
+        RockStorSocket.logReader.emit('readlog', read_type, logs_options);
+	RockStorSocket.logReader.emit('getfilesize', logs_options);
     },
 
     ShowLogReader: function() {
