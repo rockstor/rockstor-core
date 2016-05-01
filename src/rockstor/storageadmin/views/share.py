@@ -90,13 +90,16 @@ class ShareListView(ShareMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
             sort_col = self.request.query_params.get('sortby', None)
-            if (sort_col is not None and sort_col == 'usage'):
+            if (sort_col is not None):
                 reverse = self.request.query_params.get('reverse', 'no')
                 if (reverse == 'yes'):
                     reverse = True
                 else:
                     reverse = False
-                return sorted(Share.objects.all(), key=lambda u: u.rusage,
+                if (sort_col == 'usage'):
+                    sort_col = 'rusage'
+                return sorted(Share.objects.all(),
+                              key=lambda u: getattr(u, sort_col),
                               reverse=reverse)
             #If this box is receiving replication backups, the first full-send is
             #interpreted as a Share(because it does not have a parent subvol/snapshot)
