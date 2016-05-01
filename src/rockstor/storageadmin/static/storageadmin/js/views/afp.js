@@ -44,7 +44,6 @@ AFPView  = RockstorLayoutView.extend({
     this.shares.pageSize = 1000;
     this.dependencies.push(this.shares);
     this.updateFreq = 5000;
-    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -192,26 +191,6 @@ AFPView  = RockstorLayoutView.extend({
     errPopupContent.html(msg);
     statusEl.click(function(){ errPopup.overlay().load(); });
   },
-
-  initHandlebarHelpers: function(){
-    Handlebars.registerHelper('display_afp_shares', function(){
-      var html = '';
-      this.collection.each(function(afpShare) {
-        var afpShareName = afpShare.get("share"),
-        afpShareID = afpShare.id;
-        html += '<tr>';
-        html += '<td>' + afpShareName + '</td>';
-        html += '<td>' + afpShare.get("time_machine") + '</td>';
-        html += '<td>';
-        html += '<a href="#afp/edit/' + afpShareID + '"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;';
-        html += '<a href="#" class="delete-afp-share" data-share="' + afpShareName + '" data-id="' + afpShareID + '"><i class="glyphicon glyphicon-trash"></i></a>';
-        html += '</td>';
-        html += '</tr>';
-     });
-      return new Handlebars.SafeString(html);
-    });
-  }
-
 });
 
 // Add pagination
