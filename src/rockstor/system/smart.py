@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from osi import run_command
+from osi import run_command, get_base_device
 from tempfile import mkstemp
 from shutil import move
 import logging
@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
 CAT = '/usr/bin/cat'
-LSBLK = '/usr/bin/lsblk'
 # enables reading file dumps of smartctl output instead of running smartctl
 # currently hardwired to read from eg:- /root/smartdumps/smart-H--info.out
 # default setting = False
@@ -379,41 +378,6 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
         raise CommandException(('%s' % command), o, e, rc)
 
 
-def get_base_device(device, test_mode=TESTMODE):
-    """
-    Helper function that returns the full path of the base device of a partition
-    or if given a base device then will return it's full path,
-    ie
-    input sda3 output /dev/sda
-    input sda output /dev/sda
-    Works as a function of lsblk list order ie base devices first. So we return
-    the first start of line match to our supplied device name with the pattern
-    as the first element in lsblk's output and the match target as our device.
-    :param device: device name as per db entry, ie as returned from scan_disks
-    :param test_mode: Not True causes cat from file rather than smartctl command
-    :return: base_dev: single item list containing the root device's full path
-    ie device = sda3 the base_dev = /dev/sda or [''] if no lsblk entry was found
-    to match.
-    """
-    base_dev = ['', ]
-    if not test_mode:
-        out, e, rc = run_command([LSBLK])
-    else:
-        out, e, rc = run_command([CAT, '/root/smartdumps/lsblk.out'])
-    # now examine the output from lsblk line by line
-    for line in out:
-        line_fields = line.split()
-        if len(line_fields) < 1:
-            # skip empty lines
-            continue
-        if re.match(line_fields[0], device):
-            # We have found a device string match to our device so record it.
-            base_dev[0] = '/dev/' + line_fields[0]
-            break
-    # Return base_dev ie [''] or first character matches to line start in lsblk.
-    return base_dev
-
-
 def get_dev_options(device, custom_options=''):
     """
     Returns device specific options for all smartctl commands.
@@ -432,15 +396,17 @@ def get_dev_options(device, custom_options=''):
     if custom_options is None or custom_options == '':
         # Empty custom_options or they have never been set so just return
         # full path to base device as nothing else to do.
-        dev_options = get_base_device(device)
+        dev_options = get_base_device(device, TESTMODE)
     else:
         # Convert string of custom options into a list ready for run_command
+        # todo think this ascii should be utf-8 as that's kernel standard
+        # todo or just use str(custom_options).split()
         dev_options = custom_options.encode('ascii').split()
         # If our custom options don't contain a raid controller target then add
         # the full path to our base device as our last device specific option.
         if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
             # add full path to our custom options as we see no raid target dev
-            dev_options += get_base_device(device)
+            dev_options += get_base_device(device, TESTMODE)
     # Note on raid controller target devices.
     # /dev/twe#, or /dev/twa#, or /dev/twl# are 3ware controller targets devs
     # respectively 3x-xxxx, 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for
