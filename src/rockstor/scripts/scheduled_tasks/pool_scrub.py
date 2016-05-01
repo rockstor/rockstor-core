@@ -46,7 +46,7 @@ def update_state(t, pool, aw):
 
 def main():
     tid = int(sys.argv[1])
-    cwindow = sys.argv[2]
+    cwindow = sys.argv[2] if len(sys.argv) > 1 else '*-*-*-*-*-*'
     if (crontabwindow.crontab_range(cwindow)): #Performance note: immediately check task execution time/day window range to avoid other calls
         tdo = TaskDefinition.objects.get(id=tid)
         if (tdo.task_type != 'scrub'):
