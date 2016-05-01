@@ -63,11 +63,9 @@ EditNFSExportView = RockstorLayoutView.extend({
 	renderExportForm: function() {
 		var _this = this;
 		$(this.el).html(this.template({
-			shares: this.shares,
-			nfsExportGroup: this.nfsExportGroup,
+			shares: this.shares.toJSON(),
+			nfsExportGrp: this.nfsExportGroup.toJSON(),
 			nfsExportNotEmpty: this.nfsExportNotEmpty,
-			nfsExportAdminHost: this.nfsExportGroup.get('admin_host'),
-			nfsExportHostString: this.nfsExportGroup.get('host_str'),
 			modify_choices: this.modify_choices,
 			sync_choices: this.sync_choices
 		}));
@@ -116,80 +114,52 @@ EditNFSExportView = RockstorLayoutView.extend({
 		app_router.navigate('nfs-exports', {trigger: true});
 	},
 
+
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_shares_dropdown', function(){
+		var _this = this;
+		Handlebars.registerHelper('showSelectedShare', function(shareName, nfsExports){
 			var html = '',
-			nShares = _.map(this.nfsExportGroup.get('exports'),
+			nShares = _.map(nfsExports,
 					function(e) { return e.share; });
-			this.shares.each(function(share, index) { 
-				var shareName = share.get('name');
-				if (_.indexOf(nShares, shareName) != -1) { 
-					html += '<option value="' + shareName + '" selected="selected">' + shareName + '</option>';
-				} else { 
-					html += '<option value="' + shareName + '" >' + shareName+ '</option>';
-				} 
-			});
+
+			if (_.indexOf(nShares, shareName) != -1) { 
+				html += 'selected="selected"';
+			}
 
 			return new Handlebars.SafeString(html);
 		});
 
-
-		Handlebars.registerHelper('display_accessType_choices', function(){
-			var html = '',
-			nfsEditable = this.nfsExportGroup.get('editable');
-			_.each(this.modify_choices, function(c) {
-				var choiceName = c.name,
-				choiceValue = c.value;
-				html += '<label class="radio-inline">';
-				if (nfsEditable) {
-					if (nfsEditable == choiceValue) { 
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '" >';
-					}		     
-				} else {
-					if (choiceName == "Writable") { 
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '">';
-					} 
-				} 
-				html += choiceName;
-				html += '</label>';
-			});
-			
-			return new Handlebars.SafeString(html);
-			
-		});
-
-		Handlebars.registerHelper('display_sync_choices', function(){
-			var html = '',
-			nfsSyncable = this.nfsExportGroup.get('syncable');
-
-			_.each(this.sync_choices, function(c) {
-				var choiceName = c.name,
-				choiceValue = c.value;
-				html += '<label class="radio-inline">';
-				if (nfsSyncable) {
-					if (nfsSyncable == choiceValue) { 
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '" >';
-					}
-				} else { 
-					if (choiceName == "async") { 
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '">';
-					} 
-				}
-				html += choiceName;
-				html += '</label>';
-			});
-
+		Handlebars.registerHelper('accessType_editView', function(nfsEditable, choiceValue){
+			var html = '';
+			if (nfsEditable == choiceValue) {
+				html += 'checked="checked"';
+			} 
 			return new Handlebars.SafeString(html);
 		});
 
+		Handlebars.registerHelper('accessType_addView', function(choiceName){
+			var html = '';
+			if (choiceName == 'Writable') {
+				html += 'checked="checked"';
+			} 
+			return new Handlebars.SafeString(html);
+		});
+		
+		Handlebars.registerHelper('responseType_editView', function(nfsSyncable, choiceValue){
+			var html = '';
+			if (nfsSyncable == choiceValue) {
+				html += 'checked="checked"';
+			} 
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('responseType_addView', function(choiceName){
+			var html = '';
+			if (choiceName == 'async') {
+				html += 'checked="checked"';
+			} 
+			return new Handlebars.SafeString(html);
+		});
 	}
 
 });

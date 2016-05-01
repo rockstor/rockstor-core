@@ -42,7 +42,6 @@ AddSFTPShareView = RockstorLayoutView.extend({
 		                       {name: 'ro', value: 'ro'}, 
 		                       {name: 'rw', value: 'rw'},
 		                       ];
-		this.initHandebarHelpers();
 	},
 
 	render: function() {
@@ -58,6 +57,10 @@ AddSFTPShareView = RockstorLayoutView.extend({
 			});
 			return !_.isUndefined(s);
 		}, this);
+		//convert each freeshare into a JSON object
+		for (var i = 0; i < this.freeShares.length; i++){
+			this.freeShares[i] = this.freeShares[i].toJSON();
+		}
 		$(this.el).html(this.template({
 			shares: this.freeShares,
 		}));
@@ -107,17 +110,6 @@ AddSFTPShareView = RockstorLayoutView.extend({
 		event.preventDefault();
 		app_router.navigate('sftp', {trigger: true});
 	},
-
-	initHandebarHelpers: function(){
-		Handlebars.registerHelper('sftp_shares_dropdown', function(){
-			var html = '';
-			_.each(this.shares, function(share, index) {
-				var shareName = share.get('name');
-				html += '<option value="' + shareName + '">' + shareName + '</option>';
-			}); 
-			return new Handlebars.SafeString(html);
-		});
-	}
 });
 
 

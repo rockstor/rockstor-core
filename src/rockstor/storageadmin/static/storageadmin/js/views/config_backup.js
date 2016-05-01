@@ -50,6 +50,7 @@ ConfigBackupView = RockstorLayoutView.extend({
     renderConfigBackups: function() {
 	$(this.el).html(this.template({ collection: this.collection }));
 	this.$("#cb-table-ph").html(this.cb_table_template({
+	configBackup: this.collection.toJSON(),
     collection: this.collection,
     collectionNotEmpty: !this.collection.isEmpty(),
   }));
@@ -193,23 +194,9 @@ ConfigBackupView = RockstorLayoutView.extend({
   },
 
   initHandlebarHelpers: function(){
-    Handlebars.registerHelper('print_cb_tbody', function(){
-      var html = '';
-      this.collection.each(function(cb, index) {
-        var cbFileName = cb.get('filename'),
-            cbID = cb.get('id');
-        html += '<tr>';
-        html += '<td>' + cbFileName + '</td>';
-        html += '<td>' + humanize.filesize(cb.get("size")) + '</td>';
-        html += '<td>';
-        html += '<a href="#" class="cb-delete" id="delete_cb_' + cbFileName + '" data-id="' + cbID + '" data-action="delete" rel="tooltip" title="Delete backup"><i class="glyphicon glyphicon-trash"></i></a>&nbsp;&nbsp;';
-        html += '<a href="/static/config-backups/' + cbFileName + '" title="Download the config backup to your computer"><i class="glyphicon glyphicon-cloud-download"></i></a>&nbsp;&nbsp;';
-        html += '<a href="#" class="cb-restore" id="cb-restore" data-id="' + cbID + '" rel="tooltip" title="Restore config from this backup."><i class="glyphicon glyphicon-play"></i></a>';
-        html += '</td>';
-        html += '</tr>';
-      });
-      return new Handlebars.SafeString(html);
-    });
+	  Handlebars.registerHelper('humanReadableSize', function(size){
+		  return humanize.filesize(size);
+	  });
   }
 });
 

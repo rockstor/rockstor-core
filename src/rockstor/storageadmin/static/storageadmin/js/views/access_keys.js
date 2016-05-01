@@ -35,7 +35,6 @@ AccessKeysView = RockstorLayoutView.extend({
 		this.collection = new AccessKeyCollection();
 		this.dependencies.push(this.collection);
 		this.collection.on("reset", this.renderAccessKeys, this);
-		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -45,6 +44,7 @@ AccessKeysView = RockstorLayoutView.extend({
 
 	renderAccessKeys: function() {
 		$(this.el).html(this.template({
+			accessKeys: this.collection.toJSON(),
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 		}));
@@ -73,24 +73,6 @@ AccessKeysView = RockstorLayoutView.extend({
 		}
 
 	},
-
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_accessKeys_table', function(){
-			var html = '';
-			this.collection.each(function(c) {
-				var clientName = c.get('name');
-				var id = c.get('id');
-				html += '<tr>';
-				html += '<td>' + clientName + '</td>';
-				html += '<td style="vertical-align: top">' + c.get("client_id") + '</td>';
-				html += '<td style="vertical-align: top">' + c.get("client_secret") + '</td>';
-				html += '<td><a id="delete-access-key" data-id="' + id + '" data-name="' + clientName + '" data-action="delete" rel="tooltip" title="Delete access key"><i class="glyphicon glyphicon-trash"></i></a></td>';
-				html += '</tr>';
-			}); 
-			return new Handlebars.SafeString(html); 
-		});
-	}
-
 });
 
 //Add pagination

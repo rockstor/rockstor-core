@@ -78,6 +78,7 @@ SFTPView  = RockstorLayoutView.extend({
 	}
 
 	$(this.el).html(this.template({
+		sftpShare: this.collection.toJSON(),
 	    collection: this.collection,
 	    collectionNotEmpty: !this.collection.isEmpty(),
 	    freeShares: this.freeShares,
@@ -194,26 +195,15 @@ SFTPView  = RockstorLayoutView.extend({
     },
 
     initHandlebarHelpers: function(){
-	Handlebars.registerHelper('display_sftp_shares', function(){
-	    var html = '';
-	    this.collection.each(function(sftpShare) {
-		html += '<tr>';
-		html += '<td>' + sftpShare.get("share") + '</td>';
-		html += '<td>';
-		if (sftpShare.get('editable') == 'ro') {
-		    html += 'Read only';
-		} else {
-		    html += 'Writable';
-		}
-		html += '</td>';
-		html += '<td>';
-		html += '<a href="#" class="delete-sftp-share" data-id="' + sftpShare.id + '"><i class="glyphicon glyphicon-trash"></i></a>';
-		html += '</td>';
-		html += '</tr>';
-	    });
-
-	    return new Handlebars.SafeString(html);
-	});
+    	Handlebars.registerHelper('displaySftpPermission', function(sftpEditable){
+    	    var html = '';
+    	    if (sftpEditable == 'ro') {
+    		    html += 'Read only';
+    		} else {
+    		    html += 'Writable';
+    		}
+    	    return new Handlebars.SafeString(html);
+    	});
     }
 
 });

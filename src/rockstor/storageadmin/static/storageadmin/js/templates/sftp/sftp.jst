@@ -24,7 +24,14 @@
           </tr>
         </thead>
         <tbody>
-          {{display_sftp_shares}}
+          {{#each sftpShare}}
+            <tr>
+                <td>{{this.share}}</td>
+                <td>{{displaySftpPermission this.editable}}</td>
+                <td><a href="#" class="delete-sftp-share" data-id="{{this.id}}">
+                <i class="glyphicon glyphicon-trash"></i></a></td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
       {{pagination}}
