@@ -50,8 +50,11 @@
   </div>
 </div>
 
-{{#if sharesNotEmpty}}
-  <a href="#add-sftp-share" id="add-sftp-share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add SFTP Share</a>
-  {{else}}
-  <a  id="add-sftp-share" class="btn btn-primary disabled" title="No shares available to export via SFTP"><i class="glyphicon glyphicon-edit "></i> Add SFTP Share</a>
-{{/if}}
+<a id="add-sftp-share" class="btn btn-primary"
+    {{#if sharesNotEmpty}}
+        href="#add-sftp-share">
+    {{else}}
+        disabled="disabled" title="No shares available to export via SFTP">
+    {{/if}}
+<i class="glyphicon glyphicon-edit "></i> Add SFTP Share</a>
+
