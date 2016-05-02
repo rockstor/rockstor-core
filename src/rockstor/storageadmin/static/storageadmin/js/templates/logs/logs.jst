@@ -29,15 +29,17 @@
                         <div class="panel-body" id="log_funcs">
 				<form class="form-inline">
 					<div class="form-group">
-					<input type="button" id="live-log" class="btn btn-primary" value="Read log">
+					<label class="inline">Reading method: </label>
 					<select class="form-control" id="read_type" name="read_type" rel="tooltip" title="Read log with tail last 200 lines(default), tail last 30 lines or cat(full file read)">
                                                 <option value="tail200"> tail -n 200</option>
 						<option value="tail30"> tail -n 30</option>
               					<option value="cat"> cat -n</option>
             				</select>
+					<label class="inline">Log file: </label>
                                         <select class="form-control" id="logs_options" name="logs_options" rel="tooltip" title="Select which log to read">
                                         {{print_logs_options}}
-					</select>
+					</select>&nbsp;
+					<input type="button" id="live-log" class="btn btn-primary" value="Read log">
 					</div>
                         </div>
                         </div>
@@ -45,7 +47,13 @@
 	</div>
 </div>
 	<div class="row">
-		<div class="col-md-4">
+	<div class="col-md-8">
+                <div class="panel panel-default">
+                        <div class="panel-heading">
+                                <h3 class="panel-title">Live log reader</h3>
+                        </div>
+		<div class="panel-body">		
+		<div class="col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">
@@ -57,7 +65,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="col-md-4">
+		<div class="col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">
@@ -68,6 +76,9 @@
 				</div>
 			</div>
 		</div>
+		</div>
+		</div>
+	</div>
 	</div>
 </div>
 <div id="log_reader" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="LogReaderLabel" aria-hidden="true">
