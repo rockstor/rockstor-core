@@ -40,6 +40,7 @@
                                         {{print_logs_options}}
 					</select>&nbsp;
 					<input type="button" id="live-log" class="btn btn-primary" value="Read log">
+					</form>
 					</div>
                         </div>
                         </div>
@@ -52,7 +53,7 @@
                         <div class="panel-heading">
                                 <h3 class="panel-title">Logs Downloader :: compressed packet builder</h3>
                         </div>
-		<div class="panel-body">		
+		<div class="panel-body" style="height: 260px;">		
 		<div class="col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
@@ -69,13 +70,23 @@
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">
-						Logs download queue
+					Logs Download Queue
 					</h3>
 				</div>
 				<div class="panel-body" id="download_logs">
 				</div>
 			</div>
 		</div>
+		</div>
+		<div class="panel-footer">
+        		<div class="row">
+            			<div class="col-md-8">
+					<label class="inline" id="download_response"></label>
+				</div>
+				<div class="col-md-4 text-right">
+					<input type="button" id="download-logs" class="btn btn-primary" value="Download Logs Archive">
+				</div>
+        		</div>
 		</div>
 		</div>
 	</div>
@@ -90,6 +101,14 @@
       </div>
       <div class="modal-body">
 	<pre style="overflow-y: auto; height: 300px;"><span style="font-size: 11px;"><code id="system_log" name="system_log"></code></span></pre>
+      </div>
+      <div class="text-center"><label>Log reading progress</label></div>
+      <div class="modal-footer text-center">
+	<div class="progress">
+	<div id="reader_progress" name="reader_progress" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+	0%
+    	</div>
+	</div>
       </div>
     </div>
   </div>
