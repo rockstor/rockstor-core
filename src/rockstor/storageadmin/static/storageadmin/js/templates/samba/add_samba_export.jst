@@ -1,30 +1,30 @@
 <div class="row">
-  <div class="col-md-8">
-  <div class="panel panel-default">
-{{#if sambaShareIdNotNull}}
-  <div class="panel-heading">Edit Samba export for <strong>{{smbShareName}}</strong></div>
-{{else}}
-<div class="panel-heading">Add Samba export</div>
-{{/if}}
-
-    <div class="panel-body">
-      <form class="form-horizontal" id="add-samba-export-form" name="aform">
-        <div class="messages"></div>
-
-        <!-- Shares -->
+<div class="col-md-8">
+<div class="panel panel-default">
+  <div class="panel-heading">
+      {{#if sambaShareIdNotNull}}
+            Edit Samba export for <strong>{{smbShareName}}</strong>
+      {{else}}
+            Add Samba export
+      {{/if}}
+  </div>
+  <div class="panel-body">
+    <form class="form-horizontal" id="add-samba-export-form" name="aform">
+    <div class="messages"></div>
+    <!-- Shares -->
         <div class="form-group">
-          {{#if sambaShareIdNull}}
-          <label class="col-sm-4 control-label" for="shares">Shares to export<span class="required"> *</span></label>
-          {{/if}}
-          <div class="col-sm-4">
-        {{#if sambaShareIdNull}}
-            <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
-            {{#each shares}}
-                <option value="{{this.name}}">{{this.name}}</option>
-            {{/each}}
-            </select>
-        {{/if}}
-          </div>
+            {{#if sambaShareIdNull}}
+                <label class="col-sm-4 control-label" for="shares">Shares to export<span class="required"> *</span></label>
+            {{/if}}
+            <div class="col-sm-4">
+                {{#if sambaShareIdNull}}
+                    <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
+                    {{#each shares}}
+                        <option value="{{this.name}}">{{this.name}}</option>
+                    {{/each}}
+                    </select>
+                {{/if}}
+            </div>
         </div>
 
         <!-- Admin Users  -->
@@ -61,48 +61,49 @@
         <div class="form-group">
           <label class="col-sm-4 control-label" for="comment">Comment</label>
           <div class="col-sm-4">
-            {{#if sambaShareIdNotNull}}
-             <input type="text" id="comment" class="form-control" name="comment" value="{{smbShareComment}}" title="Comment string to associate with the new share">
-            {{else}}
-             <input type="text" id="comment" class="form-control" name="comment" value="Samba-Export" title="Comment string to associate with the new share">
-            {{/if}}
+              <input type="text" id="comment" class="form-control" name="comment" 
+                {{#if sambaShareIdNotNull}}
+                     value="{{smbShareComment}}"
+                {{else}}
+                     value="Samba-Export" 
+                {{/if}}
+               title="Comment string to associate with the new share">
           </div>
-	</div>
+	     </div>
 
-	<div class="form-group">
-  <div class="col-sm-4"></div>
-	  <div class="col-sm-4">
-	      {{#if smbSnapshotPrefixRule}}
-	      <input type="checkbox" name="shadow_copy" id="shadow_copy" checked="true">
-	      {{else}}
-	      <input type="checkbox" name="shadow_copy" id="shadow_copy">
-	       {{/if}} 
-	       Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
-      </div>
-      </div> <!-- closing form group -->
-    {{#if smbSnapshotPrefixRule}}
-		  <div class="form-group" id="snapprefix-ph">
-		  {{else}}
-		  <div class="form-group" id="snapprefix-ph" style="visibility: hidden">
-		    {{/if}}
-		    <label class="col-sm-4 control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
-        <div class="col-sm-4">
+	     <div class="form-group">
+             <div class="col-sm-4"></div>
+    	     <div class="col-sm-4">
+    	       <input type="checkbox" name="shadow_copy"
+        	    {{#if smbSnapshotPrefixRule}}
+        	       checked="true"
+        	    {{/if}} 
+    	       id="shadow_copy">Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
+            </div>
+          </div> <!-- closing form group -->
+          <div class="form-group"
+            {{#unless smbSnapshotPrefixRule}}
+    		   style="visibility: hidden"
+		    {{/unless}}
+		  id="snapprefix-ph">
+		  <label class="col-sm-4 control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
+          <div class="col-sm-4">
+             <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" 
 		      {{#if sambaShareIdNotNull}}
-		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" value="{{smbShareSnapPrefix}}" title="Prefix of Snapshots for this Share. You must use this prefix when scheduling Snapshot tasks for this Share for shadow copies to work.">
-		      {{else}}
-		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" title="Prefix of Snapshots for this Share. You must use this prefix when scheduling Snapshot tasks for this Share for shadow copies to work.">
+		          value="{{smbShareSnapPrefix}}"
 		      {{/if}}
+		     title="Prefix of Snapshots for this Share. You must use this prefix when scheduling Snapshot tasks for this Share for shadow copies to work.">
           </div>
         </div>
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="custom_config">Custom configuration </label>
           <div class="col-sm-8">
-          {{# if sambaShareIdNotNull}}
-           <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf">{{configList}}</textarea>
-           {{else}}
-           <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
-             {{/if}}
+            <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf">
+                {{# if sambaShareIdNotNull}}
+                    {{configList}}
+                {{/if}}
+            </textarea>
         </div>
 
       </div>
