@@ -38,11 +38,11 @@
                 {{/unless}}
             </td>
             <td>
-            {{#if (getCompressionStatus this.compression)}}
+            {{#checkCompressionStatus this.compression}}
                 Off
             {{else}}
                 On (Algorithm: <strong>{{this.compression}}</strong>)
-            {{/if}}
+            {{/checkCompressionStatus}}
                 {{#unless (isRoot this.role)}}
                       &nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
                 {{/unless}}

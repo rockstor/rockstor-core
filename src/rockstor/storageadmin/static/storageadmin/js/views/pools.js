@@ -64,7 +64,7 @@ PoolsView = RockstorLayoutView.extend({
 			return (disk.get('pool') == null) && !(disk.get('offline')) &&
 			!(disk.get('parted'));
 		});
-		
+
 		var disksAvailable = false;
 		if(_.size(freedisks) > 0){
 			disksAvailable = true;
@@ -145,13 +145,13 @@ PoolsView = RockstorLayoutView.extend({
 
 		});
 
-		Handlebars.registerHelper('getCompressionStatus', function(poolCompression) {
+		Handlebars.registerHelper('checkCompressionStatus', function(poolCompression, opts) {
 			if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
-				return true;
+				return opts.fn(this);
 			}
-			return false;
+			return opts.inverse(this);
 		});
-		
+
 		Handlebars.registerHelper('getDisks', function(disks) {
 			var dNames =  _.reduce(disks,
 					function(s, disk, i, list) {
@@ -163,7 +163,7 @@ PoolsView = RockstorLayoutView.extend({
 			}, '');
 			return dNames;
 		});
-		
+
 		Handlebars.registerHelper('isRoot', function(role) {
 			if (role == 'root') {
 				return true;

@@ -246,12 +246,13 @@ DisksView = Backbone.View.extend({
     	    return false;
     	});
 
-    	Handlebars.registerHelper('findSerial', function (serial, diskName) {
+    	Handlebars.registerHelper('checkSerialStatus', function (serial, diskName, opts) {
     	    if(serial == null || serial == '' || serial == diskName || serial.length == 48){
-    		return true;
+    		return opts.fn(this);
     	    }
-    	    return false;
+    	    return opts.inverse(this);
     	});
+    	
 
     	Handlebars.registerHelper('humanReadableSize', function (size) {
     	    return humanize.filesize(size * 1024);
