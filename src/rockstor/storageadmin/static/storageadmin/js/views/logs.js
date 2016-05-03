@@ -28,6 +28,7 @@ LogsView = RockstorLayoutView.extend({
     events: {
 	'click .logs-item': 'LogBaskets',
 	'click #live-log': 'LoadServerLogs',
+	'click #download-logs': 'SubmitDownloadQueue',
     },
 
     initialize: function() {
@@ -35,18 +36,32 @@ LogsView = RockstorLayoutView.extend({
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.logs_logs;
 	this.initHandlebarHelpers();
+	this.download_basket = [];
     },
 
     render: function() {
 	this.$el.html(this.template);
 	this.$('[rel=tooltip]').tooltip({ placement: 'top'});
-	RockStorSocket.addListener(this.getData, this, 'logReader:logcontent');
+	this.$('#download-logs').hide();
+	RockStorSocket.addListener(this.getLogContent, this, 'logReader:logcontent');
 	RockStorSocket.addListener(this.getLogSize, this, 'logReader:logsize');
+	RockStorSocket.addListener(this.getLogsArchive, this, 'logReader:logsdownload');
 	return this;
     },
 
-    getData: function(data) {
-	$('#system_log').append(data);
+    getLogsArchive: function(data) {
+	var _this = this;
+	var response_text = 'Logs Archive ready for download - ';
+	response_text += '<a href="' + data.archive_name + '">Click to download</a>'
+	$('#' + data.recipient).html(response_text);
+	console.log(data.archive_name);
+	console.log(data.recipient);
+    },
+
+    getLogContent: function(data) {
+	var _this = this;
+	_this.updateLogProgress(data.current_rows, data.total_rows);
+	$('#system_log').append(data.chunk_content);
 	$('#system_log').closest('pre').scrollTop($('#system_log').closest('pre')[0].scrollHeight+100);
     },
 
@@ -54,17 +69,55 @@ LogsView = RockstorLayoutView.extend({
 	console.log(data);
     },
 
+    updateLogProgress: function(partial, total) {
+	$('#reader_progress').addClass('progress-bar-striped');
+	current_rows = parseInt(partial);
+	total_rows = parseInt(total);
+	current_percent = (current_rows/total_rows*100).toFixed(2);
+	$('#reader_progress').attr('aria-valuenow', current_percent);
+	$('#reader_progress').width(current_percent + '%');
+	$('#reader_progress').text(current_percent + '%');
+	if (current_rows == total_rows) {
+		$('#reader_progress').removeClass('progress-bar-striped');
+	}
+
+    },
+
     cleanup: function() {
     	RockStorSocket.removeOneListener('logReader');
     },
 
+    ShowLogDownload: function(){
+	var download_queue = $('#download_logs').children();
+	if (download_queue.length > 0) {
+		$('#download-logs').show();	
+	} else {
+		$('#download-logs').hide();
+	}
+    },
+
+    SubmitDownloadQueue: function(event){
+	_this = this;
+	_this.download_basket = [];
+	$('#download_response').empty();
+	var download_queue = $('#download_logs').children();
+	download_queue.each(function(){
+		_this.download_basket.push($(this).attr('log'));
+	});
+	$('#download-logs').blur();
+	RockStorSocket.logReader.emit('downloadlogs', _this.download_basket, 'download_response');
+    },
+
     LogBaskets: function(event) {
+	var _this = this;
 	event.preventDefault();
+	$('#download_response').empty();
 	var parent_div = $(event.currentTarget).parent().attr('id');
 	var dest_div = parent_div == 'avail_logs' ? '#download_logs' : '#avail_logs';
 	$(event.currentTarget).fadeTo(500,0, function(){
 		$(dest_div).append(event.currentTarget);
 		$(event.currentTarget).fadeTo(500,1);
+		_this.ShowLogDownload();
 	});
     },
 
@@ -85,7 +138,7 @@ LogsView = RockstorLayoutView.extend({
 
     ShowLogReader: function() {
 	$('#log_reader').modal({
-	    keyboard: true,
+	    keyboard: false,
             show: false,
             backdrop: 'static'
         });
