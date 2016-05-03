@@ -184,29 +184,18 @@ ServicesView = Backbone.View.extend({
 
     initHandlebarHelpers: function(){
 	var _this = this;
-	Handlebars.registerHelper('configure_service', function(serviceName){
-	    var html = '';
+	Handlebars.registerHelper('isServiceConfigurable', function(serviceName, opts){
 	    if(_this.configurable_services.indexOf(serviceName) > -1) {
-		return true;
+		return opts.fn(this);
 	    }
-	    return false;
+	    return opts.inverse(this);
 	});
 
-	Handlebars.registerHelper('isServiceAD', function(serviceName){
+	Handlebars.registerHelper('isServiceAD', function(serviceName, opts){
 	    if(serviceName == "active-directory") {
-		return true;
+		return opts.fn(this);
 	    }
-	    return false;
-	});
-
-	Handlebars.registerHelper('getStatus', function(status){
-	    var html = '';
-	    if(status){
-		html = 'checked';
-	    }else{
-		html = '';
-	    }
-	    return new Handlebars.SafeString(html);
+	    return opts.inverse(this);
 	});
     }
 });
