@@ -97,7 +97,17 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 id="LogReaderLabel">Content of selected log</h4>
+	<div class="row">
+		<div class="col-md-5">
+        	<h4 id="LogReaderLabel">Content of selected log</h4>
+		</div>
+		<div class="col-md-4">
+		<h4>
+			<b>Content Size:</b>&nbsp;<span id="logsize"></span><br/>
+			<a href="#" id="reader-logs" name="reader-logs">Download full Log file <i class="glyphicon glyphicon-download-alt"></i></a>
+		</h4>
+		</div>
+	</div>
       </div>
       <div class="modal-body">
 	<pre style="overflow-y: auto; height: 300px;"><span style="font-size: 11px;"><code id="system_log" name="system_log"></code></span></pre>

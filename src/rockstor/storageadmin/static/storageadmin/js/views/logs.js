@@ -29,6 +29,7 @@ LogsView = RockstorLayoutView.extend({
 	'click .logs-item': 'LogBaskets',
 	'click #live-log': 'LoadServerLogs',
 	'click #download-logs': 'SubmitDownloadQueue',
+	'click #reader-logs' : 'SubmitReaderLogDownload'
     },
 
     initialize: function() {
@@ -51,11 +52,13 @@ LogsView = RockstorLayoutView.extend({
 
     getLogsArchive: function(data) {
 	var _this = this;
-	var response_text = 'Logs Archive ready for download - ';
-	response_text += '<a href="' + data.archive_name + '">Click to download</a>'
-	$('#' + data.recipient).html(response_text);
-	console.log(data.archive_name);
-	console.log(data.recipient);
+	if (data.recipient == 'download_response') {
+		var response_text = 'Logs Archive ready for download - ';
+		response_text += '<a href="' + data.archive_name + '">Click to download</a>'
+		$('#' + data.recipient).html(response_text);
+	} else {
+		$(location).attr('href', data.archive_name);
+	}
     },
 
     getLogContent: function(data) {
@@ -63,6 +66,7 @@ LogsView = RockstorLayoutView.extend({
 	_this.updateLogProgress(data.current_rows, data.total_rows);
 	$('#system_log').append(data.chunk_content);
 	$('#system_log').closest('pre').scrollTop($('#system_log').closest('pre')[0].scrollHeight+100);
+	if ($('#logsize').text().length == 0) { $('#logsize').text((parseInt(data.content_size)/1024).toFixed(2) + 'kB'); }
     },
 
     getLogSize: function(data) {
@@ -96,6 +100,14 @@ LogsView = RockstorLayoutView.extend({
 	}
     },
 
+    SubmitReaderLogDownload: function(event) {
+	_this = this;
+	event.preventDefault();
+	var log_file = $('#logs_options').val();
+	log_file = log_file.split();
+	RockStorSocket.logReader.emit('downloadlogs', log_file, 'reader_response');
+    },
+
     SubmitDownloadQueue: function(event){
 	_this = this;
 	_this.download_basket = [];
@@ -122,13 +134,14 @@ LogsView = RockstorLayoutView.extend({
     },
 
     LoadServerLogs: function() {
+	$('#logsize').empty();
 	var _this = this;
 	var read_type = $('#read_type').val();
 	var logs_options = $('#logs_options').val();
 	var log_file = $('#logs_options option:selected').text();
 	var read_tool = $('#read_type option:selected').text();
-	var modal_title = '<b>Selected log:</b>&nbsp; ' + log_file;
-	modal_title += '<br/><b>Reader type:</b>&nbsp;' + read_tool;
+	var modal_title = '<b>Selected log:</b>&nbsp; <span>' + log_file + '</span>';
+	modal_title += '<br/><b>Reader type:</b>&nbsp; <span>' + read_tool + '</span>';
 	$("#LogReaderLabel").html(modal_title);
 	$('#system_log').empty();
         _this.ShowLogReader();
