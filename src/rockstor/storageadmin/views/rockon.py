@@ -246,7 +246,7 @@ class RockOnView(rfc.GenericView):
             v_d = c_d.get('volumes', {})
             cur_vols = [vo.dest_dir for vo in
                         DVolume.objects.filter(container=co)]
-            logger.debug('container description volumes = %s', v_d)
+            logger.debug('container description volumes = %s', v_d.keys())
             logger.debug('cur_vols _create_update_meta = %s', cur_vols)
             #cur_vols can have entries not in the config for Shares mapped post
             #install.
@@ -258,6 +258,10 @@ class RockOnView(rfc.GenericView):
                              (co.name, ro.name))
                     handle_exception(Exception(e_msg), self.request)
                 DVolume.objects.filter(container=co).delete()
+            # maybe a similar check for cur_vols that are no longer in the
+            # container description, and if we are also in the process of
+            # installing then remove these entries from the db as they are now
+            # in error. ie cycle through them and .delete() them.
 
             for v in v_d:
                 cv_d = v_d[v]
