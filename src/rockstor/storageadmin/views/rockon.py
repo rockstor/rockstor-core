@@ -246,6 +246,7 @@ class RockOnView(rfc.GenericView):
             v_d = c_d.get('volumes', {})
             cur_vols = [vo.dest_dir for vo in
                         DVolume.objects.filter(container=co)]
+            logger.debug('container description volumes = %s', v_d)
             logger.debug('cur_vols _create_update_meta = %s', cur_vols)
             #cur_vols can have entries not in the config for Shares mapped post
             #install.
