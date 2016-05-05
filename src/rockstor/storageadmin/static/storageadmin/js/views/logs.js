@@ -29,7 +29,8 @@ LogsView = RockstorLayoutView.extend({
 	'click .logs-item': 'LogBaskets',
 	'click #live-log': 'LoadServerLogs',
 	'click #download-logs': 'SubmitDownloadQueue',
-	'click #reader-logs' : 'SubmitReaderLogDownload'
+	'click #reader-logs' : 'SubmitReaderLogDownload',
+	'change #read_type, #logs_options' : 'RequestLogSize'
     },
 
     initialize: function() {
@@ -70,7 +71,21 @@ LogsView = RockstorLayoutView.extend({
     },
 
     getLogSize: function(data) {
-	console.log(data);
+	log_size = (parseInt(data)/1024).toFixed(2);
+	if (log_size > 500) {
+		var size_warning = '<div class="alert alert-warning logsizealert">';
+		size_warning += '<strong>Warning!</strong>&nbsp;Log size is greater than 500kB (';
+		size_warning += log_size + ' kB) and reading with cat could take a while</div>';
+		$(size_warning).appendTo('#reader-block').hide().fadeIn(500);
+	}
+    },
+
+    RequestLogSize: function(event) {
+        $('.logsizealert').fadeOut(100, function(){ $(this).remove(); });
+        if ($('#read_type').val() == 'cat') {
+                current_log = $('#logs_options').val();
+                RockStorSocket.logReader.emit('getfilesize', current_log);
+        }
     },
 
     updateLogProgress: function(partial, total) {
@@ -85,10 +100,6 @@ LogsView = RockstorLayoutView.extend({
 		$('#reader_progress').removeClass('progress-bar-striped');
 	}
 
-    },
-
-    cleanup: function() {
-    	RockStorSocket.removeOneListener('logReader');
     },
 
     ShowLogDownload: function(){
@@ -156,6 +167,10 @@ LogsView = RockstorLayoutView.extend({
             backdrop: 'static'
         });
         $('#log_reader').modal('show');
+    },
+
+    cleanup: function() {
+        RockStorSocket.removeOneListener('logReader');
     },
 
     initHandlebarHelpers: function(){
