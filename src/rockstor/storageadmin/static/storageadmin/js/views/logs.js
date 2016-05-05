@@ -157,7 +157,6 @@ LogsView = RockstorLayoutView.extend({
 	$('#system_log').empty();
         _this.ShowLogReader();
         RockStorSocket.logReader.emit('readlog', read_type, logs_options);
-	RockStorSocket.logReader.emit('getfilesize', logs_options);
     },
 
     ShowLogReader: function() {
