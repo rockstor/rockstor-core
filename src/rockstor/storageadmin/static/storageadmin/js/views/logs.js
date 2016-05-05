@@ -98,6 +98,7 @@ LogsView = RockstorLayoutView.extend({
 	$('#reader_progress').text(current_percent + '%');
 	if (current_rows == total_rows) {
 		$('#reader_progress').removeClass('progress-bar-striped');
+		$('#live-log').removeClass('disabled'); // Log totally rendered, enable again live log request button
 	}
 
     },
@@ -145,6 +146,7 @@ LogsView = RockstorLayoutView.extend({
     },
 
     LoadServerLogs: function() {
+	$('#live-log').addClass('disabled'); // prevent users from submitting multiple reading requests same time
 	$('#logsize').empty();
 	var _this = this;
 	var read_type = $('#read_type').val();
