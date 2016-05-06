@@ -100,7 +100,6 @@ LogsView = RockstorLayoutView.extend({
 		$('#reader_progress').removeClass('progress-bar-striped');
 		$('#live-log').removeClass('disabled'); // Log totally rendered, enable again live log request button
 	}
-
     },
 
     ShowLogDownload: function(){

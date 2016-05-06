@@ -1,3 +1,21 @@
+"""
+Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+This file is part of RockStor.
+
+RockStor is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+RockStor is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+"""
+
 from gevent import monkey
 monkey.patch_all()
 
@@ -9,6 +27,10 @@ from socketio.server import SocketIOServer
 from socketio import socketio_manage
 from socketio.namespace import BaseNamespace
 from socketio.mixins import BroadcastMixin
+
+from gevent.subprocess import Popen, PIPE
+from os import path
+from sys import getsizeof
 
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
@@ -22,6 +44,150 @@ from system.pkg_mgmt import update_check
 import logging
 logger = logging.getLogger(__name__)
 
+
+class LogReaderNamespace(BaseNamespace, BroadcastMixin):
+
+    def initialize(self):
+
+        #Set common vars used both for log reading and downloading
+        self.system_logs = '/var/log/'
+        self.rockstor_logs = '%svar/log/' % settings.ROOT_DIR
+        self.samba_subd_logs = '%ssamba/' % self.system_logs
+        self.nginx_subd_logs = '%snginx/' % self.system_logs
+
+        self.readers = {'cat' : {'command' : '/usr/bin/cat', 'args' : '-n'},
+               'tail200' : {'command' : '/usr/bin/tail', 'args' : '-n 200'},
+               'tail30' : {'command' : '/usr/bin/tail', 'args' : '-n 30'},
+        }
+        
+        self.logs = {'rockstor' : '%srockstor.log' % self.rockstor_logs,
+            'dmesg' : '%sdmesg' % self.system_logs,
+            'nmbd' : '%slog.nmbd' % self.samba_subd_logs,
+            'smbd' : '%slog.smbd' % self.samba_subd_logs,
+            'winbindd' : '%slog.winbindd' % self.samba_subd_logs,
+            'nginx' : '%saccess.log' % self.nginx_subd_logs,
+            'yum' : '%syum.log' % self.system_logs,
+        }
+        
+        self.tar_utility = ['/usr/bin/tar', 'czf']
+
+    def recv_connect(self):
+
+        #On first connection emit a welcome just to have a recv_connect func
+        self.emit("logReader:logwelcome", {
+            "key": "logReader:logwelcome", "data": "Welcome to Rockstor LogManager"
+        })
+
+    def recv_disconnect(self):
+
+        self.disconnect()
+        logger.debug('Log Manager has been closed')
+
+    def on_downloadlogs(self, logs_queued, recipient):
+
+        #Build tar command with tar command and logs sent by client
+        archive_path = '%ssrc/rockstor/logs/' % settings.ROOT_DIR
+        archive_file = 'requested_logs.tgz'
+        
+        #If log download requested by Log Reader serve a personalized tgz file with log file name
+        if (recipient == 'reader_response'):
+            archive_file = '%s.tgz' % logs_queued[0]
+        archive_path += archive_file
+        download_command = []
+        download_command.extend(self.tar_utility)
+        download_command.append(archive_path)
+
+        #Get every log location via logs dictionary
+        for log in logs_queued:
+            download_command.append(self.logs[log])
+        
+        #Build download archive
+        download_process = Popen(download_command, bufsize=1, stdout=PIPE)
+        download_result = download_process.communicate()[0]
+
+        #Return ready state for logs archive download specifing recipient (LogReader or LogDownloader)
+        self.emit('logReader:logsdownload', {
+            'key': 'logReader:logsdownload', 'data': {
+            'archive_name' : '/logs/%s' % archive_file,
+            'recipient' : recipient
+            }
+        })
+        gevent.sleep(0)
+        logger.debug('Logs archive built in /logs/%s' % archive_file)
+
+    def on_readlog(self, reader, logfile):
+
+        logs_loader = {'slow' : {'lines' : 200, 'sleep' : 0.50},
+                   'fast' : {'lines' : 1, 'sleep' : 0.05},
+        }
+
+        def valid_log(logfile):
+            #If file exist and size greater than 0 return true
+            #else false and avoid processing
+            if path.exists(logfile):
+                return (path.getsize(logfile) > 0)
+            else:
+                return False
+
+        log_path = self.logs[logfile]
+        logger.debug('Log Reader request for %s - Started' % log_path)
+        
+        if (valid_log(log_path)):#Log file exist and greater than 0, perform data collecting
+
+            #Build read command from readers dict
+            read_command = []
+            read_command.append(self.readers[reader]['command'])
+            #If our reader has opt args we add them to popen command
+            if ('args' in self.readers[reader]):
+                read_command.append(self.readers[reader]['args'])
+            #Queue log file to popen command
+            read_command.append(log_path)
+
+            #Define popen process and once completed split stdout by lines
+            reader_process = Popen(read_command, bufsize=1, stdout=PIPE)
+            log_content = reader_process.communicate()[0]
+            log_contentsize = getsizeof(log_content)
+            log_content = log_content.splitlines(True)
+            
+            #Starting from content num of lines decide if serve it 1 line/time or in 200 lines chunks
+            reader_type = 'fast' if (len(log_content) <= 200) else 'slow'
+            chunk_size = logs_loader[reader_type]['lines']
+            reader_sleep = logs_loader[reader_type]['sleep']
+            log_content_chunks = [log_content[x:x+chunk_size] for x in xrange(0, len(log_content), chunk_size)]
+            total_rows = len(log_content)
+
+        else:#Log file missing or size 0, gently inform user
+        
+            log_content = 'Selected log file is empty or doesn\'t exist'
+            log_content = log_content.splitlines(True)
+            total_rows = 1
+            log_contentsize = getsizeof(log_content)
+            log_content_chunks = []
+            log_content_chunks.append(log_content)
+            reader_sleep = 0
+        
+        #Serve each chunk with emit and sleep before next one to avoid client side browser overload
+        current_rows = 0
+        
+        for data_chunks in log_content_chunks:
+            chunk_content = ''.join(data_chunks)
+            current_rows += len(data_chunks)
+            self.emit('logReader:logcontent', {
+                'key': 'logReader:logcontent', 'data': {
+                'current_rows' : current_rows,
+                'total_rows' : total_rows,
+                'chunk_content' : chunk_content,
+                'content_size' : log_contentsize
+                }
+            })
+            gevent.sleep(reader_sleep)
+        logger.debug('Log Reader request for %s - Finished' % log_path)
+        
+    def on_getfilesize(self, logfile):
+
+        file_size = path.getsize(self.logs[logfile])
+        self.emit('logReader:logsize', {'key': 'logReader:logsize', 'data': file_size})
+        gevent.sleep(0)
 
 class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
     switch = False
@@ -135,10 +301,10 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
         self.disconnect()
 
     def network_stats(self):
-        from storageadmin.models import NetworkDevice
+        from storageadmin.models import NetworkInterface
 
         def retrieve_network_stats(prev_stats):
-            interfaces = [i.name for i in NetworkDevice.objects.all()]
+            interfaces = [i.name for i in NetworkInterface.objects.all()]
             interval = 1
             cur_stats = {}
             with open('/proc/net/dev') as sfo:
@@ -390,6 +556,7 @@ class Application(object):
                                       '/memory-widget': MemoryWidgetNamespace,
                                       '/network-widget': NetworkWidgetNamespace,
                                       '/disk-widget': DisksWidgetNamespace,
+                                      '/logmanager': LogReaderNamespace,
             })
             if ((cur_ts - self.scan_ts).total_seconds() > self.scan_interval):
                 self.scan_ts = cur_ts
