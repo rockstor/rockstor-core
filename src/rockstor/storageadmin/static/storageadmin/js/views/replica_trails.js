@@ -88,7 +88,7 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 				html += '<tr>';
 				html += '<td>' + r.get('id') + '</td>';
 				html += '<td>' + r.get('snap_name') + '</td>';
-				html += '<td>' + moment(r.get('receive_pending')).format(RS_DATE_FORMAT) + '</td>';
+				html += '<td>' + moment(r.get('snapshot_created')).format(RS_DATE_FORMAT) + '</td>';
 				html += '<td>';
 				if (r.get('end_ts')) {
 					html += moment(r.get('end_ts')).format(RS_DATE_FORMAT);
@@ -103,19 +103,19 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 				html += '</td>';
 				html += '<td>';
 				if (r.get('end_ts')) {
-					html += moment(r.get('end_ts')).from(moment(r.get('receive_pending')));
+					html += moment(r.get('end_ts')).from(moment(r.get('snapshot_created')));
 				} else {
 				}
 				html += '</td>';
 				html += '<td>';
 				if (r.get('end_ts')) {
-					var d = moment(r.get('end_ts')).diff(moment(r.get('receive_pending')))/1000;
-					var rate = (r.get('kb_received') / d).toFixed(2);
+					var d = moment(r.get('end_ts')).diff(moment(r.get('snapshot_created')))/1000;
+					var rate = (r.get('kb_sent') / d).toFixed(2);
 				} else {
-					var d = moment().diff(moment(r.get('receive_pending')))/1000;
-					var rate = (r.get('kb_received') / d).toFixed(2);
+					var d = moment().diff(moment(r.get('snapshot_created')))/1000;
+					var rate = (r.get('kb_sent') / d).toFixed(2);
 				}
-				html += r.get('kb_received') + ' KB at ' + rate + ' KB/sec.';
+				html += r.get('kb_sent') + ' KB at ' + rate + ' KB/sec.';
 				html += '</td>';
 				html += '</tr>';
 			});
