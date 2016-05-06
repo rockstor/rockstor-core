@@ -37,7 +37,6 @@
           </tr>
         </thead>
         <tbody>
-          {{replicaTrails_table}}
           {{#each replicaColl}}
             <tr>
                 <td>{{this.id}}</td>
@@ -55,8 +54,9 @@
                 </td>
                 <td>{{#if this.end_ts}}
                     {{getDuration this.end_ts this.snapshot_created}}
+                    {{/if}}
                 </td>
-                <td>Data Transfer</td>
+                <td>{{this.kb_sent}} KB at {{getRate this.end_ts this.snapshot_created this.kb_sent}} KB/sec.</td>
             </tr>
           {{/each}}
         </tbody>
