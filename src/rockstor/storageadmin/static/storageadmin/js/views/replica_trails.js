@@ -64,7 +64,8 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 		if (!this.replicaFetched) return false;
 		var _this = this;
 		$(this.el).html(this.template({
-			replica: _this.replica,
+			replica: _this.replica.toJSON(),
+			replicaColl: _this.collection.toJSON(),
 			collection: _this.collection,
 			collectionNotEmpty: !this.collection.isEmpty()
 		}));
@@ -76,11 +77,6 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_h4', function(){
-			var html = '';
-			html += '<h4>Replication history for ' + this.replica.get('task_name') + '(' + this.replica.get('share') + 'on' + this.replica.get('appliance') + ':' + this.replica.get('dpool') + ')</h4>';
-			return new Handlebars.SafeString(html);
-		});
 		Handlebars.registerHelper('replicaTrails_table', function(){
 			var html = '',
 			_this = this;
