@@ -246,29 +246,54 @@ class RockOnView(rfc.GenericView):
             v_d = c_d.get('volumes', {})
             cur_vols = [vo.dest_dir for vo in
                         DVolume.objects.filter(container=co)]
+            logger.debug('dealing with updating %s', co.name)
             logger.debug('container description volumes = %s', v_d.keys())
             logger.debug('cur_vols _create_update_meta = %s', cur_vols)
-            #cur_vols can have entries not in the config for Shares mapped post
-            #install.
+            # cur_vols can have entries not in the config for Shares mapped post
+            # install.
+            # If we have more volumes defined in the rock-on definition than
+            # we have previously seen for this rockon, ie volumes added in newer
+            # definition, then remove our existing volumes record.
             if (len(set(v_d.keys()) - set(cur_vols)) != 0):
+                # but only if the current state is 'available' (to install) or
+                # 'install failed', otherwise raise warning about changing an
+                # installed rock-ons.
                 if (ro.state not in ('available', 'install_failed')):
                     e_msg = ('Cannot add/remove volume definitions of the '
                              'container(%s) as it belongs to an installed '
                              'Rock-on(%s). Uninstall it first and try again.' %
                              (co.name, ro.name))
                     handle_exception(Exception(e_msg), self.request)
+                # Delete all volume entries for this container so that they
+                # might be created a fresh.
                 DVolume.objects.filter(container=co).delete()
-            # maybe a similar check for cur_vols that are no longer in the
-            # container description, and if we are also in the process of
-            # installing then remove these entries from the db as they are now
-            # in error. ie cycle through them and .delete() them.
+            # If the existing rock-on db entry indicates this container is not
+            # installed ie state available or install_failed then check if we
+            # need to remove any now deprecated volume entries.
+            # Ie updated config that has removed a previously seen volume.
+            if (ro.state in ('available', 'install_failed')):
+                if (len(set(cur_vols) - set(v_d.keys())) > 0):
+                    # we have some current volumes in db that are no longer in
+                    # our updated rock-on definition so remove all volumes for
+                    # this rock-on so they might be updated whole sale.
+                    logger.debug('removing all volume records for container %s', co.name)
+                    # Delete all volume entries for this container so that they
+                    # might be created a fresh.
+                    DVolume.objects.filter(container=co).delete()
 
+            # Cycle through all volumes in the rock-on json definition and
+            # update or create the appropriate db volumes entry.
             for v in v_d:
                 cv_d = v_d[v]
                 vo_defaults = {'description': cv_d['description'],
                                'label': cv_d['label']}
+
                 vo, created = DVolume.objects.get_or_create(dest_dir=v, container=co,
                                                             defaults=vo_defaults)
+                # If this db entry previously existed then update it's
+                # description and label to that found in our rock-on json
+                # This ensures changes made in repo json to the description and
+                # label's get updated in the local db.
                 if (not created):
                     vo.description = vo_defaults['description']
                     vo.label = vo_defaults['label']
