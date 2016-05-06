@@ -38,6 +38,27 @@
         </thead>
         <tbody>
           {{replicaTrails_table}}
+          {{#each replicaColl}}
+            <tr>
+                <td>{{this.id}}</td>
+                <td>{{this.snap_name}}</td>
+                <td>{{getDateFormat this.snapshot_created}}</td>
+                <td>{{#if this.end_ts}}
+                        {{getDateFormat this.end_ts}}
+                    {{/if}}
+                </td>
+                <td>{{#ifStatusSuccess this.status}}
+                        {{this.status}}
+                    {{else}}
+                        <i class="fa fa-exclamation-circle" title="{{this.error}}" rel="tooltip"></i>&nbsp;{{this.status}}
+                    {{/ifStatusSuccess}}
+                </td>
+                <td>{{#if this.end_ts}}
+                    {{getDuration this.end_ts this.snapshot_created}}
+                </td>
+                <td>Data Transfer</td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
       <div>{{pagination}}</div>

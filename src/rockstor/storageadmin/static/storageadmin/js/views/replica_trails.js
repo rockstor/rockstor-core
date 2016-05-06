@@ -77,6 +77,18 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('getDateFormat', function(date){
+			return moment(date).format(RS_DATE_FORMAT);
+		});
+		Handlebars.registerHelper('ifStatusSuccess', function(status, opts){
+			if(status == 'failed'){
+				return opts.fn(this);
+			}
+			return opts.inverse(this);
+		});
+		Handlebars.registerHelper('getDuration', function(timeNow, fromTime){
+			return moment(timeNow).from(moment(fromTime));
+		});
 		Handlebars.registerHelper('replicaTrails_table', function(){
 			var html = '',
 			_this = this;
