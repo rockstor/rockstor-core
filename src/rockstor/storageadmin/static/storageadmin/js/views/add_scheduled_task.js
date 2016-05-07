@@ -52,7 +52,6 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		}else{
 			this.taskDefIdNull = false;
 		}
-		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -188,7 +187,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 			}));
 		} else {
 			this.$('#optional-fields').html(this.scrubFieldsTemplate({
-				pools: this.pools,
+				pools: this.pools.toJSON(),
 				taskDef: this.taskDef,
 				taskDefId: this.taskDefId,
 				taskDefIdNull: this.taskDefIdNull,
@@ -204,16 +203,4 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		event.preventDefault();
 		app_router.navigate('scheduled-tasks', {trigger: true});
 	},
-
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_scrub_pools', function(){
-			var html = '';
-			this.pools.each(function(pool, index) {
-				html += '<option value="' + pool.get('name') + '"> ' + pool.get('name') + '</option>';
-			});
-			return new Handlebars.SafeString(html);
-		});
-
-	}
-
 });
