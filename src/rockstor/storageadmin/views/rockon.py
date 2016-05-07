@@ -246,9 +246,6 @@ class RockOnView(rfc.GenericView):
             v_d = c_d.get('volumes', {})
             cur_vols = [vo.dest_dir for vo in
                         DVolume.objects.filter(container=co)]
-            logger.debug('dealing with updating %s', co.name)
-            logger.debug('container description volumes = %s', v_d.keys())
-            logger.debug('cur_vols _create_update_meta = %s', cur_vols)
             # cur_vols can have entries not in the config for Shares mapped post
             # install.
             # If we have more volumes defined in the rock-on definition than
@@ -276,7 +273,6 @@ class RockOnView(rfc.GenericView):
                     # we have some current volumes in db that are no longer in
                     # our updated rock-on definition so remove all volumes for
                     # this rock-on so they might be updated whole sale.
-                    logger.debug('removing all volume records for container %s', co.name)
                     # Delete all volume entries for this container so that they
                     # might be created a fresh.
                     DVolume.objects.filter(container=co).delete()
@@ -389,11 +385,9 @@ class RockOnView(rfc.GenericView):
         meta_cfg = {}
         for k,v in root.items():
             cur_meta_url = '%s/%s' % (url_root, v)
-            logger.debug('we are looking to retrieve the following url =%s', cur_meta_url)
             msg = ('Error while processing Rock-on profile at %s' % cur_meta_url)
             with self._handle_exception(self.request, msg=msg):
                 cur_res = requests.get(cur_meta_url, timeout=10)
-                logger.debug('this is the json retrieved %s', cur_res)
                 if (cur_res.status_code != 200):
                     cur_res.raise_for_status()
                 meta_cfg.update(cur_res.json())
