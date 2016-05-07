@@ -206,15 +206,6 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_taskType_options', function(){
-			var html = '',
-			_this = this;
-			_.each(_this.taskTypes, function(taskType, index) {
-				html += '<option value="' + taskType + '"> ' + taskType + '</option>';
-			});
-			return new Handlebars.SafeString(html);
-		});
-
 		Handlebars.registerHelper('display_snapshot_shares', function(){
 			var html = '';
 			this.shares.each(function(share, index) {
