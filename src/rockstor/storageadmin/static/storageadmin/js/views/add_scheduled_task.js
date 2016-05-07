@@ -180,7 +180,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		}
 		if (taskType == 'snapshot') {
 			this.$('#optional-fields').html(this.snapshotFieldsTemplate({
-				shares: this.shares,
+				shares: this.shares.toJSON(),
 				taskDef: this.taskDef,
 				taskDefId: this.taskDefId,
 				taskDefIdNull: this.taskDefIdNull,
@@ -206,14 +206,6 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_snapshot_shares', function(){
-			var html = '';
-			this.shares.each(function(share, index) {
-				html += '<option value="' + share.get('name') + '"> ' + share.get('name') + '</option>';
-			});
-			return new Handlebars.SafeString(html);
-		});
-
 		Handlebars.registerHelper('display_scrub_pools', function(){
 			var html = '';
 			this.pools.each(function(pool, index) {
