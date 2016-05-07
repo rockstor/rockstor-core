@@ -36,7 +36,17 @@
           </tr>
         </thead>
         <tbody>
-          {{display_taskHistory_tbody}}
+          {{#each taskColl}}
+            <tr>
+                <td>{{this.id}}</td>
+                <td>{{dateFormat this.start}}</td>
+                <td>{{#if this.end}} 
+                        {{dateFormat this.end}}
+                    {{/if}}
+                </td>
+                <td>{{this.state}}</td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
       <div>{{pagination}}</div>
