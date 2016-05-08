@@ -125,6 +125,8 @@ class DiskMixin(object):
             if d.fstype == 'isw_raid_member' or d.fstype == 'linux_raid_member':
                 # transfer fstype raid member indicator to role field
                 dob.role = d.fstype
+                logger.debug('setting db role for %s', dob.name)
+                logger.debug('to role = %s', dob.role)
             else:
                 # No identified role from scan_disks() fstype indicator so
                 # set as None to update db of new drive role. If we don't
@@ -136,6 +138,7 @@ class DiskMixin(object):
                 # roles based on the fs found and also take heed of an
                 # existing devices db role entry prior to overwriting.
                 dob.role = None
+                logger.debug('setting db role to None for %s', dob.name)
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.
