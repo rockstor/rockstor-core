@@ -122,21 +122,20 @@ class DiskMixin(object):
                 dob.parted = True  # overload use of parted as non btrfs flag.
                 # N.B. this overload use may become redundant with the addition
                 # of the Disk.role field.
-                if d.fstype == 'isw_raid_member' \
-                        or d.fstype == 'linux_raid_member':
-                    # transfer fstype raid member indicator to role field
-                    dob.role = d.fstype
-                else:
-                    # No identified role from scan_disks() fstype indicator so
-                    # set as None to update db of new drive role. If we don't
-                    # do this then the same drive when re-deployed will inherit
-                    # it's previous role in the db which may be desired but in
-                    # the case of these raid member indicators from scan_disks()
-                    # we have the current truth provided.
-                    # N.B. this if else could be expanded to accommodate other
-                    # roles based on the fs found and also take heed of an
-                    # existing devices db role entry prior to overwriting.
-                    dob.role = None
+            if d.fstype == 'isw_raid_member' or d.fstype == 'linux_raid_member':
+                # transfer fstype raid member indicator to role field
+                dob.role = d.fstype
+            else:
+                # No identified role from scan_disks() fstype indicator so
+                # set as None to update db of new drive role. If we don't
+                # do this then the same drive when re-deployed will inherit
+                # it's previous role in the db which may be desired but in
+                # the case of these raid member indicators from scan_disks()
+                # we have the current truth provided.
+                # N.B. this if else could be expanded to accommodate other
+                # roles based on the fs found and also take heed of an
+                # existing devices db role entry prior to overwriting.
+                dob.role = None
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.
