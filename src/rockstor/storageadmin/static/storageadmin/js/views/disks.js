@@ -232,12 +232,36 @@ DisksView = Backbone.View.extend({
             }
             return false;
         });
-    	Handlebars.registerHelper('displayInfo', function (role) {
-    	    if(role == 'isw_raid_member' || role == 'linux_raid_member'){
-    		return true;
-    	    }
-    	    return false;
-    	});
+        Handlebars.registerHelper('displayInfo', function (role) {
+            // check for the legacy / pre json formatted role field contents.
+            if (role == 'isw_raid_member' || role == 'linux_raid_member') {
+                return true;
+            }
+            // now check if our role is null = db default of None
+            if (role == null) {
+                console.log('role = null returning false')
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // todo not sure if this is redundant?
+            try {
+                var roleAsJson = JSON.parse(role);
+            } catch (e) {
+                console.log('exception in JSON.parse(role) returning false')
+                return false;
+            }
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('mdraid')) {
+                // in the case of an mdraid property we are assured it is an
+                // mdraid member, the specific type is not important here.
+                // Non mdraid members will have no mdraid property.
+                console.log('confirmed to have mdraid property in role')
+                return true;
+            }
+            // In all other cases return false.
+            console.log('defaulting to return false')
+            return false;
+        });
 
     	Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
     	    if(btrfsUid && _.isNull(poolName)){
