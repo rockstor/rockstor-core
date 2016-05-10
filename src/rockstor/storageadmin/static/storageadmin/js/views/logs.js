@@ -176,11 +176,15 @@ LogsView = RockstorLayoutView.extend({
     initHandlebarHelpers: function(){
       var avail_logs =  {
                         "Rockstor Logs" : "rockstor",
+			"Supervisor (Process monitor)" : "supervisor",
                         "Dmesg (Kernel)" : "dmesg",
                         "Nmbd (Samba)" : "nmbd",
                         "Smbd (Samba)" : "smbd",
                         "Winbindd (Samba)" : "winbindd",
-                        "Nginx (WebUI)" : "nginx",
+                        "Nginx stdout (WebUI)" : "nginx_stdout",
+			"Nginx stderr (WebUI)" : "nginx_stderr",
+			"Gunicorn stdout (WebUI)" : "gunicorn_stdout",
+			"Gunicorn stderr (WebUI)" : "gunicorn_stderr",
                         "Yum (System updates)" : "yum"
                         };
 
