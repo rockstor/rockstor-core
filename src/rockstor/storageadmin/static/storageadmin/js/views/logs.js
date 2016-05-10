@@ -31,6 +31,7 @@ LogsView = RockstorLayoutView.extend({
 	'click #download-logs': 'SubmitDownloadQueue',
 	'click #reader-logs' : 'SubmitReaderLogDownload',
 	'click #modal_resize' : 'ModalSwitchResize',
+	'click #code_increase_size, #code_decrease_size' : 'ModalResizeText',
 	'change #read_type, #logs_options' : 'RequestLogSize'
     },
 
@@ -63,6 +64,14 @@ LogsView = RockstorLayoutView.extend({
 		modal_container.addClass('modal-lg');
 		resize_icon.switchClass('glyphicon-resize-full', 'glyphicon-resize-small');
 	}
+    },
+
+    ModalResizeText: function(event) {
+	event.preventDefault();
+	var resize_emitter = event.currentTarget.id;
+	var size_delta = resize_emitter == 'code_increase_size' ? 1 : -1;
+	var code_font_size = parseInt($('#system_log').css('font-size'));
+	$('#system_log').css('font-size', code_font_size + size_delta);
     },
 
     getLogsArchive: function(data) {
