@@ -350,8 +350,12 @@ StorageMetricsWidget = RockStorWidgetView.extend({
   },
 
   resize: function(event) {
+    var _this = this
     this.constructor.__super__.resize.apply(this, arguments);
-    this.setGraphDimensions();
+    //this.setGraphDimensions();
+    _this.setDimensions();
+    _this.setupSvg();
+    _this.renderMetrics();
   }
 
 });
