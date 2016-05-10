@@ -66,6 +66,12 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
             'smbd' : '%slog.smbd' % self.samba_subd_logs,
             'winbindd' : '%slog.winbindd' % self.samba_subd_logs,
             'nginx' : '%saccess.log' % self.nginx_subd_logs,
+            'nginx_stdout' : '%ssupervisord_nginx_stdout.log' % self.rockstor_logs,
+            'nginx_stderr' : '%ssupervisord_nginx_stderr.log' % self.rockstor_logs,
+            'gunicorn' : '%sgunicorn.log' % self.rockstor_logs,
+            'gunicorn_stdout' : '%ssupervisord_gunicorn_stdout.log' % self.rockstor_logs,
+            'gunicorn_stderr' : '%ssupervisord_gunicorn_stderr.log' % self.rockstor_logs,
+            'supervisord' : '%ssupervisord.log' % self.rockstor_logs,
             'yum' : '%syum.log' % self.system_logs,
         }
         
