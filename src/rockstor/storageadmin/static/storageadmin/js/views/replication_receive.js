@@ -69,6 +69,7 @@ ReplicationReceiveView = RockstorLayoutView.extend({
 		});
 		$(this.el).html(this.template({
 			replicationService: this.replicationService,
+			replicaColl: this.collection.toJSON(),
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 			replicaReceiveTrailMap: this.replicaReceiveTrailMap
@@ -203,34 +204,23 @@ ReplicationReceiveView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('replication_receive_table', function(){
-			var html = '',
-			_this = this;
-			this.collection.each(function(r, index) { 
-				html += '<tr>';
-				html += '<td>' + r.id + '&nbsp;<a href="#" data-rshare-name="' + r.get('share') + '" data-rshare-id="' + r.id + '" data-action="delete">';
-				html += '<i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a></td>';
-				html += '<td>' + r.get('appliance') + '</td>';
-				html += '<td>' + r.get('src_share') + '</td>';
-				html += '<td><a href="#pools/' + r.get('pool') + '">' + r.get('pool') + '</a></td>';
-				html += '<td>' + r.get('share') + '</td>';
-				html += '<td>';
-				if (_this.replicaReceiveTrailMap[r.id]) {
-					if (_this.replicaReceiveTrailMap[r.id].length > 0) { 
-						var rrt = _this.replicaReceiveTrailMap[r.id][0];
-						if (rrt.get('status') == 'failed') { 
-							html += '<a href="#replication-receive/' + r.id + '/trails" class="replica-trail"><i class="glyphicon glyphicon-warning-sign"></i> ' + rrt.get('status') + '</a>';
-						} else if (rrt.get('status') == 'pending') {
-							html += '<a href="#replication-receive/' + r.id + '/trails" class="replica-trail">' + rrt.get('status') + '</a>';
+		var _this = this;
+		
+		Handlebars.registerHelper('lastReceived', function(replicaId){
+			var html = '';
+			if (_this.replicaReceiveTrailMap[replicaId]) {
+				if (_this.replicaReceiveTrailMap[replicaId].length > 0) { 
+					var rrt = _this.replicaReceiveTrailMap[replicaId][0];
+					if (rrt.get('status') == 'failed') { 
+						html += '<a href="#replication-receive/' + replicaId + '/trails" class="replica-trail"><i class="glyphicon glyphicon-warning-sign"></i> ' + rrt.get('status') + '</a>';
+					} else if (rrt.get('status') == 'pending') {
+						html += '<a href="#replication-receive/' + replicaId + '/trails" class="replica-trail">' + rrt.get('status') + '</a>';
 
-						} else if (rrt.get('status') == 'succeeded') { 
-							html += '<a href="#replication-receive/' + r.id + '/trails" class="replica-trail">' + moment(rrt.get('end_ts')).fromNow() + '</a>';
-						} 
-					}
-				} 
-				html += '</td>';
-				html += '</tr>';
-			});
+					} else if (rrt.get('status') == 'succeeded') { 
+						html += '<a href="#replication-receive/' + replicaId + '/trails" class="replica-trail">' + moment(rrt.get('end_ts')).fromNow() + '</a>';
+					} 
+				}
+			} 
 			return new Handlebars.SafeString(html);
 		});
 	}
