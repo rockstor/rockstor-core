@@ -288,15 +288,13 @@ ReplicationView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		
+		var _this = this;
 		 Handlebars.registerHelper('getFrequency', function(cronTab){
 			return prettyCron.toString(cronTab);
 		}); 
 		
 		Handlebars.registerHelper('lastBackup', function(replicaId){
-			console.log("replica id is: ", replicaId);
-			var html = '',
-			_this = this;
+			var html = '';
 			 if (_this.replicaTrailMap[replicaId]) { 
 				if (_this.replicaTrailMap[replicaId].length > 0) {
 					var rt = _this.replicaTrailMap[replicaId][0]; 
