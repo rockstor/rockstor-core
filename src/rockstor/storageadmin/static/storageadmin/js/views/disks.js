@@ -259,24 +259,23 @@ DisksView = Backbone.View.extend({
             return false;
         });
 
-    	Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
-    	    if(btrfsUid && _.isNull(poolName)){
-    		return true;
-    	    }
-    	    return false;
-    	});
+        Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
+            if (btrfsUid && _.isNull(poolName)) {
+                return true;
+            }
+            return false;
+        });
 
-    	Handlebars.registerHelper('checkSerialStatus', function (serial, diskName, opts) {
-    	    if(serial == null || serial == '' || serial == diskName || serial.length == 48){
-    		return opts.fn(this);
-    	    }
-    	    return opts.inverse(this);
-    	});
-    	
+        Handlebars.registerHelper('checkSerialStatus', function (serial, diskName, opts) {
+            if (serial == null || serial == '' || serial == diskName || serial.length == 48) {
+                return opts.fn(this);
+            }
+            return opts.inverse(this);
+        });
 
-    	Handlebars.registerHelper('humanReadableSize', function (size) {
-    	    return humanize.filesize(size * 1024);
-    	});
+        Handlebars.registerHelper('humanReadableSize', function (size) {
+            return humanize.filesize(size * 1024);
+        });
     },
 
     smartToggle: function (event, state) {
