@@ -124,7 +124,12 @@ class DiskMixin(object):
                 # N.B. this overload use may become redundant with the addition
                 # of the Disk.role field.
             # Update the role field with scan_disks findings, currently only
-            # mdraid membership type based on fstype info.
+            # mdraid membership type based on fstype info. In the case of
+            # these raid member indicators from scan_disks() we have the
+            # current truth provided so update the db role status accordingly.
+            # N.B. this if else could be expanded to accommodate other
+            # roles based on the fs found
+            logger.debug('looking at disk named %s', dob.name)
             if d.fstype == 'isw_raid_member' or d.fstype == 'linux_raid_member':
                 # We have an indicator of mdraid membership so update existing
                 # role info if any.
@@ -142,6 +147,7 @@ class DiskMixin(object):
                     # get our known roles into a dictionary
                     logger.debug('Non None dob.role about to be updated')
                     known_roles = json.loads(dob.role)
+                    # create or update an mdraid dictionary entry
                     known_roles['mdraid'] = str(d.fstype)
                     # return updated dict to json format and store in db object
                     dob.role = json.dumps(known_roles)
@@ -151,20 +157,26 @@ class DiskMixin(object):
                     dob.role = '{"mdraid": "' + d.fstype + '"}'  # json string
                     logger.debug('setting db role for %s', dob.name)
                     logger.debug('to role = %s', dob.role)
-            else:
-                # No identified role from scan_disks() fstype indicator so
-                # set as None to update db of new drive role. If we don't
-                # do this then the same drive when re-deployed will inherit
-                # it's previous role in the db which may be desired but in
-                # the case of these raid member indicators from scan_disks()
-                # we have the current truth provided.
-                # N.B. this if else could be expanded to accommodate other
-                # roles based on the fs found and also take heed of an
-                # existing devices db role entry prior to overwriting.
-                # todo account for other role types than mdraid as the following
-                # todo overwrites all that is found otherwise.
-                dob.role = None
-                logger.debug('setting db role to None for %s', dob.name)
+            else:  # We know this disk is not an mdraid raid member.
+                # No identified role from scan_disks() fstype value (mdraid
+                # only for now )so we preserve any prior known roles not
+                # exposed by scan_disks but remove the mdraid role if found.
+                # todo - When we reset migrations the following need only check
+                # todo - "dob.role is not None"
+                if dob.role is not None and dob.role != 'isw_raid_member' \
+                        and dob.role != 'linux_raid_member':
+                    # remove mdraid role if found but preserve prior roles
+                    # which should now only be in json format
+                    known_roles = json.loads(dob.role)
+                    if 'mdraid' in known_roles:
+                        del known_roles['mdraid']
+                        dob.role = json.dumps(known_roles)
+                        logger.debug('setting db role to %s', dob.role)
+                else:  # Empty or legacy role entry.
+                    # We have either None or a legacy mdraid role when this disk
+                    # is no longer an mdraid member. We can now assert None.
+                    dob.role = None
+                    logger.debug('setting db role to None for %s', dob.name)
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.
