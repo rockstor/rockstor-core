@@ -137,7 +137,7 @@ class DiskMixin(object):
                 # format for the db role field we stored one of 2 strings.
                 # if these 2 strings are found then ignore them as we then
                 # overwrite with our current finding and in the new json format.
-                # ie non None could also be a legacy entry so follow overwrite
+                # I.e. non None could also be a legacy entry so follow overwrite
                 # path when legacy entry found by treating as a None entry.
                 # todo - When we reset migrations the following need only check
                 # todo - "dob.role is not None"
@@ -152,8 +152,8 @@ class DiskMixin(object):
                     # return updated dict to json format and store in db object
                     dob.role = json.dumps(known_roles)
                     logger.debug('known_roles now = %s', known_roles)
-                else:  # we have a None dob.role so just insert our new role.
-                    # also applies to legacy pre json role entries.
+                else:  # We have a dob.role = None so just insert our new role.
+                    # Also applies to legacy pre json role entries.
                     dob.role = '{"mdraid": "' + d.fstype + '"}'  # json string
                     logger.debug('setting db role for %s', dob.name)
                     logger.debug('to role = %s', dob.role)
@@ -169,8 +169,16 @@ class DiskMixin(object):
                     # which should now only be in json format
                     known_roles = json.loads(dob.role)
                     if 'mdraid' in known_roles:
-                        del known_roles['mdraid']
-                        dob.role = json.dumps(known_roles)
+                        if len(known_roles) > 1:
+                            # mdraid is not the only entry so we have to pull
+                            # out only mdraid from dict and convert back to json
+                            del known_roles['mdraid']
+                            dob.role = json.dumps(known_roles)
+                        else:
+                            # mdraid was the only entry so we need not bother
+                            # with dict edit and json conversion only to end up
+                            # with an empty json {} so revert to default 'None'.
+                            dob.role = None
                         logger.debug('setting db role to %s', dob.role)
                 else:  # Empty or legacy role entry.
                     # We have either None or a legacy mdraid role when this disk
