@@ -129,7 +129,6 @@ class DiskMixin(object):
             # current truth provided so update the db role status accordingly.
             # N.B. this if else could be expanded to accommodate other
             # roles based on the fs found
-            logger.debug('looking at disk named %s', dob.name)
             if d.fstype == 'isw_raid_member' or d.fstype == 'linux_raid_member':
                 # We have an indicator of mdraid membership so update existing
                 # role info if any.
@@ -141,22 +140,17 @@ class DiskMixin(object):
                 # path when legacy entry found by treating as a None entry.
                 # todo - When we reset migrations the following need only check
                 # todo - "dob.role is not None"
-                logger.debug('processing dob.role of %s', dob.role)
                 if dob.role is not None and dob.role != 'isw_raid_member' \
                         and dob.role != 'linux_raid_member':
                     # get our known roles into a dictionary
-                    logger.debug('Non None dob.role about to be updated')
                     known_roles = json.loads(dob.role)
                     # create or update an mdraid dictionary entry
                     known_roles['mdraid'] = str(d.fstype)
                     # return updated dict to json format and store in db object
                     dob.role = json.dumps(known_roles)
-                    logger.debug('known_roles now = %s', known_roles)
                 else:  # We have a dob.role = None so just insert our new role.
                     # Also applies to legacy pre json role entries.
                     dob.role = '{"mdraid": "' + d.fstype + '"}'  # json string
-                    logger.debug('setting db role for %s', dob.name)
-                    logger.debug('to role = %s', dob.role)
             else:  # We know this disk is not an mdraid raid member.
                 # No identified role from scan_disks() fstype value (mdraid
                 # only for now )so we preserve any prior known roles not
@@ -179,12 +173,10 @@ class DiskMixin(object):
                             # with dict edit and json conversion only to end up
                             # with an empty json {} so revert to default 'None'.
                             dob.role = None
-                        logger.debug('setting db role to %s', dob.role)
                 else:  # Empty or legacy role entry.
                     # We have either None or a legacy mdraid role when this disk
                     # is no longer an mdraid member. We can now assert None.
                     dob.role = None
-                    logger.debug('setting db role to None for %s', dob.name)
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.

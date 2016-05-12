@@ -237,9 +237,8 @@ DisksView = Backbone.View.extend({
             if (role == 'isw_raid_member' || role == 'linux_raid_member') {
                 return true;
             }
-            // now check if our role is null = db default of None
+            // now check if our role is null = db default
             if (role == null) {
-                console.log('role = null returning false')
                 return false;
             }
             // try json conversion and return false if it fails
@@ -247,7 +246,6 @@ DisksView = Backbone.View.extend({
             try {
                 var roleAsJson = JSON.parse(role);
             } catch (e) {
-                console.log('exception in JSON.parse(role) returning false')
                 return false;
             }
             // We have a json string ie non legacy role info so we can examine:
@@ -255,11 +253,9 @@ DisksView = Backbone.View.extend({
                 // in the case of an mdraid property we are assured it is an
                 // mdraid member, the specific type is not important here.
                 // Non mdraid members will have no mdraid property.
-                console.log('confirmed to have mdraid property in role')
                 return true;
             }
             // In all other cases return false.
-            console.log('defaulting to return false')
             return false;
         });
 
