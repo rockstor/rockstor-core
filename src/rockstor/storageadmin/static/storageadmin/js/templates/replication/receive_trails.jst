@@ -19,7 +19,9 @@
  */
 </script>
 
-{{display_h4}}
+<h4>Replication receive history for ( {{replicaShare.appliance}} : {{replicaShare.src_share}}
+ to {{replicaShare.pool}} : {{replicaShare.share}} )</h4>
+ 
 {{#if collectionNotEmpty}}
   <div class="row">
     <div class="col-md-12">
@@ -37,7 +39,28 @@
           </tr>
         </thead>
         <tbody>
-        {{replicaTrails_receive_table}}
+        {{#each replicaReceiveColl}}
+            <tr>
+                <td>{{this.id}}</td>
+                <td>{{this.snap_name}}</td>
+                <td>{{getDateFormat this.receive_pending}}</td>
+                <td>{{#if this.end_ts}}
+                        {{getDateFormat this.end_ts}}
+                    {{/if}}
+                </td>
+                <td>{{#ifStatusSuccess this.status}}
+                        {{this.status}}
+                    {{else}}
+                        <i class="fa fa-exclamation-circle" title="{{this.error}}" rel="tooltip"></i>&nbsp;{{this.status}}
+                    {{/ifStatusSuccess}}
+                </td>
+                <td>{{#if this.end_ts}}
+                    {{getDuration this.end_ts receive_pending}}
+                    {{/if}}
+                </td>
+                <td>{{this.kb_received}} KB at {{getRate this.end_ts this.receive_pending this.kb_received}} KB/sec.</td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
       <div>{{pagination}}</div>

@@ -55,7 +55,19 @@
     </tr>
     </thead>
     <tbody>
-    {{replication_receive_table}}
+    {{#each replicaColl}}
+        <tr>
+            <td>{{this.id}}<a href="#" data-rshare-name="{{this.share}}" data-rshare-id="{{this.id}}" data-action="delete">
+                <i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a>
+            </td>
+            <td>{{this.appliance}}</td>
+            <td>{{this.src_share}}</td>
+            <td><a href="#pools/{{this.pool}}">{{this.pool}}</a></td>
+            <td>{{this.share}}</td>
+            <td>{{getFrequency this.crontab}}</td>
+            <td>{{lastReceived this.id}}</td>
+        </tr>
+    {{/each}}
     </tbody>
     </table>
     <div>{{pagination}}</div>

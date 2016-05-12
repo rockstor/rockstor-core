@@ -64,7 +64,8 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 		if (!this.replicaFetched) return false;
 		var _this = this;
 		$(this.el).html(this.template({
-			replica: _this.replica,
+			replica: _this.replica.toJSON(),
+			replicaColl: _this.collection.toJSON(),
 			collection: _this.collection,
 			collectionNotEmpty: !this.collection.isEmpty()
 		}));
@@ -76,50 +77,30 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_h4', function(){
-			var html = '';
-			html += '<h4>Replication history for ' + this.replica.get('task_name') + '(' + this.replica.get('share') + 'on' + this.replica.get('appliance') + ':' + this.replica.get('dpool') + ')</h4>';
-			return new Handlebars.SafeString(html);
+		
+		Handlebars.registerHelper('getDateFormat', function(date){
+			return moment(date).format(RS_DATE_FORMAT);
 		});
-		Handlebars.registerHelper('replicaTrails_table', function(){
-			var html = '',
-			_this = this;
-			this.collection.each(function(r) {
-				html += '<tr>';
-				html += '<td>' + r.get('id') + '</td>';
-				html += '<td>' + r.get('snap_name') + '</td>';
-				html += '<td>' + moment(r.get('receive_pending')).format(RS_DATE_FORMAT) + '</td>';
-				html += '<td>';
-				if (r.get('end_ts')) {
-					html += moment(r.get('end_ts')).format(RS_DATE_FORMAT);
-				}
-				html += '</td>';
-				html += '<td>';
-				if (r.get('status') != 'failed') {
-					html += r.get('status');
-				} else {
-					html += '<i class="fa fa-exclamation-circle" title="' + r.get('error') + '" rel="tooltip"></i>&nbsp;' + r.get('status');
-				}
-				html += '</td>';
-				html += '<td>';
-				if (r.get('end_ts')) {
-					html += moment(r.get('end_ts')).from(moment(r.get('receive_pending')));
-				} else {
-				}
-				html += '</td>';
-				html += '<td>';
-				if (r.get('end_ts')) {
-					var d = moment(r.get('end_ts')).diff(moment(r.get('receive_pending')))/1000;
-					var rate = (r.get('kb_received') / d).toFixed(2);
-				} else {
-					var d = moment().diff(moment(r.get('receive_pending')))/1000;
-					var rate = (r.get('kb_received') / d).toFixed(2);
-				}
-				html += r.get('kb_received') + ' KB at ' + rate + ' KB/sec.';
-				html += '</td>';
-				html += '</tr>';
-			});
-			return new Handlebars.SafeString(html);
+
+		Handlebars.registerHelper('ifStatusSuccess', function(status, opts){
+			if (status != 'failed'){
+				return opts.fn(this);
+			}
+			return opts.inverse(this);
+		});
+
+		Handlebars.registerHelper('getDuration', function(endTime, startTime){
+			return moment(endTime).from(moment(startTime));
+		});
+
+		Handlebars.registerHelper('getRate', function(endTime, startTime, kbSent){
+			var d;
+			if (kbSent){
+				d = moment(endTime).diff(moment(startTime))/1000;
+			} else {
+				d = moment().diff(moment(startTime))/1000;
+			}
+			return (kbSent / d).toFixed(2);
 		});
 	}
 

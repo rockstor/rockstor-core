@@ -19,7 +19,7 @@
  */
 </script>
 
-{{display_h4}}
+<h4>Replication history for {{replica.task_name}} ( {{replica.share}} on {{replica.appliance}} : {{replica.dpool}} )</h4>
 {{#if collectionNotEmpty}}
   <div class="row">
     <div class="col-md-12">
@@ -37,7 +37,28 @@
           </tr>
         </thead>
         <tbody>
-          {{replicaTrails_table}}
+          {{#each replicaColl}}
+            <tr>
+                <td>{{this.id}}</td>
+                <td>{{this.snap_name}}</td>
+                <td>{{getDateFormat this.snapshot_created}}</td>
+                <td>{{#if this.end_ts}}
+                        {{getDateFormat this.end_ts}}
+                    {{/if}}
+                </td>
+                <td>{{#ifStatusSuccess this.status}}
+                        {{this.status}}
+                    {{else}}
+                        <i class="fa fa-exclamation-circle" title="{{this.error}}" rel="tooltip"></i>&nbsp;{{this.status}}
+                    {{/ifStatusSuccess}}
+                </td>
+                <td>{{#if this.end_ts}}
+                    {{getDuration this.end_ts this.snapshot_created}}
+                    {{/if}}
+                </td>
+                <td>{{this.kb_sent}} KB at {{getRate this.end_ts this.snapshot_created this.kb_sent}} KB/sec.</td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
       <div>{{pagination}}</div>

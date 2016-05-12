@@ -106,6 +106,7 @@ ReplicationView = RockstorLayoutView.extend({
 		}
 		$(this.el).html(this.template({
 			replicationService: this.replicationService,
+			replicaColl: this.collection.toJSON(),
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 			replicaShareMap: this.replicaShareMap,
@@ -287,40 +288,25 @@ ReplicationView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('replication_send_table', function(){
-			var html = '',
-			_this = this;
-			this.collection.each(function(replica, index) { 
-				html += '<tr>';
-				html += '<td><a href="#edit-replication-task/' + replica.id + '">' + replica.get('task_name') + '</a>&nbsp;<a href="#" data-task-name="' + replica.get('task_name') + '" data-task-id="' + replica.id + '" data-action="delete">';
-				html += '<i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a></td>';
-				html += '<td>' + replica.get('share') + '</td>';
-				html += '<td>' + replica.get('appliance') + '</td>';
-				html += '<td>' + replica.get('dpool') + '</td>';
-				html += '<td>' + prettyCron.toString(replica.get('crontab')) + '</td>';
-				html += '<td>';
-				if (_this.replicaTrailMap[replica.id]) { 
-					if (_this.replicaTrailMap[replica.id].length > 0) {
-						var rt = _this.replicaTrailMap[replica.id][0]; 
-						if (rt.get('status') == 'failed') { 
-							html += '<a href="#replication/' + replica.id + '/trails" class="replica-trail"><i class="fa fa-exclamation-circle"></i> ' + rt.get('status') + '</a>';
-						} else if (rt.get('status') == 'pending') { 
-							html += '<a href="#replication/' + replica.id + '/trails" class="replica-trail">' + rt.get('status') + '</a>';
-						} else if (rt.get('status') == 'succeeded') {
-							html += '<a href="#replication/' + replica.id + '/trails" class="replica-trail">' + moment(rt.get('end_ts')).fromNow() + '</a>';
-						} 
+		var _this = this;
+		 Handlebars.registerHelper('getFrequency', function(cronTab){
+			return prettyCron.toString(cronTab);
+		}); 
+		
+		Handlebars.registerHelper('lastBackup', function(replicaId){
+			var html = '';
+			 if (_this.replicaTrailMap[replicaId]) { 
+				if (_this.replicaTrailMap[replicaId].length > 0) {
+					var rt = _this.replicaTrailMap[replicaId][0]; 
+					if (rt.get('status') == 'failed') { 
+						html += '<a href="#replication/' + replicaId + '/trails" class="replica-trail"><i class="fa fa-exclamation-circle"></i> ' + rt.get('status') + '</a>';
+					} else if (rt.get('status') == 'pending') { 
+						html += '<a href="#replication/' + replicaId + '/trails" class="replica-trail">' + rt.get('status') + '</a>';
+					} else if (rt.get('status') == 'succeeded') {
+						html += '<a href="#replication/' + replicaId + '/trails" class="replica-trail">' + moment(rt.get('end_ts')).fromNow() + '</a>';
 					} 
-				}
-				html += '</td>';
-				html += '<td>';
-				if (replica.get('enabled')) { 
-					html += '<input type="checkbox" name="replica-task-checkbox" data-replica-id="' + replica.id + '" data-size="mini" checked>';
-				} else {
-					html += '<input type="checkbox" name="replica-task-checkbox" data-replica-id="' + replica.id + '" data-size="mini">';
 				} 
-				html += '</td>';
-				html += '</tr>';
-			}); 
+			} 
 			return new Handlebars.SafeString(html);
 		});
 	}
