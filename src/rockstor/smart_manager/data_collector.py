@@ -49,6 +49,10 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
 
     def initialize(self):
 
+        #Livereader subprocess append with self so accessible by all funcs
+        self.livereader_process = None
+        #Live reading switch to kill/stop tail -f process
+        self.livereading = False
         #Set common vars used both for log reading and downloading
         self.system_logs = '/var/log/'
         self.rockstor_logs = '%svar/log/' % settings.ROOT_DIR
@@ -58,6 +62,7 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
         self.readers = {'cat' : {'command' : '/usr/bin/cat', 'args' : '-n'},
                'tail200' : {'command' : '/usr/bin/tail', 'args' : '-n 200'},
                'tail30' : {'command' : '/usr/bin/tail', 'args' : '-n 30'},
+               'tailf' : {'command' : '/usr/bin/tail', 'args' : '-f'}
         }
         
         self.logs = {'rockstor' : '%srockstor.log' % self.rockstor_logs,
@@ -88,6 +93,30 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
 
         self.disconnect()
         logger.debug('Log Manager has been closed')
+        #Func to secure tail -f reader
+        #If browser close/crash/accidentally ends while a tail -f running, this ensures running process to get stopped
+        self.livereading = False
+
+    def on_livereading(self, action):
+
+        #When user close modal log reader check livereading switch and livereader_process
+        #Immediately set livereading switch to False and stop emitting to frontend
+        #If livereader_process is None we were reading logs with cat, tail -n 200 or tail -n 30
+        #Otherwise it was changed to a subprocess by tail -f, so we kill it and set back to None
+        #to avoid other readers trying killing nothing
+        self.livereading = False
+        logger.debug('Status %s', self.livereading)
+        if self.livereader_process is not None:
+            self.livereader_process.kill()
+            self.livereader_process = None
+            
+        #Emit current state only for checking purpose, no funcs handle on frontend
+        self.emit('logReader:logskilltailf', {
+            'key' : 'logReader:logskilltailf', 'data': {
+            'status' : self.livereading
+            }
+        })
+        gevent.sleep(0)
 
     def on_downloadlogs(self, logs_queued, recipient):
 
@@ -134,60 +163,90 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
                 return (path.getsize(logfile) > 0)
             else:
                 return False
+        
+        def static_reader(reader, log_path):
+            if (valid_log(log_path)):#Log file exist and greater than 0, perform data collecting
+
+                #Build read command from readers dict
+                read_command = []
+                read_command.append(self.readers[reader]['command'])
+                #If our reader has opt args we add them to popen command
+                if ('args' in self.readers[reader]):
+                    read_command.append(self.readers[reader]['args'])
+                #Queue log file to popen command
+                read_command.append(log_path)
+
+                #Define popen process and once completed split stdout by lines
+                reader_process = Popen(read_command, bufsize=1, stdout=PIPE)
+                log_content = reader_process.communicate()[0]
+                log_contentsize = getsizeof(log_content)
+                log_content = log_content.splitlines(True)
+                
+                #Starting from content num of lines decide if serve it 1 line/time or in 200 lines chunks
+                reader_type = 'fast' if (len(log_content) <= 200) else 'slow'
+                chunk_size = logs_loader[reader_type]['lines']
+                reader_sleep = logs_loader[reader_type]['sleep']
+                log_content_chunks = [log_content[x:x+chunk_size] for x in xrange(0, len(log_content), chunk_size)]
+                total_rows = len(log_content)
+
+            else:#Log file missing or size 0, gently inform user
+            
+                log_content = 'Selected log file is empty or doesn\'t exist'
+                log_content = log_content.splitlines(True)
+                total_rows = 1
+                log_contentsize = getsizeof(log_content)
+                log_content_chunks = []
+                log_content_chunks.append(log_content)
+                reader_sleep = 0
+            
+            #Serve each chunk with emit and sleep before next one to avoid client side browser overload
+            current_rows = 0
+            
+            for data_chunks in log_content_chunks:
+                chunk_content = ''.join(data_chunks)
+                current_rows += len(data_chunks)
+                self.emit('logReader:logcontent', {
+                    'key': 'logReader:logcontent', 'data': {
+                    'current_rows' : current_rows,
+                    'total_rows' : total_rows,
+                    'chunk_content' : chunk_content,
+                    'content_size' : log_contentsize
+                    }
+                })
+                gevent.sleep(reader_sleep)
+            logger.debug('Log Reader request for %s - Finished' % log_path)
+        
+        def live_reader(log_path):
+
+            #Switch live reader state to True
+            self.livereading = True
+            logger.debug('Status %s', self.livereading)
+            #Build read command from readers dict
+            read_command = []
+            read_command.append(self.readers['tailf']['command'])
+            read_command.append(self.readers['tailf']['args'])
+            #Queue log file to popen command
+            read_command.append(log_path)
+            self.livereader_process = Popen(read_command, bufsize=1, stdout=PIPE)
+            while self.livereading:
+                live_out = self.livereader_process.stdout.readline()
+                self.emit('logReader:logcontent', {
+                    'key': 'logReader:logcontent', 'data': {
+                    'current_rows' : 1,
+                    'total_rows' : 1,
+                    'chunk_content' : live_out,
+                    'content_size' : 1
+                    }
+                })
+            logger.debug('Exited livereader Status is %s', self.livereading)
 
         log_path = self.logs[logfile]
         logger.debug('Log Reader request for %s - Started' % log_path)
-        
-        if (valid_log(log_path)):#Log file exist and greater than 0, perform data collecting
 
-            #Build read command from readers dict
-            read_command = []
-            read_command.append(self.readers[reader]['command'])
-            #If our reader has opt args we add them to popen command
-            if ('args' in self.readers[reader]):
-                read_command.append(self.readers[reader]['args'])
-            #Queue log file to popen command
-            read_command.append(log_path)
-
-            #Define popen process and once completed split stdout by lines
-            reader_process = Popen(read_command, bufsize=1, stdout=PIPE)
-            log_content = reader_process.communicate()[0]
-            log_contentsize = getsizeof(log_content)
-            log_content = log_content.splitlines(True)
-            
-            #Starting from content num of lines decide if serve it 1 line/time or in 200 lines chunks
-            reader_type = 'fast' if (len(log_content) <= 200) else 'slow'
-            chunk_size = logs_loader[reader_type]['lines']
-            reader_sleep = logs_loader[reader_type]['sleep']
-            log_content_chunks = [log_content[x:x+chunk_size] for x in xrange(0, len(log_content), chunk_size)]
-            total_rows = len(log_content)
-
-        else:#Log file missing or size 0, gently inform user
-        
-            log_content = 'Selected log file is empty or doesn\'t exist'
-            log_content = log_content.splitlines(True)
-            total_rows = 1
-            log_contentsize = getsizeof(log_content)
-            log_content_chunks = []
-            log_content_chunks.append(log_content)
-            reader_sleep = 0
-        
-        #Serve each chunk with emit and sleep before next one to avoid client side browser overload
-        current_rows = 0
-        
-        for data_chunks in log_content_chunks:
-            chunk_content = ''.join(data_chunks)
-            current_rows += len(data_chunks)
-            self.emit('logReader:logcontent', {
-                'key': 'logReader:logcontent', 'data': {
-                'current_rows' : current_rows,
-                'total_rows' : total_rows,
-                'chunk_content' : chunk_content,
-                'content_size' : log_contentsize
-                }
-            })
-            gevent.sleep(reader_sleep)
-        logger.debug('Log Reader request for %s - Finished' % log_path)
+        if (reader == 'tailf'):
+            gevent.spawn(live_reader, log_path)
+        else:
+            gevent.spawn(static_reader, reader, log_path)
         
     def on_getfilesize(self, logfile):
 
