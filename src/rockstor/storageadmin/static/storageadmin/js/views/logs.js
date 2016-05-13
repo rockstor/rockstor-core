@@ -32,7 +32,8 @@ LogsView = RockstorLayoutView.extend({
 	'click #reader-logs' : 'SubmitReaderLogDownload',
 	'click #modal_resize' : 'ModalSwitchResize',
 	'click #code_increase_size, #code_decrease_size' : 'ModalResizeText',
-	'change #read_type, #logs_options' : 'RequestLogSize'
+	'change #read_type, #logs_options' : 'RequestLogSize',
+	'hidden.bs.modal #log_reader' : 'ModalClose'
     },
 
     initialize: function() {
@@ -51,6 +52,10 @@ LogsView = RockstorLayoutView.extend({
 	RockStorSocket.addListener(this.getLogSize, this, 'logReader:logsize');
 	RockStorSocket.addListener(this.getLogsArchive, this, 'logReader:logsdownload');
 	return this;
+    },
+
+    ModalClose: function(event) {
+	RockStorSocket.logReader.emit('livereading', 'kill');
     },
 
     ModalSwitchResize: function(event) {

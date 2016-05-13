@@ -33,7 +33,8 @@
 					<select class="form-control" id="read_type" name="read_type" rel="tooltip" title="Read log with tail last 200 lines(default), tail last 30 lines or cat(full file read)">
                                                 <option value="tail200"> tail -n 200</option>
 						<option value="tail30"> tail -n 30</option>
-              					<option value="cat"> cat -n</option>
+                                                <option value="cat"> cat -n</option>
+						<option value="tailf"> tail -f</option>
             				</select>
 					<label class="inline">Log file: </label>
                                         <select class="form-control" id="logs_options" name="logs_options" rel="tooltip" title="Select which log to read">
