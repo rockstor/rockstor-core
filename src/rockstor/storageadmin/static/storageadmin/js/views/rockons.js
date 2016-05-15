@@ -79,7 +79,6 @@ RockonsView = RockstorLayoutView.extend({
 			}
 			return false;
 		});
-
 		$(this.el).html(this.template({
 			rockons: _this.rockons,
 			rockonJson: _this.rockons.toJSON(),
@@ -660,7 +659,6 @@ RockonCustomChoice = RockstorWizardPage.extend({
 	//@todo: fix this to work for all rockons.
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('findInputType', function(ccLabel){
-			console.log("came to the helper");
 			if (ccLabel.match(/password/i)) {
 				return true;
 			} 
