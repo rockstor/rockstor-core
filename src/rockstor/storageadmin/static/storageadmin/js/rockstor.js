@@ -481,7 +481,6 @@ RockstorWizardPage = Backbone.View.extend({
     save: function() {
 	return $.Deferred().resolve();
     }
-
 });
 
 WizardView = Backbone.View.extend({

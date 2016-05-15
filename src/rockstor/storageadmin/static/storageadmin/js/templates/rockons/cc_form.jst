@@ -5,7 +5,23 @@
     <div class="form-box">
       <form id="custom-choice-form" name="aform" class="form-horizontal">
 	<div class="messages"></div>
-	{{display_ccForm}}
+	{{#each cc}}
+        <div class="form-group">
+            <label class="control-label col-sm-3" for="cc">{{this.label}}<span class="required">*</span></label>
+        <div class="controls">
+        <div class="col-sm-6">
+            <input class="form-control" 
+            {{#if (findInputType this.label)}}
+                 type="password"
+            {{else}}
+                 type="text"
+            {{/if}}
+            id="{{this.id}}" name="{{this.id}}" value="{{#unless null}}{{this.val}}{{/unless}}">
+         </div>&nbsp;&nbsp;
+         <i class="fa fa-info-circle fa-lg" title="{{this.description}}" rel="tooltop"></i>
+        </div>
+        </div>
+        {{/each}}
       </form>
     </div>
   </div>

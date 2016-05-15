@@ -79,9 +79,9 @@ RockonsView = RockstorLayoutView.extend({
 	    }
 	    return false;
 	});
-
 	$(this.el).html(this.template({
 	    rockons: _this.rockons,
+	    rockonJson: _this.rockons.toJSON(),
 	    status: _this.service.get('status'),
 	    ui_map: ui_map
 	}));
@@ -292,6 +292,7 @@ RockonsView = RockstorLayoutView.extend({
 	}
     },
 
+    //@todo: cleanup after figuring out how to track the installed variable.
     initHandlebarHelpers: function(){
 	Handlebars.registerHelper('display_installedRockons', function(){
 	    var html = '';
@@ -401,28 +402,6 @@ RockonsView = RockstorLayoutView.extend({
 		html += '</div>';
 		html += '</div>';
 	    }
-	    return new Handlebars.SafeString(html);
-	});
-
-	Handlebars.registerHelper('display_ccForm', function(){
-	    var html = '';
-	    this.cc.each(function(cci, index) {
-		html += '<div class="form-group">';
-		html += '<label class="control-label col-sm-3" for="cc">' + cci.get('label') + '<span class="required">*</span></label>';
-		html += '<div class="controls">';
-		html += '<div class="col-sm-6">';
-		html += '<input class="form-control" ';
-		if (cci.get('label').match(/password/i)) {
-		    html += 'type="password" ';
-		} else {
-		    html += 'type="text" ';
-		}
-		html += 'id="' + cci.id + '" name="' + cci.id + '" value="' + (cci.get('val') || '') + '">';
-		html += '</div>&nbsp;&nbsp';
-		html += '<i class="fa fa-info-circle fa-lg" title="' + cci.get('description') + '" rel="tooltop"></i>';
-		html += '</div>';
-		html += '</div>';
-	    });
 	    return new Handlebars.SafeString(html);
 	});
     }
@@ -548,7 +527,6 @@ RockonShareChoice = RockstorWizardPage.extend({
 	this.shares.setPageSize(100);
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
 	this.shares.on('reset', this.renderVolumes, this);
-	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -558,7 +536,7 @@ RockonShareChoice = RockstorWizardPage.extend({
     },
 
     renderVolumes: function() {
-	this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes, shares: this.shares}));
+	this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes.toJSON(), shares: this.shares.toJSON()}));
 	//form validation
 	this.volForm = this.$('#vol-select-form');
 	var rules = {};
@@ -589,29 +567,6 @@ RockonShareChoice = RockstorWizardPage.extend({
 	this.model.set('share_map', share_map);
 	return $.Deferred().resolve();
     },
-
-    initHandlebarHelpers: function(){
-	Handlebars.registerHelper('display_volumesForm', function(){
-	    var html = '';
-	    var _this = this;
-	    this.volumes.each(function(volume, index) {
-		html += '<div class="form-group">';
-		html += '<label class="control-label col-sm-3" for="shares">' + volume.get('label') + '<span class="required">*</span></label>';
-		html += '<div class="col-sm-5">';
-		html += '<select class="form-control" type="text" id="' + volume.id + '" name="' + volume.id + '" data-placeholder="Select shares to export" >';
-		html += '<option></option>';
-		_this.shares.each(function(share, index) {
-		    html += '<option value="' + share.get('name') + '">' + share.get('name') + '</option>';
-		});
-		html += '</select>';
-		html += '</div>';
-		html += '<i class="fa fa-info-circle fa-lg" title="' + volume.get('description') + '"></i>';
-		html += '</div>';
-	    });
-	    return new Handlebars.SafeString(html);
-	});
-    }
-
 });
 
 RockonPortChoice = RockstorWizardPage.extend({
@@ -620,12 +575,11 @@ RockonPortChoice = RockstorWizardPage.extend({
 	this.port_template = window.JST.rockons_ports_form;
 	this.ports = this.model.get('ports');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
-	this.initHandlebarHelpers();
     },
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.$('#ph-ports-form').html(this.port_template({ports: this.ports}));
+	this.$('#ph-ports-form').html(this.port_template({ports: this.ports.toJSON()}));
 
 	// Add form validation
 	this.portForm = this.$('#port-select-form');
@@ -659,22 +613,6 @@ RockonPortChoice = RockstorWizardPage.extend({
 	this.model.set('port_map', port_map);
 	return $.Deferred().resolve();
     },
-
-    initHandlebarHelpers: function(){
-	Handlebars.registerHelper('display_portsForm', function(){
-	    var html = '';
-	    this.ports.each(function(port, index) {
-		html += '<div class="form-group">';
-		html += '<label class="control-label col-sm-3" for="ports">' + port.get('label') + '<span class="required">*</span></label>';
-		html += '<div class="col-sm-5">';
-		html += '<input class="form-control" type="text" id="' + port.id + '" name="' + port.id + '" value="' + port.get('hostp') + '">';
-		html += '</div>';
-		html += '<i class="fa fa-info-circle fa-lg" title="' + port.get('description') + '"></i>';
-		html += '</div>';
-	    });
-	    return new Handlebars.SafeString(html);
-	});
-    }
 });
 
 RockonCustomChoice = RockstorWizardPage.extend({
@@ -682,12 +620,14 @@ RockonCustomChoice = RockstorWizardPage.extend({
 	this.template = window.JST.rockons_custom_choice;
 	this.cc_template = window.JST.rockons_cc_form;
 	this.custom_config = this.model.get('custom_config');
+        this.initHandlebarHelpers();
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config}));
+	//@todo: working only for the ownCloud and Discourse rockons. Fix to work for the rest
+	this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config.toJSON()}));
 	this.cc_form = this.$('#custom-choice-form');
 	var rules = {};
 	var messages = {};
@@ -714,32 +654,23 @@ RockonCustomChoice = RockstorWizardPage.extend({
 	}, this);
 	this.model.set('cc_map', cc_map);
 	return $.Deferred().resolve();
+    },
+
+    initHandlebarHelpers: function(){
+	Handlebars.registerHelper('findInputType', function(ccLabel){
+	    if (ccLabel.match(/password/i)) {
+		return true;
+	    }
+	    return false;
+	});
     }
 });
 
-RockonEnvironment = RockstorWizardPage.extend({
-    initialize: function() {
-	this.template = window.JST.rockons_custom_choice;
-	this.cc_template = window.JST.rockons_cc_form;
-	this.custom_config = this.model.get('environment');
-	RockstorWizardPage.prototype.initialize.apply(this, arguments);
-    },
 
-    render: function() {
-	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config}));
-	this.cc_form = this.$('#custom-choice-form');
-	var rules = {};
-	var messages = {};
-	this.custom_config.each(function(cc) {
-	    rules[cc.id] = "required";
-	    messages[cc.id] = "This is a required field.";
-	});
-	this.validator = this.cc_form.validate({
-	    rules: rules,
-	    messages: messages
-	});
-	return this;
+RockonEnvironment = RockonCustomChoice.extend({
+    initialize: function() {
+        RockonCustomChoice.prototype.initialize.apply(this, arguments);
+        this.custom_config = this.model.get('environment');
     },
 
     save: function() {
@@ -770,7 +701,6 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	this.cc = this.model.get('custom_config');
 	this.rockon = this.model.get('rockon');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
-	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -804,42 +734,6 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	    error: function(request, status, error) { }
 	});
     },
-
-    initHandlebarHelpers: function(){
-	Handlebars.registerHelper('display_rockonsSummary_table', function(){
-	    var html = '';
-	    for (s in this.share_map) {
-		html += '<tr>';
-		html += '<td>Share</td>';
-		html += '<td>' + this.share_map[s] + '</td>';
-		html += '<td>' + s + '</td>';
-		html += '</tr>';
-	    }
-	    for (p in this.port_map) {
-		html += '<tr>';
-		html += '<td>Port</td>';
-		html += '<td>' + this.port_map[p] + '</td>';
-		html += '<td>' + p + '</td>';
-		html += '</tr>';
-	    }
-	    for (c in this.cc_map) {
-		html += '<tr>';
-		html += '<td>Custom</td>';
-		html += '<td>' + this.cc_map[c] + '</td>';
-		html += '<td>' + c + '</td>';
-		html += '</tr>';
-	    }
-	    for (e in this.env_map) {
-		html += '<tr>';
-		html += '<td>Env</td>';
-		html += '<td>' + this.env_map[e] + '</td>';
-		html += '<td>' + e + '</td>';
-		html += '</tr>';
-	    }
-	    return new Handlebars.SafeString(html);
-	});
-    }
-
 });
 
 RockonInstallComplete = RockstorWizardPage.extend({
@@ -961,14 +855,14 @@ RockonSettingsWizardView = WizardView.extend({
 	    if (!this.rockon.get('volume_add_support')) {
 		this.$('#next-page').hide();
 	    }else{
-	    	 if(this.rockon.get('status') == "started") { 
-	    		 var _this = this;
-	    		 this.$('#next-page').click(function(){
-	    			//disabling the button so that the backbone event is not triggered after the alert click.
-	    			 _this.$('#next-page').prop("disabled",true); 
-	    			 alert("Rock-on must be turned off to add storage.");
-	    		 });
-	    	}
+		if(this.rockon.get('status') == "started") {
+		    var _this = this;
+		    this.$('#next-page').click(function(){
+			//disabling the button so that the backbone event is not triggered after the alert click.
+			_this.$('#next-page').prop("disabled",true);
+			alert("Rock-on must be turned off to add storage.");
+		    });
+		}
 	    }
 	} else if (this.currentPageNum == (this.pages.length - 2)) {
 	    this.$('#prev-page').html('Add Storage');
@@ -1085,28 +979,17 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 	RockstorWizardPage.prototype.render.apply(this, arguments);
 	this.$('#ph-settings-summary-table').html(this.sub_template({
 	    model: this.model,
-	    volumes: this.model.get('volumes'),
+	    volumes: this.model.get('volumes').toJSON(),
 	    new_volumes: this.model.get('shares'),
-	    ports: this.model.get('ports'),
-	    cc: this.model.get('custom_config'),
-	    env: this.model.get('environment'),
+	    ports: this.model.get('ports').toJSON(),
+	    cc: this.model.get('custom_config').toJSON(),
+	    env: this.model.get('environment').toJSON(),
 	    rockon: this.model.get('rockon')
 	}));
 	return this;
     },
+    //@todo: remove this helper after finding out where new volumes is being used.
     initHandlebarHelpers: function(){
-	Handlebars.registerHelper('display_volumes', function(){
-	    var html = '';
-	    this.volumes.each(function(volume, index) {
-		html += '<tr>';
-		html += '<td>Share</td>';
-		html += '<td>' + volume.get('share_name') + '</td>';
-		html += '<td>' + volume.get('dest_dir') + '</td>';
-		html += '</tr>';
-	    });
-	    return new Handlebars.SafeString(html);
-	});
-
 	Handlebars.registerHelper('display_newVolumes', function(){
 	    var html = '';
 	    for (share in this.new_volumes) {
@@ -1118,37 +1001,6 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 	    }
 	    return new Handlebars.SafeString(html);
 	});
-
-	Handlebars.registerHelper('display_ports', function(){
-	    var html = '';
-	    this.ports.each(function(port, index) {
-		html += '<tr>';
-		html += '<td>Port</td>';
-		html += '<td>' + port.get('hostp') + '</td>';
-		html += '<td>' + port.get('containerp') + '</td>';
-		html += '</tr>';
-	    });
-	    return new Handlebars.SafeString(html);
-	});
-
-	Handlebars.registerHelper('display_cc', function(){
-	    var html = '';
-	    this.cc.each(function(cci, index) {
-		html += '<tr>';
-		html += '<td>Custom</td>';
-		html += '<td>' + cci.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + cci.get('description') + '" rel="tooltip"></i></td>';
-		html += '<td>' + cci.get('key') + '</td>';
-		html += '</tr>';
-	    });
-	    //@todo: separate env and cc stuff.
-	    this.env.each(function(envi, index) {
-		html += '<tr><td>Env</td>';
-		html += '<td>' + envi.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + envi.get('description') + '" rel="tooltip"></i></td>';
-		html += '<td>' + envi.get('key') + '</td></tr>';
-	    });
-	    return new Handlebars.SafeString(html);
-	});
-
     }
 });
 

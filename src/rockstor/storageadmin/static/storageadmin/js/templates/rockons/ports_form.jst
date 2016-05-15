@@ -4,7 +4,15 @@
     <div class="form-box">
       <form id="port-select-form" name="aform" class="form-horizontal">
 	<div class="messages"></div>
-    {{display_portsForm}}
+    {{#each ports}}
+        <div class="form-group">
+            <label class="control-label col-sm-3" for="ports">{{this.label}}<span class="required">*</span></label>
+            <div class="col-sm-5">
+                <input class="form-control" type="text" id="{{this.id}}" name="{{this.id}}" value="{{this.hostp}}">
+            </div>
+            <i class="fa fa-info-circle fa-lg" title="{{this.description}}"></i>
+        </div>
+     {{/each}}
       </form>
     </div>
   </div>
