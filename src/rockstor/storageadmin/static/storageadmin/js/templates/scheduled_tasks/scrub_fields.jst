@@ -8,7 +8,9 @@
 <div class="form-group">
     <div class="col-md-4">
       <select class="form-control" id="pool" name="meta.pool">
-        {{display_scrub_pools}}
+        {{#each pools}}
+            <option value="{{this.name}}">{{this.name}}</option>
+        {{/each}}
       </select>
     </div><!--col-md-4-->
   </div><!--form-group-->

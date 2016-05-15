@@ -7,7 +7,9 @@
     <div class="row">
       <div class="col-sm-4">
 	<select class="form-control" id="share" name="meta.share">
-          {{display_snapshot_shares}}
+          {{#each shares}}
+            <option value="{{this.name}}">{{this.name}}</option>
+          {{/each}}
 	</select>
       </div>
       <div class="col-sm-4">
@@ -22,11 +24,7 @@
 </div>
 <div class="row">
   <div class="col-sm-4">
-  {{#unless taskDefIdNull}}
-    <input class="form-control col-sm-4" type="text" id="max_count" name="meta.max_count" value="{{taskMaxCount}}" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
-  {{else}}
-    <input class="form-control col-sm-4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
-  {{/unless}}
+    <input class="form-control col-sm-4" type="text" id="max_count" name="meta.max_count" {{#unless taskDefIdNull}} value="{{taskMaxCount}}" {{/unless}} placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
   </div>
 </div>
 <div class="checkbox" style="clear: both">

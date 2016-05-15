@@ -55,7 +55,9 @@ $(document).ready(function() {
 	  </div>
 	  <div class="col-sm-4">
             <select class="form-control" id="task_type" name="task_type">
-              {{display_taskType_options}}
+              {{#each taskTypes}}
+                <option value="{{this}}">{{this}}</option>
+              {{/each}}
             </select>
 	  </div>
 	</div>
@@ -152,11 +154,7 @@ $(document).ready(function() {
 	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
-		{{#if taskObj.visible}}
-		  <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
-		  {{else}}
-		  <input class="checkbox" type="checkbox" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
-		  {{/if}}
+		  <input class="checkbox" type="checkbox" id="visible" name="meta.visible" {{#if taskObj.visible}} checked="true" {{/if}} title="Make snapshots visible to the end user"> Make snapshots visible?
 		</label>
 	      </div>
 	    </div>
@@ -166,11 +164,7 @@ $(document).ready(function() {
 	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
-              {{#if taskObj.enabled}}
-              <input class="checkbox" type="checkbox" checked="true" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">Enable task?
-              {{else}}
-              <input class="checkbox" type="checkbox" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">Enable task?
-              {{/if}}
+              <input class="checkbox" type="checkbox" id="enabled" name="enabled" {{#if taskObj.enabled}} checked="true" {{/if}} title="Disabled tasks will be created but not run till they are enabled">Enable task?
 	      </label>
 	      </div>
             </div>

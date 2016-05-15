@@ -1,23 +1,23 @@
 <h3>Add drive specific Spin down time</h3>
-<h4>This is the time a drive must remains <strong>Idle</strong> before
+<li><p>This is the time a drive must remains <strong>Idle</strong> before
   spinning down it's disks / platters to save on power and reduce drive noise.
-  <br>
-  Idle periods a disk activity can be encouraged by adding <strong>Task
+<li><p>Idle periods a disk activity can be encouraged by adding <strong>Task
     execution time windows</strong> to relevant <strong>Scheduled Tasks</strong>.
   <i>See System - Scheduled Tasks</i>
-</h4>
+</p></li>
 
-<h5>Please note that a drive's <i>initial</i> response time when in
+<p class="text-warning">Please note that a drive's <i>initial</i> response time when in
   <strong>standby</strong> mode is typically increased by tens of seconds
-  as the disk motor takes time to re-energize the platters.</h5>
-<h6>The value entered here will be used by hdparm -S to set this drives Spin
+  as the disk motor takes time to re-energize the platters.</p>
+  
+<p class="bg-info"><strong>Note: </strong>The value entered here will be used by hdparm -S to set this drives Spin
   down delay. If this delay is set too small for a specific work load then the
   the drive will spend more time than necessary spinning up and down and have
   an unnecessary impact on performance and wear levels. Conversely a high or
   non existent spin down time may waste energy and cause a drive to create
   unwanted noise and heat. For HOME or SMALL OFFICE consider values in the
   range of 20 minutes. For larger installs consider values greater than 1 hour.
-</h6>
+</p>
 
 <div class="row">
   <div class="col-md-8">

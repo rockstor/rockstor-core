@@ -66,6 +66,7 @@ TasksView = RockstorLayoutView.extend({
 		$(this.el).html(this.template({
 			taskDef: this.taskDef,
 			taskName: this.taskDef.get('name'),
+			taskColl: this.collection.toJSON(),
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 		}));
@@ -83,22 +84,9 @@ TasksView = RockstorLayoutView.extend({
 			return new Handlebars.SafeString(html);
 		}); 
 
-		 Handlebars.registerHelper('display_taskHistory_tbody', function(){
-			var html = '';
-			this.collection.each(function(task) { 
-				html += '<tr>';
-				html += '<td>' + task.get('id') + '</td>';
-				html += '<td>' + moment(task.get('start')).format(RS_DATE_FORMAT) + '</td>';
-				html += '<td>';
-				if (task.get('end')) { 
-					html += moment(task.get('end')).format(RS_DATE_FORMAT); 
-				} 
-				html += '</td>';
-				html += '<td>' + task.get('state') + '</td>';
-				html += '</tr>';
-			}); 
-			return new Handlebars.SafeString(html);
-		}); 
+		Handlebars.registerHelper('dateFormat', function(taskTime){
+			return moment(taskTime).format(RS_DATE_FORMAT);
+		});
 	}
 
 });
