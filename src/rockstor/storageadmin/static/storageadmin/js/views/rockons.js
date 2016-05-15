@@ -291,7 +291,7 @@ RockonsView = RockstorLayoutView.extend({
 			this.updateStatus();
 		}
 	},
-	
+
 	//@todo: cleanup after figuring out how to track the installed variable.
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('display_installedRockons', function(){
@@ -536,7 +536,7 @@ RockonShareChoice = RockstorWizardPage.extend({
 	},
 
 	renderVolumes: function() {
-		this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes.toJSON(), shares: this.shares.toJSON()})); 
+		this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes.toJSON(), shares: this.shares.toJSON()}));
 		//form validation
 		this.volForm = this.$('#vol-select-form');
 		var rules = {};
@@ -616,95 +616,76 @@ RockonPortChoice = RockstorWizardPage.extend({
 });
 
 RockonCustomChoice = RockstorWizardPage.extend({
-	initialize: function() {
-		this.template = window.JST.rockons_custom_choice;
-		this.cc_template = window.JST.rockons_cc_form;
-		this.custom_config = this.model.get('custom_config');
-		RockstorWizardPage.prototype.initialize.apply(this, arguments);
-		this.initHandlebarHelpers();
-	},
+    initialize: function() {
+	this.template = window.JST.rockons_custom_choice;
+	this.cc_template = window.JST.rockons_cc_form;
+	this.custom_config = this.model.get('custom_config');
+        this.initHandlebarHelpers();
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    },
 
-	render: function() {
-		RockstorWizardPage.prototype.render.apply(this, arguments);
-		//@todo: working only for the ownCloud and Discourse rockons. Fix to work for the rest
-		this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config.toJSON()}));
-		this.cc_form = this.$('#custom-choice-form');
-		var rules = {};
-		var messages = {};
-		this.custom_config.each(function(cc) {
-			rules[cc.id] = "required";
-			messages[cc.id] = "This is a required field.";
-		});
-		this.validator = this.cc_form.validate({
-			rules: rules,
-			messages: messages
-		});
-		return this;
-	},
+    render: function() {
+	RockstorWizardPage.prototype.render.apply(this, arguments);
+	//@todo: working only for the ownCloud and Discourse rockons. Fix to work for the rest
+	this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config.toJSON()}));
+	this.cc_form = this.$('#custom-choice-form');
+	var rules = {};
+	var messages = {};
+	this.custom_config.each(function(cc) {
+	    rules[cc.id] = "required";
+	    messages[cc.id] = "This is a required field.";
+	});
+	this.validator = this.cc_form.validate({
+	    rules: rules,
+	    messages: messages
+	});
+	return this;
+    },
 
-	save: function() {
-		if (!this.cc_form.valid()) {
-			this.validator.showErrors();
-			return $.Deferred().reject();
-		}
-		var cc_map = {};
-		var cconfigs = this.custom_config.filter(function(cc) {
-			cc_map[cc.get('key')] = this.$('#' + cc.id).val();
-			return cc;
-		}, this);
-		this.model.set('cc_map', cc_map);
-		return $.Deferred().resolve();
-	},
+    save: function() {
+	if (!this.cc_form.valid()) {
+	    this.validator.showErrors();
+	    return $.Deferred().reject();
+	}
+	var cc_map = {};
+	var cconfigs = this.custom_config.filter(function(cc) {
+	    cc_map[cc.get('key')] = this.$('#' + cc.id).val();
+	    return cc;
+	}, this);
+	this.model.set('cc_map', cc_map);
+	return $.Deferred().resolve();
+    },
 
-	//@todo: fix this to work for all rockons.
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('findInputType', function(ccLabel){
-			if (ccLabel.match(/password/i)) {
-				return true;
-			} 
-			return false;
-		});
-	},
+    initHandlebarHelpers: function(){
+	Handlebars.registerHelper('findInputType', function(ccLabel){
+	    if (ccLabel.match(/password/i)) {
+		return true;
+	    }
+	    return false;
+	});
+    }
 });
 
-RockonEnvironment = RockstorWizardPage.extend({
-	initialize: function() {
-		this.template = window.JST.rockons_custom_choice;
-		this.cc_template = window.JST.rockons_cc_form;
-		this.custom_config = this.model.get('environment');
-		RockstorWizardPage.prototype.initialize.apply(this, arguments);
-	},
 
-	render: function() {
-		RockstorWizardPage.prototype.render.apply(this, arguments);
-		this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config}));
-		this.cc_form = this.$('#custom-choice-form');
-		var rules = {};
-		var messages = {};
-		this.custom_config.each(function(cc) {
-			rules[cc.id] = "required";
-			messages[cc.id] = "This is a required field.";
-		});
-		this.validator = this.cc_form.validate({
-			rules: rules,
-			messages: messages
-		});
-		return this;
-	},
+RockonEnvironment = RockonCustomChoice.extend({
+    initialize: function() {
+        RockonCustomChoice.prototype.initialize.apply(this, arguments);
+        this.custom_config = this.model.get('environment');
+    },
 
-	save: function() {
-		if (!this.cc_form.valid()) {
-			this.validator.showErrors();
-			return $.Deferred().reject();
-		}
-		var env_map = {};
-		var envars = this.custom_config.filter(function(cvar) {
-			env_map[cvar.get('key')] = this.$('#' + cvar.id).val();
-			return cvar;
-		}, this);
-		this.model.set('env_map', env_map);
-		return $.Deferred().resolve();
+    save: function() {
+	if (!this.cc_form.valid()) {
+	    this.validator.showErrors();
+	    return $.Deferred().reject();
 	}
+	var env_map = {};
+	var envars = this.custom_config.filter(function(cvar) {
+	    env_map[cvar.get('key')] = this.$('#' + cvar.id).val();
+	    return cvar;
+	}, this);
+	this.model.set('env_map', env_map);
+	return $.Deferred().resolve();
+    }
 });
 
 RockonInstallSummary = RockstorWizardPage.extend({
@@ -874,11 +855,11 @@ RockonSettingsWizardView = WizardView.extend({
 			if (!this.rockon.get('volume_add_support')) {
 				this.$('#next-page').hide();
 			}else{
-				if(this.rockon.get('status') == "started") { 
+				if(this.rockon.get('status') == "started") {
 					var _this = this;
 					this.$('#next-page').click(function(){
 						//disabling the button so that the backbone event is not triggered after the alert click.
-						_this.$('#next-page').prop("disabled",true); 
+						_this.$('#next-page').prop("disabled",true);
 						alert("Rock-on must be turned off to add storage.");
 					});
 				}
