@@ -108,7 +108,7 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
         
         #First build our rotated logs list, removing current log and
         #eventually excluded logs file
-        log_keys = list(self.logs.keys()) #collect logs key because iterating directly over dict doesn't let update it
+        log_keys = sorted(list(self.logs.keys())) #collect logs key because iterating directly over dict doesn't let update it
         rotated_logs_list = []
         
         for log_key in log_keys:
@@ -131,7 +131,7 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
                 rotated_logfile, rotated_logdir = path.basename(current_rotated), ('%s/' % path.dirname(current_rotated))
                 rotated_key = rotated_logfile.replace(self.logs[log_key]['logfile'], log_key)
                 self.logs.update({rotated_key : {'logfile' : rotated_logfile, 'logdir' : rotated_logdir}})
-                rotated_logs_list.append('{\'log\' : \'%s\', \'logfamily\' : \'%s\'}' % (rotated_key, log_key))
+                rotated_logs_list.append({'log' : rotated_key, 'logfamily' : log_key})
         
         self.emit('logReader:rotatedlogs', {'key': 'logReader:rotatedlogs', 'data': {'rotated_logs_list' : rotated_logs_list}})
 
