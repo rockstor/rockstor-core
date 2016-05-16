@@ -42,12 +42,16 @@ class Disk(models.Model):
     vendor = models.CharField(max_length=1024, null=True)
     smart_available = models.BooleanField(default=False)
     smart_enabled = models.BooleanField(default=False)
-    """custom smart options for drive, ie for USB bridges / enclosures"""
-    """eg "-d usbjmicron,p" or "-s on -d 3ware,0"."""
+    """custom smart options for drive, ie for USB bridges / enclosures
+    eg "-d usbjmicron,p" or "-s on -d 3ware,0".
+    """
     smart_options = models.CharField(max_length=64, null=True)
-    """drive role ie "isw_raid_member" or "linux_raid_member"."""
-    """could also be "import" or "backup" for temp external drive connection."""
-    """role is aux info to flag special use disks"""
+    """role is json formatted aux info to flag special use disks
+    ie "import" or "backup" flags for temp external drive connection.
+    Also flags mdraid status eg {"mdraid": "isw_raid_member"} or
+    {"mdraid": "linux_raid_member"}.
+    role can be Null if no flags are in use.
+    """
     role = models.CharField(max_length=256, null=True)
 
     @property

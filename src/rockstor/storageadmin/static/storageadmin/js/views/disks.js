@@ -232,31 +232,50 @@ DisksView = Backbone.View.extend({
             }
             return false;
         });
-    	Handlebars.registerHelper('displayInfo', function (role) {
-    	    if(role == 'isw_raid_member' || role == 'linux_raid_member'){
-    		return true;
-    	    }
-    	    return false;
-    	});
+        Handlebars.registerHelper('displayInfo', function (role) {
+            // check for the legacy / pre json formatted role field contents.
+            if (role == 'isw_raid_member' || role == 'linux_raid_member') {
+                return true;
+            }
+            // now check if our role is null = db default
+            if (role == null) {
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // todo not sure if this is redundant?
+            try {
+                var roleAsJson = JSON.parse(role);
+            } catch (e) {
+                return false;
+            }
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('mdraid')) {
+                // in the case of an mdraid property we are assured it is an
+                // mdraid member, the specific type is not important here.
+                // Non mdraid members will have no mdraid property.
+                return true;
+            }
+            // In all other cases return false.
+            return false;
+        });
 
-    	Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
-    	    if(btrfsUid && _.isNull(poolName)){
-    		return true;
-    	    }
-    	    return false;
-    	});
+        Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
+            if (btrfsUid && _.isNull(poolName)) {
+                return true;
+            }
+            return false;
+        });
 
-    	Handlebars.registerHelper('checkSerialStatus', function (serial, diskName, opts) {
-    	    if(serial == null || serial == '' || serial == diskName || serial.length == 48){
-    		return opts.fn(this);
-    	    }
-    	    return opts.inverse(this);
-    	});
-    	
+        Handlebars.registerHelper('checkSerialStatus', function (serial, diskName, opts) {
+            if (serial == null || serial == '' || serial == diskName || serial.length == 48) {
+                return opts.fn(this);
+            }
+            return opts.inverse(this);
+        });
 
-    	Handlebars.registerHelper('humanReadableSize', function (size) {
-    	    return humanize.filesize(size * 1024);
-    	});
+        Handlebars.registerHelper('humanReadableSize', function (size) {
+            return humanize.filesize(size * 1024);
+        });
     },
 
     smartToggle: function (event, state) {

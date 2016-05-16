@@ -33,6 +33,7 @@ from system import smart
 from system.osi import set_disk_spindown, enter_standby
 from copy import deepcopy
 import uuid
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -122,20 +123,59 @@ class DiskMixin(object):
                 dob.parted = True  # overload use of parted as non btrfs flag.
                 # N.B. this overload use may become redundant with the addition
                 # of the Disk.role field.
-                if d.fstype == 'isw_raid_member' \
-                        or d.fstype == 'linux_raid_member':
-                    # transfer fstype raid member indicator to role field
-                    dob.role = d.fstype
-                else:
-                    # No identified role from scan_disks() fstype indicator so
-                    # set as None to update db of new drive role. If we don't
-                    # do this then the same drive when re-deployed will inherit
-                    # it's previous role in the db which may be desired but in
-                    # the case of these raid member indicators from scan_disks()
-                    # we have the current truth provided.
-                    # N.B. this if else could be expanded to accommodate other
-                    # roles based on the fs found and also take heed of an
-                    # existing devices db role entry prior to overwriting.
+            # Update the role field with scan_disks findings, currently only
+            # mdraid membership type based on fstype info. In the case of
+            # these raid member indicators from scan_disks() we have the
+            # current truth provided so update the db role status accordingly.
+            # N.B. this if else could be expanded to accommodate other
+            # roles based on the fs found
+            if d.fstype == 'isw_raid_member' or d.fstype == 'linux_raid_member':
+                # We have an indicator of mdraid membership so update existing
+                # role info if any.
+                # N.B. We have a minor legacy issue in that prior to using json
+                # format for the db role field we stored one of 2 strings.
+                # if these 2 strings are found then ignore them as we then
+                # overwrite with our current finding and in the new json format.
+                # I.e. non None could also be a legacy entry so follow overwrite
+                # path when legacy entry found by treating as a None entry.
+                # todo - When we reset migrations the following need only check
+                # todo - "dob.role is not None"
+                if dob.role is not None and dob.role != 'isw_raid_member' \
+                        and dob.role != 'linux_raid_member':
+                    # get our known roles into a dictionary
+                    known_roles = json.loads(dob.role)
+                    # create or update an mdraid dictionary entry
+                    known_roles['mdraid'] = str(d.fstype)
+                    # return updated dict to json format and store in db object
+                    dob.role = json.dumps(known_roles)
+                else:  # We have a dob.role = None so just insert our new role.
+                    # Also applies to legacy pre json role entries.
+                    dob.role = '{"mdraid": "' + d.fstype + '"}'  # json string
+            else:  # We know this disk is not an mdraid raid member.
+                # No identified role from scan_disks() fstype value (mdraid
+                # only for now )so we preserve any prior known roles not
+                # exposed by scan_disks but remove the mdraid role if found.
+                # todo - When we reset migrations the following need only check
+                # todo - "dob.role is not None"
+                if dob.role is not None and dob.role != 'isw_raid_member' \
+                        and dob.role != 'linux_raid_member':
+                    # remove mdraid role if found but preserve prior roles
+                    # which should now only be in json format
+                    known_roles = json.loads(dob.role)
+                    if 'mdraid' in known_roles:
+                        if len(known_roles) > 1:
+                            # mdraid is not the only entry so we have to pull
+                            # out only mdraid from dict and convert back to json
+                            del known_roles['mdraid']
+                            dob.role = json.dumps(known_roles)
+                        else:
+                            # mdraid was the only entry so we need not bother
+                            # with dict edit and json conversion only to end up
+                            # with an empty json {} so revert to default 'None'.
+                            dob.role = None
+                else:  # Empty or legacy role entry.
+                    # We have either None or a legacy mdraid role when this disk
+                    # is no longer an mdraid member. We can now assert None.
                     dob.role = None
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
