@@ -30,7 +30,7 @@ LogsView = RockstorLayoutView.extend({
 	'click #live-log': 'LoadServerLogs',
 	'click #download-logs': 'SubmitDownloadQueue',
 	'click #reader-logs' : 'SubmitReaderLogDownload',
-	'click #modal_resize' : 'ModalSwitchResize',
+	'click #modal_resize' : 'ModalSwitchSize',
 	'click #code_increase_size, #code_decrease_size' : 'ModalResizeText',
 	'change #read_type, #logs_options' : 'RequestLogSize',
 	'hidden.bs.modal #log_reader' : 'ModalClose'
@@ -40,72 +40,90 @@ LogsView = RockstorLayoutView.extend({
 	RockStorSocket.logReader = io.connect('/logmanager', {'secure': true, 'force new connection': true});
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.logs_logs;
+	this.avail_logs;
 	this.initHandlebarHelpers();
 	this.download_basket = [];
     },
 
     render: function() {
-	this.$el.html(this.template);
-	this.$('[rel=tooltip]').tooltip({ placement: 'top'});
-	this.$('#download-logs').hide();
-	RockStorSocket.addListener(this.getLogContent, this, 'logReader:logcontent');
-	RockStorSocket.addListener(this.getLogSize, this, 'logReader:logsize');
-	RockStorSocket.addListener(this.getLogsArchive, this, 'logReader:logsdownload');
-	return this;
+		this.$el.html(this.template);
+		this.$('[rel=tooltip]').tooltip({ placement: 'top'});
+		this.$('#download-logs').hide();
+		RockStorSocket.addListener(this.getLogContent, this, 'logReader:logcontent');
+		RockStorSocket.addListener(this.getLogSize, this, 'logReader:logsize');
+		RockStorSocket.addListener(this.getLogsArchive, this, 'logReader:logsdownload');
+		RockStorSocket.addListener(this.getRotatedLogs, this, 'logReader:rotatedlogs');
+		return this;
     },
+	
+	getRotatedLogs: function(data) {
+		var _this = this;
+		var reader_options = '<optgroup label="Rotated Logs">';
+		var downloader_divs = '';
+		$.each(data.rotated_logs_list, function(index, val) {
+			//If rotated log is compress we don't add it to logs available for reading
+			//example: usually nginx rotated logs
+			var rotated_log_descriptor = val.log.replace(val.logfamily, _this.avail_logs[val.logfamily]);
+			if (val.log.indexOf('.gz')<0) reader_options += '<option value="' + val.log  + '">' + rotated_log_descriptor + '</option>';
+			downloader_divs += '<div class="logs-item" log="' + val.log  + '"><i class="fa fa-gears" aria-hidden="true"></i> ' + rotated_log_descriptor + '</div>';
+			});
+		reader_options += '</optgroup>'
+		$('#logs_options').append(reader_options);
+		$('#avail_logs').append(downloader_divs);
+	},
 
     ModalClose: function(event) {
-	RockStorSocket.logReader.emit('livereading', 'kill');
+		RockStorSocket.logReader.emit('livereading', 'kill');
     },
 
-    ModalSwitchResize: function(event) {
-	event.preventDefault();
-	var modal_container = $('#log_reader').children().first();
-	var resize_icon = $(event.currentTarget).children().first();
-	if (modal_container.hasClass('modal-lg')) {
-		modal_container.removeClass('modal-lg');
-		resize_icon.switchClass('glyphicon-resize-small', 'glyphicon-resize-full');
-	} else {
-		modal_container.addClass('modal-lg');
-		resize_icon.switchClass('glyphicon-resize-full', 'glyphicon-resize-small');
-	}
+    ModalSwitchSize: function(event) {
+		event.preventDefault();
+		var modal_container = $('#log_reader').children().first();
+		var resize_icon = $(event.currentTarget).children().first();
+		if (modal_container.hasClass('modal-lg')) {
+			modal_container.removeClass('modal-lg');
+			resize_icon.switchClass('glyphicon-resize-small', 'glyphicon-resize-full');
+		} else {
+			modal_container.addClass('modal-lg');
+			resize_icon.switchClass('glyphicon-resize-full', 'glyphicon-resize-small');
+		}
     },
 
     ModalResizeText: function(event) {
-	event.preventDefault();
-	var resize_emitter = event.currentTarget.id;
-	var size_delta = resize_emitter == 'code_increase_size' ? 1 : -1;
-	var code_font_size = parseInt($('#system_log').css('font-size'));
-	$('#system_log').css('font-size', code_font_size + size_delta);
-    },
+		event.preventDefault();
+		var resize_emitter = event.currentTarget.id;
+		var size_delta = resize_emitter == 'code_increase_size' ? 1 : -1;
+		var code_font_size = parseInt($('#system_log').css('font-size'));
+		$('#system_log').css('font-size', code_font_size + size_delta);
+		},
 
-    getLogsArchive: function(data) {
-	var _this = this;
-	if (data.recipient == 'download_response') {
-		var response_text = 'Logs Archive ready for download - ';
-		response_text += '<a href="' + data.archive_name + '">Click to download</a>'
-		$('#' + data.recipient).html(response_text);
-	} else {
-		$(location).attr('href', data.archive_name);
-	}
+		getLogsArchive: function(data) {
+		var _this = this;
+		if (data.recipient == 'download_response') {
+			var response_text = 'Logs Archive ready for download - ';
+			response_text += '<a href="' + data.archive_name + '">Click to download</a>'
+			$('#' + data.recipient).html(response_text);
+		} else {
+			$(location).attr('href', data.archive_name);
+		}
     },
 
     getLogContent: function(data) {
-	var _this = this;
-	_this.updateLogProgress(data.current_rows, data.total_rows);
-	$('#system_log').append(data.chunk_content);
-	$('#system_log').closest('pre').scrollTop($('#system_log').closest('pre')[0].scrollHeight+100);
-	if ($('#logsize').text().length == 0) { $('#logsize').text((parseInt(data.content_size)/1024).toFixed(2) + 'kB'); }
+		var _this = this;
+		_this.updateLogProgress(data.current_rows, data.total_rows);
+		$('#system_log').append(data.chunk_content);
+		$('#system_log').closest('pre').scrollTop($('#system_log').closest('pre')[0].scrollHeight+100);
+		if ($('#logsize').text().length == 0) { $('#logsize').text((parseInt(data.content_size)/1024).toFixed(2) + 'kB'); }
     },
 
     getLogSize: function(data) {
-	log_size = (parseInt(data)/1024).toFixed(2);
-	if (log_size > 500) {
-		var size_warning = '<div class="alert alert-warning logsizealert">';
-		size_warning += '<strong>Warning!</strong>&nbsp;Log size is greater than 500kB (';
-		size_warning += log_size + ' kB) and reading with cat could take a while</div>';
-		$(size_warning).appendTo('#reader-block').hide().fadeIn(500);
-	}
+		log_size = (parseInt(data)/1024).toFixed(2);
+		if (log_size > 500) {
+			var size_warning = '<div class="alert alert-warning logsizealert">';
+			size_warning += '<strong>Warning!</strong>&nbsp;Log size is greater than 500kB (';
+			size_warning += log_size + ' kB) and reading with cat could take a while</div>';
+			$(size_warning).appendTo('#reader-block').hide().fadeIn(500);
+		}
     },
 
     RequestLogSize: function(event) {
@@ -117,84 +135,84 @@ LogsView = RockstorLayoutView.extend({
     },
 
     updateLogProgress: function(partial, total) {
-	$('#reader_progress').addClass('progress-bar-striped');
-	current_rows = parseInt(partial);
-	total_rows = parseInt(total);
-	current_percent = (current_rows/total_rows*100).toFixed(2);
-	$('#reader_progress').attr('aria-valuenow', current_percent);
-	$('#reader_progress').width(current_percent + '%');
-	$('#reader_progress').text(current_percent + '%');
-	if (current_rows == total_rows) {
-		$('#reader_progress').removeClass('progress-bar-striped');
-		$('#live-log').removeClass('disabled'); // Log totally rendered, enable again live log request button
-	}
+		$('#reader_progress').addClass('progress-bar-striped');
+		current_rows = parseInt(partial);
+		total_rows = parseInt(total);
+		current_percent = (current_rows/total_rows*100).toFixed(2);
+		$('#reader_progress').attr('aria-valuenow', current_percent);
+		$('#reader_progress').width(current_percent + '%');
+		$('#reader_progress').text(current_percent + '%');
+		if (current_rows == total_rows) {
+			$('#reader_progress').removeClass('progress-bar-striped');
+			$('#live-log').removeClass('disabled'); // Log totally rendered, enable again live log request button
+		}
     },
 
     ShowLogDownload: function(){
-	var download_queue = $('#download_logs').children();
-	if (download_queue.length > 0) {
-		$('#download-logs').show();	
-	} else {
-		$('#download-logs').hide();
-	}
+		var download_queue = $('#download_logs').children();
+		if (download_queue.length > 0) {
+			$('#download-logs').show();	
+		} else {
+			$('#download-logs').hide();
+		}
     },
 
     SubmitReaderLogDownload: function(event) {
-	_this = this;
-	event.preventDefault();
-	var log_file = $('#logs_options').val();
-	log_file = log_file.split();
-	RockStorSocket.logReader.emit('downloadlogs', log_file, 'reader_response');
+		_this = this;
+		event.preventDefault();
+		var log_file = $('#logs_options').val();
+		log_file = log_file.split();
+		RockStorSocket.logReader.emit('downloadlogs', log_file, 'reader_response');
     },
 
     SubmitDownloadQueue: function(event){
-	_this = this;
-	_this.download_basket = [];
-	$('#download_response').empty();
-	var download_queue = $('#download_logs').children();
-	download_queue.each(function(){
-		_this.download_basket.push($(this).attr('log'));
-	});
-	$('#download-logs').blur();
-	RockStorSocket.logReader.emit('downloadlogs', _this.download_basket, 'download_response');
+		_this = this;
+		_this.download_basket = [];
+		$('#download_response').empty();
+		var download_queue = $('#download_logs').children();
+		download_queue.each(function(){
+			_this.download_basket.push($(this).attr('log'));
+		});
+		$('#download-logs').blur();
+		RockStorSocket.logReader.emit('downloadlogs', _this.download_basket, 'download_response');
     },
 
     LogBaskets: function(event) {
-	var _this = this;
-	event.preventDefault();
-	$('#download_response').empty();
-	var parent_div = $(event.currentTarget).parent().attr('id');
-	var dest_div = parent_div == 'avail_logs' ? '#download_logs' : '#avail_logs';
-	$(event.currentTarget).fadeTo(500,0, function(){
-		$(dest_div).append(event.currentTarget);
-		$(event.currentTarget).fadeTo(500,1);
-		_this.ShowLogDownload();
-	});
+		var _this = this;
+		event.preventDefault();
+		$('#download_response').empty();
+		var parent_div = $(event.currentTarget).parent().attr('id');
+		var dest_div = parent_div == 'avail_logs' ? '#download_logs' : '#avail_logs';
+		$(event.currentTarget).fadeTo(500,0, function(){
+			$(dest_div).append(event.currentTarget);
+			$(event.currentTarget).fadeTo(500,1);
+			_this.ShowLogDownload();
+		});
     },
 
     LoadServerLogs: function() {
-	$('#live-log').addClass('disabled'); // prevent users from submitting multiple reading requests same time
-	$('#logsize').empty();
-	var _this = this;
-	var read_type = $('#read_type').val();
-	var logs_options = $('#logs_options').val();
-	var log_file = $('#logs_options option:selected').text();
-	var read_tool = $('#read_type option:selected').text();
-	var modal_title = '<b>Selected log:</b>&nbsp; <span>' + log_file + '</span>';
-	modal_title += '<br/><b>Reader type:</b>&nbsp; <span>' + read_tool + '</span>';
-	$("#LogReaderLabel").html(modal_title);
-	$('#system_log').empty();
-        _this.ShowLogReader();
-        RockStorSocket.logReader.emit('readlog', read_type, logs_options);
+		$('#live-log').addClass('disabled'); // prevent users from submitting multiple reading requests same time
+		$('#logsize').empty();
+		var _this = this;
+		var read_type = $('#read_type').val();
+		var logs_options = $('#logs_options').val();
+		var log_file = $('#logs_options option:selected').text();
+		var read_tool = $('#read_type option:selected').text();
+		var modal_title = '<b>Selected log:</b>&nbsp; <span>' + log_file + '</span>';
+		modal_title += '<br/><b>Reader type:</b>&nbsp; <span>' + read_tool + '</span>';
+		$("#LogReaderLabel").html(modal_title);
+		$('#system_log').empty();
+			_this.ShowLogReader();
+			RockStorSocket.logReader.emit('readlog', read_type, logs_options);
     },
 
     ShowLogReader: function() {
-	$('#log_reader').modal({
-	    keyboard: false,
-            show: false,
-            backdrop: 'static'
-        });
-        $('#log_reader').modal('show');
+		$('#log_reader').modal({
+			keyboard: false,
+				show: false,
+				backdrop: 'static'
+			});
+			$('#log_reader').modal('show');
     },
 
     cleanup: function() {
@@ -202,37 +220,39 @@ LogsView = RockstorLayoutView.extend({
     },
 
     initHandlebarHelpers: function(){
-      var avail_logs =  {
-			"Rockstor Logs" : "rockstor",
-			"Supervisord (Process monitor)" : "supervisord",
-			"Dmesg (Kernel)" : "dmesg",
-			"Nmbd (Samba)" : "nmbd",
-			"Smbd (Samba)" : "smbd",
-			"Winbindd (Samba)" : "winbindd",
-			"Nginx (WebUI)" : "nginx",
-			"Nginx stdout (WebUI)" : "nginx_stdout",
-			"Nginx stderr (WebUI)" : "nginx_stderr",
-			"Gunicorn (WebUI)" : "gunicorn",
-			"Gunicorn stdout (WebUI)" : "gunicorn_stdout",
-			"Gunicorn stderr (WebUI)" : "gunicorn_stderr",
-			"Yum (System updates)" : "yum"
+		var _this = this;
+		_this.avail_logs = {
+			"rockstor" : "Rockstor Logs",
+			"supervisord" : "Supervisord (Process monitor)",
+			"dmesg" : "Dmesg (Kernel)",
+			"nmbd" : "Nmbd (Samba)" ,
+			"smbd" : "Smbd (Samba)" ,
+			"winbindd" : "Winbindd (Samba)",
+			"nginx" : "Nginx (WebUI)",
+			"nginx_stdout" : "Nginx stdout (WebUI)",
+			"nginx_stderr" : "Nginx stderr (WebUI)",
+			"gunicorn" : "Gunicorn (WebUI)",
+			"gunicorn_stdout" : "Gunicorn stdout (WebUI)",
+			"gunicorn_stderr" : "Gunicorn stderr (WebUI)",
+			"yum" : "Yum (System updates)"
 			};
 
-    Handlebars.registerHelper('print_logs_divs', function(){
-      var html = '';
-      $.each(avail_logs, function(key, val) {
-        html += '<div class="logs-item" log="' + val  + '"><i class="fa fa-gear" aria-hidden="true"></i> ' + key + '</div>';
-      });
-      return new Handlebars.SafeString(html);
-    });
+		Handlebars.registerHelper('print_logs_divs', function(){
+		  var html = '';
+		  $.each(_this.avail_logs, function(key, val) {
+			html += '<div class="logs-item" log="' + key  + '"><i class="fa fa-gear" aria-hidden="true"></i> ' + val + '</div>';
+		  });
+		  return new Handlebars.SafeString(html);
+		});
 
-    Handlebars.registerHelper('print_logs_options', function(){
-      var html = '';
-      $.each(avail_logs, function(key, val) {
-        html += '<option value="' + val  + '">' + key + '</option>';
-      });
-      return new Handlebars.SafeString(html);
-    });
+		Handlebars.registerHelper('print_logs_options', function(){
+		  var html = '<optgroup label="Current Logs">';
+		  $.each(_this.avail_logs, function(key, val) {
+			html += '<option value="' + key  + '">' + val + '</option>';
+		  });
+		  html += '</optgroup>'
+		  return new Handlebars.SafeString(html);
+		});
   
     }
 });
