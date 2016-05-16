@@ -31,6 +31,7 @@ from socketio.mixins import BroadcastMixin
 from gevent.subprocess import Popen, PIPE
 from os import path
 from sys import getsizeof
+from glob import glob
 
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
@@ -65,19 +66,20 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
                'tailf' : {'command' : '/usr/bin/tail', 'args' : '-f'}
         }
         
-        self.logs = {'rockstor' : '%srockstor.log' % self.rockstor_logs,
-            'dmesg' : '%sdmesg' % self.system_logs,
-            'nmbd' : '%slog.nmbd' % self.samba_subd_logs,
-            'smbd' : '%slog.smbd' % self.samba_subd_logs,
-            'winbindd' : '%slog.winbindd' % self.samba_subd_logs,
-            'nginx' : '%saccess.log' % self.nginx_subd_logs,
-            'nginx_stdout' : '%ssupervisord_nginx_stdout.log' % self.rockstor_logs,
-            'nginx_stderr' : '%ssupervisord_nginx_stderr.log' % self.rockstor_logs,
-            'gunicorn' : '%sgunicorn.log' % self.rockstor_logs,
-            'gunicorn_stdout' : '%ssupervisord_gunicorn_stdout.log' % self.rockstor_logs,
-            'gunicorn_stderr' : '%ssupervisord_gunicorn_stderr.log' % self.rockstor_logs,
-            'supervisord' : '%ssupervisord.log' % self.rockstor_logs,
-            'yum' : '%syum.log' % self.system_logs,
+        self.logs = {'rockstor' : {'logfile' : 'rockstor.log', 'logdir' : self.rockstor_logs},
+            'dmesg' : {'logfile' : 'dmesg', 'logdir' : self.system_logs},
+            'nmbd' : {'logfile' : 'log.nmbd', 'logdir' : self.samba_subd_logs, 'rotatingdir' : 'old/'},
+            'smbd' : {'logfile' : 'log.smbd', 'logdir' : self.samba_subd_logs, 'rotatingdir' : 'old/'},
+            'winbindd' : {'logfile' : 'log.winbindd', 'logdir' : self.samba_subd_logs, 'rotatingdir' : 'old/',
+                          'excluded' : ['dc-connect', 'idmap', 'locator']},
+            'nginx' : {'logfile' : 'access.log', 'logdir' : self.nginx_subd_logs},
+            'nginx_stdout' : {'logfile' : 'supervisord_nginx_stdout.log', 'logdir' : self.rockstor_logs},
+            'nginx_stderr' : {'logfile' : 'supervisord_nginx_stderr.log', 'logdir' : self.rockstor_logs},
+            'gunicorn' : {'logfile' : 'gunicorn.log', 'logdir' : self.rockstor_logs},
+            'gunicorn_stdout' : {'logfile' : 'supervisord_gunicorn_stdout.log', 'logdir' : self.rockstor_logs},
+            'gunicorn_stderr' : {'logfile' : 'supervisord_gunicorn_stderr.log', 'logdir' : self.rockstor_logs},
+            'supervisord' : {'logfile' : 'supervisord.log', 'logdir' : self.rockstor_logs},
+            'yum' : {'logfile' : 'yum.log', 'logdir' : self.system_logs},
         }
         
         self.tar_utility = ['/usr/bin/tar', 'czf']
@@ -88,6 +90,7 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
         self.emit("logReader:logwelcome", {
             "key": "logReader:logwelcome", "data": "Welcome to Rockstor LogManager"
         })
+        self.find_rotating_logs()
 
     def recv_disconnect(self):
 
@@ -96,6 +99,41 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
         #Func to secure tail -f reader
         #If browser close/crash/accidentally ends while a tail -f running, this ensures running process to get stopped
         self.livereading = False
+    
+    def build_log_path(self, selectedlog):
+        
+        return '%s%s' % (self.logs[selectedlog]['logdir'],self.logs[selectedlog]['logfile'])
+    
+    def find_rotating_logs(self):
+        
+        #First build our rotated logs list, removing current log and
+        #eventually excluded logs file
+        log_keys = list(self.logs.keys()) #collect logs key because iterating directly over dict doesn't let update it
+        rotated_logs_list = []
+        
+        for log_key in log_keys:
+            log = self.logs[log_key]['logdir']
+            if ('rotatingdir' in self.logs[log_key]):
+                log += self.logs[log_key]['rotatingdir']
+            log += '%s*' % self.logs[log_key]['logfile']
+            rotated_logs = sorted(glob(log), reverse=True)
+            starting_log = self.build_log_path(log_key)
+            #When looking for rotated logs we ask logname* and we get current log to, so we remove it
+            if starting_log in rotated_logs:
+                rotated_logs.remove(starting_log)
+            if ('excluded' in self.logs[log_key]):
+                rotated_logs = list(set(rotated_logs)-{l for e in self.logs[log_key]['excluded'] for l in rotated_logs if e in l})
+            
+            #For every list of rotated logs - grouped by current log -
+            #Append each rotated log to self.logs dict and make it available for log reading/downloading
+            #Build a rotated log list to be sent to client for frontend updates
+            for current_rotated in rotated_logs:
+                rotated_logfile, rotated_logdir = path.basename(current_rotated), ('%s/' % path.dirname(current_rotated))
+                rotated_key = rotated_logfile.replace(self.logs[log_key]['logfile'], log_key)
+                self.logs.update({rotated_key : {'logfile' : rotated_logfile, 'logdir' : rotated_logdir}})
+                rotated_logs_list.append('{\'log\' : \'%s\', \'logfamily\' : \'%s\'}' % (rotated_key, log_key))
+        
+        self.emit('logReader:rotatedlogs', {'key': 'logReader:rotatedlogs', 'data': {'rotated_logs_list' : rotated_logs_list}})
 
     def on_livereading(self, action):
 
@@ -134,13 +172,13 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
 
         #Get every log location via logs dictionary
         for log in logs_queued:
-            download_command.append(self.logs[log])
+            download_command.append(self.build_log_path(log))
         
         #Build download archive
         download_process = Popen(download_command, bufsize=1, stdout=PIPE)
         download_result = download_process.communicate()[0]
 
-        #Return ready state for logs archive download specifing recipient (LogReader or LogDownloader)
+        #Return ready state for logs archive download specifying recipient (LogReader or LogDownloader)
         self.emit('logReader:logsdownload', {
             'key': 'logReader:logsdownload', 'data': {
             'archive_name' : '/logs/%s' % archive_file,
@@ -240,7 +278,7 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
                 })
             logger.debug('Exited livereader Status is %s', self.livereading)
 
-        log_path = self.logs[logfile]
+        log_path = self.build_log_path(logfile)
         logger.debug('Log Reader request for %s - Started' % log_path)
 
         if (reader == 'tailf'):
@@ -250,7 +288,7 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
         
     def on_getfilesize(self, logfile):
 
-        file_size = path.getsize(self.logs[logfile])
+        file_size = path.getsize(self.build_log_path(logfile))
         self.emit('logReader:logsize', {'key': 'logReader:logsize', 'data': file_size})
         gevent.sleep(0)
 
