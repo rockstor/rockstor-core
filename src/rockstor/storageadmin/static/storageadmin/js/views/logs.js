@@ -70,7 +70,7 @@ LogsView = RockstorLayoutView.extend({
             //example: usually nginx rotated logs
             var rotated_log_descriptor = val.log.replace(val.logfamily, _this.avail_logs[val.logfamily]);
             if (val.log.indexOf('.gz') < 0) reader_options += '<option value="' + val.log + '">' + rotated_log_descriptor + '</option>';
-            downloader_divs += '<div class="logs-item" log="' + val.log + '">';
+            downloader_divs += '<div class="logs-item" log="' + val.log + '" rotated="true">';
 			downloader_divs += '<i class="fa fa-gears" aria-hidden="true"></i> ' + rotated_log_descriptor + '</div>';
         });
         reader_options += '</optgroup>'
@@ -205,8 +205,15 @@ LogsView = RockstorLayoutView.extend({
         $('#download_response').empty();
         var parent_div = $(event.currentTarget).parent().attr('id');
         var dest_div = parent_div == 'avail_logs' ? '#download_logs' : '#avail_logs';
+		var is_rotated = ($(event.currentTarget).attr('rotated') === 'true');
         $(event.currentTarget).fadeTo(500, 0, function() {
-            $(dest_div).append(event.currentTarget);
+			//If selected log is a rotated one append to list bottom
+			//otherwise append to top
+			if (is_rotated) {
+				$(dest_div).append(event.currentTarget);
+			} else {
+				$(dest_div).prepend(event.currentTarget);
+			}
             $(event.currentTarget).fadeTo(500, 1);
             _this.ShowLogDownload();
         });
@@ -263,7 +270,7 @@ LogsView = RockstorLayoutView.extend({
         Handlebars.registerHelper('print_logs_divs', function() {
             var html = '';
             $.each(_this.avail_logs, function(key, val) {
-                html += '<div class="logs-item" log="' + key + '">';
+                html += '<div class="logs-item" log="' + key + '" rotated="false">';
 				html += '<i class="fa fa-gear" aria-hidden="true"></i> ' + val + '</div>';
             });
             return new Handlebars.SafeString(html);
