@@ -35,6 +35,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.replication_add_replication_task;
 	this.shares = new ShareCollection();
+	this.shares.pageSize = RockStorGlobals.maxPageSize;
 	this.dependencies.push(this.shares);
 	this.appliances = new ApplianceCollection();
 	this.dependencies.push(this.appliances);
