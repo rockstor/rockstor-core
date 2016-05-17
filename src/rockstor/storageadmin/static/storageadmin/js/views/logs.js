@@ -36,7 +36,7 @@ LogsView = RockstorLayoutView.extend({
     },
 
     initialize: function() {
-        RockStorSocket.logReader = io.connect('/logmanager', {
+        RockStorSocket.logManager = io.connect('/logmanager', {
             'secure': true,
             'force new connection': true
         });
@@ -53,14 +53,15 @@ LogsView = RockstorLayoutView.extend({
             placement: 'top'
         });
         this.$('#download-logs').hide();
-        RockStorSocket.addListener(this.getLogContent, this, 'logReader:logcontent');
-        RockStorSocket.addListener(this.getLogSize, this, 'logReader:logsize');
-        RockStorSocket.addListener(this.getLogsArchive, this, 'logReader:logsdownload');
-        RockStorSocket.addListener(this.getRotatedLogs, this, 'logReader:rotatedlogs');
+        RockStorSocket.addListener(this.getLogContent, this, 'logManager:logcontent');
+        RockStorSocket.addListener(this.getLogSize, this, 'logManager:logsize');
+        RockStorSocket.addListener(this.getLogsArchive, this, 'logManager:logsdownload');
+        RockStorSocket.addListener(this.getRotatedLogs, this, 'logManager:rotatedlogs');
         return this;
     },
 
     getRotatedLogs: function(data) {
+		//Handles rotated logs list got on connection to data_collector
         var _this = this;
         var reader_options = '<optgroup label="Rotated Logs">';
         var downloader_divs = '';
@@ -69,7 +70,8 @@ LogsView = RockstorLayoutView.extend({
             //example: usually nginx rotated logs
             var rotated_log_descriptor = val.log.replace(val.logfamily, _this.avail_logs[val.logfamily]);
             if (val.log.indexOf('.gz') < 0) reader_options += '<option value="' + val.log + '">' + rotated_log_descriptor + '</option>';
-            downloader_divs += '<div class="logs-item" log="' + val.log + '"><i class="fa fa-gears" aria-hidden="true"></i> ' + rotated_log_descriptor + '</div>';
+            downloader_divs += '<div class="logs-item" log="' + val.log + '">';
+			downloader_divs += '<i class="fa fa-gears" aria-hidden="true"></i> ' + rotated_log_descriptor + '</div>';
         });
         reader_options += '</optgroup>'
         $('#logs_options').append(reader_options);
@@ -77,10 +79,12 @@ LogsView = RockstorLayoutView.extend({
     },
 
     ModalClose: function(event) {
-        RockStorSocket.logReader.emit('livereading', 'kill');
+		//When LogReader modal window close emit to ensure any running tail -f get killed
+        RockStorSocket.logManager.emit('livereading', 'kill');
     },
-
+ 
     ModalSwitchSize: function(event) {
+		//LogReader modal window func to move small/large and viceversa
         event.preventDefault();
         var modal_container = $('#log_reader').children().first();
         var resize_icon = $(event.currentTarget).children().first();
@@ -94,6 +98,7 @@ LogsView = RockstorLayoutView.extend({
     },
 
     ModalResizeText: function(event) {
+		//LogReader modal window func to resize code text size
         event.preventDefault();
         var resize_emitter = event.currentTarget.id;
         var size_delta = resize_emitter == 'code_increase_size' ? 1 : -1;
@@ -102,6 +107,9 @@ LogsView = RockstorLayoutView.extend({
     },
 
     getLogsArchive: function(data) {
+		//Handle Logs tar archive based
+		//If request sent from Archive builder show a link for download
+		//Otherwise if from LogReader link auto-download archive
         var _this = this;
         if (data.recipient == 'download_response') {
             var response_text = 'Logs Archive ready for download - ';
@@ -113,6 +121,7 @@ LogsView = RockstorLayoutView.extend({
     },
 
     getLogContent: function(data) {
+		//When data is pushed from backend data_collector add it to LogReader and autoscroll to the end
         var _this = this;
         _this.updateLogProgress(data.current_rows, data.total_rows);
         $('#system_log').append(data.chunk_content);
@@ -123,6 +132,8 @@ LogsView = RockstorLayoutView.extend({
     },
 
     getLogSize: function(data) {
+		//Get log file size while selecting reader (cat,tail, etc) and log
+		//If log file size greater than 500kB && reader is cat alerts user about possible long reading time
         log_size = (parseInt(data) / 1024).toFixed(2);
         if (log_size > 500) {
             var size_warning = '<div class="alert alert-warning logsizealert">';
@@ -133,16 +144,18 @@ LogsView = RockstorLayoutView.extend({
     },
 
     RequestLogSize: function(event) {
+		//Call backend data_collector and ask for current log size
         $('.logsizealert').fadeOut(100, function() {
             $(this).remove();
         });
         if ($('#read_type').val() == 'cat') {
             current_log = $('#logs_options').val();
-            RockStorSocket.logReader.emit('getfilesize', current_log);
+            RockStorSocket.logManager.emit('getfilesize', current_log);
         }
     },
 
     updateLogProgress: function(partial, total) {
+		//Nicely update progressbar in LogReader modal
         $('#reader_progress').addClass('progress-bar-striped');
         current_rows = parseInt(partial);
         total_rows = parseInt(total);
@@ -170,7 +183,7 @@ LogsView = RockstorLayoutView.extend({
         event.preventDefault();
         var log_file = $('#logs_options').val();
         log_file = log_file.split();
-        RockStorSocket.logReader.emit('downloadlogs', log_file, 'reader_response');
+        RockStorSocket.logManager.emit('downloadlogs', log_file, 'reader_response');
     },
 
     SubmitDownloadQueue: function(event) {
@@ -182,10 +195,11 @@ LogsView = RockstorLayoutView.extend({
             _this.download_basket.push($(this).attr('log'));
         });
         $('#download-logs').blur();
-        RockStorSocket.logReader.emit('downloadlogs', _this.download_basket, 'download_response');
+        RockStorSocket.logManager.emit('downloadlogs', _this.download_basket, 'download_response');
     },
 
     LogBaskets: function(event) {
+		//This function serves divs switching between Available Logs and Logs download queue
         var _this = this;
         event.preventDefault();
         $('#download_response').empty();
@@ -199,6 +213,7 @@ LogsView = RockstorLayoutView.extend({
     },
 
     LoadServerLogs: function() {
+		//On user action for log reading append some info to LogReader modal, open it and ask backend for data
         $('#live-log').addClass('disabled'); // prevent users from submitting multiple reading requests same time
         $('#logsize').empty();
         var _this = this;
@@ -208,10 +223,10 @@ LogsView = RockstorLayoutView.extend({
         var read_tool = $('#read_type option:selected').text();
         var modal_title = '<b>Selected log:</b>&nbsp; <span>' + log_file + '</span>';
         modal_title += '<br/><b>Reader type:</b>&nbsp; <span>' + read_tool + '</span>';
-        $("#LogReaderLabel").html(modal_title);
+        $('#LogReaderLabel').html(modal_title);
         $('#system_log').empty();
         _this.ShowLogReader();
-        RockStorSocket.logReader.emit('readlog', read_type, logs_options);
+        RockStorSocket.logManager.emit('readlog', read_type, logs_options);
     },
 
     ShowLogReader: function() {
@@ -224,7 +239,7 @@ LogsView = RockstorLayoutView.extend({
     },
 
     cleanup: function() {
-        RockStorSocket.removeOneListener('logReader');
+        RockStorSocket.removeOneListener('logManager');
     },
 
     initHandlebarHelpers: function() {
@@ -248,7 +263,8 @@ LogsView = RockstorLayoutView.extend({
         Handlebars.registerHelper('print_logs_divs', function() {
             var html = '';
             $.each(_this.avail_logs, function(key, val) {
-                html += '<div class="logs-item" log="' + key + '"><i class="fa fa-gear" aria-hidden="true"></i> ' + val + '</div>';
+                html += '<div class="logs-item" log="' + key + '">';
+				html += '<i class="fa fa-gear" aria-hidden="true"></i> ' + val + '</div>';
             });
             return new Handlebars.SafeString(html);
         });
