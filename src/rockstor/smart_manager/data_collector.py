@@ -46,7 +46,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class LogReaderNamespace(BaseNamespace, BroadcastMixin):
+class LogManagerNamespace(BaseNamespace, BroadcastMixin):
 
     def initialize(self):
 
@@ -87,28 +87,49 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
     def recv_connect(self):
 
         #On first connection emit a welcome just to have a recv_connect func
-        self.emit("logReader:logwelcome", {
-            "key": "logReader:logwelcome", "data": "Welcome to Rockstor LogManager"
+        self.emit("logManager:logwelcome", {
+            "key": "logManager:logwelcome", "data": "Welcome to Rockstor LogManager"
         })
-        self.find_rotating_logs()
+        gevent.spawn(self.find_rotating_logs)
 
     def recv_disconnect(self):
 
         self.disconnect()
-        logger.debug('Log Manager has been closed')
         #Func to secure tail -f reader
-        #If browser close/crash/accidentally ends while a tail -f running, this ensures running process to get stopped
-        self.livereading = False
+        #If browser close/crash/accidentally ends while a tail -f running,
+        #this ensures running process to get stopped
+        gevent.spawn(self.kill_live_reading)
     
     def build_log_path(self, selectedlog):
         
         return '%s%s' % (self.logs[selectedlog]['logdir'],self.logs[selectedlog]['logfile'])
     
+    def kill_live_reading(self):
+
+        #When user close modal log reader check livereading switch and livereader_process
+        #Immediately set livereading switch to False and stop emitting to frontend
+        #If livereader_process is None we were reading logs with cat, tail -n 200 or tail -n 30
+        #Otherwise it was changed to a subprocess by tail -f, so we kill it and set back to None
+        #to avoid other readers trying killing nothing
+        self.livereading = False
+        if self.livereader_process is not None:
+            self.livereader_process.kill()
+            self.livereader_process = None
+            
+        #Emit current state only for checking purpose, no funcs handle on frontend
+        self.emit('logManager:logskilltailf', {
+            'key' : 'logManager:logskilltailf', 'data': {
+            'status' : self.livereading
+            }
+        })
+        gevent.sleep(0)    
+    
     def find_rotating_logs(self):
         
         #First build our rotated logs list, removing current log and
         #eventually excluded logs file
-        log_keys = sorted(list(self.logs.keys())) #collect logs key because iterating directly over dict doesn't let update it
+        #Collect logs key because iterating directly over dict doesn't let update it
+        log_keys = sorted(list(self.logs.keys()))
         rotated_logs_list = []
         
         for log_key in log_keys:
@@ -133,60 +154,46 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
                 self.logs.update({rotated_key : {'logfile' : rotated_logfile, 'logdir' : rotated_logdir}})
                 rotated_logs_list.append({'log' : rotated_key, 'logfamily' : log_key})
         
-        self.emit('logReader:rotatedlogs', {'key': 'logReader:rotatedlogs', 'data': {'rotated_logs_list' : rotated_logs_list}})
-
+        self.emit('logManager:rotatedlogs', {'key': 'logManager:rotatedlogs', 'data': {'rotated_logs_list' : rotated_logs_list}})
+        gevent.sleep(0)
+        
     def on_livereading(self, action):
 
-        #When user close modal log reader check livereading switch and livereader_process
-        #Immediately set livereading switch to False and stop emitting to frontend
-        #If livereader_process is None we were reading logs with cat, tail -n 200 or tail -n 30
-        #Otherwise it was changed to a subprocess by tail -f, so we kill it and set back to None
-        #to avoid other readers trying killing nothing
-        self.livereading = False
-        logger.debug('Status %s', self.livereading)
-        if self.livereader_process is not None:
-            self.livereader_process.kill()
-            self.livereader_process = None
-            
-        #Emit current state only for checking purpose, no funcs handle on frontend
-        self.emit('logReader:logskilltailf', {
-            'key' : 'logReader:logskilltailf', 'data': {
-            'status' : self.livereading
-            }
-        })
-        gevent.sleep(0)
+        gevent.spawn(self.kill_live_reading)
 
     def on_downloadlogs(self, logs_queued, recipient):
 
-        #Build tar command with tar command and logs sent by client
-        archive_path = '%ssrc/rockstor/logs/' % settings.ROOT_DIR
-        archive_file = 'requested_logs.tgz'
-        
-        #If log download requested by Log Reader serve a personalized tgz file with log file name
-        if (recipient == 'reader_response'):
-            archive_file = '%s.tgz' % logs_queued[0]
-        archive_path += archive_file
-        download_command = []
-        download_command.extend(self.tar_utility)
-        download_command.append(archive_path)
+        def logs_downloader(logs_queued, recipient):
+            #Build tar command with tar command and logs sent by client
+            archive_path = '%ssrc/rockstor/logs/' % settings.ROOT_DIR
+            archive_file = 'requested_logs.tgz'
+            
+            #If log download requested by Log Reader serve a personalized tgz file with log file name
+            if (recipient == 'reader_response'):
+                archive_file = '%s.tgz' % logs_queued[0]
+            archive_path += archive_file
+            download_command = []
+            download_command.extend(self.tar_utility)
+            download_command.append(archive_path)
 
-        #Get every log location via logs dictionary
-        for log in logs_queued:
-            download_command.append(self.build_log_path(log))
-        
-        #Build download archive
-        download_process = Popen(download_command, bufsize=1, stdout=PIPE)
-        download_result = download_process.communicate()[0]
+            #Get every log location via logs dictionary
+            for log in logs_queued:
+                download_command.append(self.build_log_path(log))
+            
+            #Build download archive
+            download_process = Popen(download_command, bufsize=1, stdout=PIPE)
+            download_result = download_process.communicate()[0]
 
-        #Return ready state for logs archive download specifying recipient (LogReader or LogDownloader)
-        self.emit('logReader:logsdownload', {
-            'key': 'logReader:logsdownload', 'data': {
-            'archive_name' : '/logs/%s' % archive_file,
-            'recipient' : recipient
-            }
-        })
-        gevent.sleep(0)
-        logger.debug('Logs archive built in /logs/%s' % archive_file)
+            #Return ready state for logs archive download specifying recipient (logManager or LogDownloader)
+            self.emit('logManager:logsdownload', {
+                'key': 'logManager:logsdownload', 'data': {
+                'archive_name' : '/logs/%s' % archive_file,
+                'recipient' : recipient
+                }
+            })
+            gevent.sleep(0)
+        
+        gevent.spawn(logs_downloader, logs_queued, recipient)
 
     def on_readlog(self, reader, logfile):
 
@@ -201,18 +208,23 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
                 return (path.getsize(logfile) > 0)
             else:
                 return False
-        
+                
+        def build_reader_command(reader):
+
+            command = []
+            command.append(self.readers[reader]['command'])
+            #If our reader has opt args we add them to popen command
+            if ('args' in self.readers[reader]):
+                command.append(self.readers[reader]['args'])
+            #Queue log file to popen command
+            command.append(log_path)
+            return command
+            
         def static_reader(reader, log_path):
             if (valid_log(log_path)):#Log file exist and greater than 0, perform data collecting
 
-                #Build read command from readers dict
-                read_command = []
-                read_command.append(self.readers[reader]['command'])
-                #If our reader has opt args we add them to popen command
-                if ('args' in self.readers[reader]):
-                    read_command.append(self.readers[reader]['args'])
-                #Queue log file to popen command
-                read_command.append(log_path)
+                #Build reader command
+                read_command = build_reader_command(reader)
 
                 #Define popen process and once completed split stdout by lines
                 reader_process = Popen(read_command, bufsize=1, stdout=PIPE)
@@ -229,6 +241,9 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
 
             else:#Log file missing or size 0, gently inform user
             
+                #Log not exist or empty so we send fake values
+                #for rows, chunks, etc to uniform data on existing functions
+                #and avoid client side extra checks
                 log_content = 'Selected log file is empty or doesn\'t exist'
                 log_content = log_content.splitlines(True)
                 total_rows = 1
@@ -243,8 +258,8 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
             for data_chunks in log_content_chunks:
                 chunk_content = ''.join(data_chunks)
                 current_rows += len(data_chunks)
-                self.emit('logReader:logcontent', {
-                    'key': 'logReader:logcontent', 'data': {
+                self.emit('logManager:logcontent', {
+                    'key': 'logManager:logcontent', 'data': {
                     'current_rows' : current_rows,
                     'total_rows' : total_rows,
                     'chunk_content' : chunk_content,
@@ -252,34 +267,29 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
                     }
                 })
                 gevent.sleep(reader_sleep)
-            logger.debug('Log Reader request for %s - Finished' % log_path)
         
         def live_reader(log_path):
 
             #Switch live reader state to True
             self.livereading = True
-            logger.debug('Status %s', self.livereading)
-            #Build read command from readers dict
-            read_command = []
-            read_command.append(self.readers['tailf']['command'])
-            read_command.append(self.readers['tailf']['args'])
-            #Queue log file to popen command
-            read_command.append(log_path)
+            
+            #Build reader command from readers dict
+            read_command = build_reader_command('tailf')
+
             self.livereader_process = Popen(read_command, bufsize=1, stdout=PIPE)
             while self.livereading:
                 live_out = self.livereader_process.stdout.readline()
-                self.emit('logReader:logcontent', {
-                    'key': 'logReader:logcontent', 'data': {
+                self.emit('logManager:logcontent', {
+                    'key': 'logManager:logcontent', 'data': {
                     'current_rows' : 1,
                     'total_rows' : 1,
                     'chunk_content' : live_out,
                     'content_size' : 1
                     }
                 })
-            logger.debug('Exited livereader Status is %s', self.livereading)
+                gevent.sleep(0)
 
         log_path = self.build_log_path(logfile)
-        logger.debug('Log Reader request for %s - Started' % log_path)
 
         if (reader == 'tailf'):
             gevent.spawn(live_reader, log_path)
@@ -288,9 +298,12 @@ class LogReaderNamespace(BaseNamespace, BroadcastMixin):
         
     def on_getfilesize(self, logfile):
 
-        file_size = path.getsize(self.build_log_path(logfile))
-        self.emit('logReader:logsize', {'key': 'logReader:logsize', 'data': file_size})
-        gevent.sleep(0)
+        def file_size(logfile):
+            file_size = path.getsize(self.build_log_path(logfile))
+            self.emit('logManager:logsize', {'key': 'logManager:logsize', 'data': file_size})
+            gevent.sleep(0)
+        
+        gevent.spawn(file_size, logfile)
 
 class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
     switch = False
@@ -659,7 +672,7 @@ class Application(object):
                                       '/memory-widget': MemoryWidgetNamespace,
                                       '/network-widget': NetworkWidgetNamespace,
                                       '/disk-widget': DisksWidgetNamespace,
-                                      '/logmanager': LogReaderNamespace,
+                                      '/logmanager': LogManagerNamespace,
             })
             if ((cur_ts - self.scan_ts).total_seconds() > self.scan_interval):
                 self.scan_ts = cur_ts
