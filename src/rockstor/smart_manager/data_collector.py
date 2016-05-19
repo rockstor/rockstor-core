@@ -121,8 +121,7 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
             'key' : 'logManager:logskilltailf', 'data': {
             'status' : self.livereading
             }
-        })
-        gevent.sleep(0)    
+        })    
     
     def find_rotating_logs(self):
         
@@ -155,7 +154,6 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
                 rotated_logs_list.append({'log' : rotated_key, 'logfamily' : log_key})
         
         self.emit('logManager:rotatedlogs', {'key': 'logManager:rotatedlogs', 'data': {'rotated_logs_list' : rotated_logs_list}})
-        gevent.sleep(0)
         
     def on_livereading(self, action):
 
@@ -191,7 +189,6 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
                 'recipient' : recipient
                 }
             })
-            gevent.sleep(0)
         
         gevent.spawn(logs_downloader, logs_queued, recipient)
 
@@ -287,7 +284,6 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
                     'content_size' : 1
                     }
                 })
-                gevent.sleep(0)
 
         log_path = self.build_log_path(logfile)
 
@@ -301,7 +297,6 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
         def file_size(logfile):
             file_size = path.getsize(self.build_log_path(logfile))
             self.emit('logManager:logsize', {'key': 'logManager:logsize', 'data': file_size})
-            gevent.sleep(0)
         
         gevent.spawn(file_size, logfile)
 
