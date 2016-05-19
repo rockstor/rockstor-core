@@ -113,10 +113,13 @@ LogsView = RockstorLayoutView.extend({
         var _this = this;
         if (data.recipient == 'download_response') {
             var response_text = 'Logs Archive ready for download - ';
-            response_text += '<a href="' + data.archive_name + '">Click to download</a>'
+            response_text += '<a href="' + data.archive_name + '" download>Click to download</a>'
             $('#' + data.recipient).html(response_text);
         } else {
-            $(location).attr('href', data.archive_name);
+			//On Log Reader we use a fake hidden link and after log download request
+			//we trigger a click on it
+			$('#reader-log-download').attr('href', data.archive_name);
+			$('#reader-log-download')[0].click();
         }
     },
 
