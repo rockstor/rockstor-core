@@ -1,0 +1,137 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<div class="container">
+<div class="row">
+	<div class="col-md-8" id="reader-block">
+		<div class="panel panel-default">
+                	<div class="panel-heading">
+                        	<h3 class="panel-title">Logs Reader</h3>
+                        </div>
+                        <div class="panel-body" id="log_funcs">
+				<form class="form-inline">
+					<div class="form-group">
+					<label class="inline">Reading method: </label>
+					<select class="form-control" id="read_type" name="read_type" rel="tooltip" title="Read log with tail last 200 lines(default), tail last 30 lines, cat(full file read) or tail -f (Live Log Reading)">
+                                                <option value="tail200"> tail -n 200</option>
+						<option value="tail30"> tail -n 30</option>
+                                                <option value="cat"> cat -n</option>
+						<option value="tailf"> tail -f</option>
+            				</select>
+					<label class="inline">Log file: </label>
+                                        <select class="form-control" id="logs_options" name="logs_options" rel="tooltip" title="Select which log to read">
+                                        {{print_logs_options}}
+					</select>&nbsp;
+					<input type="button" id="live-log" class="btn btn-primary" value="Read log">
+					</form>
+					</div>
+                        </div>
+		</div>
+
+	</div>
+</div>
+	<div class="row">
+	<div class="col-md-8">
+                <div class="panel panel-default">
+                        <div class="panel-heading">
+                                <h3 class="panel-title">Logs Downloader :: compressed packet builder</h3>
+                        </div>
+		<div class="panel-body">		
+		<div class="col-md-6">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">
+						Available Logs
+					</h3>
+				</div>
+				<div class="panel-body" id="avail_logs" style="overflow-y: auto; height: 170px;">
+				{{print_logs_divs}}
+				</div>
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">
+					Logs Download Queue
+					</h3>
+				</div>
+				<div class="panel-body" id="download_logs" style="overflow-y: auto; height: 170px;">
+				</div>
+			</div>
+		</div>
+		</div>
+		<div class="panel-footer">
+        		<div class="row">
+            			<div class="col-md-8">
+					<label class="inline" id="download_response"></label>
+				</div>
+				<div class="col-md-4 text-right">
+					<input type="button" id="download-logs" class="btn btn-primary" value="Download Logs Archive">
+				</div>
+        		</div>
+		</div>
+		</div>
+	</div>
+	</div>
+</div>
+<div id="log_reader" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="LogReaderLabel" aria-hidden="true">
+  <div class="modal-dialog" style="overflow-y: initial;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <a style="float: right; margin-right: 5px;" href="#" id="modal_resize">
+                <i class="glyphicon glyphicon-resize-full"></i>
+                </a>
+                <a style="float: right; margin-right: 5px;" href="#" id="code_increase_size">
+                <i class="glyphicon glyphicon-text-height"></i>
+                </a>
+                <a style="font-size: 8px; float: right; margin-right: 5px;" href="#" id="code_decrease_size">
+                <i class="glyphicon glyphicon-text-height"></i>
+                </a>
+	<div class="row">
+		<div class="col-md-5">
+        	<h4 id="LogReaderLabel">Content of selected log</h4>
+		</div>
+		<div class="col-md-4">
+		<h4>
+			<b>Content Size:</b>&nbsp;<span id="logsize"></span><br/>
+			<a href="#" id="reader-logs" name="reader-logs">Download full Log file <i class="glyphicon glyphicon-download-alt"></i></a>
+			<a style="visibility: hidden;" href="#" id="reader-log-download" name="reader-log-download" download>.</a>
+		</h4>
+		</div>
+	</div>
+      </div>
+      <div class="modal-body">
+	<pre style="overflow-y: auto; height: 300px;"><span><code style="font-size: 11px;" id="system_log" name="system_log"></code></span></pre>
+      </div>
+      <div class="text-center"><label>Log reading progress</label></div>
+      <div class="modal-footer text-center">
+	<div class="progress">
+	<div id="reader_progress" name="reader_progress" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+	0%
+    	</div>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
