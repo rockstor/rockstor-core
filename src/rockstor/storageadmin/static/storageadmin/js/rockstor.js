@@ -61,8 +61,8 @@ RockstorLayoutView = Backbone.View.extend({
 	$.when.apply($, allDependencies).done(function () {
 	    if (callback) callback.apply(context);
 	});
-    }
-
+    },
+    
 });
 
 
