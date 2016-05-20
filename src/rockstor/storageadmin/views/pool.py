@@ -85,6 +85,7 @@ class PoolMixin(object):
             'nospace_cache': None,
             'space_cache': None,
             'ssd': None,
+            'nossd': None,
             'ssd_spread': None,
             'thread_pool': int,
             'noatime': None,
