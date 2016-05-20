@@ -53,7 +53,7 @@ ServicesView = Backbone.View.extend({
 		_this.renderServices();
 		// Register function for socket endpoint
 		RockStorSocket.services = io.connect('/services', {'secure': true, 'force new connection': true});
-		RockStorSocket.addListener(_this.servicesStatuses, _this, 'services:get_services');
+		//RockStorSocket.addListener(_this.servicesStatuses, _this, 'services:get_services');
 	    }
 	});
 	return this;
@@ -99,8 +99,8 @@ ServicesView = Backbone.View.extend({
 	}
 	//Added columns definition for sorting purpose
 	$('table.data-table').DataTable({
-	    "iDisplayLength": 15,
-	    "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]],
+	    "iDisplayLength": 12,
+	    "aLengthMenu": [[12, 30, 45, -1], [12, 30, 45, "All"]],
 	    "columns": [
 	    null,
 	    { "orderDataType": "dom-checkbox" }

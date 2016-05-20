@@ -36,5 +36,5 @@ SnapshotsCommonView = RockstorLayoutView.extend({
 			_this.selectSnapshotWithName($(this).attr('data-name'), checked);
 		});
 		this.toggleDeleteButton();
-	}
+	},
 });
