@@ -58,7 +58,7 @@
                     {{getDuration this.end_ts receive_pending}}
                     {{/if}}
                 </td>
-                <td>{{this.kb_received}} KB at {{getRate this.end_ts this.receive_pending this.kb_received}} KB/sec.</td>
+                <td>{{humanReadableSize this.kb_received}} at {{getRate this.end_ts this.receive_pending this.kb_received}} /sec.</td>
             </tr>
           {{/each}}
         </tbody>
