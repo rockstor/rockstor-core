@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import systemctl
-from system.pkg_mgmt import install_pkg
 from django.db import transaction
 from base_service import BaseServiceDetailView
 import os
@@ -43,8 +42,6 @@ class SNMPServiceView(BaseServiceDetailView):
         e_msg = ('Failed to %s SNMP service due to system error.' %
                  command)
         with self._handle_exception(request, e_msg):
-            if (not os.path.exists('/usr/lib/systemd/system/snmpd.service')):
-                install_pkg('net-snmp')
             if (command == 'config'):
                 service = Service.objects.get(name=self.service_name)
                 config = request.data.get('config', {})
