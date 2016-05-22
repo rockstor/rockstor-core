@@ -794,7 +794,7 @@ def set_disk_spindown(device, spindown_time, apm_value,
     return True
 
 
-def get_dev_byid_name(device_name):
+def get_dev_byid_name(device_name, removePath=False):
     """
     When given a standard dev name eg sda will return the /dev/disk/by-id
     name, or None if error or no name available.
@@ -812,7 +812,8 @@ def get_dev_byid_name(device_name):
     :param device_name: eg sda but can also be /dev/sda or even the by-id name
     but only if the full path is specified with by-id
     :return: None if error or no DEVLINKS entry found or the full path by-id
-    name of the given device_name.
+    name of the given device_name with removePath default. Alternatively this
+    flag can be used to strip the /dev/disk/by-id from the returned value.
     """
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
@@ -824,8 +825,17 @@ def get_dev_byid_name(device_name):
         if len(fields) > 1:
             # we have at least 2 fields in this line
             if fields[0] == 'DEVLINKS':
-                # return the first value directly after DEVLINKS
-                return fields[1]
+                if not removePath:
+                    # return the first value directly after DEVLINKS (with path)
+                    logger.debug('get_dev_byid_name with path returning = %s', fields[1])
+                    return fields[1]
+                else:
+                    # strip the /dev/disk/by-id from the beginning.
+                    # for use in Disk.name db field for example.
+                    # works by tasking the last enement in the consequent list
+                    logger.debug('get_dev_byid_name without path returning = %s',
+                                 fields[1].replace('/', ' ').split()[-1])
+                    return fields[1].replace('/', ' ').split()[-1]
     # if no DEVLINKS value found or an error occurred.
     return None
 
