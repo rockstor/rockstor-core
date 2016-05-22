@@ -83,6 +83,10 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('getDuration', function(endTime, startTime){
 			return moment(endTime).from(moment(startTime));
 		});
+		
+		Handlebars.registerHelper('humanReadableSize', function(size){
+			return humanize.filesize(size * 1024);
+		});
 
 		Handlebars.registerHelper('getRate', function(endTime, startTime, kbReceived){
 			var d;
@@ -91,7 +95,7 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
 			} else {
 				d = moment().diff(moment(startTime))/1000;
 			}
-			return (kbReceived / d).toFixed(2);
+			return humanize.filesize((kbReceived / d).toFixed(2) * 1024);
 		});
 	}
 
