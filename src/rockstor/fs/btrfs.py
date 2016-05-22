@@ -57,7 +57,7 @@ def add_pool(pool, disks):
     """
     pool is a btrfs filesystem.
     """
-    disks_fp = ['/dev/' + d for d in disks]
+    disks_fp = ['/dev/disk/by-id/' + d for d in disks]
     cmd = [MKFS_BTRFS, '-f', '-d', pool.raid, '-m', pool.raid, '-L',
            pool.name, ]
     cmd.extend(disks_fp)
@@ -67,7 +67,8 @@ def add_pool(pool, disks):
 
 
 def get_pool_info(disk):
-    cmd = [BTRFS, 'fi', 'show', '/dev/%s' % disk]
+    # cmd = [BTRFS, 'fi', 'show', '/dev/%s' % disk]
+    cmd = [BTRFS, 'fi', 'show', '/dev/disk/by-id/%s' % disk]
     o, e, rc = run_command(cmd)
     pool_info = {'disks': [],}
     for l in o:
@@ -148,7 +149,7 @@ def mount_root(pool):
         raise Exception('Cannot mount Pool(%s) as it has no disks in it.' % pool.name)
     last_device = pool.disk_set.last()
     for device in pool.disk_set.all():
-        mnt_device = ('/dev/%s' % device.name)
+        mnt_device = ('/dev/disk/by-id/%s' % device.name)
         if (os.path.exists(mnt_device)):
             mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
             if (len(mnt_options) > 0):
@@ -232,7 +233,7 @@ def mount_share(share, mnt_pt):
     if (is_mounted(mnt_pt)):
         return
     mount_root(share.pool)
-    pool_device = ('/dev/%s' % share.pool.disk_set.first().name)
+    pool_device = ('/dev/disk/by-id/%s' % share.pool.disk_set.first().name)
     subvol_str = 'subvol=%s' % share.subvol_name
     create_tmp_dir(mnt_pt)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
@@ -240,7 +241,7 @@ def mount_share(share, mnt_pt):
 
 
 def mount_snap(share, snap_name, snap_mnt=None):
-    pool_device = ('/dev/%s' % share.pool.disk_set.first().name)
+    pool_device = ('/dev/disk/by-id/%s' % share.pool.disk_set.first().name)
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
     rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
@@ -782,17 +783,20 @@ def device_scan():
 
 def btrfs_uuid(disk):
     """return uuid of a btrfs filesystem"""
-    o, e, rc = run_command([BTRFS, 'filesystem', 'show', '/dev/%s' % disk])
+    o, e, rc = run_command(
+        [BTRFS, 'filesystem', 'show', '/dev/disk/by-id/%s' % disk])
     return o[0].split()[3]
 
 
 def btrfs_label(disk):
-    o, e, rc = run_command([BTRFS, 'filesystem', 'label', '/dev/%s' % disk])
+    o, e, rc = run_command(
+        [BTRFS, 'filesystem', 'label', '/dev/disk/by-id/%s' % disk])
     return o[0]
 
 
 def btrfs_importable(disk):
-    o, e, rc = run_command([BTRFS, 'check', '/dev/%s' % disk], throw=False)
+    o, e, rc = run_command([BTRFS, 'check', '/dev/disk/by-id/%s' % disk],
+                           throw=False)
     if (rc == 0):
         return True
     return False
@@ -1100,13 +1104,13 @@ def scan_disks(min_size):
 
 def wipe_disk(disk):
     # todo candidate for move to system/osi as not btrfs related
-    disk = ('/dev/%s' % disk)
+    disk = ('/dev/disk/by-id/%s' % disk)
     return run_command([WIPEFS, '-a', disk])
 
 
 def blink_disk(disk, total_exec, read, sleep):
     # todo candidate for move to system/osi as not btrfs related
-    DD_CMD = [DD, 'if=/dev/%s' % disk, 'of=/dev/null', 'bs=512',
+    DD_CMD = [DD, 'if=/dev/disk/by-id/%s' % disk, 'of=/dev/null', 'bs=512',
               'conv=noerror']
     p = subprocess.Popen(DD_CMD, shell=False, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)

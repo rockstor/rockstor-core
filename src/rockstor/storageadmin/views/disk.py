@@ -30,7 +30,8 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
-from system.osi import set_disk_spindown, enter_standby
+from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
+    get_devname
 from copy import deepcopy
 import uuid
 import json
@@ -74,10 +75,14 @@ class DiskMixin(object):
             # N.B. do not optimize by re-using uuid index as this could lead
             # to a non refreshed webui acting upon an entry that is different
             # from that shown to the user.
+            #todo - re-address in light of new by-id names which are much longer
+            #todo - so will cause collision, and hence false positive on missing
+            #todo - by having 32 char long name flag, ie add 'missing-' to this.
             do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
             # Delete duplicate or fake by serial number db disk entries.
             # It makes no sense to save fake serial number drives between scans
             # as on each scan the serial number is re-generated anyway.
+            # N.B. serial number len 48 assumed fake as uuid4 from scan_disks.
             if (do.serial in serial_numbers_seen) or (len(do.serial) == 48):
                 logger.info('Deleting duplicate or fake (by serial) Disk db '
                             'entry. Serial = %s' % do.serial)
@@ -100,15 +105,21 @@ class DiskMixin(object):
         for d in disks:
             # start with an empty disk object
             dob = None
+            # Convert our transient but just scanned so current sda type name
+            # to a more useful by-id type name as found in /dev/disk/by-id
+            byid_disk_name = get_dev_byid_name(d.name, True)
+            logger.debug('Converting %s to by-id of %s' % (d.name, byid_disk_name))
             # If the db has an entry with this disk's serial number then
             # use this db entry and update the device name from our recent scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
-                dob.name = d.name
+                #dob.name = d.name
+                dob.name = byid_disk_name
             else:
                 # We have an assumed new disk entry as no serial match in db.
                 # Build a new entry for this disk.
-                dob = Disk(name=d.name, serial=d.serial)
+                #dob = Disk(name=d.name, serial=d.serial)
+                dob = Disk(name=byid_disk_name, serial=d.serial)
             # Update the db disk object (existing or new) with our scanned info
             dob.size = d.size
             dob.parted = d.parted
@@ -212,6 +223,11 @@ class DiskMixin(object):
             # find all the not offline db entries
             if (not do.offline):
                 # We have an attached disk db entry
+                # Since our Disk.name model now uses by-id we need to convert
+                # this back to a /dev/vd*, /dev/md*, /dev/mmcblk* type name
+                # as a cheap evaluation of it's type ie virtio, md, or sdcard.
+                bus_based_devname = get_devname('/dev/disk/by-id/%s' % do.name)
+                logger.debug('bus-type-name for %s = %s' % (do.name, bus_based_devname))
                 if (re.match('vd|md|mmcblk', do.name) is not None):
                     # Virtio disks (named vd*), md devices (named md*), and
                     # an sdcard reader that provides devs named mmcblk* have
@@ -222,8 +238,10 @@ class DiskMixin(object):
                 # try to establish smart availability and status and update db
                 try:
                     # for non ata/sata drives
+                    #do.smart_available, do.smart_enabled = smart.available(
+                    #    do.name, do.smart_options)
                     do.smart_available, do.smart_enabled = smart.available(
-                        do.name, do.smart_options)
+                        bus_based_devname, do.smart_options)
                 except Exception, e:
                     logger.exception(e)
                     do.smart_available = do.smart_enabled = False
