@@ -25,7 +25,11 @@ from system.osi import get_disk_power_status, get_dev_byid_name, \
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
     pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
-    """typically sda, sdb etc.. max_length = 0 supports 100s of disks"""
+    """ Previously the name field contained sda, sdb etc..
+    Revised to contain device names for use with the udev created links at
+    /dev/disk/by-id/ which in turn are symlinks to sda, sdb etc.
+    eg ata-QEMU_HARDDISK_QM00005 ie mostly derived from model and serial number.
+    """
     name = models.CharField(max_length=64, unique=True)
     """total size in KB"""
     size = models.BigIntegerField(default=0)
