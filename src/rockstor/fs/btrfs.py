@@ -28,7 +28,8 @@ import signal
 import shutil
 import collections
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
-                        is_mounted, get_disk_serial, get_md_members)
+                        is_mounted, get_disk_serial, get_md_members,
+                        get_dev_byid_name)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
@@ -77,7 +78,14 @@ def get_pool_info(disk):
             pool_info['label'] = fields[1].strip("'")
             pool_info['uuid'] = fields[3]
         elif (re.match('\tdevid', l) is not None):
-            pool_info['disks'].append(l.split()[-1].split('/')[-1])
+            # We have a line starting wth <tab>devid, extract the dev name.
+            # Previously this would have been sda and used as is but we need
+            # it's by-id references as that is the new format for Disks.name.
+            # Original sda extraction:
+            # pool_info['disks'].append(l.split()[-1].split('/')[-1])
+            # Updated '/dev/sda' extraction to save on a split we no longer need
+            # and use this 'now' name to get our by-id name with path removed.
+            pool_info['disks'].append(get_dev_byid_name(l.split()[-1], True))
     return pool_info
 
 def pool_raid(mnt_pt):
