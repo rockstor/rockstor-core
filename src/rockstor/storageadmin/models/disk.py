@@ -75,7 +75,7 @@ class Disk(models.Model):
     @property
     def hdparm_setting(self, *args, **kwargs):
         try:
-            return read_hdparm_setting(get_dev_byid_name(self.name))
+            return read_hdparm_setting(str(self.name))
         except:
             return None
 

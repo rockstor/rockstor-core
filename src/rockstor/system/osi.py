@@ -647,10 +647,10 @@ def is_rotational(device_name, test=None):
     return rotational
 
 
-def get_disk_power_status(device_name):
+def get_disk_power_status(dev_byid):
     """
-    When given a disk name such as that stored in the db ie sda
-    we return it's current power state via hdparm -C /dev/<disk>
+    When given a disk name such as that stored in the db ie /dev/disk/by-id type
+    we return it's current power state via hdparm -C /dev/disk/by-id/<dev_byid>
     Possible states are:
     unknown - command not supported by disk
     active/idle - normal operation
@@ -661,15 +661,15 @@ def get_disk_power_status(device_name):
     any request will wake a fully sleeping drive.
     Drives in 'sleeping' mode typically require a hard or soft reset before
     becoming available for use, the kernel does this automatically however.
-    :param device_name: disk name as stored in db / Disk model eg sda
+    :param dev_byid: disk name as stored in db / Disk model ie without path
     :return: single word sting of state as indicated by hdparm -C /dev/<disk>
     and if we encounter an error line in the output we return unknown.
     """
     # if we use the -C -q switches then we have only one line of output:
     # hdparm -C -q /dev/sda
     # drive state is:  active/idle
-    out, err, rc = run_command([HDPARM, '-C', '-q', '/dev/%s' % device_name],
-                               throw=False)
+    out, err, rc = run_command(
+        [HDPARM, '-C', '-q', '/dev/disk/by-id/%s' % dev_byid], throw=False)
     if len(err) != 1:
         # In some instances an error can be returned even with rc=0.
         # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
@@ -797,7 +797,7 @@ def set_disk_spindown(device, spindown_time, apm_value,
 def get_dev_byid_name(device_name, removePath=False):
     """
     When given a standard dev name eg sda will return the /dev/disk/by-id
-    name, or None if error or no name available.
+    name, or None if error or no name available. Can optionally drop the path.
     Works by querying udev via udevadm info --query=property --name device_name
     The first line of which (DEVLINKS) is examined and parsed for the first
     entry which has been found to be the /dev/disk/by-id symlink to our
@@ -827,7 +827,6 @@ def get_dev_byid_name(device_name, removePath=False):
             if fields[0] == 'DEVLINKS':
                 if not removePath:
                     # return the first value directly after DEVLINKS (with path)
-                    logger.debug('get_dev_byid_name with path returning = %s', fields[1])
                     return fields[1]
                 else:
                     # strip the /dev/disk/by-id from the beginning.
@@ -1037,7 +1036,7 @@ def read_hdparm_setting(dev_byid):
     Looks through /etc/systemd/system/rockstor-hdparm service for any comment
     following a matching device entry and returns it if found. Returns None if
     no file or no matching entry or comment there after was found.
-    :param dev_byid: full path device name of by-id type
+    :param dev_byid: device name of by-id type without path
     :return: comment string immediately following an entry containing the given
     device name or None if None found or the systemd file didn't exist.
     """
@@ -1046,6 +1045,7 @@ def read_hdparm_setting(dev_byid):
     infile = '/etc/systemd/system/rockstor-hdparm.service'
     if not os.path.isfile(infile):
         return None
+    dev_byid_withPath = '/dev/disk/by-id/%s' % dev_byid
     dev_byid_found = False
     with open(infile) as ino:
         for line in ino.readlines():
@@ -1068,7 +1068,8 @@ def read_hdparm_setting(dev_byid):
                 # Also no device line will be of interest if below 4, this way
                 # we don't do slow re.match on non candidates.
                 continue
-            if re.match('ExecStart', line_fields[0]) and line_fields[-1] == dev_byid:
+            if re.match('ExecStart', line_fields[0]) \
+                    and line_fields[-1] == dev_byid_withPath:
                 # Found a line beginning with ExecStart and ending in dev_byid.
                 dev_byid_found = True
     return None
