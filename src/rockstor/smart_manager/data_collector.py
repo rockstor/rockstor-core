@@ -355,7 +355,7 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
                             'ios_progress': data[8],
                             'ms_ios': data[9],
                             'weighted_ios': data[10],
-                            'ts': str(datetime.utcnow().replace(tzinfo=utc))
+                            'ts': str(datetime.utcnow().replace(tzinfo=utc).isoformat())
                         }]
                     })
             return cur_stats
@@ -386,7 +386,7 @@ class CPUWidgetNamespace(BaseNamespace, BroadcastMixin):
             cpu_stats = {}
             cpu_stats['results'] = []
             vals = psutil.cpu_times_percent(percpu=True)
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=utc).isoformat()
             for i, val in enumerate(vals):
                 name = 'cpu%d' % i
                 cpu_stats['results'].append({
@@ -394,6 +394,7 @@ class CPUWidgetNamespace(BaseNamespace, BroadcastMixin):
                     'umode_nice': val.nice, 'smode': val.system,
                     'idle': val.idle, 'ts': str(ts)
                 })
+                logger.debug('Time is %s' % ts)
             self.emit('cpuWidget:cpudata', {
                 'key': 'cpuWidget:cpudata', 'data': cpu_stats
             })
@@ -426,7 +427,7 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
                     if (fields[0][:-1] not in interfaces):
                         continue
                     cur_stats[fields[0][:-1]] = fields[1:]
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=utc).isoformat()
             if (isinstance(prev_stats, dict)):
                 results = []
                 for interface in cur_stats.keys():
@@ -495,7 +496,7 @@ class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
                     elif (re.match('Dirty:', l) is not None):
                         dirty = int(l.split()[1])
                         break  # no need to look at lines after dirty.
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=utc).isoformat()
             self.emit('memoryWidget:memory', {
                 'key': 'memoryWidget:memory', 'data': {'results': [{
                     'total': total, 'free': free, 'buffers': buffers,
