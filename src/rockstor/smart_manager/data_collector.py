@@ -394,7 +394,6 @@ class CPUWidgetNamespace(BaseNamespace, BroadcastMixin):
                     'umode_nice': val.nice, 'smode': val.system,
                     'idle': val.idle, 'ts': str(ts)
                 })
-                logger.debug('Time is %s' % ts)
             self.emit('cpuWidget:cpudata', {
                 'key': 'cpuWidget:cpudata', 'data': cpu_stats
             })
