@@ -1075,16 +1075,16 @@ def read_hdparm_setting(dev_byid):
     return None
 
 
-def enter_standby(device_name):
+def enter_standby(dev_byid):
     """
-    Simple wrapper to execute hdparm -y /dev/device_name which requests that the
+    Simple wrapper to execute hdparm -y /dev/disk/by-id/device_name which requests that the
     named device enter 'standby' mode which usually means it will spin down.
     Should only be available if he power status of the device can be
     successfully read without errors (ui inforced)
-    :param device_name: device name as stored in db ie sda
+    :param dev_byid: device name as stored in db ie /dev/disk/by-id type
     :return: None or out, err, rc of command
     """
-    hdparm_command = [HDPARM, '-q', '-y', '%s' % get_devname(device_name, True)]
+    hdparm_command = [HDPARM, '-q', '-y', '/dev/disk/by-id/%s' % dev_byid]
     return run_command(hdparm_command)
 
 def hostid():
