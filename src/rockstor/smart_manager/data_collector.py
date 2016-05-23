@@ -445,9 +445,10 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
                             'colls': data[13], 'carrier': data[14],
                             'compressed_tx': data[15], 'ts': str(ts)
                         })
-                self.emit('networkWidget:network', {
-                    'key': 'networkWidget:network', 'data': {'results': results}
-                })
+                if len(results) > 0 :
+                    self.emit('networkWidget:network', {
+                        'key': 'networkWidget:network', 'data': {'results': results}
+                    })
             return cur_stats
 
         def send_network_stats():
