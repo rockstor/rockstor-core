@@ -37,6 +37,7 @@ PoolRemoveDisks = RockstorWizardPage.extend({
 		this.disks_template = window.JST.common_disks_table;
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
 		this.disks.on('reset', this.renderDisks, this);
+        this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -79,4 +80,10 @@ PoolRemoveDisks = RockstorWizardPage.extend({
 		this.model.set('diskNames', diskNames);
 		return $.Deferred().resolve();
 	},
+
+    initHandlebarHelpers: function () {
+        Handlebars.registerHelper('mathHelper', function (value, options) {
+            return parseInt(value) + 1;
+        });
+    }
 });
