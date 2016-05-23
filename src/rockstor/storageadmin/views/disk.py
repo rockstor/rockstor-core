@@ -108,7 +108,6 @@ class DiskMixin(object):
             # Convert our transient but just scanned so current sda type name
             # to a more useful by-id type name as found in /dev/disk/by-id
             byid_disk_name = get_dev_byid_name(d.name, True)
-            logger.debug('Converting %s to by-id of %s' % (d.name, byid_disk_name))
             # If the db has an entry with this disk's serial number then
             # use this db entry and update the device name from our recent scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
@@ -227,8 +226,6 @@ class DiskMixin(object):
                 # this back to a vd*, md*, mmcblk* type name
                 # as a cheap evaluation of it's type ie virtio, md, or sdcard.
                 bus_based_devname = get_devname('/dev/disk/by-id/%s' % do.name)
-                logger.debug(
-                    'bus-type-name for %s = %s' % (do.name, bus_based_devname))
                 if (re.match('vd|md|mmcblk', bus_based_devname) is not None):
                     # Virtio disks (named vd*), md devices (named md*), and
                     # an sdcard reader that provides devs named mmcblk* have
