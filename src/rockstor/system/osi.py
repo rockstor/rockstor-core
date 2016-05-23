@@ -598,9 +598,9 @@ def get_base_device(device, test_mode=False):
 def is_rotational(device_name, test=None):
     """
     When given a device_name a udevadmin lookup takes place to look for either:
-    E: ID_ATA_ROTATION_RATE_RPM non zero or ID_ATA_FEATURE_SET_AAM
-    AAM = Automatic Acoustic Mamanement - ie head speed / noise tradeoff
-    If neither is found for then the device is assumed to be non
+    E: ID_ATA_ROTATION_RATE_RPM non zero or ID_ATA_FEATURE_SET_AAM_CURRENT_VALUE
+    AAM = Automatic Acoustic Mamanement - ie head speed / noise trade off.
+    If neither is found then the device is assumed to be non
     rotational. This method appears more reliable than
     "cat /sys/block/sda/queue/rotational"
     and "lsblk -d -o name,rota" which will both often report usb sticks as
@@ -608,9 +608,18 @@ def is_rotational(device_name, test=None):
     N.B. we use --query=property and so have only 2 fields rather than 3 and
     no spaces, only '=' this simplifies the parsing required.
     :param device: string containing device name eg sda or /dev/sda, ie any
-    legal udevadm --name parameter.
+    legal udevadm --name parameter. N.B. in the case of by-id type names they
+    must contain a full path, by-id alone does not work.
     :return: True if rotational, false if error or unknown.
     """
+    # Possible improvement:
+    # We could change ID_ATA_FEATURE_SET_AAM_CURRENT_VALUE non zero value check
+    # to
+    # ID_ATA_FEATURE_SET_AAM_VENDOR_RECOMMENDED_VALUE
+    # ie to account of a current setting of zero on a rotational drive and
+    # assuming the RECOMMENDED value for all rotational devices with this
+    # feature = non zero. Needs more research on actual drive readings for these
+    # 2 values.
     rotational = False  # until we find otherwise
     if test is None:
         out, err, rc = run_command([UDEVADM, 'info', '--query=property',
@@ -719,16 +728,16 @@ def get_disk_APM_level(dev_byid):
     return 0
 
 
-def set_disk_spindown(device, spindown_time, apm_value,
+def set_disk_spindown(dev_byid, spindown_time, apm_value,
                       spindown_message='no comment'):
     """
     Takes a value to be used with hdparm -S to set disk spindown time for the
     device specified.
     Executes hdparm -S spindown_time and ensures the systemd script to do the
     same on boot is also updated. Note we do not restart the systemd service
-    to enact these changes in order to keep keep our drive intervention to a
-    minimum.
-    :param device: The name of a disk device as used in the db ie sda
+    to enact these changes in order to keep our drive intervention to a minimum.
+    :param dev_byid: The name of a disk device as used in the db ie by-id type
+    without a path.
     :param spindown_time: Integer received from settings form ie 240
     :param apm_value: value to be used with hdparm's -B parameter to set the
     drives APM level. Should be between 1-255 and will be ignored if not. When
@@ -739,21 +748,21 @@ def set_disk_spindown(device, spindown_time, apm_value,
     :return: False if an hdparm command was not possible ie inappropriate dev,
     or an error was return by the command, True otherwise.
     """
-    # hdparm -S works on for example /dev/sda3 so base_dev is not needed,
-    # but it does require a full path, ie sda3 doesn't work.
-    device_with_path = get_devname(device, True)
-    # md devices arn't offered a spindown config: unknown status from hdparm -C
+    # Deal elegantly with null dev_byid
+    if dev_byid is None:
+        return False
+    # hdparm -S works on partitions so base_dev is not needed, but it does
+    # require a full path ie /dev/disk/by-id/dev_byid; dev_by along is no good.
+    dev_byid_withPath = '/dev/disk/by-id/%s' % dev_byid
+    # md devices arn't offered a spindown config: unknown status from hdparm -C.
     # Their member disks are exposed on the Disks page so for the time being
     # their spin down times are addressed as regular disks are.
-    if device_with_path is None:
-        return False
     # Don't spin down non rotational devices, skip all and return True.
-    if is_rotational(device_with_path) is not True:
+    if is_rotational(dev_byid_withPath) is not True:
         logger.info(
             'Skipping hdparm settings: device not confirmed as rotational')
         return False
-    dev_byid = get_dev_byid_name(device_with_path)
-    # execute the -B hdparm command first as if it fails we can then not include
+    # Execute the -B hdparm command first as if it fails we can then not include
     # it in the final command in systemd as it will trip the whole command then.
     # todo - Check if only rc != 0 throws systemd execution ie do error returns
     # todo - also trip the script execution.
@@ -762,8 +771,8 @@ def set_disk_spindown(device, spindown_time, apm_value,
     # Also skip if we have received the remove entry flag of spindown_time = -1
     if (apm_value > 0 and apm_value < 256) and spindown_time != -1:
         apm_switch_list = ['-q', '-B%s' % apm_value]
-        hdparm_command = [HDPARM] + apm_switch_list + ['%s' % dev_byid]
-        # try running this -B only hdparm to see if it will run without
+        hdparm_command = [HDPARM] + apm_switch_list + ['%s' % dev_byid_withPath]
+        # Try running this -B only hdparm to see if it will run without
         # error or non zero return code.
         out, err, rc = run_command(hdparm_command, throw=False)
         if rc == 0 and len(err) == 1:
@@ -775,7 +784,7 @@ def set_disk_spindown(device, spindown_time, apm_value,
                          % (hdparm_command, err, rc))
     # setup -S hdparm command
     standby_switch_list = ['-q', '-S%s' % spindown_time]
-    hdparm_command = [HDPARM] + standby_switch_list + ['%s' % dev_byid]
+    hdparm_command = [HDPARM] + standby_switch_list + ['%s' % dev_byid_withPath]
     # Only run the command if we haven't received the spindown_time of -1
     # as this is our 'remove config' flag.
     if spindown_time != -1:
@@ -786,7 +795,7 @@ def set_disk_spindown(device, spindown_time, apm_value,
                          hdparm_command, err, rc))
             return False
     hdparm_command = [HDPARM] + switch_list + standby_switch_list + [
-        '%s' % dev_byid]
+        '%s' % dev_byid_withPath]
     # hdparm ran without issues or we are about to remove this devices setting
     # so attempt to edit rockstor-hdparm.service with the same entry
     if update_hdparm_service(hdparm_command, spindown_message) is not True:
