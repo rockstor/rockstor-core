@@ -224,11 +224,12 @@ class DiskMixin(object):
             if (not do.offline):
                 # We have an attached disk db entry
                 # Since our Disk.name model now uses by-id we need to convert
-                # this back to a /dev/vd*, /dev/md*, /dev/mmcblk* type name
+                # this back to a vd*, md*, mmcblk* type name
                 # as a cheap evaluation of it's type ie virtio, md, or sdcard.
                 bus_based_devname = get_devname('/dev/disk/by-id/%s' % do.name)
-                logger.debug('bus-type-name for %s = %s' % (do.name, bus_based_devname))
-                if (re.match('vd|md|mmcblk', do.name) is not None):
+                logger.debug(
+                    'bus-type-name for %s = %s' % (do.name, bus_based_devname))
+                if (re.match('vd|md|mmcblk', bus_based_devname) is not None):
                     # Virtio disks (named vd*), md devices (named md*), and
                     # an sdcard reader that provides devs named mmcblk* have
                     # no smart capability so avoid cluttering logs with
@@ -238,10 +239,8 @@ class DiskMixin(object):
                 # try to establish smart availability and status and update db
                 try:
                     # for non ata/sata drives
-                    #do.smart_available, do.smart_enabled = smart.available(
-                    #    do.name, do.smart_options)
                     do.smart_available, do.smart_enabled = smart.available(
-                        bus_based_devname, do.smart_options)
+                        do.name, do.smart_options)
                 except Exception, e:
                     logger.exception(e)
                     do.smart_available = do.smart_enabled = False

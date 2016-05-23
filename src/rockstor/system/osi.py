@@ -566,10 +566,28 @@ def md5sum(fpath):
     return md5.hexdigest()
 
 
+def get_base_device_byid(dev_byid, test_mode=False):
+    """ Initially a by-id type compatibility wrapper for get_base_device which
+    works with sda type names.
+    Required since the move to by-id format Disk.name db entries.
+    Should be improved upon as involves a double conversion and is called many
+    times. The replacement for this method might work by simply dropping the
+    '-part-#' element from a by-id formatted name if such an element is found.
+    """
+    base_dev_byid = ['', ]
+    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    # todo - replace inefficient double conversion with alternative method more
+    # todo - suited to by-id type naming.
+    base_dev = get_base_device(get_devname(dev_byid_withpath), test_mode)
+    if base_dev != ['']:
+        base_dev_byid[0] = get_dev_byid_name(base_dev[0])
+    return base_dev_byid
+
+
 def get_base_device(device, test_mode=False):
     """
     Helper function that returns the full path of the base device of a partition
-    or if given a base device then will return it's full path,
+    or if given a base device it will return it's full path,
     ie
     input sda3 output /dev/sda
     input sda output /dev/sda
@@ -759,12 +777,12 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
         return False
     # hdparm -S works on partitions so base_dev is not needed, but it does
     # require a full path ie /dev/disk/by-id/dev_byid; dev_by along is no good.
-    dev_byid_withPath = '/dev/disk/by-id/%s' % dev_byid
+    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
     # md devices arn't offered a spindown config: unknown status from hdparm -C.
     # Their member disks are exposed on the Disks page so for the time being
     # their spin down times are addressed as regular disks are.
     # Don't spin down non rotational devices, skip all and return True.
-    if is_rotational(dev_byid_withPath) is not True:
+    if is_rotational(dev_byid_withpath) is not True:
         logger.info('Skipping hdparm settings: device %s '
                     'not confirmed as rotational' % dev_byid)
         return False
@@ -777,7 +795,7 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
     # Also skip if we have received the remove entry flag of spindown_time = -1
     if (apm_value > 0 and apm_value < 256) and spindown_time != -1:
         apm_switch_list = ['-q', '-B%s' % apm_value]
-        hdparm_command = [HDPARM] + apm_switch_list + ['%s' % dev_byid_withPath]
+        hdparm_command = [HDPARM] + apm_switch_list + ['%s' % dev_byid_withpath]
         # Try running this -B only hdparm to see if it will run without
         # error or non zero return code.
         out, err, rc = run_command(hdparm_command, throw=False)
@@ -790,7 +808,7 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
                          % (hdparm_command, err, rc))
     # setup -S hdparm command
     standby_switch_list = ['-q', '-S%s' % spindown_time]
-    hdparm_command = [HDPARM] + standby_switch_list + ['%s' % dev_byid_withPath]
+    hdparm_command = [HDPARM] + standby_switch_list + ['%s' % dev_byid_withpath]
     # Only run the command if we haven't received the spindown_time of -1
     # as this is our 'remove config' flag.
     if spindown_time != -1:
@@ -801,7 +819,7 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
                          hdparm_command, err, rc))
             return False
     hdparm_command = [HDPARM] + switch_list + standby_switch_list + [
-        '%s' % dev_byid_withPath]
+        '%s' % dev_byid_withpath]
     # hdparm ran without issues or we are about to remove this devices setting
     # so attempt to edit rockstor-hdparm.service with the same entry
     if update_hdparm_service(hdparm_command, spindown_message) is not True:
@@ -1060,7 +1078,7 @@ def read_hdparm_setting(dev_byid):
     infile = '/etc/systemd/system/rockstor-hdparm.service'
     if not os.path.isfile(infile):
         return None
-    dev_byid_withPath = '/dev/disk/by-id/%s' % dev_byid
+    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
     dev_byid_found = False
     with open(infile) as ino:
         for line in ino.readlines():
@@ -1084,7 +1102,7 @@ def read_hdparm_setting(dev_byid):
                 # we don't do slow re.match on non candidates.
                 continue
             if re.match('ExecStart', line_fields[0]) \
-                    and line_fields[-1] == dev_byid_withPath:
+                    and line_fields[-1] == dev_byid_withpath:
                 # Found a line beginning with ExecStart and ending in dev_byid.
                 dev_byid_found = True
     return None
