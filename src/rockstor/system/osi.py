@@ -688,28 +688,28 @@ def get_disk_power_status(dev_byid):
     return 'unknown'
 
 
-def get_disk_APM_level(device_name):
+def get_disk_APM_level(dev_byid):
     """
-    When given a disk name such as that stored in the db ie sda
-    we return it's current APM level via hdparm -B /dev/<device_name>
+    When given a disk name such as that stored in the db ie by-id type
+    we return it's current APM level via hdparm -B /dev/disk/by-id/<dev_byid>
     Possible return values from the command are:
     1 to 254 ie min to max power use
     'off' = equivalent to 255 setting
     If we receive an error message, can happen even with rc=0, we ignore any
     reading and return 0. We also translate the 'off' setting back to it's
     number equivalent
-    :param device_name: disk name as stored in db / Disk model eg sda
+    :param dev_byid: disk name as stored in db / Disk model ie by-id type
     :return: APM setting read from the drive ie 1 - 255 (off is translated to
     it's setting equivalent of 255. If there is an error, such as can happen
     when APM is not supported, then we return 0.
     """
     # if we use the -B -q switches then we have only one line of output:
-    # hdparm -B -q /dev/sda
+    # hdparm -B -q /dev/disk/by-id/dev_byid
     #  APM_level<tab>= 192
     #  APM_level<tab>= off
     #  APM_level<tab>= not supported
-    out, err, rc = run_command([HDPARM, '-B', '-q', '/dev/%s' % device_name],
-                               throw=False)
+    out, err, rc = run_command(
+        [HDPARM, '-B', '-q', '/dev/disk/by-id/%s' % dev_byid], throw=False)
     if len(err) != 1:
         # In some instances an error can be returned even with rc=0.
         # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
