@@ -111,7 +111,7 @@ def cur_devices(mnt_pt):
 
 
 def resize_pool(pool, dev_list, add=True):
-    dev_list = ['/dev/' + d for d in dev_list]
+    dev_list = ['/dev/disk/by-id/' + d for d in dev_list]
     root_mnt_pt = mount_root(pool)
     cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
