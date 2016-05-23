@@ -765,8 +765,8 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
     # their spin down times are addressed as regular disks are.
     # Don't spin down non rotational devices, skip all and return True.
     if is_rotational(dev_byid_withPath) is not True:
-        logger.info(
-            'Skipping hdparm settings: device not confirmed as rotational')
+        logger.info('Skipping hdparm settings: device %s '
+                    'not confirmed as rotational' % dev_byid)
         return False
     # Execute the -B hdparm command first as if it fails we can then not include
     # it in the final command in systemd as it will trip the whole command then.
