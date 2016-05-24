@@ -842,6 +842,7 @@ def get_dev_byid_name(device_name, removePath=False):
     name of the given device_name with removePath default. Alternatively this
     flag can be used to strip the /dev/disk/by-id from the returned value.
     """
+    logger.debug('get_dev_byid_name called with %s' % device_name)
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
         throw=False)
