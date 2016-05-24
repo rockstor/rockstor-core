@@ -242,7 +242,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	event.preventDefault();
 	this.$('#ph-compression-info').html(this.compression_info_edit_template({
 	    pool: this.pool,
-	    cOpts: this.cOpts
+	    cOpts: this.cOpts,
+	    poolMtOptions: this.pool.get('mnt_options'),
+	    poolCompression: this.pool.get('compression')
 	}));
 	this.showCompressionTooltips();
     },
@@ -250,7 +252,11 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     editCompressionCancel: function(event) {
 	event.preventDefault();
 	this.hideCompressionTooltips();
-	this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
+	this.$('#ph-compression-info').html(this.compression_info_template({
+		pool: this.pool, 
+		poolCompression: this.pool.get('compression'),
+		poolMtOptions: this.pool.get('mnt_options')
+	}));
     },
 
     updateCompression: function(event) {
@@ -320,6 +326,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     initHandlebarHelpers: function(){
+    	var _this = this;
 
 	Handlebars.registerHelper('display_pool_details', function(){
 	    var html = '';
@@ -360,13 +367,13 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	});
 
 	Handlebars.registerHelper('display_compression_options', function(){
-	    var html = '',
-		_this = this;
+	    var html = '';
+	    var __this = this;
 	    _.each(_.keys(_this.cOpts), function(c) {
-		if (this.poolCompression == c) {
-		    html += '<option value=' + c + 'selected="selected">' + _this.cOpts[c] + '</option>';
+		if (__this.poolCompression == c) {
+		    html += '<option value="' + c + '" selected="selected">' + _this.cOpts[c] + '</option>';
 		} else {
-		    html += '<option value=' + c + '>' + _this.cOpts[c] + '</option>';
+		    html += '<option value="' + c + '">' + _this.cOpts[c] + '</option>';
 		}
 	    });
 	    return new Handlebars.SafeString(html);
