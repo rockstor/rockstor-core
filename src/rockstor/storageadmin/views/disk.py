@@ -107,7 +107,7 @@ class DiskMixin(object):
             dob = None
             # Convert our transient but just scanned so current sda type name
             # to a more useful by-id type name as found in /dev/disk/by-id
-            byid_disk_name = get_dev_byid_name(d.name, True)
+            byid_disk_name, is_byid = get_dev_byid_name(d.name, True)
             # If the db has an entry with this disk's serial number then
             # use this db entry and update the device name from our recent scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
@@ -118,6 +118,11 @@ class DiskMixin(object):
                 # We have an assumed new disk entry as no serial match in db.
                 # Build a new entry for this disk.
                 #dob = Disk(name=d.name, serial=d.serial)
+                # N.B. we may want to force a fake-serial here if is_byid False,
+                # that way we flag as unusable disk as no by-id type name found.
+                # It may already have been set though as the only by-id
+                # failures so far are virtio disks with no serial so scan_disks
+                # will have already given it a fake serial in d.serial.
                 dob = Disk(name=byid_disk_name, serial=d.serial)
             # Update the db disk object (existing or new) with our scanned info
             dob.size = d.size
