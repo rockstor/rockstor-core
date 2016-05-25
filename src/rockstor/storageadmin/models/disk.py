@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import Pool
-from system.osi import get_disk_power_status, get_dev_byid_name, \
-    read_hdparm_setting, get_disk_APM_level
+from system.osi import get_disk_power_status, read_hdparm_setting, \
+    get_disk_APM_level
 
 
 class Disk(models.Model):
