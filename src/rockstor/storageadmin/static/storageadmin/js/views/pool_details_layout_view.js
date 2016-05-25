@@ -99,13 +99,13 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		pool: this.pool,
 		poolMtOptions: this.pool.get('mnt_options'),
 		poolCompression: this.pool.get('compression'),
-		cOpts: this.cOpts
+		cOpts: this.cOpts.toJSON(),
+
+		
 	    }));
 	    this.showCompressionTooltips(); } else {
 		this.$('#ph-compression-info').html(this.compression_info_template({
-		    pool: this.pool,
-		    poolCompression: this.pool.get('compression'),
-		    poolMtOptions: this.pool.get('mnt_options'),
+		    pool: this.pool.toJSON(),
 		})); }
 
 	this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool:
@@ -244,7 +244,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	    pool: this.pool,
 	    cOpts: this.cOpts,
 	    poolMtOptions: this.pool.get('mnt_options'),
-	    poolCompression: this.pool.get('compression')
+	    poolCompression: this.pool.get('compression'),
 	}));
 	this.showCompressionTooltips();
     },
@@ -253,9 +253,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	event.preventDefault();
 	this.hideCompressionTooltips();
 	this.$('#ph-compression-info').html(this.compression_info_template({
-		pool: this.pool, 
-		poolCompression: this.pool.get('compression'),
-		poolMtOptions: this.pool.get('mnt_options')
+		pool: this.pool.toJSON(), 
 	}));
     },
 
@@ -335,38 +333,23 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	    html += 'Raid Configuration: <strong>' + this.model.get('raid') + '</strong>';
 	    return new Handlebars.SafeString(html);
 	});
-
-	Handlebars.registerHelper('display_compression_details', function(){
-	    var html = '';
-	    html += '<table>';
-	    html += '<tr>';
-	    html += '<td>Compression algorithm:</td>';
-	    html += '<td>';
-	    if (this.poolCompression == 'no') {
-		html += '<strong>None</strong>';
-	    } else if(this.poolCompression != null){
-		html += '<strong>' + this.poolCompression + '</strong>';
+	
+	
+	Handlebars.registerHelper('poolCompressionNone', function(compression,opts){
+	    if (compression == 'no') {
+	    	return opts.fn(this);
 	    }
-	    html += '</td>';
-	    html += '</tr>';
-	    html += '<tr>';
-	    html += '<td>Extra mount options:</td>';
-	    html += '<td>';
-	    if (_.isUndefined(this.poolMtOptions) || _.isNull(this.poolMtOptions) || _.isEmpty(this.poolMtOptions)) {
-		html += '<strong>None</strong>';
-	    } else {
-		html += '<strong>' + this.poolMtOptions + '</strong>';
-	    }
-	    html += '</td>';
-	    html += '</tr>';
-	    html += '</table>';
-	    html += '<a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>';
-
-
-	    return new Handlebars.SafeString(html);
+	    return opts.inverse(this);
 	});
-
-	Handlebars.registerHelper('display_compression_options', function(){
+	
+	Handlebars.registerHelper('displayMtOptions', function(mtOptions,opts){
+	if (_.isUndefined(mtOptions) || _.isNull(mtOptions) || _.isEmpty(mtOptions)) {
+		return opts.fn(this);
+	}  
+		return opts.inverse(this);
+	});
+	
+	 Handlebars.registerHelper('display_compression_options', function(){
 	    var html = '';
 	    var __this = this;
 	    _.each(_.keys(_this.cOpts), function(c) {
@@ -377,7 +360,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		}
 	    });
 	    return new Handlebars.SafeString(html);
-	});
+	}); 
 
 	Handlebars.registerHelper('disks_insidePools_tbody', function(){
 	    var html = '',

@@ -1,1 +1,28 @@
-{{display_compression_details}}
+{{!--display_compression_details--}}
+<table>
+    <tr>
+        <td>Compression algorithm:</td>
+        <td>
+        <strong>
+        {{#poolCompressionNone pool.compression}}
+            None
+         {{else}}
+            {{pool.compression}}
+        {{/poolCompressionNone}}
+        </strong>
+        </td>
+    </tr>
+    <tr>
+        <td>Extra mount options:</td>
+        <td>
+        <strong>
+        {{#displayMtOptions pool.mnt_options}}
+            None
+        {{else}}
+            {{pool.mnt_options}}
+        {{/displayMtOptions}}
+        </td>
+    </tr>
+        </table>
+        <a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
+
