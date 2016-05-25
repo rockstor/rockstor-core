@@ -1,14 +1,13 @@
-{{!--display_compression_details--}}
 <table>
     <tr>
         <td>Compression algorithm:</td>
         <td>
         <strong>
-        {{#poolCompressionNone pool.compression}}
+        {{#isPoolCompressionNone pool.compression}}
             None
          {{else}}
             {{pool.compression}}
-        {{/poolCompressionNone}}
+        {{/isPoolCompressionNone}}
         </strong>
         </td>
     </tr>
@@ -16,13 +15,13 @@
         <td>Extra mount options:</td>
         <td>
         <strong>
-        {{#displayMtOptions pool.mnt_options}}
+        {{#isMntOptionNone pool.mnt_options}}
             None
         {{else}}
             {{pool.mnt_options}}
-        {{/displayMtOptions}}
+        {{/isMntOptionNone}}
         </td>
     </tr>
-        </table>
-        <a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
+</table>
+<a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
 
