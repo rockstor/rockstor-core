@@ -85,5 +85,8 @@ PoolRemoveDisks = RockstorWizardPage.extend({
         Handlebars.registerHelper('mathHelper', function (value, options) {
             return parseInt(value) + 1;
         });
+        Handlebars.registerHelper('humanReadableSize', function(diskSize){
+            return humanize.filesize(diskSize * 1024);
+        });
     }
 });
