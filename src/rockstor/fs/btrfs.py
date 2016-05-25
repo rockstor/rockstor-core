@@ -68,6 +68,18 @@ def add_pool(pool, disks):
 
 
 def get_pool_info(disk):
+    """
+    Extracts any pool information by running btrfs fi show <disk> and collates
+    the results by 'Label', 'uuid', and current boot disk name. The disk name
+    is then translated to the by-id type found in /dev/disk/by-id so that it's
+    counterparts in the db's Disk.name field can be found.
+    N.B. devices without serial may have no by-id counterpart.
+    Used by CommandView()._refresh_pool_state() and
+    DiskDetailView()._btrfs_disk_import
+    :param disk: by-id disk name without path
+    :return: a dictionary with keys of 'disks', 'label', and 'uuid';
+    disks keys a list of devices, while label and uuid keys are for strings.
+    """
     # cmd = [BTRFS, 'fi', 'show', '/dev/%s' % disk]
     cmd = [BTRFS, 'fi', 'show', '/dev/disk/by-id/%s' % disk]
     o, e, rc = run_command(cmd)
@@ -85,7 +97,12 @@ def get_pool_info(disk):
             # pool_info['disks'].append(l.split()[-1].split('/')[-1])
             # Updated '/dev/sda' extraction to save on a split we no longer need
             # and use this 'now' name to get our by-id name with path removed.
-            pool_info['disks'].append(get_dev_byid_name(l.split()[-1], True))
+            # This is required as that is how device names  are stored in the
+            # db Disk.name so that we can locate a drive and update it's pool
+            # field reference.
+            dev_byid, is_byid = get_dev_byid_name(l.split()[-1], True)
+            pool_info['disks'].append(dev_byid)
+    logger.debug('get_pool_info returning %s' % pool_info)
     return pool_info
 
 def pool_raid(mnt_pt):
@@ -98,7 +115,7 @@ def pool_raid(mnt_pt):
             raid_d[fields[0][:-1].lower()] = fields[1][:-1].lower()
     if (raid_d['metadata'] == 'single'):
         raid_d['data'] = raid_d['metadata']
-    return raid_d;
+    return raid_d
 
 def cur_devices(mnt_pt):
     devices = []
@@ -564,9 +581,9 @@ def qgroup_create(pool):
 def qgroup_destroy(qid, mnt_pt):
     o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt])
     for l in o:
-        if (re.match(qid, l) is not None and
-            l.split()[0] == qid):
-            return run_command([BTRFS, 'qgroup', 'destroy', qid, mnt_pt], log=True)
+        if (re.match(qid, l) is not None and l.split()[0] == qid):
+            return run_command([BTRFS, 'qgroup', 'destroy', qid, mnt_pt],
+                               log=True)
     return False
 
 

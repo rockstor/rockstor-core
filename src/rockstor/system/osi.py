@@ -570,11 +570,12 @@ def get_base_device_byid(dev_byid, test_mode=False):
     """
     base_dev_byid = ['', ]
     dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
-    # todo - replace inefficient double conversion with alternative method more
-    # todo - suited to by-id type naming.
+    #todo - replace inefficient double conversion with alternative method more
+    #todo - suited to by-id type naming or maintain this as a fallback when
+    #todo - no by-id type name is availalbe.
     base_dev = get_base_device(get_devname(dev_byid_withpath), test_mode)
     if base_dev != ['']:
-        base_dev_byid[0] = get_dev_byid_name(base_dev[0])
+        base_dev_byid[0], is_byid = get_dev_byid_name(base_dev[0])
     return base_dev_byid
 
 
@@ -821,26 +822,35 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
     return True
 
 
-def get_dev_byid_name(device_name, removePath=False):
+def get_dev_byid_name(device_name, remove_path=False):
     """
     When given a standard dev name eg sda will return the /dev/disk/by-id
-    name, or None if error or no name available. Can optionally drop the path.
+    name, or the original device_name and False as the second member of the
+    returned tuple if an error occurred or no by-id type name was available.
+    N.B. This latter condition is found with virtio devices that have no serial.
+    Can optionally drop the path via the removePath parameter flag.
     Works by querying udev via udevadm info --query=property --name device_name
     The first line of which (DEVLINKS) is examined and parsed for the first
     entry which has been found to be the /dev/disk/by-id symlink to our
     device_name eg:
     DEVLINKS=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00005
     /dev/disk/by-path/pci-0000:00:05.0-ata-1.0
-    In the above example we have the by-id name made from type, model and serial
+    In the above example we have the by-id name made from type, model, & serial
     and a second by-path entry which is not used here.
-    N.B. As the subsystem of the device is embeded in the by-id name a drive's
+    N.B. As the subsystem of the device is embedded in the by-id name a drive's
     by-id path will change if for example it is plugged in via usb rather than
     ata subsystem.
     :param device_name: eg sda but can also be /dev/sda or even the by-id name
-    but only if the full path is specified with by-id
-    :return: None if error or no DEVLINKS entry found or the full path by-id
-    name of the given device_name with removePath default. Alternatively this
-    flag can be used to strip the /dev/disk/by-id from the returned value.
+    but only if the full path is specified with the by-id type name.
+    :param remove_path: this flag can be used to strip the /dev/disk/by-id from the
+    by-id returned value, in the case of an error or no DEVLINKS entry then the
+    path strip flag will still be honoured but applied instead to the original
+    'device_name'.
+    :return: tuple of device_name and a boolean: where the device name is either
+    the by-id name (with or without path as per remove_path) or in the case of
+    an error or no DEVLINKS entry then the original device_name (with or without
+    path as per remove_path). The second boolean element of the tuple indicates
+    if a DEVLINKS entry was found. ie is_byid
     """
     logger.debug('get_dev_byid_name called with %s' % device_name)
     out, err, rc = run_command(
@@ -853,18 +863,30 @@ def get_dev_byid_name(device_name, removePath=False):
         if len(fields) > 1:
             # we have at least 2 fields in this line
             if fields[0] == 'DEVLINKS':
-                if not removePath:
+                if not remove_path:
                     # return the first value directly after DEVLINKS (with path)
-                    return fields[1]
+                    logger.debug('get_dev_byid_name returning DEVLINKS with path of %s' % fields[1])
+                    return fields[1], True
                 else:
                     # strip the /dev/disk/by-id from the beginning.
                     # for use in Disk.name db field for example.
                     # works by tasking the last enement in the consequent list
                     logger.debug('get_dev_byid_name without path returning = %s',
                                  fields[1].replace('/', ' ').split()[-1])
-                    return fields[1].replace('/', ' ').split()[-1]
-    # if no DEVLINKS value found or an error occurred.
-    return None
+                    return fields[1].replace('/', ' ').split()[-1], True
+    # If no DEVLINKS value found or an error occurred we return the device_name
+    # and honour our path strip request if we can.
+    if remove_path:
+        # Split original name by path delimiter char '/'
+        device_name_fields = device_name.split('/')
+        if len(device_name_fields) > 1:
+            # Original device_name has path delimiters in: assume it has a path.
+            logger.debug('get_dev_byid_name stripping path on original name and returning %s' % device_name_fields[-1])
+            return device_name_fields[-1], False
+    # We are here due to error or no DEVLINKS found and no removepath request
+    # so return whatever we were passed with False to signify this condition.
+    logger.debug('get_dev_byid_name returning original name as is %s' %device_name)
+    return device_name, False
 
 def get_devname_old(device_name):
     """
