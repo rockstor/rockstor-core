@@ -86,13 +86,7 @@ SnapshotsView = SnapshotsCommonView.extend({
 	    placement: 'bottom'
 	});
 
-	//this.renderDataTables();
-	//renderDataTables: function(event){
-		$('table.data-table').DataTable({
-		    "iDisplayLength": 5,
-		    "aLengthMenu": [[5, 10, 45, -1], [5, 10, 45, "All"]]
-		});
-	//},
+	this.renderDataTables();
 
 	return this;
     },

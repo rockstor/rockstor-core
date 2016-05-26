@@ -37,4 +37,11 @@ SnapshotsCommonView = RockstorLayoutView.extend({
 		});
 		this.toggleDeleteButton();
 	},
+	
+	renderDataTables: function(event){
+		$('table.data-table').DataTable({
+		    "iDisplayLength": 15,
+		    "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]],
+		});
+	},
 });
