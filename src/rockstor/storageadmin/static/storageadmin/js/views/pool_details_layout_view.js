@@ -82,7 +82,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 			isPoolNameRockstor: poolNameIsRockstor,
 		}));
 
-		this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool });
+		this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool.toJSON() });
 		this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
 		this.subviews['pool-scrubs'] = new PoolScrubTableModule({poolscrubs: this.poolscrubs, pool: this.pool, parentView: this });
 		this.subviews['pool-rebalances'] = new PoolRebalanceTableModule({poolrebalances: this.poolrebalances, pool: this.pool, parentView: this });
@@ -318,16 +318,11 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		var _this = this;
 
-		Handlebars.registerHelper('display_pool_details', function(){
-			var html = '';
-			html += '<h3>Details</h3>';
-			html += 'Created on <strong>' + moment(this.model.get('toc')).format(RS_DATE_FORMAT) + '</strong><br/>';
-			html += 'Raid Configuration: <strong>' + this.model.get('raid') + '</strong>';
-			return new Handlebars.SafeString(html);
+		Handlebars.registerHelper('getPoolCreationDate', function(date){
+			return moment(date).format(RS_DATE_FORMAT);
 		});
-
+		
 		Handlebars.registerHelper('isPoolCompressionNone', function(compression,opts){
 			if (compression == 'no') {
 				return opts.fn(this);
