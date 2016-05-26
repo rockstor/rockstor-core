@@ -105,7 +105,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 				})); }
 
 		this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool:
-			this.pool})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
+			this.pool.toJSON()})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
 			(!_.isUndefined(this.cView) && this.cView == 'resize') { // scroll to resize section
 				$('#content').scrollTop($('#ph-resize-pool-info').offset().top); }
 
@@ -349,16 +349,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 			return opts.inverse(this);
 		});
 
-		Handlebars.registerHelper('disks_insidePools_tbody', function(){
-			var html = '',
-			_this = this;
-			_.each(_this.pool.get('disks'), function(disk, i) {
-				html += '<tr>';
-				html += '<td>' + disk.name + '</td>';
-				html += '<td>' + humanize.filesize(disk.size*1024) + '</td>';
-				html += '</tr>';
-			});
-			return new Handlebars.SafeString(html);
+		Handlebars.registerHelper('humanReadableSize', function(size){
+			return humanize.filesize(size * 1024);
 		});
 	}
 });
