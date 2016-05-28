@@ -77,13 +77,14 @@ class DiskMixin(object):
             # from that shown to the user.
             #todo - re-address in light of new by-id names which are much longer
             #todo - so will cause collision, and hence false positive on missing
-            #todo - by having 32 char long name flag, ie add 'missing-' to this.
+            #todo - by having 32 char long name flag, ie add 'detached-disk-'.
             do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
             # Delete duplicate or fake by serial number db disk entries.
             # It makes no sense to save fake serial number drives between scans
-            # as on each scan the serial number is re-generated anyway.
-            # N.B. serial number len 48 assumed fake as uuid4 from scan_disks.
-            if (do.serial in serial_numbers_seen) or (len(do.serial) == 48):
+            # as on each scan the serial number is re-generated (fake) anyway.
+            # Serial numbers beginning with 'fake-serial-' are from scan_disks.
+            if (do.serial in serial_numbers_seen) or (
+                    re.match('fake-serial-', do.serial) is not None):
                 logger.info('Deleting duplicate or fake (by serial) Disk db '
                             'entry. Serial = %s' % do.serial)
                 do.delete()  # django >=1.9 returns a dict of deleted items.
