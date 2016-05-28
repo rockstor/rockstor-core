@@ -75,10 +75,7 @@ class DiskMixin(object):
             # N.B. do not optimize by re-using uuid index as this could lead
             # to a non refreshed webui acting upon an entry that is different
             # from that shown to the user.
-            #todo - re-address in light of new by-id names which are much longer
-            #todo - so will cause collision, and hence false positive on missing
-            #todo - by having 32 char long name flag, ie add 'detached-disk-'.
-            do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
+            do.name = 'detached-' + str(uuid.uuid4()).replace('-', '')
             # Delete duplicate or fake by serial number db disk entries.
             # It makes no sense to save fake serial number drives between scans
             # as on each scan the serial number is re-generated (fake) anyway.
