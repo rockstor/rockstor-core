@@ -33,8 +33,25 @@ var Disk = Backbone.Model.extend({
     },
     available: function () {
         return _.isNull(this.get('pool')) && !this.get('parted') && !this.get('offline') && _.isNull(this.get('btrfs_uuid'));
+    },
+    isSerialUsable: function () {
+        // Simple disk serial validator to return true unless the given disk
+        // serial number looks fake or untrustworthy.
+        // In the case of a repeat or missing serial scan_disks() will use a
+        // placeholder of fake-serial-<uuid4> so look for this signature text.
+        var diskSerial = this.get('serial')
+        if (diskSerial.substring(0, 12) == 'fake-serial-') {
+            return false;
+        }
+        // Observed in a 4 bay ORICO USB 3.0 enclosure that obfuscated all it's
+        // disk serial numbers and replaced them with '000000000000'.
+        if (diskSerial == '000000000000') {
+            return false;
+        }
+        return true;
     }
 });
+
 var DiskCollection = RockStorPaginatedCollection.extend({
     model: Disk,
     baseUrl: '/api/disks',
