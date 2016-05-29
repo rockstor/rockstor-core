@@ -59,7 +59,11 @@ AddPoolView = Backbone.View.extend({
         this.filteredCollection = _.reject(this.collection.models, function (disk) {
             return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid')) && isSerialUsable(disk.get('serial'));
         });
-        
+
+        // N.B. the isSerialUsable() code below is now duplicated in the
+        // Backbone Disk model as the property isSerialUsable()
+        // storageadmin/static/storageadmin/js/models/models.js
+        // It would be better not to have this duplication if possible.
         function isSerialUsable(diskSerialNumber) {
             // Simple disk serial validator to return true unless the given disk
             // serial number looks fake or untrustworthy.
