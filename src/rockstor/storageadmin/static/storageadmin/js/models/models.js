@@ -25,16 +25,14 @@
  */
 
 // Models and Collections
-var Setup = Backbone.Model.extend({
-
-});
+var Setup = Backbone.Model.extend({});
 
 var Disk = Backbone.Model.extend({
-    url: function() {
-	return '/api/disks/' + this.get('diskName');
+    url: function () {
+        return '/api/disks/' + this.get('diskName');
     },
-    available: function() {
-	return _.isNull(this.get('pool')) && !this.get('parted') && !this.get('offline') && _.isNull(this.get('btrfs_uuid'));
+    available: function () {
+        return _.isNull(this.get('pool')) && !this.get('parted') && !this.get('offline') && _.isNull(this.get('btrfs_uuid'));
     }
 });
 var DiskCollection = RockStorPaginatedCollection.extend({
@@ -43,23 +41,23 @@ var DiskCollection = RockStorPaginatedCollection.extend({
 });
 
 var Pool = Backbone.Model.extend({
-    url: function() {
-	return '/api/pools/' + this.get('poolName') + '/';
+    url: function () {
+        return '/api/pools/' + this.get('poolName') + '/';
     },
-    sizeGB: function() {
-	return this.get('size') / (1024*1024);
+    sizeGB: function () {
+        return this.get('size') / (1024 * 1024);
     },
-    freeGB: function() {
-	return this.get('free') / (1024*1024);
+    freeGB: function () {
+        return this.get('free') / (1024 * 1024);
     },
-    usedGB: function() {
-	return (this.get('size') - this.get('free')) / (1024*1024);
+    usedGB: function () {
+        return (this.get('size') - this.get('free')) / (1024 * 1024);
     }
 });
 
 var SmartInfo = Backbone.Model.extend({
-    url: function() {
-	return '/api/disks/smart/info/' + this.get('diskName');
+    url: function () {
+        return '/api/disks/smart/info/' + this.get('diskName');
     }
 });
 
@@ -69,8 +67,8 @@ var PoolCollection = RockStorPaginatedCollection.extend({
 });
 
 var SupportCase = Backbone.Model.extend({
-    url: function() {
-	return '/api/support/' + this.get('supportCaseId') + '/';
+    url: function () {
+        return '/api/support/' + this.get('supportCaseId') + '/';
     }
 });
 
@@ -80,24 +78,24 @@ var SupportCaseCollection = Backbone.Collection.extend({
 });
 
 var Share = Backbone.Model.extend({
-    url: function() {
-	return '/api/shares/' + this.get('shareName');
+    url: function () {
+        return '/api/shares/' + this.get('shareName');
     }
 });
 
 var ShareCollection = RockStorPaginatedCollection.extend({
     model: Share,
     baseUrl: '/api/shares',
-    extraParams: function() {
+    extraParams: function () {
         var p = this.constructor.__super__.extraParams.apply(this, arguments);
         p['sortby'] = 'name';
         return p;
-    } 
+    }
 });
 
 var Image = Backbone.Model.extend({
-    url: function() {
-	return '/api/rockons/' ;
+    url: function () {
+        return '/api/rockons/';
     }
 });
 
@@ -107,8 +105,8 @@ var ImageCollection = RockStorPaginatedCollection.extend({
 });
 
 var Container = Backbone.Model.extend({
-    url: function() {
-	return '/api/rockons/' ;
+    url: function () {
+        return '/api/rockons/';
     }
 });
 
@@ -118,25 +116,26 @@ var ContainerCollection = RockStorPaginatedCollection.extend({
 });
 
 var Snapshot = Backbone.Model.extend({
-    url: function() {
-	return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');			}
+    url: function () {
+        return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');
+    }
 });
 
 var SnapshotCollection = RockStorPaginatedCollection.extend({
     model: Snapshot,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.snapType = options.snapType;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.snapType = options.snapType;
+        }
     },
-    setUrl: function(shareName) {
-	this.baseUrl = '/api/shares/' + shareName + '/snapshots'
+    setUrl: function (shareName) {
+        this.baseUrl = '/api/shares/' + shareName + '/snapshots'
     },
-    extraParams: function() {
-	var p = this.constructor.__super__.extraParams.apply(this, arguments);
-	p['snap_type'] = this.snapType;
-	return p;
+    extraParams: function () {
+        var p = this.constructor.__super__.extraParams.apply(this, arguments);
+        p['snap_type'] = this.snapType;
+        return p;
     }
 });
 
@@ -150,52 +149,51 @@ var SnapshotsCollection = RockStorPaginatedCollection.extend({
 });
 
 
-
 var Poolscrub = Backbone.Model.extend({
-    url: function() {
-	return '/api/pools/' + this.get('poolName') + '/scrub';
+    url: function () {
+        return '/api/pools/' + this.get('poolName') + '/scrub';
     }
 });
 
 var PoolscrubCollection = RockStorPaginatedCollection.extend({
     model: Poolscrub,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.snapType = options.snapType;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.snapType = options.snapType;
+        }
     },
-    setUrl: function(poolName) {
-	this.baseUrl = '/api/pools/' + poolName + '/scrub';
+    setUrl: function (poolName) {
+        this.baseUrl = '/api/pools/' + poolName + '/scrub';
     },
-    extraParams: function() {
-	var p = this.constructor.__super__.extraParams.apply(this, arguments);
-	p['snap_type'] = this.snapType;
-	return p;
+    extraParams: function () {
+        var p = this.constructor.__super__.extraParams.apply(this, arguments);
+        p['snap_type'] = this.snapType;
+        return p;
     }
 });
 
 var PoolRebalance = Backbone.Model.extend({
-    url: function() {
-	return '/api/pools/' + this.get('poolName') + '/balance';
+    url: function () {
+        return '/api/pools/' + this.get('poolName') + '/balance';
     }
 });
 
 var PoolRebalanceCollection = RockStorPaginatedCollection.extend({
     model: PoolRebalance,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.snapType = options.snapType;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.snapType = options.snapType;
+        }
     },
-    setUrl: function(poolName) {
-	this.baseUrl = '/api/pools/' + poolName + '/balance';
+    setUrl: function (poolName) {
+        this.baseUrl = '/api/pools/' + poolName + '/balance';
     },
-    extraParams: function() {
-	var p = this.constructor.__super__.extraParams.apply(this, arguments);
-	p['snap_type'] = this.snapType;
-	return p;
+    extraParams: function () {
+        var p = this.constructor.__super__.extraParams.apply(this, arguments);
+        p['snap_type'] = this.snapType;
+        return p;
     }
 });
 
@@ -207,8 +205,8 @@ var NFSExport = Backbone.Model.extend();
 
 var NFSExportCollection = RockStorPaginatedCollection.extend({
     model: NFSExport,
-    setUrl: function(shareName) {
-	this.baseUrl = '/api/shares/' + shareName + '/nfs'
+    setUrl: function (shareName) {
+        this.baseUrl = '/api/shares/' + shareName + '/nfs'
     }
 });
 
@@ -222,8 +220,8 @@ var NFSExportGroupCollection = RockStorPaginatedCollection.extend({
 });
 
 var SMBShare = Backbone.Model.extend({
-    url: function() {
-	return '/api/shares/' + this.get('shareName') + '/samba'
+    url: function () {
+        return '/api/shares/' + this.get('shareName') + '/samba'
     },
 
 });
@@ -279,65 +277,64 @@ var GroupCollection = RockStorPaginatedCollection.extend({
 });
 
 var ISCSITarget = Backbone.Model.extend({
-    url: function() {
-	return '/api/shares/' + this.get('shareName') + '/iscsi/'
+    url: function () {
+        return '/api/shares/' + this.get('shareName') + '/iscsi/'
     }
 });
 
 var DashboardConfig = Backbone.Model.extend({
     url: '/api/dashboardconfig',
-    setConfig: function(wConfigs) {
-	var tmp = [];
-	_.each(wConfigs, function(wConfig) {
-	    tmp.push({
-		name: wConfig.name,
-		position: wConfig.position,
-		maximized: wConfig.maximized
-	    });
-	});
-	this.set({ widgets: JSON.stringify(tmp) });
+    setConfig: function (wConfigs) {
+        var tmp = [];
+        _.each(wConfigs, function (wConfig) {
+            tmp.push({
+                name: wConfig.name,
+                position: wConfig.position,
+                maximized: wConfig.maximized
+            });
+        });
+        this.set({widgets: JSON.stringify(tmp)});
     },
 
-    getConfig: function() {
-	if (!_.isUndefined(this.get('widgets')) &&
-            !_.isNull(this.get('widgets'))) {
-	    return JSON.parse(this.get('widgets'));
-	} else {
-	    this.setConfig(RockStorWidgets.defaultWidgets());
-	    return JSON.parse(this.get("widgets"));
-	}
+    getConfig: function () {
+        if (!_.isUndefined(this.get('widgets')) && !_.isNull(this.get('widgets'))) {
+            return JSON.parse(this.get('widgets'));
+        } else {
+            this.setConfig(RockStorWidgets.defaultWidgets());
+            return JSON.parse(this.get("widgets"));
+        }
     }
 
 });
 
 var Probe = Backbone.Model.extend({
-    urlRoot: function() {
-	return '/api/sm/sprobes/' + this.get('name') + '/';
+    urlRoot: function () {
+        return '/api/sm/sprobes/' + this.get('name') + '/';
     },
-    dataUrl: function() {
-	return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data';
+    dataUrl: function () {
+        return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data';
     },
-    parse: function(response) {
-	if (response.results && response.results.length > 0) {
-	    return response.results[0];
-	} else {
-	    return {};
-	}
+    parse: function (response) {
+        if (response.results && response.results.length > 0) {
+            return response.results[0];
+        } else {
+            return {};
+        }
     }
 });
 
 var ProbeCollection = Backbone.Collection.extend({
     model: Probe,
-    initialize: function(models, options) {
-	if (!_.isUndefined(options) && !_.isNull(options)) {
-	    this.name = options.name;
-	}
+    initialize: function (models, options) {
+        if (!_.isUndefined(options) && !_.isNull(options)) {
+            this.name = options.name;
+        }
     },
-    url: function() {
-	return '/api/sm/sprobes/' + this.name + '/';
+    url: function () {
+        return '/api/sm/sprobes/' + this.name + '/';
     },
-    parse: function(response) {
-	return response.results;
+    parse: function (response) {
+        return response.results;
     }
 });
 
@@ -361,14 +358,14 @@ var NetworkConnectionCollection = RockStorPaginatedCollection.extend({
 });
 
 var ProbeRun = Backbone.Model.extend({
-    dataUrl: function() {
-	return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data?format=json';
+    dataUrl: function () {
+        return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data?format=json';
     },
-    downloadUrl: function() {
-	return "/api/sm/sprobes/" + this.get("name") + "/" + this.id
-	    + "/data" + "?"
-	    + "t1="+this.get("start") + "&t2=" + this.get("end")
-	    + "&download=true";
+    downloadUrl: function () {
+        return "/api/sm/sprobes/" + this.get("name") + "/" + this.id
+            + "/data" + "?"
+            + "t1=" + this.get("start") + "&t2=" + this.get("end")
+            + "&download=true";
     },
 });
 
@@ -397,18 +394,18 @@ var ReplicaTrail = Backbone.Model.extend({
 
 var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
     model: ReplicaTrail,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.replicaId = options.replicaId;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.replicaId = options.replicaId;
+        }
     },
-    baseUrl: function() {
-	if (this.replicaId) {
-	    return '/api/sm/replicas/trail/replica/' + this.replicaId;
-	} else {
-	    return '/api/sm/replicas/trail';
-	}
+    baseUrl: function () {
+        if (this.replicaId) {
+            return '/api/sm/replicas/trail/replica/' + this.replicaId;
+        } else {
+            return '/api/sm/replicas/trail';
+        }
     }
 });
 
@@ -427,57 +424,57 @@ var ReceiveTrail = Backbone.Model.extend({
 
 var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
     model: ReceiveTrail,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.replicaShareId = options.replicaShareId;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.replicaShareId = options.replicaShareId;
+        }
     },
-    baseUrl: function() {
-	if (this.replicaShareId) {
-	    return '/api/sm/replicas/rtrail/rshare/' + this.replicaShareId;
-	} else {
-	    return '/api/sm/replicas/rtrail';
-	}
+    baseUrl: function () {
+        if (this.replicaShareId) {
+            return '/api/sm/replicas/rtrail/rshare/' + this.replicaShareId;
+        } else {
+            return '/api/sm/replicas/rtrail';
+        }
     }
 });
 
 var TaskDef = Backbone.Model.extend({
     urlRoot: "/api/sm/tasks/",
-    max_count: function() {
-	if (this.get('json_meta') != null) {
-	    return JSON.parse(this.get('json_meta')).max_count;
-	} else {
-	    return 0;
-	}
+    max_count: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).max_count;
+        } else {
+            return 0;
+        }
     },
-    share: function() {
-	if (this.get('json_meta') != null) {
-	    return JSON.parse(this.get('json_meta')).share;
-	} else {
-	    return '';
-	}
+    share: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).share;
+        } else {
+            return '';
+        }
     },
-    prefix: function() {
-	if (this.get('json_meta') != null) {
-	    return JSON.parse(this.get('json_meta')).prefix;
-	} else {
-	    return '';
-	}
+    prefix: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).prefix;
+        } else {
+            return '';
+        }
     },
-    pool: function() {
-	if (this.get('json_meta') != null) {
-	    return JSON.parse(this.get('json_meta')).pool;
-	} else {
-	    return '';
-	}
+    pool: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).pool;
+        } else {
+            return '';
+        }
     },
-    visible: function() {
-	if (this.get('json_meta') != null) {
-	    return JSON.parse(this.get('json_meta')).visible;
-	} else {
-	    return false;
-	}
+    visible: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).visible;
+        } else {
+            return false;
+        }
     },
 
 
@@ -494,18 +491,18 @@ var Task = Backbone.Model.extend({
 
 var TaskCollection = RockStorPaginatedCollection.extend({
     model: Task,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.taskDefId = options.taskDefId;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.taskDefId = options.taskDefId;
+        }
     },
-    baseUrl: function() {
-	if (this.taskDefId) {
-	    return '/api/sm/tasks/log/taskdef/' + this.taskDefId;
-	} else {
-	    return '/api/sm/tasks/log';
-	}
+    baseUrl: function () {
+        if (this.taskDefId) {
+            return '/api/sm/tasks/log/taskdef/' + this.taskDefId;
+        } else {
+            return '/api/sm/tasks/log';
+        }
     }
 });
 
@@ -556,8 +553,8 @@ var AdvancedNFSExportCollection = RockStorPaginatedCollection.extend({
 
 
 var AccessKey = Backbone.Model.extend({
-    url: function() {
-	return '/api/oauth_app';
+    url: function () {
+        return '/api/oauth_app';
     }
 });
 
@@ -580,7 +577,7 @@ var ConfigBackupCollection = RockStorPaginatedCollection.extend({
 });
 
 var EmailAccount = Backbone.Model.extend({
-	urlRoot: '/api/email',
+    urlRoot: '/api/email',
 });
 
 var RockOn = Backbone.Model.extend({
@@ -598,18 +595,18 @@ var RockOnVolume = Backbone.Model.extend({
 
 var RockOnVolumeCollection = RockStorPaginatedCollection.extend({
     model: RockOnVolume,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.rid = options.rid;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
     },
-    baseUrl: function() {
-	if (this.rid) {
-	    return '/api/rockons/volumes/' + this.rid;
-	} else {
-	    return '/api/rockons/volumes';
-	}
+    baseUrl: function () {
+        if (this.rid) {
+            return '/api/rockons/volumes/' + this.rid;
+        } else {
+            return '/api/rockons/volumes';
+        }
     }
 });
 
@@ -619,18 +616,18 @@ var RockOnPort = Backbone.Model.extend({
 
 var RockOnPortCollection = RockStorPaginatedCollection.extend({
     model: RockOnPort,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.rid = options.rid;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
     },
-    baseUrl: function() {
-	if (this.rid) {
-	    return '/api/rockons/ports/' + this.rid;
-	} else {
-	    return '/api/rockons/ports';
-	}
+    baseUrl: function () {
+        if (this.rid) {
+            return '/api/rockons/ports/' + this.rid;
+        } else {
+            return '/api/rockons/ports';
+        }
     }
 });
 
@@ -640,18 +637,18 @@ var RockOnCustomConfig = Backbone.Model.extend({
 
 var RockOnCustomConfigCollection = RockStorPaginatedCollection.extend({
     model: RockOnCustomConfig,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.rid = options.rid;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
     },
-    baseUrl: function() {
-	if (this.rid) {
-	    return '/api/rockons/customconfig/' + this.rid;
-	} else {
-	    return '/api/rockons/customconfig';
-	}
+    baseUrl: function () {
+        if (this.rid) {
+            return '/api/rockons/customconfig/' + this.rid;
+        } else {
+            return '/api/rockons/customconfig';
+        }
     }
 });
 
@@ -661,18 +658,18 @@ var RockOnEnvironment = Backbone.Model.extend({
 
 var RockOnEnvironmentCollection = RockStorPaginatedCollection.extend({
     model: RockOnEnvironment,
-    initialize: function(models, options) {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	if (options) {
-	    this.rid = options.rid;
-	}
+    initialize: function (models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
     },
-    baseUrl: function() {
-	if (this.rid) {
-	    return '/api/rockons/environment/' + this.rid;
-	} else {
-	    return '/api/rockons/environment';
-	}
+    baseUrl: function () {
+        if (this.rid) {
+            return '/api/rockons/environment/' + this.rid;
+        } else {
+            return '/api/rockons/environment';
+        }
     }
 });
 
