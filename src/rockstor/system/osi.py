@@ -836,8 +836,8 @@ def get_dev_byid_name(device_name, remove_path=False):
     N.B. This latter condition is found with virtio devices that have no serial.
     Can optionally drop the path via the removePath parameter flag.
     Works by querying udev via udevadm info --query=property --name device_name
-    The first line of which (DEVLINKS) is examined and parsed for the first
-    entry which has been found to be the /dev/disk/by-id symlink to our
+    The first line of which is matched to 'DEVLINKS' and parsed for the longest
+    entry of the by-id type ie /dev/disk/by-id which is in turn a symlink to our
     device_name eg:
     DEVLINKS=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00005
     /dev/disk/by-path/pci-0000:00:05.0-ata-1.0
@@ -848,51 +848,63 @@ def get_dev_byid_name(device_name, remove_path=False):
     ata subsystem.
     :param device_name: eg sda but can also be /dev/sda or even the by-id name
     but only if the full path is specified with the by-id type name.
-    :param remove_path: this flag can be used to strip the /dev/disk/by-id from the
-    by-id returned value, in the case of an error or no DEVLINKS entry then the
-    path strip flag will still be honoured but applied instead to the original
+    :param remove_path: flag request to strip the path from the returned device
+    name, if an error occurred or no by-id type name was found then the path
+    strip flag will still be honoured but applied instead to the original
     'device_name'.
     :return: tuple of device_name and a boolean: where the device name is either
     the by-id name (with or without path as per remove_path) or in the case of
-    an error or no DEVLINKS entry then the original device_name (with or without
-    path as per remove_path). The second boolean element of the tuple indicates
-    if a DEVLINKS entry was found. ie is_byid
+    an error or no by-id name found then the original device_name (with or
+    without path as per remove_path). The second boolean element of the tuple
+    indicates if a by-id type name was found. ie (return_name, is_byid)
     """
     logger.debug('get_dev_byid_name called with %s' % device_name)
+    # Until we find a by-id type name set this flag as False.
+    is_byid = False
+    # Until we find a by-id type name we will be returning device_name
+    return_name = device_name
+    byid_name = ''  # Should never be returned prior to reassignment.
+    longest_byid_name_length = 0
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
         throw=False)
-    if len(out) > 0:
-        # the output has at least one line
-        # split this line by '=' and ' ' chars
+    if len(out) > 0 and rc == 0:
+        # The output has at least one line and our udevadm executed OK.
+        # Split this first line by '=' and ' ' chars
         fields = out[0].replace('=', ' ').split()
         if len(fields) > 1:
             # we have at least 2 fields in this line
             if fields[0] == 'DEVLINKS':
-                if not remove_path:
-                    # return the first value directly after DEVLINKS (with path)
-                    logger.debug('get_dev_byid_name returning DEVLINKS with path of %s' % fields[1])
-                    return fields[1], True
-                else:
-                    # strip the /dev/disk/by-id from the beginning.
-                    # for use in Disk.name db field for example.
-                    # works by tasking the last enement in the consequent list
-                    logger.debug('get_dev_byid_name without path returning = %s',
-                                 fields[1].replace('/', ' ').split()[-1])
-                    return fields[1].replace('/', ' ').split()[-1], True
-    # If no DEVLINKS value found or an error occurred we return the device_name
-    # and honour our path strip request if we can.
+                # cycle through all device names on the DEVLINKS line
+                for index in range(1, len(fields)):
+                    # check if device name is by-id type
+                    if re.match('/dev/disk/by-id', fields[index]) is not None:
+                        is_byid = True
+                        dev_name_length = len(fields[index])
+                        # check if longer than any found previously
+                        if dev_name_length > longest_byid_name_length:
+                            longest_byid_name_length = dev_name_length
+                            # save the longest by-id type name so far.
+                            byid_name = fields[index]
+    if is_byid:
+        # Return the longest by-id name found in the DEVLINKS line
+        # or the first if multiple by-id names were of equal length.
+        return_name = byid_name
+    # Honour our path strip request in all cases if we can.
     if remove_path:
-        # Split original name by path delimiter char '/'
-        device_name_fields = device_name.split('/')
-        if len(device_name_fields) > 1:
+        # Strip the path from the beginning of our return_name.
+        # For use in Disk.name db field for example.
+        # Split return_name by path delimiter char '/' into it's fields.
+        return_name_fields = return_name.split('/')
+        if len(return_name_fields) > 1:
             # Original device_name has path delimiters in: assume it has a path.
-            logger.debug('get_dev_byid_name stripping path on original name and returning %s' % device_name_fields[-1])
-            return device_name_fields[-1], False
-    # We are here due to error or no DEVLINKS found and no removepath request
-    # so return whatever we were passed with False to signify this condition.
-    logger.debug('get_dev_byid_name returning original name as is %s' %device_name)
-    return device_name, False
+            logger.debug('get_dev_byid_name removing path and returning %s' % return_name_fields[-1])
+            return return_name_fields[-1], is_byid
+    # No remove_path request by parameter flag or no path delimiter chars found
+    # in return_name so leave as is and returning.
+    logger.debug('get_dev_byid_name returning %s' % return_name)
+    return return_name, is_byid
+
 
 def get_devname_old(device_name):
     """
