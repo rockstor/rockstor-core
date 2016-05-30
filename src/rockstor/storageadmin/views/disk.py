@@ -224,29 +224,24 @@ class DiskMixin(object):
         for do in Disk.objects.all():
             # find all the not offline db entries
             if (not do.offline):
-                # We have an attached disk db entry
-                # Since our Disk.name model now uses by-id we need to convert
-                # this back to a vd*, md*, mmcblk* type name
-                # as a cheap evaluation of it's type ie virtio, md, or sdcard.
-                #todo - this is now no longer as cheap so should be replaced by
-                #todo - something more elegant, ie virtio has Vendor 0x1af4 for
-                #todo - example and md devices have other tells now such as in
-                #todo - the role field ie having an mdraid key
-                bus_based_devname = get_devname('/dev/disk/by-id/%s' % do.name)
-                logger.debug('bus_based_devname = %s' % bus_based_devname)
-                # N.B. in cases where no by-id name was available our Disk.name
-                # will contain a regular vda type name, this will result in a
-                # None value for get_devname. Given we have no serial / and only
-                # a temporary name for this device we should disable smart
-                # collection as any data is then less likely to be wrongly
-                # associated with the next device that takes this temporary
-                # drive slot name.
-                if (bus_based_devname is None) or \
-                        (re.match('vd|md|mmcblk', bus_based_devname) is not None):
-                    # Virtio disks (named vd*), md devices (named md*), and
-                    # an sdcard reader that provides devs named mmcblk* have
+                # We have an attached disk db entry.
+                # Since our Disk.name model now uses by-id type names we can
+                # do cheap matches to the beginnings of these names to find
+                # virtio, md, or sdcard devices which are assumed to have no
+                # SMART capability.
+                # We also disable devices smart support when they have a
+                # fake serial number as ascribed by scan_disks as any SMART
+                # data collected is then less likely to be wrongly associated
+                # with the next device that takes this temporary drive's name.
+                # Also note that with no serial number some device types will
+                # not have a by-id type name expected by the smart subsystem.
+                # This has only been observed in no serial virtio devices.
+                if (re.match('fake-serial-', do.serial) is not None) or \
+                        (re.match('virtio-|md-|mmc-', do.name) is not None):
+                    # Virtio disks (named virtio-*), md devices (named md-*),
+                    # and an sdcard reader that provides devs named mmc-* have
                     # no smart capability so avoid cluttering logs with
-                    # exceptions on these types of devices.
+                    # exceptions on probing these with smart.available.
                     do.smart_available = do.smart_enabled = False
                     continue
                 # try to establish smart availability and status and update db
