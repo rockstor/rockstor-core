@@ -87,7 +87,9 @@ PoolsView = RockstorLayoutView.extend({
 			}
 		});
 		this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
-
+		
+		this.renderDataTables();
+		
 		return this;
 	},
 
