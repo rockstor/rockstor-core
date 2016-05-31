@@ -77,15 +77,6 @@ PoolsView = RockstorLayoutView.extend({
 			disksAvailable: disksAvailable
 		}));
 
-		this.$("#pools-table").tablesorter({
-			headers: {
-				// assign the fifth column (we start counting zero)
-				5: {
-					// disable it by setting the property sorter to false
-					sorter: false
-				}
-			}
-		});
 		this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
 		
 		this.renderDataTables();
