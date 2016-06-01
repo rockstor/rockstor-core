@@ -323,7 +323,7 @@ AddPoolView = Backbone.View.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper("mathHelper", function(value, options){
+		Handlebars.registerHelper('mathHelper', function(value, options){
 			return parseInt(value) + 1;
 		});
 
