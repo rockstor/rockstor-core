@@ -389,14 +389,14 @@ def get_dev_options(dev_byid, custom_options=''):
     :param dev_byid:  device name as per db entry, ie by-id type without a path
     :param custom_options: string of user entered custom smart options.
     :return: dev_options: list containing the device specific smart options and
-    the appropriate smart device target.
+    the appropriate smart device target with full path.
     """
     # Initially our custom_options parameter may be None, ie db default prior
     # to any changes having been made. Deal with this by adding a guard.
     if custom_options is None or custom_options == '':
         # Empty custom_options or they have never been set so just return
         # full path to base device as nothing else to do.
-        dev_options = get_base_device_byid(dev_byid, TESTMODE)
+        dev_options = ['/dev/disk/by-id/%s' % get_base_device_byid(dev_byid, TESTMODE)]
     else:
         # Convert string of custom options into a list ready for run_command
         # todo think this ascii should be utf-8 as that's kernel standard
@@ -406,7 +406,7 @@ def get_dev_options(dev_byid, custom_options=''):
         # the full path to our base device as our last device specific option.
         if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
             # add full path to our custom options as we see no raid target dev
-            dev_options += get_base_device_byid(dev_byid, TESTMODE)
+            dev_options += ['/dev/disk/by-id/%s' % get_base_device_byid(dev_byid, TESTMODE)]
     # Note on raid controller target devices.
     # /dev/twe#, or /dev/twa#, or /dev/twl# are 3ware controller targets devs
     # respectively 3x-xxxx, 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for
