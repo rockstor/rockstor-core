@@ -567,26 +567,68 @@ def md5sum(fpath):
 
 
 def get_base_device_byid(dev_byid, test_mode=False):
-    """ Initially a by-id type compatibility wrapper for get_base_device which
-    works with sda type names.
-    Required since the move to by-id format Disk.name db entries.
-    Should be improved upon as involves a double conversion and is called many
-    times. The replacement for this method might work by simply dropping the
-    '-part-#' element from a by-id formatted name if such an element is found.
+    """ A by-id type name parser which simply removes any trailing partition
+    indicators in a given dev_byid name. The remaining name will represent the
+    base device ie:-
+    dev_byid = ata-QEMU_HARDDISK_QM00005-part3
+    base_dev_byid = ata-QEMU_HARDDISK_QM00005
+    Given the structure of by-id type names this should always follow.
+    At time of last update this function is used exclusively to derive the base
+    name of a device for SMART interrogation purposes, ie currently called only
+    by smart.py/dev_options which is an portal for pre-processing smart commands
+    which have been found to be more reliable when acting on the base device ie
+    not called on a partition but on the base device. Hence this functions part
+    in dev_options pre-processing.
+    Previously this was a by-id type compatibility wrapper for get_base_device
+    which worked with sda type names.
+    Since the move to by-id format Disk.name db entries the above simpler
+    surface syntax method can be used to derive the base device. Previously a
+    list order artifact in lsblk's output was relied upon to establish the base
+    device.
+    N.B. a caveat of this method is that it only works for by-id type names
+    however given the fact that it's return is simply the passed dev_byid
+    contents then if given any string with no '-part3' type ending then that
+    same device name will be returned unaltered, only in the format expected by
+    smart.py/dev_options.
+    Also given we disable smart functions for all devices attributed with a
+    fake-serial number by scan_disks which are also the only encountered
+    devcies which fail to get a by-id type name we should never actaully be
+    called using a non by-id type name anyway.
+    :param dev_byid: device name as per db entry, ie by-id type without path
+    although all path elements should be ignored anyway.
+    :param test_mode: currently unused internal self test flag defined in
+    system/smart.py
+    :return: the original dev_byid string with any '-part#' type ending removed
+    if found.
+    N.B. No path is added to the device in either return case and irrespective
+    of path status of passed dev_byid.
     """
-    base_dev_byid = ['', ]
-    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
-    #todo - replace inefficient double conversion with alternative method more
-    #todo - suited to by-id type naming or maintain this as a fallback when
-    #todo - no by-id type name is availalbe.
-    base_dev = get_base_device(get_devname(dev_byid_withpath), test_mode)
-    if base_dev != ['']:
-        base_dev_byid[0], is_byid = get_dev_byid_name(base_dev[0])
+    logger.debug('get_base_device_byid passed device name = %s' % dev_byid)
+    # split by by-id section delimiter '-'
+    name_fields = dev_byid.split('-')
+    logger.debug('get_base_device_byid found the following fields in the '
+                 'passed devcie - %s' % name_fields)
+    if len(name_fields) > 2 and re.match('part', name_fields[-1]):
+        # The passed device has at least 3 fields ie bus, uniqueid, partname eg:
+        # busname-model_serial_or_uniqueid-part3
+        # The passed device name has a -part* ending so process it away by
+        # re-joining all elements except the last from our previous split('-').
+        base_dev_byid = '-'.join(name_fields[:-1])
+        logger.debug('get_base_device_byid returning dev name stripped of part')
+    else:
+        # our passed device name had no -part* ending so return unaltered.
+        base_dev_byid = dev_byid
+        logger.debug('get_base_device_byid returning dev name as was')
+    # return the consequent result
+    logger.debug('get_base_device_byid returning %s' % base_dev_byid)
     return base_dev_byid
 
 
 def get_base_device(device, test_mode=False):
     """
+    Redundant as of move to by-id type names in db Disk.name field, keeping for
+    time being in case of oversight re redundancy.
+    Replaced by get_base_device_byid()
     Helper function that returns the full path of the base device of a partition
     or if given a base device it will return it's full path,
     ie
