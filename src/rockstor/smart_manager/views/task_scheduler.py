@@ -38,7 +38,7 @@ class TaskSchedulerMixin(object):
     def _validate_input(request):
         meta = {}
         crontab = request.data.get('crontab')
-	crontabwindow = request.data.get('crontabwindow')
+        crontabwindow = request.data.get('crontabwindow')
         meta = request.data.get('meta', {})
         if (type(meta) != dict):
             e_msg = ('meta must be a dictionary, not %s' % type(meta))
@@ -88,7 +88,7 @@ class TaskSchedulerMixin(object):
                         logger.error('ignoring unknown task_type: %s' % td.task_type)
                         continue
                     if (td.crontabwindow is not None): #add crontabwindow as 2nd arg to task script, new line moved here
-                        tab = ('%s %s\n' % (tab, td.crontabwindow))
+                        tab = ('%s \%s\n' % (tab, td.crontabwindow))
                     else:
                         logger.error('missing crontab window value')
                         continue
