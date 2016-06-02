@@ -24,7 +24,7 @@ from tempfile import mkstemp
 import time
 from socket import inet_ntoa
 from struct import pack
-from exceptions import CommandException
+from exceptions import CommandException, NonBTRFSRootException
 import hashlib
 import logging
 import uuid
@@ -407,6 +407,48 @@ def convert_to_kib(size):
             return 0
         raise Exception('Unknown suffix(%s) while converting to KiB' % suffix)
     return int(float(num) * suffix_map[suffix])
+
+
+def root_disk():
+    """
+    Returns the base drive device name where / mount point is found.
+    Works by parsing /proc/mounts. Eg if the root entry was as follows:
+    /dev/sdc3 / btrfs rw,noatime,ssd,space_cache,subvolid=258,subvol=/root 0 0
+    the returned value is sdc
+    The assumption with non md devices is that the partition number will be a
+    single character.
+    """
+    with open('/proc/mounts') as fo:
+        for line in fo.readlines():
+            fields = line.split()
+            if (fields[1] == '/' and fields[2] == 'btrfs'):
+                disk = os.path.realpath(fields[0])
+                if (re.match('/dev/md', disk) is not None):
+                    # We have an Multi Device naming scheme which is a little
+                    # different ie 3rd partition = md126p3 on the md126 device,
+                    # or md0p3 as third partition on md0 device.
+                    # As md devs often have 1 to 3 numerical chars we search
+                    # for one or more numeric characters, this assumes our dev
+                    # name has no prior numerical components ie starts /dev/md
+                    # but then we are here due to that match.
+                    # Find the indexes of the device name without the partition.
+                    # Search for where the numbers after "md" end.
+                    # N.B. the following will also work if root is not in a
+                    # partition ie on md126 directly.
+                    end = re.search('\d+', disk).end()
+                    return disk[5:end]
+                else:
+                    # catch all that assumes we have eg /dev/sda3 and want "sda"
+                    # so start from 6th char and remove the last char
+                    # /dev/sda3 = sda
+                    # todo consider changing to same method as in md devs above
+                    # todo to cope with more than one numeric in name.
+                    return disk[5:-1]
+    msg = ('root filesystem is not BTRFS. During Rockstor installation, '
+           'you must select BTRFS instead of LVM and other options for '
+           'root filesystem. Please re-install Rockstor properly.')
+    raise NonBTRFSRootException(msg)
+
 
 
 def get_md_members(device_name, test=None):
