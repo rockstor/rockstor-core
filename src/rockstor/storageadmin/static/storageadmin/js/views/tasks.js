@@ -71,6 +71,8 @@ TasksView = RockstorLayoutView.extend({
 			collectionNotEmpty: !this.collection.isEmpty(),
 		}));
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+		
+		this.renderDataTables();
 	},
 
 	initHandlebarHelpers: function(){
