@@ -21,7 +21,7 @@ from storageadmin.exceptions import RockStorAPIException
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool, Share)
-from fs.btrfs import (scan_disks, wipe_disk, blink_disk, enable_quota,
+from fs.btrfs import (scan_disks, blink_disk, enable_quota,
                       btrfs_uuid, pool_usage, mount_root, get_pool_info,
                       pool_raid, enable_quota)
 from storageadmin.serializers import DiskInfoSerializer
@@ -31,7 +31,7 @@ from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
-    get_devname
+    wipe_disk
 from copy import deepcopy
 import uuid
 import json
