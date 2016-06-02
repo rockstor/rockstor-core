@@ -47,6 +47,7 @@ AppliancesView = RockstorLayoutView.extend({
 
   renderApplianceList: function() {
     $(this.el).html(this.template({collection: this.collection, appliances: this.collection.toJSON()}));
+    this.renderDataTables();
   },
 
   newAppliance: function() {
