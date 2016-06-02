@@ -63,6 +63,8 @@ GroupsView = RockstorLayoutView.extend({
 			otherSystemGroups: this.otherSystemGroups,
 		}));
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+		
+		this.renderDataTables();
 	},
 
 	deleteGroup: function(event) {
