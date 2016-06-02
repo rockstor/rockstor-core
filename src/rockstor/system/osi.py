@@ -18,7 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import os
+# todo consider drop in replacement of subprocess32 module
 import subprocess
+import signal
 import shutil
 from tempfile import mkstemp
 import time
@@ -55,6 +57,7 @@ LSBLK = '/usr/bin/lsblk'
 HDPARM = '/usr/sbin/hdparm'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 WIPEFS = '/usr/sbin/wipefs'
+DD = '/bin/dd'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -392,6 +395,34 @@ def wipe_disk(disk_byid):
     """
     disk_byid_withpath = ('/dev/disk/by-id/%s' % disk_byid)
     return run_command([WIPEFS, '-a', disk_byid_withpath])
+
+
+def blink_disk(disk_byid, total_exec, read, sleep):
+    """
+    Method to cause a drives activity light to blink by parameter defined
+    timings to aid in physically locating an attached disk.
+    Works by causing drive activity via a dd read to null from the disk_byid.
+    N.B. Utilises subprocess and signal to run on dd on an independent thread.
+    :param disk_byid: by-id type disk name without path
+    :param total_exec: Total time to blink the drive light.
+    :param read: Read (light on) time.
+    :param sleep: light off time.
+    :return: None.
+    """
+    dd_cmd = [DD, 'if=/dev/disk/by-id/%s' % disk_byid, 'of=/dev/null', 'bs=512',
+              'conv=noerror']
+    p = subprocess.Popen(dd_cmd, shell=False, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    total_elapsed_time = 0
+    while (total_elapsed_time < total_exec):
+        if (p.poll() is not None):
+            return None
+        time.sleep(read)
+        p.send_signal(signal.SIGSTOP)
+        time.sleep(sleep)
+        total_elapsed_time += read + sleep
+        p.send_signal(signal.SIGCONT)
+    p.terminate()
 
 
 def convert_to_kib(size):
