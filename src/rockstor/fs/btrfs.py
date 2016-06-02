@@ -29,7 +29,7 @@ import shutil
 import collections
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted, get_disk_serial, get_md_members,
-                        get_dev_byid_name)
+                        get_dev_byid_name, convert_to_kib)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
@@ -667,23 +667,6 @@ def update_quota(pool, qgroup, size_bytes):
     return run_command(cmd, log=True)
 
 
-def convert_to_KiB(size):
-    # todo candidate for move to system/osi as not btrfs related
-    SMAP = {
-        'KiB': 1,
-        'MiB': 1024,
-        'GiB': 1024 * 1024,
-        'TiB': 1024 * 1024 * 1024,
-        'PiB': 1024 * 1024 * 1024 * 1024, }
-    suffix = size[-3:]
-    num = size[:-3]
-    if (suffix not in SMAP):
-        if (size[-1] == 'B'):
-            return 0
-        raise Exception('Unknown suffix(%s) while converting to KiB' % suffix)
-    return int(float(num) * SMAP[suffix])
-
-
 def share_usage(pool, share_id):
     """
     for now, exclusive byte count
@@ -695,8 +678,8 @@ def share_usage(pool, share_id):
     for line in out:
         fields = line.split()
         if (len(fields) > 0 and fields[0] == share_id):
-            rusage = convert_to_KiB(fields[-2])
-            eusage = convert_to_KiB(fields[-2])
+            rusage = convert_to_kib(fields[-2])
+            eusage = convert_to_kib(fields[-2])
             break
     return (rusage, eusage)
 
@@ -717,8 +700,8 @@ def shares_usage(pool, share_map, snap_map):
     for line in out:
         fields = line.split()
         if (len(fields) > 0 and fields[0] in combined_map):
-            r_usage = convert_to_KiB(fields[-2])
-            e_usage = convert_to_KiB(fields[-1])
+            r_usage = convert_to_kib(fields[-2])
+            e_usage = convert_to_kib(fields[-1])
             usage_map[combined_map[fields[0]]] = (r_usage, e_usage)
     return usage_map
 
