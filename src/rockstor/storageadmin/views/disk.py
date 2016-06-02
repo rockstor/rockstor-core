@@ -150,8 +150,8 @@ class DiskMixin(object):
                 # overwrite with our current finding and in the new json format.
                 # I.e. non None could also be a legacy entry so follow overwrite
                 # path when legacy entry found by treating as a None entry.
-                # todo - When we reset migrations the following need only check
-                # todo - "dob.role is not None"
+                # TODO: When we reset migrations the following need only check
+                # TODO: "dob.role is not None"
                 if dob.role is not None and dob.role != 'isw_raid_member' \
                         and dob.role != 'linux_raid_member':
                     # get our known roles into a dictionary
@@ -167,8 +167,8 @@ class DiskMixin(object):
                 # No identified role from scan_disks() fstype value (mdraid
                 # only for now )so we preserve any prior known roles not
                 # exposed by scan_disks but remove the mdraid role if found.
-                # todo - When we reset migrations the following need only check
-                # todo - "dob.role is not None"
+                # TODO: When we reset migrations the following need only check
+                # TODO: "dob.role is not None"
                 if dob.role is not None and dob.role != 'isw_raid_member' \
                         and dob.role != 'linux_raid_member':
                     # remove mdraid role if found but preserve prior roles
@@ -206,7 +206,7 @@ class DiskMixin(object):
             # the attached disk is our root disk (flagged by scan_disks)
             if (dob.pool is None and d.root is True):
                 # setup our special root disk db entry in Pool
-                #@todo: dynamically retrieve raid level.
+                # TODO: dynamically retrieve raid level.
                 p = Pool(name=d.label, raid='single', role='root')
                 p.disk_set.add(dob)
                 p.save()
@@ -350,7 +350,7 @@ class DiskDetailView(rfc.GenericView):
     @transaction.atomic
     def _smartcustom_drive(self, dname, request):
         disk = self._validate_disk(dname, request)
-        # todo Check on None, null, or '' for default in next command
+        # TODO: Check on None, null, or '' for default in next command
         custom_smart_options = str(
             request.data.get('smartcustom_options', ''))
         # strip leading and trailing white space chars before entry in db

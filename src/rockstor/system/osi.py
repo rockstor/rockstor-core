@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import os
-# todo consider drop in replacement of subprocess32 module
+# TODO: consider drop in replacement of subprocess32 module
 import subprocess
 import signal
 import collections
@@ -121,7 +121,6 @@ def scan_disks(min_size):
     :param min_size: Discount all devices below this size in KB
     :return: List containing drives of interest
     """
-    # todo candidate for move to system/osi as not btrfs related
     base_root_disk = root_disk()
     cmd = [LSBLK, '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
@@ -372,8 +371,8 @@ def scan_disks(min_size):
 
 def uptime():
     with open('/proc/uptime') as ufo:
-        # todo check on readline here as reads a character at a time
-        # todo xreadlines() reads one line at a time.
+        # TODO: check on readline here as reads a character at a time
+        # TODO: xreadlines() reads one line at a time.
         return int(float(ufo.readline().split()[0]))
 
 
@@ -758,8 +757,8 @@ def root_disk():
                     # catch all that assumes we have eg /dev/sda3 and want "sda"
                     # so start from 6th char and remove the last char
                     # /dev/sda3 = sda
-                    # todo consider changing to same method as in md devs above
-                    # todo to cope with more than one numeric in name.
+                    # TODO: consider changing to same method as in md devs above
+                    # TODO: to cope with more than one numeric in name.
                     return disk[5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
@@ -1217,8 +1216,8 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
         return False
     # Execute the -B hdparm command first as if it fails we can then not include
     # it in the final command in systemd as it will trip the whole command then.
-    # todo - Check if only rc != 0 throws systemd execution ie do error returns
-    # todo - also trip the script execution.
+    # TODO: Check if only rc != 0 throws systemd execution ie do error returns
+    # TODO: also trip the script execution.
     switch_list = []
     # Do nothing with testing -B options if the value supplied is out of range.
     # Also skip if we have received the remove entry flag of spindown_time = -1
@@ -1507,7 +1506,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         # a future need to restart this service via the update flag as not True.
         if update:  # update was set true if this file exists so we check first.
             logger.info('Removing the rockstor-hdparm systemd file.')
-            # todo do we need try clause around this, we know it exists already?
+            # TODO: do we need try clause around this, we know it exists already?
             os.remove('/etc/systemd/system/rockstor-hdparm.service')
     else:
         # Since we know our proposed systemd file has more than template entries
