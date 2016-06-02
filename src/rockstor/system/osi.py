@@ -388,6 +388,33 @@ def remount(mnt_pt, mnt_options):
     return True
 
 
+def convert_to_kib(size):
+    """
+    Attempts to convert a size string that is initially expected to have 3
+    letters indicating it's units, into the equivalent KiB units.
+    If no known 3 letter Unit string is identified and 'B' is found then 0 is
+    returned.
+    Upon no string match is found in the above process for 'size' unit then an
+    exception is raised to this effect.
+    :param size: String parameter to process
+    :return: post processed size parameter expressed in equivalent integer KiB's
+    or zero if units in size are found to 'B'
+    """
+    suffix_map = {
+        'KiB': 1,
+        'MiB': 1024,
+        'GiB': 1024 * 1024,
+        'TiB': 1024 * 1024 * 1024,
+        'PiB': 1024 * 1024 * 1024 * 1024, }
+    suffix = size[-3:]
+    num = size[:-3]
+    if (suffix not in suffix_map):
+        if (size[-1] == 'B'):
+            return 0
+        raise Exception('Unknown suffix(%s) while converting to KiB' % suffix)
+    return int(float(num) * suffix_map[suffix])
+
+
 def get_md_members(device_name, test=None):
     """
     Returns the md members from a given device, if the given device is not an
