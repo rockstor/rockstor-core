@@ -23,8 +23,6 @@ system level helper methods to interact with the filesystem
 import re
 import time
 import os
-import subprocess
-import signal
 import shutil
 import collections
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
@@ -42,7 +40,6 @@ MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
 MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
-DD = '/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 QID = '2015'
@@ -1100,24 +1097,6 @@ def scan_disks(min_size):
         disks.append(Disk(*dnames[d]))
     logger.debug('disks to return = %s' % disks)
     return disks
-
-
-def blink_disk(disk, total_exec, read, sleep):
-    # todo candidate for move to system/osi as not btrfs related
-    DD_CMD = [DD, 'if=/dev/disk/by-id/%s' % disk, 'of=/dev/null', 'bs=512',
-              'conv=noerror']
-    p = subprocess.Popen(DD_CMD, shell=False, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    total_elapsed_time = 0
-    while (total_elapsed_time < total_exec):
-        if (p.poll() is not None):
-            return
-        time.sleep(read)
-        p.send_signal(signal.SIGSTOP)
-        time.sleep(sleep)
-        total_elapsed_time += read + sleep
-        p.send_signal(signal.SIGCONT)
-    p.terminate()
 
 
 def set_property(mnt_pt, name, val, mount=True):
