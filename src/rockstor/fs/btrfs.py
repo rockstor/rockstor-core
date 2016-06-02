@@ -251,12 +251,6 @@ def umount_root(root_pool_mnt):
     return
 
 
-def remount(mnt_pt, mnt_options):
-    if (is_mounted(mnt_pt)):
-        run_command([MOUNT, '-o', 'remount,%s' % mnt_options, mnt_pt])
-    return True
-
-
 def is_subvol(mnt_pt):
     show_cmd = [BTRFS, 'subvolume', 'show', mnt_pt]
     o, e, rc = run_command(show_cmd, throw=False)

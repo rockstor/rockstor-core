@@ -376,6 +376,12 @@ def is_mounted(mnt_pt):
     return False
 
 
+def remount(mnt_pt, mnt_options):
+    if (is_mounted(mnt_pt)):
+        run_command([MOUNT, '-o', 'remount,%s' % mnt_options, mnt_pt])
+    return True
+
+
 def get_md_members(device_name, test=None):
     """
     Returns the md members from a given device, if the given device is not an
