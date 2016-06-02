@@ -73,7 +73,7 @@ def get_users(max_wait=90):
             if (len(ufields) > 3):
                 charset = chardet.detect( ufields[0] )
                 uname = ufields[0].decode( charset['encoding'] )
-                users[uname] = (int(ufields[2]), int(ufields[3]))
+                users[uname] = (int(ufields[2]), int(ufields[3]), str(ufields[6]))
             if (time.time() - t0 > max_wait):
                 p.terminate()
                 break

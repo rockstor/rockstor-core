@@ -32,6 +32,7 @@ def combined_users():
             uo = User.objects.get(username=u)
             uo.uid = sys_users[u][0]
             uo.gid = sys_users[u][1]
+            uo.shell = sys_users[u][2]
             gname = get_groups(uo.gid).keys()[0]
             create = True
             if (uo.group is not None):
@@ -60,7 +61,7 @@ def combined_users():
             users.append(uo)
         except User.DoesNotExist:
             temp_uo = User(username=u, uid=sys_users[u][0],
-                           gid=sys_users[u][1], admin=False)
+                           gid=sys_users[u][1], shell=sys_users[u][2], admin=False)
             temp_uo.managed_user = False
             users.append(temp_uo)
     for u in User.objects.all():
