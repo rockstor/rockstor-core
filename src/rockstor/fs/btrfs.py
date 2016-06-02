@@ -45,7 +45,6 @@ UMOUNT = '/bin/umount'
 DD = '/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
-WIPEFS = '/usr/sbin/wipefs'
 QID = '2015'
 
 
@@ -1101,12 +1100,6 @@ def scan_disks(min_size):
         disks.append(Disk(*dnames[d]))
     logger.debug('disks to return = %s' % disks)
     return disks
-
-
-def wipe_disk(disk):
-    # todo candidate for move to system/osi as not btrfs related
-    disk = ('/dev/disk/by-id/%s' % disk)
-    return run_command([WIPEFS, '-a', disk])
 
 
 def blink_disk(disk, total_exec, read, sleep):

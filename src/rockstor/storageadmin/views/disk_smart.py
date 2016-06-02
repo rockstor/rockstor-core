@@ -27,7 +27,7 @@ from storageadmin.models import (Disk, SMARTInfo, SMARTAttribute,
                                  SMARTCapability, SMARTErrorLog,
                                  SMARTErrorLogSummary, SMARTTestLog,
                                  SMARTTestLogDetail, SMARTIdentity)
-from fs.btrfs import (scan_disks, wipe_disk, blink_disk, btrfs_uuid,
+from fs.btrfs import (scan_disks, blink_disk, btrfs_uuid,
                       pool_usage, mount_root)
 from storageadmin.serializers import SMARTInfoSerializer
 from storageadmin.util import handle_exception

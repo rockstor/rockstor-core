@@ -53,6 +53,7 @@ HOSTNAMECTL = '/usr/bin/hostnamectl'
 LSBLK = '/usr/bin/lsblk'
 HDPARM = '/usr/sbin/hdparm'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
+WIPEFS = '/usr/sbin/wipefs'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -386,6 +387,17 @@ def remount(mnt_pt, mnt_options):
     if (is_mounted(mnt_pt)):
         run_command([MOUNT, '-o', 'remount,%s' % mnt_options, mnt_pt])
     return True
+
+
+def wipe_disk(disk_byid):
+    """
+    Simple run_command wrapper to execute "wipefs -a disk_byid"
+    :param disk_byid: by-id type name without path as found in db Disks.name.
+    :return: o, e, rc tuple returned by the run_command wrapper running the
+    locally generated wipefs command.
+    """
+    disk_byid_withpath = ('/dev/disk/by-id/%s' % disk_byid)
+    return run_command([WIPEFS, '-a', disk_byid_withpath])
 
 
 def convert_to_kib(size):
