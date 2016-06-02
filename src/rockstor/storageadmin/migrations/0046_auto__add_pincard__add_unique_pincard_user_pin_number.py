@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'Pincard'
         db.create_table(u'storageadmin_pincard', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.User'], unique=True)),
+            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
             ('pin_number', self.gf('django.db.models.fields.IntegerField')()),
             ('pin_code', self.gf('django.db.models.fields.CharField')(max_length=32)),
         ))
@@ -69,8 +69,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'0YTvcS7urV3v2q0MVM1kLnjVduM40qCYgsVFGjsW'", 'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'fALgPct7ITpZ7fI4OH94EIQBTWXnMa4VSglNPqQRRd1IaTRQicTxHXCCrlhS9h8ETKSu2mKqkGp2W0u9SoU3xEyswV289EOyvTCWkrwnfWPAIDCvhpADnCRipBGTXKbk'", 'max_length': '255', 'db_index': 'True', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'wygLDVb1Jz4MYYNjwhgG0g9yvwzdmQT3UWzilhsH'", 'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'KV1KLTjNmZ9alamIbg3lUy4bRCj90YTSzta3qnrMJBVKKJSkd4SZZ0UpgRWnDEGr7qtUceh4Si4QvBqjTj9OMh8WuqqxaUGg0kIjt242SQrmZ6BDBkF57UFQ6ynqRhl6'", 'max_length': '255', 'db_index': 'True', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -317,7 +317,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'pin_code': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'pin_number': ('django.db.models.fields.IntegerField', [], {}),
-            'user': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['auth.User']", 'unique': 'True'})
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         },
         'storageadmin.plugin': {
             'Meta': {'object_name': 'Plugin'},
