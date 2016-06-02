@@ -21,7 +21,7 @@
 {{#if collectionNotEmpty}}
   <div class="row">
     <div class="col-md-12">
-      <table id="scheduled-tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of scheduled tasks">
+      <table id="scheduled-tasks-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of scheduled tasks">
         <thead>
           <tr>
             <th scope="col" abbr="Task name">Task name</th>
@@ -37,7 +37,6 @@
           {{display_scheduledTasks_table}}
         </tbody>
       </table>
-      <div>{{pagination}}</div>
     </div>
   </div>
   {{else}}

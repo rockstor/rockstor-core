@@ -38,7 +38,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 		// add dependencies
 		this.collection = new TaskDefCollection();
 		this.tasks = new TaskCollection();
-		this.tasks.pageSize = RockStorGlobals.maxPageSize;
+		//this.tasks.pageSize = RockStorGlobals.maxPageSize;
 		this.dependencies.push(this.collection);
 		this.dependencies.push(this.tasks);
 		this.collection.on('reset', this.renderScheduledTasks, this);
@@ -71,6 +71,8 @@ ScheduledTasksView = RockstorLayoutView.extend({
 			taskMap: this.taskMap
 		}));
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+		
+		this.renderDataTables();
 	},
 
 	toggleEnabled: function(event) {
