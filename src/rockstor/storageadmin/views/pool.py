@@ -29,8 +29,9 @@ from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from storageadmin.views import DiskMixin
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, remount, get_pool_info,
+                      btrfs_uuid, mount_root, get_pool_info,
                       pool_raid, start_balance)
+from system.osi import remount
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
