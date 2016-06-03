@@ -135,7 +135,7 @@ ReplicationView = RockstorLayoutView.extend({
 		}
 
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-		this.$('#replicas-table').tablesorter();
+		this.renderDataTables();
 	},
 
 	switchStatus: function(event,state){
