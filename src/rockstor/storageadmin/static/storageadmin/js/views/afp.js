@@ -85,6 +85,8 @@ AFPView  = RockstorLayoutView.extend({
       service: this.service
     }));
 
+    this.renderDataTables();
+    
     //initalize Bootstrap Switch
   	this.$("[type='checkbox']").bootstrapSwitch();
   	this.$('input[name="afp-service-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
