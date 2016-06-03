@@ -40,8 +40,6 @@ SFTPView  = RockstorLayoutView.extend({
 	this.service = new Service({name: this.serviceName});
 	this.dependencies.push(this.service);
 	this.shares = new ShareCollection();
-	// dont paginate shares for now
-	this.shares.pageSize = 1000;
 	this.dependencies.push(this.shares);
 	this.updateFreq = 5000;
 	this.initHandlebarHelpers();
