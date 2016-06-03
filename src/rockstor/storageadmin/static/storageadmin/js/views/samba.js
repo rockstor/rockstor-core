@@ -84,6 +84,8 @@ SambaView  = RockstorLayoutView.extend({
 			freeShares: this.freeShares,
 			sharesNotEmpty : verifySharesBool
 		}));
+		
+		this.renderDataTables();
 
 		//initalize Bootstrap Switch
 		this.$("[type='checkbox']").bootstrapSwitch();
