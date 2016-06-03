@@ -24,7 +24,7 @@
  *
  */
 
-DisksView = Backbone.View.extend({
+DisksView = RockstorLayoutView.extend({
     events: {
         "click #setup": "setupDisks",
         'click .wipe': 'wipeDisk',
@@ -60,12 +60,13 @@ DisksView = Backbone.View.extend({
             collectionNotEmpty: !this.collection.isEmpty()
         }));
 
-        this.$("#disks-table").tablesorter();
         this.$("[rel=tooltip]").tooltip({
             placement: "right",
             container: '#disks-table'
         });
 
+        this.renderDataTables();
+        
         //initialize bootstrap switch
         this.$("[type='checkbox']").bootstrapSwitch();
         this.$("[type='checkbox']").bootstrapSwitch('onColor', 'success'); //left side text color
