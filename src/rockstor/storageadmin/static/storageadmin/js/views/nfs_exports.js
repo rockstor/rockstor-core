@@ -64,7 +64,9 @@ NFSExportsView  = RockstorLayoutView.extend({
 			currentAppliance: currentAppliance,
 			currentApplianceIp: currentAppliance.get('ip')
 		}));
-
+		
+		this.renderDataTables();
+		
 		//initalize Bootstrap Switch
 		this.$("[type='checkbox']").bootstrapSwitch();
 		this.$('input[name="nfs-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
