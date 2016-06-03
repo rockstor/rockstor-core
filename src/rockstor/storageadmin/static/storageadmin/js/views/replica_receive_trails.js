@@ -63,8 +63,10 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
 		if (this.$('[rel=tooltip]')) { 
 			this.$('[rel=tooltip]').tooltip('hide');
 		}
-		this.$('#receive-trails-table').tablesorter();
+		
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+		
+		this.renderDataTables();
 	},
 
 	initHandlebarHelpers: function(){
