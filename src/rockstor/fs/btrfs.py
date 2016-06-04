@@ -90,7 +90,6 @@ def get_pool_info(disk):
             # field reference.
             dev_byid, is_byid = get_dev_byid_name(l.split()[-1], True)
             pool_info['disks'].append(dev_byid)
-    logger.debug('get_pool_info returning %s' % pool_info)
     return pool_info
 
 
@@ -130,7 +129,6 @@ def cur_devices(mnt_pt):
             # our caller expects this full path format.
             dev_byid, is_byid = get_dev_byid_name(l.split()[-1])
             dev_list_byid.append(dev_byid)
-    logger.debug('cur_devices returning %s' % dev_list_byid)
     return dev_list_byid
 
 
@@ -171,7 +169,6 @@ def resize_pool(pool, dev_list_byid, add=True):
     if (not resize):
         return None
     resize_cmd.append(root_mnt_pt)
-    logger.debug('resize_pool about to execute %s' %resize_cmd)
     return run_command(resize_cmd)
 
 
