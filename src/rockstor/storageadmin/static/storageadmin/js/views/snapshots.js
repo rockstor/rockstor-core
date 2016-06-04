@@ -42,8 +42,6 @@ SnapshotsView = SnapshotsCommonView.extend({
 	this.snapshots = this.options.snapshots;
 	this.collection = new SnapshotsCollection();
 	this.shares = new ShareCollection();
-	this.collection.pageSize = RockStorGlobals.maxPageSize;
-	this.shares.pageSize = RockStorGlobals.maxPageSize;
 	this.dependencies.push(this.shares);
 	this.dependencies.push(this.collection);
 	this.selectedSnapshots = [];
