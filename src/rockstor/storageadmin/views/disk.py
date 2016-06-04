@@ -236,11 +236,14 @@ class DiskMixin(object):
                 # not have a by-id type name expected by the smart subsystem.
                 # This has only been observed in no serial virtio devices.
                 if (re.match('fake-serial-', do.serial) is not None) or \
-                        (re.match('virtio-|md-|mmc-', do.name) is not None):
+                        (re.match('virtio-|md-|mmc-|nvme-', do.name) is not None):
                     # Virtio disks (named virtio-*), md devices (named md-*),
                     # and an sdcard reader that provides devs named mmc-* have
                     # no smart capability so avoid cluttering logs with
                     # exceptions on probing these with smart.available.
+                    # nvme not yet supported by CentOS 7 smartmontools:
+                    # https://www.smartmontools.org/ticket/657
+                    # Thanks to @snafu in rockstor forum post 1567 for this.
                     do.smart_available = do.smart_enabled = False
                     continue
                 # try to establish smart availability and status and update db
