@@ -319,6 +319,12 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
             cur_stats = {}
             interval = 1
             disks = [d.name for d in Disk.objects.all()]
+            # TODO: need to add some translation to old names here now as
+            # TODO: /proc/diskstats has lines of the following form:
+            #  8      64 sde 1034 0 9136 702 0 0 0 0 0 548 702
+            #  8      65 sde1 336 0 2688 223 0 0 0 0 0 223 223
+            # Could maybe generate a map from ls of /dev/disk/by-id
+            # linking all first elements (by-id names) to last (sda type names)
             with open(stats_file_path) as stats_file:
                 for line in stats_file.readlines():
                     fields = line.split()
