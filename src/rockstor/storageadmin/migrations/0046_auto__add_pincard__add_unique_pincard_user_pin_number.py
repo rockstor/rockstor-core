@@ -11,19 +11,19 @@ class Migration(SchemaMigration):
         # Adding model 'Pincard'
         db.create_table(u'storageadmin_pincard', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
+            ('user', self.gf('django.db.models.fields.IntegerField')()),
             ('pin_number', self.gf('django.db.models.fields.IntegerField')()),
             ('pin_code', self.gf('django.db.models.fields.CharField')(max_length=32)),
         ))
         db.send_create_signal('storageadmin', ['Pincard'])
 
         # Adding unique constraint on 'Pincard', fields ['user', 'pin_number']
-        db.create_unique(u'storageadmin_pincard', ['user_id', 'pin_number'])
+        db.create_unique(u'storageadmin_pincard', ['user', 'pin_number'])
 
 
     def backwards(self, orm):
         # Removing unique constraint on 'Pincard', fields ['user', 'pin_number']
-        db.delete_unique(u'storageadmin_pincard', ['user_id', 'pin_number'])
+        db.delete_unique(u'storageadmin_pincard', ['user', 'pin_number'])
 
         # Deleting model 'Pincard'
         db.delete_table(u'storageadmin_pincard')
@@ -69,8 +69,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'wygLDVb1Jz4MYYNjwhgG0g9yvwzdmQT3UWzilhsH'", 'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'KV1KLTjNmZ9alamIbg3lUy4bRCj90YTSzta3qnrMJBVKKJSkd4SZZ0UpgRWnDEGr7qtUceh4Si4QvBqjTj9OMh8WuqqxaUGg0kIjt242SQrmZ6BDBkF57UFQ6ynqRhl6'", 'max_length': '255', 'db_index': 'True', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'AyG8zICJdEiodFQxEnIiARkMQwzz1KDmQNhsuy3i'", 'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'ZXZ7p4tw4tyngRo6EKRTQpTrfnqfZDdOImCl44wDCnARZTdlAoXEV0502FtymeuTBGj2yEkhKhGDOV1itHWkC7kvfNob5sL93bIoDFpBr7DNYlAxwcSNxXeTjRYERenF'", 'max_length': '255', 'db_index': 'True', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -317,7 +317,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'pin_code': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'pin_number': ('django.db.models.fields.IntegerField', [], {}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
+            'user': ('django.db.models.fields.IntegerField', [], {})
         },
         'storageadmin.plugin': {
             'Meta': {'object_name': 'Plugin'},
