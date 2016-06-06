@@ -16,8 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (User, Group)
+from storageadmin.models import (User, Group, Pincard)
 from system.users import (get_users, get_groups)
+from system.pinmanager import (pincard_states)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -58,12 +59,16 @@ def combined_users():
                         go.save()
                         uo.group = go
             uo.save()
+            uo.pincard_allowed, uo.has_pincard = pincard_states(uo)
             users.append(uo)
+            
         except User.DoesNotExist:
             temp_uo = User(username=u, uid=sys_users[u][0],
                            gid=sys_users[u][1], shell=sys_users[u][2], admin=False)
             temp_uo.managed_user = False
+            temp_uo.pincard_allowed, temp_uo.has_pincard = pincard_states(temp_uo)
             users.append(temp_uo)
+            
     for u in User.objects.all():
         if (u.username not in uname_list):
             users.append(u)
