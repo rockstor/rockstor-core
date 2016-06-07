@@ -27,11 +27,11 @@
 UsersView = RockstorLayoutView.extend({
 	events: {
 		"click .delete-user": "deleteUser",
-		"click .edit-user": "editUser"
+		"click .edit-user": "editUser",
+		"click .add-pincard": "addPincard"
 	},
 
 	initialize: function() {
-		// call initialize of base
 		this.constructor.__super__.initialize.apply(this, arguments);
 		this.template = window.JST.users_users;
 		this.collection = new UserCollection();
@@ -97,6 +97,18 @@ UsersView = RockstorLayoutView.extend({
 			trigger: true
 		});
 	},
+	
+	addPincard: function(event) {
+		event.preventDefault();
+		var uid = $(event.currentTarget).attr('data-uid');
+		console.log(uid);
+		RockStorSocket.pincardManager = io.connect('/pincardmanager', {
+            'secure': true,
+            'force new connection': true
+        });
+		RockStorSocket.pincardManager.emit('generatepincard', uid);
+		//RockStorSocket.pincard.disconnect();
+	},
 
 	initHandlebarHelpers: function() {
 		Handlebars.registerHelper('display_users_table', function(adminBool) {
@@ -129,17 +141,17 @@ UsersView = RockstorLayoutView.extend({
 					html += '<td>';
 					if (filteredCollection[i].get('managed_user')) {
 						html += '<a href="#" class="edit-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;';
-						html += '<a href="#" class="delete-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>';
+						html += '<a href="#" class="delete-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>&nbsp;';
 					}
 					if (has_pincard) {
-						html += '&nbsp;<i class="fa fa-credit-card text-success" aria-hidden="true" rel="tooltip" title="Pincard already present - Click to generate a new Pincard"></i>';
+						html += '<a href="#" class="add-pincard" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Pincard already present - Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
 					} else {
 						switch (pincard_allowed) {
 							case 'yes':
-								html += '&nbsp;<i class="fa fa-credit-card text-success" style="color: green;" aria-hidden="true" rel="tooltip" title="Click to generate a new Pincard"></i>';
+								html += '<a href="#" class="add-pincard" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
 								break;
 							case 'otp':
-								html += '&nbsp;<a href="#email" rel="tooltip" title="Pincard+OTP (One Time Password) via mail required, Email Alerts not enabled, click to procede"><i class="fa fa-credit-card text-warning" aria-hidden="true"></i></a>';
+								html += '<a href="#email" rel="tooltip" title="Pincard+OTP (One Time Password) via mail required, Email Alerts not enabled, click to procede"><i class="fa fa-credit-card text-warning" aria-hidden="true"></i></a>';
 								break;
 						}
 					}
