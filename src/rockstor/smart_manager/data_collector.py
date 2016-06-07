@@ -51,6 +51,7 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
     
     def initialize(self):
         self.connected = True
+
     def recv_connect(self):
 
         self.emit("pincardManager:pincardwelcome", {
