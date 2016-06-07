@@ -33,6 +33,8 @@ from os import path
 from sys import getsizeof
 from glob import glob
 
+from system.pinmanager import save_pincard
+
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
 from datetime import (datetime, timedelta)
@@ -45,6 +47,27 @@ from system.pkg_mgmt import update_check
 import logging
 logger = logging.getLogger(__name__)
 
+class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
+    
+    def initialize(self):
+        self.connected = True
+    def recv_connect(self):
+
+        self.emit("pincardManager:pincardwelcome", {
+            "key": "pincardManager:pincardwelcome", "data": "Welcome to Rockstor PincardManager"
+        })
+
+    def recv_disconnect(self):
+
+        self.disconnect()
+    
+    def on_generatepincard(self, uid):
+        
+        def create_pincard(uid):
+            new_pincard = save_pincard(uid)
+            self.emit('pincardManager:newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
+
+        gevent.spawn(create_pincard, uid)
 
 class LogManagerNamespace(BaseNamespace, BroadcastMixin):
 
@@ -669,6 +692,7 @@ class Application(object):
                                       '/network-widget': NetworkWidgetNamespace,
                                       '/disk-widget': DisksWidgetNamespace,
                                       '/logmanager': LogManagerNamespace,
+                                      '/pincardmanager': PincardManagerNamespace
             })
             if ((cur_ts - self.scan_ts).total_seconds() > self.scan_interval):
                 self.scan_ts = cur_ts
