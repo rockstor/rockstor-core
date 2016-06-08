@@ -799,12 +799,16 @@ $(document).ready(function() {
 	var htmlErr = null;
 	var resType = jqXhr.getResponseHeader('Content-Type');
 	var detail = jqXhr.responseText;
-	var errJson = {};
+	    var errJson = {};
+        var tb = [];
 	if (jqXhr.status != 403) {
 	    // dont show forbidden errors (for setup screen)
 	    if (jqXhr.getResponseHeader('Content-Type').match(/json/)) {
-		errJson = getXhrErrorJson(jqXhr);
-		detail = errJson.detail;
+		    errJson = getXhrErrorJson(jqXhr);
+		    detail = errJson[0];
+            if (errJson.length > 1) {
+                tb = errJson.slice(1);
+            }
 	    } else if (jqXhr.status >= 400 && jqXhr.status < 500) {
 		detail = 'Unknown client error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
 	    } else if (jqXhr.status >= 500 && jqXhr.status < 600) {
@@ -814,12 +818,14 @@ $(document).ready(function() {
 		$("#globalerrmsg").html(commonerr_template({
 		    jqXhr: jqXhr,
 		    detail: detail,
+            tb: tb,
 		    help: errJson.help,
 		    ajaxSettings: ajaxSettings
 		}));
 	    } else {
 		$('.overlay-content', '#global-err-overlay').html(popuperrTemplate({
-		    detail: detail
+		    detail: detail,
+            tb: tb
 		}));
 		$('#global-err-overlay').overlay().load();
 	    }

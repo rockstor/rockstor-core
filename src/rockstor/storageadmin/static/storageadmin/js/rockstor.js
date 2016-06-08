@@ -234,8 +234,6 @@ $.ajaxSetup({
     }
 });
 
-errorPopup = undefined;
-
 function showApplianceList() {
     var applianceSelectPopup = $('#appliance-select-popup').modal({
 	show: false
