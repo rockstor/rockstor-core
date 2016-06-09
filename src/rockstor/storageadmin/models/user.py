@@ -59,5 +59,21 @@ class User(models.Model):
     def managed_user(self, val, *args, **kwargs):
         self.editable = val
 
+    @property
+    def has_pincard(self, *args, **kwargs):
+        return getattr(self, 'pincard_exist', False)
+
+    @has_pincard.setter
+    def has_pincard(self, val, *args, **kwargs):
+        self.pincard_exist = val
+
+    @property
+    def pincard_allowed(self, *args, **kwargs):
+        return getattr(self, 'pincard_enabled', 'no')
+
+    @pincard_allowed.setter
+    def pincard_allowed(self, val, *args, **kwargs):
+        self.pincard_enabled = val
+
     class Meta:
         app_label = 'storageadmin'
