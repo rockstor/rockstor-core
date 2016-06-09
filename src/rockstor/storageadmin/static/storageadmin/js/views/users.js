@@ -28,7 +28,8 @@ UsersView = RockstorLayoutView.extend({
 	events: {
 		"click .delete-user": "deleteUser",
 		"click .edit-user": "editUser",
-		"click .add-pincard": "addPincard"
+		"click .add-pincard": "addPincard",
+		"hidden.bs.modal #pincard-modal": "PincardModalClose"
 	},
 
 	initialize: function() {
@@ -101,13 +102,99 @@ UsersView = RockstorLayoutView.extend({
 	addPincard: function(event) {
 		event.preventDefault();
 		var uid = $(event.currentTarget).attr('data-uid');
-		console.log(uid);
+		var username = $(event.currentTarget).attr('data-username');
 		RockStorSocket.pincardManager = io.connect('/pincardmanager', {
             'secure': true,
             'force new connection': true
         });
+		$('#pincard_user').text(username);
+		RockStorSocket.addListener(this.renderPincard, this, 'pincardManager:newpincard');
 		RockStorSocket.pincardManager.emit('generatepincard', uid);
-		//RockStorSocket.pincard.disconnect();
+	},
+
+	renderPincard: function(data) {
+
+		//Define start and default values 
+		var pins_array = data;
+		var pin_cells_start = {'x': 6, 'y': 16};
+		var pin_cells_dimensions = {'x': 30, 'y': 20};
+		var pin_indexes_start = {'x': 20, 'y': 13};
+		var pin_texts_start = {'x': 21, 'y': 30};
+		var pincard_objects_slide = {'x': 40, 'y': 36};
+		var Pincard_canvas = $('#Pincard_canvas')[0];
+		var ctx = Pincard_canvas.getContext("2d");
+		//Clear Pincard canvas
+		ctx.clearRect(0, 0, 242, 152);
+		//Create canvas shape and fill will black background
+		ctx.fillStyle = "black";
+		ctx.strokeStyle = "black";
+		ctx.moveTo(10, 0);
+		ctx.lineTo(232, 0);
+		ctx.arcTo(242, 0, 242, 10, 10);
+		ctx.lineTo(242, 142);
+		ctx.arcTo(242, 152, 232, 152, 10);
+		ctx.lineTo(10, 152);
+		ctx.arcTo(0, 152, 0, 142, 10);
+		ctx.lineTo(0, 10);
+		ctx.arcTo(0, 0, 10, 0, 10);
+		ctx.fill();
+		//Add Rockstor watermark image then render pins cells, indexes and pins values
+		var background_image = $('#canvas_background')[0];
+		//Reduce opacity for background image
+		ctx.globalAlpha = 0.3
+		ctx.drawImage(background_image, 33, 6, 176, 140);
+		//Back to normal opacity for pin cells, indexes and values
+		ctx.globalAlpha = 1
+		ctx.strokeStyle = "white";
+		ctx.lineWidth = "2";
+		ctx.fillStyle = "white";
+		ctx.textAlign = "center";
+		var pin_index, x_delta, y_delta, pin_cell_x, pin_cell_y,
+			pin_index_x, pin_index_y, pin_text_x, pin_text_y;
+		var pins_string = '<table class="table table-condensed table-bordered"><tbody>';
+		
+		for (var y=0;y<=3;y++){
+			//Loop through Pincard rows and calculate y deltas for every object
+			y_delta = y*pincard_objects_slide['y'];
+			pin_cell_y = pin_cells_start['y'] + y_delta;
+			pin_index_y = pin_indexes_start['y'] + y_delta;
+			pin_text_y = pin_texts_start['y'] + y_delta;
+			pins_string += '<tr>';
+	
+			for (var x=0;x<=5;x++){
+				//Loop through Pincard columns and calculate
+				//x deltas for every object and current pin index value
+				pin_index = (x+1)+y*6;
+				x_delta = x*pincard_objects_slide['x'];
+				pin_cell_x = pin_cells_start['x'] + x_delta;
+				pin_index_x = pin_indexes_start['x'] + x_delta;
+				pin_text_x = pin_texts_start['x'] + x_delta;
+				//Render Pin cell
+				ctx.strokeRect(pin_cell_x, pin_cell_y, pin_cells_dimensions.x, pin_cells_dimensions.y);
+				//Render Pin index
+				ctx.font = "bold 13px Courier New";
+				ctx.fillText(pin_index, pin_index_x, pin_index_y);
+				//Render Pin value
+				ctx.font = "bold 14px Courier New";
+				ctx.fillText(pins_array[pin_index-1], pin_text_x, pin_text_y);
+				pins_string += '<td>' + pins_array[pin_index-1] + '</td>';
+			}
+			pins_string += '</tr>';
+		}
+		pins_string += '</tbody></table>';
+		$('#pins_list').html('Selectable Pincard pins:<br/>' + pins_string);
+        $('#pincard-modal').modal({
+            keyboard: false,
+            show: false,
+            backdrop: 'static'
+        });
+        $('#pincard-modal').modal('show');
+	},
+	
+	PincardModalClose: function(){
+		
+		RockStorSocket.removeOneListener('pincardManager');
+		RockStorSocket.pincardManager.disconnect();	
 	},
 
 	initHandlebarHelpers: function() {
@@ -144,11 +231,11 @@ UsersView = RockstorLayoutView.extend({
 						html += '<a href="#" class="delete-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>&nbsp;';
 					}
 					if (has_pincard) {
-						html += '<a href="#" class="add-pincard" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Pincard already present - Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
+						html += '<a href="#" class="add-pincard" data-username="' + filteredCollection[i].get('username') + '" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Pincard already present - Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
 					} else {
 						switch (pincard_allowed) {
 							case 'yes':
-								html += '<a href="#" class="add-pincard" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
+								html += '<a href="#" class="add-pincard" data-username="' + filteredCollection[i].get('username') + '" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
 								break;
 							case 'otp':
 								html += '<a href="#email" rel="tooltip" title="Pincard+OTP (One Time Password) via mail required, Email Alerts not enabled, click to procede"><i class="fa fa-credit-card text-warning" aria-hidden="true"></i></a>';
