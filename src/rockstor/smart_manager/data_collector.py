@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
     
     def initialize(self):
+
         self.connected = True
 
     def recv_connect(self):
@@ -65,6 +66,7 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
     def on_generatepincard(self, uid):
         
         def create_pincard(uid):
+
             new_pincard = save_pincard(uid)
             self.emit('pincardManager:newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
 

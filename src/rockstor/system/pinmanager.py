@@ -21,6 +21,7 @@ from hashlib import md5
 from storageadmin.models import (Pincard, EmailClient)
 
 def email_notification_enabled():
+
     #Check for email notifications state
     #required for password reset over root user (Pincard + otp via mail)
     try:
@@ -33,6 +34,7 @@ def email_notification_enabled():
     return has_mail
 
 def has_pincard(user):
+
     #Check if user has already a Pincard
     try:
         pins = Pincard.objects.filter(user=int(user.uid)).count()
@@ -44,6 +46,7 @@ def has_pincard(user):
     return has_pincard
 
 def pincard_states(user):
+
     #If user has a Pincard that means already allowed to have one, so avoid computing
     #If selected user is a managed one allowed to have a pincard_allowed
     #If user is uid 0 (root) and mail notifications enabled -> ok Pincard
@@ -65,6 +68,7 @@ def pincard_states(user):
     return pincard_allowed, pincard_present
 
 def generate_pincard():
+
     #Generate a 72 chars string over letters, digits and punctuation
     #Split string in 3 chars groups for 24 total pins
     #and crypt them
@@ -76,10 +80,13 @@ def generate_pincard():
         pincard_crypted.append(md5(pin).hexdigest())
     
     return pincard_plain, pincard_crypted
-def flush_pincard(uid):
+
+    def flush_pincard(uid):
+
     Pincard.objects.filter(user=int(uid)).delete()
 
 def save_pincard(uid):
+
     #Generate new pincard - plain text for frontend and md5 vals for db
     #Flush current pincard over db
     #Populate db and return plain text pins to user
