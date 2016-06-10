@@ -81,7 +81,7 @@ def generate_pincard():
     
     return pincard_plain, pincard_crypted
 
-    def flush_pincard(uid):
+def flush_pincard(uid):
 
     Pincard.objects.filter(user=int(uid)).delete()
 
