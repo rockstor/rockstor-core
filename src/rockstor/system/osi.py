@@ -1326,6 +1326,47 @@ def get_dev_byid_name(device_name, remove_path=False):
     return return_name, is_byid
 
 
+def get_byid_name_map():
+    """
+    Simple wrapper around 'ls -l /dev/disk/by-id' which returns a current
+    mapping of all attached sda type device names to their by-id counterparts.
+    Intended as a light weight helper for the Dashboard disk activity widget or
+    other non critical components. For critical components use only:
+    get_dev_byid_name() and get_devname() as they contain sanity checks and
+    validation mechanisms and are intended to have more repeatable behaviour but
+    only work on a single device at a time.
+    However a single call to this method can provide all current device name
+    mappings to their by-id counterparts.
+    :return: dictionary indexed (keyed) by sda type names with associated by-id
+    type names as the values or an empty dictionary if a non zero return code
+    was encountered.
+    """
+    logger.debug('GET_BYID_NAME_MAP called')
+    byid_name_map = {}
+    out, err, rc = run_command(['/usr/bin/ls', '-l', '/dev/disk/by-id'],
+        throw=True)
+    logger.debug('GET_BYID_NAME_MAP run_command returned %s %s %s' % (out, err, rc))
+    if rc == 0:
+        for each_line in out:
+            # Split the line by spaces and '/' chars
+            line_fields = each_line.replace('/', ' ').split()
+            # Grab every sda type name from the last field in the line
+            # and add it as a dictionary key with it's value as the by-id
+            # type name so we can index by sda type name and retrieve by-id.
+            # As there are often multiple by-id type names for a given sda type
+            # name we grab the first listed (usually the longest) only.
+            # N.B. The longest listed fist assumption may be fragile but we
+            # are not a canonical supplier of this mapping.
+            if len(line_fields) >= 5:
+                # Ensure we have at least 5 elements to avoid index out of range
+                # and to skip lines such as "total 0"
+                if line_fields[-1] not in byid_name_map.keys():
+                    byid_name_map[line_fields[-1]] = line_fields[-5]
+                    # ie {'sda': 'ata-QEMU_HARDDISK_QM00005'}
+    logger.debug('GET_BYID_NAME_MAP returning %s' % byid_name_map)
+    return byid_name_map
+
+
 def get_devname_old(device_name):
     """
     Depricated / prior version of get_devname()
