@@ -73,7 +73,7 @@ def get_users(max_wait=90):
             if (len(ufields) > 3):
                 charset = chardet.detect( ufields[0] )
                 uname = ufields[0].decode( charset['encoding'] )
-                users[uname] = (int(ufields[2]), int(ufields[3]))
+                users[uname] = (int(ufields[2]), int(ufields[3]), str(ufields[6]))
             if (time.time() - t0 > max_wait):
                 p.terminate()
                 break
@@ -100,6 +100,9 @@ def userdel(uname):
     except KeyError:
         # user doesn't exist
         return
+    #Ensure user get deleted from samba pass db
+    cmd = [SMBPASSWD, '-x', uname]
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     return run_command([USERDEL, '-r', uname])
 
