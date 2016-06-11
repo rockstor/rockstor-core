@@ -818,13 +818,15 @@ $(document).ready(function() {
 		            jqXhr: jqXhr,
 		            detail: detail,
                     tb: tb,
+                    stable: RockStorGlobals.updateChannel == "Stable",
 		            help: errJson.help,
 		            ajaxSettings: ajaxSettings
 		        }));
 	        } else {
 		        $('.overlay-content', '#global-err-overlay').html(popuperrTemplate({
 		            detail: detail,
-                    tb: tb
+                    tb: tb,
+                    stable: RockStorGlobals.updateChannel == "Stable"
 		        }));
 		        $('#global-err-overlay').overlay().load();
 	        }
