@@ -982,24 +982,18 @@ def get_base_device_byid(dev_byid, test_mode=False):
     N.B. No path is added to the device in either return case and irrespective
     of path status of passed dev_byid.
     """
-    logger.debug('get_base_device_byid passed device name = %s' % dev_byid)
     # split by by-id section delimiter '-'
     name_fields = dev_byid.split('-')
-    logger.debug('get_base_device_byid found the following fields in the '
-                 'passed devcie - %s' % name_fields)
     if len(name_fields) > 2 and re.match('part', name_fields[-1]):
         # The passed device has at least 3 fields ie bus, uniqueid, partname eg:
         # busname-model_serial_or_uniqueid-part3
         # The passed device name has a -part* ending so process it away by
         # re-joining all elements except the last from our previous split('-').
         base_dev_byid = '-'.join(name_fields[:-1])
-        logger.debug('get_base_device_byid returning dev name stripped of part')
     else:
         # our passed device name had no -part* ending so return unaltered.
         base_dev_byid = dev_byid
-        logger.debug('get_base_device_byid returning dev name as was')
     # return the consequent result
-    logger.debug('get_base_device_byid returning %s' % base_dev_byid)
     return base_dev_byid
 
 
@@ -1279,7 +1273,6 @@ def get_dev_byid_name(device_name, remove_path=False):
     without path as per remove_path). The second boolean element of the tuple
     indicates if a by-id type name was found. ie (return_name, is_byid)
     """
-    logger.debug('get_dev_byid_name called with %s' % device_name)
     # Until we find a by-id type name set this flag as False.
     is_byid = False
     # Until we find a by-id type name we will be returning device_name
@@ -1319,11 +1312,9 @@ def get_dev_byid_name(device_name, remove_path=False):
         return_name_fields = return_name.split('/')
         if len(return_name_fields) > 1:
             # Original device_name has path delimiters in: assume it has a path.
-            logger.debug('get_dev_byid_name removing path and returning %s' % return_name_fields[-1])
             return return_name_fields[-1], is_byid
     # No remove_path request by parameter flag or no path delimiter chars found
     # in return_name so leave as is and returning.
-    logger.debug('get_dev_byid_name returning %s' % return_name)
     return return_name, is_byid
 
 
@@ -1344,11 +1335,9 @@ def get_byid_name_map():
     type names as the values, or an empty dictionary if a non zero return code
     was encountered by run_command or no by-id type names were encountered.
     """
-    logger.debug('GET_BYID_NAME_MAP called')
     byid_name_map = {}
     out, err, rc = run_command([LS, '-l', '/dev/disk/by-id'],
         throw=True)
-    logger.debug('GET_BYID_NAME_MAP run_command returned %s %s %s' % (out, err, rc))
     if rc == 0:
         for each_line in out:
             # Split the line by spaces and '/' chars
@@ -1373,9 +1362,7 @@ def get_byid_name_map():
                     if len(line_fields[-5]) > len(
                             byid_name_map[line_fields[-1]]):
                         # The current line's by-id name is longer so use it.
-                        logger.debug('GET_BYID_NAME_MAP found a longer version of the same device, using instead device = %s' % line_fields[-1])
                         byid_name_map[line_fields[-1]] = line_fields[-5]
-    logger.debug('GET_BYID_NAME_MAP returning %s' % byid_name_map)
     return byid_name_map
 
 
