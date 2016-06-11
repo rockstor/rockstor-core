@@ -1,17 +1,31 @@
+
 <div class="alert alert-danger">
-  <strong><h4>Error!</h4></strong>
+  <strong><h4>Houston, we've had a problem.</h4></strong>
   <br>
   <div class="global-err-content">
     {{detail}}
   </div>
+  <div class="global-err-content">
+    {{#each tb}}
+    <p>{{this}}</p>
+    {{/each}}
+  </div>
 </div>
 <br>
 <div class="err-help">
-  If you need more help on this issue, email us at <a href="mailto:support@rockstor.com" target="_blank">support@rockstor.com</a> with the following information:
+  {{#if stable}}
+  Follow these steps to report this problem to Rockstor Community Forum. .
   <ul>
-    <li>The error message: {{detail}}</li>
-    <li>A step by step description of the actions leading up to the error.</li>
-    <li>Download the tarred and zipped server logs by clicking <a href="/logs/error.tgz" target="_blank">here</a>, and attach it to the email.</li>
+    <li>Take a screen capture of this error.</li>
+    <li>Copy this detailed error.</li>
+    <li>Create your support topic <a href="https://forum.rockstor.com/new-topic?title={{detail}}&category=support" target="_blank">here</a>.</li>
   </ul>
+  {{else}}
+  As a subscriber to Stable updates, you are eligible for commercial support. Please follow these steps to get help from the Rockstor team.
+  <ul>
+    <li>Take a screen capture of this error.</li>
+    <li>Copy this detailed error.</li>
+    <li>Create a support ticket <a href="https://support.rockstor.com/open.php" target="_blank">here</a>.</li>
+  </ul>
+  {{/if}}
 </div> <!-- err-help -->
-
