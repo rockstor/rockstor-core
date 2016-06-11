@@ -59,6 +59,7 @@ HDPARM = '/usr/sbin/hdparm'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 WIPEFS = '/usr/sbin/wipefs'
 DD = '/bin/dd'
+LS = '/usr/bin/ls'
 
 
 Disk = collections.namedtuple('Disk',
@@ -1335,21 +1336,23 @@ def get_dev_byid_name(device_name, remove_path=False):
 def get_byid_name_map():
     """
     Simple wrapper around 'ls -l /dev/disk/by-id' which returns a current
-    mapping of all attached sda type device names to their by-id counterparts.
+    mapping of all attached by-id device names to their sdX counterparts.
+    When multiple by-id names are found for the same sdX device then the longest
+    is preferred, or when equal in length then the first listed is used.
     Intended as a light weight helper for the Dashboard disk activity widget or
     other non critical components. For critical components use only:
     get_dev_byid_name() and get_devname() as they contain sanity checks and
     validation mechanisms and are intended to have more repeatable behaviour but
     only work on a single device at a time.
-    However a single call to this method can provide all current device name
-    mappings to their by-id counterparts.
-    :return: dictionary indexed (keyed) by sda type names with associated by-id
-    type names as the values or an empty dictionary if a non zero return code
-    was encountered.
+    A single call to this method can provide all current by-id device
+    names mapped to their sdX counterparts with the latter being the index.
+    :return: dictionary indexed (keyed) by sdX type names with associated by-id
+    type names as the values, or an empty dictionary if a non zero return code
+    was encountered by run_command or no by-id type names were encountered.
     """
     logger.debug('GET_BYID_NAME_MAP called')
     byid_name_map = {}
-    out, err, rc = run_command(['/usr/bin/ls', '-l', '/dev/disk/by-id'],
+    out, err, rc = run_command([LS, '-l', '/dev/disk/by-id'],
         throw=True)
     logger.debug('GET_BYID_NAME_MAP run_command returned %s %s %s' % (out, err, rc))
     if rc == 0:
@@ -1367,8 +1370,17 @@ def get_byid_name_map():
                 # Ensure we have at least 5 elements to avoid index out of range
                 # and to skip lines such as "total 0"
                 if line_fields[-1] not in byid_name_map.keys():
+                    # we don't yet have a record of this device so take one.
                     byid_name_map[line_fields[-1]] = line_fields[-5]
                     # ie {'sda': 'ata-QEMU_HARDDISK_QM00005'}
+                else:
+                    # We already have a record of this device so check if the
+                    # current line's by-id name is longer.
+                    if len(line_fields[-5]) > len(
+                            byid_name_map[line_fields[-1]]):
+                        # The current line's by-id name is longer so use it.
+                        logger.debug('GET_BYID_NAME_MAP found a longer version of the same device, using instead device = %s' % line_fields[-1])
+                        byid_name_map[line_fields[-1]] = line_fields[-5]
     logger.debug('GET_BYID_NAME_MAP returning %s' % byid_name_map)
     return byid_name_map
 
