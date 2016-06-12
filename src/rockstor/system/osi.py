@@ -37,22 +37,17 @@ import uuid
 logger = logging.getLogger(__name__)
 
 
-HOSTS_FILE = '/etc/hosts'
 MKDIR = '/bin/mkdir'
 RMDIR = '/bin/rmdir'
-CHMOD = '/bin/chmod'
 MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
 EXPORTFS = '/usr/sbin/exportfs'
-RESTART = '/sbin/restart'
-SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
 DEFAULT_MNT_DIR = '/mnt2/'
 SHUTDOWN = '/usr/sbin/shutdown'
 GRUBBY = '/usr/sbin/grubby'
 CAT = '/usr/bin/cat'
 UDEVADM = '/usr/sbin/udevadm'
-GREP = '/usr/bin/grep'
 NMCLI = '/usr/bin/nmcli'
 HOSTNAMECTL = '/usr/bin/hostnamectl'
 LSBLK = '/usr/bin/lsblk'
