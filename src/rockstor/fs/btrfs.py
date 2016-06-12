@@ -68,7 +68,6 @@ def get_pool_info(disk):
     :return: a dictionary with keys of 'disks', 'label', and 'uuid';
     disks keys a list of devices, while label and uuid keys are for strings.
     """
-    # cmd = [BTRFS, 'fi', 'show', '/dev/%s' % disk]
     cmd = [BTRFS, 'fi', 'show', '/dev/disk/by-id/%s' % disk]
     o, e, rc = run_command(cmd)
     pool_info = {'disks': [],}
