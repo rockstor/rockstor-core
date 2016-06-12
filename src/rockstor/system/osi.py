@@ -733,6 +733,7 @@ def root_disk():
     the returned value is sdc
     The assumption with non md devices is that the partition number will be a
     single character.
+    :return: sdX type device name (without path) where root is mounted.
     """
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
