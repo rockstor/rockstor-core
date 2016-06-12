@@ -1110,6 +1110,7 @@ def get_disk_power_status(dev_byid):
     :return: single word sting of state as indicated by hdparm -C /dev/<disk>
     and if we encounter an error line in the output we return unknown.
     """
+    # TODO: candidate for move to system/hdparm
     # if we use the -C -q switches then we have only one line of output:
     # hdparm -C -q /dev/sda
     # drive state is:  active/idle
@@ -1142,6 +1143,7 @@ def get_disk_APM_level(dev_byid):
     it's setting equivalent of 255. If there is an error, such as can happen
     when APM is not supported, then we return 0.
     """
+    # TODO: candidate for move to system/hdparm
     # if we use the -B -q switches then we have only one line of output:
     # hdparm -B -q /dev/disk/by-id/dev_byid
     #  APM_level<tab>= 192
@@ -1184,6 +1186,7 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
     :return: False if an hdparm command was not possible ie inappropriate dev,
     or an error was return by the command, True otherwise.
     """
+    # TODO: candidate for move to system/hdparm
     # Deal elegantly with null dev_byid
     if dev_byid is None:
         return False
@@ -1437,6 +1440,7 @@ def update_hdparm_service(hdparm_command_list, comment):
     only done when the service is freshly installed, ie when no existing
     /etc/systemd/system/rockstor-hdparm.service file exists in the first place.
     """
+    # TODO: candidate for move to system/hdparm
     edit_done = False
     do_edit = False
     clear_line_count = 0
@@ -1564,6 +1568,7 @@ def read_hdparm_setting(dev_byid):
     :return: comment string immediately following an entry containing the given
     device name or None if None found or the systemd file didn't exist.
     """
+    # TODO: candidate for move to system/hdparm
     if dev_byid is None:
         return None
     infile = '/etc/systemd/system/rockstor-hdparm.service'
@@ -1608,6 +1613,7 @@ def enter_standby(dev_byid):
     :param dev_byid: device name as stored in db ie /dev/disk/by-id type
     :return: None or out, err, rc of command
     """
+    # TODO: candidate for move to system/hdparm
     hdparm_command = [HDPARM, '-q', '-y', '/dev/disk/by-id/%s' % dev_byid]
     return run_command(hdparm_command)
 
