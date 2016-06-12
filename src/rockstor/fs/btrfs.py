@@ -556,7 +556,7 @@ def rollback_snap(snap_name, sname, subvol_name, pool):
     shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
     create_tmp_dir(mnt_pt)
     subvol_str = 'subvol=%s' % sname
-    dpath = '/dev/%s' % pool.disk_set.first().name
+    dpath = '/dev/disk/by-id/%s' % pool.disk_set.first().name
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, dpath, mnt_pt]
     run_command(mnt_cmd)
 
