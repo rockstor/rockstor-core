@@ -100,6 +100,8 @@ def userdel(uname):
     except KeyError:
         # user doesn't exist
         return
+    #Ensure user get deleted from samba pass db
+    run_command([SMBPASSWD, '-x', uname])
 
     return run_command([USERDEL, '-r', uname])
 
