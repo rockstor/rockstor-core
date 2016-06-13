@@ -801,6 +801,7 @@ $(document).ready(function() {
 	    var errJson = {};
         var tb = [];
 	    if (jqXhr.status != 403) {
+	    	new Clipboard('#clip');
 	        // dont show forbidden errors (for setup screen)
 	        if (jqXhr.getResponseHeader('Content-Type').match(/json/)) {
 		        errJson = getXhrErrorJson(jqXhr);
