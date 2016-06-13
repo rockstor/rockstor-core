@@ -101,8 +101,7 @@ def userdel(uname):
         # user doesn't exist
         return
     #Ensure user get deleted from samba pass db
-    cmd = [SMBPASSWD, '-x', uname]
-    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    run_command([SMBPASSWD, '-x', uname])
 
     return run_command([USERDEL, '-r', uname])
 
