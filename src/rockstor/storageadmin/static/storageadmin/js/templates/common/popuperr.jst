@@ -15,19 +15,20 @@
   {{#if stable}}
     <p>As a subscriber to Stable updates, you are eligible for commercial support. Please follow these steps to get help from the Rockstor team.</p>
   {{else}}
-    <p>Follow these steps to report this problem to Rockstor Community Forum.</p>
+    <p>If you think this is a bug or need help, follow these steps to submit a report to the Rockstor Community Forum.</p>
   {{/if}}
-  <ul>
-    <li>Take a screen capture of this error.</li>
+  <ol>
+    <li>Take a screen capture of this error/screen.</li>
     <li>Click
         <a id="clip" data-clipboard-target="#errorContent">
             <i class="fa fa-clipboard fa-lg" aria-hidden="true"></i>
         </a>
-        to copy the detailed error.
+        to copy the above traceback to your clipboard.
     </li>
     {{#if stable}}
-        <li>Create a support ticket <a href="https://support.rockstor.com/open.php" target="_blank">here</a>.</li>
+        <li>Create a support ticket with information from above two steps <a href="https://support.rockstor.com/open.php" target="_blank">here</a>.</li>
     {{else}}
-        <li>Create your support topic <a href="https://forum.rockstor.com/new-topic?title={{detail}}&category=support" target="_blank">here</a>.</li>
-    {{/if}}
+        <li>Create a support topic with information from above two steps <a href="https://forum.rockstor.com/new-topic?title={{detail}}&category=support" target="_blank">here</a>.</li>
+        {{/if}}
+  </ol>
 </div> <!-- err-help -->
