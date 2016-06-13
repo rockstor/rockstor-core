@@ -38,7 +38,7 @@ def handle_exception(e, request, e_msg=None):
     for optionally humanizing the message. Otherwise, error from the exception
     object is used.
     """
-    exc_type, exc_value, exc_traceback = sys.exc_info()
+    #exc_type, exc_value, exc_traceback = sys.exc_info()
     if (e_msg is not None):
         e_msg = '%s. Lower level exception: %s' % (e_msg, e.__str__())
         logger.error(e_msg)
@@ -52,4 +52,4 @@ def handle_exception(e, request, e_msg=None):
     fpath = '%ssrc/rockstor/logs/error.tgz' % settings.ROOT_DIR
     logdir = '%svar/log' % settings.ROOT_DIR
     run_command(['/usr/bin/tar', '-c', '-z', '-f', fpath, logdir], throw=False)
-    raise RockStorAPIException(detail=e_msg, trace=traceback.format_tb(exc_traceback))
+    raise RockStorAPIException(detail=e_msg, trace=traceback.format_exc())

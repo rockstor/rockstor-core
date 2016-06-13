@@ -22,6 +22,4 @@ class RockStorAPIException(APIException):
         self.status_code = status_code
         self.detail = [detail,]
         if trace is not None:
-            for i in range(3):
-                for t in trace:
-                    self.detail.extend(t.split('\n'))
+            self.detail.append(trace)
