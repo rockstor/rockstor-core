@@ -234,24 +234,6 @@ $.ajaxSetup({
     }
 });
 
-function showError(errorMsg) {
-    if (_.isUndefined(errorPopup)) {
-	errorPopup = $('#errorPopup').modal({
-	    show: false
-	});
-    }
-    // $('#errorContent').html("<h3>Error!</h3>");
-    var msg = errorMsg;
-    try {
-	msg = JSON.parse(errorMsg).detail;
-    } catch(err) {
-    }
-    $('#errorContent').html(msg);
-    $('#errorPopup').modal('show');
-}
-
-errorPopup = undefined;
-
 function showApplianceList() {
     var applianceSelectPopup = $('#appliance-select-popup').modal({
 	show: false

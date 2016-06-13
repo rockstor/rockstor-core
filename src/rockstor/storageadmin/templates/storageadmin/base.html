@@ -26,7 +26,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/static/storageadmin/img/favicon.ico">
-    <title> RockStor {% block title %}{% endblock %}</title>
+    <title> Rockstor {% block title %}{% endblock %}</title>
     <link href="/static/storageadmin/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/js/lib/cron/jquery-cron.css" rel="stylesheet">
     <link href="/static/js/lib/gentleSelect/jquery-gentleSelect.css" rel="stylesheet">
@@ -112,6 +112,7 @@
     <script src="/static/js/lib/jquery.dataTables.min.js"></script>
     <script src="/static/js/lib/dataTables.bootstrap.min.js"></script>
     <script src="/static/storageadmin/js/storageadmin.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.10/clipboard.min.js"></script>
   </head>
 
   <body>
@@ -265,6 +266,7 @@
       {% endif %}
       RockStorGlobals.showAnalyticsModal = false;
       RockStorGlobals.pageSize = {{ page_size }};
+      RockStorGlobals.updateChannel = "{{ update_channel }}";
     </script>
   <script>
       // Controls hamburger menu collapse after click
