@@ -1,31 +1,33 @@
-
 <div class="alert alert-danger">
-  <strong><h4>Houston, we've had a problem.</h4></strong>
-  <br>
+  <strong><h5>Houston, we've had a problem.</h5></strong>
   <div class="global-err-content">
     {{detail}}
-  </div>
-  <div class="global-err-content">
-    {{#each tb}}
-    <p>{{this}}</p>
-    {{/each}}
+  </div><br/>
+  <div id="errorContent" class="global-err-content tracebackDiv">
+    <pre>{{#each tb}}
+            {{this}}
+         {{/each}}
+    </pre>
   </div>
 </div>
 <br>
-<div class="err-help">
+<div class="err-help reportError">
   {{#if stable}}
-  Follow these steps to report this problem to Rockstor Community Forum. .
-  <ul>
-    <li>Take a screen capture of this error.</li>
-    <li>Copy this detailed error.</li>
-    <li>Create your support topic <a href="https://forum.rockstor.com/new-topic?title={{detail}}&category=support" target="_blank">here</a>.</li>
-  </ul>
+    <p>As a subscriber to Stable updates, you are eligible for commercial support. Please follow these steps to get help from the Rockstor team.</p>
   {{else}}
-  As a subscriber to Stable updates, you are eligible for commercial support. Please follow these steps to get help from the Rockstor team.
+    <p>Follow these steps to report this problem to Rockstor Community Forum.</p>
+  {{/if}}
   <ul>
     <li>Take a screen capture of this error.</li>
-    <li>Copy this detailed error.</li>
-    <li>Create a support ticket <a href="https://support.rockstor.com/open.php" target="_blank">here</a>.</li>
-  </ul>
-  {{/if}}
+    <li>Click
+        <a id="clip" data-clipboard-target="#errorContent">
+            <i class="fa fa-clipboard fa-lg" aria-hidden="true"></i>
+        </a>
+        to copy the detailed error.
+    </li>
+    {{#if stable}}
+        <li>Create a support ticket <a href="https://support.rockstor.com/open.php" target="_blank">here</a>.</li>
+    {{else}}
+        <li>Create your support topic <a href="https://forum.rockstor.com/new-topic?title={{detail}}&category=support" target="_blank">here</a>.</li>
+    {{/if}}
 </div> <!-- err-help -->
