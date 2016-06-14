@@ -787,7 +787,6 @@ $(document).ready(function() {
     Backbone.history.start();
     $('#appliance-name').click(function(event) {
 	    event.preventDefault();
-	    //showApplianceList();
 	    app_router.navigate('appliances', {trigger: true});
     });
 
