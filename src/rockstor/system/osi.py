@@ -27,6 +27,7 @@ from struct import pack
 from exceptions import CommandException
 import hashlib
 import logging
+import uuid
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -204,13 +205,6 @@ def refresh_nfs_exports(exports):
             nfs4_mount_teardown(s)
     shutil.move(npath, '/etc/exports')
     return run_command([EXPORTFS, '-ra'])
-
-
-def hostid():
-    """
-    return the hostid of the machine
-    """
-    return run_command([HOSTID])
 
 
 def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
@@ -1081,3 +1075,14 @@ def enter_standby(device_name):
     """
     hdparm_command = [HDPARM, '-q', '-y', '%s' % get_devname(device_name, True)]
     return run_command(hdparm_command)
+
+def hostid():
+    """Get the system's uuid from /sys/class/dmi/id/product_uuid. If the file
+    doesn't exist for any reason, generate a uuid like we used to prior to this
+    change.
+    """
+    try:
+        with open("/sys/class/dmi/id/product_uuid") as fo:
+            return fo.readline().strip()
+    except:
+        return '%s-%s' % (run_command(HOSTID)[0][0], str(uuid.uuid4()))
