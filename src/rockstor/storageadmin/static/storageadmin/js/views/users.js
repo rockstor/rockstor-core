@@ -116,33 +116,33 @@ UsersView = RockstorLayoutView.extend({
 
 		//Define start and default values 
 		var pins_array = data;
-		var pin_cells_start = {'x': 6, 'y': 16};
-		var pin_cells_dimensions = {'x': 30, 'y': 20};
-		var pin_indexes_start = {'x': 20, 'y': 13};
-		var pin_texts_start = {'x': 21, 'y': 30};
-		var pincard_objects_slide = {'x': 40, 'y': 36};
+		var pin_cells_start = {'x': 7, 'y': 18};
+		var pin_cells_dimensions = {'x': 45, 'y': 30};
+		var pin_indexes_start = {'x': 28, 'y': 15};
+		var pin_texts_start = {'x': 30, 'y': 38};
+		var pincard_objects_slide = {'x': 53, 'y': 46};
 		var Pincard_canvas = $('#Pincard_canvas')[0];
 		var ctx = Pincard_canvas.getContext("2d");
 		//Clear Pincard canvas
-		ctx.clearRect(0, 0, 242, 152);
+		ctx.clearRect(0, 0, 324, 204);
 		//Create canvas shape and fill will black background
 		ctx.fillStyle = "black";
 		ctx.strokeStyle = "black";
-		ctx.moveTo(10, 0);
-		ctx.lineTo(232, 0);
-		ctx.arcTo(242, 0, 242, 10, 10);
-		ctx.lineTo(242, 142);
-		ctx.arcTo(242, 152, 232, 152, 10);
-		ctx.lineTo(10, 152);
-		ctx.arcTo(0, 152, 0, 142, 10);
-		ctx.lineTo(0, 10);
-		ctx.arcTo(0, 0, 10, 0, 10);
+		ctx.moveTo(12, 0);
+		ctx.lineTo(312, 0);
+		ctx.arcTo(324, 0, 324, 12, 12);
+		ctx.lineTo(324, 192);
+		ctx.arcTo(324, 204, 312, 204, 12);
+		ctx.lineTo(12, 204);
+		ctx.arcTo(0, 204, 0, 192, 12);
+		ctx.lineTo(0, 12);
+		ctx.arcTo(0, 0, 12, 0, 12);
 		ctx.fill();
 		//Add Rockstor watermark image then render pins cells, indexes and pins values
 		var background_image = $('#canvas_background')[0];
 		//Reduce opacity for background image
 		ctx.globalAlpha = 0.3
-		ctx.drawImage(background_image, 33, 6, 176, 140);
+		ctx.drawImage(background_image, 32, 2, 260, 208);
 		//Back to normal opacity for pin cells, indexes and values
 		ctx.globalAlpha = 1
 		ctx.strokeStyle = "white";
