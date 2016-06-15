@@ -135,7 +135,7 @@ class NetworkMixin(object):
             slave_co = NetworkConnection.objects.get(uuid=e['uuid'])
             try:
                 slave_co.master = NetworkConnection.objects.get(name=e['master'])
-            except Exception, e:
+            except (NetworkConnection.DoesNotExist, NetworkConnection.MultipleObjectsReturned), e:
                 logger.exception(e)
             slave_co.save()
 
@@ -147,7 +147,8 @@ class NetworkMixin(object):
             if ('connection' in dconfig):
                 try:
                     dconfig['connection'] = NetworkConnection.objects.get(name=dconfig['connection'])
-                except (NetworkConnection.DoesNotExist, NetworkConnection.MultipleObjectsReturned):
+                except (NetworkConnection.DoesNotExist, NetworkConnection.MultipleObjectsReturned), e:
+                    logger.exception(e)
                     dconfig['connection'] = None
 
         for ndo in NetworkDevice.objects.all():
