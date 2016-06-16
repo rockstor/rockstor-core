@@ -18,7 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import random, string
 from hashlib import md5
+from pwd import getpwnam
 from storageadmin.models import (Pincard, EmailClient)
+
+def username_to_uid(username):
+    
+    #Convert from username to user uid
+    try:
+        user_uid = getpwnam(username).pw_uid
+    except KeyError:
+        # user doesn't exist
+        user_uid = None
+
+    return user_uid
 
 def email_notification_enabled():
 
@@ -36,8 +48,11 @@ def email_notification_enabled():
 def has_pincard(user):
 
     #Check if user has already a Pincard
+    #Added uid_field to dinamically handle passed data:
+    #user can be and User obcject or directly a uid
+    uid_field = user.uid if hasattr(user, 'uid') else user
     try:
-        pins = Pincard.objects.filter(user=int(user.uid)).count()
+        pins = Pincard.objects.filter(user=int(uid_field)).count()
     except Pincard.DoesNotExist:
         pins = 0
     
