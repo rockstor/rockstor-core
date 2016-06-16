@@ -33,7 +33,7 @@ from os import path
 from sys import getsizeof
 from glob import glob
 
-from system.pinmanager import save_pincard
+from system.pinmanager import (save_pincard, has_pincard, username_to_uid)
 
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
@@ -71,6 +71,22 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
             self.emit('pincardManager:newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
 
         gevent.spawn(create_pincard, uid)
+    
+    def on_haspincard(self, user):
+        
+        def check_has_pincard(user):
+            
+            #Convert from username to uid and if user exist check for pincardManager
+            #We don't tell to frontend if a user exists or not to avoid exposure to security flaws/brute forcing etc
+            uid = username_to_uid(user)
+            user_exist = True if uid is not None else False
+            user_has_pincard = False
+            if user_exist:
+                user_has_pincard = has_pincard(uid)
+
+            self.emit('pincardManager:haspincard', {'key': 'pincardManager:haspincard', 'has_pincard': user_has_pincard})
+
+        gevent.spawn(check_has_pincard, user)
 
 class LogManagerNamespace(BaseNamespace, BroadcastMixin):
 
