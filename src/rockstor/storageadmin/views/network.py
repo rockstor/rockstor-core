@@ -91,7 +91,7 @@ class NetworkMixin(object):
             return config
         try:
             co.master = NetworkConnection.objects.get(name=config['master'])
-        except NetworkConnection.DoesNotExist:
+        except (NetworkConnection.DoesNotExist, NetworkConnection.MultipleObjectsReturned):
             if (not isinstance(defer_list, list)):
                 raise
             defer_list.append({'uuid': co.uuid, 'master': config['master']})
@@ -133,7 +133,10 @@ class NetworkMixin(object):
                 cls._update_or_create_ctype(nco, ctype, ctype_d)
         for e in defer_master_updates:
             slave_co = NetworkConnection.objects.get(uuid=e['uuid'])
-            slave_co.master = NetworkConnection.objects.get(name=e['master'])
+            try:
+                slave_co.master = NetworkConnection.objects.get(name=e['master'])
+            except (NetworkConnection.DoesNotExist, NetworkConnection.MultipleObjectsReturned), e:
+                logger.exception(e)
             slave_co.save()
 
     @staticmethod
@@ -144,7 +147,8 @@ class NetworkMixin(object):
             if ('connection' in dconfig):
                 try:
                     dconfig['connection'] = NetworkConnection.objects.get(name=dconfig['connection'])
-                except NetworkConnection.DoesNotExist:
+                except (NetworkConnection.DoesNotExist, NetworkConnection.MultipleObjectsReturned), e:
+                    logger.exception(e)
                     dconfig['connection'] = None
 
         for ndo in NetworkDevice.objects.all():

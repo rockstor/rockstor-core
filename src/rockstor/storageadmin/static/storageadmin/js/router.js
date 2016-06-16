@@ -792,7 +792,6 @@ $(document).ready(function() {
 
     // Global ajax error handler
     $(document).ajaxError(function(event, jqXhr, ajaxSettings, e) {
-	    var commonerr_template = window.JST.common_commonerr;
 	    var popuperrTemplate = window.JST.common_popuperr;
 	    var htmlErr = null;
 	    var resType = jqXhr.getResponseHeader('Content-Type');
@@ -814,7 +813,7 @@ $(document).ready(function() {
 		        detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
 	        }
 	        if (ajaxSettings.type == 'GET') {
-		        $("#globalerrmsg").html(commonerr_template({
+		        $("#globalerrmsg").html(popuperrTemplate({
 		            jqXhr: jqXhr,
 		            detail: detail,
                     tb: tb,
