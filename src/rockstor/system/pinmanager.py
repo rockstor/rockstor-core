@@ -68,18 +68,14 @@ def pincard_states(user):
     #Otherwise 'otp' third state : allowed to have a Pincard, but mail notifications required
     pincard_allowed = 'no'
     pincard_present = has_pincard(user)
-    if not pincard_present:
-        if user.managed_user:
-            pincard_allowed = 'yes'
-        else:
-            if int(user.uid) == 0:
-                pincard_allowed = 'yes' if email_notification_enabled() else 'otp'
-            else:
-                pincard_allowed = 'no'
-            
-    else:
+    if user.managed_user:
         pincard_allowed = 'yes'
-        
+    else:
+        if int(user.uid) == 0:
+            pincard_allowed = 'yes' if email_notification_enabled() else 'otp'
+        else:
+            pincard_allowed = 'no'
+
     return pincard_allowed, pincard_present
 
 def generate_pincard():

@@ -212,9 +212,7 @@ UsersView = RockstorLayoutView.extend({
 				for (var i = 0; i < filteredCollection.length; i++) {
 					var has_pincard = filteredCollection[i].get('has_pincard');
 					var pincard_allowed = filteredCollection[i].get('pincard_allowed');
-					if (has_pincard) {
-						pincard_allowed = 'yes';
-					}
+
 					html += '<tr>';
 					html += '<td><i class="glyphicon glyphicon-user"></i> ' + filteredCollection[i].get('username') + '</td>';
 					html += '<td>' + filteredCollection[i].get('uid') + '</td>';
@@ -230,7 +228,7 @@ UsersView = RockstorLayoutView.extend({
 						html += '<a href="#" class="edit-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;';
 						html += '<a href="#" class="delete-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>&nbsp;';
 					}
-					if (has_pincard) {
+					if (has_pincard && pincard_allowed=='yes') {
 						html += '<a href="#" class="add-pincard" data-username="' + filteredCollection[i].get('username') + '" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Pincard already present - Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
 					} else {
 						switch (pincard_allowed) {
