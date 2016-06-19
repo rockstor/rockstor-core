@@ -33,7 +33,9 @@ from os import path
 from sys import getsizeof
 from glob import glob
 
-from system.pinmanager import (save_pincard, has_pincard, username_to_uid)
+from system.pinmanager import (save_pincard, has_pincard, 
+                               username_to_uid, email_notification_enabled,
+                               reset_random_pins, reset_password)
 
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
@@ -60,7 +62,11 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
         })
 
     def recv_disconnect(self):
-
+        
+        self.pins_user_uname = None
+        self.pins_user_uid = None
+        self.pins_check = None
+        self.pass_reset_time = None
         self.disconnect()
     
     def on_generatepincard(self, uid):
@@ -76,6 +82,7 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
         
         def check_has_pincard(user):
             
+            self.pins_check = []
             #Convert from username to uid and if user exist check for pincardManager
             #We don't tell to frontend if a user exists or not to avoid exposure to security flaws/brute forcing etc
             uid = username_to_uid(user)
@@ -83,10 +90,37 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
             user_has_pincard = False
             if user_exist:
                 user_has_pincard = has_pincard(uid)
+            #If user is root / uid 0 we check also if email notifications are enabled
+            #If not user won't be able to reset password with pincard 
+            if uid == 0:
+                user_has_pincard = user_has_pincard and email_notification_enabled()
+            
+            if user_has_pincard:
+                self.pins_user_uname = user
+                self.pins_user_uid = uid
+                pins = reset_random_pins(uid)
+                for pin in pins:
+                    self.pins_check.append(pin['pin_number'])
+                
+                #Set current time, user will have max 3 min to reset password
+                self.pass_reset_time = datetime.now()
 
-            self.emit('pincardManager:haspincard', {'key': 'pincardManager:haspincard', 'has_pincard': user_has_pincard})
+            self.emit('pincardManager:haspincard', {'key': 'pincardManager:haspincard', 'has_pincard': user_has_pincard, 'pins_check': pins})
 
         gevent.spawn(check_has_pincard, user)
+    
+    def on_passreset(self, pinlist):
+        
+        def password_reset(pinlist):
+            
+            new_password = None
+            #If received pins equal expected pins, check for values
+            if all(int(key) in self.pins_check for key in pinlist):
+                new_password = reset_password(self.pins_user_uname, self.pins_user_uid, pinlist)
+            
+            logger.debug('Pass reset response %s' % new_password)
+            
+        gevent.spawn(password_reset, pinlist)
 
 class LogManagerNamespace(BaseNamespace, BroadcastMixin):
 
