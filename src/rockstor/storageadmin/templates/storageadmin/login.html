@@ -134,14 +134,40 @@
 <div class="simple-overlay" id="forgot-pw-info">
     <div style="padding: 20px">
         <h4>To reset your admin user's password, run the following command as
-            the root user in a console on your Rockstor appliance:<br>
+            the root user in a console on your Rockstor appliance:<br/>
             (The "root" user is the one created during the initial install
-            when a password was requested twice.)<br><br>
-            /opt/rockstor/bin/pwreset<br><br>
+            when a password was requested twice.)<br/><br/>
+            /opt/rockstor/bin/pwreset<br/><br/>
             If you have forgotten the root user's password please see:
             <a href="http://rockstor.com/docs/reset-root-password.html"
-               target="_blank"> Resetting root password.</a><br>
+               target="_blank"> Resetting root password.</a><br/><br/>
+			If enabled, you can reset passwords with Pincards 
+			<a href="#" id="pincard-reset">Click to reset users password with Pincards</a>
             </h4>
+    </div>
+</div>
+
+<div class="simple-overlay" id="pincard-reset-form">
+    <div style="padding: 20px">
+        <h3>Welcome to Pincard Manager password reset</h3><br/>
+        <h4>From this form you're able to reset passwords for every user with Pincard enabled.<br>
+            Password reset for root user (user with UID equal to 0) requires email notifications too (One Time Password sent via mail)
+        </h4><br/><br/>
+		<form class="form-inline">
+			<div class="form-group">
+				<label class="inline">Username (case sensitive): </label>
+				<input type="text" class="form-control" id="pincard_username" name="pincard_username">
+				<input type="button" id="pincard_req_reset" name="pincard_req_reset" class="btn btn-primary" value="Request pins check">
+				<div id="pincard_state_ok" class="inline btn btn-success disabled">
+					<span class="glyphicon glyphicon-ok" aria-hidden="true"> </span>
+				</div>
+				<div id="pincard_state_ko" class="inline btn btn-danger disabled">
+					<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+				</div>
+			</div>
+		</form><br/>
+		<form class="form-inline" id="pincard_pins">
+		</form>
     </div>
 </div>
 
@@ -149,10 +175,71 @@
 <script src="/static/js/lib/bootstrap-datepicker.js"></script>
 <script src="/static/js/lib/bootstrap-timepicker.js"></script>
 <script src="/static/js/lib/jquery.tools.min.js"></script>
+<script src="/static/js/lib/socket.io.min.js"></script>
 <script>
+
+	PincardSocket = io.connect('/pincardmanager', {
+					'secure': true,
+					'force new connection': true
+					});
+	$("[id^=pincard_state]").hide();
+	
+	PincardManager = {
+		
+		checkUserHasPincard: function(event) {
+		
+			event.preventDefault();
+			var username = $('#pincard_username').val();
+			if (username != null && username !=''){
+				PincardSocket.emit('haspincard', username);
+			}
+		},
+		
+		RenderResetForm : function(data) {
+			$('#pincard_username').val('');
+			$('#pincard_pins').empty();
+			$("[id^=pincard_state]").hide();
+			if (data.has_pincard) {
+				var html='<label class="inline">You have 3 minutes to reset your password with current pins set</label><br/>';
+				$('#pincard_state_ok').fadeIn(1000);
+				$.each(data.pins_check, function() {
+					$.each(this, function(key, val){
+						html += '<label class="inline">Pin ' + val + ' : </label>';
+						html += '<input type="password" class="form-control pinbox" style="width: 40px; margin-right: 30px;" pin="' + val + '">';
+					});
+				});
+				html += '<input type="button" id="pincard_apply_reset" name="pincard_apply_reset" class="btn btn-primary" value="Reset Password">';
+				$('#pincard_pins').append(html);
+			} else {
+				$('#pincard_state_ko').fadeIn(1000);
+			}
+		},
+		
+		SubmitResetForm : function(event){
+			event.preventDefault();
+			var pins_list = {};
+			$('.pinbox').each(function(){
+				//pins_list.push("{'" + $(this).attr('pin') +"':" + $(this).val() + "}");
+				pins_list[$(this).attr('pin')] = $(this).val();
+			});
+			PincardSocket.emit('passreset', pins_list);
+		}
+	
+	}
+	
+	$('#pincard_req_reset').on('click', PincardManager.checkUserHasPincard);
+	$('#pincard_pins').on('click', '#pincard_apply_reset', PincardManager.SubmitResetForm);
+	PincardSocket.on('pincardManager:haspincard',PincardManager.RenderResetForm);
+	
     $('#forgot-pw-info').overlay({load: false});
     $('#forgot-pw').click(function () {
         $('#forgot-pw-info').overlay().load();
+    });
+	
+    $('#pincard-reset-form').overlay({load: false});
+    $('#pincard-reset').click(function () {
+		$('#forgot-pw-info').overlay().close();
+        $('#pincard-reset-form').overlay().load();
     });
 </script>
 </body>
