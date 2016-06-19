@@ -57,12 +57,14 @@ def reset_password(uname, uid, pinlist):
             duser.save()
         
         password_message = 'Password reset succeeded. New current password is %s' % new_password
+        password_status = True
     
     else:
         
-        password_message = 'Password change failed'
+        password_message = 'At least one pin was wrong, password reset failed'
+        password_status = False
     
-    return password_message
+    return password_message, password_status
     
 def reset_random_pins(uid):
     

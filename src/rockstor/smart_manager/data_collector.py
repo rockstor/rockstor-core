@@ -82,6 +82,7 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
         
         def check_has_pincard(user):
             
+            pins = []
             self.pins_check = []
             #Convert from username to uid and if user exist check for pincardManager
             #We don't tell to frontend if a user exists or not to avoid exposure to security flaws/brute forcing etc
@@ -113,12 +114,21 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
         
         def password_reset(pinlist):
             
-            new_password = None
-            #If received pins equal expected pins, check for values
-            if all(int(key) in self.pins_check for key in pinlist):
-                new_password = reset_password(self.pins_user_uname, self.pins_user_uid, pinlist)
-            
-            logger.debug('Pass reset response %s' % new_password)
+            reset_status = False
+            reset_response = None
+            elapsed_time = (datetime.now()-self.pass_reset_time).total_seconds()
+            #Pins have been sent in less than 3 mins, so we procede
+            if elapsed_time < 180:
+                
+                #If received pins equal expected pins, check for values
+                if all(int(key) in self.pins_check for key in pinlist):
+                    reset_response, reset_status = reset_password(self.pins_user_uname, self.pins_user_uid, pinlist)
+                else:
+                    reset_response = 'Received pins set differs from expected one. Password reset denied'
+            else:
+                reset_response = 'Pincard 3 minutes reset time has expired. Password reset denied'
+                
+            self.emit('pincardManager:passresetresponse', {'key': 'pincardManager:passresetresponse', 'response': reset_response, 'status': reset_status})
             
         gevent.spawn(password_reset, pinlist)
 
