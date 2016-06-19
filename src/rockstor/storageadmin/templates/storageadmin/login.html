@@ -158,12 +158,6 @@
 				<label class="inline">Username (case sensitive): </label>
 				<input type="text" class="form-control" id="pincard_username" name="pincard_username">
 				<input type="button" id="pincard_req_reset" name="pincard_req_reset" class="btn btn-primary" value="Request pins check">
-				<div id="pincard_state_ok" class="inline btn btn-success disabled">
-					<span class="glyphicon glyphicon-ok" aria-hidden="true"> </span>
-				</div>
-				<div id="pincard_state_ko" class="inline btn btn-danger disabled">
-					<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-				</div>
 			</div>
 		</form><br/>
 		<form class="form-inline" id="pincard_pins">
@@ -182,7 +176,6 @@
 					'secure': true,
 					'force new connection': true
 					});
-	$("[id^=pincard_state]").hide();
 	
 	PincardManager = {
 		
@@ -196,11 +189,12 @@
 		},
 		
 		RenderResetForm : function(data) {
+		
 			$('#pincard_username').val('');
-			$('#pincard_pins').empty();
-			$("[id^=pincard_state]").hide();
+			$('#pincard_pins').empty().hide();
+			var html = '';
 			if (data.has_pincard) {
-				var html='<label class="inline">You have 3 minutes to reset your password with current pins set</label><br/>';
+				html += '<label class="inline">You have 3 minutes to reset your password with current pins set</label><br/>';
 				$('#pincard_state_ok').fadeIn(1000);
 				$.each(data.pins_check, function() {
 					$.each(this, function(key, val){
@@ -209,13 +203,17 @@
 					});
 				});
 				html += '<input type="button" id="pincard_apply_reset" name="pincard_apply_reset" class="btn btn-primary" value="Reset Password">';
-				$('#pincard_pins').append(html);
 			} else {
-				$('#pincard_state_ko').fadeIn(1000);
+				html += '<div class="alert alert-warning"><strong>';
+				html += 'Password reset not available (user doesn\'t exist, missing Pincard or Email Notifications required and not enabled)'; 
+				html += '</strong></div>';
 			}
+			$('#pincard_pins').append(html).fadeIn(1000);
+			
 		},
 		
 		SubmitResetForm : function(event){
+		
 			event.preventDefault();
 			var pins_list = {};
 			$('.pinbox').each(function(){
@@ -223,13 +221,24 @@
 				pins_list[$(this).attr('pin')] = $(this).val();
 			});
 			PincardSocket.emit('passreset', pins_list);
+		},
+		
+		RenderResponse : function(data){
+		
+			$('#pincard_pins').empty();
+			$('#pincard_pins').hide();
+			var status_color = data.status ? 'alert alert-success' : 'alert alert-danger';
+			var html = '<div class="' + status_color + '"><strong>' + data.response + '</strong></div>';
+			$('#pincard_pins').append(html);
+			$('#pincard_pins').fadeIn(1000);
 		}
 	
 	}
 	
 	$('#pincard_req_reset').on('click', PincardManager.checkUserHasPincard);
 	$('#pincard_pins').on('click', '#pincard_apply_reset', PincardManager.SubmitResetForm);
-	PincardSocket.on('pincardManager:haspincard',PincardManager.RenderResetForm);
+	PincardSocket.on('pincardManager:haspincard', PincardManager.RenderResetForm);
+	PincardSocket.on('pincardManager:passresetresponse', PincardManager.RenderResponse);
 	
     $('#forgot-pw-info').overlay({load: false});
     $('#forgot-pw').click(function () {
