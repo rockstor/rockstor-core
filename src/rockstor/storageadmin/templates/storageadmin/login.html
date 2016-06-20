@@ -171,7 +171,8 @@
 <script src="/static/js/lib/jquery.tools.min.js"></script>
 <script src="/static/js/lib/socket.io.min.js"></script>
 <script>
-
+	
+	//Connect to gevent.sockeio for Pincard
 	PincardSocket = io.connect('/pincardmanager', {
 					'secure': true,
 					'force new connection': true
@@ -181,6 +182,7 @@
 		
 		checkUserHasPincard: function(event) {
 		
+			//First request to check if user has Pincard enabled
 			event.preventDefault();
 			var username = $('#pincard_username').val();
 			if (username != null && username !=''){
@@ -193,6 +195,8 @@
 			$('#pincard_username').val('');
 			$('#pincard_pins').empty().hide();
 			var html = '';
+			//If user had pincard enabled loop pins set
+			//creating input boxes
 			if (data.has_pincard) {
 				html += '<label class="inline">You have 3 minutes to reset your password with current pins set</label><br/>';
 				$('#pincard_state_ok').fadeIn(1000);
@@ -202,12 +206,13 @@
 						html += '<input type="password" class="form-control pinbox" style="width: 40px; margin-right: 20px;" pin="' + val + '">';
 					});
 				});
+				//If user pass reset requires otp too render relative box
 				if (data.otp) {
 					html += '<label class="inline">One Time Password : </label>';
 					html += '<input type="password" class="form-control" id="pincard_otpbox" style="width: 50px; margin-right: 10px;">';
 				}
 				html += '<input type="button" id="pincard_apply_reset" name="pincard_apply_reset" class="btn btn-primary" value="Reset Password">';
-			} else {
+			} else { //response on error
 				html += '<div class="alert alert-warning"><strong>';
 				html += 'Password reset not available (user doesn\'t exist, missing Pincard or Email Alerts required and not enabled)'; 
 				html += '</strong></div>';
@@ -220,9 +225,10 @@
 		
 			event.preventDefault();
 			var pins_list = {};
-			$('.pinbox').each(function(){
+			$('.pinbox').each(function(){ //collect all pins values
 				pins_list[$(this).attr('pin')] = $(this).val();
 			});
+			//if otp exists append to our payload
 			var otp_value = $('#pincard_otpbox').length > 0 ? $('#pincard_otpbox').val() : 'none';
 			PincardSocket.emit('passreset', pins_list, otp_value);
 		},
