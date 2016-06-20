@@ -158,7 +158,8 @@ def generate_pincard():
     return pincard_plain, pincard_crypted
 
 def flush_pincard(uid):
-
+    
+    #Clear all Pincard entries for selected user
     Pincard.objects.filter(user=int(uid)).delete()
 
 def save_pincard(uid):
