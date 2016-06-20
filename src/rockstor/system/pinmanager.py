@@ -21,6 +21,7 @@ from hashlib import md5
 from pwd import getpwnam
 from storageadmin.models import (Pincard, EmailClient, User)
 from system.users import (smbpasswd, usermod)
+from system.email_util import email_root
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -74,6 +75,17 @@ def reset_random_pins(uid):
     
     return pin_rows
 
+def generate_otp(username):
+    
+    #Generate a random 6 chars text and sent to root mail
+    new_otp = ''.join(random.choice(string.letters + string.digits) for _ in range(6))
+    otp_subject = 'Received password reset request for uid 0 user'
+    otp_message = 'System has received a password reset request for user %s\n\n OTP string value is: %s' % (username, new_otp)
+    
+    email_root(otp_subject, otp_message)
+    
+    return new_otp
+    
 def username_to_uid(username):
     
     #Convert from username to user uid
