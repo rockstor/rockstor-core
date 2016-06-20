@@ -177,7 +177,7 @@ UsersView = RockstorLayoutView.extend({
 				//Render Pin value
 				ctx.font = "bold 14px Courier New";
 				ctx.fillText(pins_array[pin_index-1], pin_text_x, pin_text_y);
-				pins_string += '<td>' + pins_array[pin_index-1] + '</td>';
+				pins_string += '<td>' + $('<div/>').text(pins_array[pin_index-1]).html() + '</td>';
 			}
 			pins_string += '</tr>';
 		}
