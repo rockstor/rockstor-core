@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import requests
 import json
-import uuid
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Appliance
@@ -112,9 +111,7 @@ class ApplianceListView(rfc.GenericView):
                                       client_secret=client_secret)
                 appliance.save()
             else:
-                appliance_uuid = ('%s-%s' % (hostid()[0][0],
-                                             str(uuid.uuid4())))
-                appliance = Appliance(uuid=appliance_uuid, ip=ip,
+                appliance = Appliance(uuid=hostid(), ip=ip,
                                       current_appliance=True)
                 if ('hostname' in request.data):
                     appliance.hostname = request.data['hostname']

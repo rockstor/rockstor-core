@@ -191,7 +191,7 @@ class CommandView(NFSExportMixin, APIView):
             try:
                 return Response(current_version())
             except Exception, e:
-                e_msg = ('Unable to check current version due to a this '
+                e_msg = ('Unable to check current version due to this '
                          'exception: ' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 

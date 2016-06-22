@@ -173,7 +173,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 				//_this.$('#snapshots').empty().append(_this.snapshotsTableView.render().el);
 			}).fail(function() {
 				enableButton(button);
-				showError('error while creating snapshot');
 			});
 		});
 	},
@@ -386,23 +385,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('view_read_permissions', function(){
 			var html = '';
 			html += '<td>';
-			if (this.permStr[0] == "1") { 
+			if (this.permStr[0] == "1") {
 				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
-				html += '<input type="checkbox" disabled>'; 
-			} 
-			html += '</td>';
-			html += '<td>';
-			if (this.permStr[3] == "1") { 
-				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
+			} else {
 				html += '<input type="checkbox" disabled>';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[6] == "1") { 
+			if (this.permStr[3] == "1") {
 				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
+			} else {
+				html += '<input type="checkbox" disabled>';
+			}
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[6] == "1") {
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else {
 				html += '<input type="checkbox" disabled>';
 			}
 			html += '</td>';
@@ -412,23 +411,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('view_write_permissions', function(){
 			var html = '';
 			html += '<td>';
-			if (this.permStr[1] == "1") { 
+			if (this.permStr[1] == "1") {
 				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
-				html += '<input type="checkbox" disabled>'; 
-			} 
-			html += '</td>';
-			html += '<td>';
-			if (this.permStr[4] == "1") { 
-				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
+			} else {
 				html += '<input type="checkbox" disabled>';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[7] == "1") { 
+			if (this.permStr[4] == "1") {
 				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
+			} else {
+				html += '<input type="checkbox" disabled>';
+			}
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[7] == "1") {
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else {
 				html += '<input type="checkbox" disabled>';
 			}
 			html += '</td>';
@@ -438,23 +437,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('view_execute_permissions', function(){
 			var html = '';
 			html += '<td>';
-			if (this.permStr[2] == "1") { 
+			if (this.permStr[2] == "1") {
 				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
-				html += '<input type="checkbox" disabled>'; 
-			} 
-			html += '</td>';
-			html += '<td>';
-			if (this.permStr[5] == "1") { 
-				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
+			} else {
 				html += '<input type="checkbox" disabled>';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[8] == "1") { 
+			if (this.permStr[5] == "1") {
 				html += '<input type="checkbox" checked="true" disabled>';
-			} else { 
+			} else {
+				html += '<input type="checkbox" disabled>';
+			}
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[8] == "1") {
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else {
 				html += '<input type="checkbox" disabled>';
 			}
 			html += '</td>';
@@ -477,23 +476,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('edit_read_permissions', function(){
 			var html = '';
 			html += '<td>';
-			if (this.permStr[0] == "1") { 
+			if (this.permStr[0] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="owner-r" checked="true">';
-			} else { 
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="owner-r">';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[3] == "1") { 
+			if (this.permStr[3] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="group-r" checked="true">';
-			} else { 
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="group-r">';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[6] == "1") { 
+			if (this.permStr[6] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="other-r" checked="true">';
-			} else {  
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="other-r">';
 			}
 			html += '</td>';
@@ -503,23 +502,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('edit_write_permissions', function(){
 			var html = '';
 			html += '<td>';
-			if (this.permStr[1] == "1") { 
+			if (this.permStr[1] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="owner-w" checked="true">';
-			} else { 
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="owner-w">';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[4] == "1") { 
+			if (this.permStr[4] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="group-w" checked="true">';
-			} else { 
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="group-w">';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[7] == "1") { 
+			if (this.permStr[7] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="other-w" checked="true">';
-			} else {  
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="other-w">';
 			}
 			html += '</td>';
@@ -529,23 +528,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('edit_execute_permissions', function(){
 			var html = '';
 			html += '<td>';
-			if (this.permStr[2] == "1") { 
+			if (this.permStr[2] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="owner-x" checked="true">';
-			} else { 
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="owner-x">';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[5] == "1") { 
+			if (this.permStr[5] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="group-x" checked="true">';
-			} else { 
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="group-x">';
-			} 
+			}
 			html += '</td>';
 			html += '<td>';
-			if (this.permStr[8] == "1") { 
+			if (this.permStr[8] == "1") {
 				html += '<input type="checkbox" name="perms[]" value="other-x" checked="true">';
-			} else {  
+			} else {
 				html += '<input type="checkbox" name="perms[]" value="other-x">';
 			}
 			html += '</td>';

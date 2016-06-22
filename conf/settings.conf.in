@@ -402,7 +402,7 @@ UPDATE_CHANNELS = {
 		'testing': {
 		'name': 'Testing',
 		'description': 'Subscription channel for testing updates',
-		'url': 'rockstor.com/rockrepo-testing',
+                'url': 'updates.rockstor.com:8999/rockstor-testing',
 		},
 }
 

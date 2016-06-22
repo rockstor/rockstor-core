@@ -56,7 +56,7 @@
                     {{getDuration this.end_ts this.snapshot_created}}
                     {{/if}}
                 </td>
-                <td>{{this.kb_sent}} KB at {{getRate this.end_ts this.snapshot_created this.kb_sent}} KB/sec.</td>
+                <td>{{humanReadableSize this.kb_sent}} at {{getRate this.end_ts this.snapshot_created this.kb_sent}} /sec.</td>
             </tr>
           {{/each}}
         </tbody>

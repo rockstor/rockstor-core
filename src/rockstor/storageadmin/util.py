@@ -19,6 +19,8 @@ from storageadmin.exceptions import RockStorAPIException
 from system.osi import run_command
 from system.pkg_mgmt import rpm_build_info
 from django.conf import settings
+import traceback
+import sys
 
 import logging
 logger = logging.getLogger(__name__)
@@ -42,11 +44,6 @@ def handle_exception(e, request, e_msg=None):
     else:
         e_msg = e.__str__()
 
-    logger.error('request path: %s method: %s data: %s' %
-                 (request.path, request.method, request.data))
     logger.exception('exception: %s' % e.__str__())
     logger.debug('Current Rockstor version: %s' % version)
-    fpath = '%ssrc/rockstor/logs/error.tgz' % settings.ROOT_DIR
-    logdir = '%svar/log' % settings.ROOT_DIR
-    run_command(['/usr/bin/tar', '-c', '-z', '-f', fpath, logdir], throw=False)
-    raise RockStorAPIException(detail=e_msg)
+    raise RockStorAPIException(detail=e_msg, trace=traceback.format_exc())

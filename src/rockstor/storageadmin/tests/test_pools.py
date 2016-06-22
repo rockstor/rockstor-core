@@ -405,14 +405,6 @@ class PoolTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
         self.assertEqual(response4.data['detail'], e_msg)
 
-        # add 2 disks
-        e_msg = ('Pool migration from single to single is not supported.')
-        data2 = {'disks': ('sdf', 'sdg',), }
-        response5 = self.client.put('%s/singlepool2/add' % self.BASE_URL, data=data2)
-        self.assertEqual(response5.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
-        self.assertEqual(response5.data['detail'], e_msg)
-
         # invalid put command
         e_msg = ('command(derp) is not supported.')
         response5 = self.client.put('%s/singlepool2/derp' % self.BASE_URL, data=data2)
@@ -436,15 +428,6 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response6.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
         self.assertEqual(response6.data['detail'], e_msg)
-
-        # remove disk
-        e_msg = ('Disks cannot be removed from a pool with this '
-                 'raid(single) configuration')
-        data2 = {'disks': ('sdc',), }
-        response8 = self.client.put('%s/singlepool2/remove' % self.BASE_URL, data=data2)
-        self.assertEqual(response8.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response8.data)
-        self.assertEqual(response8.data['detail'], e_msg)
 
         # delete pool
         response9 = self.client.delete('%s/singlepool2' % self.BASE_URL)

@@ -1,17 +1,34 @@
 <div class="alert alert-danger">
-  <strong><h4>Error!</h4></strong>
-  <br>
+  <strong><h5>Houston, we've had a problem.</h5></strong>
   <div class="global-err-content">
     {{detail}}
+  </div><br/>
+  <div id="errorContent" class="global-err-content tracebackDiv">
+    <pre>{{#each tb}}
+            {{this}}
+         {{/each}}
+    </pre>
   </div>
 </div>
 <br>
-<div class="err-help">
-  If you need more help on this issue, email us at <a href="mailto:support@rockstor.com" target="_blank">support@rockstor.com</a> with the following information:
-  <ul>
-    <li>The error message: {{detail}}</li>
-    <li>A step by step description of the actions leading up to the error.</li>
-    <li>Download the tarred and zipped server logs by clicking <a href="/logs/error.tgz" target="_blank">here</a>, and attach it to the email.</li>
-  </ul>
+<div class="err-help reportError">
+  {{#if stable}}
+    <p>As a subscriber to Stable updates, you are eligible for commercial support. Please follow these steps to get help from the Rockstor team.</p>
+  {{else}}
+    <p>If you think this is a bug or need help, follow these steps to submit a report to the Rockstor Community Forum.</p>
+  {{/if}}
+  <ol>
+    <li>Take a screen capture of this error/screen.</li>
+    <li>Click
+        <a id="clip" data-clipboard-target="#errorContent">
+            <i class="fa fa-clipboard fa-lg" aria-hidden="true"></i>
+        </a>
+        to copy the above traceback to your clipboard.
+    </li>
+    {{#if stable}}
+        <li>Create a support ticket with information from above two steps <a href="https://support.rockstor.com/open.php" target="_blank">here</a>.</li>
+    {{else}}
+        <li>Create a support topic with information from above two steps <a href="https://forum.rockstor.com/new-topic?title={{detail}}&category=support" target="_blank">here</a>.</li>
+        {{/if}}
+  </ol>
 </div> <!-- err-help -->
-
