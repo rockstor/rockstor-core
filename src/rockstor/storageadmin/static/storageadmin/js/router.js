@@ -772,13 +772,6 @@ $(document).ready(function() {
         "aLengthMenu": [[10, 15, 30, 45, -1], [10, 15, 30, 45, "All"]]
     });
     
-   /* $.fn.editable.defaults.mode = 'inline';  
-    
-    $('#userHost').editable({
-    	url:'/post',
-    	title: 'enter username',
-    }); */
-
     if (!RockStorGlobals.navbarLoaded) {
 	    refreshNavbar();
     }
