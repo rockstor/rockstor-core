@@ -47,12 +47,40 @@ AppliancesView = RockstorLayoutView.extend({
 
   renderApplianceList: function() {
     $(this.el).html(this.template({collection: this.collection, appliances: this.collection.toJSON()}));
+    
+    /* Use X-editable js library for editing the Hostname inline. */
+    
+    $.fn.editable.defaults.mode = 'inline';  
+    var dataAppId = $('#hostname').data('id');
+    $('#hostname').editable({
+    	type:'text',
+    	title: 'Edit Hostname',
+    	//handle an empty input
+    	validate: function(newHostname) {
+            if($.trim(newHostname) == '') {
+                return 'This field is required';
+            }
+        },
+    	success: function(response, newHostname) {
+    		var data = {"hostname": newHostname};
+    		$.ajax({
+    	          url: '/api/appliances/'+ dataAppId,
+    	          type: 'PUT',
+    	          dataType: 'json',
+    	          contentType: 'application/json',
+    	          data: JSON.stringify(data),
+    	          success: function() {
+    	            setApplianceName();
+    	          },
+    		});
+        }
+    });  
   },
 
   newAppliance: function() {
     this.$('#new-appliance-container').html(this.new_appliance_template());
   },
-
+  
   deleteAppliance: function(event) {
     var _this = this;
     event.preventDefault();
