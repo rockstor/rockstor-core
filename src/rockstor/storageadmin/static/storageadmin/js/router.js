@@ -99,7 +99,6 @@ var AppRouter = Backbone.Router.extend({
 	    "images": "showImages",
 	    "containers": "showContainers",
 	    "appliances": "showAppliances",
-	    "edit-hostname/:applianceID/edit": "editHostname",
 	    "add-appliance": "addAppliance",
 	    "access-keys": "showAccessKeys",
 	    "add-access-key": "addAccessKey",
@@ -688,14 +687,6 @@ var AppRouter = Backbone.Router.extend({
 	    $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    editHostname: function(applianceID) {
-	    this.renderSidebar("system", "appliances");
-	    this.cleanup();
-	    this.currentLayout = new EditHostnameView({applianceID: applianceID});
-	    $('#maincontent').empty();
-	    $('#maincontent').append(this.currentLayout.render().el);
-    },
-
     showAccessKeys: function() {
 	    this.renderSidebar("system", "access-keys");
 	    this.cleanup();
@@ -780,6 +771,13 @@ $(document).ready(function() {
         "iDisplayLength": 10,
         "aLengthMenu": [[10, 15, 30, 45, -1], [10, 15, 30, 45, "All"]]
     });
+    
+   /* $.fn.editable.defaults.mode = 'inline';  
+    
+    $('#userHost').editable({
+    	url:'/post',
+    	title: 'enter username',
+    }); */
 
     if (!RockStorGlobals.navbarLoaded) {
 	    refreshNavbar();
