@@ -85,6 +85,7 @@ class PoolMixin(object):
             'nospace_cache': None,
             'space_cache': None,
             'ssd': None,
+            'nossd': None,
             'ssd_spread': None,
             'thread_pool': int,
             'noatime': None,
@@ -329,7 +330,8 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
                                  'from the Storage -> Disks screen of the '
                                  'web-ui' % d.name)
                         handle_exception(Exception(e_msg), request)
-                if (new_raid == 'single'):
+
+                if (pool.raid != 'single' and new_raid == 'single'):
                     e_msg = ('Pool migration from %s to %s is not supported.'
                              % (pool.raid, new_raid))
                     handle_exception(Exception(e_msg), request)
@@ -380,7 +382,7 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
                         handle_exception(Exception(e_msg), request)
                 remaining_disks = (Disk.objects.filter(pool=pool).count() -
                                    num_new_disks)
-                if (pool.raid in ('raid0', 'single',)):
+                if (pool.raid == 'raid0'):
                     e_msg = ('Disks cannot be removed from a pool with this '
                              'raid(%s) configuration' % pool.raid)
                     handle_exception(Exception(e_msg), request)

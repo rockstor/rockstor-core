@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.exceptions import APIException
 
 class RockStorAPIException(APIException):
-    def __init__(self, status_code=500, detail=None):
+    def __init__(self, status_code=500, detail=None, trace=None):
         self.status_code = status_code
-        self.detail = detail
-
-
+        self.detail = [detail,]
+        if trace is not None:
+            self.detail.append(trace)

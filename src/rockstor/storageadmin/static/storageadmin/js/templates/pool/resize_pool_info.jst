@@ -8,7 +8,12 @@
                 </tr>
               </thead>
               <tbody>
-              {{disks_insidePools_tbody}}
+              {{#each pool.disks}}
+                <tr>
+                    <td>{{this.name}}</td>
+                    <td>{{humanReadableSize this.size}}</td>
+                </tr>
+              {{/each}}
               </tbody>
             </table>
             

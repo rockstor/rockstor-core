@@ -767,6 +767,15 @@ label.error { font-size: 12px; color: #b94a48; }
 /* Error content */
 #errorContent { padding: 20px; }
 
+.tracebackDiv{
+	overflow:scroll; 
+	height:250px;"
+}
+
+.reportError{
+	font-size:14px;
+} 
+
 /* Modal */
 .modal {
   /*position: absolute;*/

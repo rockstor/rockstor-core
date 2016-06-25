@@ -36,7 +36,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.dataBuffers = {};
     this.dataLength = 300;
     this.currentTs = null;
-    this.networkInterfaces = new NetworkConnectionCollection();
+    this.networkInterfaces = new NetworkDeviceCollection();
     this.networkInterfaces.on("reset", this.getInitialData, this);
     this.selectedInterface = null;
     this.colors = ["#1224E3", "#F25805", "#04D6D6", "#F5CC73", "#750413"];
