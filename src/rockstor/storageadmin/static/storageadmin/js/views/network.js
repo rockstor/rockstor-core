@@ -29,7 +29,7 @@ NetworkView = RockstorLayoutView.extend({
     events: {
 	"click a[data-action=delete]": "deleteConnection",
 	'switchChange.bootstrapSwitch': 'switchStatus',
-	"click a[data-action=link]":"toggleChildRow",
+	"click a[data-action=subtreeToggle]":"toggleChildRow"
     },
 
     initialize: function() {
@@ -150,24 +150,12 @@ NetworkView = RockstorLayoutView.extend({
 	    });
 	}
     },
-    
+
     toggleChildRow: function(event){
     	var table = $('#networks2-table').DataTable();
-    	var tr = (event.currentTarget).closest('tr');
-    	var glyphicon = $("#childRowToggler").find('i');
-    	var displayRowText = $('#hiddenChildRow').html();
-        var row = table.row( tr );
-        if ( row.child.isShown() ) {
-            // This row is already open - close it
-            row.child.hide();
-            glyphicon.toggleClass('glyphicon-minus').toggleClass('glyphicon-plus');
-        }
-        else {
-            // Open this row
-            row.child(displayRowText).show();
-            glyphicon.toggleClass('glyphicon-plus').toggleClass('glyphicon-minus');
-        } 
-    }, 
+        var rid = $(event.currentTarget).attr('data-id');
+        $('#hiddenChildRow_' + rid).toggle();
+    },
 
     initHandlebarHelpers: function(){
 	var _this = this;

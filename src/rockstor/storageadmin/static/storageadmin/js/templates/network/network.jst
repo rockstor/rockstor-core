@@ -64,7 +64,7 @@
 
 	  {{#each parent_connections}}
 	   <tr id="{{this.uuid}}">
-	        <td id="childRowToggler"><a data-action="link"><i class="glyphicon glyphicon-plus"></i></a></td>
+	        <td id="childRowToggler_{{this.id}}"><a data-action="subtreeToggle" data-id="{{this.id}}"><i class="glyphicon glyphicon-plus"></i></a></td>
     	    <td>{{this.name}}</a>&nbsp;&nbsp; <a href="#network/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>
             <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
     	    <td>{{this.uuid}}</td>
@@ -80,9 +80,9 @@
     	    <td>{{this.ipv4_dns}}</td>
     	    <td>{{this.ipv4_dns_search}}</td>
 	  </tr>
-	  
-	  <tr id="hiddenChildRow" style="display:none;">
-       <td>{{!-- start of the child table --}}  
+
+	  <tr id="hiddenChildRow_{{this.id}}" style="display:none;">
+       <td>{{!-- start of the child table --}}
             {{#hasChildren this}}
                 {{#if this.team_profile}}
                   <h4>Team Profile: {{this.team_profile}}</h4>
@@ -130,7 +130,7 @@
                      </tr>
                         {{/if}}
                      {{/each}}
-                 </table> 
+                 </table>
         </td>
       </tr>{{!-- end of the child table --}}
 	  {{/each}}
@@ -165,9 +165,3 @@
 
   </div> <!-- col-md-12 -->
 </div> <!-- row -->
-
-
-
-
-
-
