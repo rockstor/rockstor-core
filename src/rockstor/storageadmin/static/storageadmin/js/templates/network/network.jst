@@ -46,7 +46,7 @@
 	   <td><a data-action="link"><i class="glyphicon glyphicon-list"></i></a>&nbsp;</td>
 	  </tr>
 	  <tr id="tester" style="display:none">
-      <td><table class="table table-bordered">
+      <td><table id="hiddenChildRow" class="table table-bordered">
             <tr>
                 <td>Name</td>
                 <td>Age</td>
@@ -80,11 +80,10 @@
     	    <td>{{this.ipv4_dns}}</td>
     	    <td>{{this.ipv4_dns_search}}</td>
 	  </tr>
-
 	  <tr id="hiddenChildRow_{{this.id}}" style="display:none;">
        <td>{{!-- start of the child table --}}
-            {{#hasChildren this}}
-                {{#if this.team_profile}}
+         {{#hasChildren this}}
+         {{#if this.team_profile}}
                   <h4>Team Profile: {{this.team_profile}}</h4>
                 {{/if}}
                 {{#if this.bond_profile}}

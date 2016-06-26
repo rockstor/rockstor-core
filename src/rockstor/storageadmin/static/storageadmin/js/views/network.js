@@ -35,7 +35,7 @@ NetworkView = RockstorLayoutView.extend({
     initialize: function() {
 	this.template = window.JST.network_network;
 	this.collection = new NetworkConnectionCollection();
-	this.collection.on('reset', this.renderNetwork, this);
+	//this.collection.on('reset', this.renderNetwork, this);
 	this.devices = new NetworkDeviceCollection();
 	this.devices.on('reset', this.renderNetwork, this);
 	this.initHandlebarHelpers();
@@ -152,6 +152,7 @@ NetworkView = RockstorLayoutView.extend({
     },
 
     toggleChildRow: function(event){
+    	console.log("came to func");
     	var table = $('#networks2-table').DataTable();
         var rid = $(event.currentTarget).attr('data-id');
         $('#hiddenChildRow_' + rid).toggle();
