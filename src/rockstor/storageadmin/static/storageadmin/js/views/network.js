@@ -29,13 +29,14 @@ NetworkView = RockstorLayoutView.extend({
     events: {
 	"click a[data-action=delete]": "deleteConnection",
 	'switchChange.bootstrapSwitch': 'switchStatus',
-	"click a[data-action=link]":"toggleChildRow",
+	//"click a[data-action=link]":"toggleChildRow",
+	"click td.cont":"toggleChildRow",
     },
 
     initialize: function() {
 	this.template = window.JST.network_network;
 	this.collection = new NetworkConnectionCollection();
-	this.collection.on('reset', this.renderNetwork, this);
+	//this.collection.on('reset', this.renderNetwork, this);
 	this.devices = new NetworkDeviceCollection();
 	this.devices.on('reset', this.renderNetwork, this);
 	this.initHandlebarHelpers();
@@ -152,20 +153,23 @@ NetworkView = RockstorLayoutView.extend({
     },
     
     toggleChildRow: function(event){
+    	console.log("came to func");
     	var table = $('#networks2-table').DataTable();
     	var tr = (event.currentTarget).closest('tr');
-    	var glyphicon = $("#childRowToggler").find('i');
-    	var displayRowText = $('#hiddenChildRow').html();
+    	/* var glyphicon = $("td[id^='childRowToggler']").find('i');
+    	var g = $("#childRowToggler").data("id"); //get the uuid of connection 
+    	var glyphicon = $("#tester").data("id").find('i'); */
+    	var displayRowText = $('#hiddenChildRow').html(); 
         var row = table.row( tr );
         if ( row.child.isShown() ) {
             // This row is already open - close it
             row.child.hide();
-            glyphicon.toggleClass('glyphicon-minus').toggleClass('glyphicon-plus');
+            //glyphicon.toggleClass('glyphicon-minus').toggleClass('glyphicon-plus');
         }
         else {
             // Open this row
             row.child(displayRowText).show();
-            glyphicon.toggleClass('glyphicon-plus').toggleClass('glyphicon-minus');
+            //glyphicon.toggleClass('glyphicon-plus').toggleClass('glyphicon-minus');
         } 
     }, 
 

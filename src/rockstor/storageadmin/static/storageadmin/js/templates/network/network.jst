@@ -46,7 +46,7 @@
 	   <td><a data-action="link"><i class="glyphicon glyphicon-list"></i></a>&nbsp;</td>
 	  </tr>
 	  <tr id="tester" style="display:none">
-      <td><table class="table table-bordered">
+      <td><table id="hiddenChildRow" class="table table-bordered">
             <tr>
                 <td>Name</td>
                 <td>Age</td>
@@ -63,8 +63,8 @@
       </tr> working static html table --}}
 
 	  {{#each parent_connections}}
-	   <tr id="{{this.uuid}}">
-	        <td id="childRowToggler"><a data-action="link"><i class="glyphicon glyphicon-plus"></i></a></td>
+	  <tr id="{{this.uuid}}">
+	        <td id="childRowToggler" class="cont"><a data-action="link" data-id="{{this.uuid}}"><i class="glyphicon glyphicon-plus"></i></a></td>
     	    <td>{{this.name}}</a>&nbsp;&nbsp; <a href="#network/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>
             <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
     	    <td>{{this.uuid}}</td>
@@ -80,10 +80,25 @@
     	    <td>{{this.ipv4_dns}}</td>
     	    <td>{{this.ipv4_dns_search}}</td>
 	  </tr>
-	  
-	  <tr id="hiddenChildRow" style="display:none;">
-       <td>{{!-- start of the child table --}}  
-            {{#hasChildren this}}
+	  <tr id="hiddenChildRow" style="display:none">
+      <td><table class="table table-bordered">
+            <tr>
+                <td>Name</td>
+                <td>Age</td>
+            </tr>
+            <tr>
+            <td>Priya</td>
+            <td>26</td>
+            </tr>
+            <tr>
+            <td>Suman</td>
+            <td>33</td>
+            </tr>
+        </table></td>
+      </tr>
+	  {{!--<tr id="hiddenChildRow1" style="display:none;"> --}}
+       {{!--<td>--}}{{!-- start of the child table --}}  
+            {{!-- {{#hasChildren this}}
                 {{#if this.team_profile}}
                   <h4>Team Profile: {{this.team_profile}}</h4>
                 {{/if}}
@@ -131,8 +146,8 @@
                         {{/if}}
                      {{/each}}
                  </table> 
-        </td>
-      </tr>{{!-- end of the child table --}}
+        </td> --}}
+      {{!--</tr>--}}{{!-- end of the child table --}}
 	  {{/each}}
 	</tbody>
     </table>
