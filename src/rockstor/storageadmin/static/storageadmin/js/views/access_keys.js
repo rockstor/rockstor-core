@@ -48,6 +48,8 @@ AccessKeysView = RockstorLayoutView.extend({
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 		}));
+		
+		this.renderDataTables();
 	},
 
 	deleteAccessKey: function(event) {
@@ -74,6 +76,3 @@ AccessKeysView = RockstorLayoutView.extend({
 
 	},
 });
-
-//Add pagination
-Cocktail.mixin(AccessKeysView, PaginationMixin);
