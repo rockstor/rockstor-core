@@ -125,6 +125,3 @@ GroupsView = RockstorLayoutView.extend({
 	}
 
 });
-
-//Add pagination
-Cocktail.mixin(GroupsView, PaginationMixin);

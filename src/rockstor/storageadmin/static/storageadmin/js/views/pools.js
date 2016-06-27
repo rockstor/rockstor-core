@@ -165,7 +165,3 @@ PoolsView = RockstorLayoutView.extend({
 		});
 	}
 });
-
-
-//Add pagination
-Cocktail.mixin(PoolsView, PaginationMixin);

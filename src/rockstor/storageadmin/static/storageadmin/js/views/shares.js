@@ -140,6 +140,3 @@ SharesView = RockstorLayoutView.extend({
 		});
 	}
 });
-
-//Add pagination
-Cocktail.mixin(SharesView, PaginationMixin);

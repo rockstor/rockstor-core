@@ -325,6 +325,3 @@ DisksView = RockstorLayoutView.extend({
         });
     }
 });
-
-// Add pagination
-Cocktail.mixin(DisksView, PaginationMixin);

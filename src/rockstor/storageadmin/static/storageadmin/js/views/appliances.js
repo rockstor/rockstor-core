@@ -79,6 +79,3 @@ AppliancesView = RockstorLayoutView.extend({
     }
   },
 });
-
-// Add pagination
-Cocktail.mixin(AppliancesView, PaginationMixin);

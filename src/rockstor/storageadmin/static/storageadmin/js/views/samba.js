@@ -211,6 +211,3 @@ SambaView  = RockstorLayoutView.extend({
 		});
 	}
 });
-
-//Add pagination
-Cocktail.mixin(SambaView, PaginationMixin);

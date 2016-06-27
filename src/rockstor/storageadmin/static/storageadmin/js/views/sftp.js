@@ -206,6 +206,3 @@ SFTPView  = RockstorLayoutView.extend({
     }
 
 });
-
-//Add pagination
-Cocktail.mixin(SFTPView, PaginationMixin);

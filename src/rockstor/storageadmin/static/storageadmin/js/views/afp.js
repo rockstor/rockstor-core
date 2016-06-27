@@ -192,6 +192,3 @@ AFPView  = RockstorLayoutView.extend({
     statusEl.click(function(){ errPopup.overlay().load(); });
   },
 });
-
-// Add pagination
-//Cocktail.mixin(AFPView, PaginationMixin);

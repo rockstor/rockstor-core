@@ -201,5 +201,3 @@ ConfigBackupView = RockstorLayoutView.extend({
 		});
 	}
 });
-
-Cocktail.mixin(ConfigBackupView, PaginationMixin);

@@ -185,6 +185,3 @@ NFSExportsView  = RockstorLayoutView.extend({
 	}
 
 });
-
-//Add pagination
-Cocktail.mixin(NFSExportsView, PaginationMixin);
