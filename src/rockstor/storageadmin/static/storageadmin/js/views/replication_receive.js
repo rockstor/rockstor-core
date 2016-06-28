@@ -92,7 +92,7 @@ ReplicationReceiveView = RockstorLayoutView.extend({
 		}
 
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-		this.$('#replica-receives-table').tablesorter();
+		this.renderDataTables();
 	},
 
 	switchStatus: function(event,state){

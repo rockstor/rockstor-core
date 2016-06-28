@@ -63,6 +63,8 @@ GroupsView = RockstorLayoutView.extend({
 			otherSystemGroups: this.otherSystemGroups,
 		}));
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+		
+		this.renderDataTables();
 	},
 
 	deleteGroup: function(event) {
@@ -123,6 +125,3 @@ GroupsView = RockstorLayoutView.extend({
 	}
 
 });
-
-//Add pagination
-Cocktail.mixin(GroupsView, PaginationMixin);

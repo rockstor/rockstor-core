@@ -1,5 +1,5 @@
 {{#if collectionNotEmpty}}
-  <table id="cb-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of Config Backups">
+  <table id="cb-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of Config Backups">
     <thead>
       <tr>
         <th>Filename</th>
@@ -24,9 +24,6 @@
       {{/each}}
     </tbody>
   </table>
-  <div>
-  {{pagination}}
-  </div>
 {{ else }}
   <h4>No backups have been created.</h4>
 {{/if}}

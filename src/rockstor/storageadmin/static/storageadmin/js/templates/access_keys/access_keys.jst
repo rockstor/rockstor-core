@@ -27,13 +27,15 @@
     <div class="messages"></div>
     <div id="access-keys-table-ph">
     {{#if collectionNotEmpty}}
-        <table id="access-keys-table" class="table table-condensed table-bordered table-hover table-striped">
+        <table id="access-keys-table" class="table table-bordered table-striped data-table">
+          <thead>
           <tr>
             <th>Name</th>
             <th>Access Key ID</th>
             <th>Secret Access Key</th>
             <th></th>
           </tr>
+          </thead>
           <tbody>
           {{#each accessKeys}}
             <tr>

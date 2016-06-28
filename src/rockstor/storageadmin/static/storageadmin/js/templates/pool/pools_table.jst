@@ -1,5 +1,5 @@
 {{#if collectionNotEmpty}}
-<table id="pools-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pools">
+<table id="pools-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of pools">
   <thead>
     <tr>
       <th>Name</th>
@@ -63,9 +63,6 @@
     {{/each}}
   </tbody>
 </table>
-<div>
-  {{pagination}}
-</div>
 {{ else }}
 <h4>No Pools have been created</h4>
 {{/if}}

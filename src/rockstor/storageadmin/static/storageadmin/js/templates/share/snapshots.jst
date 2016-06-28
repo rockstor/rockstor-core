@@ -33,7 +33,7 @@
 
 {{#if snapshotsNotEmpty}}
 
-<table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
+<table id="snapshots-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of snapshots">
   <thead>
     <tr>
       <th>
@@ -85,7 +85,6 @@
   {{/each}}
   </tbody> 
   </table>
-   <div>{{pagination}}</div>
   {{else}}
   <div class="alert alert-warning"><h4>There are no snapshots to display</h4></div>
   {{/if}}

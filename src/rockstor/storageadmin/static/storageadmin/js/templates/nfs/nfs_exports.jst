@@ -39,7 +39,7 @@
     <div class="messages"></div>
     <!-- Content -->
     {{#if collectionNotEmpty}}
-      <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+      <table id="nfs-exports-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of nfs exports">
         <thead>
           <tr>
             <th scope="col" abbr="Host String">Host String</th>
@@ -67,7 +67,6 @@
           {{/each}}
         </tbody>
       </table>
-      <div>{{pagination}}</div>
     {{else}}
       <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
         <tbody>

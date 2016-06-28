@@ -61,7 +61,14 @@ RockstorLayoutView = Backbone.View.extend({
 	$.when.apply($, allDependencies).done(function () {
 	    if (callback) callback.apply(context);
 	});
-    }
+    },
+
+    renderDataTables: function(){
+		$('table.data-table').DataTable({
+		    "iDisplayLength": 15,
+		    "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]],
+		});
+	},
 
 });
 

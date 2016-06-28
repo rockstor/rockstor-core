@@ -40,8 +40,6 @@ SFTPView  = RockstorLayoutView.extend({
 	this.service = new Service({name: this.serviceName});
 	this.dependencies.push(this.service);
 	this.shares = new ShareCollection();
-	// dont paginate shares for now
-	this.shares.pageSize = 1000;
 	this.dependencies.push(this.shares);
 	this.updateFreq = 5000;
 	this.initHandlebarHelpers();
@@ -86,7 +84,8 @@ SFTPView  = RockstorLayoutView.extend({
 	    service: this.service
 	}));
 
-
+	this.renderDataTables();
+	
 	//initalize Bootstrap Switch
 	this.$("[type='checkbox']").bootstrapSwitch();
 	this.$('input[name="sftp-service-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
@@ -207,6 +206,3 @@ SFTPView  = RockstorLayoutView.extend({
     }
 
 });
-
-//Add pagination
-Cocktail.mixin(SFTPView, PaginationMixin);

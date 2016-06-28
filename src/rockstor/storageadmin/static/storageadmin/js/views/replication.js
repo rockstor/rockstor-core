@@ -94,7 +94,7 @@ ReplicationView = RockstorLayoutView.extend({
 		var noFreeShares,
 		noOtherAppliances,
 		otherAppliances_FreeShares = false;
-		
+
 		if(this.freeShares.length == 0){
 			noFreeShares = true;
 		}
@@ -135,7 +135,22 @@ ReplicationView = RockstorLayoutView.extend({
 		}
 
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-		this.$('#replicas-table').tablesorter();
+
+		//added ext func to sort over Replication task Enable/Disable input checkboxes
+		$.fn.dataTable.ext.order['dom-checkbox'] = function ( settings, col ) {
+			return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
+				return $('input', td).prop('checked') ? '1' : '0';
+			});
+		}
+		//Added columns definition for sorting purpose
+		$('table.data-table').DataTable({
+			"iDisplayLength": 15,
+			"aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]],
+			"columns": [
+			            null,null,null,null,null,null,
+			            { "orderDataType": "dom-checkbox" }
+			            ]
+		});
 	},
 
 	switchStatus: function(event,state){
@@ -289,13 +304,13 @@ ReplicationView = RockstorLayoutView.extend({
 
 	initHandlebarHelpers: function(){
 		var _this = this;
-		 Handlebars.registerHelper('getFrequency', function(cronTab){
+		Handlebars.registerHelper('getFrequency', function(cronTab){
 			return prettyCron.toString(cronTab);
 		}); 
-		
+
 		Handlebars.registerHelper('lastBackup', function(replicaId){
 			var html = '';
-			 if (_this.replicaTrailMap[replicaId]) { 
+			if (_this.replicaTrailMap[replicaId]) { 
 				if (_this.replicaTrailMap[replicaId].length > 0) {
 					var rt = _this.replicaTrailMap[replicaId][0]; 
 					if (rt.get('status') == 'failed') { 

@@ -1,6 +1,6 @@
 {{#if collectionNotEmpty}}
 <table id="disks-table"
-       class="table table-condensed table-bordered table-hover table-striped share-table tablesorter"
+       class="table table-bordered table-striped share-table data-table" width="100%"
        summary="List of disks">
   <thead>
     <tr>
@@ -86,9 +86,6 @@
     {{/each}}
   </tbody>
 </table>
-<div>
-  {{pagination}}
-</div>
 {{else}}
 <h4>No disks added. Click on Rescan to discover disks</h4>
 {{/if}}

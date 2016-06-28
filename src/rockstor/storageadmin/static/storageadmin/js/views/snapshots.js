@@ -42,7 +42,6 @@ SnapshotsView = SnapshotsCommonView.extend({
 	this.snapshots = this.options.snapshots;
 	this.collection = new SnapshotsCollection();
 	this.shares = new ShareCollection();
-	this.shares.pageSize = RockStorGlobals.maxPageSize;
 	this.dependencies.push(this.shares);
 	this.dependencies.push(this.collection);
 	this.selectedSnapshots = [];
@@ -80,12 +79,13 @@ SnapshotsView = SnapshotsCommonView.extend({
 	    snapshotsNotEmpty: !_this.collection.isEmpty(),
 	    collection: _this.collection,
 	}));
+
 	this.$('[rel=tooltip]').tooltip({
 	    placement: 'bottom'
 	});
-	this.$('#snapshots-table').tablesorter({
-	    headers: { 0: {sorter: false}}
-	});
+
+	this.renderDataTables();
+
 	return this;
     },
 
@@ -326,6 +326,3 @@ SnapshotsView = SnapshotsCommonView.extend({
 
     }
 });
-
-//Add pagination
-Cocktail.mixin(SnapshotsView, PaginationMixin);
