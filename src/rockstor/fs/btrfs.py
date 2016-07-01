@@ -814,14 +814,6 @@ def btrfs_uuid(disk):
     return o[0].split()[3]
 
 
-def btrfs_importable(disk):
-    o, e, rc = run_command([BTRFS, 'check', '/dev/disk/by-id/%s' % disk],
-                           throw=False)
-    if (rc == 0):
-        return True
-    return False
-
-
 def set_property(mnt_pt, name, val, mount=True):
     if (mount is not True or is_mounted(mnt_pt)):
         cmd = [BTRFS, 'property', 'set', mnt_pt, name, val]
