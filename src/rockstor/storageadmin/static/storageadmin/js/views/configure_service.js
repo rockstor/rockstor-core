@@ -87,8 +87,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		network_interface: 'required'
 	    },
 	    rockstor: {
-		listener_port: 'required',
-		network_interface: 'required'
+		listener_port: 'required'
 	    }
 	}
 
@@ -251,7 +250,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	this.$('#rockstor-form #network_interface').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'Select the Network connection for Rockstor. <b>WARNING!!!</b> UI may become inaccessible after changing the interface. It should be available on the new interface IP/Hostname after a momentary pause.'
+	    title: 'Select the Network connection for Rockstor. If you leave the selection blank, service will listen on all interfaces.<b>WARNING!!!</b> UI may become inaccessible after changing the interface. It should be available on the new interface IP/Hostname after a momentary pause.'
 	});
 	this.$('#rockstor-form #listener_port').tooltip({
 	    html: true,
@@ -417,12 +416,13 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    var html = '',
 		_this = this;
 	    this.network.each(function(ni, index) {
-		var niName = ni.get('name');
+		    var niName = ni.get('name');
+            var niLongName = niName + ' [IP: ' + ni.get('ipv4_addresses') + ']';
 		if (!ni.get('master')) {
 		    if (niName == _this.config.network_interface) {
-			html += '<option value="' + niName + '" selected="selected"> ' + niName + '</option>';
+			html += '<option value="' + niName + '" selected="selected"> ' + niLongName + '</option>';
 		    } else {
-			html += '<option value="' + niName + '">' + niName+ '</option>';
+			html += '<option value="' + niName + '">' + niLongName+ '</option>';
 		    }
 		}
 	    });
