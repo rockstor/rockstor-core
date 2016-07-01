@@ -1343,16 +1343,15 @@ def get_byid_name_map():
             line_fields = each_line.replace('/', ' ').split()
             # Grab every sda type name from the last field in the line
             # and add it as a dictionary key with it's value as the by-id
-            # type name so we can index by sda type name and retrieve by-id.
+            # type name so we can index by sda type name and retrieve the by-id.
             # As there are often multiple by-id type names for a given sda type
-            # name we grab the first listed (usually the longest) only.
-            # N.B. The longest listed fist assumption may be fragile but we
-            # are not a canonical supplier of this mapping.
+            # name we gain consistency in mapped by-id value by always
+            # preferring the longest by-id for a given sda type name key.
             if len(line_fields) >= 5:
                 # Ensure we have at least 5 elements to avoid index out of range
                 # and to skip lines such as "total 0"
                 if line_fields[-1] not in byid_name_map.keys():
-                    # we don't yet have a record of this device so take one.
+                    # We don't yet have a record of this device so take one.
                     byid_name_map[line_fields[-1]] = line_fields[-5]
                     # ie {'sda': 'ata-QEMU_HARDDISK_QM00005'}
                 else:
