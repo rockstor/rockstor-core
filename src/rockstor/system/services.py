@@ -225,17 +225,23 @@ def update_nginx(ip, port):
     conf = '%s/etc/nginx/nginx.conf' % settings.ROOT_DIR
     fo, npath = mkstemp()
     with open(conf) as ifo, open(npath, 'w') as tfo:
-        for line in ifo.readlines():
-            if (re.search('listen.*80 default_server', line) is not None):
-                substr = 'listen 80'
-                if (ip is not None):
-                    substr = 'listen %s:80' % ip
-                line = re.sub(r'listen.*80', substr, line)
-            elif (re.search('listen.*default_server', line) is not None):
+        http_server = False
+        lines = ifo.readlines()
+        for i in range(len(lines)):
+            if (re.search('server {', lines[i]) is not None and
+                re.search('listen.*80 default_server', lines[i+1]) is not None):
+                #found legacy http server section. don't rewrite it.
+                http_server = True
+            if (not http_server and
+                re.search('listen.*default_server', lines[i]) is not None):
                 substr = 'listen %d default_server' % port
                 if (ip is not None):
-                    substr = 'listen %s:%s default_server' % (ip, port)
-                line = re.sub(r'listen.* default_server', substr, line)
-            tfo.write(line)
+                    substr = 'listen %s:%d default_server' % (ip, port)
+                lines[i] = re.sub(r'listen.* default_server', substr, lines[i])
+            if (not http_server):
+                tfo.write(lines[i])
+            if (http_server is True and lines[i].strip() == '}'):
+                http_server = False
+
     move(npath, conf)
     superctl('nginx', 'restart')

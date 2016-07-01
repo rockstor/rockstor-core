@@ -51,12 +51,15 @@ class RockstorServiceView(BaseServiceDetailView):
                 if (listener_port < 0 or listener_port > 65535):
                     raise Exception('Invalid listener port(%d)' % listener_port)
                 ni = config['network_interface']
-                try:
-                    nco = NetworkConnection.objects.get(name=ni)
-                except NetworkConnection.DoesNotExist:
-                    raise Exception('Network Connection(%s) does not exist.' % ni)
-                #@todo: we should make restart transparent to the user.
-                ztask_helpers.restart_rockstor.async(nco.ipaddr, listener_port)
+                if (len(ni.strip()) == 0): #empty string
+                    ztask_helpers.restart_rockstor.async(None, listener_port)
+                else:
+                    try:
+                        nco = NetworkConnection.objects.get(name=ni)
+                    except NetworkConnection.DoesNotExist:
+                        raise Exception('Network Connection(%s) does not exist.' % ni)
+                    #@todo: we should make restart transparent to the user.
+                    ztask_helpers.restart_rockstor.async(nco.ipaddr, listener_port)
                 self._save_config(service, config)
                 return Response()
             except Exception, e:
