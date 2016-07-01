@@ -42,12 +42,6 @@ http {
 	index index.html;
 
 	server {
-	       listen 80 default_server;
-               server_name "~^(?<myhost>.+)$";
-	       rewrite ^ https://$myhost/$request_uri? permanent;
-	}
-
-	server {
 		listen 443 default_server;
                 server_name "~^(?<myhost>.+)$";
 		ssl on;
