@@ -814,12 +814,6 @@ def btrfs_uuid(disk):
     return o[0].split()[3]
 
 
-def btrfs_label(disk):
-    o, e, rc = run_command(
-        [BTRFS, 'filesystem', 'label', '/dev/disk/by-id/%s' % disk])
-    return o[0]
-
-
 def btrfs_importable(disk):
     o, e, rc = run_command([BTRFS, 'check', '/dev/disk/by-id/%s' % disk],
                            throw=False)
