@@ -32,7 +32,6 @@ import hashlib
 import logging
 import uuid
 from django.conf import settings
-import uuid
 
 logger = logging.getLogger(__name__)
 
