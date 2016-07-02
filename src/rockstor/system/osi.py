@@ -1364,6 +1364,34 @@ def get_byid_name_map():
     return byid_name_map
 
 
+def get_dev_temp_name(dev_byid):
+    """
+    Returns the current canonical device name (of type 'sda') for a supplied
+    by-id type name. Used to translate a single Disk.name db field by-id type
+    name to it's current equivalent canonical sda type name.
+    Works by parsing the output of os.readlink which returns the file target of
+    a given link, all /dev/disk/by-id entries are links created by udev.
+    os.readlink('/dev/disk/by-id/ata-QEMU_HARDDISK_QM005-part3') = '../../sda3'
+    As db.name values are not guaranteed to have by-id entries, if no match is
+    found, ie OSError, then the original by-id name is returned. This also
+    servers as a fail safe in case any other OSError is encountered.
+    This allows for 'no serial' devices where a by-id can't be created and for
+    calls made on detached devices ie Disk.name = 'detached-<uuid>'.
+    :param dev_byid: by-id type device name without path.
+    :return: sda type device name without path or if no match is found then
+    dev_byid is returned.
+    """
+    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    try:
+        temp_name = os.readlink(dev_byid_withpath).split('/')[-1]
+    except OSError:
+        # the device name given may not have a listing in /dev/disk/by-id
+        return dev_byid
+    else:
+        return temp_name
+
+
+
 def get_devname_old(device_name):
     """
     Depricated / prior version of get_devname()
