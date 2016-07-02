@@ -1080,9 +1080,16 @@ def hostid():
     """Get the system's uuid from /sys/class/dmi/id/product_uuid. If the file
     doesn't exist for any reason, generate a uuid like we used to prior to this
     change.
+
+    There's a lazy vendor problem where uuid is not set and defaults to
+    03000200-0400-0500-0006-000700080009. non-persistent uuid is generated even
+    in this case.
     """
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
-            return fo.readline().strip()
+            puuid = fo.readline().strip()
+            if (puuid == '03000200-0400-0500-0006-000700080009'):
+                raise
+            return puuid
     except:
-        return '%s-%s' % (run_command(HOSTID)[0][0], str(uuid.uuid4()))
+        return '%s-%s' % (run_command([HOSTID])[0][0], str(uuid.uuid4()))
