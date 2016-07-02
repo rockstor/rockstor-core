@@ -38,6 +38,7 @@ class DiskInfoSerializer(serializers.ModelSerializer):
     power_state = serializers.CharField()
     hdparm_setting = serializers.CharField()
     apm_level = serializers.CharField()
+    temp_name = serializers.CharField()
     class Meta:
         model = Disk
 

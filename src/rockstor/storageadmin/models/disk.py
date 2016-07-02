@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import Pool
 from system.osi import get_disk_power_status, read_hdparm_setting, \
-    get_disk_APM_level
+    get_disk_APM_level, get_dev_temp_name
 
 
 class Disk(models.Model):
@@ -83,6 +83,13 @@ class Disk(models.Model):
     def apm_level(self, *args, **kwargs):
         try:
             return get_disk_APM_level(str(self.name))
+        except:
+            return None
+
+    @property
+    def temp_name(self, *args, **kwargs):
+        try:
+            return get_dev_temp_name(str(self.name))
         except:
             return None
 
