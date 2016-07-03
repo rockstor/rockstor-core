@@ -911,11 +911,11 @@ $(document).ready(function() {
 	    $loadavg.text('Linux: ' + data);
     };
 	
-	var displayLocaleTime = function(data){
-		
-		$('#local-time > span').text(data);
-		
-	}	
+    var displayLocaleTime = function(data){
+
+        $('#local-time > span').text(data);
+
+    }	
 
     var displayLoadAvg = function(data) {
 	    var n = parseInt(data);
