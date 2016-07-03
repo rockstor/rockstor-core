@@ -911,7 +911,7 @@ $(document).ready(function() {
 	    $loadavg.text('Linux: ' + data);
     };
 	
-    var displayLocaleTime = function(data){
+    var displayLocaleTime = function(data) {
 
         $('#local-time > span').text(data);
 

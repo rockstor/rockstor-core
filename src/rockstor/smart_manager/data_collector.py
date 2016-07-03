@@ -36,6 +36,7 @@ from glob import glob
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
 from datetime import (datetime, timedelta)
+import time
 from django.utils.timezone import utc
 from storageadmin.models import Disk
 from smart_manager.models import Service
@@ -561,6 +562,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.prune_logs)
+        gevent.spawn(self.send_localtime)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -574,6 +576,15 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                 'data': uptime(), 'key': 'sysinfo:uptime'
             })
             gevent.sleep(60)
+
+    def send_localtime(self):
+        
+        while self.start:
+            
+            self.emit('sysinfo:localtime', {
+                'data': time.strftime('%H:%M (%z %Z)'), 'key': 'sysinfo:localtime'
+            })
+            gevent.sleep(20)
 
     def send_kernel_info(self):
             try:
