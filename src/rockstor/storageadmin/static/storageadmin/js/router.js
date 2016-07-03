@@ -967,7 +967,7 @@ $(document).ready(function() {
 
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
-	RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
+    RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software-update');
 
