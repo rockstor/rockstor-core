@@ -53,3 +53,4 @@ from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,
 from config_backup import ConfigBackup
 from email import EmailClient
 from update_subscription import UpdateSubscription
+from pincard import Pincard

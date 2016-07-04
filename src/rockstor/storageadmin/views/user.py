@@ -28,6 +28,7 @@ import rest_framework_custom as rfc
 from system.users import (useradd, usermod, userdel,
                           smbpasswd, add_ssh_key, update_shell)
 import pwd
+from system.pinmanager import (username_to_uid, flush_pincard)
 from system.ssh import is_pub_key
 from ug_helpers import (combined_users, combined_groups)
 import logging
@@ -275,6 +276,9 @@ class UserDetailView(UserMixin, rfc.GenericView):
                     not User.objects.filter(gid=gid).exists()):
                     g.delete()
 
+            #When user deleted destroy all Pincard entries
+            flush_pincard(username_to_uid(username))
+            
             try:
                 userdel(username)
             except Exception, e:

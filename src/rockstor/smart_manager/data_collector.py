@@ -33,6 +33,10 @@ from os import path
 from sys import getsizeof
 from glob import glob
 
+from system.pinmanager import (save_pincard, has_pincard, 
+                               username_to_uid, email_notification_enabled,
+                               reset_random_pins, reset_password, generate_otp)
+
 from django.conf import settings
 from system.osi import uptime, kernel_info, get_byid_name_map
 from datetime import (datetime, timedelta)
@@ -45,6 +49,103 @@ from system.pkg_mgmt import update_check
 import logging
 logger = logging.getLogger(__name__)
 
+class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
+    
+    def initialize(self):
+
+        self.connected = True
+
+    def recv_connect(self):
+
+        self.emit("pincardManager:pincardwelcome", {
+            "key": "pincardManager:pincardwelcome", "data": "Welcome to Rockstor PincardManager"
+        })
+
+    def recv_disconnect(self):
+        
+        self.pins_user_uname = None
+        self.pins_user_uid = None
+        self.pins_check = None
+        self.pass_reset_time = None
+        self.otp = 'none'
+        self.disconnect()
+    
+    def on_generatepincard(self, uid):
+        
+        def create_pincard(uid):
+
+            new_pincard = save_pincard(uid)
+            self.emit('pincardManager:newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
+
+        gevent.spawn(create_pincard, uid)
+    
+    def on_haspincard(self, user):
+        
+        def check_has_pincard(user):
+            
+            pins = []
+            otp = False
+            self.pins_check = []
+            self.otp = 'none'
+            #Convert from username to uid and if user exist check for pincardManager
+            #We don't tell to frontend if a user exists or not to avoid exposure to security flaws/brute forcing etc
+            uid = username_to_uid(user)
+            user_exist = True if uid is not None else False
+            user_has_pincard = False
+            #If user exists we check if has a pincard
+            if user_exist:
+                user_has_pincard = has_pincard(uid)
+            #If user is root / uid 0 we check also if email notifications are enabled
+            #If not user won't be able to reset password with pincard 
+            if uid == 0:
+                user_has_pincard = user_has_pincard and email_notification_enabled()
+            
+            if user_has_pincard:
+                self.pins_user_uname = user
+                self.pins_user_uid = uid
+                pins = reset_random_pins(uid)
+                for pin in pins:
+                    self.pins_check.append(pin['pin_number'])
+                
+                #Set current time, user will have max 3 min to reset password
+                self.pass_reset_time = datetime.now()
+                
+                if uid == 0:
+                    self.otp = generate_otp(user)
+                    otp = True
+
+            self.emit('pincardManager:haspincard', {'key': 'pincardManager:haspincard', 'has_pincard': user_has_pincard, 'pins_check': pins, 'otp': otp})
+
+        gevent.spawn(check_has_pincard, user)
+    
+    def on_passreset(self, pinlist, otp='none'):
+        
+        def password_reset(pinlist, otp):
+            
+            reset_status = False
+            reset_response = None
+            
+            #On pass reset first we check for otp
+            #If not required none = none, otherwhise sent val has to match stored one
+            if otp == self.otp:
+                
+                #If otp is ok we check for elapsed time to be < 3 mins
+                elapsed_time = (datetime.now()-self.pass_reset_time).total_seconds()
+                if elapsed_time < 180:
+                    
+                    #If received pins equal expected pins, check for values via reset_password func
+                    if all(int(key) in self.pins_check for key in pinlist):
+                        reset_response, reset_status = reset_password(self.pins_user_uname, self.pins_user_uid, pinlist)
+                    else:
+                        reset_response = 'Received pins set differs from expected one. Password reset denied'
+                else:
+                    reset_response = 'Pincard 3 minutes reset time has expired. Password reset denied'
+            else:
+                reset_response = 'Sent OTP doesn\'t match. Password reset denied'
+                
+            self.emit('pincardManager:passresetresponse', {'key': 'pincardManager:passresetresponse', 'response': reset_response, 'status': reset_status})
+            
+        gevent.spawn(password_reset, pinlist, otp)
 
 class LogManagerNamespace(BaseNamespace, BroadcastMixin):
 
@@ -681,6 +782,7 @@ class Application(object):
                                       '/network-widget': NetworkWidgetNamespace,
                                       '/disk-widget': DisksWidgetNamespace,
                                       '/logmanager': LogManagerNamespace,
+                                      '/pincardmanager': PincardManagerNamespace
             })
             if ((cur_ts - self.scan_ts).total_seconds() > self.scan_interval):
                 self.scan_ts = cur_ts

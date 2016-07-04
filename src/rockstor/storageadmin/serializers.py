@@ -77,8 +77,16 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
 
 
 class SUserSerializer(serializers.ModelSerializer):
+    
+    ALLOWED_CHOICES = (
+        ('yes', 'yes'),
+        ('no', 'no'),
+        ('otp', 'otp')
+        )
     groupname = serializers.CharField()
     managed_user = serializers.BooleanField(default=True)
+    has_pincard = serializers.BooleanField(default=False)
+    pincard_allowed = serializers.ChoiceField(choices=ALLOWED_CHOICES, default='no')
 
     class Meta:
         model = User
