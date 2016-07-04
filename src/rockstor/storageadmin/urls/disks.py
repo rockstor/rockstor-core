@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls import patterns, url
 from storageadmin.views import (DiskListView, DiskDetailView, DiskSMARTDetailView)
 
-disk_regex = '[A-Za-z0-9]+[A-Za-z0-9]*'
+disk_regex = '[A-Za-z0-9]+[A-Za-z0-9:_-]*'
 
 urlpatterns = patterns(
     '',

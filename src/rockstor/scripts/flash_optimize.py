@@ -23,9 +23,8 @@ import re
 from tempfile import mkstemp
 from shutil import move
 import logging
-from system.osi import run_command
+from system.osi import run_command, root_disk
 from system.services import systemctl
-from fs.btrfs import root_disk
 
 HDPARM = '/usr/sbin/hdparm'
 YUM = '/usr/bin/yum'

@@ -18,14 +18,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import Pool
-from system.osi import get_disk_power_status, get_dev_byid_name, \
-    read_hdparm_setting, get_disk_APM_level
+from system.osi import get_disk_power_status, read_hdparm_setting, \
+    get_disk_APM_level, get_dev_temp_name
 
 
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
     pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
-    """typically sda, sdb etc.. max_length = 0 supports 100s of disks"""
+    """ Previously the name field contained sda, sdb etc..
+    Revised to contain device names for use with the udev created links at
+    /dev/disk/by-id/ which in turn are symlinks to sda, sdb etc.
+    eg ata-QEMU_HARDDISK_QM00005 ie mostly derived from model and serial number.
+    """
     name = models.CharField(max_length=64, unique=True)
     """total size in KB"""
     size = models.BigIntegerField(default=0)
@@ -71,7 +75,7 @@ class Disk(models.Model):
     @property
     def hdparm_setting(self, *args, **kwargs):
         try:
-            return read_hdparm_setting(get_dev_byid_name(self.name))
+            return read_hdparm_setting(str(self.name))
         except:
             return None
 
@@ -79,6 +83,13 @@ class Disk(models.Model):
     def apm_level(self, *args, **kwargs):
         try:
             return get_disk_APM_level(str(self.name))
+        except:
+            return None
+
+    @property
+    def temp_name(self, *args, **kwargs):
+        try:
+            return get_dev_temp_name(str(self.name))
         except:
             return None
 

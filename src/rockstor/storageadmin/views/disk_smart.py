@@ -23,21 +23,16 @@ Disk view, for anything at the disk level
 import re
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (Disk, SMARTInfo, SMARTAttribute,
-                                 SMARTCapability, SMARTErrorLog,
-                                 SMARTErrorLogSummary, SMARTTestLog,
-                                 SMARTTestLogDetail, SMARTIdentity)
-from fs.btrfs import (scan_disks, wipe_disk, blink_disk, btrfs_uuid,
-                      pool_usage, mount_root)
+from storageadmin.models import Disk, SMARTInfo, SMARTAttribute, \
+    SMARTCapability, SMARTErrorLog, SMARTErrorLogSummary, SMARTTestLog, \
+    SMARTTestLogDetail, SMARTIdentity
 from storageadmin.serializers import SMARTInfoSerializer
 from storageadmin.util import handle_exception
-from django.conf import settings
 import rest_framework_custom as rfc
-from system.smart import (extended_info, capabilities, info, error_logs, test_logs,
-                          run_test)
+from system.smart import extended_info, capabilities, info, error_logs, \
+    test_logs, run_test
 from datetime import datetime
 from django.utils.timezone import utc
-from django.db.models import Count
 
 import logging
 logger = logging.getLogger(__name__)

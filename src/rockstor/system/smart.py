@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from osi import run_command, get_base_device
+from osi import run_command, get_base_device_byid
 from tempfile import mkstemp
 from shutil import move
 import logging
@@ -378,7 +378,7 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
         raise CommandException(('%s' % command), o, e, rc)
 
 
-def get_dev_options(device, custom_options=''):
+def get_dev_options(dev_byid, custom_options=''):
     """
     Returns device specific options for all smartctl commands.
     Note that in most cases this requires looking up the base device via
@@ -386,27 +386,29 @@ def get_dev_options(device, custom_options=''):
     of devices behind some raid controllers. If custom_options contains known
     raid controller smartctl targets then these will be substituted for device
     name.
-    :param device:  device name as per db entry, ie as returned from scan_disks
+    :param dev_byid:  device name as per db entry, ie by-id type without a path
     :param custom_options: string of user entered custom smart options.
     :return: dev_options: list containing the device specific smart options and
-    the appropriate smart device target.
+    the appropriate smart device target with full path.
     """
     # Initially our custom_options parameter may be None, ie db default prior
     # to any changes having been made. Deal with this by adding a guard.
     if custom_options is None or custom_options == '':
         # Empty custom_options or they have never been set so just return
         # full path to base device as nothing else to do.
-        dev_options = get_base_device(device, TESTMODE)
+        dev_options = [
+            '/dev/disk/by-id/%s' % get_base_device_byid(dev_byid, TESTMODE)]
     else:
         # Convert string of custom options into a list ready for run_command
-        # todo think this ascii should be utf-8 as that's kernel standard
-        # todo or just use str(custom_options).split()
+        # TODO: think this ascii should be utf-8 as that's kernel standard
+        # TODO: or just use str(custom_options).split()
         dev_options = custom_options.encode('ascii').split()
         # If our custom options don't contain a raid controller target then add
         # the full path to our base device as our last device specific option.
         if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
             # add full path to our custom options as we see no raid target dev
-            dev_options += get_base_device(device, TESTMODE)
+            dev_options += [
+                '/dev/disk/by-id/%s' % get_base_device_byid(dev_byid, TESTMODE)]
     # Note on raid controller target devices.
     # /dev/twe#, or /dev/twa#, or /dev/twl# are 3ware controller targets devs
     # respectively 3x-xxxx, 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for

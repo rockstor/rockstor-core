@@ -34,7 +34,7 @@ from sys import getsizeof
 from glob import glob
 
 from django.conf import settings
-from system.osi import (uptime, kernel_info)
+from system.osi import uptime, kernel_info, get_byid_name_map
 from datetime import (datetime, timedelta)
 from django.utils.timezone import utc
 from storageadmin.models import Disk
@@ -300,10 +300,13 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
         
         gevent.spawn(file_size, logfile)
 
+
 class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
     switch = False
+    byid_disk_map = {}
 
     def recv_connect(self):
+        self.byid_disk_map = get_byid_name_map()
         self.switch = True
         self.spawn(self.send_top_disks)
 
@@ -318,13 +321,22 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
             stats_file_path = '/proc/diskstats'
             cur_stats = {}
             interval = 1
+            # Build a list of our db's disk names, now in by-id type format.
             disks = [d.name for d in Disk.objects.all()]
+            # /proc/diskstats has lines of the following form:
+            #  8      64 sde 1034 0 9136 702 0 0 0 0 0 548 702
+            #  8      65 sde1 336 0 2688 223 0 0 0 0 0 223 223
             with open(stats_file_path) as stats_file:
                 for line in stats_file.readlines():
                     fields = line.split()
-                    if (fields[2] not in disks):
+                    # As the /proc/diskstats lines contain transient type names
+                    # we need to convert those to our by-id db names.
+                    byid_name = self.byid_disk_map[fields[2]]
+                    if byid_name not in disks:
+                        # the disk name in this line is not one in our db so
+                        # ignore it and move to the next line.
                         continue
-                    cur_stats[fields[2]] = fields[3:]
+                    cur_stats[byid_name] = fields[3:]
             for disk in cur_stats.keys():
                 if (disk in prev_stats):
                     prev = prev_stats[disk]

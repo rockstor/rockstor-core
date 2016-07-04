@@ -21,16 +21,16 @@ from storageadmin.exceptions import RockStorAPIException
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool, Share)
-from fs.btrfs import (scan_disks, wipe_disk, blink_disk, enable_quota,
-                      btrfs_uuid, pool_usage, mount_root, get_pool_info,
-                      pool_raid, enable_quota)
+from fs.btrfs import enable_quota, btrfs_uuid, pool_usage, mount_root, \
+    get_pool_info, pool_raid, enable_quota
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
-from system.osi import set_disk_spindown, enter_standby
+from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
+    wipe_disk, blink_disk, scan_disks
 from copy import deepcopy
 import uuid
 import json
@@ -74,11 +74,13 @@ class DiskMixin(object):
             # N.B. do not optimize by re-using uuid index as this could lead
             # to a non refreshed webui acting upon an entry that is different
             # from that shown to the user.
-            do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
+            do.name = 'detached-' + str(uuid.uuid4()).replace('-', '')
             # Delete duplicate or fake by serial number db disk entries.
             # It makes no sense to save fake serial number drives between scans
-            # as on each scan the serial number is re-generated anyway.
-            if (do.serial in serial_numbers_seen) or (len(do.serial) == 48):
+            # as on each scan the serial number is re-generated (fake) anyway.
+            # Serial numbers beginning with 'fake-serial-' are from scan_disks.
+            if (do.serial in serial_numbers_seen) or (
+                    re.match('fake-serial-', do.serial) is not None):
                 logger.info('Deleting duplicate or fake (by serial) Disk db '
                             'entry. Serial = %s' % do.serial)
                 do.delete()  # django >=1.9 returns a dict of deleted items.
@@ -100,15 +102,25 @@ class DiskMixin(object):
         for d in disks:
             # start with an empty disk object
             dob = None
+            # Convert our transient but just scanned so current sda type name
+            # to a more useful by-id type name as found in /dev/disk/by-id
+            byid_disk_name, is_byid = get_dev_byid_name(d.name, True)
             # If the db has an entry with this disk's serial number then
             # use this db entry and update the device name from our recent scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
-                dob.name = d.name
+                #dob.name = d.name
+                dob.name = byid_disk_name
             else:
                 # We have an assumed new disk entry as no serial match in db.
                 # Build a new entry for this disk.
-                dob = Disk(name=d.name, serial=d.serial)
+                #dob = Disk(name=d.name, serial=d.serial)
+                # N.B. we may want to force a fake-serial here if is_byid False,
+                # that way we flag as unusable disk as no by-id type name found.
+                # It may already have been set though as the only by-id
+                # failures so far are virtio disks with no serial so scan_disks
+                # will have already given it a fake serial in d.serial.
+                dob = Disk(name=byid_disk_name, serial=d.serial)
             # Update the db disk object (existing or new) with our scanned info
             dob.size = d.size
             dob.parted = d.parted
@@ -138,8 +150,8 @@ class DiskMixin(object):
                 # overwrite with our current finding and in the new json format.
                 # I.e. non None could also be a legacy entry so follow overwrite
                 # path when legacy entry found by treating as a None entry.
-                # todo - When we reset migrations the following need only check
-                # todo - "dob.role is not None"
+                # TODO: When we reset migrations the following need only check
+                # TODO: "dob.role is not None"
                 if dob.role is not None and dob.role != 'isw_raid_member' \
                         and dob.role != 'linux_raid_member':
                     # get our known roles into a dictionary
@@ -155,8 +167,8 @@ class DiskMixin(object):
                 # No identified role from scan_disks() fstype value (mdraid
                 # only for now )so we preserve any prior known roles not
                 # exposed by scan_disks but remove the mdraid role if found.
-                # todo - When we reset migrations the following need only check
-                # todo - "dob.role is not None"
+                # TODO: When we reset migrations the following need only check
+                # TODO: "dob.role is not None"
                 if dob.role is not None and dob.role != 'isw_raid_member' \
                         and dob.role != 'linux_raid_member':
                     # remove mdraid role if found but preserve prior roles
@@ -194,7 +206,7 @@ class DiskMixin(object):
             # the attached disk is our root disk (flagged by scan_disks)
             if (dob.pool is None and d.root is True):
                 # setup our special root disk db entry in Pool
-                #@todo: dynamically retrieve raid level.
+                # TODO: dynamically retrieve raid level.
                 p = Pool(name=d.label, raid='single', role='root')
                 p.disk_set.add(dob)
                 p.save()
@@ -211,12 +223,27 @@ class DiskMixin(object):
         for do in Disk.objects.all():
             # find all the not offline db entries
             if (not do.offline):
-                # We have an attached disk db entry
-                if (re.match('vd|md|mmcblk', do.name) is not None):
-                    # Virtio disks (named vd*), md devices (named md*), and
-                    # an sdcard reader that provides devs named mmcblk* have
+                # We have an attached disk db entry.
+                # Since our Disk.name model now uses by-id type names we can
+                # do cheap matches to the beginnings of these names to find
+                # virtio, md, or sdcard devices which are assumed to have no
+                # SMART capability.
+                # We also disable devices smart support when they have a
+                # fake serial number as ascribed by scan_disks as any SMART
+                # data collected is then less likely to be wrongly associated
+                # with the next device that takes this temporary drive's name.
+                # Also note that with no serial number some device types will
+                # not have a by-id type name expected by the smart subsystem.
+                # This has only been observed in no serial virtio devices.
+                if (re.match('fake-serial-', do.serial) is not None) or \
+                        (re.match('virtio-|md-|mmc-|nvme-', do.name) is not None):
+                    # Virtio disks (named virtio-*), md devices (named md-*),
+                    # and an sdcard reader that provides devs named mmc-* have
                     # no smart capability so avoid cluttering logs with
-                    # exceptions on these types of devices.
+                    # exceptions on probing these with smart.available.
+                    # nvme not yet supported by CentOS 7 smartmontools:
+                    # https://www.smartmontools.org/ticket/657
+                    # Thanks to @snafu in rockstor forum post 1567 for this.
                     do.smart_available = do.smart_enabled = False
                     continue
                 # try to establish smart availability and status and update db
@@ -326,7 +353,7 @@ class DiskDetailView(rfc.GenericView):
     @transaction.atomic
     def _smartcustom_drive(self, dname, request):
         disk = self._validate_disk(dname, request)
-        # todo Check on None, null, or '' for default in next command
+        # TODO: Check on None, null, or '' for default in next command
         custom_smart_options = str(
             request.data.get('smartcustom_options', ''))
         # strip leading and trailing white space chars before entry in db
