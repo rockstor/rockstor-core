@@ -59,7 +59,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
     this.updateFreq = 1000;
     this.sortAttrs = ['reads_completed']; // attrs to sort by
-    this.numTop = 5; // maximum number of top disks to display
+    // maximum number of top disks to display
+    this.numTop = this.maximized ? 5 : 3;
     this.partition = d3.layout.partition()
     .value(function(d) {
       return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0);
@@ -387,6 +388,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     var _this = this;
     this.constructor.__super__.resize.apply(this, arguments);
     this.topDisksWidth = this.maximized ? 520 : 240;
+    // maximum number of top disks to display
+    this.numTop = this.maximized ? 5 : 3;
     //this.$('#top-disks-ph').empty();
     this.$('#top-disks-ph').css('width', this.topDisksWidth);
     this.topDisksVis.attr('width', this.topDisksWidth);
