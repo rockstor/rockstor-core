@@ -85,10 +85,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       yaxis: {
         min: 0
       },
-			series: {
-        lines: { show: true, fill: false },
-        shadowSize: 0	// Drawing is faster without shadows
-			}
+      series: {
+        lines: {show: true, fill: false},
+        shadowSize: 0 // Drawing is faster without shadows
+      }
     };
     this.dataGraphOptions = {
       grid : {
@@ -112,10 +112,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         min: 0,
         tickFormatter: this.valueTickFormatter
       },
-			series: {
-        lines: { show: true, fill: false },
-        shadowSize: 0	// Drawing is faster without shadows
-			}
+      series: {
+        lines: {show: true, fill: false},
+        shadowSize: 0 // Drawing is faster without shadows
+      }
     };
   },
 
@@ -386,7 +386,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   resize: function(event) {
     var _this = this;
     this.constructor.__super__.resize.apply(this, arguments);
-    this.topDisksWidth = this.maximized ? 400 : 200;
+    this.topDisksWidth = this.maximized ? 520 : 240;
     //this.$('#top-disks-ph').empty();
     this.$('#top-disks-ph').css('width', this.topDisksWidth);
     this.topDisksVis.attr('width', this.topDisksWidth);
