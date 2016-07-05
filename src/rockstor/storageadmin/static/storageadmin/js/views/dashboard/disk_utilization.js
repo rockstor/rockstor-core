@@ -306,7 +306,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         if (d.name == 'root') {
           return '';
         } else {
-          return d.name + ' (' + (d.dx*100).toFixed(2) + '%)';
+          return d.name;
         }
       })
       .attr('fill-opacity', 1.0);
