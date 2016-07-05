@@ -52,7 +52,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       this.disks.pageSize = RockStorGlobals.maxPageSize;
 
     this.topDisks = [];
-    this.topDisksWidth = this.maximized ? 400 : 200;
+    this.topDisksWidth = this.maximized ? 520 : 240;
     this.topDisksHeight = 50;
 
     this.selectedDisk = null;
@@ -170,6 +170,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     var _this = this;
     this.disks.each(function(disk) {
       var name = disk.get('name');
+      var temp_name = disk.get('temp_name');
       _this.disksData[name] = [];
       for (var i=0; i<_this.dataLength; i++) {
         _this.disksData[name].push(_this.genEmptyDiskData());
