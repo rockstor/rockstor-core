@@ -59,7 +59,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
     this.updateFreq = 1000;
     this.sortAttrs = ['reads_completed']; // attrs to sort by
-    this.numTop = 5; // no of top shares
+    this.numTop = 5; // maximum number of top disks to display
     this.partition = d3.layout.partition()
     .value(function(d) {
       return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0);
