@@ -91,7 +91,7 @@ PoolAddDisks = RockstorWizardPage.extend({
             var html = '',
                 _this = this;
             if (this.model.get('raidChange')) {
-                html += '<h4>Select a new raid level</h4>';
+                html += '<h4>Select a new raid level<br>raid5 & raid6 are not production-ready</h4>';
                 var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6'];
                 html += '<div class="">';
                 html += '<select id="raid-level" name="raid-level" title="Select a new raid level for the pool">';
