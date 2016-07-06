@@ -96,6 +96,7 @@ var AppRouter = Backbone.Router.extend({
 	    "add-afp-share": "addAFPShare",
 	    "afp/edit/:afpShareId": "editAFPShare",
 	    "rockons": "showRockons",
+		"shell": "showShell",
 	    "images": "showImages",
 	    "containers": "showContainers",
 	    "appliances": "showAppliances",
@@ -757,7 +758,15 @@ var AppRouter = Backbone.Router.extend({
         this.currentLayout = new LogsView();
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
-    }
+    },
+	
+	showShell: function() {
+		this.renderSidebar('system', 'shell');
+        this.cleanup();
+		this.currentLayout = new ShellView();
+        $('#maincontent').empty();
+        $('#maincontent').append(this.currentLayout.render().el);
+	},
 
 
 });
