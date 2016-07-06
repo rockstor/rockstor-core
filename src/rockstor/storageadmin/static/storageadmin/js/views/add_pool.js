@@ -159,7 +159,7 @@ AddPoolView = Backbone.View.extend({
         this.$('#raid_level').tooltip({
             html: true,
             placement: 'right',
-            title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong> and <strong>Raid6</strong> are similar to conventional implementations with key differences.<br>See documentation for more information"
+            title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong>, and <strong>Raid6</strong> are similar to conventional raid levels. See documentation for more information.<br><strong>WARNING: Raid5 and Raid6 are not production-ready</strong>"
         });
 
         this.$('#compression').tooltip({
