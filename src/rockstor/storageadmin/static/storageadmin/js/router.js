@@ -96,7 +96,7 @@ var AppRouter = Backbone.Router.extend({
 	    "add-afp-share": "addAFPShare",
 	    "afp/edit/:afpShareId": "editAFPShare",
 	    "rockons": "showRockons",
-		"shell": "showShell",
+	    "shell": "showShell",
 	    "images": "showImages",
 	    "containers": "showContainers",
 	    "appliances": "showAppliances",
@@ -919,12 +919,6 @@ $(document).ready(function() {
     var kernelInfo = function(data) {
 	    $loadavg.text('Linux: ' + data);
     };
-	
-    var displayLocaleTime = function(data) {
-
-        $('#local-time > span').text(data);
-
-    }	
 
     var displayLoadAvg = function(data) {
 	    var n = parseInt(data);
@@ -976,7 +970,6 @@ $(document).ready(function() {
 
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
-    RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software-update');
 
