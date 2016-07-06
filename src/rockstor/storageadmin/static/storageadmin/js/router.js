@@ -762,10 +762,10 @@ var AppRouter = Backbone.Router.extend({
 	
 	showShell: function() {
 		this.renderSidebar('system', 'shell');
-        this.cleanup();
+		this.cleanup();
 		this.currentLayout = new ShellView();
-        $('#maincontent').empty();
-        $('#maincontent').append(this.currentLayout.render().el);
+		$('#maincontent').empty();
+		$('#maincontent').append(this.currentLayout.render().el);
 	},
 
 
