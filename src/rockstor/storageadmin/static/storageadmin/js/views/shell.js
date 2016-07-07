@@ -26,7 +26,8 @@
 
 ShellView = RockstorLayoutView.extend({
 	events: {
-		'switchChange.bootstrapSwitch': 'switchStatus'
+		'switchChange.bootstrapSwitch': 'switchStatus',
+		'click #fullscreen': 'FullScreenSwitch'
 	},
 	
 	initialize: function() {
@@ -59,11 +60,27 @@ ShellView = RockstorLayoutView.extend({
 		if (!this.service.get('status')) {
 			this.$('#shell-warning').show();
 			this.$('div[name="shell-container"]').show();
-			this.$('#rockstor-shell').hide();
 		} else {
 			this.$('#rockstor-shell')[0].src="/shell";
 			this.$('#rockstor-shell').show();
+			this.$('#fullscreen').show();
 		}		
+	},
+	
+	FullScreenSwitch: function(){
+		//nicely switch our console between normal size and fullscreen
+		//fullscreen requires crossbrowser checks
+		//Back to normal size just with ESC, as suggested by browser
+		var rockstor_shell = this.$('#rockstor-shell')[0];
+		if (rockstor_shell.requestFullscreen) {
+			rockstor_shell.requestFullscreen();
+		} else if (rockstor_shell.webkitRequestFullscreen) {
+			rockstor_shell.webkitRequestFullscreen();
+		} else if (rockstor_shell.mozRequestFullScreen) {
+			rockstor_shell.mozRequestFullScreen();
+		} else if (rockstor_shell.msRequestFullscreen) {
+			rockstor_shell.msRequestFullscreen();
+		}
 	},
 	
 	switchStatus: function(event,state){
@@ -85,6 +102,7 @@ ShellView = RockstorLayoutView.extend({
 				_this.$('#shell-warning').hide();
 				_this.$('#rockstor-shell')[0].src="/shell";
 				_this.$('#rockstor-shell').show();
+				_this.$('#fullscreen').show();
 				
 			},
 			error: function(xhr, status, error) {
