@@ -25,16 +25,99 @@
  */
 
 ShellView = RockstorLayoutView.extend({
-
+	events: {
+		'switchChange.bootstrapSwitch': 'switchStatus'
+	},
+	
     initialize: function() {
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.shell_shell;
+		this.serviceName = 'shellinaboxd';
+		this.service = new Service({name: this.serviceName});
+		this.dependencies.push(this.service);
     },
 
     render: function() {
-        this.$el.html(this.template);
-        return this;
+		var _this = this;
+		this.fetch(this.renderShell, this);
+		return this;
     },
+	
+	renderShell: function(){
+		
+		$(this.el).html(this.template({
+			service: this.service
+		}));
+		
+		//initalize Bootstrap Switch
+		this.$("[type='checkbox']").bootstrapSwitch();
+		this.$('input[name="shell-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
+		this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+		this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+
+		// Display NFS Export Service Warning
+		if (!this.service.get('status')) {
+			this.$('#shell-warning').show();
+			this.$('div[name="shell-container"]').show();
+			this.$('#rockstor-shell').hide();
+		} else {
+			this.$('#rockstor-shell')[0].src="/shell";
+			this.$('#rockstor-shell').show();
+		}		
+	},
+	
+	switchStatus: function(event,state){
+		if (state){
+			this.startService();
+		}
+	},
+
+	startService: function() {
+		var _this = this;
+		this.setStatusLoading(this.serviceName, true);
+		$.ajax({
+			url: "/api/sm/services/shellinaboxd/start",
+			type: "POST",
+			dataType: "json",
+			success: function(data, status, xhr) {
+				_this.setStatusLoading(_this.serviceName, false);
+				_this.$('div[name="shell-container"]').hide();
+				_this.$('#shell-warning').hide();
+				_this.$('#rockstor-shell')[0].src="/shell";
+				_this.$('#rockstor-shell').show();
+				
+			},
+			error: function(xhr, status, error) {
+				_this.setStatusError(_this.serviceName, xhr);
+				_this.$('div[name="shell-container"]').show();
+				_this.$('#shell-warning').show();
+			}
+		});
+	},
+
+	setStatusLoading: function(serviceName, show) {
+		var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
+		if (show) {
+			statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
+		} else {
+			statusEl.empty();
+		}
+	},
+
+	setStatusError: function(serviceName, xhr) {
+		var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
+		var msg = parseXhrError(xhr);
+		// remove any existing error popups
+		$('body').find('#' + serviceName + 'err-popup').remove();
+		// add icon and popup
+		statusEl.empty();
+		var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
+		statusEl.append(icon);
+		var errPopup = this.$('#' + serviceName + '-err-popup');
+		var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
+		errPopupContent.html(msg);
+		statusEl.click(function(){ errPopup.overlay().load(); });
+	},
 
 });
 

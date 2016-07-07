@@ -18,6 +18,21 @@
  * 
  */
 </script>
-
-<iframe id="rockstor-shell" src="/shell"></iframe>
-
+<div class="row" name="shell-container" style="display:none">
+  <div class="col-md-12">
+    <div id="details-header">
+      <table>
+        <tr>
+          <td><span class="h3">Shell In a Box Service&nbsp;&nbsp;&nbsp;</span></td>
+          <td>
+          <input type="checkbox" name="shell-export-checkbox" data-size="mini">
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div id="shell-warning" class="alert alert-warning" style="display:none">
+    	<strong>Warning! Shell In A Box Service is not running</strong>. Shell access not available
+    </div>
+  </div>
+</div>
+<iframe id="rockstor-shell" style="display:none"></iframe>
