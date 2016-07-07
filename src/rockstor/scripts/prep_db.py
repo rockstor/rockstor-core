@@ -37,6 +37,7 @@ def register_services():
         'NUT-UPS': 'nut',
         'ZTaskd': 'ztask-daemon',
         'Bootstrap': 'rockstor-bootstrap',
+        'Shell In A Box': 'shellinaboxd',
         'Rockstor': 'rockstor',}
 
     for k,v in services.items():
