@@ -29,19 +29,19 @@ ShellView = RockstorLayoutView.extend({
 		'switchChange.bootstrapSwitch': 'switchStatus'
 	},
 	
-    initialize: function() {
-        this.constructor.__super__.initialize.apply(this, arguments);
-        this.template = window.JST.shell_shell;
+	initialize: function() {
+		this.constructor.__super__.initialize.apply(this, arguments);
+		this.template = window.JST.shell_shell;
 		this.serviceName = 'shellinaboxd';
 		this.service = new Service({name: this.serviceName});
 		this.dependencies.push(this.service);
-    },
+	},
 
-    render: function() {
+	render: function() {
 		var _this = this;
 		this.fetch(this.renderShell, this);
 		return this;
-    },
+	},
 	
 	renderShell: function(){
 		
