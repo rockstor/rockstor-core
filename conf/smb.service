@@ -1,7 +1,6 @@
 [Unit]
 Description=Samba SMB Daemon
 After=syslog.target network.target nmb.service rockstor-bootstrap.service
-Requires=rockstor-bootstrap.service
 
 [Service]
 Environment=KRB5CCNAME=/run/samba/krb5cc_samba

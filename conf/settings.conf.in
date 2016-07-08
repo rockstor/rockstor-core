@@ -284,7 +284,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
    "django.core.context_processors.request"
 )
 
-SMB_CONF = '${django-settings-conf:smb_conf}'
 MNT_PT = '/mnt2/'
 NFS_EXPORT_ROOT = '/export/'
 SFTP_MNT_ROOT = '/mnt3/'
