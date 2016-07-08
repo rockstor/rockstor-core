@@ -584,7 +584,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             self.emit('sysinfo:localtime', {
                 'data': time.strftime('%H:%M (%z %Z)'), 'key': 'sysinfo:localtime'
             })
-            gevent.sleep(20)
+            gevent.sleep(40)
 
     def send_kernel_info(self):
             try:
