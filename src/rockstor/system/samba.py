@@ -95,18 +95,26 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def update_global_config(workgroup=None, realm=None, idmap_range=None, rfc2307=False):
+def update_global_config(smb_config=None, ad_config=None):
     fh, npath = mkstemp()
+    if (smb_config is None):
+        smb_config = {}
+    if (ad_config is not None):
+        smb_config.update(ad_config)
+
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         tfo.write('[global]\n')
-        if (workgroup is not None):
-            tfo.write('    workgroup = %s\n' % workgroup)
-        tfo.write('    log file = /var/log/samba/log.%m\n')
-        if (realm is not None):
-            idmap_high = int(idmap_range.split()[2])
+        workgroup = smb_config.get('workgroup', 'MYGROUP')
+        tfo.write('    workgroup = %s\n' % workgroup)
+        smb_config.pop('workgroup', None)
+        logfile = smb_config.get('log file', '/var/log/samba/log.%m')
+        tfo.write('    log file = %s\n' % logfile)
+        smb_config.pop('log file', None)
+        if ('realm' in smb_config):
+            idmap_high = int(smb_config['idmap_range'].split()[2])
             default_range = '%s - %s' % (idmap_high + 1, idmap_high + 1000000)
             tfo.write('    security = ads\n')
-            tfo.write('    realm = %s\n' % realm)
+            tfo.write('    realm = %s\n' % smb_config['realm'])
             tfo.write('    template shell = /bin/sh\n')
             tfo.write('    kerberos method = secrets and keytab\n')
             tfo.write('    winbind use default domain = false\n')
@@ -115,21 +123,32 @@ def update_global_config(workgroup=None, realm=None, idmap_range=None, rfc2307=F
             tfo.write('    winbind enum groups = yes\n')
             tfo.write('    idmap config * : backend = tdb\n')
             tfo.write('    idmap config * : range = %s\n' % default_range)
-            #enable rfc2307 schema and collect UIDS from AD DC
-            #we assume if rfc2307 then winbind nss info too - collects AD DC home and shell for each user 
+            #enable rfc2307 schema and collect UIDS from AD DC we assume if
+            #rfc2307 then winbind nss info too - collects AD DC home and shell
+            #for each user
             if (rfc2307):
                 tfo.write('    idmap config %s : backend = ad\n' % workgroup)
-                tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
+                tfo.write('    idmap config %s : range = %s\n' %
+                          (workgroup, smb_config['idmap_range']))
                 tfo.write('    idmap config %s : schema_mode = rfc2307\n' % workgroup)
                 tfo.write('    winbind nss info = rfc2307\n')
             else:
                 tfo.write('    idmap config %s : backend = rid\n' % workgroup)
-                tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
-        #@todo: remove log level once AD integration is working well for users.
-        tfo.write('    log level = 3\n')
-        tfo.write('    load printers = no\n')
-        tfo.write('    cups options = raw\n')
-        tfo.write('    printcap name = /dev/null\n\n')
+                tfo.write('    idmap config %s : range = %s\n' % (workgroup, smb_config['idmap_range']))
+            smb_config.pop('idmap_range', None)
+        tfo.write('    log level = %s\n' % smb_config.get('log level', 3))
+        smb_config.pop('log level', None)
+        tfo.write('    load printers = %s\n' % smb_config.get('load printers', 'no'))
+        smb_config.pop('load printers', None)
+        tfo.write('    cups options = %s\n' % smb_config.get('cups options', 'raw'))
+        smb_config.pop('cups options', None)
+        tfo.write('    printcap name = %s\n' % smb_config.get('printcap name', '/dev/null'))
+        smb_config.pop('printcap name', None)
+        tfo.write('    map to guest = %s\n' % smb_config.get('map to guest', 'Bad User'))
+        smb_config.pop('map to guest', None)
+
+        for k in smb_config:
+            tfo.write('    %s = %s\n' % (k, smb_config[k]))
 
         rockstor_section = False
         for line in sfo.readlines():
@@ -137,8 +156,28 @@ def update_global_config(workgroup=None, realm=None, idmap_range=None, rfc2307=F
                 rockstor_section = True
             if (rockstor_section is True):
                 tfo.write(line)
-    test_parm(npath)
-    shutil.move(npath, SMB_CONFIG)
+        test_parm(npath)
+        shutil.move(npath, SMB_CONFIG)
+
+def get_global_config():
+    config = {}
+    with open(SMB_CONFIG) as sfo:
+        global_section = False
+        for l in sfo.readlines():
+            if (re.match('\[global]', l) is not None):
+                global_section = True
+                continue
+            if (not global_section or
+                len(l.strip()) == 0 or
+                re.match('#', l) is not None):
+                continue
+            if (global_section and
+                re.match('\[', l) is not None):
+                global_section = False
+                continue
+            fields = l.strip().split('=')
+            config[fields[0].strip()] = fields[1].strip()
+    return config
 
 
 def restart_samba(hard=False):
