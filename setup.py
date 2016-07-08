@@ -53,6 +53,7 @@ setup(
             'bootstrap = scripts.bootstrap:main',
             'send-replica = scripts.scheduled_tasks.send_replica:main',
             'qgroup-test = scripts.qgroup_test:main',
+            'mnt-share = scripts.mount_share:mount_share',
         ],
     },
 

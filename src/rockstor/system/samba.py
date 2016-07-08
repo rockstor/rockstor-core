@@ -23,6 +23,8 @@ from tempfile import mkstemp
 import re
 import os
 from storageadmin.models import SambaCustomConfig
+from django.conf import settings
+
 
 TESTPARM = '/usr/bin/testparm'
 SMB_CONFIG = '/etc/samba/smb.conf'
@@ -46,12 +48,15 @@ def test_parm(config='/etc/samba/smb.conf'):
 
 
 def rockstor_smb_config(fo, exports):
+    mnt_helper = os.path.join(settings.ROOT_DIR, 'bin/mnt-share')
     fo.write('%s\n' % RS_HEADER)
     for e in exports:
         admin_users = ''
         for au in e.admin_users.all():
             admin_users = '%s%s ' % (admin_users, au.username)
         fo.write('[%s]\n' % e.share.name)
+        fo.write('    root preexec = "%s %s"\n' % (mnt_helper, e.share.name))
+        fo.write('    root preexec close = yes\n')
         fo.write('    comment = %s\n' % e.comment)
         fo.write('    path = %s\n' % e.path)
         fo.write('    browseable = %s\n' % e.browsable)
