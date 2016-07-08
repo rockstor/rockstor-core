@@ -20,27 +20,38 @@ import shutil
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import systemctl
-from system.samba import (update_global_config, restart_samba)
+from system.samba import (update_global_config, restart_samba,
+                          get_global_config)
 from django.db import transaction
 from django.conf import settings
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.models import SambaShare
 from system.osi import md5sum
+from smart_manager.serializers import ServiceStatusSerializer
 
 import logging
 logger = logging.getLogger(__name__)
 
 
 class SambaServiceView(BaseServiceDetailView):
+    service_name = 'smb'
+
+    @transaction.atomic
+    def get(self, request, *args, **kwargs):
+        with self._handle_exception(self.request, msg=None):
+            so = Service.objects.get(name=self.service_name)
+            config = get_global_config()
+            self._save_config(so, config)
+            sd = ServiceStatusSerializer(self._get_or_create_sso(so))
+            return Response(sd.data)
 
     @transaction.commit_on_success
     def post(self, request, command):
         """
         execute a command on the service
         """
-        service_name = 'smb'
-        service = Service.objects.get(name=service_name)
+        service = Service.objects.get(name=self.service_name)
         if (command == 'config'):
             aso = Service.objects.get(name='active-directory')
             if (aso.config is not None):
@@ -50,10 +61,21 @@ class SambaServiceView(BaseServiceDetailView):
                 handle_exception(Exception(e_msg), request)
 
             try:
-                config = request.data.get('config', {'workgroup': 'MYGROUP',})
-                workgroup = config['workgroup']
-                self._save_config(service, config)
-                update_global_config(workgroup)
+                config = request.data.get('config', {})
+                global_config = {}
+                gc_lines = config['global_config'].split('\n')
+                for l in gc_lines:
+                    gc_param = l.strip().split('=')
+                    if (len(gc_param) == 2):
+                        global_config[gc_param[0].strip().lower()] = gc_param[1].strip()
+                if ('workgroup' not in global_config):
+                    global_config['workgroup'] = config['workgroup']
+                self._save_config(service, global_config)
+                adso = Service.objects.get(name='active-directory')
+                adconfig = {}
+                if (adso.config is not None):
+                    adconfig = self._get_config(adso)
+                update_global_config(global_config, adconfig)
                 restart_samba(hard=True)
             except Exception, e:
                 e_msg = ('Samba could not be configured. Try again. '
@@ -65,7 +87,7 @@ class SambaServiceView(BaseServiceDetailView):
                     systemctl('smb', 'disable')
                     systemctl('nmb', 'disable')
                 else:
-                    systemd_name = '%s.service' % service_name
+                    systemd_name = '%s.service' % self.service_name
                     ss_dest = ('/etc/systemd/system/%s' % systemd_name)
                     ss_src = ('%s/%s' % (settings.CONFROOT, systemd_name))
                     sum1 = md5sum(ss_dest)
