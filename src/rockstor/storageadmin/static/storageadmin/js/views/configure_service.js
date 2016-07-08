@@ -77,6 +77,10 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		    }
 		}
 	    },
+		shellinaboxd: {
+		shelltype: 'required',
+		css: 'required'
+		},
 	    "active-directory": {
 		domain: 'required',
 		username: 'required',
@@ -256,6 +260,17 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    html: true,
 	    placement: 'right',
 	    title: 'While default port(443) is recommended for most users, advanced users can change it to access UI on a different port. <b>Changing the port will make UI inaccessible.</b> After a momentary pause, it should be available on the new port.'
+	});
+	this.$('#shell-form #shelltype').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: '<strong>LOGIN</strong> is default Shell In a Box connection method, like a login via console (root direct login not allowed, su required)<br/> \
+		<strong>SSH</strong> connection with root user allowed. Less secure for system'
+	});
+	this.$('#shell-form #css').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Choose between Black on White or White on Black layout'
 	});
 
 	this.validator = this.$('#' + this.formName).validate({
