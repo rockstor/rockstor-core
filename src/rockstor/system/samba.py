@@ -22,8 +22,11 @@ import shutil
 from tempfile import mkstemp
 import re
 import os
+import logging
 from storageadmin.models import SambaCustomConfig
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 TESTPARM = '/usr/bin/testparm'
@@ -176,6 +179,8 @@ def get_global_config():
                 global_section = False
                 continue
             fields = l.strip().split('=')
+            logger.debug('FIELDS = %s', fields)
+            logger.debug('LEN OF FIELDS = %s', len(fields))
             config[fields[0].strip()] = fields[1].strip()
     return config
 
