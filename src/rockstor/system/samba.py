@@ -164,8 +164,8 @@ def update_global_config(smb_config=None, ad_config=None):
                 rockstor_section = True
             if (rockstor_section is True):
                 tfo.write(line)
-        test_parm(npath)
-        shutil.move(npath, SMB_CONFIG)
+    test_parm(npath)
+    shutil.move(npath, SMB_CONFIG)
 
 def get_global_config():
     config = {}
