@@ -22,11 +22,9 @@ import shutil
 from tempfile import mkstemp
 import re
 import os
-import logging
 from storageadmin.models import SambaCustomConfig
 from django.conf import settings
 
-logger = logging.getLogger(__name__)
 
 
 TESTPARM = '/usr/bin/testparm'
@@ -39,8 +37,6 @@ RS_HEADER = '####BEGIN: Rockstor SAMBA CONFIG####'
 def test_parm(config='/etc/samba/smb.conf'):
     cmd = [TESTPARM, '-s', config]
     o, e, rc = run_command(cmd, throw=False)
-    logger.debug('test_parm received rc of %s', rc)
-    logger.debug('test_parm was passed %s', config)
     if (rc != 0):
         try:
             os.remove(npath)
@@ -101,8 +97,6 @@ def refresh_smb_config(exports):
 
 
 def update_global_config(smb_config=None, ad_config=None):
-    logger.debug('update_global_config called with smb_config = %s', smb_config)
-    logger.debug('update_global_config called with ad_config = %s', ad_config)
     fh, npath = mkstemp()
     if (smb_config is None):
         smb_config = {}
@@ -184,12 +178,9 @@ def get_global_config():
                 global_section = False
                 continue
             fields = l.strip().split('=')
-            logger.debug('FIELDS = %s', fields)
-            logger.debug('LEN OF FIELDS = %s', len(fields))
             if len(fields) < 2:
                 continue
             config[fields[0].strip()] = fields[1].strip()
-    logger.debug('get_global_config returning %s', config)
     return config
 
 
