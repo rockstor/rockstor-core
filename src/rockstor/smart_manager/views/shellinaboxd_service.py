@@ -22,6 +22,7 @@ from system.services import systemctl
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
+from system.shell import (update_shell_config, restart_shell)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -33,10 +34,20 @@ class ShellInABoxServiceView(BaseServiceDetailView):
     def post(self, request, command):
         service = Service.objects.get(name=self.name)
 
-        if (command == 'start'):
+        if (command == 'config'):
+            config = request.data.get('config')
+            self._save_config(service, config)
+            shelltype = config.get('shelltype')
+            css = config.get('css')
+            update_shell_config(shelltype, css)
+            restart_shell()
+            
+        elif (command == 'start'):
             systemctl(self.name, 'enable')
             systemctl(self.name, 'start')
+
         elif (command == 'stop'):
             systemctl(self.name, 'stop')
             systemctl(self.name, 'disable')
+        
         return Response()
