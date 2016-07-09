@@ -130,9 +130,10 @@ def update_global_config(smb_config=None, ad_config=None):
             tfo.write('    winbind enum groups = yes\n')
             tfo.write('    idmap config * : backend = tdb\n')
             tfo.write('    idmap config * : range = %s\n' % default_range)
-            #enable rfc2307 schema and collect UIDS from AD DC we assume if
-            #rfc2307 then winbind nss info too - collects AD DC home and shell
-            #for each user
+            # enable rfc2307 schema and collect UIDS from AD DC we assume if
+            # rfc2307 then winbind nss info too - collects AD DC home and shell
+            # for each user
+            # TODO rfc2307 is now an unresolved reference
             if (rfc2307):
                 tfo.write('    idmap config %s : backend = ad\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' %
