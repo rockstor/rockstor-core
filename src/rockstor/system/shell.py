@@ -27,9 +27,10 @@ SYSTEMCTL = '/usr/bin/systemctl'
 
 def update_shell_config(shelltype='LOGIN', css='white-on-black'):
 
-    npath = mkstemp()
+    fh, npath = mkstemp()
     with open(npath, 'w') as tfo:
         #Write shellinaboxd default config
+        tfo.write('# Shell In A Box configured by Rockstor\n\n')
         tfo.write('USER=root\n')
         tfo.write('GROUP=root\n')
         tfo.write('CERTDIR=/var/lib/shellinabox\n')
@@ -39,8 +40,15 @@ def update_shell_config(shelltype='LOGIN', css='white-on-black'):
         #--localhost-only to block shell direct access and because behind nginx
         #--disable-ssl because already on rockstor ssl
         #--no-beep to avoid sounds and possible crashes under FF - see man pages
-        tfo.write('OPTS="--no-beep --localhost-only --disable-ssl --css %s.css -s /:%s"' % 
-                 (css, shelltype))
+        tfo.write('OPTS="--no-beep --localhost-only --disable-ssl ')
+        #Switch between LOGIN connection and SSH connection
+        #LOGIN connection only uid > 1000 allowed, su required to become root\n
+        #SSH connection root login allowed too
+        tfo.write('-s /:%s ' % shelltype)
+        #If white on black add --css option
+        #Default black on white --css option not required / shellinaboxd fails
+        if (css=='white-on-black'):
+            tfo.write('--css %s.css' % css)
 
     shutil.move(npath, SHELL_CONFIG)
 
@@ -48,7 +56,7 @@ def update_shell_config(shelltype='LOGIN', css='white-on-black'):
 def restart_shell():
 
     #simply restart shellinaboxd service
-    
+    #No return code checks because rc!=0 documented also for nicely running state
     return run_command([SYSTEMCTL, 'restart', 'shellinaboxd'])
 
 def status():
