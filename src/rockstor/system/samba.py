@@ -181,6 +181,8 @@ def get_global_config():
             fields = l.strip().split('=')
             logger.debug('FIELDS = %s', fields)
             logger.debug('LEN OF FIELDS = %s', len(fields))
+            if len(fields) < 2:
+                continue
             config[fields[0].strip()] = fields[1].strip()
     return config
 
