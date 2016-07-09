@@ -380,6 +380,38 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     },
 
     initHandlebarHelpers: function(){
+	
+	//ShellInABox
+	Handlebars.registerHelper('display_shelltype_options', function(){
+		var html = '',
+		_this = this;
+		var avail_shells = ['LOGIN', 'SSH'];
+		_.each(avail_shells, function(shell, index) {
+			if (shell == _this.config.shelltype) {
+				html += '<option value="' + shell + '" selected="selected">';
+				html += shell + '</option>';
+			} else {
+				html += '<option value="' + shell + '">' + shell + '</option>';
+			}			
+		});
+	    return new Handlebars.SafeString(html);		
+	});
+	
+	Handlebars.registerHelper('display_shellstyle_options', function(){
+		var html = '',
+		_this = this;
+		var avail_styles = {'white-on-black': 'White on Black', 'black-on-white': 'Black on White'};
+		_.each(avail_styles, function(key, val) {
+			if (val == _this.config.css) {
+				html += '<option value="' + val + '" selected="selected">';
+				html += key + '</option>';
+			} else {
+				html += '<option value="' + val + '">' + key + '</option>';
+			}			
+		});
+	    return new Handlebars.SafeString(html);		
+	});
+	
 	//NUT-UPS
 	Handlebars.registerHelper('display_nutMode_options', function(){
 	    var html = '',

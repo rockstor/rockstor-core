@@ -31,8 +31,7 @@
 			<label class="col-sm-4 control-label" for="shelltype">Shell connection service<span class="required"> *</span></label>
 			<div class="col-sm-4">
 			<select class="form-control" id="shelltype" name="shelltype">
-				<option value="LOGIN">LOGIN</option>
-				<option value="SSH">SSH</option>
+				{{display_shelltype_options}}
 			</select>
           </div>
         </div>
@@ -41,8 +40,7 @@
 			<label class="col-sm-4 control-label" for="css">Shell color scheme<span class="required"> *</span></label>
 			<div class="col-sm-4">
 			<select class="form-control" id="css" name="css">
-				<option value="white-on-black">White on Black</option>
-				<option value="black-on-white">Black on White</option>
+				{{display_shellstyle_options}}
 			</select>
           </div>
         </div>      
