@@ -49,14 +49,14 @@ ShellView = RockstorLayoutView.extend({
 		$(this.el).html(this.template({
 			service: this.service
 		}));
-		
+				
 		//initalize Bootstrap Switch
 		this.$("[type='checkbox']").bootstrapSwitch();
 		this.$('input[name="shell-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
 		this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
 		this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
 
-		// Display NFS Export Service Warning
+		// Display Shell In a Box Service Warning
 		if (!this.service.get('status')) {
 			this.$('#shell-warning').show();
 			this.$('div[name="shell-container"]').show();
