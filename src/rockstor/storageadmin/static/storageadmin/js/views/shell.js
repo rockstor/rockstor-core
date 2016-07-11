@@ -49,7 +49,7 @@ ShellView = RockstorLayoutView.extend({
 		$(this.el).html(this.template({
 			service: this.service
 		}));
-				
+
 		//initalize Bootstrap Switch
 		this.$("[type='checkbox']").bootstrapSwitch();
 		this.$('input[name="shell-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);

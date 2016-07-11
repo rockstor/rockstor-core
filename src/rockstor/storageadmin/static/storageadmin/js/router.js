@@ -761,11 +761,26 @@ var AppRouter = Backbone.Router.extend({
     },
 	
 	showShell: function() {
-		this.renderSidebar('system', 'shell');
-		this.cleanup();
-		this.currentLayout = new ShellView();
-		$('#maincontent').empty();
-		$('#maincontent').append(this.currentLayout.render().el);
+		//Special router function for shell
+		//We fetch shellinaboxd service model and check for detach option
+		//If not present or false we go with normal layout to maincontent
+		//otherwhise (popup enabled) we open it in a new detached window
+		var _this = this;
+		_this.shell_service = new Service({name: 'shellinaboxd'});
+		_this.shell_service.fetch({
+		success: function(collection){
+			var config = JSON.parse(collection.get('config'));
+			if ('detach' in config && config.detach){
+					window.open('/shell', '', 'width=800, height=600');
+			} else {
+				_this.renderSidebar('system', 'shell');
+				_this.cleanup();
+				_this.currentLayout = new ShellView();
+				$('#maincontent').empty();
+				$('#maincontent').append(_this.currentLayout.render().el);				
+			}
+		}});
+		
 	},
 
 
@@ -919,6 +934,12 @@ $(document).ready(function() {
     var kernelInfo = function(data) {
 	    $loadavg.text('Linux: ' + data);
     };
+	
+    var displayLocaleTime = function(data) {
+
+        $('#local-time > span').text(data);
+
+    }	
 
     var displayLoadAvg = function(data) {
 	    var n = parseInt(data);
@@ -970,6 +991,7 @@ $(document).ready(function() {
 
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
+    RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software-update');
 
