@@ -272,6 +272,11 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    placement: 'right',
 	    title: 'Choose between Black on White or White on Black layout'
 	});
+	this.$('#shellinaboxd-form #detach').tooltip({
+	    html: true,
+	    placement: 'left',
+	    title: 'Remember to allow Rockstor server on popup blockers to avoid annoying messages'
+	});
 
 	this.validator = this.$('#' + this.formName).validate({
 	    onfocusout: false,
