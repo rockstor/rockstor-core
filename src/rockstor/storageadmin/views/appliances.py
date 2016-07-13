@@ -142,6 +142,7 @@ class ApplianceDetailView(rfc.GenericView):
             appliance.hostname = request.data['hostname']
             appliance.save()
             sethostname(appliance.hostname)
+            logger.debug('here')
             return Response()
         except Exception, e:
             logger.exception(e)
