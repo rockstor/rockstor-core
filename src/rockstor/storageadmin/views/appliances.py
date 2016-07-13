@@ -20,7 +20,8 @@ import requests
 import json
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import Appliance
+from storageadmin.models import (Appliance, EmailClient)
+from storageadmin.views.email_client import update_generic
 from storageadmin.util import handle_exception
 from storageadmin.serializers import ApplianceSerializer
 
@@ -142,7 +143,9 @@ class ApplianceDetailView(rfc.GenericView):
             appliance.hostname = request.data['hostname']
             appliance.save()
             sethostname(appliance.hostname)
-            logger.debug('here')
+            if (EmailClient.objects.count() > 0):
+                current_email = EmailClient.objects.all()[0]
+                update_generic(current_email.sender)
             return Response()
         except Exception, e:
             logger.exception(e)
