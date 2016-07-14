@@ -1,0 +1,39 @@
+<script>
+/*
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+<div class="row" name="shell-container" style="display: none;">
+  <div class="col-md-12">
+    <div id="details-header">
+      <table>
+        <tr>
+          <td><span class="h3">Shell In a Box Service&nbsp;&nbsp;&nbsp;</span></td>
+          <td>
+          <input type="checkbox" name="shell-export-checkbox" data-size="mini">
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div id="shell-warning" class="alert alert-warning" style="display: none;">
+    	<strong>Warning! Shell In A Box Service is not running</strong>. Shell access not available
+    </div>
+  </div>
+</div>
+<iframe id="rockstor-shell" style="display: none;"></iframe>
+<button type="button" id="fullscreen" class="btn btn-secondary btn-sm" style="position: absolute; top: 25px; right: 25px; opacity: 0.7; display: none;"><i class="fa fa-arrows-alt" aria-hidden="true"></i></button>

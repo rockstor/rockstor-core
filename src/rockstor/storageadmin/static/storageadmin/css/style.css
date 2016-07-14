@@ -796,15 +796,25 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #breadcrumbs h3 { color: #005580; padding: 0; margin: 0;}
 
-#appliance-name, #local-time {
+#appliance-name, #local-time , #direct-shell {
     color: #FFFFFF;
     font-family: Roboto-Light;
     font-size: 12px;
 }
 
-#local-time {
+#local-time, #direct-shell {
     padding-left: 20px;
     display: inline-block;
+}
+
+#rockstor-shell {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%
 }
 
 #appliance-select-content {

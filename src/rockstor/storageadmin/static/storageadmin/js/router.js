@@ -96,6 +96,7 @@ var AppRouter = Backbone.Router.extend({
 	    "add-afp-share": "addAFPShare",
 	    "afp/edit/:afpShareId": "editAFPShare",
 	    "rockons": "showRockons",
+	    "shell": "showShell",
 	    "images": "showImages",
 	    "containers": "showContainers",
 	    "appliances": "showAppliances",
@@ -757,7 +758,30 @@ var AppRouter = Backbone.Router.extend({
         this.currentLayout = new LogsView();
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
-    }
+    },
+	
+	showShell: function() {
+		//Special router function for shell
+		//We fetch shellinaboxd service model and check for detach option
+		//If not present or false we go with normal layout to maincontent
+		//otherwhise (popup enabled) we open it in a new detached window
+		var _this = this;
+		_this.shell_service = new Service({name: 'shellinaboxd'});
+		_this.shell_service.fetch({
+		success: function(collection){
+			var config = JSON.parse(collection.get('config'));
+			if ('detach' in config && config.detach){
+					window.open('/shell', '', 'width=800, height=600');
+			} else {
+				_this.renderSidebar('system', 'shell');
+				_this.cleanup();
+				_this.currentLayout = new ShellView();
+				$('#maincontent').empty();
+				$('#maincontent').append(_this.currentLayout.render().el);				
+			}
+		}});
+		
+	},
 
 
 });

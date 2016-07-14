@@ -42,7 +42,7 @@ ServicesView = Backbone.View.extend({
 	    'reload': 'reloaded'
 	};
 	this.smTs = null; // current timestamp of sm service
-	this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'rockstor'];
+	this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'shellinaboxd', 'rockstor'];
 	this.initHandlebarHelpers();
     },
 

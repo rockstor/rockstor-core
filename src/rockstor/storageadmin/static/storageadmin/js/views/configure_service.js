@@ -77,6 +77,10 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		    }
 		}
 	    },
+		shellinaboxd: {
+		shelltype: 'required',
+		css: 'required'
+		},
 	    "active-directory": {
 		domain: 'required',
 		username: 'required',
@@ -257,6 +261,22 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    placement: 'right',
 	    title: 'While default port(443) is recommended for most users, advanced users can change it to access UI on a different port. <b>Changing the port will make UI inaccessible.</b> After a momentary pause, it should be available on the new port.'
 	});
+	this.$('#shellinaboxd-form #shelltype').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: '<strong>LOGIN</strong> is default Shell In a Box connection method, like a login via console (root direct login not allowed, su required)<br/> \
+		<strong>SSH</strong> connection with root user allowed. Less secure for system'
+	});
+	this.$('#shellinaboxd-form #css').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Choose between Black on White or White on Black layout'
+	});
+	this.$('#shellinaboxd-form #detach').tooltip({
+	    html: true,
+	    placement: 'left',
+	    title: 'Remember to allow Rockstor server on popup blockers to avoid annoying messages'
+	});
 
 	this.validator = this.$('#' + this.formName).validate({
 	    onfocusout: false,
@@ -365,6 +385,38 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     },
 
     initHandlebarHelpers: function(){
+	
+	//ShellInABox
+	Handlebars.registerHelper('display_shelltype_options', function(){
+		var html = '',
+		_this = this;
+		var avail_shells = ['LOGIN', 'SSH'];
+		_.each(avail_shells, function(shell, index) {
+			if (shell == _this.config.shelltype) {
+				html += '<option value="' + shell + '" selected="selected">';
+				html += shell + '</option>';
+			} else {
+				html += '<option value="' + shell + '">' + shell + '</option>';
+			}			
+		});
+	    return new Handlebars.SafeString(html);		
+	});
+	
+	Handlebars.registerHelper('display_shellstyle_options', function(){
+		var html = '',
+		_this = this;
+		var avail_styles = {'white-on-black': 'White on Black', 'black-on-white': 'Black on White'};
+		_.each(avail_styles, function(key, val) {
+			if (val == _this.config.css) {
+				html += '<option value="' + val + '" selected="selected">';
+				html += key + '</option>';
+			} else {
+				html += '<option value="' + val + '">' + key + '</option>';
+			}			
+		});
+	    return new Handlebars.SafeString(html);		
+	});
+	
 	//NUT-UPS
 	Handlebars.registerHelper('display_nutMode_options', function(){
 	    var html = '',
