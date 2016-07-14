@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from smart_manager.models import Service
 from storageadmin.models import Setup
+from django.conf import settings
 
 
 def register_services():
@@ -38,12 +39,19 @@ def register_services():
         'ZTaskd': 'ztask-daemon',
         'Bootstrap': 'rockstor-bootstrap',
         'Shell In A Box': 'shellinaboxd',
-        'Rockstor': 'rockstor',}
+        'Rockstor': 'rockstor'
+        }
+
+    services_configs = {
+        'shellinaboxd': '{"detach": false, "css": "white-on-black", "shelltype": "LOGIN"}'
+        }
 
     for k,v in services.items():
         try:
             so = Service.objects.get(name=v)
             so.display_name = k
+            if v in services_configs:
+                so.config = services_configs[v]
         except Service.DoesNotExist:
             so = Service(display_name=k, name=v)
         finally:
