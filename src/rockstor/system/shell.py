@@ -20,7 +20,7 @@ from osi import run_command
 from services import service_status
 import shutil
 from tempfile import mkstemp
-import re
+from django.conf import settings
 
 SHELL_CONFIG = '/etc/sysconfig/shellinaboxd'
 SYSTEMCTL = '/usr/bin/systemctl'
@@ -31,10 +31,10 @@ def update_shell_config(shelltype='LOGIN', css='white-on-black'):
     with open(npath, 'w') as tfo:
         #Write shellinaboxd default config
         tfo.write('# Shell In A Box configured by Rockstor\n\n')
-        tfo.write('USER=root\n')
-        tfo.write('GROUP=root\n')
-        tfo.write('CERTDIR=/var/lib/shellinabox\n')
-        tfo.write('PORT=4200\n')
+        tfo.write('USER=%s\n' % settings.SHELLINABOX.get('user'))
+        tfo.write('GROUP=%s\n' % settings.SHELLINABOX.get('group'))
+        tfo.write('CERTDIR=%s\n' % settings.SHELLINABOX.get('certs'))
+        tfo.write('PORT=%s\n' % settings.SHELLINABOX.get('port'))
         #Add config customization for css and shelltype
         #IMPORTANT
         #--localhost-only to block shell direct access and because behind nginx
