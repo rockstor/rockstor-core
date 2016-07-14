@@ -796,21 +796,15 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #breadcrumbs h3 { color: #005580; padding: 0; margin: 0;}
 
-#appliance-name, #local-time {
+#appliance-name, #local-time , #direct-shell {
     color: #FFFFFF;
     font-family: Roboto-Light;
     font-size: 12px;
 }
 
-#local-time {
+#local-time, #direct-shell {
     padding-left: 20px;
     display: inline-block;
-}
-
-#appliance-select-content {
-  height: 400px;
-  overflow-y: auto;
-  padding: 24px;
 }
 
 #rockstor-shell {
@@ -821,6 +815,12 @@ label.error { font-size: 12px; color: #b94a48; }
 	top: 0px;
 	width: 100%;
 	height: 100%
+}
+
+#appliance-select-content {
+  height: 400px;
+  overflow-y: auto;
+  padding: 24px;
 }
 
 #appliance-breadcrumb {
