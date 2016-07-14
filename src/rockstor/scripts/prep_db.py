@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from smart_manager.models import Service
 from storageadmin.models import Setup
-from django.conf import settings
 
 
 def register_services():
