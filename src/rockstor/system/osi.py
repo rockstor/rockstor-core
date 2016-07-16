@@ -742,13 +742,24 @@ def root_disk():
                     # partition ie on md126 directly.
                     end = re.search('\d+', disk).end()
                     return disk[5:end]
-                else:
-                    # catch all that assumes we have eg /dev/sda3 and want "sda"
-                    # so start from 6th char and remove the last char
-                    # /dev/sda3 = sda
-                    # TODO: consider changing to same method as in md devs above
-                    # TODO: to cope with more than one numeric in name.
-                    return disk[5:-1]
+                if (re.match('/dev/nvme', disk) is not None):
+                    # We have an nvme device. These have the following naming
+                    # conventions.
+                    # Base device examples: nvme0n1 or nvme1n1
+                    # First partition on the first device would be nvme0n1p1
+                    # The first number after 'nvme' is the device number.
+                    # Partitions are indicated by the p# combination ie 'p1'.
+                    # We need to also account for a root install on the base
+                    # device itself as with the /dev/md parsing just in case,
+                    # so look for the end of the base device name via 'n1'.
+                    end = re.search('n1', disk).end()
+                    return disk[5:end]
+                # catch all that assumes we have eg /dev/sda3 and want "sda"
+                # so start from 6th char and remove the last char
+                # /dev/sda3 = sda
+                # TODO: consider changing to same method as in md devs above
+                # TODO: to cope with more than one numeric in name.
+                return disk[5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
            'root filesystem. Please re-install Rockstor properly.')
