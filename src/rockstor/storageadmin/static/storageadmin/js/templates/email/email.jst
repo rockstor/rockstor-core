@@ -94,11 +94,20 @@
     <div class="form-group">
       <div class="col-xs-8 col-xs-offset-4">
         <a id="cancel" class="btn btn-default">Cancel</a>
-        <input type="Submit" id="add-email" class="btn btn-primary" value="Submit"></input>
+        <input type="Submit" id="add-email" class="btn btn-primary" value="Submit"></input><br/><br/>
+		<button type="button" id="test-smtp" class="btn btn-primary">Test current SMTP params</button>
       </div>
     </div>
   </form>
+  <div class="alert alert-success auth-results" id="auth_success" style="display: none;">
+  <strong>SMTP Authentication was successful</strong> Save your settings
+  </div>
+  <div class="alert alert-danger auth-results" id="auth_failed" style="display: none;">
+  <strong>SMTP Authentication failed!</strong> Please update your settings before saving.
+  <br/>If using a Google account please remember to <a target="_new" href="https://support.google.com/a/answer/6260879">Allow less secure apps to access accounts</a>
+  </div>
 </div><!--panel-body-->
-</div><!--panel-default -->
 </div><!--col-md-8 -->
+</div><!--panel-default -->
 </div><!-- row-->
+
