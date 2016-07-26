@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import enable_quota, btrfs_uuid, pool_usage, mount_root, \
-    get_pool_info, pool_raid, enable_quota
+    get_pool_info, pool_raid
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from share_helpers import (import_shares, import_snapshots)
