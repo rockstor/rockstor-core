@@ -96,13 +96,21 @@ EmailView = RockstorLayoutView.extend({
                 name: 'required',
                 sender: 'required',
                 password: 'required',
-                smtp_server: 'required',
+                smtp_server: {
+                    required: true,
+                    pattern: /^(([a-z\d]|[a-z\d][a-z\d\-]*[a-z\d])\.)*([a-z\d]|[a-z\d][a-z\d\-]*[a-z\d])$/
+                },
                 receiver: 'required',
                 username: {
                     required: "#enable_username:checked" //username field required only if username checkbox checked else empty
                 },
                 port: {
                     number: true
+                }
+            },
+            messages: {
+                smtp_server: {
+                    pattern: 'Please provide a correct hostname with only lowercase letters, digits and -'
                 }
             },
 
