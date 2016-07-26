@@ -26,6 +26,22 @@ from email.Utils import formatdate
 from email import Encoders
 from system.osi import gethostname
 
+def test_smtp_auth(eco):
+    auth = None
+    try:
+        smtp = smtplib.SMTP(eco.get('smtp_server'), eco.get('port'))
+    except:
+        return False
+    smtp.ehlo()
+    smtp.starttls()
+    try:
+        smtp.login(eco.get('username'), eco.get('password'))
+        auth = True
+    except:
+        auth = False
+    finally:
+        smtp.close()
+        return auth
 
 def send_test_email(eco, subject):
     msg = MIMEMultipart()
