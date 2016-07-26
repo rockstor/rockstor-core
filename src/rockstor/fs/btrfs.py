@@ -44,14 +44,31 @@ QID = '2015'
 
 def add_pool(pool, disks):
     """
-    pool is a btrfs filesystem.
+    Makes a btrfs pool (filesystem) of name 'pool' using the by-id disk names
+    provided, then enables quotas for this pool.
+    :param pool: name of pool to create.
+    :param disks: list of by-id disk names without paths to make the pool from.
+    :return o, err, rc from last command executed.
     """
+
     disks_fp = ['/dev/disk/by-id/' + d for d in disks]
     cmd = [MKFS_BTRFS, '-f', '-d', pool.raid, '-m', pool.raid, '-L',
            pool.name, ]
     cmd.extend(disks_fp)
-    out, err, rc = run_command(cmd)
-    enable_quota(pool)
+    # run the create pool command, any exceptions are logged and raised by
+    # run_command as a CommandException.
+    out, err, rc = run_command(cmd, log=True)
+    # only execute enable_quota on above btrfs command having an rc=0
+    if rc == 0:
+        # N.B. enable_quota wraps switch_quota() which doesn't enable logging
+        # so log what we have on rc != 0.
+        out2, err2, rc2 = enable_quota(pool)
+        if rc2 != 0:
+            logger.error('Error while enabling quota on newly created '
+                         'pool = %s' % pool.name)
+            return out2, err2, rc2
+    else:
+        logger.error('Error while creating new pool')
     return out, err, rc
 
 
@@ -93,6 +110,7 @@ def get_pool_info(disk):
 
 
 def pool_raid(mnt_pt):
+    # TODO: propose name change to get_pool_raid_levels(mnt_pt)
     o, e, rc = run_command([BTRFS, 'fi', 'df', mnt_pt])
     # data, system, metadata, globalreserve
     raid_d = {}
@@ -213,7 +231,7 @@ def mount_root(pool):
                 if (device.name == last_device.name):
                     #exhausted mounting using all devices in the pool
                     raise e
-                logger.error('Error mouting: %s. Will try using another device.' % mnt_cmd)
+                logger.error('Error mounting: %s. Will try using another device.' % mnt_cmd)
                 logger.exception(e)
     raise Exception('Failed to mount Pool(%s) due to an unknown reason.' % pool.name)
 
