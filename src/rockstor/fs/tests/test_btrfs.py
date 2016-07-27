@@ -14,7 +14,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-from fs.btrfs import add_pool, pool_raid
+from fs.btrfs import add_pool, pool_raid, is_subvol
 import mock
 from mock import patch
 
@@ -147,3 +147,19 @@ class BTRFSTests(unittest.TestCase):
             self.assertEqual(pool_raid(mount_point), expected_result,
                              msg='get_pool_raid_level() miss identified raid '
                                  'level %s' % raid_level)
+
+    def test_is_subvol_exists(self):
+        mount_point='/mnt2/test-pool/test-share'
+        o = ['/mnt2/test-pool/test-share', '\tName: \t\t\ttest-share',
+             '\tUUID: \t\t\t80c240a2-c353-7540-bb5e-b6a71a50a02e',
+             '\tParent UUID: \t\t-', '\tReceived UUID: \t\t-',
+             '\tCreation time: \t\t2016-07-27 17:01:09 +0100',
+             '\tSubvolume ID: \t\t258', '\tGeneration: \t\t13',
+             '\tGen at creation: \t13', '\tParent ID: \t\t5',
+             '\tTop level ID: \t\t5', '\tFlags: \t\t\t-', '\tSnapshot(s):', '']
+        e=['']
+        rc=0
+        # btrfs subvol show has return code of 0 (no errors) when subvol exists
+        self.mock_run_command.return_value = (o, e, rc)
+        self.assertEqual(is_subvol(mount_point), True,
+                         msg='Did NOT return True for existing subvol')
