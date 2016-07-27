@@ -33,12 +33,12 @@ class BTRFSTests(unittest.TestCase):
     def tearDown(self):
         patch.stopall()
 
-    # sample test
-    def test_add_pool_mkfs_fail(self):
-        pool = Pool(raid='raid0', name='mypool')
-        disks = ('sdb', 'sdc')
-        self.mock_run_command.side_effect = Exception('mkfs error')
-        self.assertEqual(add_pool(pool, disks), 1)
+    # # sample test
+    # def test_add_pool_mkfs_fail(self):
+    #     pool = Pool(raid='raid0', name='mypool')
+    #     disks = ('sdb', 'sdc')
+    #     self.mock_run_command.side_effect = Exception('mkfs error')
+    #     self.assertEqual(add_pool(pool, disks), 1)
 
     def test_get_pool_raid_levels_identification(self):
         """
@@ -161,8 +161,8 @@ class BTRFSTests(unittest.TestCase):
         rc = 0
         # btrfs subvol show has return code of 0 (no errors) when subvol exists
         self.mock_run_command.return_value = (o, e, rc)
-        self.assertEqual(is_subvol(mount_point), True,
-                         msg='Did NOT return True for existing subvol')
+        self.assertTrue(is_subvol(mount_point),
+                        msg='Did NOT return True for existing subvol')
 
     def test_is_subvol_nonexistent(self):
         mount_point = '/mnt2/test-pool/test-share'
@@ -171,5 +171,16 @@ class BTRFSTests(unittest.TestCase):
         rc = 1
         # btrfs subvol show has return code of 1 when subvol doesn't exist.
         self.mock_run_command.return_value = (o, e, rc)
-        self.assertEqual(is_subvol(mount_point), False,
+        self.assertFalse(is_subvol(mount_point),
                          msg='Did NOT return False for nonexistent subvol')
+
+
+    # def test_is_subvol_exception(self):
+    #     mount_point = '/mnt2/test-pool/test-share'
+    #     o = ['']
+    #     e = ["not important as we are throwing exception in run_command"]
+    #     rc = 1
+    #     # btrfs subvol show has return code of 1 when subvol doesn't exist.
+    #     self.mock_run_command.side_effect = Exception('mkfs error')
+    #     self.assertFalse(is_subvol(mount_point),
+    #                  msg='Did NOT return False for exception')
