@@ -46,6 +46,9 @@ class BTRFSTests(unittest.TestCase):
         it's return dict to that expected for the given input.
         :return: 'ok' if all is as expected or a message indicating which raid
         level was incorrectly identified given the test data.
+        N.B. Only the first raid level fail is indicated, however all are
+        expected to pass anyway so we will have to tend to each failure in turn
+        until all pass.
         """
         # setup fake mount point
         mount_point = '/mnt2/fake-pool'
@@ -84,9 +87,10 @@ class BTRFSTests(unittest.TestCase):
             'GlobalReserve, single: total=16.00MiB, used=0.00B', '']
         # for a time we incorrectly parsed the last btrfs fi df mount_point as
         # the following:
-        raid1_some_single_chunks_return = {'data': 'single', 'system': 'raid1',
-                                           'globalreserve': 'single',
-                                           'metadata': 'raid1'}
+        raid1_some_single_chunks_return_broken = {'data': 'single',
+                                                  'system': 'raid1',
+                                                  'globalreserve': 'single',
+                                                  'metadata': 'raid1'}
         # but the expected result should be the same as "raid1_return" above
         # ie data raid1 not single.
         raid10_fi_df = ['Data, RAID10: total=419.75MiB, used=128.00KiB',
@@ -107,15 +111,33 @@ class BTRFSTests(unittest.TestCase):
                        'GlobalReserve, single: total=16.00MiB, used=0.00B', '']
         raid6_return = {'data': 'raid6', 'system': 'raid6',
                         'globalreserve': 'single', 'metadata': 'raid6'}
+        # Data to test for correct recognition of the default rockstor_rockstor
+        # pool ie:
+        default_sys_fi_df = ['Data, single: total=3.37GiB, used=2.71GiB',
+                             'System, DUP: total=8.00MiB, used=16.00KiB',
+                             'System, single: total=4.00MiB, used=0.00B',
+                             'Metadata, DUP: total=471.50MiB, used=165.80MiB',
+                             'Metadata, single: total=8.00MiB, used=0.00B',
+                             'GlobalReserve, single: total=64.00MiB, used=0.00B',
+                             '']
+        default_sys_return = {'data': 'single', 'system': 'dup',
+                              'globalreserve': 'single', 'metadata': 'dup'}
+        # N.B. prior to pr #1408 as of writing this unit test we had a
+        # default_sys_return of which was correct for data but not system
+        default_sys_return_broken = {'data': 'single', 'system': 'single',
+                            'globalreserve': 'single', 'metadata': 'single'}
         # list used to report what raid level is currently under test.
         raid_levels_tested = ['single', 'raid0', 'raid1', 'raid10', 'raid5',
-                              'raid6', 'raid1_some_single_chunks']
+                              'raid6', 'raid1_some_single_chunks',
+                              'default_sys_pool']
         # list of example fi_df outputs in raid_levels_tested order
         btrfs_fi_di = [single_fi_df, raid0_fi_df, raid1_fi_df, raid10_fi_df,
-                       raid5_fi_df, raid6_fi_df, raid1_fi_df_some_single_chunks]
+                       raid5_fi_df, raid6_fi_df, raid1_fi_df_some_single_chunks,
+                       default_sys_fi_df]
         # list of correctly parsed return dictionaries
         return_dict = [single_return, raid0_return, raid1_return, raid10_return,
-                       raid5_return, raid6_return, raid1_return]
+                       raid5_return, raid6_return, raid1_return,
+                       default_sys_return]
         # simple iteration over above example inputs to expected outputs.
         for raid_level, fi_df, expected_result in map(None, raid_levels_tested,
                                                       btrfs_fi_di, return_dict):
