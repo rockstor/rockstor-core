@@ -259,7 +259,13 @@ def umount_root(root_pool_mnt):
 
 
 def is_subvol(mnt_pt):
+    """
+    Simple wrapper around "btrfs subvolume show mnt_pt"
+    :param mnt_pt: mount point of subvolume to query
+    :return: True if subvolume mnt_pt exists, else False
+    """
     show_cmd = [BTRFS, 'subvolume', 'show', mnt_pt]
+    # Throw=False on run_command to silence CommandExceptions.
     o, e, rc = run_command(show_cmd, throw=False)
     if (rc == 0):
         return True
