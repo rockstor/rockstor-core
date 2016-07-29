@@ -685,8 +685,11 @@ def share_usage(pool, share_id):
     Return the sum of the qgroup sizes of this share and any child subvolumes
     """
     # Obtain path to share in pool
+    logger.debug('share_usage() CALLED WITH pool name of=%s and share_id=%s' % (pool.name, share_id))
     root_pool_mnt = mount_root(pool)
+    logger.debug('mount_root(%s) returned %s' % (pool, root_pool_mnt))
     cmd = [BTRFS, 'subvolume', 'list', root_pool_mnt]
+    logger.debug('share_usage cmd=%s', cmd)
     out, err, rc = run_command(cmd, log=True)
     short_id = share_id.split('/')[1]
     share_dir = ''
@@ -717,6 +720,7 @@ def share_usage(pool, share_id):
         if (len(qgroup) > 0 and qgroup[1] in qgroups):
             rusage += convert_to_kib(fields[1])
             eusage += convert_to_kib(fields[2])
+    logger.debug('share_usage returning rusage=%s and eusage=%s' % (rusage, eusage))
     return (rusage, eusage)
 
 
