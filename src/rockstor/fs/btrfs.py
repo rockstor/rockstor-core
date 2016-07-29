@@ -681,16 +681,25 @@ def share_usage(pool, share_id):
     """
     for now, exclusive byte count
     """
+    logger.debug('share_usage() CALLED WITH pool name of=%s and share_id=%s' % (pool.name, share_id))
     root_pool_mnt = mount_root(pool)
+    logger.debug('mount_root(%s) returned %s' % (pool, root_pool_mnt))
     cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
+    logger.debug('share_usage cmd=%s', cmd)
     out, err, rc = run_command(cmd, log=True)
     rusage = eusage = -1
     for line in out:
         fields = line.split()
         if (len(fields) > 0 and fields[0] == share_id):
+            # penultimate column [-2] = rfer = total data referenced in subvol
+            # ie what df might be expected to return.
             rusage = convert_to_kib(fields[-2])
+            # last column [-1] = excl = exclusive data held in subvol
+            # ie what would be re-claimed if the subvol was deleted.
+            # TODO: currently hard wired to return rfer in place of excl
             eusage = convert_to_kib(fields[-2])
             break
+    logger.debug('share_usage returning rusage=%s and eusage=%s' % (rusage, eusage))
     return (rusage, eusage)
 
 
