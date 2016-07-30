@@ -696,6 +696,7 @@ def share_usage(pool, share_id):
     Returns the referenced and exclusive share usage information for a given
     share_id by parsing the output of btrfs qgroup show pool_mount_point for a
     line beginning with share_id (qgroupid).
+    N.B. qgroupid defaults to a unique identifier of the form 0/<subvolume id>
     :return rusage, eusage tuple referencing respectively the rfer and excl
     usage of the given share_id/qgroupid. Sizes are converted into KiB units.
     """
@@ -714,8 +715,7 @@ def share_usage(pool, share_id):
             rusage = convert_to_kib(fields[-2])
             # last column [-1] = excl = exclusive data held in subvol
             # ie what would be re-claimed if the subvol was deleted.
-            # TODO: currently hard wired to return rfer in place of excl
-            eusage = convert_to_kib(fields[-2])
+            eusage = convert_to_kib(fields[-1])
             break
     logger.debug('share_usage returning rusage=%s and eusage=%s' % (rusage, eusage))
     return (rusage, eusage)
