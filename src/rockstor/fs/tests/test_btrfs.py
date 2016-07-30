@@ -14,7 +14,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-from fs.btrfs import add_pool, pool_raid, is_subvol
+from fs.btrfs import add_pool, pool_raid, is_subvol, share_usage
 import mock
 from mock import patch
 
@@ -29,6 +29,9 @@ class BTRFSTests(unittest.TestCase):
     def setUp(self):
         self.patch_run_command = patch('fs.btrfs.run_command')
         self.mock_run_command = self.patch_run_command.start()
+        # setup mock patch for is_mounted in fs.btrfs
+        self.patch_is_mounted = patch('fs.btrfs.is_mounted')
+        self.mock_is_mounted = self.patch_is_mounted.start()
 
     def tearDown(self):
         patch.stopall()
@@ -184,3 +187,67 @@ class BTRFSTests(unittest.TestCase):
     #     self.mock_run_command.side_effect = Exception('mkfs error')
     #     self.assertFalse(is_subvol(mount_point),
     #                  msg='Did NOT return False for exception')
+
+
+    def test_share_usage(self):
+        """
+        Moc the return value of "btrfs qgroup show pool_mount_point" to assess
+        test_share's parsing capabilities to extract rfer and excl subvol usage
+        information.
+        :return:
+        """
+        # share_usage() CALLED WITH pool name of=test-pool and share_id=0/285
+        # mount_root(Pool object) returned /mnt2/test-pool
+        # share_usage cmd=['/sbin/btrfs', 'qgroup', 'show', u'/mnt2/test-pool']
+        # share_usage returning rusage=461404 and eusage=3512
+        #
+        # Setup our calling variables and mock the root pool as mounted.
+        o = ['qgroupid         rfer         excl ',
+             '--------         ----         ---- ',
+             '0/5          16.00KiB     16.00KiB ',
+             '0/259         2.04MiB      2.04MiB ',
+             '0/260         7.37GiB      7.37GiB ',
+             '0/261        63.65MiB     63.65MiB ',
+             '0/263       195.32MiB    496.00KiB ',
+             '0/264       195.34MiB    112.00KiB ',
+             '0/265       195.34MiB     80.00KiB ',
+             '0/266       195.34MiB     80.00KiB ',
+             '0/267       195.34MiB     80.00KiB ',
+             '0/268       195.38MiB    152.00KiB ',
+             '0/269       229.06MiB     80.00KiB ',
+             '0/270       229.06MiB     80.00KiB ',
+             '0/271       229.06MiB     80.00KiB ',
+             '0/272       229.06MiB     96.00KiB ',
+             '0/273       229.06MiB    128.00KiB ',
+             '0/274       236.90MiB     80.00KiB ',
+             '0/275       236.90MiB     80.00KiB ',
+             '0/276       236.90MiB     80.00KiB ',
+             '0/277       450.54MiB    128.00KiB ',
+             '0/278       450.54MiB    112.00KiB ',
+             '0/279       450.54MiB    128.00KiB ',
+             '0/280       450.54MiB     80.00KiB ',
+             '0/281       450.54MiB     80.00KiB ',
+             '0/282       450.54MiB     80.00KiB ',
+             '0/283       450.54MiB     80.00KiB ',
+             '0/284       450.54MiB    176.00KiB ',
+             '0/285       450.59MiB      3.43MiB ',
+             '2015/1          0.00B        0.00B ',
+             '2015/2        2.04MiB      2.04MiB ',
+             '2015/3        7.37GiB      7.37GiB ',
+             '2015/4       63.65MiB     63.65MiB ', '']
+        e = ['']
+        rc = 0
+        # is_mounted returning True avoids mount command calls in mount_root()
+        self.mock_is_mounted.return_value = True
+        # setup the return values from our run_command wrapper
+        # examples of output from /mnt2/test-pool from a real system install
+        self.mock_run_command.return_value = (o, e, rc)
+        # create a fake pool object
+        pool = Pool(raid='raid0', name='test-pool')
+        # and fake share_id / qgroupid
+        share_id = '0/285'
+        # As share_usage uses convert_to_kib() everything is converted to KiB
+        # here we convert 450.59MiB and 3.43MiB to their KiB equivalent (x1024)
+        expected_results = (461404, 3512)
+        self.assertEqual(share_usage(pool, share_id), expected_results,
+                         msg='Failed to retrieve expected rfer and excl usage')
