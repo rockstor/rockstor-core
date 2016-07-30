@@ -697,6 +697,7 @@ def update_quota(pool, qgroup, size_bytes):
 def share_usage(pool, share_id):
     """
     Return the sum of the qgroup sizes of this share and any child subvolumes
+    N.B. qgroupid defaults to a unique identifier of the form 0/<subvolume id>
     """
     # Obtain path to share in pool
     logger.debug('share_usage() CALLED WITH pool name of=%s and share_id=%s' % (pool.name, share_id))
