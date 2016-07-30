@@ -395,10 +395,12 @@ def kernel_info(supported_version):
 
 
 def create_tmp_dir(dirname):
+    # TODO: suggest name change to create_dir
     return run_command([MKDIR, '-p', dirname])
 
 
 def rm_tmp_dir(dirname):
+    # TODO: suggest name change to remove_dir
     return run_command([RMDIR, dirname])
 
 
