@@ -700,11 +700,8 @@ def share_usage(pool, share_id):
     N.B. qgroupid defaults to a unique identifier of the form 0/<subvolume id>
     """
     # Obtain path to share in pool
-    logger.debug('share_usage() CALLED WITH pool name of=%s and share_id=%s' % (pool.name, share_id))
     root_pool_mnt = mount_root(pool)
-    logger.debug('mount_root(%s) returned %s' % (pool, root_pool_mnt))
     cmd = [BTRFS, 'subvolume', 'list', root_pool_mnt]
-    logger.debug('share_usage cmd=%s', cmd)
     out, err, rc = run_command(cmd, log=True)
     short_id = share_id.split('/')[1]
     share_dir = ''
@@ -851,7 +848,15 @@ def start_balance(mnt_pt, force=False, convert=None):
 
 
 def balance_status(pool):
+    """
+    Wrapper around btrfs balance status pool_mount_point to extract info about
+    the current status of a balance.
+    :param pool: pool object to query
+    :return: dictionary containing parsed info about the balance status,
+    ie indexed by 'status' and 'percent_done'.
+    """
     stats = {'status': 'unknown', }
+    # retrieve the root mount point of passed pool.
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
