@@ -821,11 +821,21 @@ def scrub_status(pool):
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
     cmd = ['btrfs', 'balance', 'start', mnt_pt]
+    # TODO: Confirm -f is doing what is intended, man states for reducing
+    # TODO: metadata from say raid1 to single.
+    # With no filters we also get a warning that block some balances due to
+    # expected long execution time, in this case "--full-balance" is required.
+    # N.B. currently force in Web-UI does not mean force here.
     if (force):
         cmd.insert(3, '-f')
     if (convert is not None):
         cmd.insert(3, '-dconvert=%s' % convert)
         cmd.insert(3, '-mconvert=%s' % convert)
+    # TODO: elseif to apply "--full-balance" when no filters are requested.
+    # TODO: this avoids a problematic 10 second count down delay.
+    logger.debug('start_balance command=%s' % cmd)
+    # cmd=['btrfs', 'balance', 'start', u'/mnt2/raid5-pool']
+    #
     run_command(cmd)
 
 
@@ -837,14 +847,20 @@ def balance_status(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
+    logger.debug('balance_status called with pool object of name=%s' % pool.name)
     stats = {'status': 'unknown', }
     # retrieve the root mount point of passed pool.
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
+    logger.debug('run_command returned out=%s' % out)
+    logger.debug('run_command returned err=%s' % err)
+    logger.debug('run_command returned rc=%s' % rc)
     if (len(out) > 0):
         if (re.match('Balance', out[0]) is not None):
             stats['status'] = 'running'
+            if (re.search('cancel requested', out[0]) is not None):
+                stats['status'] = 'aborting'
             if ((len(out) > 1 and
                     re.search('chunks balanced', out[1]) is not None)):
                 percent_left = out[1].split()[-2][:-1]
@@ -856,6 +872,7 @@ def balance_status(pool):
         elif (re.match('No balance', out[0]) is not None):
             stats['status'] = 'finished'
             stats['percent_done'] = 100
+    logger.debug('balance_status() returning stats=%s' % stats)
     return stats
 
 
