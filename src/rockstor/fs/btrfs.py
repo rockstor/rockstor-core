@@ -699,12 +699,10 @@ def share_usage(pool, share_id):
     N.B. qgroupid defaults to a unique identifier of the form 0/<subvolume id>
     :return rusage, eusage tuple referencing respectively the rfer and excl
     usage of the given share_id/qgroupid. Sizes are converted into KiB units.
+    If no output was parsed from the given command both values will be -1.
     """
-    logger.debug('share_usage() CALLED WITH pool name of=%s and share_id=%s' % (pool.name, share_id))
     root_pool_mnt = mount_root(pool)
-    logger.debug('mount_root(%s) returned %s' % (pool, root_pool_mnt))
     cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
-    logger.debug('share_usage cmd=%s', cmd)
     out, err, rc = run_command(cmd, log=True)
     rusage = eusage = -1
     for line in out:
@@ -717,7 +715,6 @@ def share_usage(pool, share_id):
             # ie what would be re-claimed if the subvol was deleted.
             eusage = convert_to_kib(fields[-1])
             break
-    logger.debug('share_usage returning rusage=%s and eusage=%s' % (rusage, eusage))
     return (rusage, eusage)
 
 
@@ -833,7 +830,15 @@ def start_balance(mnt_pt, force=False, convert=None):
 
 
 def balance_status(pool):
+    """
+    Wrapper around btrfs balance status pool_mount_point to extract info about
+    the current status of a balance.
+    :param pool: pool object to query
+    :return: dictionary containing parsed info about the balance status,
+    ie indexed by 'status' and 'percent_done'.
+    """
     stats = {'status': 'unknown', }
+    # retrieve the root mount point of passed pool.
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
