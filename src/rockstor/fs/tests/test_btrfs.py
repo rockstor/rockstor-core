@@ -258,6 +258,9 @@ class BTRFSTests(unittest.TestCase):
                          msg='Failed to retrieve expected rfer and excl usage')
 
 
+# TODO: add test_balance_status_finished
+
+
     def test_balance_status_in_progress(self):
         """
         Moc return value of run_command executing btrfs balance status
@@ -303,29 +306,41 @@ class BTRFSTests(unittest.TestCase):
         self.mock_mount_root.return_value = '/mnt2/test-mount'
         self.assertEqual(balance_status(pool), expected_results,
                          msg="Failed to correctly identify balance cancel requested status")
-    #
-    #
-    # def test_balance_status_pause_requested(self):
-    #     """
-    #     As per test_balance_status_in_progress(self) but while pause requested
-    #     :return:
-    #     """
-    #     out = ["Balance on '/mnt2/rock-pool' is running, pause requested",
-    #            '3 out of about 114 chunks balanced (4 considered),  97% left',
-    #            '']
-    #     err=['']
-    #     rc=1
-    #     self.mock_is_mounted.return_value = True
-    #
-    #
-    # def test_balance_status_paused(self):
-    #     """
-    #     Test to see if balance_status() correctly identifies a Paused balance state.
-    #     :return:
-    #     """
-    #     out = ["Balance on '/mnt2/rock-pool' is paused",
-    #            '3 out of about 114 chunks balanced (4 considered),  97% left',
-    #            '']
-    #     err = ['']
-    #     rc = 1
-    #     self.mock_is_mounted.return_value = True
+
+
+    def test_balance_status_pause_requested(self):
+        """
+        As per test_balance_status_in_progress(self) but while pause requested
+        :return:
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ["Balance on '/mnt2/rock-pool' is running, pause requested",
+               '3 out of about 114 chunks balanced (4 considered),  97% left',
+               '']
+        err = ['']
+        # N.B. the return code for in progress balance = 1
+        rc = 1
+        expected_results = {'status': 'pausing', 'percent_done': 3}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(balance_status(pool), expected_results,
+                         msg="Failed to correctly identify balance pause requested status")
+
+
+    def test_balance_status_paused(self):
+        """
+        Test to see if balance_status() correctly identifies a Paused balance state.
+        :return:
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ["Balance on '/mnt2/rock-pool' is paused",
+               '3 out of about 114 chunks balanced (4 considered),  97% left',
+               '']
+        err = ['']
+        # N.B. the return code for in progress balance = 1
+        rc = 1
+        expected_results = {'status': 'paused', 'percent_done': 3}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(balance_status(pool), expected_results,
+                         msg="Failed to correctly identify balance paused status")
