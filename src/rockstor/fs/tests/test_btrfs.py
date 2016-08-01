@@ -14,7 +14,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-from fs.btrfs import add_pool, pool_raid, is_subvol, share_usage
+from fs.btrfs import add_pool, pool_raid, is_subvol, share_usage, balance_status
 import mock
 from mock import patch
 
@@ -29,9 +29,12 @@ class BTRFSTests(unittest.TestCase):
     def setUp(self):
         self.patch_run_command = patch('fs.btrfs.run_command')
         self.mock_run_command = self.patch_run_command.start()
-        # setup mock patch for is_mounted in fs.btrfs
-        self.patch_is_mounted = patch('fs.btrfs.is_mounted')
-        self.mock_is_mounted = self.patch_is_mounted.start()
+        # # setup mock patch for is_mounted() in fs.btrfs
+        # self.patch_is_mounted = patch('fs.btrfs.is_mounted')
+        # self.mock_is_mounted = self.patch_is_mounted.start()
+        # setup mock patch for mount_root() in fs.btrfs
+        self.patch_mount_root = patch('fs.btrfs.mount_root')
+        self.mock_mount_root = self.patch_mount_root.start()
 
     def tearDown(self):
         patch.stopall()
@@ -202,6 +205,7 @@ class BTRFSTests(unittest.TestCase):
         # share_usage returning rusage=461404 and eusage=3512
         #
         # Setup our calling variables and mock the root pool as mounted.
+        root_mount_point = '/mnt2/test-pool'
         o = ['qgroupid         rfer         excl ',
              '--------         ----         ---- ',
              '0/5          16.00KiB     16.00KiB ',
@@ -238,7 +242,8 @@ class BTRFSTests(unittest.TestCase):
         e = ['']
         rc = 0
         # is_mounted returning True avoids mount command calls in mount_root()
-        self.mock_is_mounted.return_value = True
+        mount_point = '/mnt2/test-mount'
+        self.mock_mount_root.return_value = mount_point
         # setup the return values from our run_command wrapper
         # examples of output from /mnt2/test-pool from a real system install
         self.mock_run_command.return_value = (o, e, rc)
@@ -253,67 +258,70 @@ class BTRFSTests(unittest.TestCase):
                          msg='Failed to retrieve expected rfer and excl usage')
 
 
-    def test_balance_status_in_progress(self):
-        """
-        Moc return value of run_command executing btrfs balance status
-        pool_mount_point which is invoked inside of target function.
-
-        :return:
-        """
-        # balance_status called with pool object of name=Pool object
-        #
-        # typical return for no current balance operation in progress:
-        # out=["No balance found on '/mnt2/single-to-raid1'", '']
-        # err=['']
-        # rc=0
-        # example return for ongoing balance operation:
-        out = ["Balance on '/mnt2/rock-pool' is running",
-               '7 out of about 114 chunks balanced (8 considered),  94% left',
-               '']
-        e = ['']
-        # N.B. the return code for a in progress balance = 1
-        rc = 1
-        expected_return = {'status': 'running', 'percent_done': 6}
-        # is_mounted returning True avoids mount command calls in mount_root()
-        self.mock_is_mounted.return_value = True
-
-
-    def test_balance_status_cancel_requested(self):
-        """
-        As per test_balance_status_in_progress(self) but while balance is
-        :return:
-        """
-
-        # run_command moc return values.
-        out = ["Balance on '/mnt2/rock-pool' is running, cancel requested",
-               '15 out of about 114 chunks balanced (16 considered),  87% left',
-               '']
-        err=['']
-        rc=1
-        self.mock_is_mounted.return_value = True
+    # def test_balance_status_in_progress(self):
+    #     """
+    #     Moc return value of run_command executing btrfs balance status
+    #     pool_mount_point which is invoked inside of target function.
+    #     :return:
+    #     """
+    #     # balance_status called with pool object of name=Pool object
+    #     #
+    #     # typical return for no current balance operation in progress:
+    #     # out=["No balance found on '/mnt2/single-to-raid1'", '']
+    #     # err=['']
+    #     # rc=0
+    #     # example return for ongoing balance operation:
+    #     pool = Pool(raid='raid0', name='test-pool')
+    #     out = ["Balance on '/mnt2/rock-pool' is running",
+    #            '7 out of about 114 chunks balanced (8 considered),  94% left',
+    #            '']
+    #     err = ['']
+    #     # N.B. the return code for a in progress balance = 1
+    #     rc = 1
+    #     expected_results = {'status': 'running', 'percent_done': 6}
+    #     # is_mounted returning True avoids mount command calls in mount_root()
+    #     self.mock_is_mounted.return_value = True
+    #     self.mock_run_command.return_value = (out, err, rc)
+    #     self.assertEqual(balance_status(pool), expected_results,
+    #                      msg="Failed to correctly identify balance running status")
 
 
-    def test_balance_status_pause_requested(self):
-        """
-        As per test_balance_status_in_progress(self) but while pause requested
-        :return:
-        """
-        out = ["Balance on '/mnt2/rock-pool' is running, pause requested",
-               '3 out of about 114 chunks balanced (4 considered),  97% left',
-               '']
-        err=['']
-        rc=1
-        self.mock_is_mounted.return_value = True
-
-
-    def test_balance_status_paused(self):
-        """
-        Test to see if balance_status() correctly identifies a Paused balance state.
-        :return:
-        """
-        out = ["Balance on '/mnt2/rock-pool' is paused",
-               '3 out of about 114 chunks balanced (4 considered),  97% left',
-               '']
-        err = ['']
-        rc = 1
-        self.mock_is_mounted.return_value = True
+    # def test_balance_status_cancel_requested(self):
+    #     """
+    #     As per test_balance_status_in_progress(self) but while balance is
+    #     :return:
+    #     """
+    #
+    #     # run_command moc return values.
+    #     out = ["Balance on '/mnt2/rock-pool' is running, cancel requested",
+    #            '15 out of about 114 chunks balanced (16 considered),  87% left',
+    #            '']
+    #     err=['']
+    #     rc=1
+    #     self.mock_is_mounted.return_value = True
+    #
+    #
+    # def test_balance_status_pause_requested(self):
+    #     """
+    #     As per test_balance_status_in_progress(self) but while pause requested
+    #     :return:
+    #     """
+    #     out = ["Balance on '/mnt2/rock-pool' is running, pause requested",
+    #            '3 out of about 114 chunks balanced (4 considered),  97% left',
+    #            '']
+    #     err=['']
+    #     rc=1
+    #     self.mock_is_mounted.return_value = True
+    #
+    #
+    # def test_balance_status_paused(self):
+    #     """
+    #     Test to see if balance_status() correctly identifies a Paused balance state.
+    #     :return:
+    #     """
+    #     out = ["Balance on '/mnt2/rock-pool' is paused",
+    #            '3 out of about 114 chunks balanced (4 considered),  97% left',
+    #            '']
+    #     err = ['']
+    #     rc = 1
+    #     self.mock_is_mounted.return_value = True
