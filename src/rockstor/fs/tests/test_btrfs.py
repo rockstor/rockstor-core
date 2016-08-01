@@ -258,47 +258,51 @@ class BTRFSTests(unittest.TestCase):
                          msg='Failed to retrieve expected rfer and excl usage')
 
 
-    # def test_balance_status_in_progress(self):
-    #     """
-    #     Moc return value of run_command executing btrfs balance status
-    #     pool_mount_point which is invoked inside of target function.
-    #     :return:
-    #     """
-    #     # balance_status called with pool object of name=Pool object
-    #     #
-    #     # typical return for no current balance operation in progress:
-    #     # out=["No balance found on '/mnt2/single-to-raid1'", '']
-    #     # err=['']
-    #     # rc=0
-    #     # example return for ongoing balance operation:
-    #     pool = Pool(raid='raid0', name='test-pool')
-    #     out = ["Balance on '/mnt2/rock-pool' is running",
-    #            '7 out of about 114 chunks balanced (8 considered),  94% left',
-    #            '']
-    #     err = ['']
-    #     # N.B. the return code for a in progress balance = 1
-    #     rc = 1
-    #     expected_results = {'status': 'running', 'percent_done': 6}
-    #     # is_mounted returning True avoids mount command calls in mount_root()
-    #     self.mock_is_mounted.return_value = True
-    #     self.mock_run_command.return_value = (out, err, rc)
-    #     self.assertEqual(balance_status(pool), expected_results,
-    #                      msg="Failed to correctly identify balance running status")
+    def test_balance_status_in_progress(self):
+        """
+        Moc return value of run_command executing btrfs balance status
+        pool_mount_point which is invoked inside of target function.
+        :return:
+        """
+        # balance_status called with pool object of name=Pool object
+        #
+        # typical return for no current balance operation in progress:
+        # out=["No balance found on '/mnt2/single-to-raid1'", '']
+        # err=['']
+        # rc=0
+        # example return for ongoing balance operation:
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ["Balance on '/mnt2/rock-pool' is running",
+               '7 out of about 114 chunks balanced (8 considered),  94% left',
+               '']
+        err = ['']
+        # N.B. the return code for in progress balance = 1
+        rc = 1
+        expected_results = {'status': 'running', 'percent_done': 6}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(balance_status(pool), expected_results,
+                         msg="Failed to correctly identify balance running status")
 
 
-    # def test_balance_status_cancel_requested(self):
-    #     """
-    #     As per test_balance_status_in_progress(self) but while balance is
-    #     :return:
-    #     """
-    #
-    #     # run_command moc return values.
-    #     out = ["Balance on '/mnt2/rock-pool' is running, cancel requested",
-    #            '15 out of about 114 chunks balanced (16 considered),  87% left',
-    #            '']
-    #     err=['']
-    #     rc=1
-    #     self.mock_is_mounted.return_value = True
+    def test_balance_status_cancel_requested(self):
+        """
+        As per test_balance_status_in_progress(self) but while balance is
+        :return:
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        # run_command moc return values.
+        out = ["Balance on '/mnt2/rock-pool' is running, cancel requested",
+               '15 out of about 114 chunks balanced (16 considered),  87% left',
+               '']
+        err = ['']
+        # N.B. the return code for in progress balance = 1
+        rc = 1
+        expected_results = {'status': 'cancelling', 'percent_done': 13}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(balance_status(pool), expected_results,
+                         msg="Failed to correctly identify balance cancel requested status")
     #
     #
     # def test_balance_status_pause_requested(self):
