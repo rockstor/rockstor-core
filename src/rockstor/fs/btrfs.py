@@ -820,6 +820,7 @@ def scrub_status(pool):
 
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
+    logger.debug('START_BALANCE() called with mnt_pt=%s, force=%s, convert=%s' % (mnt_pt, force, convert))
     cmd = ['btrfs', 'balance', 'start', mnt_pt]
     # TODO: Confirm -f is doing what is intended, man states for reducing
     # TODO: metadata from say raid1 to single.
@@ -858,9 +859,15 @@ def balance_status(pool):
     logger.debug('run_command returned rc=%s' % rc)
     if (len(out) > 0):
         if (re.match('Balance', out[0]) is not None):
-            stats['status'] = 'running'
             if (re.search('cancel requested', out[0]) is not None):
-                stats['status'] = 'aborting'
+                stats['status'] = 'cancelling'
+            elif (re.search('pause requested', out[0]) is not None):
+                stats['status'] = 'pausing'
+            elif (re.search('paused', out[0]) is not None):
+                stats['status'] = 'paused'
+            else:
+                stats['status'] = 'running'
+            # make sure we have a second line before parsing it.
             if ((len(out) > 1 and
                     re.search('chunks balanced', out[1]) is not None)):
                 percent_left = out[1].split()[-2][:-1]
