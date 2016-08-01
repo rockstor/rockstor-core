@@ -291,3 +291,29 @@ class BTRFSTests(unittest.TestCase):
         err=['']
         rc=1
         self.mock_is_mounted.return_value = True
+
+
+    def test_balance_status_pause_requested(self):
+        """
+        As per test_balance_status_in_progress(self) but while pause requested
+        :return:
+        """
+        out = ["Balance on '/mnt2/rock-pool' is running, pause requested",
+               '3 out of about 114 chunks balanced (4 considered),  97% left',
+               '']
+        err=['']
+        rc=1
+        self.mock_is_mounted.return_value = True
+
+
+    def test_balance_status_paused(self):
+        """
+        Test to see if balance_status() correctly identifies a Paused balance state.
+        :return:
+        """
+        out = ["Balance on '/mnt2/rock-pool' is paused",
+               '3 out of about 114 chunks balanced (4 considered),  97% left',
+               '']
+        err = ['']
+        rc = 1
+        self.mock_is_mounted.return_value = True
