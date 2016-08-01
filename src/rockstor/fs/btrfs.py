@@ -810,8 +810,12 @@ def start_balance(mnt_pt, force=False, convert=None):
     if (convert is not None):
         cmd.insert(3, '-dconvert=%s' % convert)
         cmd.insert(3, '-mconvert=%s' % convert)
-    # TODO: elseif to apply "--full-balance" when no filters are requested.
-    # TODO: this avoids a problematic 10 second count down delay.
+    else:
+        # As we are running with no convert filters a warning and 10 second
+        # countdown with ^C prompt will result unless we use "--full-balance".
+        # This warning is now present in the Web-UI "Start a new balance"
+        # button tooltip.
+        cmd.insert(3, '--full-balance')
     logger.debug('start_balance command=%s' % cmd)
     # cmd=['btrfs', 'balance', 'start', u'/mnt2/raid5-pool']
     #
