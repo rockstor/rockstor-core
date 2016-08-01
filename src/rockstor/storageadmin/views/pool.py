@@ -353,10 +353,10 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
 
                 if (PoolBalance.objects.filter(
                         pool=pool,
-                        status__regex=r'(started|running)').exists()):
-                    e_msg = ('A Balance process is already running for this '
-                             'pool(%s). Resize is not supported during a '
-                             'balance process.' % pool.name)
+                        status__regex=r'(started|running|cancelling|pausing|paused)').exists()):
+                    e_msg = ('A Balance process is already running or paused '
+                             'for this pool(%s). Resize is not supported '
+                             'during a balance process.' % pool.name)
                     handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, dnames)
