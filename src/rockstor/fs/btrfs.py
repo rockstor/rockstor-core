@@ -99,7 +99,10 @@ def pool_raid(mnt_pt):
     for l in o:
         fields = l.split()
         if (len(fields) > 1):
-            raid_d[fields[0][:-1].lower()] = fields[1][:-1].lower()
+            block = fields[0][:-1].lower()
+            raid = fields[1][:-1].lower()
+            if not block in raid_d and raid is not 'DUP':
+                raid_d[block] = raid
     if (raid_d['metadata'] == 'single'):
         raid_d['data'] = raid_d['metadata']
     return raid_d
