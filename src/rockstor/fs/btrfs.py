@@ -473,12 +473,15 @@ def snaps_info(mnt_pt, share_name):
 
 def share_id(pool, share_name):
     """
-    returns the subvolume id, becomes the share's uuid.
+    Returns the subvolume id, becomes the share's uuid.
     @todo: this should be part of add_share -- btrfs create should atomically
-    return the id
+    :param pool: a pool object.
+    :param share_name:
+    :return: the id
     """
     root_pool_mnt = mount_root(pool)
     out, err, rc = subvol_list_helper(root_pool_mnt)
+    logger.debug('subvol_list_helper() returned out=%s, err=%s, rc=%rc in share_id()')
     subvol_id = None
     for line in out:
         if (re.search(share_name + '$', line) is not None):
@@ -719,6 +722,7 @@ def share_usage(pool, share_id):
 
 
 def shares_usage(pool, share_map, snap_map):
+    # TODO: currently unused, is this to be deprecated
     # don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
@@ -820,7 +824,6 @@ def scrub_status(pool):
 
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
-    logger.debug('START_BALANCE() called with mnt_pt=%s, force=%s, convert=%s' % (mnt_pt, force, convert))
     cmd = ['btrfs', 'balance', 'start', mnt_pt]
     # TODO: Confirm -f is doing what is intended, man states for reducing
     # TODO: metadata from say raid1 to single.
@@ -838,9 +841,6 @@ def start_balance(mnt_pt, force=False, convert=None):
         # This warning is now present in the Web-UI "Start a new balance"
         # button tooltip.
         cmd.insert(3, '--full-balance')
-    logger.debug('start_balance command=%s' % cmd)
-    # cmd=['btrfs', 'balance', 'start', u'/mnt2/raid5-pool']
-    #
     run_command(cmd)
 
 
@@ -852,15 +852,11 @@ def balance_status(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    logger.debug('balance_status called with pool object of name=%s' % pool.name)
     stats = {'status': 'unknown', }
     # retrieve the root mount point of passed pool.
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
-    logger.debug('run_command returned out=%s' % out)
-    logger.debug('run_command returned err=%s' % err)
-    logger.debug('run_command returned rc=%s' % rc)
     if (len(out) > 0):
         if (re.match('Balance', out[0]) is not None):
             if (re.search('cancel requested', out[0]) is not None):
@@ -883,7 +879,6 @@ def balance_status(pool):
         elif (re.match('No balance', out[0]) is not None):
             stats['status'] = 'finished'
             stats['percent_done'] = 100
-    logger.debug('balance_status() returning stats=%s' % stats)
     return stats
 
 
