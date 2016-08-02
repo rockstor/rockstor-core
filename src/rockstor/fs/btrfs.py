@@ -689,7 +689,7 @@ def share_usage(pool, share_id):
             qgroup = fields[0].split('/')
         if (len(qgroup) > 0 and qgroup[1] in qgroups):
             rusage += convert_to_kib(fields[1])
-    eusage = rusage
+            eusage += convert_to_kib(fields[2])
     return (rusage, eusage)
 
 
