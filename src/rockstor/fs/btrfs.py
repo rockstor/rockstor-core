@@ -476,12 +476,15 @@ def snaps_info(mnt_pt, share_name):
 
 def share_id(pool, share_name):
     """
-    returns the subvolume id, becomes the share's uuid.
+    Returns the subvolume id, becomes the share's uuid.
     @todo: this should be part of add_share -- btrfs create should atomically
-    return the id
+    :param pool: a pool object.
+    :param share_name:
+    :return: the id
     """
     root_pool_mnt = mount_root(pool)
     out, err, rc = subvol_list_helper(root_pool_mnt)
+    logger.debug('subvol_list_helper() returned out=%s, err=%s, rc=%rc in share_id()')
     subvol_id = None
     for line in out:
         if (re.search(share_name + '$', line) is not None):
@@ -737,6 +740,7 @@ def share_usage(pool, share_id):
 
 
 def shares_usage(pool, share_map, snap_map):
+    # TODO: currently unused, is this to be deprecated
     # don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
