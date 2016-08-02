@@ -475,13 +475,16 @@ def share_id(pool, share_name):
     """
     Returns the subvolume id, becomes the share's uuid.
     @todo: this should be part of add_share -- btrfs create should atomically
+    Works by iterating over the output of btrfs subvolume list, received from
+    subvol_list_helper() looking for a match in share_name. If found the same
+    line is parsed for the ID, example line in output:
+    'ID 257 gen 13616 top level 5 path rock-ons-root'
     :param pool: a pool object.
-    :param share_name:
-    :return: the id
+    :param share_name: target share name to find
+    :return: the id for the given share_name or an Exception stating no id found
     """
     root_pool_mnt = mount_root(pool)
     out, err, rc = subvol_list_helper(root_pool_mnt)
-    logger.debug('subvol_list_helper() returned out=%s, err=%s, rc=%rc in share_id()')
     subvol_id = None
     for line in out:
         if (re.search(share_name + '$', line) is not None):
