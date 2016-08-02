@@ -347,7 +347,7 @@ class BTRFSTests(unittest.TestCase):
                          msg="Failed to correctly identify balance paused status")
 
 
-    def test_share_id_found(self):
+    def test_share_id(self):
         """
         Test to see if share_id() successfully returns existing subvolume id's
         :return:
@@ -410,9 +410,12 @@ class BTRFSTests(unittest.TestCase):
         rc = 0
         existing_share = 'snapshot-name'
         existing_share2 = 'sftpdata'
+        nonexistent_share = 'abcdef'
         # if queried for the last entry "snapshot-name" we would expect:
         expected_result = '794'
         expected_result2 = '283'
+        # setup expected Exception when no share is found:
+        expected_exception = 'subvolume id for share: %s not found.' % nonexistent_share
         # setup run_command mock to return the above test data
         self.mock_run_command.return_value = (out, err, rc)
         self.mock_mount_root.return_value = '/mnt2/test-mount'
@@ -420,3 +423,5 @@ class BTRFSTests(unittest.TestCase):
                          msg="Failed to get existing share_id snapshot example")
         self.assertEqual(share_id(pool, existing_share2), expected_result2,
                          msg="Failed to get existing share_id regular example")
+        with self.assertRaises(Exception):
+            share_id(pool, nonexistent_share)
