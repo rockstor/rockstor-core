@@ -685,7 +685,7 @@ def share_usage(pool, share_id):
     for line in out:
         fields = line.split()
         qgroup = []
-        if (len(fields) > 0):
+        if (len(fields) > 0 and '/' in fields[0]):
             qgroup = fields[0].split('/')
         if (len(qgroup) > 0 and qgroup[1] in qgroups):
             rusage += convert_to_kib(fields[1])
