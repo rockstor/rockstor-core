@@ -70,6 +70,7 @@ def rockstor_smb_config(fo, exports):
             fo.write('    shadow:basedir = %s\n' % e.path)
             fo.write('    shadow:snapdir = ./\n')
             fo.write('    shadow:sort = desc\n')
+            fo.write('    shadow:localtime = yes\n')
             fo.write('    vfs objects = shadow_copy2\n')
             fo.write('    veto files = /.%s*/\n' % e.snapshot_prefix)
         for cco in SambaCustomConfig.objects.filter(smb_share=e):
