@@ -29,8 +29,7 @@ from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from storageadmin.views import DiskMixin
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, get_pool_info,
-                      pool_raid, start_balance)
+                      btrfs_uuid, mount_root, start_balance)
 from system.osi import remount
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -348,16 +347,16 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
                 if (new_raid == 'raid5' and num_total_disks < 2):
-                    e_msg == ('A minimum of Two drives are required for the '
+                    e_msg = ('A minimum of Two drives are required for the '
                               'raid level: raid5')
                     handle_exception(Exception(e_msg), request)
 
                 if (PoolBalance.objects.filter(
                         pool=pool,
-                        status__regex=r'(started|running)').exists()):
-                    e_msg = ('A Balance process is already running for this '
-                             'pool(%s). Resize is not supported during a '
-                             'balance process.' % pool.name)
+                        status__regex=r'(started|running|cancelling|pausing|paused)').exists()):
+                    e_msg = ('A Balance process is already running or paused '
+                             'for this pool(%s). Resize is not supported '
+                             'during a balance process.' % pool.name)
                     handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, dnames)
