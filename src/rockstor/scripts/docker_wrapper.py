@@ -34,4 +34,4 @@ def main():
         mount_share(so, mnt_pt)
     except Exception, e:
         sys.exit('Failed to mount Docker root(%s). Exception: %s' % (mnt_pt, e.__str__()))
-    run_command([DOCKER, '-d', '--log-driver=journald', '-s', 'btrfs', '-g', mnt_pt])
+    run_command([DOCKER, 'daemon', '--log-driver=journald', '-s', 'btrfs', '-g', mnt_pt])
