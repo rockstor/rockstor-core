@@ -113,6 +113,7 @@
     <script src="/static/js/lib/dataTables.bootstrap.min.js"></script>
     <script src="/static/js/lib/clipboard.min.js"></script>
     <script src="/static/js/lib/additional-methods.min.js"></script>
+    <script src="/static/js/lib/Chart.min.js"></script>
     <script src="/static/storageadmin/js/storageadmin.js"></script>
   </head>
 
@@ -144,7 +145,7 @@
   <div id="appliance-breadcrumb">
       <a id="appliance-name" href="#"></a>
       <div id="local-time"><i class="fa fa-clock-o fa-inverse"></i>&nbsp;Local Time:&nbsp;<span/></div>
-	  <a id="direct-shell" href="#shell"><i class="fa fa-desktop fa-inverse"></i>&nbsp;System Shell</a>
+      <a id="direct-shell" href="#shell"><i class="fa fa-desktop fa-inverse"></i>&nbsp;System Shell</a>
       <div id="uptime"></div>
       <div id="appliance-loadavg"></div>
   </div>
@@ -197,41 +198,41 @@
 
   <div class="modal fade" id="donate-modal">
       <div class="modal-dialog">
-	<div class="modal-content">
-	  <div class="modal-header">
+    <div class="modal-content">
+      <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	    <h3 id="donate-modal-label">Thank you! for supporting Rockstor development</h3>
-	  </div>
-	  <div class="modal-body">
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" id="contrib10" value="10" checked>$10
-	      </label>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
-	      </label>
-	    </div>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
-	      </label>
-	    </div>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50 (Free Rockstor USB drive)
-	      </label>
-	    </div>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" id="contrib-custom" value="custom">Other
-	      </label>
-	    </div>
-	    &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
-	    <br><br>
-	    <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
-	  </div>
-	</div><!-- /.modal-content -->
+        <h3 id="donate-modal-label">Thank you! for supporting Rockstor development</h3>
+      </div>
+      <div class="modal-body">
+        <div class="radio">
+          <label>
+        <input type="radio" name="contrib" id="contrib10" value="10" checked>$10
+          </label>
+        <div class="radio">
+          <label>
+        <input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+        <input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+        <input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50 (Free Rockstor USB drive)
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+        <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
+          </label>
+        </div>
+        &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
+        <br><br>
+        <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
+      </div>
+    </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
 
