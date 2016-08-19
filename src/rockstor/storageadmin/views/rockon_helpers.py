@@ -40,7 +40,7 @@ from rockon_discourse import (discourse_install, discourse_uninstall,
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
 DCMD = [DOCKER, 'run', ]
-DCMD2 = list(DCMD) + ['daemon', '--restart=unless-stopped', ]
+DCMD2 = list(DCMD) + ['-d', '--restart=unless-stopped', ]
 
 import logging
 logger = logging.getLogger(__name__)
