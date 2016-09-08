@@ -85,54 +85,17 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
     };
 
-    this.graphOptions = {
-      grid : {
-        borderWidth: {
-          top: 1,
-          right: 1,
-          bottom: 1,
-          left: 1
-        },
-        aboveData: true,
-        borderColor: "#ddd",
-        color: "#aaa"
-      },
-			series: {
-        stack: true,
-        stackpercent : false,
-        lines: { show: true, fill: 0.5, lineWidth: 1 },
-        shadowSize: 0
-			},
-			yaxis: {
-        min: 0,
-        max: 100,
-        ticks: 4,
-        tickFormatter: this.pctTickFormatter
-      },
-      xaxis: {
-        tickFormatter: this.cpuTickFormatter,
-        tickSize: 12,
-        min: 0,
-        max: 60
-      },
-      legend : { container : "#cpuusage-legend", noColumns : 4 }
-    };
-
     // d3 graph
-    this.rawData = null;
     this.windowLength = 60000; // window length in msec (1 min)
     this.transDuration = 1000; // transition duration
     this.updateFreq = 1000;
 
-    // Start and end timestamps for api call
-
-    //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
-    this.t1 = this.t2 - this.windowLength;
 
     // cpu data array
     this.cpuData = [];
 
     this.margin = {top: 20, right: 20, bottom: 20, left: 30};
+	
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
       this.height = 200 - this.margin.top - this.margin.bottom;
@@ -155,10 +118,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
         return "";
       }
     };
-  },
-
-  cpuTickFormatter: function(val, axis) {
-    return (5 - (parseInt(val)/12)).toString() + ' m';
   },
 
   pctTickFormatter: function(val, axis) {
@@ -303,22 +262,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
       }
     });
     return cpu;
-  },
-
-
-  genRawData: function(n) {
-    //{"id": 96262, "name": "cpu1", "umode": 188641, "umode_nice": 0, "smode": 269451, "idle": 17115082, "ts": "2013-07-29T00:44:09.250Z"},
-
-    var rawData = [];
-    for (i=0; i<this.numCpus; i++) {
-      var cpu = {name: "cpu" + i};
-      cpu.smode = 10 + parseInt(Math.random()*10);
-      cpu.umode = 40 + parseInt(Math.random()*10);
-      cpu.umode_nice = parseInt(Math.random()*5);
-      cpu.idle = 100 - (cpu.smode + cpu.umode + cpu.umode_nice);
-      rawData.push(cpu);
-    }
-    return rawData;
   },
 
   displayNoDataMsg: function() {
