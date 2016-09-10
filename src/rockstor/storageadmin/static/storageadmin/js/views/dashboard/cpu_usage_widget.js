@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the 
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -83,6 +83,51 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
       }
 
+    };
+    this.AvgCpuChartOptions = {
+        showLines: true,
+        animation: false,
+        legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+                boxWidth: 10,
+                padding: 2
+            }
+        },
+        tooltips: {
+            enabled: false
+        },
+        scales: {
+            yAxes: [{
+                gridLines: {
+                    drawTicks: false
+                }
+                ticks: {
+                    fontSize: 10,
+                    max: 100,
+                    min: 0,
+                    stepSize: 20,
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }],
+            xAxes: [{
+                gridLines: {
+                    display: true,
+                    drawTicks: false
+                },
+                ticks: {
+                    fontSize: 10,
+                    maxRotation: 0,
+                    autoSkip: false,
+                    callback: function(value) {
+                        return (value.toString().length > 0 ? value : null);
+                    }
+                }
+            }]
+        }
     };
 
     // d3 graph
@@ -189,68 +234,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
       window.clearTimeout(this.timeoutId);
     }
     RockStorSocket.removeOneListener('cpuWidget');
-  },
-
-  parseData: function(data) {
-    var _this = this;
-    var tmpSum = {};
-    _.each(data, function(d) {
-      var cpu = _this.cpuData[d.name];
-      if (_.isUndefined(cpu)) {
-        cpu = _this.genEmptyCpuData(_this.numSamples );
-        _this.cpuData[d.name] = cpu;
-      }
-      _.each(_this.modes, function(mode) {
-        cpu[mode].push(d[mode]);
-        cpu[mode].splice(0,1);
-        if (!_.isUndefined(tmpSum[mode])) {
-          tmpSum[mode] = tmpSum[mode] + d[mode];
-        } else {
-          tmpSum[mode] = d[mode];
-        }
-      });
-    });
-    this.cpuNames = _.keys(this.cpuData);
-    _.each(_this.modes, function(mode) {
-      tmpSum[mode] = tmpSum[mode]/_this.cpuNames.length;
-      _this.avg[mode].push(tmpSum[mode]);
-      _this.avg[mode].splice(0,1);
-    });
-
-    _this.allCpuGraphData = [];
-    _.each(_this.modes, function(mode, i) {
-      var tmp = [];
-      _.each(_this.cpuNames, function(name, j) {
-        var dm = _this.cpuData[name][mode];
-        tmp.push([j+1, dm[dm.length-1]]);
-      });
-      // Add empty data so that bar width is acc to maxCpus .
-      for (var k=_this.numCpus; k<_this.maxCpus; k++) {
-        tmp.push([k+1, null]);
-      }
-      if (mode != 'idle') {
-        _this.allCpuGraphData.push({
-          "label": mode,
-          "data": tmp,
-          "color": _this.colors[i]
-        });
-      }
-
-    });
-    _this.avgGraphData = [];
-    _.each(_this.modes, function(mode, i) {
-      var tmp = [];
-      _.each(_this.avg[mode], function(d,j) {
-        tmp.push([j+1, d]);
-      });
-      if (mode!= 'idle') {
-        _this.avgGraphData.push({
-          "label": mode,
-          "data": tmp,
-          "color": _this.colors[i]
-        });
-      }
-    });
   },
 
   genEmptyCpuData: function(numSamples) {
