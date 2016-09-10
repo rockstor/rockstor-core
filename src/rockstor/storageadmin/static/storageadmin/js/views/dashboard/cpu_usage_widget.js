@@ -84,6 +84,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
       }
 
     };
+	this.AvgCpuChartContainer = $('#cpuusage-avg');
+	this.AvgCpuChartCanvas = $('#cpuusage-avg-chart');
     this.AvgCpuChartOptions = {
         showLines: true,
         animation: false,
@@ -129,6 +131,31 @@ CpuUsageWidget = RockStorWidgetView.extend({
             }]
         }
     };
+	this.AvgCpuChartData = {
+	    labels: [],
+	    datasets: [{
+	        label: "Cpu Average Usage",
+	        fill: false,
+	        lineTension: 0.2,
+	        backgroundColor: "rgba(75,192,192,0.4)",
+	        borderColor: "rgba(75,192,192,1)",
+	        borderCapStyle: 'butt',
+	        borderDash: [],
+	        borderDashOffset: 0.0,
+	        borderWidth: 1,
+	        borderJoinStyle: 'miter',
+	        pointBorderColor: "rgba(75,192,192,1)",
+	        pointBackgroundColor: "#fff",
+	        pointBorderWidth: 1,
+	        pointHoverRadius: 5,
+	        pointHoverBackgroundColor: "rgba(75,192,192,1)",
+	        pointHoverBorderColor: "rgba(220,220,220,1)",
+	        pointHoverBorderWidth: 2,
+	        pointRadius: 0,
+	        pointHitRadius: 10,
+	        data: [],
+	    }]
+	};
 
     // d3 graph
     this.windowLength = 60000; // window length in msec (1 min)
