@@ -28,7 +28,6 @@ from rest_framework.decorators import api_view
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
-from storageadmin.views import DiskMixin
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
                       btrfs_uuid, mount_root, start_balance, usage_bound)
 from system.osi import remount
@@ -279,7 +278,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
             return Response(PoolInfoSerializer(p).data)
 
 
-class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
+class PoolDetailView(PoolMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
             pool = Pool.objects.get(name=self.kwargs['pname'])
