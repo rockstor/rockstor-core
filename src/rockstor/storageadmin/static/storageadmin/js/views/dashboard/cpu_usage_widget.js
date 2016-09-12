@@ -37,7 +37,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.numSamples = 60;
     this.maxCpus = 8;
     this.modes = ['smode', 'umode', 'umode_nice', 'idle'];
-    //this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
     this.colors = ['#FF8C00', '#98abc5', '#8a89a6', '#ffffff'];
     this.numCpus = null;
     this.avg = this.genEmptyCpuData(this.numSamples);
@@ -84,14 +83,16 @@ CpuUsageWidget = RockStorWidgetView.extend({
       }
 
     };
-	this.AvgCpuChartContainer = $('#cpuusage-avg');
-	this.AvgCpuChartCanvas = $('#cpuusage-avg-chart');
+	
+	this.AvgCpuChart = null;
+	this.AvgCpuChartCanvas = this.$('#cpuusage-avg-chart');
     this.AvgCpuChartOptions = {
         showLines: true,
         animation: false,
+		responsive: true,
         legend: {
-            display: true,
-            position: 'bottom',
+            display: false,
+            position: 'top',
             labels: {
                 boxWidth: 10,
                 padding: 2
@@ -106,7 +107,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
                     drawTicks: false
                 },
                 ticks: {
-                    fontSize: 10,
+                    fontSize: 9,
                     max: 100,
                     min: 0,
                     stepSize: 20,
@@ -116,12 +117,17 @@ CpuUsageWidget = RockStorWidgetView.extend({
                 }
             }],
             xAxes: [{
+				scaleLabel: {
+					display: true,
+					fontSize: 10,
+					labelString: 'Time'
+				},
                 gridLines: {
                     display: true,
                     drawTicks: false
                 },
                 ticks: {
-                    fontSize: 10,
+                    fontSize: 9,
                     maxRotation: 0,
                     autoSkip: false,
                     callback: function(value) {
@@ -147,26 +153,21 @@ CpuUsageWidget = RockStorWidgetView.extend({
 	        pointBorderColor: "rgba(75,192,192,1)",
 	        pointBackgroundColor: "#fff",
 	        pointBorderWidth: 1,
-	        pointHoverRadius: 5,
+	        pointHoverRadius: 0,
 	        pointHoverBackgroundColor: "rgba(75,192,192,1)",
 	        pointHoverBorderColor: "rgba(220,220,220,1)",
-	        pointHoverBorderWidth: 2,
+	        pointHoverBorderWidth: 0,
 	        pointRadius: 0,
 	        pointHitRadius: 10,
 	        data: [],
 	    }]
 	};
 
-    // d3 graph
-    this.windowLength = 60000; // window length in msec (1 min)
-    this.transDuration = 1000; // transition duration
-    this.updateFreq = 1000;
-
-
     // cpu data array
     this.cpuData = [];
 
     this.margin = {top: 20, right: 20, bottom: 20, left: 30};
+	this.padding = {top: 0, right: 0, bottom: 20, left: 0};
 	
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
@@ -175,13 +176,15 @@ CpuUsageWidget = RockStorWidgetView.extend({
       this.width = 250 - this.margin.left - this.margin.right;
       this.height = 100 - this.margin.top - this.margin.bottom;
     }
-    this.padding = {top: 0, right: 0, bottom: 20, left: 0};
+    
 
     this.cpuColorScale = d3.scale.linear()
     .domain([0, 100])
     .range(["#F7C8A8","#F26F18"]);
-	
+
+	//Generate empty data and labels on avg cpu chart
 	this.genAvgCputInitData(this.numSamples);
+	
   },
   
   genAvgCputInitData: function(numSamples){
@@ -226,22 +229,23 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.t2 = new Date(data.results[0].ts);
     var _this = this;
     _this.startTime = new Date().getTime();
-    var t1Str = moment(_this.t1).toISOString();
-    var t2Str = moment(_this.t2).toISOString();
     data = data.results;
     if (data.length > 0) {
       _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
     }
 
-    _this.displayIndividualCpuUsage(data);
+    //_this.displayIndividualCpuUsage(data);
     if (!_this.graphRendered) {
-      _this.renderGraph(data);
+		_this.AvgCpuChart = Chart.Line(this.$('#cpuusage-avg-chart'), {
+		data: _this.AvgCpuChartData, 
+		options: _this.AvgCpuChartOptions
+		});
       _this.graphRendered = true;
     } else {
       _this.updateGraph(data);
     }
 
-    if (_this.cpuData.length > 0) {
+    /*if (_this.cpuData.length > 0) {
       while (new Date(_this.cpuData[0].ts).getTime() < _this.t2-(_this.windowLength + _this.updateFreq)) {
         _this.cpuData.shift();
       }
@@ -263,7 +267,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
         _this.t1 = _this.t1 + _this.updateFreq;
       }
       _this.t2 = _this.t2 + _this.updateFreq;
-    }
+    }*/
   },
 
   cleanup: function() {
@@ -284,141 +288,26 @@ CpuUsageWidget = RockStorWidgetView.extend({
     return cpu;
   },
 
-  displayNoDataMsg: function() {
-    this.$('#cpuusage-avg').html('<strong>No data received</strong>');
-    this.$('#cpuusage-individual').empty();
-  },
-
   renderGraph: function(data) {
-    this.$('#cpuusage-avg').empty();
+    //this.$('#cpuusage-avg').empty();
     var _this = this;
-    // Render svg
-      this.svg = d3.select(this.el).select('#cpuusage-avg')
-	  .append("svg")
-	  .attr("class", "cpugraph")
-	  .attr("width", this.width + this.margin.left + this.margin.right)
-	  .attr("height", this.height + this.margin.top + this.margin.bottom +
-		this.padding.top + this.padding.bottom);
-
-      this.svgG = this.svg.append("g")
-      	  .attr("transform", "translate(" +
-      		(this.margin.left + this.padding.left) + "," +
-      		(this.margin.top + this.padding.top) + ")");
-
-    // svg clip path
-    this.svgG.append("defs").append("clipPath")
-    .attr("id", "clip")
-    .append("rect")
-    .attr("width", this.width)
-    .attr("height", this.height);
-
-    // Scales
-    this.x = d3.time.scale().domain([this.t2-this.windowLength, this.t2]).range([0, this.width]);
-    this.y = d3.scale.linear().range([this.height, 0]);
-    this.y.domain([0, 100]);
-
-    // Line graph
-    this.line = d3.svg.line()
-    .interpolate('linear')
-    .x(function(d) { return _this.x(new Date(d.ts)); })
-    .y(function(d) { return _this.y(100 - d.idle); });
-
-    // X Axis
-    this.xAxis = this.svgG.append("g")
-	  .attr("class", "cpugraph x axis")
-	  .attr("transform", "translate(0, 0)")
-	  .attr("transform", "translate(0," + this.height + ")")
-	  .call(this.x.axis = d3.svg.axis().scale(this.x).orient("bottom").ticks(5));
-
-    // X Grid
-    this.x.grid = d3.svg.axis()
-    .scale(this.x)
-    .orient("bottom")
-    .ticks(5)
-    .tickSize(-this.height, 0, 0)
-    .tickFormat('');
-
-    this.xGrid = this.svgG.append("g")
-	  .attr("class", "cpugraph grid")
-	  .attr("transform", "translate(0, 0)")
-	  .attr("transform", "translate(0," + this.height + ")")
-	  .call(this.x.grid) ;
-
-    this.path = this.svgG.append("g")
-    .attr("clip-path", "url(#clip)")
-    .append("path")
-    .data([this.cpuData])
-    .attr("class", "cpugraph line");
-
-    // Grpah title
-    this.svg.append("text")
-    .attr("x", this.margin.left + this.padding.left + this.width/2 )
-    .attr("y",  this.margin.top/2)
-    .style("text-anchor", "middle")
-    .text("Average CPU Usage (%)");
-
-    // X axis label
-    this.svg.append("text")
-    .attr("x", this.margin.left + this.padding.left + this.width/2 )
-    .attr("y",  this.height +
-          this.margin.top +
-          this.padding.top +
-          this.margin.bottom +
-          this.padding.bottom/2 )
-    .style("text-anchor", "middle")
-    .text("Time");
-
-    // Y Axis
-    this.yAxis = d3.svg.axis().scale(this.y)
-    .orient("left").ticks(3);
-
-    this.yGrid = d3.svg.axis()
-    .scale(this.y)
-    .orient('left')
-    .ticks(4)
-    .tickSize(-this.width, 0, 0)
-    .tickFormat('');
-
-    this.svgG.append("g")			// Add the Y Axis
-    .attr("class", "cpugraph y axis")
-    .call(this.yAxis);
-
-    this.svgG.append("g")			// Add the Y Grid
-    .attr("class", "cpugraph grid")
-    .call(this.yGrid);
-
-    this.svgG.select(".line")
-    .attr("d", this.line);
-
   },
 
   updateGraph: function(data) {
     var _this = this;
+	var avgcpu = _this.getAvgCpuUsge(data);
+	  _this.AvgCpuChart.data.datasets[0].data.shift();
+  _this.AvgCpuChart.data.labels.shift();
+  _this.AvgCpuChart.data.datasets[0].data.push(100-avgcpu[0].idle);
+  var csecs = moment(avgcpu[0].ts).format("s");
+  if (csecs % 15 === 0) {
+    var label = csecs == '0' ? moment(avgcpu[0].ts).format("HH:mm") : moment(avgcpu[0].ts).format(":ss");
+    _this.AvgCpuChart.data.labels.push(label);
+  } else {
+    _this.AvgCpuChart.data.labels.push('');
+  }
 
-    //var now = new Date(data[data.length-1].ts).getTime();
-    //this.x.domain([now-(this.windowLength + this.updateFreq), now - this.updateFreq]);
-    this.x.domain([this.t2-(this.windowLength + this.updateFreq), this.t2 - this.updateFreq]);
-
-    //this.cpuData.push.apply(this.cpuData, data);
-    this.svgG.select(".line")
-    .attr("d", this.line)
-    .attr("transform", "translate(0, 0)");
-
-    this.xAxis.transition()
-    .duration(this.transDuration)
-    .ease("linear")
-    .call(this.x.axis);
-
-    this.xGrid.transition()
-    .duration(this.transDuration)
-    .ease("linear")
-    .call(this.x.grid);
-
-    // slide the line left
-    this.path.transition()
-    .duration(this.transDuration)
-    .ease("linear")
-    .attr("transform", "translate(" + this.x(this.t2 - (this.windowLength+2*this.updateFreq)) + ")");
+  _this.AvgCpuChart.update();
   },
 
   displayIndividualCpuUsage: function(data) {
@@ -481,13 +370,16 @@ CpuUsageWidget = RockStorWidgetView.extend({
       this.height = 200 - this.margin.top - this.margin.bottom;
       this.$('#cpuusage-individual').css('width', '500px');
       this.$('#cpuusage-individual-title').css('width', '500px');
+	  //this.$('#cpuusage-avg').css('width', '500px');
     } else {
       this.width = 250 - this.margin.left - this.margin.right;
       this.height = 100 - this.margin.top - this.margin.bottom;
-      this.$('#cpuusage-individual').css('width', '250');
-      this.$('#cpuusage-individual-title').css('width', '250');
+      this.$('#cpuusage-individual').css('width', '250px');
+      this.$('#cpuusage-individual-title').css('width', '250px');
+	  //this.$('#cpuusage-avg').css('width', '250px');
     }
-    this.$('#cpuusage-avg').empty();
+    //this.$('#cpuusage-avg').empty();
+	this.AvgCpuChart.resize();
     this.renderGraph(this.cpuData);
   }
 
