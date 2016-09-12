@@ -41,8 +41,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
         this.maxCpus = 8;
         this.modes = ['smode', 'umode', 'umode_nice', 'idle'];
         this.colors = ['255, 140, 0', '152, 171, 197', '138, 137, 166', '255, 255, 255'];
-        this.numCpus = null;
-        this.cpuNames = [];
 
         this.AllCpuChart = null;
         this.AllCpuChartOptions = {
@@ -57,7 +55,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
                 position: 'bottom',
                 labels: {
                     boxWidth: 10,
-                    padding: 5
+                    padding: 10
                 }
             },
             tooltips: {
@@ -199,9 +197,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
             }]
         };
 
-        // cpu data array
-        this.cpuData = [];
-
         this.margin = {
             top: 20,
             right: 20,
@@ -223,7 +218,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
             this.height = 100 - this.margin.top - this.margin.bottom;
         }
 
-        //Generate empty data and labels on avg cpu chart
+        //Generate empty data/labels on avg cpu and all charts
         this.genAvgCputInitData(this.numSamples);
         this.genAllCpuInitData(this.maxCpus);
 
@@ -232,6 +227,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     genAvgCputInitData: function(numSamples) {
         var _this = this;
         for (var i = 0; i < numSamples; i++) {
+            //Create initial empty data required to have line chart right alligned
             _this.AvgCpuChartData.labels.push('');
             _this.AvgCpuChartData.datasets[0].data.push(null);
         }
@@ -241,13 +237,14 @@ CpuUsageWidget = RockStorWidgetView.extend({
         var _this = this;
         for (var i = 0; i < maxCpus; i++) {
             _this.AllCpuChartData.labels.push('');
-			var current_color = '';
-			_.each(_this.AllCpuChartData.datasets, function(dataset, i) {
-				current_color = 'rgba(' + _this.colors[_.indexOf(_this.modes, dataset.label)] + ', 0.5)';
-				dataset.backgroundColor.push(current_color);
-				dataset.borderColor.push(current_color);
-			});
-			
+            var current_color = '';
+            _.each(_this.AllCpuChartData.datasets, function(dataset, i) {
+                //define each barchar rectangle with relative modes colors
+                current_color = 'rgba(' + _this.colors[_.indexOf(_this.modes, dataset.label)] + ', 0.3)';
+                dataset.backgroundColor.push(current_color);
+                dataset.borderColor.push(current_color);
+            });
+
         }
     },
 
@@ -270,11 +267,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
         var _this = this;
         data = data.results;
 
-        //_this.displayIndividualCpuUsage(data);
+        //If our charts on first load render them on page with empty data
         if (!_this.graphRendered) {
             _this.initGraphs();
             _this.graphRendered = true;
         }
+
         _this.updateAvgCpuGraph(data);
         _this.updateAllCpuGraph(data);
     },
@@ -286,6 +284,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
             data: _this.AvgCpuChartData,
             options: _this.AvgCpuChartOptions
         });
+
         _this.AllCpuChart = new Chart(this.$('#cpuusage-all-chart'), {
             type: 'bar',
             data: _this.AllCpuChartData,
@@ -293,62 +292,40 @@ CpuUsageWidget = RockStorWidgetView.extend({
         });
     },
 
-
-
     updateAvgCpuGraph: function(data) {
         var _this = this;
+        //We use old getAvgCpuUsage function then
+        //delete first line chart element and push new one
+        //If current time is multiple of 15 secs render it
         var avgcpu = _this.getAvgCpuUsage(data);
-        _this.AvgCpuChart.data.datasets[0].data.shift();
-        _this.AvgCpuChart.data.labels.shift();
+        _this.AvgCpuChartData.datasets[0].data.shift();
+        _this.AvgCpuChartData.labels.shift();
         var csecs = moment(avgcpu[0].ts).format("s");
         var label = '';
         if (csecs % 15 === 0) {
             label = csecs == '0' ? moment(avgcpu[0].ts).format("HH:mm") : moment(avgcpu[0].ts).format(":ss");
         }
-        _this.AvgCpuChart.data.datasets[0].data.push(100 - avgcpu[0].idle);
-        _this.AvgCpuChart.data.labels.push(label);
+        _this.AvgCpuChartData.datasets[0].data.push(100 - avgcpu[0].idle);
+        _this.AvgCpuChartData.labels.push(label);
         _this.AvgCpuChart.update();
     },
 
     updateAllCpuGraph: function(data) {
         var _this = this;
-    },
-
-    displayIndividualCpuUsage: function(data) {
-        var _this = this;
-        // get latest value for each cpu
-        var tmp = _.groupBy(data, function(d) {
-            return d.name;
-        });
-        console.log(tmp);
-        this.cpuNames = _.keys(tmp);
-        console.log(this.cpuNames);
-        this.numCpus = this.cpuNames.length;
-        data = _.map(_.keys(tmp), function(d) {
-            var a = tmp[d];
-            return a[a.length - 1];
-        });
-        _this.allCpuGraphData = [];
-        _.each(_this.modes, function(mode, i) {
-            var tmp2 = [];
-            _.each(_this.cpuNames, function(name, j) {
-                var dm = data[j][mode];
-                tmp2.push([j + 1, dm]);
+        //If we don't have already cpu names, get it!
+        if (_this.AllCpuChartData.labels[0] === '') {
+            _.each(data, function(cpu, k) {
+                _this.AllCpuChartData.labels[k] = cpu.name;
             });
-            // Add empty data so that bar width is acc to maxCpus .
-            for (var k = _this.numCpus; k < _this.maxCpus; k++) {
-                tmp2.push([k + 1, null]);
-            }
-            if (mode != 'idle') {
-                _this.allCpuGraphData.push({
-                    "label": mode,
-                    "data": tmp2,
-                    "color": _this.colors[i]
-                });
-            }
+        }
+        //Loop on the bar chart dataset and update every cpu mode val for every cpu found
+        _.each(_this.AllCpuChartData.datasets, function(dataset, i) {
+            _.each(data, function(cpu, k) {
+                dataset.data[k] = cpu[dataset.label];
+            });
+
         });
-
-
+        _this.AllCpuChart.update();
     },
 
     getAvgCpuUsage: function(data) {
