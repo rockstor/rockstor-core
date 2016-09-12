@@ -104,7 +104,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
             yAxes: [{
                 gridLines: {
                     drawTicks: false
-                }
+                },
                 ticks: {
                     fontSize: 10,
                     max: 100,
@@ -180,6 +180,16 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.cpuColorScale = d3.scale.linear()
     .domain([0, 100])
     .range(["#F7C8A8","#F26F18"]);
+	
+	this.genAvgCputInitData(this.numSamples);
+  },
+  
+  genAvgCputInitData: function(numSamples){
+	var _this = this;
+	for (var i=0; i<numSamples; i++) {
+    _this.AvgCpuChartData.labels.push('');
+    _this.AvgCpuChartData.datasets[0].data.push(null);
+    }
   },
 
   allCpuTickFormatter: function(context) {
