@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  * 
  * RockStor is free software; you can redistribute it and/or modify
@@ -21,36 +21,25 @@
 
 
 <div class="row">
-  <div class="col-md-12">
-    <div class="widget-header">
-      <div class="title">
-        <span class="h4">{{ displayName }}</span>
-      </div>
-      <div class="gear">
-        <a class="resize-widget" href="#"><i class="glyphicon glyphicon-resize-full"></i></a>
-        <a class="close-widget" href="#"><i class="glyphicon glyphicon-remove"></i></a>
-      </div>
-    </div>
-  </div> 
+    <div class="col-md-12">
+        <div class="widget-header">
+            <div class="title">
+                <span class="h4">{{ displayName }}</span>
+            </div>
+            <div class="gear">
+                <a class="resize-widget" href="#"><i class="glyphicon glyphicon-resize-full"></i></a>
+                <a class="close-widget" href="#"><i class="glyphicon glyphicon-remove"></i></a>
+            </div>
+        </div>
+    </div> 
 </div> 
 
 
 <!-- Widget Body -->
 <!-- Content -->
 <div class="widget-content">
-
-  <div id="cpuusage-avg"></div>
-  {{#if maximized}}
-    <div id="cpuusage-individual-title" style="width: 500px; text-align: center;">Individual cpu usage (%) </div>
-    <div id="cpuusage-individual" style="width: 500px; height: 30%;"></div>
-  {{ else }}
-    <div id="cpuusage-individual-title" style="width: 250px; text-align: center;">Individual cpu usage (%) </div>
-    <div id="cpuusage-individual" style="width: 250px; height: 30%;"></div>
-  {{/if}}
-  <div id="cpuusage-legend">
-  </div>
-
+    <canvas id="cpuusage-avg-chart" width="250" height="125" style="padding: 0px; margin: 0px 0px 10px;"></canvas>
+    <canvas id="cpuusage-all-chart" width="250" height="125" style="padding: 0px; margin: 0px;"></canvas>
 </div>
 <!-- End Content -->
 <!-- end Widget body -->
-
