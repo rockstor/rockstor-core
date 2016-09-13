@@ -174,22 +174,22 @@ CpuUsageWidget = RockStorWidgetView.extend({
         this.AvgCpuChartData = {
             labels: [],
             datasets: [{
-                label: "",
+                label: '',
                 fill: false,
                 lineTension: 0.2,
-                backgroundColor: "rgba(75,192,192,0.4)",
-                borderColor: "rgba(75,192,192,1)",
+                backgroundColor: 'rgba(75,192,192,0.4)',
+                borderColor: 'rgba(75,192,192,1)',
                 borderCapStyle: 'butt',
                 borderDash: [],
                 borderDashOffset: 0.0,
                 borderWidth: 1,
                 borderJoinStyle: 'miter',
-                pointBorderColor: "rgba(75,192,192,1)",
-                pointBackgroundColor: "#fff",
+                pointBorderColor: 'rgba(75,192,192,1)',
+                pointBackgroundColor: '#fff',
                 pointBorderWidth: 1,
                 pointHoverRadius: 0,
-                pointHoverBackgroundColor: "rgba(75,192,192,1)",
-                pointHoverBorderColor: "rgba(220,220,220,1)",
+                pointHoverBackgroundColor: 'rgba(75,192,192,1)',
+                pointHoverBorderColor: 'rgba(220,220,220,1)',
                 pointHoverBorderWidth: 0,
                 pointRadius: 0,
                 pointHitRadius: 10,
@@ -219,12 +219,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
         }
 
         //Generate empty data/labels on avg cpu and all charts
-        this.genAvgCputInitData(this.numSamples);
+        this.genAvgCpuInitData(this.numSamples);
         this.genAllCpuInitData(this.maxCpus);
 
     },
 
-    genAvgCputInitData: function(numSamples) {
+    genAvgCpuInitData: function(numSamples) {
         var _this = this;
         for (var i = 0; i < numSamples; i++) {
             //Create initial empty data required to have line chart right alligned
@@ -279,6 +279,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
     initGraphs: function() {
         var _this = this;
+
         _this.AvgCpuChart = new Chart(this.$('#cpuusage-avg-chart'), {
             type: 'line',
             data: _this.AvgCpuChartData,
@@ -300,10 +301,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
         var avgcpu = _this.getAvgCpuUsage(data);
         _this.AvgCpuChartData.datasets[0].data.shift();
         _this.AvgCpuChartData.labels.shift();
-        var csecs = moment(avgcpu[0].ts).format("s");
+        var csecs = moment(avgcpu[0].ts).format('s');
         var label = '';
         if (csecs % 15 === 0) {
-            label = csecs == '0' ? moment(avgcpu[0].ts).format("HH:mm") : moment(avgcpu[0].ts).format(":ss");
+            label = csecs == '0' ? moment(avgcpu[0].ts).format('HH:mm') : moment(avgcpu[0].ts).format(':ss');
         }
         _this.AvgCpuChartData.datasets[0].data.push(100 - avgcpu[0].idle);
         _this.AvgCpuChartData.labels.push(label);
