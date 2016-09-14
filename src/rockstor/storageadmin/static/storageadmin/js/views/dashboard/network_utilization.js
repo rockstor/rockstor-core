@@ -59,11 +59,12 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 	this.NetworkChartOptions = {
 		showLines: true,
             legend: {
-                display: true,
+                display: false,
                 position: 'bottom',
                 labels: {
-                    boxWidth: 10,
-                    padding: 10
+                    boxWidth: 8,
+                    padding: 2,
+					fontSize: 10
                 }
             },
 			scales: {
@@ -72,13 +73,15 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 					position: 'left',
 					                    scaleLabel: {
                         display: true,
-                        fontSize: 11,
+                        fontSize: 10,
                         labelString: 'Data'
                     },
                     ticks: {
-                        fontSize: 10,
+                        fontSize: 9,
+						beginAtZero: 0,
+						min: 0,
                         callback: function(value) {
-                            return humanize.filesize(value, 1024, 2);
+                            return humanize.filesize(value);
                         }
                     },
                     gridLines: {
@@ -90,23 +93,30 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 					position: 'right',
 					                    scaleLabel: {
                         display: true,
-                        fontSize: 11,
+                        fontSize: 10,
                         labelString: 'Packets'
                     },
 					ticks: {
-						fontSize: 10
+						fontSize: 9,
+						beginAtZero: 0,
+						min: 0
 					},
 					gridLines: {
 						drawTicks: false
 					}
                 }],
                 xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        fontSize: 10,
+                        labelString: 'Time'
+                    },
                     gridLines: {
                         display: false,
                         drawTicks: false
                     },
                     ticks: {
-                        fontSize: 10,
+                        fontSize: 9,
                         maxRotation: 0,
                         autoSkip: false,
                         callback: function(value) {
@@ -162,13 +172,13 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         lines: { show: true, fill: false },
         shadowSize: 0	// Drawing is faster without shadows
 			},
-      legend : {
+      /*legend : {
         container: "#network-util-legend",
         noColumns: 2,
         margin: [30,0],
         labelBoxBorderColor: "#fff"
 
-      }
+      }*/
     };
 
     // Start and end timestamps for api call
@@ -201,6 +211,29 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 				_this.NetworkChartData.datasets[index].data.push(null);
 			}
 		});
+    },
+	genNetworkChartLegend: function() {
+		var _this = this;
+		var legend = '<ul style="list-style-type: none; display: inline;">';
+		_.each(_this.NetworkChartData.datasets, function(dataset, index) {
+			legend += '<li><span style="background-color: ' + dataset.backgroundColor + '; ';
+			legend += 'border-style: solid; border-color: ' + dataset.borderColor + '; ';
+			legend += 'border-width: 1px; display: inline; width: 10px; height: 10px; float: left; margin: 2px;"></span>';
+			legend += dataset.label + '</li>';
+		});
+		legend += '</ul>';
+		return legend;
+	},
+
+    initGraphs: function() {
+        var _this = this;
+
+        _this.NetworkChart = new Chart(this.$('#network-chart'), {
+            type: 'line',
+            data: _this.NetworkChartData,
+            options: _this.NetworkChartOptions
+        });
+		this.$('#network-util-legend').html(_this.genNetworkChartLegend());
     },
 
   render: function() {
@@ -276,6 +309,10 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   getData: function(data) {
     var _this = this;
     this.t2 = new Date(data.results[0].ts);
+	        if (!_this.graphRendered) {
+            _this.initGraphs();
+            _this.graphRendered = true;
+        }
     //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
     _this.startTime = new Date().getTime();
     _.each(data.results, function(d) {
@@ -430,6 +467,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     } else {
       this.$('#network-util-values-ph').empty();
     }
+	this.NetworkChart.resize();
   },
 
   cleanup: function() {
