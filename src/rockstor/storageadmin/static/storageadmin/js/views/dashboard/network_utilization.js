@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -39,8 +39,90 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.networkInterfaces = new NetworkDeviceCollection();
     this.networkInterfaces.on("reset", this.getInitialData, this);
     this.selectedInterface = null;
+	this.numSamples = 60;
     this.colors = ["#1224E3", "#F25805", "#04D6D6", "#F5CC73", "#750413"];
+	this.netdatatype = ['Data rec', 'Data sent', 'Packets rec', 'Packets sent'];
+	this.colors2 = ['18, 36, 227', '242, 88, 5', '4, 214, 214', '245, 204, 115'];
     this.totalMem = 0;
+	Chart.defaults.global.tooltips.enabled = false;
+	Chart.defaults.global.elements.line.tension = 0.2;
+	Chart.defaults.global.elements.line.borderCapStyle = 'butt';
+	Chart.defaults.global.elements.line.borderDash = [];
+	Chart.defaults.global.elements.line.borderDashOffset = 0.0;
+	Chart.defaults.global.elements.line.borderWidth = 1;
+	Chart.defaults.global.elements.line.borderJoinStyle = 'miter';
+	Chart.defaults.global.elements.line.fill = false;
+	Chart.defaults.global.elements.point.radius = 0;
+	Chart.defaults.global.elements.point.hoverRadius = 0;
+
+	this.NetworkChart = null;
+	this.NetworkChartOptions = {
+		showLines: true,
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    boxWidth: 10,
+                    padding: 10
+                }
+            },
+			scales: {
+                yAxes: [{
+					id: 'Data',
+					position: 'left',
+					                    scaleLabel: {
+                        display: true,
+                        fontSize: 11,
+                        labelString: 'Data'
+                    },
+                    ticks: {
+                        fontSize: 10,
+                        callback: function(value) {
+                            return humanize.filesize(value, 1024, 2);
+                        }
+                    },
+                    gridLines: {
+                        drawTicks: false
+                    }
+				},
+					{
+					id: 'Packets',
+					position: 'right',
+					                    scaleLabel: {
+                        display: true,
+                        fontSize: 11,
+                        labelString: 'Packets'
+                    },
+					ticks: {
+						fontSize: 10
+					},
+					gridLines: {
+						drawTicks: false
+					}
+                }],
+                xAxes: [{
+                    gridLines: {
+                        display: false,
+                        drawTicks: false
+                    },
+                    ticks: {
+                        fontSize: 10,
+                        maxRotation: 0,
+                        autoSkip: false,
+                        callback: function(value) {
+                            return (value.toString().length > 0 ? value : null);
+                    }
+					}
+                }]
+            }
+	};
+	
+	this.NetworkChartData = {
+		labels: [],
+		datasets: []
+	};
+	this.NetData = {};
+	
     this.graphOptions = {
       grid : {
         //hoverable : true,
@@ -94,7 +176,32 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
     //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
+	//Chart.js Network Widget default options
+
+	this.genEmptyNetworkChartData(this.numSamples);
   },
+  
+    genEmptyNetworkChartData: function(numSamples) {
+        var _this = this;
+		//Create initial empty data required to have line chart right alligned
+        for (var i = 0; i < numSamples; i++) {
+            _this.NetworkChartData.labels.push('');	
+        }
+		_.each(_this.netdatatype, function(value, index) {
+			var YaxisID = value.indexOf('Data') > -1 ? 'Data' : 'Packets';
+			var dataset = {
+				label: value,
+				yAxisID: YaxisID,
+				backgroundColor: 'rgba(' + _this.colors2[index] + ', 0.4)',
+				borderColor: 'rgba(' + _this.colors2[index] + ', 1)',
+				data: []
+			};
+			_this.NetworkChartData.datasets.push(dataset);
+			for (var i = 0; i < numSamples; i++) {
+				_this.NetworkChartData.datasets[index].data.push(null);
+			}
+		});
+    },
 
   render: function() {
     var _this = this;
@@ -128,8 +235,6 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
       niselect.append(opt);
     });
     this.selectedInterface = this.networkInterfaces.at(0).get("name");
-    var t1Str = moment(_this.t1).toISOString();
-    var t2Str = moment(_this.t2).toISOString();
     var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
     this.jqXhr = $.ajax({
       url: '/api/sm/sprobes/netstat/?format=json&page_size=1',
@@ -141,9 +246,13 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         _this.networkInterfaces.each(function(ni) {
           var tmp = [];
           _this.dataBuffers[ni.get("name")] = tmp;
+		  _this.NetData[ni.get("name")] = tmp;
         });
+		console.log(_this.networkInterfaces);
+		console.log(_this.NetData);
         _.each(data.results, function(d) {
           _this.dataBuffers[d.device].push(d);
+		  //_this.NetData[d.device]
         });
         _.each(_.keys(_this.dataBuffers), function(device) {
           var dataBuffer = _this.dataBuffers[device];
@@ -169,11 +278,9 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.t2 = new Date(data.results[0].ts);
     //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
     _this.startTime = new Date().getTime();
-    var t1Str = moment(_this.t1).toISOString();
-    var t2Str = moment(_this.t2).toISOString();
-
     _.each(data.results, function(d) {
       _this.dataBuffers[d.device].push(d);
+	  _this.NetData[d.device].push(d);
     });
     _.each(_.keys(_this.dataBuffers), function(device) {
       var dataBuffer = _this.dataBuffers[device];
@@ -183,6 +290,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         }
       }
     });
+	//console.log(_this.NetData);
     var dataBuffer = _this.dataBuffers[_this.selectedInterface];
     _this.update(dataBuffer);
     // Check time interval from beginning of last call
