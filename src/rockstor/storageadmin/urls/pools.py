@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import (PoolListView, PoolDetailView, PoolScrubView,
-                                PoolBalanceView, get_usage_bound, PoolShareListView)
+                                PoolBalanceView, PoolShareListView)
 from django.conf import settings
 
 pool_regex = settings.POOL_REGEX

@@ -118,6 +118,24 @@ var PoolShareCollection = Backbone.Collection.extend({
   }
 });
 
+
+var PoolShare = Backbone.Model.extend({
+  url: function () {
+    console.log('poolshare');
+      return '/api/pools/' + this.get('poolName');
+    }
+});
+
+var PoolShareCollection = Backbone.Collection.extend({
+  model: PoolShare,
+  initialize: function(model, options) {
+    this.options = options;
+  },
+  url: function () {
+    return '/api/pools/' + this.options.poolName + '/shares';
+  }
+});
+
 var ShareCollection = RockStorPaginatedCollection.extend({
   model: Share,
   baseUrl: '/api/shares',
