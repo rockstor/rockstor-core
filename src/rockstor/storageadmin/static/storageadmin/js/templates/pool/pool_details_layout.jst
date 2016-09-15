@@ -23,8 +23,12 @@
 <!-- page heading -->
 
 <div class="pull-right">
-  <a href="#add_share?poolName={{poolName}}" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add Share</a>
-  <button id="delete-pool" class="btn btn-danger" type="button"><i class="glyphicon glyphicon-trash "></i> Delete</button>
+ <a href="#add_share?poolName={{poolName}}" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add Share</a>
+ {{#if isPoolNameRockstor}}
+ <!-- Don't display the delete button if rockstor_rockstor pool -->
+ {{else}}
+ <button id="delete-pool" class="btn btn-danger" type="button"><i class="glyphicon glyphicon-trash" data-name="{{pool.name}}" data-action="delete"></i> Delete</button>
+ {{/if}}
 </div>
 <span class="h2">{{poolName}}</span>
 {{#if isPoolNameRockstor}}
@@ -110,4 +114,27 @@
     <button class="btn btn-primary" id="submit-resize-modal">Submit</button>
   </div>
   -->
+</div>
+
+<div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel">Delete Pool</h3>
+      </div>
+      <div class="modal-body">
+        <div class="messages"></div>
+        <h4>Pool {{pool.name}} will be deleted along with the following shares. Are you sure?</h4>
+        <ul id="pool-shares"></ul>
+        {{#each shares}}
+        <li>{{this.attributes.name}} ({{this.attributes.size}} bytes)</li>
+        {{/each}}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <button id="js-confirm-pool-delete" class="btn btn-primary">Confirm</button>
+      </div
+    </div
+  </div>
 </div>

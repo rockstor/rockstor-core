@@ -53,11 +53,12 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		this.dependencies.push(this.disks);
 		this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
 		this.initHandlebarHelpers();
-
+    this.poolShares = new PoolShareCollection([], {poolName: this.poolName});
 	},
 
 	events: {
 		'click #delete-pool': 'deletePool',
+    "click #js-confirm-pool-delete": "confirmPoolDelete",
 		"click #js-resize-pool": "resizePool",
 		"click #js-submit-resize": "resizePoolSubmit",
 		"click #js-resize-cancel": "resizePoolCancel",
@@ -67,6 +68,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	},
 
 	render: function() {
+    this.poolShares.fetch();
 		this.fetch(this.renderSubViews, this);
 		return this;
 	},
@@ -76,8 +78,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		if (this.pool.get('role') == 'root') {
 			poolNameIsRockstor = true;
 		}
-		$(this.el).html(this.template({
-			pool: this.pool,
+    $(this.el).html(this.template({
+      shares: this.poolShares.models,
 			poolName: this.pool.get('name'),
 			isPoolNameRockstor: poolNameIsRockstor,
 		}));
@@ -105,34 +107,46 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 				})); }
 
 		this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool:
-			this.pool.toJSON()})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
-			(!_.isUndefined(this.cView) && this.cView == 'resize') { // scroll to resize section
-				$('#content').scrollTop($('#ph-resize-pool-info').offset().top); }
+			                                                                  this.pool.toJSON()})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
+		(!_.isUndefined(this.cView) && this.cView == 'resize') { // scroll to resize section
+      $('#content').scrollTop($('#ph-resize-pool-info').offset().top); }
 
-			//$('#pool-resize-raid-modal').modal({show: false});
-			$('#pool-resize-raid-overlay').overlay({load: false});
+		//$('#pool-resize-raid-modal').modal({show: false});
+		$('#pool-resize-raid-overlay').overlay({load: false});
 
 	},
 
-	deletePool: function() {
-		var button = this.$('#delete-pool');
+  deletePool: function() {
+    console.info('pool shares', this.poolShares);
+    var _this = this;
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    // show the dialog
+    _this.$('#delete-pool-modal').modal();
+	},
+
+  confirmPoolDelete: function() {
+    // TODO: adjust to fit template/scenario (also dry up)
+    var _this = this;
+		var button = $(event.currentTarget);
 		if (buttonDisabled(button)) return false;
-		if(confirm("Delete pool: "+ this.pool.get('name') + "... Are you sure?")){
-			disableButton(button);
-			$.ajax({
-				url: "/api/pools/" + this.pool.get('name'),
-				type: "DELETE",
-				dataType: "json",
-				data: { "name": this.pool.get('name') },
-				success: function() {
-					app_router.navigate('pools', {trigger: true});
-				},
-				error: function(xhr, status, error) {
-					enableButton(button);
-				}
-			});
-		}
-	},
+		disableButton(button);
+		$.ajax({
+			url: "/api/pools/" + poolName,
+			type: "DELETE",
+			dataType: "json",
+			success: function() {
+				_this.collection.fetch({reset: true});
+				enableButton(button);
+				_this.$('#delete-pool-modal').modal('hide');
+				$('.modal-backdrop').remove();
+				app_router.navigate('pools', {trigger: true})
+			},
+			error: function(xhr, status, error) {
+				enableButton(button);
+			}
+		});
+  },
 
 
 	resizePool: function(event) {

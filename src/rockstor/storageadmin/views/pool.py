@@ -439,7 +439,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             return Response(PoolInfoSerializer(pool).data)
 
     @transaction.atomic
-    def delete(self, request, pname):
+    def delete(self, request, pname, command=''):
+        force = True if (command == 'force') else False
         with self._handle_exception(request):
             try:
                 pool = Pool.objects.get(name=pname)
@@ -453,9 +454,10 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(pool=pool).exists()):
-                e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
-                         'all shares in the pool are deleted' % (pname))
-                handle_exception(Exception(e_msg), request)
+                if not force:
+                    e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
+                             'all shares in the pool are deleted' % (pname))
+                    handle_exception(Exception(e_msg), request)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
             umount_root(pool_path)
             pool.delete()
