@@ -148,6 +148,7 @@
         {{#each shares}}
         <li>{{this.attributes.name}} ({{this.attributes.size}} bytes)</li>
         {{/each}}
+        <label><input type="checkbox" id="force-delete" name="force-delete"> Force Delete &nbsp;<i class="fa fa-info-circle fa-lg"></i></label>
       </div>
       <div class="modal-footer">
         <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>

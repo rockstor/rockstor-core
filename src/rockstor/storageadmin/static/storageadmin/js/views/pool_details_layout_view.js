@@ -79,7 +79,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 			poolNameIsRockstor = true;
 		}
     $(this.el).html(this.template({
-      shares: this.poolShares.models,
+      share: this.poolShares.models[0].attributes.results,
 			poolName: this.pool.get('name'),
 			isPoolNameRockstor: poolNameIsRockstor,
 		}));
@@ -114,38 +114,39 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		//$('#pool-resize-raid-modal').modal({show: false});
 		$('#pool-resize-raid-overlay').overlay({load: false});
 
+	},
+
   deletePool: function() {
     var _this = this;
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
     _this.$('#delete-pool-modal').modal();
-  },
+	},
 
   confirmPoolDelete: function() {
     var _this = this;
-    var button = $(event.currentTarget);
+		var button = $(event.currentTarget);
     var url = "/api/pools/" + this.poolName;
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
+		if (buttonDisabled(button)) return false;
+		disableButton(button);
     if ($("#force-delete").prop("checked")) {
       url += "/force";
     }
-    $.ajax({
-      url: url,
-      type: "DELETE",
-      dataType: "json",
-      success: function() {
-        enableButton(button);
-        _this.$('#delete-pool-modal').modal('hide');
-        $('.modal-backdrop').remove();
-        app_router.navigate('pools', {trigger: true})
-      },
-      error: function(xhr, status, error) {
-        enableButton(button);
-      }
-    });
+		$.ajax({
+			url: url,
+			type: "DELETE",
+			dataType: "json",
+			success: function() {
+			  enableButton(button);
+			  _this.$('#delete-pool-modal').modal('hide');
+			  $('.modal-backdrop').remove();
+			  app_router.navigate('pools', {trigger: true})
+			},
+			error: function(xhr, status, error) {
+			  enableButton(button);
+			}
+		});
   },
-
 
 
 	resizePool: function(event) {
