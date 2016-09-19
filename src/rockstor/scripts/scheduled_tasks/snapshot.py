@@ -51,6 +51,8 @@ def validate_snap_meta(meta):
         raise Exception('max_count must atleast be 1, not %d' % max_count)
     if ('visible' not in meta or type(meta['visible']) != bool):
         meta['visible'] = False
+    if ('writable' not in meta or type(meta['writable']) != bool):
+        meta['writable'] = False
     return meta
 
 
