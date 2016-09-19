@@ -27,6 +27,7 @@ urlpatterns = patterns(
     '',
     url(r'^$', PoolListView.as_view(), name='pool-view'),
     url(r'^/(?P<pname>%s)$' % pool_regex, PoolDetailView.as_view(),),
+    url(r'^/(?P<pname>%s)/shares$' % pool_regex, PoolShareListView.as_view(),),
     url(r'^/(?P<pname>%s)/balance$' % pool_regex, PoolBalanceView.as_view(),),
     url(r'^/(?P<pname>%s)/balance/(?P<command>.*)$' % pool_regex,
         PoolBalanceView.as_view(),),

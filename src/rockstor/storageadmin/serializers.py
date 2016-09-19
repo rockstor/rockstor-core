@@ -126,6 +126,8 @@ class IscsiSerializer(serializers.ModelSerializer):
 
 
 class SharePoolSerializer(serializers.ModelSerializer):
+    size_gb = serializers.FloatField()
+
     class Meta:
         model = Share
 

@@ -105,7 +105,7 @@ var PoolShare = Backbone.Model.extend({
   url: function () {
     console.log('poolshare');
       return '/api/pools/' + this.get('poolName');
-    }
+  }
 });
 
 var PoolShareCollection = Backbone.Collection.extend({

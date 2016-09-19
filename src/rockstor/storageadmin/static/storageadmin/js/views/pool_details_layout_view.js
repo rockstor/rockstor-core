@@ -79,7 +79,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 			poolNameIsRockstor = true;
 		}
     $(this.el).html(this.template({
-      shares: this.poolShares.models,
+      share: this.poolShares.models[0].attributes.results,
 			poolName: this.pool.get('name'),
 			isPoolNameRockstor: poolNameIsRockstor,
 		}));
@@ -117,33 +117,33 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	},
 
   deletePool: function() {
-    console.info('pool shares', this.poolShares);
     var _this = this;
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    // show the dialog
     _this.$('#delete-pool-modal').modal();
 	},
 
   confirmPoolDelete: function() {
-    // TODO: adjust to fit template/scenario (also dry up)
     var _this = this;
 		var button = $(event.currentTarget);
+    var url = "/api/pools/" + this.poolName;
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
+    if ($("#force-delete").prop("checked")) {
+      url += "/force";
+    }
 		$.ajax({
-			url: "/api/pools/" + poolName,
+			url: url,
 			type: "DELETE",
 			dataType: "json",
 			success: function() {
-				_this.collection.fetch({reset: true});
-				enableButton(button);
-				_this.$('#delete-pool-modal').modal('hide');
-				$('.modal-backdrop').remove();
-				app_router.navigate('pools', {trigger: true})
+			  enableButton(button);
+			  _this.$('#delete-pool-modal').modal('hide');
+			  $('.modal-backdrop').remove();
+			  app_router.navigate('pools', {trigger: true})
 			},
 			error: function(xhr, status, error) {
-				enableButton(button);
+			  enableButton(button);
 			}
 		});
   },
