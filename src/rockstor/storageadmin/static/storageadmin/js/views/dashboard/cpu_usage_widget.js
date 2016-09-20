@@ -137,6 +137,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
             },
             scales: {
                 yAxes: [{
+                    id: 'cpu',
+                    position: 'left',
                     gridLines: {
                         drawTicks: false
                     },
@@ -148,6 +150,22 @@ CpuUsageWidget = RockStorWidgetView.extend({
                         callback: function(value) {
                             return value + '%';
                         }
+                    }
+                }, {
+                    id: 'empty',
+                    position: 'right',
+                    ticks: {
+                        fontSize: 9,
+                        beginAtZero: true,
+                        min: 0,
+                        max: 100,
+                        stepSize: 50,
+                        callback: function(value) {
+                            return null;
+                        }
+                    },
+                    gridLines: {
+                        drawTicks: false
                     }
                 }],
                 xAxes: [{
@@ -175,6 +193,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
             labels: [],
             datasets: [{
                 label: '',
+                yAxisID: 'cpu',
                 fill: false,
                 lineTension: 0.2,
                 backgroundColor: 'rgba(75,192,192,0.4)',
