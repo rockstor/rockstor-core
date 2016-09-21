@@ -340,8 +340,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     updateSwapChart: function(data) {
 
         var _this = this;
-        var swap_free = data.swap_free;
-        var swap_total = data.swap_total;
+        var swap_free = data.swap_free*1024;
+        var swap_total = data.swap_total*1024;
         var swap_used = swap_total - swap_free;
         var swap_used_per = (swap_used * 100 / swap_total).toFixed(2);
         var swap_label = 'Used ' + swap_used_per + ' % (' + humanize.filesize(swap_used) + ' / ' + humanize.filesize(swap_total) + ')';
