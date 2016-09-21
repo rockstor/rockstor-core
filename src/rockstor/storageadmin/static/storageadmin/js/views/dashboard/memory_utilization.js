@@ -24,16 +24,18 @@
  *
  */
 
-
 MemoryUtilizationWidget = RockStorWidgetView.extend({
 
-  initialize: function() {
-    RockStorSocket.memoryWidget = io.connect('/memory-widget', {'secure': true, 'force new connection': true});
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.dashboard_widgets_memory_utilization;
-	this.numSamples = 60;
-	this.modes = ['used', 'cached', 'buffers', 'free'];
-	this.colors = ['251, 106, 74', '252, 187, 61', '123, 204, 196', '204, 235, 197', '4, 214, 214'];
+    initialize: function() {
+        RockStorSocket.memoryWidget = io.connect('/memory-widget', {
+            'secure': true,
+            'force new connection': true
+        });
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.template = window.JST.dashboard_widgets_memory_utilization;
+        this.numSamples = 60;
+        this.modes = ['used', 'cached', 'buffers', 'free'];
+        this.colors = ['251, 106, 74', '252, 187, 61', '123, 204, 196', '204, 235, 197', '4, 214, 214'];
 
         //Chart.js Network Widget default options
         Chart.defaults.global.tooltips.enabled = false;
@@ -64,20 +66,20 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
                 labels: {
                     boxWidth: 10,
                     padding: 5,
-					fontSize: 10
+                    fontSize: 10
                 }
             },
             scales: {
                 yAxes: [{
-					id: 'memory',
+                    id: 'memory',
                     position: 'left',
-					stacked: true,
+                    stacked: true,
                     ticks: {
                         fontSize: 10,
                         beginAtZero: true,
                         min: 0,
-						max: 100,
-						stepSize: 50,
+                        max: 100,
+                        stepSize: 50,
                         callback: function(value) {
                             return value + ' %';
                         }
@@ -86,14 +88,14 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
                         drawTicks: false
                     }
                 }, {
-					id: 'empty',
+                    id: 'empty',
                     position: 'right',
                     ticks: {
                         fontSize: 9,
                         beginAtZero: true,
                         min: 0,
-						max: 100,
-						stepSize: 50,
+                        max: 100,
+                        stepSize: 50,
                         callback: function(value) {
                             return null;
                         }
@@ -101,7 +103,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
                     gridLines: {
                         drawTicks: false
                     }
-				}],
+                }],
                 xAxes: [{
                     scaleLabel: {
                         display: true,
@@ -111,7 +113,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
                     gridLines: {
                         display: false,
                         drawTicks: false,
-						tickMarkLength: 2
+                        tickMarkLength: 2
                     },
                     ticks: {
                         fontSize: 10,
@@ -129,36 +131,36 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
             labels: [],
             datasets: [{
                 label: this.modes[0],
-				yAxisID: 'memory',
-				fill: true,
+                yAxisID: 'memory',
+                fill: true,
                 backgroundColor: 'rgba(' + this.colors[0] + ', 1)',
                 borderColor: 'rgba(' + this.colors[0] + ', 1)',
                 data: []
             }, {
                 label: this.modes[1],
-				yAxisID: 'memory',
-				fill: true,
+                yAxisID: 'memory',
+                fill: true,
                 backgroundColor: 'rgba(' + this.colors[1] + ', 1)',
                 borderColor: 'rgba(' + this.colors[1] + ', 1)',
                 data: []
             }, {
                 label: this.modes[2],
-				yAxisID: 'memory',
-				fill: true,
+                yAxisID: 'memory',
+                fill: true,
                 backgroundColor: 'rgba(' + this.colors[2] + ', 1)',
                 borderColor: 'rgba(' + this.colors[2] + ', 1)',
                 data: []
             }, {
                 label: this.modes[3],
-				yAxisID: 'memory',
-				fill: true,
+                yAxisID: 'memory',
+                fill: true,
                 backgroundColor: 'rgba(' + this.colors[3] + ', 1)',
                 borderColor: 'rgba(' + this.colors[3] + ', 1)',
                 data: []
             }]
         };
-		
-		this.SwapChart = null;
+
+        this.SwapChart = null;
 
         this.SwapChartOptions = {
             title: {
@@ -173,7 +175,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
                 labels: {
                     boxWidth: 10,
                     padding: 5,
-					fontSize: 10
+                    fontSize: 10
                 }
             },
             tooltips: {
@@ -188,10 +190,10 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
                         }
                     },
                     gridLines: {
-						display: false,
-						zeroLineWidth: 0,
+                        display: false,
+                        zeroLineWidth: 0,
                         drawTicks: false,
-						padding: 0
+                        padding: 0
                     }
                 }],
                 xAxes: [{
@@ -203,32 +205,32 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
                     gridLines: {
                         display: false,
                         drawTicks: false,
-						tickMarkLength: 0
-					},
+                        tickMarkLength: 0
+                    },
                     ticks: {
                         fontSize: 10,
                         min: 0,
-						maxTicksLimit: 2,
+                        maxTicksLimit: 2,
                         autoSkip: false,
-						padding: 0,
-						callback: function(value) {
-							return (value > 0 ? humanize.filesize(value) : null);
-						}
+                        padding: 0,
+                        callback: function(value) {
+                            return (value > 0 ? humanize.filesize(value) : null);
+                        }
                     }
                 }]
             },
         };
 
-		this.SwapChartData = {
-			labels: [''],
-			datasets: [{
-				label: '',
-				backgroundColor: 'rgba(' + this.colors[4] + ', 0.2)',
-				borderColor: 'rgba(' + this.colors[4] + ', 1)',
-				data: [0]
-			}]
-		};
-		
+        this.SwapChartData = {
+            labels: [''],
+            datasets: [{
+                label: '',
+                backgroundColor: 'rgba(' + this.colors[4] + ', 0.2)',
+                borderColor: 'rgba(' + this.colors[4] + ', 1)',
+                data: [0]
+            }]
+        };
+
         this.margin = {
             top: 20,
             right: 20,
@@ -249,44 +251,45 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
             this.width = 250 - this.margin.left - this.margin.right;
             this.height = 100 - this.margin.top - this.margin.bottom;
         }
-  },
-
-      genMemoryInitData: function(data) {
-        var _this = this;
-		for (var i = 0; i < _this.numSamples; i++) {
-			_.each(_this.MemoryChartData.datasets, function (d){
-				d.data.push(0);
-			});
-			_this.MemoryChartData.labels.push('');
-		}
     },
 
-  render: function() {
+    render: function() {
 
-    this.constructor.__super__.render.apply(this, arguments);
-    $(this.el).html(this.template({
-      module_name: this.module_name,
-      displayName: this.displayName,
-	  maximized: this.maximized
-    }));
-	RockStorSocket.addListener(this.getData, this, 'memoryWidget:memory');
-    return this;
-  },
+        this.constructor.__super__.render.apply(this, arguments);
+        $(this.el).html(this.template({
+            module_name: this.module_name,
+            displayName: this.displayName,
+            maximized: this.maximized
+        }));
+        RockStorSocket.addListener(this.getData, this, 'memoryWidget:memory');
+        return this;
+    },
 
-getData: function(data) {
+    getData: function(data) {
 
-	var _this = this;
-	data = data.results[0];
+        var _this = this;
+        data = data.results[0];
         if (!_this.graphRendered) {
-			_this.genMemoryInitData(data);
+            _this.genMemoryInitData(data);
             _this.initGraph();
             _this.graphRendered = true;
         } else {
-			_this.updateMemoryChart(data);
-			_this.updateSwapChart(data);
-		}
-		
-},
+            _this.updateMemoryChart(data);
+            _this.updateSwapChart(data);
+        }
+
+    },
+
+    genMemoryInitData: function(data) {
+        var _this = this;
+        for (var i = 0; i < _this.numSamples; i++) {
+            _.each(_this.MemoryChartData.datasets, function(d) {
+                d.data.push(0);
+            });
+            _this.MemoryChartData.labels.push('');
+        }
+    },
+
     initGraph: function() {
 
         var _this = this;
@@ -303,73 +306,73 @@ getData: function(data) {
             options: _this.SwapChartOptions
         });
     },
-	
-	dataToPercent: function (data) {
 
-		var _this = this;
-		var newdata = [];
-		_.each(_this.modes, function(d) {
-			newdata.push(data[d]*100/data.total);
-		});
-		newdata[0] = 100 - newdata[1] - newdata[2] - newdata[3];
-		return newdata;
-	},
-	updateMemoryChart: function(data) {
+    dataToPercent: function(data) {
 
-		var _this = this;
-		var newMemoryvalues = _this.dataToPercent(data);
-		_.each(_this.modes, function(d, i){
-			_this.MemoryChartData.datasets[i].data.shift();
-			_this.MemoryChartData.datasets[i].data.push(newMemoryvalues[i]);
-			_this.MemoryChartData.datasets[i].label = d + ' ' + newMemoryvalues[i].toFixed(2) + ' %';
-		});
+        var _this = this;
+        var newdata = [];
+        _.each(_this.modes, function(d) {
+            newdata.push(data[d] * 100 / data.total);
+        });
+        newdata[0] = 100 - newdata[1] - newdata[2] - newdata[3];
+        return newdata;
+    },
+
+    updateMemoryChart: function(data) {
+
+        var _this = this;
+        var newMemoryvalues = _this.dataToPercent(data);
+        _.each(_this.modes, function(d, i) {
+            _this.MemoryChartData.datasets[i].data.shift();
+            _this.MemoryChartData.datasets[i].data.push(newMemoryvalues[i]);
+            _this.MemoryChartData.datasets[i].label = d + ' ' + newMemoryvalues[i].toFixed(2) + ' %';
+        });
         var csecs = moment(data.ts).format('s');
         var label = '';
         if (csecs % 15 === 0) {
             label = csecs == '0' ? moment(data.ts).format('HH:mm') : moment(data.ts).format(':ss');
         }
-		_this.MemoryChartData.labels.shift();
+        _this.MemoryChartData.labels.shift();
         _this.MemoryChartData.labels.push(label);
-		_this.MemoryChart.update();
-	},
-	
-	updateSwapChart: function(data) {
+        _this.MemoryChart.update();
+    },
 
-		var _this = this;
-		var swap_free = data.swap_free;
-		var swap_total = data.swap_total;
-		var swap_used = swap_total - swap_free;
-		var swap_used_per = (swap_used*100/swap_total).toFixed(2);
-		var swap_label = 'Used ' + swap_used_per + ' % (' + humanize.filesize(swap_used) + ' / ' + humanize.filesize(swap_total) + ')';
-		
-		_this.SwapChartData.datasets[0].data = [swap_used];
-		_this.SwapChartData.datasets[0].label = swap_label;
-		_this.SwapChart.config.options.scales.xAxes[0].ticks.max = swap_total;
-		_this.SwapChart.update();
-		
-		
-	},
+    updateSwapChart: function(data) {
 
-  cleanup: function() {
+        var _this = this;
+        var swap_free = data.swap_free;
+        var swap_total = data.swap_total;
+        var swap_used = swap_total - swap_free;
+        var swap_used_per = (swap_used * 100 / swap_total).toFixed(2);
+        var swap_label = 'Used ' + swap_used_per + ' % (' + humanize.filesize(swap_used) + ' / ' + humanize.filesize(swap_total) + ')';
 
-    RockStorSocket.removeOneListener('memoryWidget');
-  },
+        _this.SwapChartData.datasets[0].data = [swap_used];
+        _this.SwapChartData.datasets[0].label = swap_label;
+        _this.SwapChart.config.options.scales.xAxes[0].ticks.max = swap_total;
+        _this.SwapChart.update();
 
-  resize: function() {
+    },
 
-    this.constructor.__super__.resize.apply(this, arguments);
-    if (this.maximized) {
-      this.width = 500 - this.margin.left - this.margin.right;
-      this.height = 240 - this.margin.top - this.margin.bottom;
-    } else {
-      this.width = 250 - this.margin.left - this.margin.right;
-      this.height = 120 - this.margin.top - this.margin.bottom;
+    cleanup: function() {
+
+        RockStorSocket.removeOneListener('memoryWidget');
+    },
+
+    resize: function() {
+
+        this.constructor.__super__.resize.apply(this, arguments);
+        if (this.maximized) {
+            this.width = 500 - this.margin.left - this.margin.right;
+            this.height = 240 - this.margin.top - this.margin.bottom;
+        } else {
+            this.width = 250 - this.margin.left - this.margin.right;
+            this.height = 120 - this.margin.top - this.margin.bottom;
+        }
+
+        this.MemoryChart.resize();
+        this.SwapChart.resize();
+
     }
-
-	this.MemoryChart.resize();
-	this.SwapChart.resize();
-
-  }
 
 });
 
