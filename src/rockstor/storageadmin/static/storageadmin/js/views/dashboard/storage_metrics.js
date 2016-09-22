@@ -72,6 +72,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     },
 
     setData: function() {
+		console.log(this.shares);
         var gb = 1024*1024;
         this.raw = this.disks.reduce(function(sum, disk) {
             sum += disk.get('size');
@@ -88,8 +89,26 @@ StorageMetricsWidget = RockStorWidgetView.extend({
             return sum;
         }, 0);
         this.raidOverhead = this.provisioned - this.pool;
-        this.share = this.shares.reduce(function(sum, share) {
+        /*this.share = this.shares.reduce(function(sum, share) {
             sum += share.get('size');
+            return sum;
+        }, 0);*/
+		this.groupsharesbypool = this.shares.groupBy(function(model) {
+			return model.get('pool').name;
+			});
+		this.testshare = _.map(this.groupsharesbypool, function(val, key) {
+			  return { 
+				pool_name: key, 
+				pool_size: _.reduce(val, function(v,k) { 
+				return k.get('pool').size;
+				}, 0),
+				shares_size: _.reduce(val, function(v,k) { 
+				return v + k.get('size');
+				}, 0) 
+				};
+				});
+        this.share = this.testshare.reduce(function(sum, share) {
+            sum += share.shares_size < share.pool_size ? share.shares_size : share.pool_size;
             return sum;
         }, 0);
         this.usage = this.shares.reduce(function(sum, share) {
