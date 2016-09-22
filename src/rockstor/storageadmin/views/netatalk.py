@@ -83,8 +83,8 @@ class NetatalkDetailView(rfc.GenericView):
     def _refresh_and_reload(request):
         try:
             refresh_afp_config(list(NetatalkShare.objects.all()))
-            return systemctl('netatalk', 'reload')
-        except Exception, e:
+            return systemctl('netatalk', 'reload-or-restart')
+        except Exception as e:
             e_msg = ('Failed to reload Netatalk server. Exception: %s' % e.__str__())
             handle_exception(Exception(e_msg), request)
 
@@ -131,9 +131,9 @@ class NetatalkListView(rfc.GenericView):
                 if (not is_share_mounted(share.name)):
                     mount_share(share, mnt_pt)
             refresh_afp_config(list(NetatalkShare.objects.all()))
-            systemctl('netatalk', 'reload')
+            systemctl('netatalk', 'reload-or-restart')
             return Response()
         except RockStorAPIException:
             raise
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request)
