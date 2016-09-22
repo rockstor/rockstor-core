@@ -1,3 +1,4 @@
+
 /*
  *
  * @licstart  The following is the entire license notice for the
@@ -77,73 +78,73 @@ RockstorLayoutView = Backbone.View.extend({
 
 RockstorModuleView = Backbone.View.extend({
 
-    tagName: 'div',
-    className: 'module',
-    requestCount: 0,
+  tagName: 'div',
+  className: 'module',
+  requestCount: 0,
 
-    initialize: function() {
-  this.subviews = {};
-  this.dependencies = [];
-    },
+  initialize: function() {
+    this.subviews = {};
+    this.dependencies = [];
+  },
 
-    fetch: function(callback, context) {
-  var allDependencies = [];
-  _.each(this.dependencies, function(dep) {
+  fetch: function(callback, context) {
+    var allDependencies = [];
+    _.each(this.dependencies, function(dep) {
       allDependencies.push(dep.fetch({silent: true}));
-  });
-  $.when.apply($, allDependencies).done(function () {
+    });
+    $.when.apply($, allDependencies).done(function () {
       if (callback) callback.apply(context);
-  });
-    },
+    });
+  },
 
-    render: function() {
-  $(this.el).html(this.template({
+  render: function() {
+    $(this.el).html(this.template({
       module_name: this.module_name,
       model: this.model,
       collection: this.collection
-  }));
+    }));
 
-  return this;
-    }
+    return this;
+  }
 });
 
 RockStorWidgetView = Backbone.View.extend({
-    tagName: 'div',
-    className: 'widget',
+  tagName: 'div',
+  className: 'widget',
 
-    events: {
-  'click .configure-widget': 'configure',
-  'click .resize-widget': 'resize',
-  'click .close-widget': 'close',
-  'click .download-widget': 'download'
-    },
+  events: {
+    'click .configure-widget': 'configure',
+    'click .resize-widget': 'resize',
+    'click .close-widget': 'close',
+    'click .download-widget': 'download'
+  },
 
-    initialize: function() {
-  this.maximized = this.options.maximized;
-  this.name = this.options.name;
-  this.displayName = this.options.displayName;
-  this.parentView = this.options.parentView;
-  this.dependencies = [];
-    },
+  initialize: function() {
+    this.maximized = this.options.maximized;
+    this.name = this.options.name;
+    this.displayName = this.options.displayName;
+    this.parentView = this.options.parentView;
+    this.dependencies = [];
+  },
 
-    render: function() {
-  $(this.el).attr('id', this.name + '_widget');
-    },
+  render: function() {
+    $(this.el).attr('id', this.name + '_widget');
+  },
 
-    configure: function(event) {
-  if (!_.isUndefined(event) && !_.isNull(event)) {
+  configure: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
-  }
-    },
+    }
+  },
 
-    resize: function(event) {
-  if (!_.isUndefined(event) && !_.isNull(event)) {
+  resize: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
-  }
-  var c = $(this.el).closest('div.widgets-container');
-  var w = $(this.el).closest('div.widget-ph'); // current widget
-  var widgetDef = RockStorWidgets.findByName(this.name);
-  if (!this.maximized) {
+    }
+    var c = $(this.el).closest('div.widgets-container');
+    var w = $(this.el).closest('div.widget-ph'); // current widget
+    var widgetDef = RockStorWidgets.findByName(this.name);
+    if (!this.maximized) {
       // Maximizing
       // Remember current position
       this.originalPosition = w.index();
@@ -155,57 +156,57 @@ RockStorWidgetView = Backbone.View.extend({
       w.attr('data-ss-colspan',widgetDef.maxCols);
       w.attr('data-ss-rowspan',widgetDef.maxRows);
       this.maximized = true;
-  } else {
+    } else {
       // Restoring
       w.detach();
       w.attr('data-ss-colspan',widgetDef.cols);
       w.attr('data-ss-rowspan',widgetDef.rows);
       // find current list item at original index
       if (_.isNull(this.originalPosition) ||
-    _.isUndefined(this.originalPosition)) {
-    this.originalPosition = 0;
+          _.isUndefined(this.originalPosition)) {
+            this.originalPosition = 0;
       }
       curr_w = c.find("div.widget-ph:eq("+this.originalPosition+")");
       // insert widget at original position
       if (curr_w.length > 0) {
-    // if not last widget
-    curr_w.before(w);
+        // if not last widget
+        curr_w.before(w);
       } else {
-    c.append(w);
+        c.append(w);
       }
       this.maximized = false;
-  }
-  // trigger rearrange so shapeshift can do its job
-  c.trigger('ss-rearrange');
-  this.parentView.saveWidgetConfiguration();
-    },
-
-    close: function(event) {
-  if (!_.isUndefined(event) && !_.isNull(event)) {
-      event.preventDefault();
-  }
-  this.parentView.removeWidget(this.name, this);
-    },
-
-    download: function(event) {
-  if (!_.isUndefined(event) && !_.isNull(event)) {
-      event.preventDefault();
-  }
-    },
-
-    cleanup: function() {
-  logger.debug("In RockStorWidgetView close");
-    },
-
-    fetch: function(callback, context) {
-  var allDependencies = [];
-  _.each(this.dependencies, function(dep) {
-      allDependencies.push(dep.fetch({silent: true}));
-  });
-  $.when.apply($, allDependencies).done(function () {
-      if (callback) callback.apply(context);
-  });
     }
+    // trigger rearrange so shapeshift can do its job
+    c.trigger('ss-rearrange');
+    this.parentView.saveWidgetConfiguration();
+  },
+
+  close: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+    this.parentView.removeWidget(this.name, this);
+  },
+
+  download: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+  },
+
+  cleanup: function() {
+    logger.debug("In RockStorWidgetView close");
+  },
+
+  fetch: function(callback, context) {
+    var allDependencies = [];
+    _.each(this.dependencies, function(dep) {
+      allDependencies.push(dep.fetch({silent: true}));
+    });
+    $.when.apply($, allDependencies).done(function () {
+      if (callback) callback.apply(context);
+    });
+  }
 
 });
 
@@ -227,357 +228,357 @@ function getCookie(name) {
 }
 
 function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+  // these HTTP methods do not require CSRF protection
+  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
 $.ajaxSetup({
-    crossDomain: false, // obviates need for sameOrigin test
-    beforeSend: function(xhr, settings) {
-  if (!csrfSafeMethod(settings.type)) {
+  crossDomain: false, // obviates need for sameOrigin test
+  beforeSend: function(xhr, settings) {
+    if (!csrfSafeMethod(settings.type)) {
       var csrftoken = getCookie('csrftoken');
       xhr.setRequestHeader("X-CSRFToken", csrftoken);
-  }
     }
+  }
 });
 
 function showApplianceList() {
-    var applianceSelectPopup = $('#appliance-select-popup').modal({
-  show: false
-    });
-    $('#appliance-select-content').html((new AppliancesView()).render().el);
-    $('#appliance-select-popup').modal('show');
+  var applianceSelectPopup = $('#appliance-select-popup').modal({
+    show: false
+  });
+  $('#appliance-select-content').html((new AppliancesView()).render().el);
+  $('#appliance-select-popup').modal('show');
 
 }
 
 
 function showSuccessMessage(msg) {
-    $('#messages').html(msg);
-    $('#messages').css('visibility', 'visible');
+  $('#messages').html(msg);
+  $('#messages').css('visibility', 'visible');
 
 }
 
 function hideMessage() {
-    $('#messages').html('&nbsp;');
-    $('#messages').css('visibility', 'hidden');
+  $('#messages').html('&nbsp;');
+  $('#messages').css('visibility', 'hidden');
 
 }
 
 /* Loading indicator */
 
 $(document).ajaxStart(function() {
-    $('#loading-indicator').css('visibility', 'visible');
+  $('#loading-indicator').css('visibility', 'visible');
 });
 
 $(document).ajaxStop(function() {
-    $('#loading-indicator').css('visibility', 'hidden');
+  $('#loading-indicator').css('visibility', 'hidden');
 });
 
 
 function showLoadingIndicator(elementName, context) {
-    var _this = context;
-    _this.$('#'+elementName).css('visibility', 'visible');
+  var _this = context;
+  _this.$('#'+elementName).css('visibility', 'visible');
 }
 
 function hideLoadingIndicator(elementName, context) {
-    var _this = context;
-    _this.$('#'+elementName).css('visibility', 'hidden');
+  var _this = context;
+  _this.$('#'+elementName).css('visibility', 'hidden');
 }
 
 function disableButton(button) {
-    button.data("executing", true);
-    button.attr("disabled", true);
+  button.data("executing", true);
+  button.attr("disabled", true);
 }
 
 function enableButton(button) {
-    button.data("executing", false);
-    button.attr("disabled", false);
+  button.data("executing", false);
+  button.attr("disabled", false);
 }
 
 function buttonDisabled(button) {
-    if (button.data("executing")) {
-  return true;
-    } else {
-  return false;
-    }
+  if (button.data("executing")) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 
 function refreshNavbar() {
-    $.ajax({
-  url: "api/commands/current-user",
-  type: "POST",
-  dataType: "json",
-  global: false, // dont show global loading indicator
-  success: function(data, status, xhr) {
+  $.ajax({
+    url: "api/commands/current-user",
+    type: "POST",
+    dataType: "json",
+    global: false, // dont show global loading indicator
+    success: function(data, status, xhr) {
       var currentUser= data;
       $('#user-name').css({textTransform: 'none'});
       $('#user-name').html(currentUser+' ');
-  },
-  error: function(xhr, status, error) {
+    },
+    error: function(xhr, status, error) {
       //  $('#user-name').html("Hello, <b> Admin! </b>");
-  }
-    });
+    }
+  });
 
-    var navbarTemplate = window.JST.common_navbar;
-    $("#navbar-links").html(navbarTemplate({
-  logged_in: logged_in
+  var navbarTemplate = window.JST.common_navbar;
+  $("#navbar-links").html(navbarTemplate({
+    logged_in: logged_in
 
-    }));
+  }));
 
-    $('.dropdown-toggle').dropdown();
+  $('.dropdown-toggle').dropdown();
 }
 
 // Parses error message from ajax request
 // Returns the value of the detail attribute as json
 // or a string if it cannot be parsed as json
 function parseXhrError(xhr) {
-    var msg = xhr.responseText;
-    try {
-  msg = JSON.parse(msg).detail;
-    } catch(err) {
-    }
-    if (typeof(msg)=="string") {
+  var msg = xhr.responseText;
   try {
-      msg = JSON.parse(msg);
+    msg = JSON.parse(msg).detail;
   } catch(err) {
   }
+  if (typeof(msg)=="string") {
+    try {
+      msg = JSON.parse(msg);
+    } catch(err) {
     }
-    return msg;
+  }
+  return msg;
 }
 
 function getXhrErrorJson(xhr) {
-    var json = {};
-    try { json = JSON.parse(xhr.responseText); } catch(err) { }
-    return json;
+  var json = {};
+  try { json = JSON.parse(xhr.responseText); } catch(err) { }
+  return json;
 }
 
 function setApplianceName() {
-    var appliances = new ApplianceCollection();
-    appliances.fetch({
-  success: function(request) {
+  var appliances = new ApplianceCollection();
+  appliances.fetch({
+    success: function(request) {
       if (appliances.length > 0) {
-    RockStorGlobals.currentAppliance =
+        RockStorGlobals.currentAppliance =
         appliances.find(function(appliance) {
-      return appliance.get('current_appliance') == true;
+          return appliance.get('current_appliance') == true;
         });
-    $('#appliance-name').html('<i class="fa fa-desktop fa-inverse"></i>&nbsp;Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip'));
+        $('#appliance-name').html('<i class="fa fa-desktop fa-inverse"></i>&nbsp;Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip'));
       }
-  },
-  error: function(request, response) {
-  }
+    },
+    error: function(request, response) {
+    }
 
-    });
+  });
 }
 
 function fetchDependencies(dependencies, callback, context) {
-    if (dependencies.length == 0) {
-  if (callback) callback.apply(context);
-    }
-    var requestCount = dependencies.length;
-    _.each(dependencies, function(dependency) {
-  dependency.fetch({
+  if (dependencies.length == 0) {
+    if (callback) callback.apply(context);
+  }
+  var requestCount = dependencies.length;
+  _.each(dependencies, function(dependency) {
+    dependency.fetch({
       success: function(request){
-    requestCount -= 1;
-    if (requestCount == 0) {
-        if (callback) callback.apply(context);
-    }
+        requestCount -= 1;
+        if (requestCount == 0) {
+          if (callback) callback.apply(context);
+        }
       },
       error: function(request, response) {
-    requestCount -= 1;
-    if (requestCount == 0) {
-        if (callback) callback.apply(context);
-    }
+        requestCount -= 1;
+        if (requestCount == 0) {
+          if (callback) callback.apply(context);
+        }
       }
-  });
     });
+  });
 }
 
 function checkBrowser() {
-    var userAgent = navigator.userAgent;
-    if (!/firefox/i.test(userAgent) && !/chrome/i.test(userAgent)) {
-  $('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>The RockStor WebUI is supported only on Firefox or Chrome. Some features may not work correctly.</div>');
-    }
-    RockStorGlobals.browserChecked = true;
+  var userAgent = navigator.userAgent;
+  if (!/firefox/i.test(userAgent) && !/chrome/i.test(userAgent)) {
+    $('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>The RockStor WebUI is supported only on Firefox or Chrome. Some features may not work correctly.</div>');
+  }
+  RockStorGlobals.browserChecked = true;
 }
 
 RockStorProbeMap = [];
 RockStorGlobals = {
-    navbarLoaded: false,
-    applianceNameSet: false,
-    currentAppliance: null,
-    maxPageSize: 5000,
-    browserChecked: false,
-    kernel: null
+  navbarLoaded: false,
+  applianceNameSet: false,
+  currentAppliance: null,
+  maxPageSize: 5000,
+  browserChecked: false,
+  kernel: null
 }
 
 var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';
 
 // Constants
 probeStates = {
-    STOPPED: 'stopped',
-    CREATED: 'created',
-    RUNNING: 'running',
-    ERROR: 'error'
+  STOPPED: 'stopped',
+  CREATED: 'created',
+  RUNNING: 'running',
+  ERROR: 'error'
 };
 
 var RockstorUtil = function() {
-    var util = {
-  // maintain selected object list
-  // list is an array of contains models
+  var util = {
+    // maintain selected object list
+    // list is an array of contains models
 
-  // does the list contain a model with attr 'name' with value 'value'
-  listContains: function(list, name, value) {
+    // does the list contain a model with attr 'name' with value 'value'
+    listContains: function(list, name, value) {
       return _.find(list, function(obj) {
-    return obj.get(name) == value;
+        return obj.get(name) == value;
       });
-  },
+    },
 
-  // add obj from collection with attr 'name' and value 'value' to list
-  addToList: function(list, collection, name, value) {
+    // add obj from collection with attr 'name' and value 'value' to list
+    addToList: function(list, collection, name, value) {
       list.push(collection.find(function(obj) {
-    return obj.get(name) == value;
+        return obj.get(name) == value;
       }));
-  },
+    },
 
-  // remove obj with attr 'name' and value 'value'
-  removeFromList: function(list, name, value) {
+    // remove obj with attr 'name' and value 'value'
+    removeFromList: function(list, name, value) {
       var i = _.indexOf(_.map(list, function(obj) {
-    return obj.get(name);
+        return obj.get(name);
       }), value);
       if (i != -1) {
-    list.splice(i,1);
+        list.splice(i,1);
       }
-  }
-    };
-    return util;
+    }
+  };
+  return util;
 }();
 
 RockstorWizardPage = Backbone.View.extend({
 
-    initialize: function() {
-  this.evAgg = this.options.evAgg;
-  this.parent = this.options.parent;
-    },
+  initialize: function() {
+    this.evAgg = this.options.evAgg;
+    this.parent = this.options.parent;
+  },
 
-    render: function() {
-  $(this.el).html(this.template({
+  render: function() {
+    $(this.el).html(this.template({
       model: this.model
-  }));
-  return this;
-    },
+    }));
+    return this;
+  },
 
-    save: function() {
-  return $.Deferred().resolve();
-    }
+  save: function() {
+    return $.Deferred().resolve();
+  }
 });
 
 WizardView = Backbone.View.extend({
-    tagName: 'div',
+  tagName: 'div',
 
-    events: {
-  'click #next-page': 'nextPage',
-  'click #prev-page': 'prevPage'
-    },
+  events: {
+    'click #next-page': 'nextPage',
+    'click #prev-page': 'prevPage'
+  },
 
-    initialize: function() {
-  this.template = window.JST.wizard_wizard;
-  this.pages = null;
-  this.currentPage = null;
-  this.currentPageNum = -1;
-  this.contentEl = '#ph-wizard-contents';
-  this.evAgg = _.extend({}, Backbone.Events);
-  this.evAgg.bind('nextPage', this.nextPage, this);
-  this.evAgg.bind('prevPage', this.prevPage, this);
-  this.parent = this.options.parent;
-  this.title = this.options.title;
-    },
+  initialize: function() {
+    this.template = window.JST.wizard_wizard;
+    this.pages = null;
+    this.currentPage = null;
+    this.currentPageNum = -1;
+    this.contentEl = '#ph-wizard-contents';
+    this.evAgg = _.extend({}, Backbone.Events);
+    this.evAgg.bind('nextPage', this.nextPage, this);
+    this.evAgg.bind('prevPage', this.prevPage, this);
+    this.parent = this.options.parent;
+    this.title = this.options.title;
+  },
 
-    setPages: function(pages) {
-  this.pages = pages;
-    },
+  setPages: function(pages) {
+    this.pages = pages;
+  },
 
-    render: function() {
-  $(this.el).html(this.template({
+  render: function() {
+    $(this.el).html(this.template({
       title: this.title,
       model: this.model
-  }));
-  this.nextPage();
-  return this;
-    },
+    }));
+    this.nextPage();
+    return this;
+  },
 
-    nextPage: function() {
-  var _this = this;
-  var promise = !_.isNull(this.currentPage) ?
-    this.currentPage.save() :
-    $.Deferred().resolve();
-  promise.done(function(result, status, jqXHR) {
+  nextPage: function() {
+    var _this = this;
+    var promise = !_.isNull(this.currentPage) ?
+                  this.currentPage.save() :
+                  $.Deferred().resolve();
+    promise.done(function(result, status, jqXHR) {
       _this.incrementPage();
-  });
-  promise.fail(function(jqXHR, status, error) {
+    });
+    promise.fail(function(jqXHR, status, error) {
       console.log(error);
-  });
-    },
+    });
+  },
 
-    incrementPageNum: function() {
-  this.currentPageNum = this.currentPageNum + 1;
-    },
+  incrementPageNum: function() {
+    this.currentPageNum = this.currentPageNum + 1;
+  },
 
-    decrementPageNum: function() {
-  this.currentPageNum = this.currentPageNum - 1;
-    },
+  decrementPageNum: function() {
+    this.currentPageNum = this.currentPageNum - 1;
+  },
 
-    incrementPage: function() {
-  if (!this.lastPage()) {
+  incrementPage: function() {
+    if (!this.lastPage()) {
       this.incrementPageNum();
       this.setCurrentPage();
       this.renderCurrentPage();
-  } else {
+    } else {
       this.finish();
-  }
-    },
+    }
+  },
 
-    decrementPage: function() {
-  if (!this.firstPage()) {
+  decrementPage: function() {
+    if (!this.firstPage()) {
       this.decrementPageNum();
       this.setCurrentPage();
       this.renderCurrentPage();
-  }
-    },
+    }
+  },
 
-    setCurrentPage: function() {
-  this.currentPage = new this.pages[this.currentPageNum]({
+  setCurrentPage: function() {
+    this.currentPage = new this.pages[this.currentPageNum]({
       model: this.model,
       evAgg: this.evAgg
-  });
-    },
+    });
+  },
 
-    renderCurrentPage: function() {
-  this.$(this.contentEl).html(this.currentPage.render().el);
-  this.modifyButtonText();
-    },
+  renderCurrentPage: function() {
+    this.$(this.contentEl).html(this.currentPage.render().el);
+    this.modifyButtonText();
+  },
 
-    prevPage: function() {
-  this.decrementPage();
-    },
+  prevPage: function() {
+    this.decrementPage();
+  },
 
-    modifyButtonText: function() {
-  if (this.lastPage()) {
+  modifyButtonText: function() {
+    if (this.lastPage()) {
       this.$('#next-page').html('Finish');
-  } else {
+    } else {
       this.$('#next-page').html('Next');
-  }
-    },
-
-    firstPage: function() {
-  return (this.currentPageNum == 0);
-    },
-
-    lastPage: function() {
-  return (this.currentPageNum == (this.pages.length - 1));
-    },
-
-    finish: function() {
-  console.log('finish');
     }
+  },
+
+  firstPage: function() {
+    return (this.currentPageNum == 0);
+  },
+
+  lastPage: function() {
+    return (this.currentPageNum == (this.pages.length - 1));
+  },
+
+  finish: function() {
+    console.log('finish');
+  }
 });
