@@ -336,7 +336,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     Handlebars.registerHelper('getPoolCreationDate', function(date){
       return moment(date).format(RS_DATE_FORMAT);
     });
-    
+
     Handlebars.registerHelper('isPoolCompressionNone', function(compression,opts){
       if (compression == 'no') {
         return opts.fn(this);
@@ -347,14 +347,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     Handlebars.registerHelper('isMntOptionNone', function(mtOptions,opts){
       if (_.isUndefined(mtOptions) || _.isNull(mtOptions) || _.isEmpty(mtOptions)) {
         return opts.fn(this);
-      }  
+      }
       return opts.inverse(this);
     });
-    
+
     Handlebars.registerHelper('selectedCompressionOption', function(existingComp,c,opts){
       if (existingComp == c) {
         return opts.fn(this);
-      }  
+      }
       return opts.inverse(this);
     });
 
