@@ -27,6 +27,7 @@
 TopSharesWidget = RockStorWidgetView.extend({
 
     initialize: function() {
+
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.dashboard_widgets_top_shares;
@@ -81,7 +82,6 @@ TopSharesWidget = RockStorWidgetView.extend({
     renderTopShares: function() {
 
         var _this = this;
-
         _this.buildTitle();
         _.each(_this.data, function(d) {
             var html = _this.buildProgressbar();
@@ -113,7 +113,6 @@ TopSharesWidget = RockStorWidgetView.extend({
     buildProgressbar: function() {
 
         var _this = this;
-
         var percent_div = {
             class: 'pused',
             style: 'font-size: 10px; text-align: right; padding-right: 5px; display: table-cell; width: 50px; vertical-align: middle;'
