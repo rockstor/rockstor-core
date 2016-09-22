@@ -91,9 +91,10 @@ TopSharesWidget = RockStorWidgetView.extend({
         this.$('.pused').each(function(index) {
             $(this).text(_this.data[index].get('pUsed').toFixed(2) + '%');
         });
+		var truncate = _this.maximized ? 100 : 12;
         this.$('.progress-animate').each(function(index) {
             $(this).find('span')
-                .text(_this.data[index].get('name') +
+                .text(humanize.truncatechars(_this.data[index].get('name'), truncate) +
                     '(' + humanize.filesize(_this.data[index].get('rusage') * 1024) +
                     '/' + humanize.filesize(_this.data[index].get('size') * 1024) +
                     ')');
