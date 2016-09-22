@@ -33,6 +33,7 @@ SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
 SUPERVISORD_CONF = ('%s/etc/supervisord.conf' % settings.ROOT_DIR)
 NET = '/usr/bin/net'
+WBINFO = '/usr/bin/wbinfo'
 AFP_CONFIG = '/etc/netatalk/afp.conf'
 
 
@@ -48,7 +49,7 @@ def init_service_op(service_name, command, throw=True):
     """
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
                           'nslcd', 'netatalk', 'snmpd', 'docker', 'smartd',
-                          'nut-server', 'rockstor-bootstrap', 'rockstor')
+                          'shellinaboxd', 'nut-server', 'rockstor-bootstrap', 'rockstor')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
@@ -159,9 +160,18 @@ def service_status(service_name, config=None):
                            throw=False)
     elif (service_name == 'active-directory'):
         if (config is not None):
-            cmd = [NET, 'ads', 'status', '-U', config.get('username')]
-            return run_command(cmd, input=('%s\n' % config.get('password')),
-                               throw=False)
+            # 2 steps Active Directory status check
+            # First checks secret via rpc callable
+            # Second checks via auth for admin username
+            # If both give us 0 rc Active Directory is running
+            wbinfo_trust_cmd = [WBINFO, '-t', '--domain', config.get('domain')]
+            wbinfo_auth_credentials = '{}@{}%{}'.format(config.get('username'), config.get('domain'), config.get('password'))
+            wbinfo_auth_cmd = [WBINFO, '-a', wbinfo_auth_credentials, '--domain', config.get('domain')]
+            wbinfo_trust = run_command(wbinfo_trust_cmd, throw=False)
+            wbinfo_auth = run_command(wbinfo_auth_cmd, throw=False)
+            active_directory_rc = 0 if (wbinfo_trust[2] == 0 and wbinfo_auth[2] == 0) else 1
+            
+            return '', '', active_directory_rc
         # bootstrap switch subsystem interprets -1 as ON so returning 1 instead
         return '', '', 1
 

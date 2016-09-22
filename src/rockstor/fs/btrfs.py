@@ -99,7 +99,10 @@ def pool_raid(mnt_pt):
     for l in o:
         fields = l.split()
         if (len(fields) > 1):
-            raid_d[fields[0][:-1].lower()] = fields[1][:-1].lower()
+            block = fields[0][:-1].lower()
+            raid = fields[1][:-1].lower()
+            if not block in raid_d and raid is not 'DUP':
+                raid_d[block] = raid
     if (raid_d['metadata'] == 'single'):
         raid_d['data'] = raid_d['metadata']
     return raid_d
@@ -655,18 +658,41 @@ def update_quota(pool, qgroup, size_bytes):
 
 def share_usage(pool, share_id):
     """
-    for now, exclusive byte count
+    Return the sum of the qgroup sizes of this share and any child subvolumes
     """
+    # Obtain path to share in pool
     root_pool_mnt = mount_root(pool)
-    cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
+    cmd = [BTRFS, 'subvolume', 'list', root_pool_mnt]
     out, err, rc = run_command(cmd, log=True)
-    rusage = eusage = -1
+    short_id = share_id.split('/')[1]
+    share_dir = ''
     for line in out:
         fields = line.split()
-        if (len(fields) > 0 and fields[0] == share_id):
-            rusage = convert_to_kib(fields[-2])
-            eusage = convert_to_kib(fields[-2])
+        if (len(fields) > 0 and short_id in fields[1]):
+            share_dir = root_pool_mnt + '/' + fields[8]
             break
+
+    # Obtain list of child subvolume qgroups
+    cmd = [BTRFS, 'subvolume', 'list', '-o', share_dir]
+    out, err, rc = run_command(cmd, log=True)
+    qgroups = [short_id]
+    for line in out:
+        fields = line.split()
+        if (len(fields) > 0):
+            qgroups.append(fields[1])
+
+    # Sum qgroup sizes
+    cmd = [BTRFS, 'qgroup', 'show', share_dir]
+    out, err, rc = run_command(cmd, log=True)
+    rusage = eusage = 0
+    for line in out:
+        fields = line.split()
+        qgroup = []
+        if (len(fields) > 0 and '/' in fields[0]):
+            qgroup = fields[0].split('/')
+        if (len(qgroup) > 0 and qgroup[1] in qgroups):
+            rusage += convert_to_kib(fields[1])
+            eusage += convert_to_kib(fields[2])
     return (rusage, eusage)
 
 

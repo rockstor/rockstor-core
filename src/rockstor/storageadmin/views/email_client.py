@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
+import json
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (EmailClient, Appliance)
@@ -29,7 +30,7 @@ from shutil import move
 from tempfile import mkstemp
 from django.conf import settings
 from system.services import systemctl
-from system.email_util import send_test_email
+from system.email_util import send_test_email, test_smtp_auth
 import logging
 logger = logging.getLogger(__name__)
 
@@ -118,22 +119,36 @@ class EmailClientView(rfc.GenericView):
     def post(self, request, command=None):
         with self._handle_exception(request):
 
+            commands_list = ['send-test-email', 'check-smtp-auth']
             if (command is not None):
-                if (command != 'send-test-email'):
+                if (command not in commands_list):
                     e_msg = ('unknown command(%s) is not supported.' %
                              command)
                     handle_exception(Exception(e_msg), request)
+                    
+                if (command == 'send-test-email'):
+                    if (EmailClient.objects.count() == 0):
+                        e_msg = ('E-mail account must be setup first before test '
+                                 'e-mail could be sent')
+                        handle_exception(Exception(e_msg), request)
 
-                if (EmailClient.objects.count() == 0):
-                    e_msg = ('E-mail account must be setup first before test '
-                             'e-mail could be sent')
-                    handle_exception(Exception(e_msg), request)
-
-                eco = EmailClient.objects.all()[0]
-                subject = ('Test message from Rockstor. Appliance id: %s' %
-                           Appliance.objects.get(current_appliance=True).uuid)
-                send_test_email(eco, subject)
-                return Response()
+                    eco = EmailClient.objects.all()[0]
+                    subject = ('Test message from Rockstor. Appliance id: %s' %
+                               Appliance.objects.get(current_appliance=True).uuid)
+                    send_test_email(eco, subject)
+                    return Response()
+                    
+                elif (command == 'check-smtp-auth'):
+                    mail_auth = {}
+                    sender = request.data.get('sender')
+                    username = request.data.get('username')
+                    mail_auth['username'] = sender if not username else username 
+                    mail_auth['password'] = request.data.get('password')
+                    mail_auth['smtp_server'] = request.data.get('smtp_server')
+                    mail_auth['port'] = int(request.data.get('port', 587))
+                    
+                    return Response(json.dumps({'smtp_auth': test_smtp_auth(mail_auth)}), content_type="application/json")
+                    
 
             sender = request.data.get('sender')
             username = request.data.get('username') #collect new username field

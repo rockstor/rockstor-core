@@ -54,6 +54,7 @@ setup(
             'send-replica = scripts.scheduled_tasks.send_replica:main',
             'qgroup-test = scripts.qgroup_test:main',
             'mnt-share = scripts.mount_share:mount_share',
+            'delete-rockon = scripts.rockon_delete:delete_rockon',
         ],
     },
 

@@ -24,12 +24,12 @@
         <td><a href="#shares/{{this.name}}"><i class="glyphicon glyphicon-folder-open"></i>  {{this.name}}</a></td>
         <td>{{humanize_size this.size}}</td>
         <td>{{this.pool.name}}</td>
-        <td>{{humanize_size this.rusage}}
+        <td>{{humanize_size this.eusage}}
         <td>
         {{displayCompressionAlgo this.compression_algo this.name}}
         </td>
         <td><a id="delete_share_{{this.name}}" data-name="{{this.name}}" data-action="delete"
-        data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" data-usage="{{humanize_size this.rusage}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
+        data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" data-usage="{{humanize_size this.eusage}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
     </tr>
     {{/each}}
     </tbody>

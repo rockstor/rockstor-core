@@ -36,7 +36,7 @@
     <div class="form-group">
       <label class="col-sm-4 control-label">Sender email<span class="required"> *</span></label>
       <div class="col-sm-4">
-      <input class="form-control" type="text" id="sender" name="sender" {{add_email "email"}}>
+      <input class="form-control check-smtp-auth" type="email" id="sender" name="sender" {{add_email "email"}}>
       </div>
     </div>
 
@@ -51,28 +51,28 @@
     <div class="form-group">
       <label class="col-sm-4 control-label">Username<span class="required"> *</span></label>
       <div class="col-sm-4">
-      <input class="form-control" type="text" id="username" name="username" {{add_email "username"}} disabled="true">
+      <input class="form-control check-smtp-auth" type="text" id="username" name="username" {{add_email "username"}} disabled="true">
       </div>
     </div>
 
     <div class="form-group">
       <label class="col-sm-4 control-label">Password<span class="required"> *</span></label>
       <div class="col-sm-4">
-        <input class="form-control" type="password"  name="password" title="Password for the above email address">
+        <input class="form-control check-smtp-auth" type="password"  name="password" title="Password for the above email address">
       </div>
     </div>
 
     <div class="form-group">
       <label class="col-sm-4 control-label">SMTP Server<span class="required"> *</span></label>
       <div class="col-sm-4">
-      <input class="form-control" type="text" id="smtp_server" name="smtp_server" {{add_email "smtp"}}>
+      <input class="form-control check-smtp-auth" type="text" id="smtp_server" name="smtp_server" {{add_email "smtp"}}>
       </div>
     </div>
 
     <div class="form-group">
       <label class="col-sm-4 control-label">SMTP Port</label>
       <div class="col-sm-4">
-	<input class="form-control" type="text" id="port" name="port" {{add_email "port"}}>
+	<input class="form-control check-smtp-auth" type="text" id="port" name="port" {{add_email "port"}}>
       </div>
     </div>
 
@@ -94,11 +94,23 @@
     <div class="form-group">
       <div class="col-xs-8 col-xs-offset-4">
         <a id="cancel" class="btn btn-default">Cancel</a>
-        <input type="Submit" id="add-email" class="btn btn-primary" value="Submit"></input>
+        <input type="Submit" id="add-email" class="btn btn-primary" value="Submit"></input><br/><br/>
+		<button type="button" id="test-smtp" class="btn btn-primary">Test current SMTP params</button>
       </div>
     </div>
   </form>
+  <div class="alert alert-success auth-results" id="auth_success" style="display: none;">
+  <strong>SMTP Authentication was successful</strong> Save your settings
+  </div>
+  <div class="alert alert-danger auth-results" id="auth_failed" style="display: none;">
+  <strong>SMTP Authentication failed!</strong> Please update your settings before saving.
+  <br/>If using a Google account please remember to enable
+  <a target="_new" href="https://support.google.com/mail/answer/185833">App Passwords</a> after 
+  <a terget="_new" herf="https://support.google.com/accounts/answer/185839">Google 2-Step Verification</a> or
+  <a target="_new" href="https://support.google.com/a/answer/6260879">Allow less secure apps to access accounts</a>
+  </div>
 </div><!--panel-body-->
-</div><!--panel-default -->
 </div><!--col-md-8 -->
+</div><!--panel-default -->
 </div><!-- row-->
+
