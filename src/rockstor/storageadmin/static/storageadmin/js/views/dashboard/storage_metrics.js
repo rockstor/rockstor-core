@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@
 StorageMetricsWidget = RockStorWidgetView.extend({
 
     initialize: function() {
+
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.dashboard_widgets_storage_metrics;
@@ -51,9 +52,115 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         this.poolCapacity = 0;
         this.usage = 0;
         this.margin = {top: 0, right: 40, bottom: 20, left: 30};
+		this.colors = [{
+		    Used: '250, 198, 112',
+		    Allocated: '11, 214, 227',
+		    Provisioned: '145, 191, 242'
+		}, {
+		    Capacity: '250, 232, 202',
+		    'Raid Overhead': '176, 241, 245',
+		    Free: '228, 237, 247'
+		}];
+
+        //Chart.js Storage Metrics Widget default options
+        Chart.defaults.global.tooltips.enabled = false;
+
+		this.StorageMetricsChart = null;
+        this.StorageMetricsChartOptions = {
+            title: {
+                display: false,
+            },
+            showLines: false,
+            legend: {
+                display: false,
+                position: 'bottom',
+                labels: {
+                    boxWidth: 10,
+                    padding: 5,
+                    fontSize: 10
+                }
+            },
+            tooltips: {
+                enabled: false
+            },
+            scales: {
+                yAxes: [{
+					stacked: true,
+                    ticks: {
+                        fontSize: 9,
+						minRotation: 60
+                        },
+                    gridLines: {
+                        display: false,
+                        zeroLineWidth: 0,
+                        drawTicks: true,
+                        padding: 0
+                    }
+                }],
+                xAxes: [{
+					stacked: true,
+                    scaleLabel: {
+                        display: false,
+                        fontSize: 1,
+                        labelString: ''
+                    },
+                    gridLines: {
+                        display: false,
+                        drawTicks: false,
+                        tickMarkLength: 0
+                    },
+                    ticks: {
+                        fontSize: 10,
+                        min: 0,
+                        maxTicksLimit: 2,
+                        autoSkip: false,
+                        padding: 0,
+                        callback: function(value) {
+                            return (value > 0 ? humanize.filesize(value) : null);
+                        }
+                    }
+                }]
+            },
+        };
+
+		this.StorageMetricsChartData = {
+			labels: ['Shares', 'Pools', 'Disks'],
+			datasets:[{
+				fill: true,
+                backgroundColor: this.setColors(0, 0.8),
+                borderColor: this.setColors(0, 1),
+				data: []
+			}, {
+				fill: true,
+				backgroundColor: this.setColors(1, 0.8),
+				borderColor: this.setColors(1, 1),
+				data: []
+			}]
+		};
     },
 
+	setColors: function(index, alpha) {
+
+		var _this = this;
+		var color_array = [];
+		_.each(_this.colors[index], function(val){
+			color_array.push('rgba(' + val + ', ' + alpha + ')');
+	});
+		return color_array;
+	},
+
+    initGraph: function() {
+
+        var _this = this;
+
+        _this.StorageMetricsChart = new Chart(this.$('#metrics-chart'), {
+            type: 'horizontalBar',
+            data: _this.StorageMetricsChartData,
+            options: _this.StorageMetricsChartOptions
+        });
+    },
     render: function() {
+
         var _this = this;
         // call render of base
         this.constructor.__super__.render.apply(this, arguments);
@@ -72,85 +179,95 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     },
 
     setData: function() {
-		console.log(this.shares);
+
+		var _this = this;
+		console.log(_this.StorageMetricsChartData);
         var gb = 1024*1024;
-        this.raw = this.disks.reduce(function(sum, disk) {
+        _this.raw = this.disks.reduce(function(sum, disk) {
             sum += disk.get('size');
             return sum;
         }, 0);
-        this.provisioned = this.disks.reduce(function(sum, disk) {
+        _this.provisioned = _this.disks.reduce(function(sum, disk) {
             sum = disk.get('pool') != null ? sum + disk.get('size') : sum;
             return sum;
         }, 0);
-        this.free = this.raw - this.provisioned;
+        _this.free = _this.raw - _this.provisioned;
 
-        this.pool = this.pools.reduce(function(sum, pool) {
+        _this.pool = _this.pools.reduce(function(sum, pool) {
             sum += pool.get('size');
             return sum;
         }, 0);
-        this.raidOverhead = this.provisioned - this.pool;
-        /*this.share = this.shares.reduce(function(sum, share) {
-            sum += share.get('size');
-            return sum;
-        }, 0);*/
-		this.groupsharesbypool = this.shares.groupBy(function(model) {
-			return model.get('pool').name;
-			});
-		this.testshare = _.map(this.groupsharesbypool, function(val, key) {
-			  return { 
-				pool_name: key, 
-				pool_size: _.reduce(val, function(v,k) { 
-				return k.get('pool').size;
-				}, 0),
-				shares_size: _.reduce(val, function(v,k) { 
-				return v + k.get('size');
-				}, 0) 
-				};
-				});
-        this.share = this.testshare.reduce(function(sum, share) {
-            sum += share.shares_size < share.pool_size ? share.shares_size : share.pool_size;
-            return sum;
-        }, 0);
-        this.usage = this.shares.reduce(function(sum, share) {
+        _this.raidOverhead = _this.provisioned - _this.pool;
+		_this.share = _.map(_this.shares.groupBy(function(model) {
+		    return model.get('pool').name;
+		}), function(val, key) {
+		    return {
+		        pool_name: key,
+		        pool_size: _.reduce(val, function(v, k) {
+		            return k.get('pool').size;
+		        }, 0),
+		        shares_size: _.reduce(val, function(v, k) {
+		            return v + k.get('size');
+		        }, 0)
+		    };
+		}).reduce(function(sum, share) {
+		    sum += share.shares_size < share.pool_size ? share.shares_size : share.pool_size;
+		    return sum;
+		}, 0);
+        _this.usage = _this.shares.reduce(function(sum, share) {
             sum += share.get('rusage');
             return sum;
         }, 0);
-        this.pctUsed = parseFloat(((this.usage/this.raw).toFixed(0)) * 100);
+		
+		_this.sharesfree = _this.share - _this.usage;
+        _this.pctUsed = parseFloat(((_this.usage/_this.raw).toFixed(0)) * 100);
 
-        this.data = [
-            {name: 'used', label: 'Usage', value: this.usage},
-            {name: 'pool', label: 'Pool Capacity', value: this.poolCapacity},
-            {name: 'raw', label: 'Raw Capacity', value: this.raw}
+        _this.data = [
+            {name: 'used', label: 'Usage', value: _this.usage},
+            {name: 'pool', label: 'Pool Capacity', value: _this.poolCapacity},
+            {name: 'raw', label: 'Raw Capacity', value: _this.raw}
         ];
 
-        this.data1 = [
-            { name: 'share', label: 'Share Capacity', value: this.share },
-            { name: 'pool-provisioned', label: 'Provisioned', value: this.provisioned },
-            { name: 'raw', label: 'Raw Capacity', value: this.raw },
+        _this.data1 = [
+            { name: 'share', label: 'Share Capacity', value: _this.share },
+            { name: 'pool-provisioned', label: 'Provisioned', value: _this.provisioned },
+            { name: 'raw', label: 'Raw Capacity', value: _this.raw },
         ];
-        this.data2 = [
-            { name: 'usage', label: 'Usage', value: this.usage},
-            { name: 'pool', label: 'Pool Capacity', value: this.pool },
-            { name: 'provisioned', label: 'Provisioned', value: this.provisioned },
+
+        _this.data2 = [
+            { name: 'usage', label: 'Usage', value: _this.usage},
+            { name: 'pool', label: 'Pool Capacity', value: _this.pool },
+            { name: 'provisioned', label: 'Provisioned', value: _this.provisioned },
         ];
+		_this.updateStorageMetricsChart();
+		_this.initGraph();
 
     },
 
+	updateStorageMetricsChart: function() {
+		var _this = this;
+		_this.StorageMetricsChartData.datasets[0].data.push(_this.usage*1024, _this.pool*1024, _this.provisioned*1024);
+		_this.StorageMetricsChartData.datasets[1].data.push(_this.sharesfree*1024, _this.raidOverhead*1024, _this.free*1024);
+		_this.StorageMetricsChartOptions.scales.xAxes[0].ticks.max = _.max(_.union(_this.StorageMetricsChartData.datasets[0].data, _this.StorageMetricsChartData.datasets[1].data));
+	},
+	
     setDimensions: function() {
+
+		var _this = this;
         //this.graphWidth = this.maximized ? 500 : 250;
         //this.graphHeight = this.maximized ? 300 : 150;
-        this.barPadding = this.maximized ? 40 : 20;
-        this.barWidth = this.maximized ? 400 : 200;
-        if (this.maximized) {
-            this.width = 500 - this.margin.left - this.margin.right;
-            this.height = 500 - this.margin.top - this.margin.bottom;
+        _this.barPadding = _this.maximized ? 40 : 20;
+        _this.barWidth = _this.maximized ? 400 : 200;
+        if (_this.maximized) {
+            _this.width = 500 - _this.margin.left - _this.margin.right;
+            _this.height = 500 - _this.margin.top - _this.margin.bottom;
         } else {
-            this.width = 250 - this.margin.left - this.margin.right;
-            this.height = 190 - this.margin.top - this.margin.bottom;
+            _this.width = 250 - _this.margin.left - _this.margin.right;
+            _this.height = 190 - _this.margin.top - _this.margin.bottom;
         }
-        this.x = d3.scale.linear().domain([0,this.raw]).range([0, this.width]);
-        this.y = d3.scale.linear().domain([0, this.data1.length]).range([0, this.height]);
-        this.barHeight = (this.height / this.data1.length );
+        _this.x = d3.scale.linear().domain([0,_this.raw]).range([0, _this.width]);
+        _this.y = d3.scale.linear().domain([0, _this.data1.length]).range([0, _this.height]);
+        _this.barHeight = (_this.height / _this.data1.length );
     },
 
     setupSvg: function() {
