@@ -121,8 +121,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         qgroup_id = '0/na'
         if (snap_type == 'replication'):
             writable = False
-        add_snap(share.pool, share.subvol_name, snap_name, readonly=not
-                 writable)
+        add_snap(share.pool, share.subvol_name, snap_name, writable)
         snap_id = share_id(share.pool, snap_name)
         qgroup_id = ('0/%s' % snap_id)
         qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT, share.pool.name)))
