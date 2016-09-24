@@ -798,7 +798,6 @@ def scrub_status(pool):
 
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
-    logger.debug('START_BALANCE() called with mnt_pt=%s, force=%s, convert=%s' % (mnt_pt, force, convert))
     cmd = ['btrfs', 'balance', 'start', mnt_pt]
     # TODO: Confirm -f is doing what is intended, man states for reducing
     # TODO: metadata from say raid1 to single.
@@ -816,9 +815,6 @@ def start_balance(mnt_pt, force=False, convert=None):
         # This warning is now present in the Web-UI "Start a new balance"
         # button tooltip.
         cmd.insert(3, '--full-balance')
-    logger.debug('start_balance command=%s' % cmd)
-    # cmd=['btrfs', 'balance', 'start', u'/mnt2/raid5-pool']
-    #
     run_command(cmd)
 
 
@@ -830,14 +826,10 @@ def balance_status(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    logger.debug('balance_status called with pool object of name=%s' % pool.name)
     stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
-    logger.debug('run_command returned out=%s' % out)
-    logger.debug('run_command returned err=%s' % err)
-    logger.debug('run_command returned rc=%s' % rc)
     if (len(out) > 0):
         if (re.match('Balance', out[0]) is not None):
             if (re.search('cancel requested', out[0]) is not None):
@@ -860,7 +852,6 @@ def balance_status(pool):
         elif (re.match('No balance', out[0]) is not None):
             stats['status'] = 'finished'
             stats['percent_done'] = 100
-    logger.debug('balance_status() returning stats=%s' % stats)
     return stats
 
 
