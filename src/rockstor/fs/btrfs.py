@@ -501,7 +501,7 @@ def remove_snap(pool, share_name, snap_name):
 
 def add_snap_helper(orig, snap, writable):
     cmd = [BTRFS, 'subvolume', 'snapshot', orig, snap]
-    if (!writable):
+    if (not writable):
         cmd.insert(3, '-r')
     try:
         return run_command(cmd)
