@@ -854,15 +854,7 @@ def start_balance(mnt_pt, force=False, convert=None):
 
 
 def balance_status(pool):
-    """
-    Wrapper around btrfs balance status pool_mount_point to extract info about
-    the current status of a balance.
-    :param pool: pool object to query
-    :return: dictionary containing parsed info about the balance status,
-    ie indexed by 'status' and 'percent_done'.
-    """
     stats = {'status': 'unknown', }
-    # retrieve the root mount point of passed pool.
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
