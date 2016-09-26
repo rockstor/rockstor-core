@@ -44,6 +44,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         Chart.defaults.global.elements.line.borderDash = [];
         Chart.defaults.global.elements.line.borderDashOffset = 0.0;
         Chart.defaults.global.elements.line.borderWidth = 1;
+		Chart.defaults.global.elements.rectangle.borderWidth = 1;
         Chart.defaults.global.elements.line.borderJoinStyle = 'miter';
         Chart.defaults.global.elements.point.radius = 0;
         Chart.defaults.global.elements.point.hoverRadius = 0;
