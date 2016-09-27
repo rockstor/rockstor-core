@@ -32,6 +32,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.dashboard_widgets_storage_metrics;
+		this.legendTemplate = window.JST.dashboard_widgets_storage_metrics_legend;
         // Dependencies
         this.disks = new DiskCollection();
         this.pools = new PoolCollection();
@@ -42,16 +43,12 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         this.dependencies.push(this.disks);
         this.dependencies.push(this.pools);
         this.dependencies.push(this.shares);
-        // svg
-        this.svgEl = '#ph-metrics-viz';
-        this.svgLegendEl = '#ph-metrics-legend';
         // Metrics
         this.raw = 0; // raw storage capacity in GB
         this.allocated = 0;
         this.free = 0;
         this.poolCapacity = 0;
         this.usage = 0;
-        this.margin = {top: 0, right: 40, bottom: 20, left: 30};
 		this.colors = [{
 		    Used: '250, 198, 112',
 		    Allocated: '11, 214, 227',
@@ -64,6 +61,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
         //Chart.js Storage Metrics Widget default options
         Chart.defaults.global.tooltips.enabled = false;
+        Chart.defaults.global.elements.rectangle.borderWidth = 1;
 
 		this.StorageMetricsChart = null;
         this.StorageMetricsChartOptions = {
@@ -73,37 +71,54 @@ StorageMetricsWidget = RockStorWidgetView.extend({
             showLines: false,
             legend: {
                 display: false,
-                position: 'bottom',
-                labels: {
-                    boxWidth: 10,
-                    padding: 5,
-                    fontSize: 10
-                }
             },
             tooltips: {
                 enabled: false
             },
+			animation: {
+				duration: 1000,
+				onComplete: function() {
+					
+						var ctx = this.chart.ctx;
+		var font_size = 12;
+        ctx.font = Chart.helpers.fontString(font_size, 
+		Chart.defaults.global.defaultFontStyle, 
+		Chart.defaults.global.defaultFontFamily);
+                ctx.fillStyle = '#000000';
+        ctx.textBaseline = 'top';
+		_.each(this.data.datasets, function(dataset, index, datasets) {
+			ctx.textAlign = (index % 2 === 0) ? 'left' : 'right';
+			
+            for (var i = 0; i < dataset.data.length; i++) {
+                var model = dataset._meta[Object.keys(dataset._meta)[0]].data[i]._model;
+				var x_pos = (index % 2 === 0) ? model.base + 1 : model.x - 1;
+                var y_pos = (index % 2 === 0) ? model.y+model.height/2-font_size-2 : model.y-model.height/2+2;
+                var label = humanize.filesize(dataset.data[i]);
+				if (index % 2 === 0) {
+					var pct = datasets[0].data[i] * 100 / (datasets[0].data[i] + datasets[1].data[i]);
+					label += ' (' + pct.toFixed(2) + '%)';
+				}
+                ctx.fillText(label, x_pos, y_pos);
+            }
+        });
+				}
+			},
             scales: {
                 yAxes: [{
 					stacked: true,
                     ticks: {
                         fontSize: 9,
-						minRotation: 60
+						minRotation: 60,
                         },
                     gridLines: {
                         display: false,
                         zeroLineWidth: 0,
                         drawTicks: true,
-                        padding: 0
+						offsetGridLines: true
                     }
                 }],
                 xAxes: [{
 					stacked: true,
-                    scaleLabel: {
-                        display: false,
-                        fontSize: 1,
-                        labelString: ''
-                    },
                     gridLines: {
                         display: false,
                         drawTicks: false,
@@ -124,7 +139,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         };
 
 		this.StorageMetricsChartData = {
-			labels: ['Shares', 'Pools', 'Disks'],
+			//labels: ['Shares', 'Pools', 'Disks'],
+			labels: ['', '', ''],
 			datasets:[{
 				fill: true,
                 backgroundColor: this.setColors(0, 0.8),
@@ -159,6 +175,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
             options: _this.StorageMetricsChartOptions
         });
     },
+	
     render: function() {
 
         var _this = this;
@@ -171,9 +188,10 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         }));
         this.fetch(function() {
             _this.setData();
-            _this.setDimensions();
-            _this.setupSvg();
-            _this.renderMetrics();
+		_this.updateStorageMetricsChart();
+		_this.initGraph();
+			this.$('#metrics-legend').html(this.legendTemplate());
+			_this.genStorageMetricsChartLegend();
         }, this);
         return this;
     },
@@ -181,8 +199,6 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     setData: function() {
 
 		var _this = this;
-		console.log(_this.StorageMetricsChartData);
-        var gb = 1024*1024;
         _this.raw = this.disks.reduce(function(sum, disk) {
             sum += disk.get('size');
             return sum;
@@ -218,278 +234,42 @@ StorageMetricsWidget = RockStorWidgetView.extend({
             sum += share.get('rusage');
             return sum;
         }, 0);
-		
 		_this.sharesfree = _this.share - _this.usage;
-        _this.pctUsed = parseFloat(((_this.usage/_this.raw).toFixed(0)) * 100);
-
-        _this.data = [
-            {name: 'used', label: 'Usage', value: _this.usage},
-            {name: 'pool', label: 'Pool Capacity', value: _this.poolCapacity},
-            {name: 'raw', label: 'Raw Capacity', value: _this.raw}
-        ];
-
-        _this.data1 = [
-            { name: 'share', label: 'Share Capacity', value: _this.share },
-            { name: 'pool-provisioned', label: 'Provisioned', value: _this.provisioned },
-            { name: 'raw', label: 'Raw Capacity', value: _this.raw },
-        ];
-
-        _this.data2 = [
-            { name: 'usage', label: 'Usage', value: _this.usage},
-            { name: 'pool', label: 'Pool Capacity', value: _this.pool },
-            { name: 'provisioned', label: 'Provisioned', value: _this.provisioned },
-        ];
-		_this.updateStorageMetricsChart();
-		_this.initGraph();
+		
+		_this.data = [];
+		_this.data.push([_this.usage*1024, _this.pool*1024, _this.provisioned*1024]);
+		_this.data.push([_this.sharesfree*1024, _this.raidOverhead*1024, _this.free*1024]);
 
     },
 
 	updateStorageMetricsChart: function() {
+
 		var _this = this;
-		_this.StorageMetricsChartData.datasets[0].data.push(_this.usage*1024, _this.pool*1024, _this.provisioned*1024);
-		_this.StorageMetricsChartData.datasets[1].data.push(_this.sharesfree*1024, _this.raidOverhead*1024, _this.free*1024);
+		_.each(_this.data, function(dataset, index) {
+			_this.StorageMetricsChartData.datasets[index].data = dataset;
+		});		
 		_this.StorageMetricsChartOptions.scales.xAxes[0].ticks.max = _.max(_.union(_this.StorageMetricsChartData.datasets[0].data, _this.StorageMetricsChartData.datasets[1].data));
 	},
-	
-    setDimensions: function() {
 
-		var _this = this;
-        //this.graphWidth = this.maximized ? 500 : 250;
-        //this.graphHeight = this.maximized ? 300 : 150;
-        _this.barPadding = _this.maximized ? 40 : 20;
-        _this.barWidth = _this.maximized ? 400 : 200;
-        if (_this.maximized) {
-            _this.width = 500 - _this.margin.left - _this.margin.right;
-            _this.height = 500 - _this.margin.top - _this.margin.bottom;
-        } else {
-            _this.width = 250 - _this.margin.left - _this.margin.right;
-            _this.height = 190 - _this.margin.top - _this.margin.bottom;
-        }
-        _this.x = d3.scale.linear().domain([0,_this.raw]).range([0, _this.width]);
-        _this.y = d3.scale.linear().domain([0, _this.data1.length]).range([0, _this.height]);
-        _this.barHeight = (_this.height / _this.data1.length );
-    },
+    genStorageMetricsChartLegend: function() {
 
-    setupSvg: function() {
-        // svg for viz
-        this.$(this.svgEl).empty();
-        this.svg = d3.select(this.el).select(this.svgEl)
-            .append('svg')
-            .attr('class', 'metrics')
-            .attr('width', this.width + this.margin.left + this.margin.right)
-            .attr('height', this.height + this.margin.top + this.margin.bottom);
-        this.svgG = this.svg.append("g")
-            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
-
-        // svg for legend
-        this.$(this.svgLegendEl).empty();
-        this.svgLegend = d3.select(this.el).select(this.svgLegendEl)
-            .append('svg')
-            .attr('class', 'metrics-legend')
-            .attr('width', this.width + this.margin.left + this.margin.right)
-            .attr('height', 80);
-    },
-
-    renderMetrics: function() {
         var _this = this;
-
-        // tickValues(this.x.domain()) sets tick values at beginning and end of the scale
-        this.xAxis = d3.svg.axis().scale(this.x).orient('bottom').tickValues(_this.x.domain()).tickFormat(function(d) {
-            return humanize.filesize(d*1024);
+		var dataset = _this.StorageMetricsChartData.datasets;
+        _.each(_this.colors, function(color, index) {
+			_.each(_.keys(color), function(key, i){
+			var legend = ''
+            legend += '<span style="background-color: ' + dataset[index].backgroundColor[i] + '; ';
+            legend += 'border-style: solid; border-color: ' + dataset[index].borderColor[i] + '; ';
+            legend += 'border-width: 1px; display: inline; width: 10px; height: 10px; float: left; margin: 2px;"></span> ';
+            legend += key;
+			this.$('#metrics-legend table tr:eq(' + index + ') td:eq(' + i + ')').html(legend);
+			});
         });
-        this.yAxis = d3.svg.axis().scale(this.y).orient('left').tickValues([0,1,2]).tickFormat(function(d) {
-            if (d==0) {
-                return 'Shares';
-            } else if (d==1) {
-                return 'Pools';
-            } else if (d==2) {
-                return 'Disks';
-            }
-        });
-
-        this.svgG.append("g")
-            .attr("class", "metrics-axis")
-            .attr("transform", "translate(0," + _this.height + ")")
-            .call(this.xAxis);
-
-        // render data1
-        this.svgG.selectAll('metrics-rect1')
-            .data(this.data1)
-            .enter()
-            .append('rect')
-            .attr('class', function(d) {
-                return d.name;
-            })
-            .attr('x',0)
-            .attr('y', function(d,i) {
-                //return _this.y(i) + _this.barHeight/2 + _this.barPadding;
-                return _this.y(i);
-            })
-            .attr('width', function(d) { return _this.x(d.value); })
-            .attr('height', function() { return _this.barHeight-4; });
-
-        // render data2
-        this.svgG.selectAll('metrics-rect2')
-            .data(this.data2)
-            .enter()
-            .append('rect')
-            .attr('class', function(d) {
-                return d.name;
-            })
-            .attr('x',0)
-            .attr('y', function(d,i) {
-                return _this.y(i);
-            })
-            .attr('width', function(d) { return _this.x(d.value); })
-            .attr('height', function() { return _this.barHeight-4; });
-
-        // text labels
-        this.svgG.selectAll('metrics-text-data1')
-            .data(this.data1)
-            .enter()
-            .append('text')
-            .attr("class", "metrics-text-data1")
-            .attr('x', function(d){
-                var xOff = _this.x(d.value) - 4;
-                return (xOff > 0 ? xOff : 0);
-            })
-            .attr('y', function(d,i) {
-                return _this.y(i) + 12;
-            })
-            .style('text-anchor', function(d) {
-                var xOff = _this.x(d.value) - 4;
-                return (xOff > 30 ?  'end' : 'start');
-            })
-            .text(function(d,i) {
-                //return humanize.filesize(d.value*1024);
-                var tmp = d.value - _this.data2[i].value;
-                var pct = (tmp/d.value) * 100;
-                return humanize.filesize(tmp*1024);
-            });
-
-        // text labels
-        this.svgG.selectAll('metrics-text-data2')
-            .data(this.data2)
-            .enter()
-            .append('text')
-            .attr("class", "metrics-text-data1")
-            .attr('x', function(d){
-                return 4;
-            })
-            .attr('y', function(d,i) {
-                return _this.y(i) + _this.barHeight - 12;
-            })
-            .style('text-anchor', function(d) {
-                return 'start';
-            })
-            .text(function(d,i) {
-                var pct = (d.value/_this.data1[i].value)*100;
-                return humanize.filesize(d.value*1024) + ' (' + pct.toFixed() + '%)';
-            });
-
-        this.gDisk = this.svgLegend.append('g')
-            .attr('class', 'metrics-disk-legend');
-
-        var diskLabelData = [
-            {label: 'Provisioned', fill: '#91BFF2'},
-            {label: 'Free', fill: '#E4EDF7'},
-        ];
-
-        var poolLabelData = [
-            {label: 'Capacity', fill: '#0BD6E3'},
-            {label: 'Raid overhead', fill: '#B0F1F5'},
-        ];
-
-        var shareLabelData = [
-            {label: 'Capacity', fill: '#FAE8CA'},
-            {label: 'Used', fill: '#FAC670'},
-        ];
-
-        var diskLabels = this.gDisk.selectAll('legend-disk')
-            .data(diskLabelData)
-            .enter();
-
-        var diskLabelG = diskLabels.append('g')
-            .attr("transform", function(d,i) {
-                return "translate(0, " + (i*14) + ")";
-            });
-
-        diskLabelG.append("rect")
-            .attr("width", 13)
-            .attr("height", 13)
-            .attr("fill", function(d) { return d.fill;});
-
-        diskLabelG.append("text")
-            .attr("text-anchor", "left")
-            .attr("class", "metrics-legend-text")
-            .attr("transform", function(d,i) {
-                return "translate(16,12)";
-            })
-            .text(function(d) { return d.label;});
-
-        var poolLabels = this.gDisk.selectAll('legend-pool')
-            .data(poolLabelData)
-            .enter();
-
-        var poolLabelG = poolLabels.append('g')
-            .attr("transform", function(d,i) {
-                return "translate(75, " + (i*14) + ")";
-            });
-
-        poolLabelG.append("rect")
-            .attr("width", 13)
-            .attr("height", 13)
-            .attr("fill", function(d) { return d.fill;});
-
-        poolLabelG.append("text")
-            .attr("text-anchor", "left")
-            .attr("class", "metrics-legend-text")
-            .attr("transform", function(d,i) {
-                return "translate(16,12)";
-            })
-            .text(function(d) { return d.label;});
-
-        var shareLabels = this.gDisk.selectAll('legend-share')
-            .data(shareLabelData)
-            .enter();
-
-        var shareLabelG = shareLabels.append('g')
-            .attr("transform", function(d,i) {
-                return "translate(160, " + (i*14) + ")";
-            });
-
-        shareLabelG.append("rect")
-            .attr("width", 13)
-            .attr("height", 13)
-            .attr("fill", function(d) { return d.fill;});
-
-        shareLabelG.append("text")
-            .attr("text-anchor", "left")
-            .attr("class", "metrics-legend-text")
-            .attr("transform", function(d,i) {
-                return "translate(16,12)"
-            })
-            .text(function(d) { return d.label;});
-
-        // draw y axis last so that it is above all rects
-        this.svgG.append("g")
-            .attr("class", "metrics-axis")
-            .call(this.yAxis)
-            .selectAll("text")
-            .style("text-anchor", "end")
-            .attr("transform", function(d) {
-                return "rotate(-90)";
-            })
-            .attr("dx", "-.4em")
-            .attr("dy", "-.30em");
-
     },
 
     resize: function(event) {
         this.constructor.__super__.resize.apply(this, arguments);
-        this.setDimensions();
-        this.setupSvg();
-        this.renderMetrics();
+		this.StorageMetricsChart.resize();
     }
 
 });
