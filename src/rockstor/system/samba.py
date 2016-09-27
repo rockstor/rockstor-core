@@ -32,6 +32,7 @@ SMB_CONFIG = '/etc/samba/smb.conf'
 SYSTEMCTL = '/usr/bin/systemctl'
 CHMOD = '/bin/chmod'
 RS_HEADER = '####BEGIN: Rockstor SAMBA CONFIG####'
+RS_AD_HEADER = '####BEGIN: Rockstor ACTIVE DIRECTORY CONFIG####'
 
 
 def test_parm(config='/etc/samba/smb.conf'):
@@ -115,6 +116,7 @@ def update_global_config(smb_config=None, ad_config=None):
         if (domain is not None):
             idmap_high = int(smb_config['idmap_range'].split()[2])
             default_range = '%s - %s' % (idmap_high + 1, idmap_high + 1000000)
+            tfo.write('%s\n' % RS_AD_HEADER)
             tfo.write('    security = ads\n')
             tfo.write('    realm = %s\n' % domain)
             tfo.write('    template shell = /bin/sh\n')
@@ -137,6 +139,7 @@ def update_global_config(smb_config=None, ad_config=None):
             else:
                 tfo.write('    idmap config %s : backend = rid\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' % (workgroup, smb_config['idmap_range']))
+            tfo.write('####END: Rockstor ACTIVE DIRECTORY CONFIG####\n')
         smb_config.pop('idmap_range', None)
         tfo.write('    log level = %s\n' % smb_config.pop('log level', 3))
         tfo.write('    load printers = %s\n' % smb_config.pop('load printers', 'no'))
