@@ -24,7 +24,6 @@
  *
  */
 
-
 StorageMetricsWidget = RockStorWidgetView.extend({
 
     initialize: function() {
@@ -49,6 +48,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         this.free = 0;
         this.poolCapacity = 0;
         this.usage = 0;
+		this.data = [];
 		this.colors = [{
 		    Used: '250, 198, 112',
 		    Allocated: '11, 214, 227',
@@ -81,6 +81,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 					
 						var ctx = this.chart.ctx;
 		var font_size = 12;
+		var labels = ['Shares', 'Pools', 'Disks'];
         ctx.font = Chart.helpers.fontString(font_size, 
 		Chart.defaults.global.defaultFontStyle, 
 		Chart.defaults.global.defaultFontFamily);
@@ -97,8 +98,15 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 				if (index % 2 === 0) {
 					var pct = datasets[0].data[i] * 100 / (datasets[0].data[i] + datasets[1].data[i]);
 					label += ' (' + pct.toFixed(2) + '%)';
+				ctx.save();
+				ctx.textAlign = 'center';
+				ctx.translate(model.base - font_size, model.y);
+				ctx.rotate(-0.5 * Math.PI);
+				ctx.fillText(labels[i], 0, 0);
+				ctx.restore();
 				}
                 ctx.fillText(label, x_pos, y_pos);
+
             }
         });
 				}
@@ -139,7 +147,6 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         };
 
 		this.StorageMetricsChartData = {
-			//labels: ['Shares', 'Pools', 'Disks'],
 			labels: ['', '', ''],
 			datasets:[{
 				fill: true,
@@ -168,7 +175,6 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     initGraph: function() {
 
         var _this = this;
-
         _this.StorageMetricsChart = new Chart(this.$('#metrics-chart'), {
             type: 'horizontalBar',
             data: _this.StorageMetricsChartData,
@@ -179,7 +185,6 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     render: function() {
 
         var _this = this;
-        // call render of base
         this.constructor.__super__.render.apply(this, arguments);
         $(this.el).html(this.template({
             module_name: this.module_name,
@@ -236,7 +241,6 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         }, 0);
 		_this.sharesfree = _this.share - _this.usage;
 		
-		_this.data = [];
 		_this.data.push([_this.usage*1024, _this.pool*1024, _this.provisioned*1024]);
 		_this.data.push([_this.sharesfree*1024, _this.raidOverhead*1024, _this.free*1024]);
 
@@ -268,6 +272,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     },
 
     resize: function(event) {
+
         this.constructor.__super__.resize.apply(this, arguments);
 		this.StorageMetricsChart.resize();
     }
