@@ -499,9 +499,9 @@ def remove_snap(pool, share_name, snap_name):
                 return run_command([BTRFS, 'subvolume', 'delete', snap], log=True)
 
 
-def add_snap_helper(orig, snap, readonly=False):
+def add_snap_helper(orig, snap, writable):
     cmd = [BTRFS, 'subvolume', 'snapshot', orig, snap]
-    if (readonly):
+    if (not writable):
         cmd.insert(3, '-r')
     try:
         return run_command(cmd)
@@ -524,10 +524,10 @@ def add_clone(pool, share, clone, snapshot=None):
     else:
         orig_path = ('%s/%s' % (orig_path, share))
     clone_path = ('%s/%s' % (pool_mnt, clone))
-    return add_snap_helper(orig_path, clone_path)
+    return add_snap_helper(orig_path, clone_path, True)
 
 
-def add_snap(pool, share_name, snap_name, readonly=False):
+def add_snap(pool, share_name, snap_name, writable):
     """
     create a snapshot
     """
@@ -536,7 +536,7 @@ def add_snap(pool, share_name, snap_name, readonly=False):
     snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
     create_tmp_dir(snap_dir)
     snap_full_path = ('%s/%s' % (snap_dir, snap_name))
-    return add_snap_helper(share_full_path, snap_full_path, readonly)
+    return add_snap_helper(share_full_path, snap_full_path, writable)
 
 
 def rollback_snap(snap_name, sname, subvol_name, pool):

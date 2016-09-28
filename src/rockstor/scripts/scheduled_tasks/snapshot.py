@@ -51,6 +51,8 @@ def validate_snap_meta(meta):
         raise Exception('max_count must atleast be 1, not %d' % max_count)
     if ('visible' not in meta or type(meta['visible']) != bool):
         meta['visible'] = False
+    if ('writable' not in meta or type(meta['writable']) != bool):
+        meta['writable'] = False
     return meta
 
 
@@ -100,7 +102,8 @@ def main():
             #runaway snapshot creation beyond max_count+1.
             if(delete(aw, share, stype, prefix, max_count)):
                 data = {'snap_type': stype,
-                        'uvisible': meta['visible'], }
+                        'uvisible': meta['visible'],
+                        'writable': meta['writable'], }
                 headers = {'content-type': 'application/json'}
                 aw.api_call(url, data=data, calltype='post', headers=headers, save_error=False)
                 logger.debug('created snapshot at %s' % url)
