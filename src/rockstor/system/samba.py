@@ -130,7 +130,7 @@ def update_global_config(smb_config=None, ad_config=None):
                 tfo.write('    %s = %s\n' % (k, smb_config[k]))
             tfo.write('%s\n\n' % RS_CUSTOM_FOOTER)
 
-        #finally add AD config to smb_config and build AD section
+        #Next add AD config to smb_config and build AD section
         if (ad_config is not None):
             smb_config.update(ad_config)
 
@@ -165,8 +165,8 @@ def update_global_config(smb_config=None, ad_config=None):
                 tfo.write('    idmap config %s : range = %s\n' % (workgroup, smb_config['idmap_range']))
             tfo.write('%s\n\n' % RS_AD_FOOTER)
 
-
-
+        #After default [global], custom [global] and AD writes
+        #finally add smb shares
         rockstor_section = False
         for line in sfo.readlines():
             if (re.match(RS_SHARES_HEADER, line) is not None):
@@ -182,12 +182,22 @@ def get_global_config():
         global_section = False
         global_custom_section = False
         for l in sfo.readlines():
+            #Check one, entering smb.conf [global] section
             if (re.match('\[global]', l) is not None):
                 global_section = True
+                continue
+            #Check two, entering Rockstor custome params section under [global] 
+            if (re.match(RS_CUSTOM_HEADER, l) is not None):
+                global_custom_section = True
+                continue
+            if (global_custom_section and
+                re.match(RS_CUSTOM_FOOTER, l) is not None):
+                global_custom_section = False
                 continue
             #we ignore lines outside [global], empty lines, or
             #commends(starting with # or ;)
             if (not global_section or
+                not global_custom_section or
                 len(l.strip()) == 0 or
                 re.match('#', l) is not None or
                 re.match(';', l) is not None):
