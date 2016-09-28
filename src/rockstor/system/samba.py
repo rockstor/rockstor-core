@@ -31,9 +31,12 @@ TESTPARM = '/usr/bin/testparm'
 SMB_CONFIG = '/etc/samba/smb.conf'
 SYSTEMCTL = '/usr/bin/systemctl'
 CHMOD = '/bin/chmod'
-RS_HEADER = '####BEGIN: Rockstor SAMBA CONFIG####'
+RS_SHARES_HEADER = '####BEGIN: Rockstor SAMBA CONFIG####'
+RS_SHARES_FOOTER = '####END: Rockstor SAMBA CONFIG####'
 RS_AD_HEADER = '####BEGIN: Rockstor ACTIVE DIRECTORY CONFIG####'
-
+RS_AD_FOOTER = '####BEGIN: Rockstor ACTIVE DIRECTORY CONFIG####'
+RS_CUSTOM_HEADER = '####BEGIN: Rockstor SAMBA GLOBAL CUSTOM####'
+RS_CUSTOM_FOOTER = '####END: Rockstor SAMBA GLOBAL CUSTOM####'
 
 def test_parm(config='/etc/samba/smb.conf'):
     cmd = [TESTPARM, '-s', config]
@@ -51,7 +54,7 @@ def test_parm(config='/etc/samba/smb.conf'):
 
 def rockstor_smb_config(fo, exports):
     mnt_helper = os.path.join(settings.ROOT_DIR, 'bin/mnt-share')
-    fo.write('%s\n' % RS_HEADER)
+    fo.write('%s\n' % RS_SHARES_HEADER)
     for e in exports:
         admin_users = ''
         for au in e.admin_users.all():
@@ -77,15 +80,14 @@ def rockstor_smb_config(fo, exports):
         for cco in SambaCustomConfig.objects.filter(smb_share=e):
             if (cco.custom_config.strip()):
                     fo.write('    %s\n' % cco.custom_config)
-    fo.write('####END: Rockstor SAMBA CONFIG####\n')
-
+    fo.write('%s\n' % RS_SHARES_FOOTER)
 
 def refresh_smb_config(exports):
     fh, npath = mkstemp()
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         rockstor_section = False
         for line in sfo.readlines():
-            if (re.match(RS_HEADER, line)
+            if (re.match(RS_SHARES_HEADER, line)
                 is not None):
                 rockstor_section = True
                 rockstor_smb_config(tfo, exports)
@@ -103,20 +105,42 @@ def update_global_config(smb_config=None, ad_config=None):
     fh, npath = mkstemp()
     if (smb_config is None):
         smb_config = {}
-    if (ad_config is not None):
-        smb_config.update(ad_config)
 
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
+        #Start building samba [global] section with base config
         tfo.write('[global]\n')
-        workgroup = smb_config.pop('workgroup', 'MYGROUP')
-        tfo.write('    workgroup = %s\n' % workgroup)
+        
+        #Write some defaults samba values
         logfile = smb_config.pop('log file', '/var/log/samba/log.%m')
         tfo.write('    log file = %s\n' % logfile)
+        tfo.write('    log level = %s\n' % smb_config.pop('log level', 3))
+        tfo.write('    load printers = %s\n' % smb_config.pop('load printers', 'no'))
+        tfo.write('    cups options = %s\n' % smb_config.pop('cups options', 'raw'))
+        tfo.write('    printcap name = %s\n' % smb_config.pop('printcap name', '/dev/null'))
+        tfo.write('    map to guest = %s\n\n' % smb_config.pop('map to guest', 'Bad User'))
+
+        #Fill samba [global] section with our custom samba params
+        #before updating smb_config dict with AD data to avoid
+        #adding non samba params like AD username and password
+        if (smb_config is not None):
+            tfo.write('%s\n' % RS_CUSTOM_HEADER)
+            for k in smb_config:
+                if (ad_config is not None and k == 'workgroup'):
+                    continue
+                tfo.write('    %s = %s\n' % (k, smb_config[k]))
+            tfo.write('%s\n\n' % RS_CUSTOM_FOOTER)
+
+        #finally add AD config to smb_config and build AD section
+        if (ad_config is not None):
+            smb_config.update(ad_config)
+
         domain = smb_config.pop('domain', None)
         if (domain is not None):
             idmap_high = int(smb_config['idmap_range'].split()[2])
             default_range = '%s - %s' % (idmap_high + 1, idmap_high + 1000000)
+            workgroup = smb_config.pop('workgroup', 'MYGROUP')
             tfo.write('%s\n' % RS_AD_HEADER)
+            tfo.write('    workgroup = %s\n' % workgroup)
             tfo.write('    security = ads\n')
             tfo.write('    realm = %s\n' % domain)
             tfo.write('    template shell = /bin/sh\n')
@@ -139,21 +163,13 @@ def update_global_config(smb_config=None, ad_config=None):
             else:
                 tfo.write('    idmap config %s : backend = rid\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' % (workgroup, smb_config['idmap_range']))
-            tfo.write('####END: Rockstor ACTIVE DIRECTORY CONFIG####\n')
-        smb_config.pop('idmap_range', None)
-        tfo.write('    log level = %s\n' % smb_config.pop('log level', 3))
-        tfo.write('    load printers = %s\n' % smb_config.pop('load printers', 'no'))
-        tfo.write('    cups options = %s\n' % smb_config.pop('cups options', 'raw'))
-        tfo.write('    printcap name = %s\n' % smb_config.pop('printcap name', '/dev/null'))
-        tfo.write('    map to guest = %s\n' % smb_config.pop('map to guest', 'Bad User'))
+            tfo.write('%s\n\n' % RS_AD_FOOTER)
 
-        #iterate over remaining k,v pairs and write them to the [global] section.
-        for k in smb_config:
-            tfo.write('    %s = %s\n' % (k, smb_config[k]))
+
 
         rockstor_section = False
         for line in sfo.readlines():
-            if (re.match(RS_HEADER, line) is not None):
+            if (re.match(RS_SHARES_HEADER, line) is not None):
                 rockstor_section = True
             if (rockstor_section is True):
                 tfo.write(line)
@@ -164,6 +180,7 @@ def get_global_config():
     config = {}
     with open(SMB_CONFIG) as sfo:
         global_section = False
+        global_custom_section = False
         for l in sfo.readlines():
             if (re.match('\[global]', l) is not None):
                 global_section = True
