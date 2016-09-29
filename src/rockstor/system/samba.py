@@ -126,6 +126,7 @@ def update_global_config(smb_config=None, ad_config=None):
             tfo.write('%s\n' % RS_CUSTOM_HEADER)
             for k in smb_config:
                 if (ad_config is not None and k == 'workgroup'):
+                    tfo.write('    %s = %s\n' % (k, ad_config[k]))
                     continue
                 tfo.write('    %s = %s\n' % (k, smb_config[k]))
             tfo.write('%s\n\n' % RS_CUSTOM_FOOTER)
@@ -138,9 +139,8 @@ def update_global_config(smb_config=None, ad_config=None):
         if (domain is not None):
             idmap_high = int(smb_config['idmap_range'].split()[2])
             default_range = '%s - %s' % (idmap_high + 1, idmap_high + 1000000)
-            workgroup = smb_config.pop('workgroup', 'MYGROUP')
+            workgroup = ad_config['workgroup']
             tfo.write('%s\n' % RS_AD_HEADER)
-            tfo.write('    workgroup = %s\n' % workgroup)
             tfo.write('    security = ads\n')
             tfo.write('    realm = %s\n' % domain)
             tfo.write('    template shell = /bin/sh\n')

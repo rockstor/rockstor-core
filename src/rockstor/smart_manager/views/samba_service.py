@@ -70,11 +70,14 @@ class SambaServiceView(BaseServiceDetailView):
                 #else AD not running and leave workgroup to one choosen by user
                 adso = Service.objects.get(name='active-directory')
                 adconfig = {}
+                adso_status = 1
                 if (adso.config is not None):
                     adconfig = self._get_config(adso)
                     adso_out, adso_err, adso_status = service_status('active-directory', adconfig)
                     if adso_status == 0:
                         global_config['workgroup'] = adconfig['workgroup']
+                    else:
+                        adconfig = None
 
                 self._save_config(service, global_config)
                 update_global_config(global_config, adconfig)
