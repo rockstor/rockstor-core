@@ -110,20 +110,25 @@ def update_global_config(smb_config=None, ad_config=None):
         #Start building samba [global] section with base config
         tfo.write('[global]\n')
         
-        #Write some defaults samba values
-        logfile = smb_config.pop('log file', '/var/log/samba/log.%m')
-        tfo.write('    log file = %s\n' % logfile)
-        tfo.write('    log level = %s\n' % smb_config.pop('log level', 3))
-        tfo.write('    load printers = %s\n' % smb_config.pop('load printers', 'no'))
-        tfo.write('    cups options = %s\n' % smb_config.pop('cups options', 'raw'))
-        tfo.write('    printcap name = %s\n' % smb_config.pop('printcap name', '/dev/null'))
-        tfo.write('    map to guest = %s\n\n' % smb_config.pop('map to guest', 'Bad User'))
+        #Write some defaults samba params
+        #only if not passed via samba custom config
+        smb_default_options = {
+            'log file' : '/var/log/samba/log.%m',
+            'log level' : 3,
+            'load printers' : 'no',
+            'cups options' : 'raw',
+            'printcap name' : '/dev/null',
+            'map to guest' : 'Bad User'
+        }
+        for key, value in smb_default_options.iteritems():
+            if key not in smb_config:
+                tfo.write('    %s = %s\n' % (key, value))
 
         #Fill samba [global] section with our custom samba params
         #before updating smb_config dict with AD data to avoid
         #adding non samba params like AD username and password
         if (smb_config is not None):
-            tfo.write('%s\n' % RS_CUSTOM_HEADER)
+            tfo.write('\n%s\n' % RS_CUSTOM_HEADER)
             for k in smb_config:
                 if (ad_config is not None and k == 'workgroup'):
                     tfo.write('    %s = %s\n' % (k, ad_config[k]))
