@@ -37,6 +37,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.serviceName = this.options.serviceName;
+        this.adStatus = this.options.adStatus;
         // set template
         this.template = window.JST['services_configure_' + this.serviceName];
         this.rules = {
@@ -116,11 +117,13 @@ ConfigureServiceView = RockstorLayoutView.extend({
     },
 
     render: function() {
+
         this.fetch(this.renderServiceConfig, this);
         return this;
     },
 
     renderServiceConfig: function() {
+
         var _this = this;
         var default_port = 443;
         if (this.service.get('name') == 'replication') {
@@ -140,7 +143,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
             config: configObj,
             shares: this.shares,
             network: this.network,
-            defaultPort: default_port
+            defaultPort: default_port,
+            adStatus: this.adStatus
         }));
 
         this.$('#nis-form :input').tooltip({
@@ -341,6 +345,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     },
 
     cancel: function(event) {
+
         event.preventDefault();
         app_router.navigate("services", {
             trigger: true
@@ -348,6 +353,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     },
 
     toggleFormFields: function() {
+
         if (this.$('#security').val() == 'ads') {
             this.$('#realm').removeAttr('disabled');
         } else {
@@ -362,6 +368,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     },
 
     toggleNutFields: function() {
+
         if (this.$('#mode').val() == 'standalone') {
             this.$('#monitor-mode').hide();
             this.$('#upsmon').attr('value', 'master');
@@ -395,6 +402,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     },
 
     toggleCertUrl: function() {
+
         var cbox = this.$('#enabletls');
         if (cbox.prop('checked')) {
             this.$('#cert-ph').css('visibility', 'visible');
@@ -407,6 +415,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 
         //ShellInABox
         Handlebars.registerHelper('display_shelltype_options', function() {
+
             var html = '',
                 _this = this;
             var avail_shells = ['LOGIN', 'SSH'];
@@ -422,6 +431,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         });
 
         Handlebars.registerHelper('display_shellstyle_options', function() {
+
             var html = '',
                 _this = this;
             var avail_styles = {
@@ -445,8 +455,18 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             return key != 'workgroup';
         });
 
+        Handlebars.registerHelper('isEnabledAD', function(opts){
+
+            var _this = this;
+            if(_this.adStatus == 0) {
+                return opts.fn(this);
+            }
+            return opts.inverse(this);
+        });
+
         //NUT-UPS
         Handlebars.registerHelper('display_nutMode_options', function() {
+
             var html = '',
                 _this = this;
             var nutModeTypes = ['standalone', 'netserver', 'netclient'];
@@ -462,6 +482,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         });
 
         Handlebars.registerHelper('display_monitorMode_options', function() {
+
             var html = '',
                 _this = this;
             var nutMonitorTypes = ['master', 'slave'];
@@ -477,6 +498,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         });
 
         Handlebars.registerHelper('display_nutDriver_options', function() {
+
             var html = '',
                 _this = this;
             var nutDriverTypes = ['apcsmart', 'apcsmart-old', 'apcupsd-ups', 'bcmxcp', 'bcmxcp_usb', 'belkin', 'belkinunv', 'bestfcom', 'bestfortress', 'bestuferrups', 'bestups', 'blazer_ser', 'blazer_usb', 'dummy-ups', 'etapro', 'everups', 'gamatronic', 'genericups', 'isbmex', 'ivtscd', 'liebert', 'liebert-esp2', 'masterguard', 'metasys', 'mge-shut', 'mge-utalk', 'microdowell', 'nutclient', 'nutdrv_qx', 'oldmge-shut', 'oneac', 'optiups', 'powercom', 'powerpanel', 'rhino', 'richcomm_usb', 'riello_ser', 'riello_usb', 'safenet', 'skel', 'snmp-ups', 'solis', 'tripplite', 'tripplite_usb', 'tripplitesu', 'upscode2', 'usbhid-ups', 'victronups'];
@@ -493,6 +515,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 
         //Replication
         Handlebars.registerHelper('display_networkInterface_options', function() {
+
             var html = '',
                 _this = this;
             this.network.each(function(ni, index) {
@@ -512,6 +535,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 
         //Rockon template
         Handlebars.registerHelper('display_rockon_shares', function() {
+
             var html = '',
                 _this = this;
             if (this.shares.length === 0) {
