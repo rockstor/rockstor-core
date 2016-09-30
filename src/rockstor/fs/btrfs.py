@@ -799,22 +799,48 @@ def scrub_status(pool):
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
     cmd = ['btrfs', 'balance', 'start', mnt_pt]
+    # TODO: Confirm -f is doing what is intended, man states for reducing
+    # TODO: metadata from say raid1 to single.
+    # With no filters we also get a warning that block some balances due to
+    # expected long execution time, in this case "--full-balance" is required.
+    # N.B. currently force in Web-UI does not mean force here.
     if (force):
         cmd.insert(3, '-f')
     if (convert is not None):
         cmd.insert(3, '-dconvert=%s' % convert)
         cmd.insert(3, '-mconvert=%s' % convert)
+    else:
+        # As we are running with no convert filters a warning and 10 second
+        # countdown with ^C prompt will result unless we use "--full-balance".
+        # This warning is now present in the Web-UI "Start a new balance"
+        # button tooltip.
+        cmd.insert(3, '--full-balance')
     run_command(cmd)
 
 
 def balance_status(pool):
+    """
+    Wrapper around btrfs balance status pool_mount_point to extract info about
+    the current status of a balance.
+    :param pool: pool object to query
+    :return: dictionary containing parsed info about the balance status,
+    ie indexed by 'status' and 'percent_done'.
+    """
     stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
     if (len(out) > 0):
         if (re.match('Balance', out[0]) is not None):
-            stats['status'] = 'running'
+            if (re.search('cancel requested', out[0]) is not None):
+                stats['status'] = 'cancelling'
+            elif (re.search('pause requested', out[0]) is not None):
+                stats['status'] = 'pausing'
+            elif (re.search('paused', out[0]) is not None):
+                stats['status'] = 'paused'
+            else:
+                stats['status'] = 'running'
+            # make sure we have a second line before parsing it.
             if ((len(out) > 1 and
                     re.search('chunks balanced', out[1]) is not None)):
                 percent_left = out[1].split()[-2][:-1]
