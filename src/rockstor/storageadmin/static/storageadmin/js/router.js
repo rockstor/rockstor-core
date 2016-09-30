@@ -53,7 +53,8 @@ var AppRouter = Backbone.Router.extend({
 	    "shares/:shareName/?cView=:cView": "showShare",
 	    "snapshots": "showSnapshots",
 	    "services": "showServices",
-	    "services/:serviceName/edit": "configureService",
+        "services/:serviceName/edit": "configureService",
+	    "services/:serviceName/edit/?adStatus=:adStatus": "configureService",
 	    "users": "showUsers",
 	    "users/:username/edit": "editUser",
 	    "add-user": "addUser",
@@ -290,10 +291,11 @@ var AppRouter = Backbone.Router.extend({
 
     },
 
-    configureService: function(serviceName) {
+    configureService: function(serviceName, adStatus) {
 	    this.renderSidebar("system", "services");
 	    this.cleanup();
-	    this.currentLayout = new ConfigureServiceView({serviceName: serviceName});
+        var service_options = _.isUndefined(adStatus) ? {serviceName: serviceName} : {serviceName: serviceName, adStatus: adStatus}
+        this.currentLayout = new ConfigureServiceView(service_options);
 	    $('#maincontent').empty();
 	    $('#maincontent').append(this.currentLayout.render().el);
     },
