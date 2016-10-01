@@ -493,6 +493,13 @@ var TaskDef = Backbone.Model.extend({
             return false;
         }
     },
+    writable: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).writable;
+        } else {
+            return false;
+        }
+    },
 
 
 });
