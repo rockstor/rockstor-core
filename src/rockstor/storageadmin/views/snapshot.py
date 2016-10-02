@@ -142,8 +142,10 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             snap_type = request.data.get('snap_type', 'admin')
-            writable = request.data.get('writable', 'rw')
-            writable = True if (writable == 'rw') else False
+            writable = request.data.get('writable', False)
+            if (type(writable) != bool):
+                e_msg = ('writable must be a boolean, not %s' % type(writable))
+                handle_exception(Exception(e_msg), request)
             if (command is None):
                 ret = self._create(share, snap_name, request,
                                    uvisible=uvisible, snap_type=snap_type,
