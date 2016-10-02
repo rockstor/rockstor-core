@@ -19,13 +19,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import shutil
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import systemctl
+from system.services import systemctl, service_status
 from system.samba import (update_global_config, restart_samba,
                           get_global_config)
 from django.db import transaction
 from django.conf import settings
 from base_service import BaseServiceDetailView
-from smart_manager.models import Service
+from active_directory import ActiveDirectoryServiceView
+from smart_manager.models import Service, ServiceStatus
 from storageadmin.models import SambaShare
 from system.osi import md5sum
 from smart_manager.serializers import ServiceStatusSerializer
@@ -52,14 +53,8 @@ class SambaServiceView(BaseServiceDetailView):
         execute a command on the service
         """
         service = Service.objects.get(name=self.service_name)
+        
         if (command == 'config'):
-            aso = Service.objects.get(name='active-directory')
-            if (aso.config is not None):
-                e_msg = ('Active Directory service is configured, so '
-                         'Workgroup is automatically retrieved and cannot '
-                         'be set manually')
-                handle_exception(Exception(e_msg), request)
-
             try:
                 config = request.data.get('config', {})
                 global_config = {}
@@ -68,13 +63,23 @@ class SambaServiceView(BaseServiceDetailView):
                     gc_param = l.strip().split('=')
                     if (len(gc_param) == 2):
                         global_config[gc_param[0].strip().lower()] = gc_param[1].strip()
-                if ('workgroup' not in global_config):
-                    global_config['workgroup'] = config['workgroup']
-                self._save_config(service, global_config)
+                #Default set current workgroup to one got via samba config page
+                global_config['workgroup'] = config['workgroup']
+                #Check Active Directory config and status
+                #if AD configured and ON set workgroup to AD retrieved workgroup
+                #else AD not running and leave workgroup to one choosen by user
                 adso = Service.objects.get(name='active-directory')
                 adconfig = {}
+                adso_status = 1
                 if (adso.config is not None):
                     adconfig = self._get_config(adso)
+                    adso_out, adso_err, adso_status = service_status('active-directory', adconfig)
+                    if adso_status == 0:
+                        global_config['workgroup'] = adconfig['workgroup']
+                    else:
+                        adconfig = None
+
+                self._save_config(service, global_config)
                 update_global_config(global_config, adconfig)
                 restart_samba(hard=True)
             except Exception, e:
