@@ -461,40 +461,39 @@ var TaskDef = Backbone.Model.extend({
     max_count: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).max_count;
-        } else {
-            return 0;
         }
+        return 0;
     },
     share: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).share;
-        } else {
-            return '';
         }
+        return '';
     },
     prefix: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).prefix;
-        } else {
-            return '';
         }
+        return '';
     },
     pool: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).pool;
-        } else {
-            return '';
         }
+        return '';
     },
     visible: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).visible;
-        } else {
-            return false;
         }
+        return false;
     },
-
-
+    writable: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).writable;
+        }
+        return false;
+    }
 });
 
 var TaskDefCollection = RockStorPaginatedCollection.extend({

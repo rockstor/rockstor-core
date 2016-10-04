@@ -52,14 +52,15 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       this.disks.pageSize = RockStorGlobals.maxPageSize;
 
     this.topDisks = [];
-    this.topDisksWidth = this.maximized ? 400 : 200;
+    this.topDisksWidth = this.maximized ? 520 : 240;
     this.topDisksHeight = 50;
 
     this.selectedDisk = null;
 
     this.updateFreq = 1000;
     this.sortAttrs = ['reads_completed']; // attrs to sort by
-    this.numTop = 5; // no of top shares
+    // maximum number of top disks to display
+    this.numTop = this.maximized ? 5 : 3;
     this.partition = d3.layout.partition()
     .value(function(d) {
       return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0);
@@ -85,10 +86,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       yaxis: {
         min: 0
       },
-			series: {
-        lines: { show: true, fill: false },
-        shadowSize: 0	// Drawing is faster without shadows
-			}
+      series: {
+        lines: {show: true, fill: false},
+        shadowSize: 0 // Drawing is faster without shadows
+      }
     };
     this.dataGraphOptions = {
       grid : {
@@ -112,10 +113,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         min: 0,
         tickFormatter: this.valueTickFormatter
       },
-			series: {
-        lines: { show: true, fill: false },
-        shadowSize: 0	// Drawing is faster without shadows
-			}
+      series: {
+        lines: {show: true, fill: false},
+        shadowSize: 0 // Drawing is faster without shadows
+      }
     };
   },
 
@@ -170,6 +171,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     var _this = this;
     this.disks.each(function(disk) {
       var name = disk.get('name');
+      var temp_name = disk.get('temp_name');
       _this.disksData[name] = [];
       for (var i=0; i<_this.dataLength; i++) {
         _this.disksData[name].push(_this.genEmptyDiskData());
@@ -305,7 +307,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         if (d.name == 'root') {
           return '';
         } else {
-          return d.name + ' (' + (d.dx*100).toFixed(2) + '%)';
+          return d.name.split('_').pop();
         }
       })
       .attr('fill-opacity', 1.0);
@@ -385,7 +387,9 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   resize: function(event) {
     var _this = this;
     this.constructor.__super__.resize.apply(this, arguments);
-    this.topDisksWidth = this.maximized ? 400 : 200;
+    this.topDisksWidth = this.maximized ? 520 : 240;
+    // maximum number of top disks to display
+    this.numTop = this.maximized ? 5 : 3;
     //this.$('#top-disks-ph').empty();
     this.$('#top-disks-ph').css('width', this.topDisksWidth);
     this.topDisksVis.attr('width', this.topDisksWidth);

@@ -499,9 +499,9 @@ def remove_snap(pool, share_name, snap_name):
                 return run_command([BTRFS, 'subvolume', 'delete', snap], log=True)
 
 
-def add_snap_helper(orig, snap, readonly=False):
+def add_snap_helper(orig, snap, writable):
     cmd = [BTRFS, 'subvolume', 'snapshot', orig, snap]
-    if (readonly):
+    if (not writable):
         cmd.insert(3, '-r')
     try:
         return run_command(cmd)
@@ -524,10 +524,10 @@ def add_clone(pool, share, clone, snapshot=None):
     else:
         orig_path = ('%s/%s' % (orig_path, share))
     clone_path = ('%s/%s' % (pool_mnt, clone))
-    return add_snap_helper(orig_path, clone_path)
+    return add_snap_helper(orig_path, clone_path, True)
 
 
-def add_snap(pool, share_name, snap_name, readonly=False):
+def add_snap(pool, share_name, snap_name, writable):
     """
     create a snapshot
     """
@@ -536,7 +536,7 @@ def add_snap(pool, share_name, snap_name, readonly=False):
     snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
     create_tmp_dir(snap_dir)
     snap_full_path = ('%s/%s' % (snap_dir, snap_name))
-    return add_snap_helper(share_full_path, snap_full_path, readonly)
+    return add_snap_helper(share_full_path, snap_full_path, writable)
 
 
 def rollback_snap(snap_name, sname, subvol_name, pool):
@@ -799,22 +799,48 @@ def scrub_status(pool):
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
     cmd = ['btrfs', 'balance', 'start', mnt_pt]
+    # TODO: Confirm -f is doing what is intended, man states for reducing
+    # TODO: metadata from say raid1 to single.
+    # With no filters we also get a warning that block some balances due to
+    # expected long execution time, in this case "--full-balance" is required.
+    # N.B. currently force in Web-UI does not mean force here.
     if (force):
         cmd.insert(3, '-f')
     if (convert is not None):
         cmd.insert(3, '-dconvert=%s' % convert)
         cmd.insert(3, '-mconvert=%s' % convert)
+    else:
+        # As we are running with no convert filters a warning and 10 second
+        # countdown with ^C prompt will result unless we use "--full-balance".
+        # This warning is now present in the Web-UI "Start a new balance"
+        # button tooltip.
+        cmd.insert(3, '--full-balance')
     run_command(cmd)
 
 
 def balance_status(pool):
+    """
+    Wrapper around btrfs balance status pool_mount_point to extract info about
+    the current status of a balance.
+    :param pool: pool object to query
+    :return: dictionary containing parsed info about the balance status,
+    ie indexed by 'status' and 'percent_done'.
+    """
     stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
     if (len(out) > 0):
         if (re.match('Balance', out[0]) is not None):
-            stats['status'] = 'running'
+            if (re.search('cancel requested', out[0]) is not None):
+                stats['status'] = 'cancelling'
+            elif (re.search('pause requested', out[0]) is not None):
+                stats['status'] = 'pausing'
+            elif (re.search('paused', out[0]) is not None):
+                stats['status'] = 'paused'
+            else:
+                stats['status'] = 'running'
+            # make sure we have a second line before parsing it.
             if ((len(out) > 1 and
                     re.search('chunks balanced', out[1]) is not None)):
                 percent_left = out[1].split()[-2][:-1]
