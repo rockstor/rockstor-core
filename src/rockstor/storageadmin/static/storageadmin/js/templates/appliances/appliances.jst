@@ -23,10 +23,11 @@
             <a href="https://{{this.ip}}:{{this.mgmt_port}}" target="_blank">{{this.ip}}</a>
         {{/if}}
         </td>
-        <td>{{this.hostname}}
+        <td>
         {{#if this.current_appliance}}
-            <a href="#edit-hostname/{{this.id}}/edit" title="Edit Hostname">
-            <i class="glyphicon glyphicon-pencil"></i></a>
+            <a href="#appliances" id="hostname" data-id="{{this.id}}">{{this.hostname}}</a>
+        {{else}}
+            {{this.hostname}}
         {{/if}}
         </td>
         <td>{{this.mgmt_port}}</td>
