@@ -28,7 +28,7 @@
 ServicesView = Backbone.View.extend({
 
     events: {
-	'click .configure': "configureService",
+	'click .configure': 'configureService',
 	'switchChange.bootstrapSwitch': 'switchStatus'
     },
 
@@ -73,6 +73,7 @@ ServicesView = Backbone.View.extend({
 		}
 	    }
 	});
+    _this.adStatus = _this.collection.where({ 'name': 'active-directory' })[0].get('status') ? '0' : '1';
 	this.renderServices();
 
     },
@@ -125,6 +126,7 @@ ServicesView = Backbone.View.extend({
 	    dataType: "json",
 	    success: function(data, status, xhr) {
 		_this.setStatusLoading(serviceName, false);
+        if (serviceName == 'active-directory') { _this.adStatus = 0; }
 	    },
 	    error: function(xhr, status, error) {
 		_this.setStatusError(serviceName, xhr);
@@ -140,6 +142,7 @@ ServicesView = Backbone.View.extend({
 	    dataType: "json",
 	    success: function(data, status, xhr) {
 		_this.setStatusLoading(serviceName, false);
+        if (serviceName == 'active-directory') { _this.adStatus = 1; }
 	    },
 	    error: function(xhr, status, error) {
 		_this.setStatusError(serviceName, xhr);
@@ -151,7 +154,8 @@ ServicesView = Backbone.View.extend({
 	event.preventDefault();
 	var _this = this;
 	var serviceName = $(event.currentTarget).data('service-name');
-	app_router.navigate('services/' + serviceName + '/edit', {trigger: true});
+    var adStatus = (serviceName === 'smb') ? '/?adStatus=' + _this.adStatus : '';
+	app_router.navigate('services/' + serviceName + '/edit' + adStatus, {trigger: true});
     },
 
     setStatusLoading: function(serviceName, show) {

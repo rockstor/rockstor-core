@@ -38,14 +38,12 @@
                 {{/unless}}
             </td>
             <td>
-            {{#checkCompressionStatus this.compression}}
-                Off
+            {{#if (isRoot this.role)}}
+                    OFF
             {{else}}
-                On (Algorithm: <strong>{{this.compression}}</strong>)
-            {{/checkCompressionStatus}}
-                {{#unless (isRoot this.role)}}
-                      &nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
-                {{/unless}}
+                <a href="#" class="status" data-type="select" data-comp="{{this.compression}}" data-pname="{{this.name}}">
+                <strong>{{this.compression}}</strong></a>
+            {{/if}}
             </td>
             <td>{{#unless (isRoot this.role)}}
                    {{this.mnt_options}}&nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>

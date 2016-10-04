@@ -53,9 +53,12 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
     @transaction.atomic
     def _balance_status(pool):
         try:
+            # acquire a handle on the last pool balance status db entry
             ps = PoolBalance.objects.filter(pool=pool).order_by('-id')[0]
         except:
+            # return empty handed if we have no 'last entry' to update
             return Response()
+        # Check if we have a running task which matches our last pool status tid
         if (Task.objects.filter(uuid=ps.tid).exists()):
             to = Task.objects.get(uuid=ps.tid)
             if (to.failed is not None):
@@ -65,9 +68,22 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                 ps.save()
                 to.delete()
                 return ps
-        elif (ps.status == 'started' or ps.status == 'running'):
-            #task finished sucessfully or is still running
-            cur_status = balance_status(pool)
+        # Get the current status of balance on this pool, irrespective of
+        # a running balance task, ie command line intervention.
+        cur_status = balance_status(pool)
+        previous_status = ps.status
+        # TODO: future "Balance Cancel" button should call us to have these
+        # TODO: values updated in the db table ready for display later.
+        if previous_status == 'cancelling' \
+                and cur_status['status'] == 'finished':
+            # override current status as 'cancelled'
+            cur_status['status'] = 'cancelled'
+            cur_status['message'] = \
+                'cancelled at %s%% complete' % ps.percent_done
+            # and retain prior percent finished value
+            cur_status['percent_done'] = ps.percent_done
+        if previous_status != 'finished' and previous_status != 'cancelled':
+            # update the last pool balance status with current status info.
             PoolBalance.objects.filter(id=ps.id).update(**cur_status)
         return ps
 

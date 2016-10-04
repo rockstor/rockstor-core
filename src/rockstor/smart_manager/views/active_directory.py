@@ -219,6 +219,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     cmd += ['--update', '--enablelocauthorize',]
                     run_command(cmd)
                 config['workgroup'] = self._domain_workgroup(domain, method=method)
+                self._save_config(service, config)
                 update_global_config(smb_config, config)
                 self._join_domain(config, method=method)
                 if (method == 'sssd' and config.get('enumerate') is True):
