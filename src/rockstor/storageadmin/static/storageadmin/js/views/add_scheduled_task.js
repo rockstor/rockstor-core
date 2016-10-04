@@ -68,6 +68,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 				pool: this.taskDef.pool(),
 				maxCount: this.taskDef.max_count(),
 				visible: this.taskDef.visible(),
+				writable: this.taskDef.writable(),
 				enabled: this.taskDef.get('enabled'),
 		};
 		var isSnapshot = false;

@@ -19,8 +19,7 @@
  */
 </script>
 <div class="messages"></div>
-
-  <a class="btn btn-primary btn-spacing" href="#" id="js-poolrebalance-start" title="Restripe data across all disks of the pool. Do this only if you need to."><i class="glyphicon glyphicon-edit "></i>Start a new balance</a>
+  <a class="btn btn-primary btn-spacing" href="#" id="js-poolrebalance-start" title="Rebalance data and metadata across all disks in this pool. WARNING: very intense and potentially long operation. Do this only if needed."><i class="glyphicon glyphicon-edit "></i>Start a new balance</a>
 <br>
 {{#if collectionNotEmpty}}
   <table id="poolrebalances-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pool balances">
@@ -30,7 +29,7 @@
         <th>Status</th>
         <th>Start Time</th>
         <th>Percent finished</th>
-	<th>Errors</th>
+        <th>Errors or Notes</th>
       </tr>
     </thead>
     <tbody>
