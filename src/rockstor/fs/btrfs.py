@@ -792,49 +792,24 @@ def shares_usage(pool, share_map, snap_map):
 
 
 def pool_usage(mnt_pt):
-    # @todo: remove temporary raid5/6 custom logic once fi usage
-    # supports raid5/6.
-    cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
-    total = 0
-    inuse = 0
-    free = 0
-    data_ratio = 1
-    raid56 = False
-    parity = 1
-    disks = set()
-    out, err, rc = run_command(cmd)
-    for e in err:
-        e = e.strip()
-        if (re.match('WARNING: RAID56', e) is not None):
-            raid56 = True
+    """Return used space of the storage pool mounted at mnt_pt.
 
-    for o in out:
-        o = o.strip()
-        if (raid56 is True and re.match('/dev/', o) is not None):
-            disks.add(o.split()[0])
-        elif (raid56 is True and re.match('Data,RAID', o) is not None):
-            if (o[5:10] == 'RAID6'):
-                parity = 2
-        elif (re.match('Device size:', o) is not None):
-            total = int(o.split()[2]) / 1024
-        elif (re.match('Used:', o) is not None):
-            inuse = int(o.split()[1]) / 1024
-        elif (re.match('Free ', o) is not None):
-            free = int(o.split()[2]) / 1024
-        elif (re.match('Data ratio:', o) is not None):
-            data_ratio = float(o.split()[2])
-            if (data_ratio < 0.01):
-                data_ratio = 0.01
-    if (raid56 is True):
-        num_disks = len(disks)
-        if (num_disks > 0):
-            per_disk = total / num_disks
-            total = (num_disks - parity) * per_disk
-    else:
-        total = total / data_ratio
-        inuse = inuse / data_ratio
-    free = total - inuse
-    return (total, inuse, free)
+    Used space is considered to be:
+    - All space currently used by data;
+    - All space currently allocated for metadata and system data.
+    """
+    cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
+    out, err, rc = run_command(cmd)
+
+    used = 0
+    for line in out:
+        fields = re.split('\W+', line)
+        if line.startswith('Data'):
+            used += int(fields[5])
+        elif re.search('Size', line):
+            used += int(fields[3])
+
+    return used / 1024
 
 
 def scrub_start(pool, force=False):

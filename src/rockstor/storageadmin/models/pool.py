@@ -41,21 +41,17 @@ class Pool(models.Model):
 
     @property
     def free(self, *args, **kwargs):
-        #why do we compute pool usage on the fly like this and not like
-        #share usage as part of state refresh? This is a lot simpler and
-        #less code. For share usage, this type of logic could slow things
-        #down quite a bit because there can be 100's of Shares, but number
-        #of Pools even on a large instance is usually no more than a few.
-        try:
-            return pool_usage('%s%s' % (settings.MNT_PT, self.name))[2]
-        except:
-            return self.size
+        # Why do we compute pool usage on the fly like this and not like
+        # share usage as part of state refresh? This is a lot simpler and
+        # less code. For share usage, this type of logic could slow things
+        # down quite a bit because there can be 100's of Shares, but number
+        # of Pools even on a large instance is usually no more than a few.
+        return self.size - pool_usage('%s%s' % (settings.MNT_PT, self.name))
 
     @property
     def reclaimable(self, *args, **kwargs):
         return 0
 
-    @property
     def usage_bound(self, disk_sizes=[], num_devices=0):
         """Return the total amount of storage possible within this pool's set
         of disks, in bytes.
@@ -64,7 +60,7 @@ class Pool(models.Model):
         http://carfax.org.uk/btrfs-usage/js/btrfs-usage.js
         """
         if not disk_sizes:
-            disk_sizes = [int(size) * 1024 for size in self.disk_set
+            disk_sizes = [int(size) for size in self.disk_set
                           .values_list('size', flat=True)
                           .order_by('-size')]
             num_devices = len(disk_sizes)

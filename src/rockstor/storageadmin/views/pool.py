@@ -272,7 +272,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
                 d.pool = p
                 d.save()
             add_pool(p, dnames)
-            p.size = pool_usage(mount_root(p))[0]
+            p.size = p.usage_bound()
             p.uuid = btrfs_uuid(dnames[0])
             p.save()
             return Response(PoolInfoSerializer(p).data)
@@ -415,11 +415,11 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
                 size_cut = 0
                 for d in disks:
                     size_cut += d.size
-                if (size_cut >= usage[2]):
+                if (size_cut >= usage):
                     e_msg = ('Removing these(%s) disks may shrink the pool by '
                              '%dKB, which is greater than available free space'
                              ' %dKB. This is not supported.' %
-                             (dnames, size_cut, usage[2]))
+                             (dnames, size_cut, usage))
                     handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, dnames, add=False)
@@ -434,8 +434,7 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
             else:
                 e_msg = ('command(%s) is not supported.' % command)
                 handle_exception(Exception(e_msg), request)
-            usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-            pool.size = usage[0]
+            pool.size = pool.usage_bound()
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
 
