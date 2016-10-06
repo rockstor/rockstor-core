@@ -60,10 +60,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
         this.NetworkChartOptions = {
             showLines: true,
-            animation: {
-                duration: 1000,
-                easing: 'linear'
-            },
+            animation: false,
             responsive: true,
             legend: {
                 display: false,
