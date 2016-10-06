@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,9 +20,6 @@ from django.db import models
 from django.conf import settings
 from smart_manager.models import PoolUsage
 from fs.btrfs import pool_usage
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class Pool(models.Model):
