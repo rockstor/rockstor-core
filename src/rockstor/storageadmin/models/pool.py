@@ -66,7 +66,7 @@ class Pool(models.Model):
             num_devices = len(disk_sizes)
 
         for index, size in enumerate(disk_sizes):
-            logger.info('Device %s size: %s' % (index, size))
+            logger.debug('Device %s size: %s' % (index, size))
 
         # Determine RAID parameters
         data_ratio = 1
@@ -94,15 +94,15 @@ class Pool(models.Model):
 
         # Number of chunks to write at a time: as many as possible within the
         # number of stripes
-        logger.info('Allocate %s chunks at a time' % chunks)
+        logger.debug('Allocate %s chunks at a time' % chunks)
         # Check for feasibility at the lower end
         if num_devices < data_ratio * (stripes + parity):
             return 0
 
         # Compute the trivial bound
         bound = int(sum(disk_sizes) / chunks)
-        logger.info('Trivial bound is %s / %s = %s'
-                    % (sum(disk_sizes), chunks, bound))
+        logger.debug('Trivial bound is %s / %s = %s'
+                     % (sum(disk_sizes), chunks, bound))
 
         # For each partition point q, compute B_q (the test predicate) and
         # modify the trivial bound if it passes.
@@ -110,8 +110,8 @@ class Pool(models.Model):
         for q in range(chunks - 1):
             slice = sum(disk_sizes[q + 1:])
             b = int(slice / (chunks - q - 1))
-            logger.info('q = %s, bound is %s / %s = %s'
-                        % (q, slice, chunks-q-1, b))
+            logger.debug('q = %s, bound is %s / %s = %s'
+                         % (q, slice, chunks-q-1, b))
             if disk_sizes[q] >= b and b < bound:
                 bound = b
                 bounding_q = q
