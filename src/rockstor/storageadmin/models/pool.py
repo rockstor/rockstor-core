@@ -89,6 +89,9 @@ class Pool(models.Model):
         elif self.raid == 'raid6':
             parity = 2
 
+        # Round down so that we have an exact number of duplicate copies
+        chunks -= chunks % data_ratio
+
         # Number of chunks to write at a time: as many as possible within the
         # number of stripes
         logger.info('Allocate %s chunks at a time' % chunks)
