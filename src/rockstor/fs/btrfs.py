@@ -50,25 +50,33 @@ def add_pool(pool, disks):
     :param disks: list of by-id disk names without paths to make the pool from.
     :return o, err, rc from last command executed.
     """
-
     disks_fp = ['/dev/disk/by-id/' + d for d in disks]
     cmd = [MKFS_BTRFS, '-f', '-d', pool.raid, '-m', pool.raid, '-L',
            pool.name, ]
     cmd.extend(disks_fp)
-    # run the create pool command, any exceptions are logged and raised by
+    # Run the create pool command, any exceptions are logged and raised by
     # run_command as a CommandException.
     out, err, rc = run_command(cmd, log=True)
-    # only execute enable_quota on above btrfs command having an rc=0
+    # Note that given our cmd (mkfs.btrfs) is executed with the default
+    # run_command flag of throw=True then program execution is stopped in the
+    # event of rc != 0 so the following clause is redundant but offers an
+    # additional level of isolation.
+    # Only execute enable_quota on above btrfs command having an rc=0
     if rc == 0:
         # N.B. enable_quota wraps switch_quota() which doesn't enable logging
         # so log what we have on rc != 0.
         out2, err2, rc2 = enable_quota(pool)
         if rc2 != 0:
-            logger.error('Error while enabling quota on newly created '
-                         'pool = %s' % pool.name)
+            e_msg = (
+                'non-zero code (%d) returned by enable_quota() while '
+                'enabling quota on a newly created pool : pool name = %s, '
+                'output: %s, error: %s.' % (rc2, pool.name, out2, err2))
+            logger.error(e_msg)
             return out2, err2, rc2
     else:
-        logger.error('Error while creating new pool')
+        logger.error('Unknown state in add_pool() - non-zero code (%d) '
+                     'returned by %s with output: %s and error: %s.'
+                     % (rc, cmd, out, err))
     return out, err, rc
 
 
