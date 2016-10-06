@@ -10,13 +10,12 @@
         </td>
     </tr>
     <tr>
-        <td>Extra mount options:</td>
-        <td><strong>
-        {{#isMntOptionNone pool.mnt_options}}
-            None
-        {{else}}
-            {{pool.mnt_options}}
-        {{/isMntOptionNone}}
+        <td>Extra mount options: </td>
+        <td>&nbsp;&nbsp;
+        <strong>
+            <a href="#" id="mntOptions">
+            {{pool.mnt_options}}</a>
+        </strong>
         </td>
     </tr>
 </table>

@@ -132,6 +132,22 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 				        	 });
 				         }
 			});
+			
+			$('#mntOptions').editable({
+				type:'text',
+				title: 'Edit Mount Options',
+				emptytext: 'None',
+				success: function(response, newMntOptns){
+					$.ajax({
+						url: "/api/pools/" + poolName + "/remount",
+						type: "PUT",
+						dataType: "json",
+						data: {
+							"mnt_options": newMntOptns
+						},
+					});
+				}
+			});
 	},
 
 	deletePool: function() {
@@ -295,13 +311,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
 		Handlebars.registerHelper('getPoolCreationDate', function(date){
 			return moment(date).format(RS_DATE_FORMAT);
-		});
-		
-		Handlebars.registerHelper('isMntOptionNone', function(mtOptions,opts){
-			if (_.isUndefined(mtOptions) || _.isNull(mtOptions) || _.isEmpty(mtOptions)) {
-				return opts.fn(this);
-			}  
-			return opts.inverse(this);
 		});
 		
 		Handlebars.registerHelper('humanReadableSize', function(size){
