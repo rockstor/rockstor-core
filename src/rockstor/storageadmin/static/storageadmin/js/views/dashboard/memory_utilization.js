@@ -54,7 +54,10 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
         this.MemoryChartOptions = {
             showLines: true,
-            animation: false,
+            animation: {
+                duration: 1000,
+                easing: 'linear'
+            },
             responsive: true,
             title: {
                 display: true,
