@@ -1660,13 +1660,17 @@ def hostid():
     change.
 
     There's a lazy vendor problem where uuid is not set and defaults to
-    03000200-0400-0500-0006-000700080009. non-persistent uuid is generated even
-    in this case.
+    03000200-0400-0500-0006-000700080009 or
+    00020003-0004-0005-0006-000700080009. I don't know how these values are
+    populated, but emperically it seems to be just these
+    two. non-persistent uuid is generated even in this case.
+
     """
+    fake_puuids = ('03000200-0400-0500-0006-000700080009', '00020003-0004-0005-0006-00070008000')
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
             puuid = fo.readline().strip()
-            if (puuid == '03000200-0400-0500-0006-000700080009'):
+            if (puuid in fake_puuids):
                 raise
             return puuid
     except:
