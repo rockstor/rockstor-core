@@ -1,20 +1,17 @@
 <table>
     <tr>
-        <td>Compression algorithm:</td>
-        <td>
+        <td>Compression algorithm: </td>
+        <td>&nbsp;&nbsp;
         <strong>
-        {{#isPoolCompressionNone pool.compression}}
-            None
-         {{else}}
-            {{pool.compression}}
-        {{/isPoolCompressionNone}}
+            <a href="#" id="comprOptn" data-type="select" data-comp="{{pool.compression}}" 
+            data-pname="{{pool.name}}">{{pool.compression}}
+            </a>
         </strong>
         </td>
     </tr>
     <tr>
         <td>Extra mount options:</td>
-        <td>
-        <strong>
+        <td><strong>
         {{#isMntOptionNone pool.mnt_options}}
             None
         {{else}}
@@ -23,5 +20,5 @@
         </td>
     </tr>
 </table>
-<a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
+
 
