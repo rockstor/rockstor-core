@@ -117,7 +117,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
         this.AvgCpuChart = null;
         this.AvgCpuChartOptions = {
             showLines: true,
-            animation: false,
+            animation: {
+                duration: 1000,
+                easing: 'linear'
+            },
             responsive: true,
             title: {
                 display: true,
