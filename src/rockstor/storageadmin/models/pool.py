@@ -83,7 +83,7 @@ class Pool(models.Model):
             chunks = 2
         elif self.raid == 'raid10':
             data_ratio = 2
-            stripes = min(2, int(num_devices / 2))
+            stripes = max(2, int(num_devices / 2))
         elif self.raid == 'raid5':
             parity = 1
         elif self.raid == 'raid6':
