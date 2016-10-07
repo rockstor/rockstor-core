@@ -117,7 +117,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
         this.AvgCpuChart = null;
         this.AvgCpuChartOptions = {
             showLines: true,
-            animation: false,
+            animation: {
+                duration: 1000,
+                easing: 'linear'
+            },
             responsive: true,
             title: {
                 display: true,
@@ -262,6 +265,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
                 current_color = 'rgba(' + _this.colors[_.indexOf(_this.modes, dataset.label)] + ', 0.3)';
                 dataset.backgroundColor.push(current_color);
                 dataset.borderColor.push(current_color);
+                dataset.data.push(null);
             });
 
         }
