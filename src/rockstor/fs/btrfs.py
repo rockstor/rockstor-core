@@ -44,14 +44,39 @@ QID = '2015'
 
 def add_pool(pool, disks):
     """
-    pool is a btrfs filesystem.
+    Makes a btrfs pool (filesystem) of name 'pool' using the by-id disk names
+    provided, then enables quotas for this pool.
+    :param pool: name of pool to create.
+    :param disks: list of by-id disk names without paths to make the pool from.
+    :return o, err, rc from last command executed.
     """
     disks_fp = ['/dev/disk/by-id/' + d for d in disks]
     cmd = [MKFS_BTRFS, '-f', '-d', pool.raid, '-m', pool.raid, '-L',
            pool.name, ]
     cmd.extend(disks_fp)
-    out, err, rc = run_command(cmd)
-    enable_quota(pool)
+    # Run the create pool command, any exceptions are logged and raised by
+    # run_command as a CommandException.
+    out, err, rc = run_command(cmd, log=True)
+    # Note that given our cmd (mkfs.btrfs) is executed with the default
+    # run_command flag of throw=True then program execution is stopped in the
+    # event of rc != 0 so the following clause is redundant but offers an
+    # additional level of isolation.
+    # Only execute enable_quota on above btrfs command having an rc=0
+    if rc == 0:
+        # N.B. enable_quota wraps switch_quota() which doesn't enable logging
+        # so log what we have on rc != 0.
+        out2, err2, rc2 = enable_quota(pool)
+        if rc2 != 0:
+            e_msg = (
+                'non-zero code (%d) returned by enable_quota() while '
+                'enabling quota on a newly created pool : pool name = %s, '
+                'output: %s, error: %s.' % (rc2, pool.name, out2, err2))
+            logger.error(e_msg)
+            return out2, err2, rc2
+    else:
+        logger.error('Unknown state in add_pool() - non-zero code (%d) '
+                     'returned by %s with output: %s and error: %s.'
+                     % (rc, cmd, out, err))
     return out, err, rc
 
 
@@ -93,6 +118,7 @@ def get_pool_info(disk):
 
 
 def pool_raid(mnt_pt):
+    # TODO: propose name change to get_pool_raid_levels(mnt_pt)
     o, e, rc = run_command([BTRFS, 'fi', 'df', mnt_pt])
     # data, system, metadata, globalreserve
     raid_d = {}
@@ -174,12 +200,27 @@ def resize_pool(pool, dev_list_byid, add=True):
     return run_command(resize_cmd)
 
 
-#Try mounting by-label first. If that is not possible, mount using every device
-#in the set, one by one until success.
 def mount_root(pool):
+    """
+    Mounts a given pool at the default mount root (usually /mnt2/) using the
+    pool.name as the final path entry. Ie pool.name = test-pool will be mounted
+    at /mnt2/test-pool. Any mount options held in pool.mnt_options will be added
+    to the mount command via the -o option as will a compress=pool.compression
+    entry.
+    N.B. Initially the mount target is defined by /dev/disk/by-label/pool.name,
+    if this fails then an attempt to mount by each member of
+    /dev/disk/by-id/pool.disk_set.all() but only if there are any members.
+    If this second method also fails then an exception is raised, currently all
+    but the last failed mount by device name is logged. If no disk members were
+    reported by pool.disk_set.count() a separate Exception is raised.
+    :param pool: pool object
+    :return: either the relevant mount point or an Exception which either
+    indicates 'no disks in pool' or 'Unknown Reason'
+    """
     root_pool_mnt = DEFAULT_MNT_DIR + pool.name
     if (is_share_mounted(pool.name)):
         return root_pool_mnt
+    # Creates a directory to act as the mount point.
     create_tmp_dir(root_pool_mnt)
     mnt_device = '/dev/disk/by-label/%s' % pool.name
     mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
@@ -194,9 +235,8 @@ def mount_root(pool):
             mnt_cmd.extend(['-o', mnt_options])
         run_command(mnt_cmd)
         return root_pool_mnt
-
-    #If we cannot mount by-label, let's try mounting by device one by one
-    #until we get our first success.
+    # If we cannot mount by-label, let's try mounting by device; one by one
+    # until we get our first success.
     if (pool.disk_set.count() < 1):
         raise Exception('Cannot mount Pool(%s) as it has no disks in it.' % pool.name)
     last_device = pool.disk_set.last()
@@ -211,9 +251,9 @@ def mount_root(pool):
                 return root_pool_mnt
             except Exception, e:
                 if (device.name == last_device.name):
-                    #exhausted mounting using all devices in the pool
+                    # exhausted mounting using all devices in the pool
                     raise e
-                logger.error('Error mouting: %s. Will try using another device.' % mnt_cmd)
+                logger.error('Error mounting: %s. Will try using another device.' % mnt_cmd)
                 logger.exception(e)
     raise Exception('Failed to mount Pool(%s) due to an unknown reason.' % pool.name)
 
@@ -241,7 +281,13 @@ def umount_root(root_pool_mnt):
 
 
 def is_subvol(mnt_pt):
+    """
+    Simple wrapper around "btrfs subvolume show mnt_pt"
+    :param mnt_pt: mount point of subvolume to query
+    :return: True if subvolume mnt_pt exists, else False
+    """
     show_cmd = [BTRFS, 'subvolume', 'show', mnt_pt]
+    # Throw=False on run_command to silence CommandExceptions.
     o, e, rc = run_command(show_cmd, throw=False)
     if (rc == 0):
         return True
@@ -438,9 +484,15 @@ def snaps_info(mnt_pt, share_name):
 
 def share_id(pool, share_name):
     """
-    returns the subvolume id, becomes the share's uuid.
+    Returns the subvolume id, becomes the share's uuid.
     @todo: this should be part of add_share -- btrfs create should atomically
-    return the id
+    Works by iterating over the output of btrfs subvolume list, received from
+    subvol_list_helper() looking for a match in share_name. If found the same
+    line is parsed for the ID, example line in output:
+    'ID 257 gen 13616 top level 5 path rock-ons-root'
+    :param pool: a pool object.
+    :param share_name: target share name to find
+    :return: the id for the given share_name or an Exception stating no id found
     """
     root_pool_mnt = mount_root(pool)
     out, err, rc = subvol_list_helper(root_pool_mnt)
@@ -659,6 +711,7 @@ def update_quota(pool, qgroup, size_bytes):
 def share_usage(pool, share_id):
     """
     Return the sum of the qgroup sizes of this share and any child subvolumes
+    N.B. qgroupid defaults to a unique identifier of the form 0/<subvolume id>
     """
     # Obtain path to share in pool
     root_pool_mnt = mount_root(pool)
@@ -697,6 +750,7 @@ def share_usage(pool, share_id):
 
 
 def shares_usage(pool, share_map, snap_map):
+    # TODO: currently unused, is this to be deprecated
     # don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
