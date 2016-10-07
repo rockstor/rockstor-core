@@ -288,7 +288,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         var _this = this;
         for (var i = 0; i < _this.numSamples; i++) {
             _.each(_this.MemoryChartData.datasets, function(d) {
-                d.data.push(0);
+                d.data.push(null);
             });
             _this.MemoryChartData.labels.push('');
         }
