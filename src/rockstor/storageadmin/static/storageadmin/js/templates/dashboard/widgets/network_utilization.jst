@@ -1,30 +1,49 @@
-<!-- Header -->
+<script>
+/*
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
 <div class="row">
-  <div class="col-md-12">
-    <div class="widget-header">
-      <div class="title"><span class="h4">{{ displayName }}</span></div>
-      <div class="gear">
-        <a class="download-widget" href="#"><i class="glyphicon glyphicon-download-alt"></i></a>
-        <a class="resize-widget" href="#"><i class="glyphicon glyphicon-resize-full"></i></a>
-        <a class="close-widget" href="#"><i class="glyphicon glyphicon-remove"></i></a>
-      </div>
-    </div>
-  </div> <!-- col-md-12 -->
+    <div class="col-md-12">
+        <div class="widget-header">
+            <div class="title"><span class="h4">{{ displayName }}</span></div>
+            <div class="gear">
+                <a class="resize-widget" href="#"><i class="glyphicon glyphicon-resize-full"></i></a>
+                <a class="close-widget" href="#"><i class="glyphicon glyphicon-remove"></i></a>
+            </div>
+        </div>
+    </div> <!-- col-md-12 -->
 </div> <!-- row -->
 
 <!-- Module Body -->
 <!-- Content -->
 <div class="widget-content">
-  <div id="network-util-chart" style="float: left; width: 80%; height: 60%"></div>
-  <div class="clear"></div>
-  <div id="network-util-legend" style="float: left;"></div>
-  <div id="interface-select-div" style="float: left; margin-left: 2px; font-size: smaller;">
+    <canvas id="network-chart" width="250" height="125" style="padding: 0px; margin: 0px 0px 10px;"></canvas>
+    <div class="clear"></div>
+    <div id="network-util-legend" style="float: left;"></div>
+    <div id="interface-select-div" style="float: left; margin-left: 2px; font-size: smaller;">
     Interface:<br>
     <select id="interface-select" name="interface-select" style="font-size: smaller; line-height: 1em; width: 50px; height: 22px;">
     </select>
-  </div>
-  <div class="clear"></div>
-  <div id="network-util-values-ph" style="float: left;"></div>
+    </div>
+    <div class="clear"></div>
+    <div id="network-util-values-ph" style="float: left;"></div>
 </div>
 <!-- End Content -->
 <!-- end module body -->
