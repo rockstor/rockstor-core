@@ -265,7 +265,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
                 current_color = 'rgba(' + _this.colors[_.indexOf(_this.modes, dataset.label)] + ', 0.3)';
                 dataset.backgroundColor.push(current_color);
                 dataset.borderColor.push(current_color);
-				dataset.data.push(null);
+                dataset.data.push(null);
             });
 
         }
