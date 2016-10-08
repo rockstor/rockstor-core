@@ -812,6 +812,74 @@ def pool_usage(mnt_pt):
     return used / 1024
 
 
+def usage_bound(disk_sizes, num_devices, raid_level):
+    """Return the total amount of storage possible within this pool's set
+    of disks, in bytes.
+
+    Algorithm adapted from Hugo Mills' implementation at:
+    http://carfax.org.uk/btrfs-usage/js/btrfs-usage.js
+    """
+    # Determine RAID parameters
+    data_ratio = 1
+    stripes = 1
+    parity = 0
+
+    # Number of chunks to write at a time: as many as possible within the
+    # number of stripes
+    chunks = num_devices
+
+    if raid_level == 'single':
+        chunks = 1
+    elif raid_level == 'raid0':
+        stripes = 2
+    elif raid_level == 'raid1':
+        data_ratio = 2
+        chunks = 2
+    elif raid_level == 'raid10':
+        data_ratio = 2
+        stripes = max(2, int(num_devices / 2))
+    elif raid_level == 'raid5':
+        parity = 1
+    elif raid_level == 'raid6':
+        parity = 2
+
+    # Round down so that we have an exact number of duplicate copies
+    chunks -= chunks % data_ratio
+
+    # Check for feasibility at the lower end
+    if num_devices < data_ratio * (stripes + parity):
+        return 0
+
+    # Compute the trivial bound
+    bound = int(sum(disk_sizes) / chunks)
+
+    # For each partition point q, compute B_q (the test predicate) and
+    # modify the trivial bound if it passes.
+    bounding_q = -1
+    for q in range(chunks - 1):
+        slice = sum(disk_sizes[q + 1:])
+        b = int(slice / (chunks - q - 1))
+        if disk_sizes[q] >= b and b < bound:
+            bound = b
+            bounding_q = q
+
+    # The bound is the number of allocations we can make in total. If we
+    # have no bounding_q, then we have hit the trivial bound, and exhausted
+    # all space, so we can return immediately.
+    if bounding_q == -1:
+        return bound * ((chunks / data_ratio) - parity)
+
+    # If we have a bounding_q, then all the devices past q are full, and
+    # we can remove them. The devices up to q have been used in every one
+    # of the allocations, so we can just reduce them by bound.
+    disk_sizes = [size - bound for index, size in enumerate(disk_sizes)
+                  if index <= bounding_q]
+
+    new_bound = usage_bound(disk_sizes, bounding_q + 1)
+
+    return bound * ((chunks / data_ratio) - parity) + new_bound
+
+
 def scrub_start(pool, force=False):
     mnt_pt = mount_root(pool)
     p = PoolScrub(mnt_pt)
