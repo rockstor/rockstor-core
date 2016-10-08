@@ -111,10 +111,10 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
 			//Bootstrap Inline Edit
 			$.fn.editable.defaults.mode = 'inline';
-			var compr = $('#comprOptn').data('comp');
+			var compr = this.pool.get('compression');
 			var poolName = this.pool.get('poolName');
+			var mntOptn = this.pool.get('mnt_options');
 			var url = "/api/pools/" + poolName + "/remount";
-			var _this = this;
 			$('#comprOptn').editable({
 				value: compr,
 				source: [{value: 'no', text: 'no'},
@@ -127,26 +127,34 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 				        		 type: "PUT",
 				        		 dataType: "json",
 				        		 data: {
-				        			 "compression": newCompr
+				        			 "compression": newCompr,
+				        			 "mnt_options": mntOptn
 				        		 },
 				        	 });
 				         }
 			});
 			
 			$('#mntOptions').editable({
-				type:'text',
 				title: 'Edit Mount Options',
 				emptytext: 'None',
 				success: function(response, newMntOptns){
 					$.ajax({
-						url: "/api/pools/" + poolName + "/remount",
+						url: url,
 						type: "PUT",
 						dataType: "json",
 						data: {
+							"compression": compr,
 							"mnt_options": newMntOptns
 						},
 					});
 				}
+			});
+			
+			
+			$("#comp-mnt-optns-table").tooltip({
+			    selector: '[data-title]',
+			    html: true,
+			    placement:'right'
 			});
 	},
 
