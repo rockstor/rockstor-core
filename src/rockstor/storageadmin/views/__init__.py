@@ -21,7 +21,7 @@ from home import (login_page, login_submit, logout_user, home)
 from snapshot import SnapshotView
 from share import (ShareListView, ShareDetailView)
 from disk import (DiskMixin, DiskListView, DiskDetailView)
-from pool import (PoolListView, PoolDetailView)
+from pool import (PoolListView, PoolDetailView, get_usage_bound)
 from command import CommandView
 from appliances import (ApplianceListView, ApplianceDetailView)
 from login import LoginView

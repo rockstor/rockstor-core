@@ -24,12 +24,13 @@ import pickle
 import time
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import api_view
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from storageadmin.views import DiskMixin
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, start_balance)
+                      btrfs_uuid, mount_root, start_balance, usage_bound)
 from system.osi import remount
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -162,7 +163,7 @@ class PoolMixin(object):
                 for m in mount_map[share]:
                     try:
                         remount(m, mnt_options)
-                    except Exception, e:
+                    except Exception as e:
                         logger.exception(e)
                         failed_remounts.append(m)
         if (len(failed_remounts) > 0):
@@ -461,6 +462,15 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
             pool.delete()
             try:
                 self._update_disk_state()
-            except Exception, e:
+            except Exception as e:
                 logger.error('Exception while updating disk state: %s' % e.__str__())
             return Response()
+
+
+@api_view()
+def get_usage_bound(request):
+    """Simple view to relay the computed usage bound to the front end."""
+    disk_sizes = [int(size) for size in
+                  request.query_params.getlist('disk_sizes[]')]
+    raid_level = request.query_params.get('raid_level', 'single')
+    return Response(usage_bound(disk_sizes, len(disk_sizes), raid_level))
