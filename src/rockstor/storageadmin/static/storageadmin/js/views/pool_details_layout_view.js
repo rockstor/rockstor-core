@@ -34,7 +34,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		this.template = window.JST.pool_pool_details_layout;
 		this.resize_pool_info_template = window.JST.pool_resize_pool_info;
 		this.compression_info_template = window.JST.pool_compression_info;
-		this.compression_info_edit_template = window.JST.pool_compression_info_edit;
 		this.pool = new Pool({poolName: this.poolName});
 		// create poolscrub models
 		this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
@@ -91,15 +90,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
 		this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
 
-		if (!_.isUndefined(this.cView) && this.cView == 'edit') {
-			this.$('#ph-compression-info').html(this.compression_info_edit_template({
-				pool: this.pool.toJSON(),
-				cOpts: this.cOpts,
-			}));
-			this.showCompressionTooltips(); } else {
-				this.$('#ph-compression-info').html(this.compression_info_template({
-					pool: this.pool.toJSON(),
-				})); }
+		this.$('#ph-compression-info').html(this.compression_info_template({
+			pool: this.pool.toJSON(),
+		})); 
 
 		this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool:
 			this.pool.toJSON()})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
@@ -149,12 +142,11 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 					});
 				}
 			});
-			
-			
+
 			$("#comp-mnt-optns-table").tooltip({
-			    selector: '[data-title]',
-			    html: true,
-			    placement:'right'
+				selector: '[data-title]',
+				html: true,
+				placement:'right'
 			});
 	},
 
@@ -177,7 +169,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 			});
 		}
 	},
-
 
 	resizePool: function(event) {
 		event.preventDefault();
@@ -235,7 +226,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 			}
 		}
 	},
-
+	
 	resizePoolCancel: function(event) {
 		event.preventDefault();
 		this.hideResizeTooltips();
@@ -277,22 +268,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		});
 
 	},
-
-	showCompressionTooltips: function() {
-		this.$('#ph-compression-info #compression').tooltip({
-			html: true,
-			placement: 'top',
-			container: 'body',
-			title: "Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
-		});
-		this.$('#ph-compression-info #mnt_options').tooltip({ placement: 'top' });
-	},
-
-	hideCompressionTooltips: function() {
-		this.$('#ph-compression-info #compression').tooltip('hide');
-		this.$('#ph-compression-info #mnt_options').tooltip('hide');
-	},
-
+	
 	showResizeTooltips: function() {
 		this.$('#ph-resize-pool-info #raid_level').tooltip({
 			html: true,
@@ -320,7 +296,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('getPoolCreationDate', function(date){
 			return moment(date).format(RS_DATE_FORMAT);
 		});
-		
+
 		Handlebars.registerHelper('humanReadableSize', function(size){
 			return humanize.filesize(size * 1024);
 		});
