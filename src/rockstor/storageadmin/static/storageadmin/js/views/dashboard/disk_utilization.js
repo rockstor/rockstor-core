@@ -54,6 +54,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         Chart.defaults.global.elements.line.fill = false;
         Chart.defaults.global.elements.point.radius = 0;
         Chart.defaults.global.elements.point.hoverRadius = 0;
+        this.Disksfields = ['ms_ios', 'sectors_written', 'writes_completed', 'ms_writing', 'ms_reading', 'reads_completed', 'sectors_read'];
         this.Diskslabels = ['ms on I/Os', 'kB written', 'Writes', 'ms writing', 'ms reading', 'Reads', 'kB read'];
         this.TopDiskscolors = ['242, 0, 0', '36, 229, 84', '41, 108, 232', '232, 200, 41', '146, 41, 232']
         this.colors2 = ['77, 175, 74', '55, 126, 184']
@@ -198,9 +199,21 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 easing: 'linear'
             },
             responsive: true,
+                        legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    boxWidth: 10,
+                    padding: 5,
+                    fontSize: 10
+                }
+            },
             scale: {
                 ticks: {
-                    display: false
+                    display: false,
+                    min: 0,
+                    max: 100,
+                    stepSize: 20
                 }
             }
         };
@@ -337,19 +350,19 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             var dataset = {
                 label: '',
                 borderWidth: 1,
+                fill: true,
                 borderColor: 'rgba(' + _this.TopDiskscolors[i] + ', 1)',
                 backgroundColor: 'rgba(' + _this.TopDiskscolors[i] + ', 0.1)',
                 pointBackgroundColor: 'rgba(' + _this.TopDiskscolors[i] + ', 1)',
                 pointBorderColor: '#fff',
                 pointHoverBackgroundColor: '#fff',
                 pointHoverBorderColor: 'rgba(' + _this.TopDiskscolors[i] + ', 1)',
-                data: [null, null, null, null, null, null, null]
+                data: [0, 0, 0, 0, 0, 0, 0]
             };
             _this.TopDisksChartData.datasets.push(dataset);
         }
     },
     update: function(data) {
-
         this.updateDisksData(data);
         this.updateTopDisks();
         this.sortDisks();
@@ -372,13 +385,9 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         var _this = this;
         for (var i=0; i < _this.numTop; i++) {
             var data = [];
-            data.push(_this.TopDisksRadar[i].ms_ios);
-            data.push(_this.TopDisksRadar[i].sectors_written * 512);
-            data.push(_this.TopDisksRadar[i].writes_completed);
-            data.push(_this.TopDisksRadar[i].ms_writing);
-            data.push(_this.TopDisksRadar[i].ms_reading);
-            data.push(_this.TopDisksRadar[i].reads_completed);
-            data.push(_this.TopDisksRadar[i].sectors_read * 512);
+            _.each(_this.Disksfields, function(field) {
+                data.push(_this.normalizeData(field, _this.TopDisksRadar[i][field]));
+            });
             _this.TopDisksChartData.datasets[i].data = data;
             _this.TopDisksChartData.datasets[i].label = _this.TopDisksRadar[i].name;
         }
@@ -387,9 +396,14 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
     //Chart.js radar chart don't have multiple scales
     //so we have to normalize our data
-    //
-    normalizeData: function() {
-        
+    //data normalization has new_x = (x - x_min) / (x_max -x_min) and returns x [0..1]
+    //we assume our x_min = 0, so new_x = x /x_max
+    normalizeData: function(field, val) {
+
+        var _this = this;
+        var val_max = _.max(_.pluck(_this.TopDisksRadar, field));
+        var new_val = val == 0 ? 0 : (val * 100 / val_max).toFixed(2); //we use a 0..100 range with 2 decimals
+        return new_val;
     },
     
     sortDisks: function() {
