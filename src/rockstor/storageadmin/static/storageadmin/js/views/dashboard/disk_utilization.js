@@ -118,6 +118,23 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         shadowSize: 0 // Drawing is faster without shadows
       }
     };
+    this.TopDisksChart = null;
+    this.TopDisksChartOptions = {
+animation: {
+duration: 1500,
+easing: 'linear'
+},
+            responsive: true,
+            title: {
+                display: true,
+                text: 'Top Disks',
+                padding: 5
+            }
+};
+    this.TopDisksChartData = {
+		labels: ['Writes', 'Reads', 'kB Written', 'kB read', 'ms Writing', 'ms Reading', 'ms spent on I/Os'],
+		datasets: []
+	};
   },
 
   render: function() {
