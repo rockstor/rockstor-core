@@ -875,7 +875,7 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     disk_sizes = [size - bound for index, size in enumerate(disk_sizes)
                   if index <= bounding_q]
 
-    new_bound = usage_bound(disk_sizes, bounding_q + 1)
+    new_bound = usage_bound(disk_sizes, bounding_q + 1, raid_level)
 
     return bound * ((chunks / data_ratio) - parity) + new_bound
 
