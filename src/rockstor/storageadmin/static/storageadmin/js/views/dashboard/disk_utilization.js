@@ -42,6 +42,18 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       this.topDiskColors.push(startColor.toString());
       startColor = startColor.brighter(2);
     }
+        Chart.defaults.global.tooltips.enabled = false;
+        Chart.defaults.global.elements.line.tension = 0.2;
+        Chart.defaults.global.elements.line.borderCapStyle = 'butt';
+        Chart.defaults.global.elements.line.borderDash = [];
+        Chart.defaults.global.elements.line.borderDashOffset = 0.0;
+        Chart.defaults.global.elements.line.borderWidth = 1;
+        Chart.defaults.global.elements.line.borderJoinStyle = 'miter';
+        Chart.defaults.global.elements.line.fill = false;
+        Chart.defaults.global.elements.point.radius = 0;
+        Chart.defaults.global.elements.point.hoverRadius = 0;
+	this.Diskslabels = ['Reads', 'Writes', 'kB read', 'kB written', 'ms reading', 'ms writing', 'ms spent on I/Os'];
+	this.colors2 = ['77, 175, 74', '55, 126, 184']
     this.colors = ["#4DAF4A", "#377EB8"];
     // disks data is a map of diskname to array of values of length
     // dataLength
@@ -118,6 +130,55 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         shadowSize: 0 // Drawing is faster without shadows
       }
     };
+        this.LineGraphsDefaultOptions = {
+            showLines: true,
+            animation: {
+                duration: 1000,
+                easing: 'linear'
+            },
+            responsive: true,
+            legend: {
+                display: false
+            },
+            scales: {
+                yAxes: [{
+                    position: 'left',
+                    scaleLabel: {
+                        display: true,
+                        fontSize: 11,
+                        labelString: 'Data'
+                    },
+                    ticks: {
+                        fontSize: 9,
+                        beginAtZero: true,
+                        min: 0
+                    },
+                    gridLines: {
+                        drawTicks: false
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        fontSize: 11,
+                        labelString: 'Time'
+                    },
+                    gridLines: {
+                        display: true,
+                        drawTicks: false
+                    },
+                    ticks: {
+                        fontSize: 9,
+                        maxRotation: 0,
+                        autoSkip: false,
+                        callback: function(value) {
+                            return (value.toString().length > 0 ? value : null);
+                        }
+                    }
+                }]
+            }
+        };
+
     this.TopDisksChart = null;
     this.TopDisksChartOptions = {
 animation: {
@@ -132,10 +193,43 @@ easing: 'linear'
             }
 };
     this.TopDisksChartData = {
-		labels: ['Writes', 'Reads', 'kB Written', 'kB read', 'ms Writing', 'ms Reading', 'ms spent on I/Os'],
+		labels: this.labels,
 		datasets: []
 	};
+
+	this.DiskReadWriteChart = null;
+	this.DiskReadWriteChartOptions = this.LineGraphsDefaultOptions;
+	this.DiskReadWriteChartData = {
+				                label: this.Diskslabels[0],
+                backgroundColor: 'rgba(' + this.colors2[0] + ', 0.4)',
+                borderColor: 'rgba(' + this.colors2[0] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[1],
+                backgroundColor: 'rgba(' + this.colors[1] + ', 0.4)',
+                borderColor: 'rgba(' + this.colors2[1] + ', 1)',
+                data: []
+	};
+  
+	this.DiskkBChart = null;
+	this.DiskkBChartOptions = this.LineGraphsDefaultOptions;
+	this.DiskkBChartOptions.scales.yAxes[0].ticks.callback = function(value) {
+                            return humanize.filesize(value);
+                        }
+	this.DiskkBChartData = {
+		                label: this.Diskslabels[2],
+                backgroundColor: 'rgba(' + this.colors2[0] + ', 0.4)',
+                borderColor: 'rgba(' + this.colors2[0] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[3],
+                backgroundColor: 'rgba(' + this.colors[1] + ', 0.4)',
+                borderColor: 'rgba(' + this.colors2[1] + ', 1)',
+                data: []
+            }
+	};
   },
+
 
   render: function() {
     var _this = this;
