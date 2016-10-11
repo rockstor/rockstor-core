@@ -380,7 +380,9 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     updateTopDisksChart: function() {
 
         var _this = this;
-        for (var i=0; i < _this.numTop; i++) {
+        //If avail disks < numTop, use only avail disks
+        var num_disks = Object.keys(_this.disksData).length < _this.numTop ? Object.keys(_this.disksData).length : _this.numTop;
+        for (var i=0; i < num_disks; i++) {
             var data = [];
             _.each(_this.Disksfields, function(field) {
                 data.push(_this.normalizeData(field, _this.topDisks[i][field]));
@@ -493,15 +495,12 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     },
 
     resize: function(event) {
+
         var _this = this;
         this.constructor.__super__.resize.apply(this, arguments);
         this.topDisksWidth = this.maximized ? 520 : 240;
         // maximum number of top disks to display
         this.numTop = this.maximized ? 5 : 3;
-        //this.$('#top-disks-ph').empty();
-        this.$('#top-disks-ph').css('width', this.topDisksWidth);
-        this.topDisksVis.attr('width', this.topDisksWidth);
-        this.renderTopDisks();
         if (this.maximized) {
             this.$('#disk-details-ph').html(this.diskUtilSelect({
                 disks: this.disks.toJSON()
@@ -515,6 +514,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         } else {
             this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
         }
+        _this.TopDisksChart.resize();
     },
 
     timeTickFormatter: function(dataLength) {
