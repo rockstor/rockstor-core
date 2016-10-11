@@ -55,10 +55,11 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         Chart.defaults.global.elements.line.fill = false;
         Chart.defaults.global.elements.point.radius = 0;
         Chart.defaults.global.elements.point.hoverRadius = 0;
+
         this.Disksfields = ['ms_ios', 'sectors_written', 'writes_completed', 'ms_writing', 'ms_reading', 'reads_completed', 'sectors_read'];
         this.Diskslabels = ['ms on I/Os', 'kB written', 'Writes', 'ms writing', 'ms reading', 'Reads', 'kB read'];
         this.TopDiskscolors = ['242, 0, 0', '36, 229, 84', '41, 108, 232', '232, 200, 41', '146, 41, 232']
-        this.colors2 = ['77, 175, 74', '55, 126, 184']
+        this.SingleDiskcolors = ['7, 233, 7', '21, 124, 217', '255, 184, 7', '255, 25, 7']
         this.colors = ["#4DAF4A", "#377EB8"];
         // disks data is a map of diskname to array of values of length
         // dataLength
@@ -143,28 +144,47 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 shadowSize: 0 // Drawing is faster without shadows
             }
         };
-        this.LineGraphsDefaultOptions = {
-            showLines: true,
-            animation: {
-                duration: 1000,
-                easing: 'linear'
-            },
+		this.SingleDiskChart = null;	
+        this.SingleDiskChartOptions = {
+            animation: false,
             responsive: true,
-            legend: {
-                display: false
+                        legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    boxWidth: 10,
+                    padding: 5,
+                    fontSize: 10
+                }
             },
             scales: {
                 yAxes: [{
+                    id: 'IOs',
                     position: 'left',
                     scaleLabel: {
-                        display: true,
-                        fontSize: 11,
-                        labelString: 'Data'
+                        display: false
                     },
                     ticks: {
                         fontSize: 9,
                         beginAtZero: true,
                         min: 0
+                    },
+                    gridLines: {
+                        drawTicks: true
+                    }
+                }, {
+                    id: 'Data',
+                    position: 'right',
+                    scaleLabel: {
+                        display: false
+                    },
+                    ticks: {
+                        fontSize: 9,
+                        beginAtZero: true,
+                        min: 0,
+                        callback: function(value) {
+                            return humanize.filesize(value);
+                        }
                     },
                     gridLines: {
                         drawTicks: false
@@ -191,6 +211,34 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 }]
             }
         };
+		this.SingleDiskChartData = {
+			labels: [],
+			datasets: [{
+                label: this.Diskslabels[5],
+				yAxisID: 'IOs',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[0] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[0] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[2],
+				yAxisID: 'IOs',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[1] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[1] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[6],
+				yAxisID: 'Data',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[2] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[2] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[1],
+				yAxisID: 'Data',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[3] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[3] + ', 1)',
+                data: []
+            }]
+		}
 
         this.TopDisksChart = null;
         this.TopDisksChartOptions = {
@@ -201,7 +249,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             responsive: true,
                         legend: {
                 display: true,
-                position: 'top',
+                position: 'bottom',
                 labels: {
                     boxWidth: 10,
                     padding: 5,
@@ -222,40 +270,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             datasets: []
         };
 
-        this.DiskReadWriteChart = null;
-        this.DiskReadWriteChartOptions = this.LineGraphsDefaultOptions;
-        this.DiskReadWriteChartData = {
-            datasets: [{
-                label: this.Diskslabels[0],
-                backgroundColor: 'rgba(' + this.colors2[0] + ', 0.4)',
-                borderColor: 'rgba(' + this.colors2[0] + ', 1)',
-                data: []
-            }, {
-                label: this.Diskslabels[1],
-                backgroundColor: 'rgba(' + this.colors2[1] + ', 0.4)',
-                borderColor: 'rgba(' + this.colors2[1] + ', 1)',
-                data: []
-            }]
-        };
-
-        this.DiskkBChart = null;
-        this.DiskkBChartOptions = this.LineGraphsDefaultOptions;
-        this.DiskkBChartOptions.scales.yAxes[0].ticks.callback = function(value) {
-            return humanize.filesize(value);
-        }
-        this.DiskkBChartData = {
-            datasets: [{
-                label: this.Diskslabels[2],
-                backgroundColor: 'rgba(' + this.colors2[0] + ', 0.4)',
-                borderColor: 'rgba(' + this.colors2[0] + ', 1)',
-                data: []
-            }, {
-                label: this.Diskslabels[3],
-                backgroundColor: 'rgba(' + this.colors2[1] + ', 0.4)',
-                borderColor: 'rgba(' + this.colors2[1] + ', 1)',
-                data: []
-            }]
-        };
+		this.initHandlebarHelpers();
     },
 
 
@@ -292,7 +307,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         this.disks.fetch({
             success: function(collection, response, options) {
                 _this.initializeDisksData();
-                _this.initTopDisksChart();
+                _this.initTopDisksData();
+				_this.initSingleDiskData();
                 RockStorSocket.addListener(_this.getData, _this, 'diskWidget:top_disks');
             }
         });
@@ -328,10 +344,11 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
     },
 
-    initTopDisksChart: function() {
+    initTopDisksData: function() {
 
         var _this = this;
-        for (var i = 0; i < this.numTop; i++) {
+		var num_disks = Object.keys(_this.disksData).length < _this.numTop ? Object.keys(_this.disksData).length : _this.numTop;
+        for (var i = 0; i < num_disks; i++) {
             var dataset = {
                 label: '',
                 borderWidth: 1,
@@ -347,27 +364,47 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             _this.TopDisksChartData.datasets.push(dataset);
         }
     },
+	
+	initSingleDiskData: function() {
+
+		var _this = this;
+		for (var i= 0; i < _this.dataLength; i++) {
+			_.each(_this.SingleDiskChartData.datasets, function(dataset) {
+				dataset.data.push(null);
+			});
+			_this.SingleDiskChartData.labels.push('');
+		}
+	},
 
     getData: function(data) {
 
         var _this = this;
-        if (!_this.graphRendered) {
-            _this.initGraphs();
-            _this.graphRendered = true;
-        }
-        _this.startTime = new Date().getTime();
         _this.update(data);
     },
 
     update: function(data) {
 
-        this.updateDisksData(data);
-        this.sortDisks();
-        this.updateTopDisksChart();
-        if (this.maximized) this.renderDiskGraph();
+		var _this = this;
+        _this.updateDisksData(data);
+        _this.sortDisks();
+
+        if (!_this.TopDisksgraphRendered) {
+            _this.initTopDisksGraph();
+            _this.TopDisksgraphRendered = true;
+        }
+        _this.updateTopDisksChart();
+
+        if (_this.maximized) {
+			if (!_this.SingleDiskgraphRendered) {
+				_this.initSingleDiskGraph();
+				_this.SingleDiskgraphRendered = true;
+			}
+			_this.updateSingleDiskChart();
+			this.renderDiskGraph();
+		}
     },
 
-    initGraphs: function() {
+    initTopDisksGraph: function() {
 
         var _this = this;
         _this.TopDisksChart = new Chart(this.$('#top-disks-chart'), {
@@ -376,6 +413,16 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             options: _this.TopDisksChartOptions
         });
     },
+	
+	initSingleDiskGraph: function() {
+
+        var _this = this;
+        _this.SingleDiskChart = new Chart(this.$('#single-disk-chart'), {
+            type: 'line',
+            data: _this.SingleDiskChartData,
+            options: _this.SingleDiskChartOptions
+        });
+	},
     
     updateTopDisksChart: function() {
 
@@ -392,6 +439,45 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         }
         _this.TopDisksChart.update();
     },
+	
+	updateSingleDiskChart: function() {
+
+		var _this = this;
+        if (!_this.selectedDisk) {
+            if (_this.topDisks.length > 0) {
+                _this.selectedDisk = _this.topDisks[0].name;
+            } else {
+                _this.selectedDisk = _this.disks.at(0).get('name');
+            }
+            this.$('#disk-select').val(_this.selectedDisk);
+        }
+		var current_disk = _this.disksData[_this.selectedDisk];
+		var singlediskdata = {
+			reads_completed: [],
+			writes_completed: [],
+			sectors_read: [],
+			sectors_written: [],
+		};
+		var singledisklabels = [];
+		
+        for (var i = 0; i < _this.dataLength; i++) {
+			_.each(singlediskdata, function(dataval, datakey) {
+				var multiplier = datakey.indexOf('sectors') > -1 ? 512 : 1;
+				singlediskdata[datakey].push(current_disk[i][datakey] * multiplier);
+			});
+			var csecs = moment(current_disk[i].ts).format('s');
+			var label = '';
+			if (csecs % 30 === 0) {
+				label = csecs == '0' ? moment(current_disk[i].ts).format('HH:mm') : moment(current_disk[i].ts).format(':ss');
+			}
+			singledisklabels.push(label);
+        }
+		_.each(_.values(singlediskdata), function(val, index) {
+			_this.SingleDiskChartData.datasets[index].data = val;
+		});
+		_this.SingleDiskChartData.labels = singledisklabels;
+		_this.SingleDiskChart.update();
+	},
 
     //Chart.js radar chart don't have multiple scales
     //so we have to normalize our data
@@ -490,7 +576,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             "ios_progress": 0,
             "ms_ios": 0,
             "weighted_ios": 0,
-            "ts": 0
+            "ts": ''
         };
     },
 
@@ -526,14 +612,33 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     valueTickFormatter: function(val, axis) {
         return humanize.filesize(val, 1024, 2);
     },
-
+	
     setSelectedDisk: function(event) {
         this.selectedDisk = this.$('#disk-select').val();
     },
 
     cleanup: function() {
         RockStorSocket.removeOneListener('diskWidget');
-    }
+    },
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('getAdminUsers', function(adminUsers){
+			var html = '';
+			var userNames = _.reduce(adminUsers, function(s, user, i, list) {
+				if (i < (list.length-1)) {
+					return s + user.username + ',';
+				} else{
+					return s + user.username;
+				}
+			}, '');
+			if(userNames.length != 0){
+				html += userNames;
+			}else {
+				html += '&nbsp;--';
+			}
+			return new Handlebars.SafeString(html);
+		});
+	}
 
 });
 
