@@ -37,14 +37,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.dashboard_widgets_disk_utilization;
         this.diskUtilSelect = window.JST.dashboard_widgets_disk_util_select;
-        this.dataLength = 300;
-        this.topDiskColors = [];
-        // calculate colors from dark to light for top disks
-        var startColor = d3.rgb('#CC6104');
-        for (var i = 0; i < 5; i++) {
-            this.topDiskColors.push(startColor.toString());
-            startColor = startColor.brighter(2);
-        }
+
         Chart.defaults.global.tooltips.enabled = false;
         Chart.defaults.global.elements.line.tension = 0.2;
         Chart.defaults.global.elements.line.borderCapStyle = 'butt';
@@ -56,11 +49,13 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         Chart.defaults.global.elements.point.radius = 0;
         Chart.defaults.global.elements.point.hoverRadius = 0;
 
+		this.numTop = this.maximized ? 5 : 3;
+        this.dataLength = 300;
         this.Disksfields = ['ms_ios', 'sectors_written', 'writes_completed', 'ms_writing', 'ms_reading', 'reads_completed', 'sectors_read'];
         this.Diskslabels = ['ms on I/Os', 'kB written', 'Writes', 'ms writing', 'ms reading', 'Reads', 'kB read'];
         this.TopDiskscolors = ['242, 0, 0', '36, 229, 84', '41, 108, 232', '232, 200, 41', '146, 41, 232']
         this.SingleDiskcolors = ['7, 233, 7', '21, 124, 217', '255, 184, 7', '255, 25, 7']
-        this.colors = ["#4DAF4A", "#377EB8"];
+		
         // disks data is a map of diskname to array of values of length
         // dataLength
         // each value is of the format of the data returned by the api
@@ -70,80 +65,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         this.disks.pageSize = RockStorGlobals.maxPageSize;
 
         this.topDisks = [];
-        this.topDisksWidth = this.maximized ? 520 : 240;
-        this.topDisksHeight = 50;
-
         this.selectedDisk = null;
 
-        this.updateFreq = 1000;
         this.sortAttrs = ['reads_completed']; // attrs to sort by
-        // maximum number of top disks to display
-        this.numTop = this.maximized ? 5 : 3;
-        this.partition = d3.layout.partition()
-            .value(function(d) {
-                return _.reduce(_this.sortAttrs, function(s, a) {
-                    return s + d[a];
-                }, 0);
-            });
-        this.graphOptions = {
-            grid: {
-                //hoverable : true,
-                borderWidth: {
-                    top: 1,
-                    right: 1,
-                    bottom: 1,
-                    left: 1
-                },
-                borderColor: "#ddd"
-            },
-            xaxis: {
-                min: 0,
-                max: this.dataLength - 1,
-                tickFormatter: this.timeTickFormatter(this.dataLength),
-                axisLabel: "Time (minutes)",
-                axisLabelColour: "#000"
-            },
-            yaxis: {
-                min: 0
-            },
-            series: {
-                lines: {
-                    show: true,
-                    fill: false
-                },
-                shadowSize: 0 // Drawing is faster without shadows
-            }
-        };
-        this.dataGraphOptions = {
-            grid: {
-                //hoverable : true,
-                borderWidth: {
-                    top: 1,
-                    right: 1,
-                    bottom: 1,
-                    left: 1
-                },
-                borderColor: "#ddd"
-            },
-            xaxis: {
-                min: 0,
-                max: this.dataLength - 1,
-                tickFormatter: this.timeTickFormatter(this.dataLength),
-                axisLabel: "Time (minutes)",
-                axisLabelColour: "#000"
-            },
-            yaxis: {
-                min: 0,
-                tickFormatter: this.valueTickFormatter
-            },
-            series: {
-                lines: {
-                    show: true,
-                    fill: false
-                },
-                shadowSize: 0 // Drawing is faster without shadows
-            }
-        };
+
 		this.SingleDiskChart = null;	
         this.SingleDiskChartOptions = {
             animation: false,
@@ -400,7 +325,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 				_this.SingleDiskgraphRendered = true;
 			}
 			_this.updateSingleDiskChart();
-			this.renderDiskGraph();
 		}
     },
 
@@ -512,56 +436,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         });
     },
 
-    renderDiskGraph: function() {
-        if (!this.selectedDisk) {
-            if (this.topDisks.length > 0) {
-                this.selectedDisk = this.topDisks[0].name;
-            } else {
-                this.selectedDisk = this.disks.at(0).get('name');
-            }
-            this.$('#disk-select').val(this.selectedDisk);
-        }
-
-        var vals = this.disksData[this.selectedDisk];
-        var tmpReads = [];
-        for (var i = 0; i < this.dataLength; i++) {
-            tmpReads.push([i, vals[i].reads_completed]);
-        }
-        var tmpWrites = [];
-        for (var i = 0; i < this.dataLength; i++) {
-            tmpWrites.push([i, vals[i].writes_completed]);
-        }
-        var series1 = [{
-            label: 'Reads',
-            data: tmpReads,
-            color: this.colors[0]
-        }, {
-            label: 'Writes',
-            data: tmpWrites,
-            color: this.colors[1]
-        }];
-        $.plot(this.$('#disk-graph-reads-ph'), series1, this.graphOptions);
-
-        var tmpReadData = [];
-        for (var i = 0; i < this.dataLength; i++) {
-            tmpReadData.push([i, vals[i].sectors_read * 512]);
-        }
-        var tmpWriteData = [];
-        for (var i = 0; i < this.dataLength; i++) {
-            tmpWriteData.push([i, vals[i].sectors_written * 512]);
-        }
-        var series2 = [{
-            label: 'KB read',
-            data: tmpReadData,
-            color: this.colors[0]
-        }, {
-            label: 'KB written',
-            data: tmpWriteData,
-            color: this.colors[1]
-        }];
-        $.plot(this.$('#disk-graph-data-ph'), series2, this.dataGraphOptions);
-    },
-
     genEmptyDiskData: function() {
         // empty disk data
         return {
@@ -584,7 +458,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
         var _this = this;
         this.constructor.__super__.resize.apply(this, arguments);
-        this.topDisksWidth = this.maximized ? 520 : 240;
         // maximum number of top disks to display
         this.numTop = this.maximized ? 5 : 3;
         if (this.maximized) {
@@ -601,20 +474,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
         }
         _this.TopDisksChart.resize();
-    },
-
-    timeTickFormatter: function(dataLength) {
-        return function(val, axis) {
-            return ((dataLength / 60) - (parseInt(val / 60))).toString() + ' m';
-        };
-    },
-
-    valueTickFormatter: function(val, axis) {
-        return humanize.filesize(val, 1024, 2);
-    },
-	
-    setSelectedDisk: function(event) {
-        this.selectedDisk = this.$('#disk-select').val();
     },
 
     cleanup: function() {
