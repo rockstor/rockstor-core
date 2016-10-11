@@ -122,13 +122,22 @@ def config_upssched():
     """
     # the upssched config file
     upsshed_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
-    # would be better if we could set a file creation mask first then copy
+    # As our custom parser for nut.conf, ups.conf, upsd.conf, upsd.users
+    # and upsmon.conf can only work on whole word keys we cannot use it
+    # for editing upssched.conf which can have multiple simultaneous entries
+    # of multi word keys, ie:
+    # "AT ONBATT * START-TIMER on-batt 10"
+    # "AT ONBATT * START-TIMER early-shutdown 120"
+    # TODO: add upssched.conf parser / config editor to replace straight copy
+    # TODO: from template.
+    # Would be better if we could set a file creation mask first then copy
     # TODO: set file creation mask to 640
     shutil.copyfile(upsshed_conf_template, UPSSCHED_CONF)
     run_command([CHOWN, 'root.nut', UPSSCHED_CONF])
     run_command([CHMOD, '640', UPSSCHED_CONF])
     # the upssched command file
     upsshed_cmd_template = ('%s/upssched-cmd' % settings.CONFROOT)
+
     shutil.copyfile(upsshed_cmd_template, UPSSCHED_CMD)
     run_command([CHOWN, 'root.root', UPSSCHED_CMD])
     # going with existing rights but this should be reviewed
