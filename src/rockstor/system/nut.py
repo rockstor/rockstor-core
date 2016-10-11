@@ -274,8 +274,6 @@ def pre_process_nut_config(config):
     nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = ('%s@%s 1 %s %s %s' % (
         config['upsname'], config['nutserver'], config['nutuser'],
         config['password'], config['upsmon']))
-    logger.info(
-        'NUT MONITOR LINE = %s' % nut_configs[NUT_MONITOR_CONFIG]['MONITOR'])
 
     # move section headings from config to nut_configs OrderedDicts
     # this way all following entries will pertain to them in their respective
