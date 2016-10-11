@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-# todo revise comments for brevity
+# TODO: revise comments for brevity
 
 # for CentOS nut systemd files are:-
 # from nut package
@@ -123,7 +123,7 @@ def config_upssched():
     # the upssched config file
     upsshed_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
     # would be better if we could set a file creation mask first then copy
-    # todo set file creation mask to 640
+    # TODO: set file creation mask to 640
     shutil.copyfile(upsshed_conf_template, UPSSCHED_CONF)
     run_command([CHOWN, 'root.nut', UPSSCHED_CONF])
     run_command([CHMOD, '640', UPSSCHED_CONF])
@@ -146,7 +146,7 @@ def establish_config_defaults(config):
     """
     # An empty config dictionary will be false so raise exception as what else.
     if not config:
-        # todo I am unsure if this is the best way to raise an exception here.
+        # TODO: I am unsure if this is the best way to raise an exception here.
         e_msg = ('No NUT-UPS configuration found, make sure you have'
                  'configured this service properly.')
         raise Exception(e_msg)
@@ -216,7 +216,7 @@ def pre_process_nut_config(config):
     by a config file path & name string, each top level entry (config file) is
     paired with an OrderedDict of options. This way we have:-
     "file -> options_in_order" pairs.
-    OrderedDict allows for section head sub-sectin ordering eg:-
+    OrderedDict allows for section head sub-section ordering eg:-
     [myups]
     driver = apcsmart
     port = /dev/ttyS1
@@ -253,7 +253,8 @@ def pre_process_nut_config(config):
     # set nut shutdown command wrapped in double inverted commas
     config['SHUTDOWNCMD'] = ('"%s"' % settings.NUT_SYSTEM_SHUTDOWNCMD)
 
-    # set nut network LISTEN to LISTEN_ON_IP when in netserver mode, else ll.
+    # set nut network LISTEN to LISTEN_ON_IP when in netserver mode, else set
+    # to local loop back / localhost.
     if config['MODE'] == 'netserver':
         config['LISTEN'] = settings.NUT_LISTEN_ON_IP
     else:
@@ -307,6 +308,7 @@ def update_config_in(config_file, config, remove_all, header):
     :param config_file: path and filename of config file to update
     :param config: OrderedDict of options with possible section-- tags on index
     :param remove_all: list of entries to always remark out regardless
+    :param header: string to announce automated config file entries boundary
     :return:
     """
     file_descriptor, tempNamePath = mkstemp(prefix='rocknut')
