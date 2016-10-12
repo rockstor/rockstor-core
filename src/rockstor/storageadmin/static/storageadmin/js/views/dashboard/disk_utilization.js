@@ -441,11 +441,16 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                     }
                 });
             }
+			var local_topdisks = []
 			_.each(selected_top, function(disk) {
 				_.each(tmp, function(d){
-					if (d.name == disk) _this.topDisks.push(d);
+					if (d.name == disk) local_topdisks.push(d);
 				});
 			});
+			_this.topDisks = local_topdisks;
+			/*_this.topDisks = _.filter(tmp, function (disk) {
+				return _.contains(selected_top, disk.name);
+			});*/
         } else {
             _this.topDisks = _.sortBy(tmp, function(d) {
                 return d[sort_attr];
@@ -511,7 +516,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
 	initHandlebarHelpers: function(){
 
-		Handlebars.registerHelper('selectSortAttrs', function(){
+		Handlebars.registerHelper('getAdminUsers', function(adminUsers){
 			var html = '';
 			var userNames = _.reduce(adminUsers, function(s, user, i, list) {
 				if (i < (list.length-1)) {
