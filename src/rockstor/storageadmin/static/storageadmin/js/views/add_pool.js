@@ -166,16 +166,16 @@ AddPoolView = Backbone.View.extend({
 
     renderSummary: function() {
         // Extract various data from currently selected disks for display
-        diskSizes = this.selectedDisks.map(function(disk) {
+        var diskSizes = this.selectedDisks.map(function(disk) {
             return disk.get('size') * 1024;
         });
-        total = _.reduce(diskSizes, function(total, element) {
+        var total = _.reduce(diskSizes, function(total, element) {
             return total + element;
         });
-        sizeCounts = _.countBy(diskSizes, function(size) {
+        var sizeCounts = _.countBy(diskSizes, function(size) {
             return size;
         });
-        data = _.map(sizeCounts, function(count, size) {
+        var data = _.map(sizeCounts, function(count, size) {
             return {
                 count: count,
                 size: humanize.filesize(size),
@@ -216,14 +216,14 @@ AddPoolView = Backbone.View.extend({
     updateSelection: function(event) {
         if (!event.currentTarget.checked)
             $('#checkAll').prop('checked', false);
-        checkboxes = $('input:checkbox.disk');
+        var checkboxes = $('input:checkbox.disk');
         checkboxes.each(function() {
             $(this).closest('tr').toggleClass('row-highlight', this.checked);
         });
-        diskIds = checkboxes.filter(':checked').map(function() {
+        var diskIds = checkboxes.filter(':checked').map(function() {
                 return this.id;
         }).get();
-        disks = _.map(diskIds, function(id) {
+        var disks = _.map(diskIds, function(id) {
             return this.collection.get(id);
         }, this);
 
