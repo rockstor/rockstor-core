@@ -74,6 +74,12 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         this.SingleDiskChartOptions = {
             animation: false,
             responsive: false,
+            title: {
+                display: true,
+                text: '',
+                padding: 5,
+                fontSize: 11
+            },
             legend: {
                 display: true,
                 position: 'bottom',
@@ -370,6 +376,9 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 writes_completed: [],
                 sectors_read: [],
                 sectors_written: [],
+                ms_ios: [],
+                ms_writing: [],
+                ms_reading: []
             };
             var singledisklabels = [];
 
@@ -385,9 +394,19 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 }
                 singledisklabels.push(label);
             }
+            var msios = _.reduce(singlediskdata.ms_ios, function(s, n){ return s + n; }, 0)/singlediskdata.ms_ios.length;
+            var msw = _.reduce(singlediskdata.ms_writing, function(s, n){ return s + n; }, 0)/singlediskdata.ms_writing.length;
+            var msr = _.reduce(singlediskdata.ms_reading, function(s, n){ return s + n; }, 0)/singlediskdata.ms_reading.length;
+            var title = ': Avg I/Os: ' + msios.toFixed(2) + 'ms - ';
+            title +='Avg writing: ' + msw.toFixed(2) + 'ms - ';
+            title +='Avg reading: ' + msr.toFixed(2) + 'ms :';
+            delete singlediskdata.ms_ios;
+            delete singlediskdata.ms_writing;
+            delete singlediskdata.ms_reading;
             _.each(_.values(singlediskdata), function(val, index) {
                 _this.SingleDiskChartData.datasets[index].data = val;
             });
+            _this.SingleDiskChart.options.title.text = title;
             _this.SingleDiskChartData.labels = singledisklabels;
             _this.SingleDiskChart.update();
         }
