@@ -52,7 +52,11 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 		this.numTop = this.maximized ? 5 : 3;
         this.dataLength = 300;
         this.Disksfields = ['ms_ios', 'sectors_written', 'writes_completed', 'ms_writing', 'ms_reading', 'reads_completed', 'sectors_read'];
+		this.sortFields = this.Disksfields.slice(0);
         this.Diskslabels = ['ms on I/Os', 'kB written', 'Writes', 'ms writing', 'ms reading', 'Reads', 'kB read'];
+		this.sortLabels = this.Diskslabels.slice(0);
+		this.sortFields.unshift('best_draft');
+		this.sortLabels.unshift('Best Draft');
         this.TopDiskscolors = ['242, 0, 0', '36, 229, 84', '41, 108, 232', '232, 200, 41', '146, 41, 232']
         this.SingleDiskcolors = ['7, 233, 7', '21, 124, 217', '255, 184, 7', '255, 25, 7']
 		
@@ -67,12 +71,14 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         this.topDisks = [];
         this.selectedDisk = null;
 
+        this.best_draftSort = ['reads_completed', 'writes_completed', 'sectors_read', 'sectors_written', 'ms_ios', 'ms_writing', 'ms_reading'];
+        this.selectedAttr = '';
         this.sortAttrs = ['reads_completed']; // attrs to sort by
 
 		this.SingleDiskChart = null;	
         this.SingleDiskChartOptions = {
             animation: false,
-            responsive: true,
+            responsive: false,
                         legend: {
                 display: true,
                 position: 'bottom',
@@ -198,7 +204,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 		this.initHandlebarHelpers();
     },
 
-
     render: function() {
 
         var _this = this;
@@ -209,7 +214,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             displayName: this.displayName,
             maximized: this.maximized
         }));
-
+		if (this.maximized) this.$('#top-disks-container').css('width','60%');
         this.$('.diskSortAttr').change(function(event) {
             var cbox = $(event.currentTarget);
             var v = cbox.val();
@@ -391,8 +396,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 			});
 			var csecs = moment(current_disk[i].ts).format('s');
 			var label = '';
-			if (csecs % 30 === 0) {
-				label = csecs == '0' ? moment(current_disk[i].ts).format('HH:mm') : moment(current_disk[i].ts).format(':ss');
+			if (csecs % 60 === 0) {
+				label = moment(current_disk[i].ts).format('HH:mm');
 			}
 			singledisklabels.push(label);
         }
@@ -421,10 +426,25 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         var tmp = _.map(_.keys(_this.disksData), function(k) {
             return _this.disksData[k][_this.dataLength - 1];
         });
-        var sorter = _this.sortAttrs[0];
-        _this.topDisks = _.sortBy(tmp, function(d) {
-            return d[sorter];
-        }).reverse();
+        var sort_attr = _this.sortAttrs[0];
+        if (sort_attr == 'best_draft') {
+            var selected_top = [];
+            for (var i=0; i < _this.numTop; i++) {
+                _.each(_this.best_draftSort, function (d) {
+                    var current_top = _.sortBy(tmp, function(k) {
+                        return k[d];
+                    }).reverse();
+                    if (!_.contains(selected_top, current_top[i].name) && selected_top.length < _this.numTop) {
+                        selected_top.push(current_top[i].name);
+                    }
+                });
+            }
+        } else {
+            _this.topDisks = _.sortBy(tmp, function(d) {
+                return d[sort_attr];
+            }).reverse();
+            
+        }
     },
 
     updateDisksData: function(data) {
@@ -470,7 +490,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             this.$('#disk-select').change(function(event) {
                 _this.selectedDisk = _this.$('#disk-select').val();
             });
+			this.$('#top-disks-container').css('width','60%');
         } else {
+			this.$('#top-disks-container').css('width','70%');
+			_this.SingleDiskgraphRendered = false;
             this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
         }
         _this.TopDisksChart.resize();
@@ -481,6 +504,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     },
 
 	initHandlebarHelpers: function(){
+
 		Handlebars.registerHelper('getAdminUsers', function(adminUsers){
 			var html = '';
 			var userNames = _.reduce(adminUsers, function(s, user, i, list) {
