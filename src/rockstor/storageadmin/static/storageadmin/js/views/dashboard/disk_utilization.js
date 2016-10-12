@@ -364,31 +364,33 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             this.$('#disk-select').val(_this.selectedDisk);
         }
         var current_disk = _this.disksData[_this.selectedDisk];
-        var singlediskdata = {
-            reads_completed: [],
-            writes_completed: [],
-            sectors_read: [],
-            sectors_written: [],
-        };
-        var singledisklabels = [];
+        if (current_disk) {
+            var singlediskdata = {
+                reads_completed: [],
+                writes_completed: [],
+                sectors_read: [],
+                sectors_written: [],
+            };
+            var singledisklabels = [];
 
-        for (var i = 0; i < _this.dataLength; i++) {
-            _.each(singlediskdata, function(dataval, datakey) {
-                var multiplier = datakey.indexOf('sectors') > -1 ? 512 : 1;
-                singlediskdata[datakey].push(current_disk[i][datakey] * multiplier);
-            });
-            var csecs = moment(current_disk[i].ts).format('s');
-            var label = '';
-            if (csecs % 60 === 0) {
-                label = moment(current_disk[i].ts).format('HH:mm');
+            for (var i = 0; i < _this.dataLength; i++) {
+                _.each(singlediskdata, function(dataval, datakey) {
+                    var multiplier = datakey.indexOf('sectors') > -1 ? 512 : 1;
+                    singlediskdata[datakey].push(current_disk[i][datakey] * multiplier);
+                });
+                var csecs = moment(current_disk[i].ts).format('s');
+                var label = '';
+                if (csecs % 60 === 0) {
+                    label = moment(current_disk[i].ts).format('HH:mm');
+                }
+                singledisklabels.push(label);
             }
-            singledisklabels.push(label);
+            _.each(_.values(singlediskdata), function(val, index) {
+                _this.SingleDiskChartData.datasets[index].data = val;
+            });
+            _this.SingleDiskChartData.labels = singledisklabels;
+            _this.SingleDiskChart.update();
         }
-        _.each(_.values(singlediskdata), function(val, index) {
-            _this.SingleDiskChartData.datasets[index].data = val;
-        });
-        _this.SingleDiskChartData.labels = singledisklabels;
-        _this.SingleDiskChart.update();
     },
 
     //Chart.js radar chart don't have multiple scales
