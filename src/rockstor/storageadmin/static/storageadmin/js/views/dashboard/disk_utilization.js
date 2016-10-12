@@ -426,24 +426,30 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         var tmp = _.map(_.keys(_this.disksData), function(k) {
             return _this.disksData[k][_this.dataLength - 1];
         });
-        var sort_attr = _this.sortAttrs[0];
+
+        //var sort_attr = _this.sortAttrs[0];
+		var sort_attr = 'best_draft';
         if (sort_attr == 'best_draft') {
             var selected_top = [];
-            for (var i=0; i < _this.numTop; i++) {
+            for (var i=0; i < Object.keys(tmp).length; i++) {
                 _.each(_this.best_draftSort, function (d) {
-                    var current_top = _.sortBy(tmp, function(k) {
+                    var sorted = _.sortBy(tmp, function(k) {
                         return k[d];
                     }).reverse();
-                    if (!_.contains(selected_top, current_top[i].name) && selected_top.length < _this.numTop) {
-                        selected_top.push(current_top[i].name);
+                    if (!_.contains(selected_top, sorted[i].name) && selected_top.length < _this.numTop) {
+                        selected_top.push(sorted[i].name);
                     }
                 });
             }
+			_.each(selected_top, function(disk) {
+				_.each(tmp, function(d){
+					if (d.name == disk) _this.topDisks.push(d);
+				});
+			});
         } else {
             _this.topDisks = _.sortBy(tmp, function(d) {
                 return d[sort_attr];
             }).reverse();
-            
         }
     },
 
@@ -505,7 +511,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
 	initHandlebarHelpers: function(){
 
-		Handlebars.registerHelper('getAdminUsers', function(adminUsers){
+		Handlebars.registerHelper('selectSortAttrs', function(){
 			var html = '';
 			var userNames = _.reduce(adminUsers, function(s, user, i, list) {
 				if (i < (list.length-1)) {
