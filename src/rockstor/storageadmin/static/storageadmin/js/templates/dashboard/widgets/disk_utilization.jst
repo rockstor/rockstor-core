@@ -29,20 +29,17 @@
 
 <!-- Content -->
 <div class="widget-content">
-<div id="top-disks-container" style="width: 70%; margin: 0 auto;">
-  <canvas id="top-disks-chart"></canvas>
-  </div>
-  <div id="disks-sort-attrs">
-    Sort by: 
-    <input type="checkbox" class="diskSortAttr checkbox-inline radio-inline" name="reads_completed" value="reads_completed" checked="true">Reads&nbsp;
-    <input type="checkbox" class="diskSortAttr checkbox-inline" name="writes_completed" value="writes_completed">Writes
-
-    &nbsp;&nbsp;
-    Total: <span id="attr-total"></span>
-
-  </div>
-  <br>
-  <div id="disk-details-ph"></div>
+    <div id="top-disks-container" style="width: 70%; margin: 0 auto;">
+        <canvas id="top-disks-chart"></canvas>
+    </div>
+    <div id="disk-sort">
+        <span class="h4">Top disks</span> sort by:
+        <select name="attr-select" id="attr-select" class="inline">
+            {{genAttrSelect}}
+        </select>
+    </div>
+    <br>
+    <div id="disk-details-ph"></div>
 </div>
 <!-- End Content -->
 
