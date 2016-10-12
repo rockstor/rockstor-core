@@ -128,6 +128,7 @@ def config_upssched():
     # of multi word keys, ie:
     # "AT ONBATT * START-TIMER on-batt 10"
     # "AT ONBATT * START-TIMER early-shutdown 120"
+    # "AT ONLINE * CANCEL-TIMER early-shutdown"
     # TODO: add upssched.conf parser / config editor to replace straight copy
     # TODO: from template.
     # Would be better if we could set a file creation mask first then copy
