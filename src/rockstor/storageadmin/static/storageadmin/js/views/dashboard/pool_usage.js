@@ -80,7 +80,7 @@ PoolUsageWidget = RockStorWidgetView.extend({
     setGraphDimensions: function() {
 
         var _this = this;
-        _this.barHeight = _this.maximized ? 40 : 20;
+        _this.barHeight = _this.maximized ? 40 : 18;
         _this.barWidth = _this.maximized ? 440 : 190;
         _this.valign = _this.maximized ? 10 : 0;
     },
