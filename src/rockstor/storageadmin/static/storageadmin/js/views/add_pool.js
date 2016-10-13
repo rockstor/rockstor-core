@@ -154,6 +154,8 @@ AddPoolView = Backbone.View.extend({
         });
 
         $('#add-pool-form').validate({
+            onfocusout: false,
+            onkeyup: false,
             rules: {
                 pool_name: "validatePoolName",
                 raid_level: "validateRaid"
