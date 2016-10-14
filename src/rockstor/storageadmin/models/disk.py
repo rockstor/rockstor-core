@@ -30,7 +30,7 @@ class Disk(models.Model):
     /dev/disk/by-id/ which in turn are symlinks to sda, sdb etc.
     eg ata-QEMU_HARDDISK_QM00005 ie mostly derived from model and serial number.
     """
-    name = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=128, unique=True)
     """total size in KB"""
     size = models.BigIntegerField(default=0)
     """true if disk went offline"""
