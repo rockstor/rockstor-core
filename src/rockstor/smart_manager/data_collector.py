@@ -419,6 +419,7 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
     def send_top_disks(self):
 
         def disk_stats(prev_stats):
+            disks_stats = []
             # invoke body of disk_stats with empty cur_stats
             stats_file_path = '/proc/diskstats'
             cur_stats = {}
@@ -455,23 +456,23 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
                         else:
                             datum = (float(cur[i]) - float(prev[i]))/interval
                         data.append(datum)
-                    self.emit('diskWidget:top_disks', {
-                        'key': 'diskWidget:top_disks', 'data': [{
-                            'name': disk,
-                            'reads_completed': data[0],
-                            'reads_merged': data[1],
-                            'sectors_read': data[2],
-                            'ms_reading': data[3],
-                            'writes_completed': data[4],
-                            'writes_merged': data[5],
-                            'sectors_written': data[6],
-                            'ms_writing': data[7],
-                            'ios_progress': data[8],
-                            'ms_ios': data[9],
-                            'weighted_ios': data[10],
-                            'ts': str(datetime.utcnow().replace(tzinfo=utc).isoformat())
-                        }]
-                    })
+                    disks_stats.append({
+                        'name': disk,
+                        'reads_completed': data[0],
+                        'reads_merged': data[1],
+                        'sectors_read': data[2],
+                        'ms_reading': data[3],
+                        'writes_completed': data[4],
+                        'writes_merged': data[5],
+                        'sectors_written': data[6],
+                        'ms_writing': data[7],
+                        'ios_progress': data[8],
+                        'ms_ios': data[9],
+                        'weighted_ios': data[10],
+                        'ts': str(datetime.utcnow().replace(tzinfo=utc).isoformat())
+                        })
+
+            self.emit('diskWidget:top_disks',{ 'key': 'diskWidget:top_disks', 'data': disks_stats })
             return cur_stats
 
         def get_stats():

@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -27,405 +27,507 @@
 
 DiskUtilizationWidget = RockStorWidgetView.extend({
 
-  initialize: function() {
-    RockStorSocket.diskWidget = io.connect('/disk-widget', {'secure': true,
-                                                     'force new connection': true});
-    var _this = this;
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.dashboard_widgets_disk_utilization;
-    this.diskUtilSelect = window.JST.dashboard_widgets_disk_util_select;
-    this.dataLength = 300;
-    this.topDiskColors = [];
-    // calculate colors from dark to light for top disks
-    var startColor = d3.rgb('#CC6104');
-    for (var i=0; i<5; i++)  {
-      this.topDiskColors.push(startColor.toString());
-      startColor = startColor.brighter(2);
-    }
-    this.colors = ["#4DAF4A", "#377EB8"];
-    // disks data is a map of diskname to array of values of length
-    // dataLength
-    // each value is of the format of the data returned by the api
-    // see genEmptyDiskData for an example of this format
-    this.disksData = {};
-      this.disks = new DiskCollection();
-      this.disks.pageSize = RockStorGlobals.maxPageSize;
+    initialize: function() {
 
-    this.topDisks = [];
-    this.topDisksWidth = this.maximized ? 520 : 240;
-    this.topDisksHeight = 50;
+        RockStorSocket.diskWidget = io.connect('/disk-widget', {
+            'secure': true,
+            'force new connection': true
+        });
+        var _this = this;
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.template = window.JST.dashboard_widgets_disk_utilization;
+        this.diskUtilSelect = window.JST.dashboard_widgets_disk_util_select;
 
-    this.selectedDisk = null;
+        Chart.defaults.global.tooltips.enabled = false;
+        Chart.defaults.global.elements.line.tension = 0.2;
+        Chart.defaults.global.elements.line.borderCapStyle = 'butt';
+        Chart.defaults.global.elements.line.borderDash = [];
+        Chart.defaults.global.elements.line.borderDashOffset = 0.0;
+        Chart.defaults.global.elements.line.borderWidth = 1;
+        Chart.defaults.global.elements.line.borderJoinStyle = 'miter';
+        Chart.defaults.global.elements.line.fill = false;
+        Chart.defaults.global.elements.point.radius = 0;
+        Chart.defaults.global.elements.point.hoverRadius = 0;
 
-    this.updateFreq = 1000;
-    this.sortAttrs = ['reads_completed']; // attrs to sort by
-    // maximum number of top disks to display
-    this.numTop = this.maximized ? 5 : 3;
-    this.partition = d3.layout.partition()
-    .value(function(d) {
-      return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0);
-    });
-    this.graphOptions = {
-      grid : {
-        //hoverable : true,
-        borderWidth: {
-          top: 1,
-          right: 1,
-          bottom: 1,
-          left: 1
-        },
-        borderColor: "#ddd"
-      },
-      xaxis: {
-        min: 0,
-        max: this.dataLength-1,
-        tickFormatter: this.timeTickFormatter(this.dataLength),
-        axisLabel: "Time (minutes)",
-        axisLabelColour: "#000"
-      },
-      yaxis: {
-        min: 0
-      },
-      series: {
-        lines: {show: true, fill: false},
-        shadowSize: 0 // Drawing is faster without shadows
-      }
-    };
-    this.dataGraphOptions = {
-      grid : {
-        //hoverable : true,
-        borderWidth: {
-          top: 1,
-          right: 1,
-          bottom: 1,
-          left: 1
-        },
-        borderColor: "#ddd"
-      },
-      xaxis: {
-        min: 0,
-        max: this.dataLength-1,
-        tickFormatter: this.timeTickFormatter(this.dataLength),
-        axisLabel: "Time (minutes)",
-        axisLabelColour: "#000"
-      },
-      yaxis: {
-        min: 0,
-        tickFormatter: this.valueTickFormatter
-      },
-      series: {
-        lines: {show: true, fill: false},
-        shadowSize: 0 // Drawing is faster without shadows
-      }
-    };
-  },
+        this.numTop = this.maximized ? 5 : 3;
+        this.dataLength = 300;
+        this.Disksfields = ['ms_ios', 'sectors_written', 'writes_completed', 'ms_writing', 'ms_reading', 'reads_completed', 'sectors_read'];
+        this.Diskslabels = ['ms on I/Os', 'kB written', 'Writes', 'ms writing', 'ms reading', 'Reads', 'kB read'];
+        this.TopDiskscolors = ['242, 0, 0', '36, 229, 84', '41, 108, 232', '232, 200, 41', '146, 41, 232']
+        this.SingleDiskcolors = ['7, 233, 7', '21, 124, 217', '255, 184, 7', '255, 25, 7']
 
-  render: function() {
-    var _this = this;
-    // call render of base
-    this.constructor.__super__.render.apply(this, arguments);
-    $(this.el).html(this.template({
-      module_name: this.module_name,
-      displayName: this.displayName,
-      maximized: this.maximized
-    }));
+        // disks data is a map of diskname to array of values of length
+        // dataLength
+        // each value is of the format of the data returned by the api
+        // see genEmptyDiskData for an example of this format
+        this.disksData = {};
+        this.disks = new DiskCollection();
+        this.disks.pageSize = RockStorGlobals.maxPageSize;
 
-    this.$('.diskSortAttr').change(function(event) {
-      var cbox = $(event.currentTarget);
-      var v = cbox.val();
-      if (cbox.is(':checked')) {
-        if (_.indexOf(_this.sortAttrs, v) == -1 ) {
-          _this.sortAttrs.push(v);
+        this.topDisks = [];
+        this.selectedDisk = null;
+
+        this.best_draftSort = ['reads_completed', 'writes_completed', 'sectors_read', 'sectors_written', 'ms_ios', 'ms_writing', 'ms_reading'];
+        this.selectedAttr = 'best_draft';
+
+        this.SingleDiskChart = null;
+        this.SingleDiskChartOptions = {
+            animation: false,
+            responsive: false,
+            title: {
+                display: true,
+                text: '',
+                padding: 5,
+                fontSize: 11
+            },
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    boxWidth: 10,
+                    padding: 5,
+                    fontSize: 10
+                }
+            },
+            scales: {
+                yAxes: [{
+                    id: 'IOs',
+                    position: 'left',
+                    scaleLabel: {
+                        display: false
+                    },
+                    ticks: {
+                        fontSize: 9,
+                        beginAtZero: true,
+                        min: 0
+                    },
+                    gridLines: {
+                        drawTicks: true
+                    }
+                }, {
+                    id: 'Data',
+                    position: 'right',
+                    scaleLabel: {
+                        display: false
+                    },
+                    ticks: {
+                        fontSize: 9,
+                        beginAtZero: true,
+                        min: 0,
+                        callback: function(value) {
+                            return humanize.filesize(value);
+                        }
+                    },
+                    gridLines: {
+                        drawTicks: false
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        fontSize: 11,
+                        labelString: 'Time'
+                    },
+                    gridLines: {
+                        display: true,
+                        drawTicks: false
+                    },
+                    ticks: {
+                        fontSize: 9,
+                        maxRotation: 0,
+                        autoSkip: false,
+                        callback: function(value) {
+                            return (value.toString().length > 0 ? value : null);
+                        }
+                    }
+                }]
+            }
+        };
+        this.SingleDiskChartData = {
+            labels: [],
+            datasets: [{
+                label: this.Diskslabels[5],
+                yAxisID: 'IOs',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[0] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[0] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[2],
+                yAxisID: 'IOs',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[1] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[1] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[6],
+                yAxisID: 'Data',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[2] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[2] + ', 1)',
+                data: []
+            }, {
+                label: this.Diskslabels[1],
+                yAxisID: 'Data',
+                backgroundColor: 'rgba(' + this.SingleDiskcolors[3] + ', 0.4)',
+                borderColor: 'rgba(' + this.SingleDiskcolors[3] + ', 1)',
+                data: []
+            }]
         }
-      } else {
-        if (_.indexOf(_this.sortAttrs, v) != -1 ) {
-          if (_this.sortAttrs.length > 1) {
-            _this.sortAttrs = _.without(_this.sortAttrs, v);
-          } else {
-            // dont allow the last attr to be unchecked
-            cbox.prop('checked', true);
-          }
-        }
-      }
-    });
-    this.$('#top-disks-ph').css('width', this.topDisksWidth);
-    this.topDisksPh = d3.select(this.el).select('#top-disks-ph');
 
-    this.topDisksVis = this.topDisksPh
-    .append('svg:svg')
-    .attr('id', 'top-disks-svg')
-    .attr('height', 75)
-    .attr('width', this.topDisksWidth);
+        this.TopDisksChart = null;
+        this.TopDisksChartOptions = {
+            animation: {
+                duration: 1500,
+                easing: 'linear'
+            },
+            responsive: true,
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    boxWidth: 10,
+                    padding: 5,
+                    fontSize: 10
+                }
+            },
+            scale: {
+                ticks: {
+                    display: false,
+                    min: 0,
+                    max: 100,
+                    stepSize: 20
+                }
+            }
+        };
+        this.TopDisksChartData = {
+            labels: this.Diskslabels,
+            datasets: []
+        };
 
-    this.disks.fetch({
-      success: function(collection, response, options) {
-        _this.initializeDisksData();
-        RockStorSocket.addListener(_this.getData, _this, 'diskWidget:top_disks');
-      }
-    });
-    return this;
-  },
+        this.initHandlebarHelpers();
+    },
 
-  // initialize disksData with disk names and empty value arrays
-  initializeDisksData: function() {
-    var _this = this;
-    this.disks.each(function(disk) {
-      var name = disk.get('name');
-      var temp_name = disk.get('temp_name');
-      _this.disksData[name] = [];
-      for (var i=0; i<_this.dataLength; i++) {
-        _this.disksData[name].push(_this.genEmptyDiskData());
-      }
-    });
-    if (this.maximized) {
-      // initialize disk-select
-      this.$('#disk-details-ph').html(this.diskUtilSelect({
-          disks: this.disks.toJSON()
-      }));
-      if (this.selectedDisk) {
-        this.$('#disk-select').val(this.selectedDisk);
-      }
-      this.$('#disk-select').change(function(event) {
-        _this.selectedDisk = _this.$('#disk-select').val();
-      });
-    } else {
-      this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
-    }
-  },
+    render: function() {
 
-  getData: function(data) {
-    var _this = this;
-    _this.startTime = new Date().getTime();
-    _this.update(data);
-  },
+        var _this = this;
+        // call render of base
+        this.constructor.__super__.render.apply(this, arguments);
+        $(this.el).html(this.template({
+            module_name: this.module_name,
+            displayName: this.displayName,
+            maximized: this.maximized
+        }));
+        if (this.maximized) this.$('#top-disks-container').css('width', '60%');
 
-  update: function(data) {
-    this.updateDisksData(data);
-    this.updateTopDisks();
-    this.renderTopDisks();
-    if (this.maximized) this.renderDiskGraph();
-  },
+        this.$('#attr-select').change(function(event) {
+            var cbox = $(event.currentTarget);
+            var v = cbox.val();
+            _this.selectedAttr = v;
+        });
 
-  updateDisksData: function(data) {
-    var _this = this;
-    _.each(data, function(d) {
-      _this.disksData[d.name].push(d);
-    });
-    _.each(_.keys(_this.disksData), function(diskName) {
-      var diskData = _this.disksData[diskName];
-      if (diskData.length > _this.dataLength) {
-        diskData.splice(0, diskData.length - _this.dataLength);
-      }
-    });
-  },
+        this.disks.fetch({
+            success: function(collection, response, options) {
+                _this.initializeDisksData();
+                _this.initTopDisksData();
+                _this.initSingleDiskData();
+                RockStorSocket.addListener(_this.getData, _this, 'diskWidget:top_disks');
+            }
+        });
 
-  // sorts latest values in disksData by sortAttrs and returns top n
-  updateTopDisks: function() {
-    var _this = this;
-    var tmp = _.map(_.keys(_this.disksData), function(k) {
-      return _this.disksData[k][_this.dataLength - 1];
-    });
-    tmp = _.reject(tmp, function(d) {
-      var x = _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0);
-      return x == 0;
-    });
-    var sorted = _.sortBy(tmp, function(d) {
-      return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0);
-    }).reverse();
-    this.topDisks = sorted.slice(0,_this.numTop);
-  },
+        return this;
+    },
 
-  // render bars for top disks. the width of each bar is proportional
-  // to the sort value. Use d3 partition layout to calculate coordinates.
-  renderTopDisks: function() {
-    var _this = this;
-    var w = this.topDisksWidth;
-    var h = this.topDisksHeight;
-    // calculate total value of all sortAttrs over all disks
-    var totalAttr = _.reduce(this.topDisks, function(total, disk) {
-      return total + _.reduce(_this.sortAttrs, function(s, a) {
-        return s + disk[a];
-      }, 0);
-    }, 0);
-    this.$('#attr-total').html(totalAttr);
+    // initialize disksData with disk names and empty value arrays
+    initializeDisksData: function() {
 
-    if (this.topDisks.length == 0) {
-      if (!this.noDisks) {
-        this.$('#top-disks-svg').empty();
-        this.topDisksVis.append('g')
-        .append('svg:text')
-        .attr("transform", function(d) {
-          return 'translate(0,' + 32 + ')';
-        })
-        .text('No disk activity')
-        .attr('fill-opacity', 1.0);
-        this.noDisks = true;
-      }
-    } else {
-      if (this.noDisks) {
-        // clear no disk activity msg
-        this.$('#top-disks-svg').empty();
-      }
-      this.noDisks = false;
-      var root = {name: 'root',
-        reads_completed: 0,
-        writes_completed: 0,
-        children: this.topDisks
-      };
-      var x = d3.scale.linear().range([0, w]);
-      var y = d3.scale.linear().range([0, h]);
-      var diskNodes = this.partition.nodes(root);
-      var kx = w / root.dx, ky = h / 1;
-      var duration = 200;
-
-      var disk = this.topDisksVis.selectAll('g')
-      .data(diskNodes, function(d, i) { return d.name; });
-
-      // Create g elements - each g element is positioned at appropriate
-      // x coordinate, and contains a rect with width acc to disk sort value,
-      // and a text element with the disk name
-      var diskEnter = disk
-      .enter().append('svg:g');
-
-      diskEnter.append('svg:rect')
-      .attr('class', 'diskRect')
-      .attr('height', function(d) {
-        if (d.name == 'root') {
-          return 0;
+        var _this = this;
+        this.disks.each(function(disk) {
+            var name = disk.get('name');
+            _this.disksData[name] = [];
+            for (var i = 0; i < _this.dataLength; i++) {
+                _this.disksData[name].push(_this.genEmptyDiskData());
+            }
+        });
+        if (this.maximized) {
+            // initialize disk-select
+            this.$('#disk-details-ph').html(this.diskUtilSelect({
+                disks: this.disks.toJSON()
+            }));
+            if (this.selectedDisk) {
+                this.$('#disk-select').val(this.selectedDisk);
+            }
+            this.$('#disk-select').change(function(event) {
+                _this.selectedDisk = _this.$('#disk-select').val();
+            });
         } else {
-          return 25;
+            this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
         }
-      })
-      .attr('fill', function(d,i) { return _this.topDiskColors[i-1]; });
 
-      diskEnter.append("svg:text")
-      .attr('class', 'diskText')
-      .attr("transform", function(d) {
-        return 'translate(0,' + 32 + ')';
-      })
-      .text(function(d) {
-        if (d.name == 'root') {
-          return '';
+    },
+
+    initTopDisksData: function() {
+
+        var _this = this;
+        var num_disks = Object.keys(_this.disksData).length < _this.numTop ? Object.keys(_this.disksData).length : _this.numTop;
+        for (var i = 0; i < num_disks; i++) {
+            var dataset = {
+                label: '',
+                borderWidth: 1,
+                fill: true,
+                borderColor: 'rgba(' + _this.TopDiskscolors[i] + ', 1)',
+                backgroundColor: 'rgba(' + _this.TopDiskscolors[i] + ', 0.1)',
+                pointBackgroundColor: 'rgba(' + _this.TopDiskscolors[i] + ', 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(' + _this.TopDiskscolors[i] + ', 1)',
+                data: [0, 0, 0, 0, 0, 0, 0]
+            };
+            _this.TopDisksChartData.datasets.push(dataset);
+        }
+    },
+
+    initSingleDiskData: function() {
+
+        var _this = this;
+        for (var i = 0; i < _this.dataLength; i++) {
+            _.each(_this.SingleDiskChartData.datasets, function(dataset) {
+                dataset.data.push(null);
+            });
+            _this.SingleDiskChartData.labels.push('');
+        }
+    },
+
+    getData: function(data) {
+
+        var _this = this;
+        _this.update(data);
+    },
+
+    update: function(data) {
+
+        var _this = this;
+        _this.updateDisksData(data);
+        _this.sortDisks();
+
+        if (!_this.TopDisksgraphRendered) {
+            _this.initTopDisksGraph();
+            _this.TopDisksgraphRendered = true;
+        }
+        _this.updateTopDisksChart();
+
+        if (_this.maximized) {
+            if (!_this.SingleDiskgraphRendered) {
+                _this.initSingleDiskGraph();
+                _this.SingleDiskgraphRendered = true;
+            }
+            _this.updateSingleDiskChart();
+        }
+    },
+
+    initTopDisksGraph: function() {
+
+        var _this = this;
+        _this.TopDisksChart = new Chart(this.$('#top-disks-chart'), {
+            type: 'radar',
+            data: _this.TopDisksChartData,
+            options: _this.TopDisksChartOptions
+        });
+    },
+
+    initSingleDiskGraph: function() {
+
+        var _this = this;
+        _this.SingleDiskChart = new Chart(this.$('#single-disk-chart'), {
+            type: 'line',
+            data: _this.SingleDiskChartData,
+            options: _this.SingleDiskChartOptions
+        });
+    },
+
+    updateTopDisksChart: function() {
+
+        var _this = this;
+        //If avail disks < numTop, use only avail disks
+        var num_disks = Object.keys(_this.disksData).length < _this.numTop ? Object.keys(_this.disksData).length : _this.numTop;
+        for (var i = 0; i < num_disks; i++) {
+            var data = [];
+            _.each(_this.Disksfields, function(field) {
+                data.push(_this.normalizeData(field, _this.topDisks[i][field]));
+            });
+            _this.TopDisksChartData.datasets[i].data = data;
+            _this.TopDisksChartData.datasets[i].label = _this.topDisks[i].name;
+        }
+        _this.TopDisksChart.update();
+    },
+
+    updateSingleDiskChart: function() {
+
+        var _this = this;
+        if (!_this.selectedDisk) {
+            if (_this.topDisks.length > 0) {
+                _this.selectedDisk = _this.topDisks[0].name;
+            } else {
+                _this.selectedDisk = _this.disks.at(0).get('name');
+            }
+            this.$('#disk-select').val(_this.selectedDisk);
+        }
+        var current_disk = _this.disksData[_this.selectedDisk];
+        if (current_disk) {
+            var singlediskdata = {
+                reads_completed: [],
+                writes_completed: [],
+                sectors_read: [],
+                sectors_written: [],
+                ms_ios: [],
+                ms_writing: [],
+                ms_reading: []
+            };
+            var singledisklabels = [];
+
+            for (var i = 0; i < _this.dataLength; i++) {
+                _.each(singlediskdata, function(dataval, datakey) {
+                    var multiplier = datakey.indexOf('sectors') > -1 ? 512 : 1;
+                    singlediskdata[datakey].push(current_disk[i][datakey] * multiplier);
+                });
+                var csecs = moment(current_disk[i].ts).format('s');
+                var label = '';
+                if (csecs % 60 === 0) {
+                    label = moment(current_disk[i].ts).format('HH:mm');
+                }
+                singledisklabels.push(label);
+            }
+            var msios = _.reduce(singlediskdata.ms_ios, function(s, n){ return s + n; }, 0)/singlediskdata.ms_ios.length;
+            var msw = _.reduce(singlediskdata.ms_writing, function(s, n){ return s + n; }, 0)/singlediskdata.ms_writing.length;
+            var msr = _.reduce(singlediskdata.ms_reading, function(s, n){ return s + n; }, 0)/singlediskdata.ms_reading.length;
+            var title = ': Avg I/Os: ' + msios.toFixed(2) + 'ms - ';
+            title +='Avg writing: ' + msw.toFixed(2) + 'ms - ';
+            title +='Avg reading: ' + msr.toFixed(2) + 'ms :';
+            delete singlediskdata.ms_ios;
+            delete singlediskdata.ms_writing;
+            delete singlediskdata.ms_reading;
+            _.each(_.values(singlediskdata), function(val, index) {
+                _this.SingleDiskChartData.datasets[index].data = val;
+            });
+            _this.SingleDiskChart.options.title.text = title;
+            _this.SingleDiskChartData.labels = singledisklabels;
+            _this.SingleDiskChart.update();
+        }
+    },
+
+    //Chart.js radar chart don't have multiple scales
+    //so we have to normalize our data
+    //data normalization has new_x = (x - x_min) / (x_max -x_min) and returns x [0..1]
+    //we assume our x_min = 0, so new_x = x /x_max
+    normalizeData: function(field, val) {
+
+        var _this = this;
+        var val_max = _.max(_.pluck(_this.topDisks, field));
+        var new_val = val == 0 ? 0 : (val * 100 / val_max).toFixed(2); //we use a 0..100 range with 2 decimals
+        return new_val;
+    },
+
+    sortDisks: function() {
+
+        var _this = this;
+        var tmp = _.map(_.keys(_this.disksData), function(k) {
+            return _this.disksData[k][_this.dataLength - 1];
+        });
+
+        var sort_attr = _this.selectedAttr;
+        if (sort_attr == 'best_draft') {
+            var selected_top = [];
+            for (var i = 0; i < Object.keys(tmp).length; i++) {
+                _.each(_this.best_draftSort, function(d) {
+                    var sorted = _.sortBy(tmp, function(k) {
+                        return k[d];
+                    }).reverse();
+                    if (!_.contains(selected_top, sorted[i].name) && selected_top.length < _this.numTop) {
+                        selected_top.push(sorted[i].name);
+                    }
+                });
+            }
+            var local_topdisks = []
+            _.each(selected_top, function(disk) {
+                _.each(tmp, function(d) {
+                    if (d.name == disk) local_topdisks.push(d);
+                });
+            });
+            _this.topDisks = local_topdisks;
         } else {
-          return d.name.split('_').pop();
+            _this.topDisks = _.sortBy(tmp, function(d) {
+                return d[sort_attr];
+            }).reverse();
         }
-      })
-      .attr('fill-opacity', 1.0);
+    },
 
-      var diskUpdate = disk.transition()
-      .duration(duration)
-      .attr('transform', function(d) {
-        return 'translate(' + x(d.x) + ',' + y(d.y) + ')';
-      });
+    updateDisksData: function(data) {
 
-      var diskRectUpdate = diskUpdate.select('rect.diskRect')
-      .attr('width', function(d) { return (d.dx * w) - 1; })
-      .attr('fill', function(d,i) { return _this.topDiskColors[i-1]; });
+        var _this = this;
+        _.each(data, function(d) {
+            _this.disksData[d.name].push(d);
+            _this.disksData[d.name].shift();
+        });
+    },
 
-      var diskExit = disk.exit().remove();
+    genEmptyDiskData: function() {
+        // empty disk data
+        return {
+            "reads_completed": 0,
+            "reads_merged": 0,
+            "sectors_read": 0,
+            "ms_reading": 0,
+            "writes_completed": 0,
+            "writes_merged": 0,
+            "sectors_written": 0,
+            "ms_writing": 0,
+            "ios_progress": 0,
+            "ms_ios": 0,
+            "weighted_ios": 0,
+            "ts": ''
+        };
+    },
+
+    resize: function(event) {
+
+        var _this = this;
+        this.constructor.__super__.resize.apply(this, arguments);
+        // maximum number of top disks to display
+        this.numTop = this.maximized ? 5 : 3;
+        if (this.maximized) {
+            this.$('#disk-details-ph').html(this.diskUtilSelect({
+                disks: this.disks.toJSON()
+            }));
+            if (this.selectedDisk) {
+                this.$('#disk-select').val(this.selectedDisk);
+            }
+            this.$('#disk-select').change(function(event) {
+                _this.selectedDisk = _this.$('#disk-select').val();
+            });
+            this.$('#top-disks-container').css('width', '60%');
+        } else {
+            this.$('#top-disks-container').css('width', '70%');
+            _this.SingleDiskgraphRendered = false;
+            this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
+        }
+        _this.TopDisksChart.resize();
+    },
+
+    cleanup: function() {
+
+        RockStorSocket.removeOneListener('diskWidget');
+    },
+
+    initHandlebarHelpers: function() {
+
+        var _this = this;
+
+        Handlebars.registerHelper('genAttrSelect', function() {
+
+            var html = '<option value="best_draft" selected>Best Draft</option>';
+            _.each(_this.Disksfields, function(field, index) {
+                html += '<option value="' + field + '">' + _this.Diskslabels[index] + '</option>';
+            });
+            return new Handlebars.SafeString(html);
+        });
     }
-  },
-
-  renderDiskGraph: function() {
-    if (!this.selectedDisk) {
-      if (this.topDisks.length > 0) {
-        this.selectedDisk = this.topDisks[0].name;
-      } else {
-        this.selectedDisk = this.disks.at(0).get('name');
-      }
-      this.$('#disk-select').val(this.selectedDisk);
-    }
-
-    var vals = this.disksData[this.selectedDisk];
-    var tmpReads = [];
-    for (var i=0; i<this.dataLength; i++) {
-      tmpReads.push([i, vals[i].reads_completed]);
-    }
-    var tmpWrites = [];
-    for (var i=0; i<this.dataLength; i++) {
-      tmpWrites.push([i, vals[i].writes_completed]);
-    }
-    var series1 = [
-      { label: 'Reads', data: tmpReads, color: this.colors[0] },
-      { label: 'Writes', data: tmpWrites, color: this.colors[1] }
-    ];
-    $.plot(this.$('#disk-graph-reads-ph'), series1, this.graphOptions);
-
-    var tmpReadData = [];
-    for (var i=0; i<this.dataLength; i++) {
-      tmpReadData.push([i, vals[i].sectors_read * 512]);
-    }
-    var tmpWriteData = [];
-    for (var i=0; i<this.dataLength; i++) {
-      tmpWriteData.push([i, vals[i].sectors_written * 512]);
-    }
-    var series2 = [
-      { label: 'KB read', data: tmpReadData, color: this.colors[0] },
-      { label: 'KB written', data: tmpWriteData, color: this.colors[1] }
-    ];
-    $.plot(this.$('#disk-graph-data-ph'), series2, this.dataGraphOptions);
-  },
-
-  genEmptyDiskData: function() {
-    // empty disk data
-    return {
-      "reads_completed": 0,
-      "reads_merged": 0,
-      "sectors_read": 0,
-      "ms_reading": 0,
-      "writes_completed": 0,
-      "writes_merged": 0,
-      "sectors_written": 0,
-      "ms_writing": 0,
-      "ios_progress": 0,
-      "ms_ios": 0,
-      "weighted_ios": 0,
-      "ts": 0
-    };
-  },
-
-  resize: function(event) {
-    var _this = this;
-    this.constructor.__super__.resize.apply(this, arguments);
-    this.topDisksWidth = this.maximized ? 520 : 240;
-    // maximum number of top disks to display
-    this.numTop = this.maximized ? 5 : 3;
-    //this.$('#top-disks-ph').empty();
-    this.$('#top-disks-ph').css('width', this.topDisksWidth);
-    this.topDisksVis.attr('width', this.topDisksWidth);
-    this.renderTopDisks();
-    if (this.maximized) {
-      this.$('#disk-details-ph').html(this.diskUtilSelect({
-          disks: this.disks.toJSON()
-      }));
-      if (this.selectedDisk) {
-        this.$('#disk-select').val(this.selectedDisk);
-      }
-      this.$('#disk-select').change(function(event) {
-        _this.selectedDisk = _this.$('#disk-select').val();
-      });
-    } else {
-      this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
-    }
-  },
-
-  timeTickFormatter: function(dataLength) {
-    return function(val, axis) {
-      return ((dataLength/60) - (parseInt(val/60))).toString() + ' m';
-    };
-  },
-
-  valueTickFormatter: function(val, axis) {
-    return humanize.filesize(val, 1024, 2);
-  },
-
-  setSelectedDisk: function(event) {
-    this.selectedDisk = this.$('#disk-select').val();
-  },
-
-  cleanup: function() {
-    RockStorSocket.removeOneListener('diskWidget');
-  }
 
 });
 

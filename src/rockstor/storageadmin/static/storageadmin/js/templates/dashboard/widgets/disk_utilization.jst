@@ -1,28 +1,45 @@
-<!-- Header -->
+<script>
+/*
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
 <div class="widget-header">
-  <div class="title"><span class="h4">{{ displayName }}</span></div>
-  <div class="gear">
-    <a class="resize-widget" href="#"><i class="glyphicon glyphicon-resize-full"></i></a>
-    <a class="close-widget" href="#"><i class="glyphicon glyphicon-remove"></i></a>
-  </div>
+    <div class="title"><span class="h4">{{ displayName }}</span></div>
+    <div class="gear">
+        <a class="resize-widget" href="#"><i class="glyphicon glyphicon-resize-full"></i></a>
+        <a class="close-widget" href="#"><i class="glyphicon glyphicon-remove"></i></a>
+    </div>
 </div>
 
 <!-- Content -->
 <div class="widget-content">
-  <h4>Top Disks</h4>
-  <div id="top-disks-ph"></div>
-  <div id="disks-msg"></div>
-  <div id="disks-sort-attrs">
-    Sort by: 
-    <input type="checkbox" class="diskSortAttr checkbox-inline radio-inline" name="reads_completed" value="reads_completed" checked="true">Reads&nbsp;
-    <input type="checkbox" class="diskSortAttr checkbox-inline" name="writes_completed" value="writes_completed">Writes
-
-    &nbsp;&nbsp;
-    Total: <span id="attr-total"></span>
-
-  </div>
-  <br>
-  <div id="disk-details-ph"></div>
+    <div id="top-disks-container" style="width: 70%; margin: 0 auto;">
+        <canvas id="top-disks-chart"></canvas>
+    </div>
+    <div id="disk-sort">
+        <span class="h4">Top disks</span> sort by:
+        <select name="attr-select" id="attr-select" class="inline">
+            {{genAttrSelect}}
+        </select>
+    </div>
+    <br>
+    <div id="disk-details-ph"></div>
 </div>
 <!-- End Content -->
 
