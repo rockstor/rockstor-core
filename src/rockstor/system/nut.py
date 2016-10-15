@@ -150,8 +150,11 @@ def update_upssched_early_shutdown(seconds):
     which is the default when no relevant START-TIMER directives are defined.
     :return: True if no errors were encountered
     """
-    timer_start_pattern = 'AT ONBATT * START-TIMER early-shutdown'
-    timer_stop_pattern = 'AT ONLINE * CANCEL-TIMER early-shutdown'
+    # setup out match patterns (with escaped '*') and associated lines
+    timer_start_pattern = 'AT ONBATT \* START-TIMER early-shutdown'
+    timer_start_line = 'AT ONBATT * START-TIMER early-shutdown'
+    timer_stop_pattern = 'AT ONLINE \* CANCEL-TIMER early-shutdown'
+    timer_stop_line = 'AT ONLINE * CANCEL-TIMER early-shutdown'
     start_timer_found = False
     stop_timer_found = False
     # Establish our upssched.conf template file.
@@ -172,36 +175,37 @@ def update_upssched_early_shutdown(seconds):
             if (re.match(timer_start_pattern, line) is not None):
                 # we have found an early-shutdown start timer line so
                 # replace it with one containing our seconds parameter
-                # but only if it's not seconds !=0
+                # but only if seconds !=0
                 if start_timer_found or seconds == '0':
                     # we have a duplicate line or seconds = 0 so omit this
                     # line by moving along to the next line in our template.
                     continue
                 # replace our template start timer line with our own version
-                outo.write(timer_start_pattern + ' %s' % seconds + '\n')
+                outo.write(timer_start_line + ' %s' % seconds + '\n')
                 # set our flag to cope with future duplicate entries
                 start_timer_found = True
-            if (re.match(timer_stop_pattern, line) is not None):
-                # we have found an existing early-shutdown cancel timer
-                # line so set out flag and leave it be but only if we
-                # haven't already found such a line and seconds != 0
-                if stop_timer_found or seconds == '0':
-                    # we have a duplicate line or seconds = 0 so omit this
-                    # line by moving along to the next line in our template.
-                    continue
-                # set our flag to cope with future duplicate entries
-                stop_timer_found = True
-            # copy template file line over to temporary file unaltered
-            outo.write(line)
+            else:
+                if (re.match(timer_stop_pattern, line) is not None):
+                    # we have found an existing early-shutdown cancel timer
+                    # line so set out flag and leave it be but only if we
+                    # haven't already found such a line and seconds != 0
+                    if stop_timer_found or seconds == '0':
+                        # we have a duplicate line or seconds = 0 so omit this
+                        # line by moving along to the next line in our template.
+                        continue
+                    # set our flag to cope with future duplicate entries
+                    stop_timer_found = True
+                # copy template file line over to temporary file unaltered
+                outo.write(line)
         # Only bother checking if we need to add our start and top timer lines
         # if seconds != 0
         if seconds != '0':
             if not start_timer_found:
                 # add our missing start timer line with the appropriate seconds
-                outo.write(timer_start_pattern + ' %s' % seconds + '\n')
+                outo.write(timer_start_line + ' %s' % seconds + '\n')
             if not stop_timer_found:
                 # add out missing stop timer line
-                outo.write(timer_stop_pattern + '\n')
+                outo.write(timer_stop_line + '\n')
     # Now we deploy our template derived upssched.conf temp file by file move.
     # Would be better if we could set a file creation mask first then do the
     # move / overwrite.
