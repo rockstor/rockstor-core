@@ -178,7 +178,7 @@ def update_upssched_early_shutdown(seconds):
                     # line by moving along to the next line in our template.
                     continue
                 # replace our template start timer line with our own version
-                outo.write(timer_start_pattern + ' %s' % seconds)
+                outo.write(timer_start_pattern + ' %s' % seconds + '\n')
                 # set our flag to cope with future duplicate entries
                 start_timer_found = True
             if (re.match(timer_stop_pattern, line) is not None):
@@ -198,10 +198,10 @@ def update_upssched_early_shutdown(seconds):
         if seconds != '0':
             if not start_timer_found:
                 # add our missing start timer line with the appropriate seconds
-                outo.write(timer_start_pattern + ' %s' % seconds)
+                outo.write(timer_start_pattern + ' %s' % seconds + '\n')
             if not stop_timer_found:
                 # add out missing stop timer line
-                outo.write(timer_stop_pattern)
+                outo.write(timer_stop_pattern + '\n')
     # Now we deploy our template derived upssched.conf temp file by file move.
     # Would be better if we could set a file creation mask first then do the
     # move / overwrite.
