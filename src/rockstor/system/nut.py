@@ -35,7 +35,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # N.B. if this config arrangement fails to prove robust then re-write using
 # http://augeas.net/ configuration API and use python-augeas package
 # and augeas and augeas-libs and lensens from nut source "nut/scripts/augeas"
-
+import os
 import re
 import collections
 from tempfile import mkstemp
@@ -120,8 +120,6 @@ def config_upssched():
     Overwite nut default upssched.conf and upssched-cmd files with Rockstor
     versions. Set owner.group and permissions to originals.
     """
-    # the upssched config file
-    upsshed_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
     # As our custom parser for nut.conf, ups.conf, upsd.conf, upsd.users
     # and upsmon.conf can only work on whole word keys we cannot use it
     # for editing upssched.conf which can have multiple simultaneous entries
@@ -129,20 +127,89 @@ def config_upssched():
     # "AT ONBATT * START-TIMER on-batt 10"
     # "AT ONBATT * START-TIMER early-shutdown 120"
     # "AT ONLINE * CANCEL-TIMER early-shutdown"
-    # TODO: add upssched.conf parser / config editor to replace straight copy
-    # TODO: from template.
-    # Would be better if we could set a file creation mask first then copy
-    # TODO: set file creation mask to 640
-    shutil.copyfile(upsshed_conf_template, UPSSCHED_CONF)
-    run_command([CHOWN, 'root.nut', UPSSCHED_CONF])
-    run_command([CHMOD, '640', UPSSCHED_CONF])
+    # so calling upssched.conf specific parser / editor
+    update_upssched_early_shutdown('240')
     # the upssched command file
     upsshed_cmd_template = ('%s/upssched-cmd' % settings.CONFROOT)
-
     shutil.copyfile(upsshed_cmd_template, UPSSCHED_CMD)
     run_command([CHOWN, 'root.root', UPSSCHED_CMD])
     # going with existing rights but this should be reviewed
     run_command([CHMOD, '755', UPSSCHED_CMD])
+
+
+def update_upssched_early_shutdown(seconds):
+    """
+    Updates the upssched.conf file by re-reading and inline editing the
+    template file to applying the given seconds early-shutdown START-TIMER
+    directive and it's associated CANCEL-TIMER directive.
+    Example target config lines within upssched.conf given 240 seconds:
+    AT ONBATT * START-TIMER early-shutdown 240
+    AT ONLINE * CANCEL-TIMER early-shutdown
+    :param seconds: number of seconds after which an early-shutdown schedule
+    timer event is triggered. A value of 0 is used to disabling early shutdown
+    which is the default when no relevant START-TIMER directives are defined.
+    :return: True if no errors were encountered
+    """
+    timer_start_pattern = 'AT ONBATT * START-TIMER early-shutdown'
+    timer_stop_pattern = 'CANCEL-TIMER early-shutdown'
+    start_timer_found = False
+    stop_timer_found = False
+    # Establish our upssched.conf template file.
+    upssched_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
+    # Check for the existence of this template file.
+    if not os.path.isfile(upssched_conf_template):
+        # We have no template file so log the error and return False.
+        logger.error('Skipping early shutdown settings: no upssched.conf '
+                     'template file found.')
+        return False
+    # Create a temp file to use as our output until we are done editing.
+    tfo, npath = mkstemp()
+    infile = upssched_conf_template
+    # Populate our temporary file with the template file contents plus edits
+    # or additions if no existing early-shutdown timer directives are found
+    with open(infile) as ino, open(npath, 'w') as outo:
+        for line in ino.readlines():  # readlines reads whole file.
+            if (re.match(timer_start_pattern, line) is not None):
+                # we have found an early-shutdown start timer line so
+                # replace it with one containing our seconds parameter
+                # but only if it's not seconds !=0
+                if start_timer_found or seconds == '0':
+                    # we have a duplicate line or seconds = 0 so omit this
+                    # line by moving along to the next line in our template.
+                    continue
+                # replace our template start timer line with our own version
+                outo.write(timer_start_pattern + ' %s' % seconds)
+                # set our flag to cope with future duplicate entries
+                start_timer_found = True
+            if (re.match(timer_stop_pattern, line) is not None):
+                # we have found an existing early-shutdown cancel timer
+                # line so set out flag and leave it be but only if we
+                # haven't already found such a line and seconds != 0
+                if stop_timer_found or seconds == '0':
+                    # we have a duplicate line or seconds = 0 so omit this
+                    # line by moving along to the next line in our template.
+                    continue
+                # set our flag to cope with future duplicate entries
+                stop_timer_found = True
+            # copy template file line over to temporary file unaltered
+            outo.write(line)
+        # Only bother checking if we need to add our start and top timer lines
+        # if seconds != 0
+        if seconds != '0':
+            if not start_timer_found:
+                # add our missing start timer line with the appropriate seconds
+                outo.write(timer_start_pattern + ' %s' % seconds)
+            if not stop_timer_found:
+                # add out missing stop timer line
+                outo.write(timer_stop_pattern)
+    # Now we deploy our template derived upssched.conf temp file by file move.
+    # Would be better if we could set a file creation mask first then do the
+    # move / overwrite.
+    # TODO: set file creation mask to 640
+    shutil.move(npath, UPSSCHED_CONF)
+    run_command([CHOWN, 'root.nut', UPSSCHED_CONF])
+    run_command([CHMOD, '640', UPSSCHED_CONF])
+    return True
 
 
 def establish_config_defaults(config):
