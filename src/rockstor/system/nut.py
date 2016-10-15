@@ -151,7 +151,7 @@ def update_upssched_early_shutdown(seconds):
     :return: True if no errors were encountered
     """
     timer_start_pattern = 'AT ONBATT * START-TIMER early-shutdown'
-    timer_stop_pattern = 'CANCEL-TIMER early-shutdown'
+    timer_stop_pattern = 'AT ONLINE * CANCEL-TIMER early-shutdown'
     start_timer_found = False
     stop_timer_found = False
     # Establish our upssched.conf template file.
