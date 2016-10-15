@@ -29,14 +29,14 @@ AddAFPShareView = RockstorLayoutView.extend({
     "click #cancel": "cancel"
   },
 
-  initialize: function() {
+  initialize: function(options) {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.afp_add_afp_share;
     this.shares = new ShareCollection();
     // dont paginate shares for now
     this.shares.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.shares);
-    this.afpShareId = this.options.afpShareId || null;
+    this.afpShareId = options.afpShareId || null;
     this.afpShares = new AFPCollection({afpShareId: this.afpShareId});
     this.dependencies.push(this.afpShares);
      this.yes_no_choices = [

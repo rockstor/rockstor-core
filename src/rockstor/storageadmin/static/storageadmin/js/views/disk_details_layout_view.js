@@ -26,10 +26,10 @@
 
 DiskDetailsLayoutView = RockstorLayoutView.extend({
 
-    initialize: function () {
+    initialize: function (options) {
         // call initialize of base
         this.constructor.__super__.initialize.apply(this, arguments);
-        this.diskName = this.options.diskName;
+        this.diskName = options.diskName;
         this.template = window.JST.disk_disk_details_layout;
         this.disk = new Disk({diskName: this.diskName});
         this.smartinfo = new SmartInfo({diskName: this.diskName});

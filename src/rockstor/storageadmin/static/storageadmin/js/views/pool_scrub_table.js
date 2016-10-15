@@ -30,15 +30,15 @@ PoolScrubTableModule  = RockstorModuleView.extend({
 		"click #js-poolscrub-cancel": "cancel"
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		this.template = window.JST.pool_poolscrub_table_template;
 		this.startScrubTemplate = window.JST.pool_poolscrub_start_template;
 		this.module_name = 'poolscrubs';
-		this.pool = this.options.pool;
-		this.poolscrubs = this.options.poolscrubs;
-		this.collection = this.options.poolscrubs;
+		this.pool = options.pool;
+		this.poolscrubs = options.poolscrubs;
+		this.collection = options.poolscrubs;
 		this.collection.on("reset", this.render, this);
-		this.parentView = this.options.parentView;
+		this.parentView = options.parentView;
 		this.initHandlebarHelpers();
 	},
 

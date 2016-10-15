@@ -29,11 +29,11 @@ DockerServiceView = Backbone.View.extend({
 		'switchChange.bootstrapSwitch': 'switchStatus',
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		this.template = window.JST.rockons_docker_service;
 		this.serviceName = 'docker';
 		this.service = new Service({name: this.serviceName});
-		this.parentView = this.options.parentView;
+		this.parentView = options.parentView;
 		this.updateFreq = 30000;
 	},
 

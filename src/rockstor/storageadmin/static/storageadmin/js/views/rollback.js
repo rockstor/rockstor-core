@@ -30,16 +30,16 @@ RollbackView = RockstorLayoutView.extend({
 		'click #js-confirm-rollback-submit': 'confirmRollback'
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		this.constructor.__super__.initialize.apply(this, arguments);
 		// Templates
 		this.template = window.JST.share_rollback;
 		this.snapshot_list_template = window.JST.share_rollback_snapshot_list;
 		// Dependencies
-		this.share = new Share({shareName: this.options.shareName});
+		this.share = new Share({shareName: options.shareName});
 		this.collection = new SnapshotCollection();
 		this.collection.pageSize = 10;
-		this.collection.setUrl(this.options.shareName);
+		this.collection.setUrl(options.shareName);
 		this.dependencies.push(this.share);
 		this.dependencies.push(this.collection);
 		this.collection.on('reset', this.renderSnapshotList, this);

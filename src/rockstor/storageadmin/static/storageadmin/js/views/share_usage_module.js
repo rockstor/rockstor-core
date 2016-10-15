@@ -32,11 +32,11 @@ ShareUsageModule = RockstorModuleView.extend({
 
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		this.template = window.JST.share_share_usage_module;
 		this.editTemplate = window.JST.share_share_usage_edit;
 		this.module_name = 'share-usage';
-		this.share = this.options.share;
+		this.share = options.share;
 		this.initHandlebarHelpers();
 	},
 

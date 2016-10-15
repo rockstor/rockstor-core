@@ -118,11 +118,11 @@ RockStorWidgetView = Backbone.View.extend({
 	'click .download-widget': 'download'
     },
 
-    initialize: function() {
-	this.maximized = this.options.maximized;
-	this.name = this.options.name;
-	this.displayName = this.options.displayName;
-	this.parentView = this.options.parentView;
+    initialize: function(options) {
+	this.maximized = options.maximized;
+	this.name = options.name;
+	this.displayName = options.displayName;
+	this.parentView = options.parentView;
 	this.dependencies = [];
     },
 
@@ -455,9 +455,9 @@ var RockstorUtil = function() {
 
 RockstorWizardPage = Backbone.View.extend({
 
-    initialize: function() {
-	this.evAgg = this.options.evAgg;
-	this.parent = this.options.parent;
+    initialize: function(options) {
+	this.evAgg = options.evAgg;
+	this.parent = options.parent;
     },
 
     render: function() {
@@ -480,7 +480,7 @@ WizardView = Backbone.View.extend({
 	'click #prev-page': 'prevPage'
     },
 
-    initialize: function() {
+    initialize: function(options) {
 	this.template = window.JST.wizard_wizard;
 	this.pages = null;
 	this.currentPage = null;
@@ -489,8 +489,8 @@ WizardView = Backbone.View.extend({
 	this.evAgg = _.extend({}, Backbone.Events);
 	this.evAgg.bind('nextPage', this.nextPage, this);
 	this.evAgg.bind('prevPage', this.prevPage, this);
-	this.parent = this.options.parent;
-	this.title = this.options.title;
+	this.parent = options.parent;
+	this.title = options.title;
     },
 
     setPages: function(pages) {

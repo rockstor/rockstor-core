@@ -31,7 +31,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 	"change #appliance":  "fetchRemotePools"
     },
 
-    initialize: function() {
+    initialize: function(options) {
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.replication_add_replication_task;
 	this.shares = new ShareCollection();
@@ -44,7 +44,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 	this.dependencies.push(this.replicas);
 	this.remote_pools = [];
 
-	this.replicaId = this.options.replicaId;
+	this.replicaId = options.replicaId;
 
 	if (!_.isUndefined(this.replicaId) && !_.isNull(this.replicaId)) {
 	    this.replica = new Replica({id: this.replicaId});

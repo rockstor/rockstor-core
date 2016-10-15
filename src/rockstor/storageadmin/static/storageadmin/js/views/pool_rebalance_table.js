@@ -30,15 +30,15 @@ PoolRebalanceTableModule  = RockstorModuleView.extend({
 		"click #js-poolrebalance-cancel": "cancel"
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		this.template = window.JST.pool_poolrebalance_table_template;
 		this.startRebalanceTemplate = window.JST.pool_poolrebalance_start_template;
 		this.module_name = 'poolrebalances';
-		this.pool = this.options.pool;
-		this.poolrebalances = this.options.poolrebalances;
-		this.collection = this.options.poolrebalances;
+		this.pool = options.pool;
+		this.poolrebalances = options.poolrebalances;
+		this.collection = options.poolrebalances;
 		this.collection.on("reset", this.render, this);
-		this.parentView = this.options.parentView;
+		this.parentView = options.parentView;
 		this.initHandlebarHelpers();
 	},
 

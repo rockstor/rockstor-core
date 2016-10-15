@@ -29,13 +29,13 @@ TasksView = RockstorLayoutView.extend({
 	events: {
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		// call initialize of base
 		this.constructor.__super__.initialize.apply(this, arguments);
 		// set template
 		this.template = window.JST.scheduled_tasks_tasks;
 		// add dependencies
-		this.taskDefId = this.options.taskDefId;
+		this.taskDefId = options.taskDefId;
 		this.taskDef = new TaskDef({id: this.taskDefId});
 		this.dependencies.push(this.taskDef);
 		this.collection = new TaskCollection(null, {

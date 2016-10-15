@@ -29,12 +29,12 @@ AddGroupView = RockstorLayoutView.extend({
 	"click #cancel": "cancel"
     },
 
-    initialize: function() {
+    initialize: function(options) {
 	// call initialize of base
 	this.constructor.__super__.initialize.apply(this, arguments);
 	// set template
 	this.template = window.JST.users_add_group;
-	this.groupname = this.options.groupname;
+	this.groupname = options.groupname;
 	this.group = new Group({groupname: this.groupname});
 	this.dependencies.push(this.group);
     },

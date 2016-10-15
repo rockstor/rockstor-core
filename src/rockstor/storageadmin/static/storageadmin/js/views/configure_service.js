@@ -32,12 +32,12 @@ ConfigureServiceView = RockstorLayoutView.extend({
         "click #mode": "toggleNutFields"
     },
 
-    initialize: function() {
+    initialize: function(options) {
         // call initialize of base
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
-        this.serviceName = this.options.serviceName;
-        this.adStatus = this.options.adStatus;
+        this.serviceName = options.serviceName;
+        this.adStatus = options.adStatus;
         // set template
         this.template = window.JST['services_configure_' + this.serviceName];
         this.rules = {

@@ -29,11 +29,11 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         'click #cancel': 'cancel'
     },
 
-    initialize: function () {
+    initialize: function (options) {
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_smartcustom_disks;
         this.disks = new DiskCollection();
-        this.diskName = this.options.diskName;
+        this.diskName = options.diskName;
         this.dependencies.push(this.disks);
     },
 

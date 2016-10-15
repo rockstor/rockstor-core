@@ -31,7 +31,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 		'click #shadow_copy': 'toggleSnapPrefix'
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		this.constructor.__super__.initialize.apply(this, arguments);
 		this.template = window.JST.samba_add_samba_export;
 		this.shares = new ShareCollection();
@@ -41,7 +41,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 		this.users.pageSize = RockStorGlobals.maxPageSize;
 		this.dependencies.push(this.shares);
 		this.dependencies.push(this.users);
-		this.sambaShareId = this.options.sambaShareId || null;
+		this.sambaShareId = options.sambaShareId || null;
 		this.sambaShares = new SambaCollection({sambaShareId: this.sambaShareId});
 		this.dependencies.push(this.sambaShares);
 

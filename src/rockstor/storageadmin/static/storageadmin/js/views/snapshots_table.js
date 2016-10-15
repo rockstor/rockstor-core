@@ -35,20 +35,20 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
 	"click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
     },
 
-    initialize: function() {
+    initialize: function(options) {
 	this.template = window.JST.share_snapshots_table_template;
 	this.addTemplate = window.JST.share_snapshot_add;
 	this.module_name = 'snapshots';
-	this.share = this.options.share;
-	this.snapshots = this.options.snapshots;
-	this.collection = this.options.snapshots;
+	this.share = options.share;
+	this.snapshots = options.snapshots;
+	this.collection = options.snapshots;
 	this.collection.on("reset", this.render, this);
 	this.selectedSnapshots = [];
 	this.modify_choices = [
 	    {name: 'yes', value: 'yes'},
 	    {name: 'no', value: 'no'},
 	];
-	this.parentView = this.options.parentView;
+	this.parentView = options.parentView;
 	this.initHandlebarHelpers();
     },
 

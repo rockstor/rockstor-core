@@ -31,7 +31,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		"change #task_type": "renderOptionalFields"
 	},
 
-	initialize: function() {
+	initialize: function(options) {
 		this.constructor.__super__.initialize.apply(this, arguments);
 		this.template = window.JST.scheduled_tasks_add_task;
 		this.snapshotFieldsTemplate = window.JST.scheduled_tasks_snapshot_fields;
@@ -42,7 +42,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		this.pools.pageSize = RockStorGlobals.maxPageSize;
 		this.dependencies.push(this.shares);
 		this.dependencies.push(this.pools);
-		this.taskDefId = this.options.taskDefId;
+		this.taskDefId = options.taskDefId;
 		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
 			this.taskDef = new TaskDef({id: this.taskDefId});
 			this.dependencies.push(this.taskDef);
