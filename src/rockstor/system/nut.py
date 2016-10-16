@@ -241,7 +241,12 @@ def establish_config_defaults(config):
         config['upsname'] = 'ups'
     if ('nutserver' in config) and (config['nutserver'] == ''):
         config['nutserver'] = 'localhost'
-
+    # Establish a port default of auto as this works with most USB connected
+    # UPS devices which is a more common connection type going forward.
+    # Note that this setting persists but netclient mode, which doesn't use
+    # the port option, is unaffected by this setting so persistence is harmless.
+    if ('port' in config) and (config['port'] == ''):
+        config['port'] = 'auto'
 
 def configure_nut(config):
     """
