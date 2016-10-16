@@ -247,6 +247,11 @@ def establish_config_defaults(config):
     # the port option, is unaffected by this setting so persistence is harmless.
     if ('port' in config) and (config['port'] == ''):
         config['port'] = 'auto'
+    # Establish a default Shutdown Timing setting of 0 as this was the effective
+    # default behaviour prior to the timed shutdown config option
+    if ('shutdowntimer' in config) and (config['shutdowntimer'] == ''):
+        config['shutdowntimer'] = '0'
+
 
 def configure_nut(config):
     """
