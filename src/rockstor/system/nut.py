@@ -115,7 +115,7 @@ nut_option_delimiter = {"LISTEN": " ", "MAXAGE": " ",
                         "NOTIFYFLAG NOPARENT": " "}
 
 
-def config_upssched():
+def config_upssched(seconds):
     """
     Overwite nut default upssched.conf and upssched-cmd files with Rockstor
     versions. Set owner.group and permissions to originals.
@@ -128,7 +128,7 @@ def config_upssched():
     # "AT ONBATT * START-TIMER early-shutdown 120"
     # "AT ONLINE * CANCEL-TIMER early-shutdown"
     # so calling upssched.conf specific parser / editor
-    update_upssched_early_shutdown('240')
+    update_upssched_early_shutdown(seconds)
     # the upssched command file
     upsshed_cmd_template = ('%s/upssched-cmd' % settings.CONFROOT)
     shutil.copyfile(upsshed_cmd_template, UPSSCHED_CMD)
@@ -306,7 +306,7 @@ def configure_nut(config):
         # read access. Fixed by chown root.nut on all files we edit as a matter
         # of course.
         run_command([CHOWN, 'root.nut', config_file])
-    config_upssched()
+    config_upssched(config['shutdowntimer'])
 
 
 def pre_process_nut_config(config):
