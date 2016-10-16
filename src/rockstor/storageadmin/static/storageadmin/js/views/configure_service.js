@@ -137,6 +137,17 @@ ConfigureServiceView = RockstorLayoutView.extend({
         if (configObj.listener_port) {
             default_port = configObj.listener_port;
         }
+        var nutShutdownTimes = {
+            'When Battery Low': 0,
+            'after 30 seconds': 30,
+            'after 1 minute': 60,
+            'after 2 minutes': 120,
+            'after 4 minutes': 240,
+            'after 8 minutes': 480,
+            'after 16 minutes': 960,
+            'after 32 minutes': 1920
+        };
+        _this.nutShutdownTimes = nutShutdownTimes;
         $(this.el).html(this.template({
             service: this.service,
             serviceName: this.service.get('display_name'),
@@ -144,7 +155,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
             shares: this.shares,
             network: this.network,
             defaultPort: default_port,
-            adStatus: this.adStatus
+            adStatus: this.adStatus,
+            nutShutdownTimes: nutShutdownTimes
         }));
 
         this.$('#nis-form :input').tooltip({
@@ -195,11 +207,11 @@ ConfigureServiceView = RockstorLayoutView.extend({
         this.$('#smartd-form #smartd_config').tooltip({
             html: true,
             placement: 'right',
-            title: 'Following are a few example directives. For complete information, read smard.conf manpage.<br> \
+            title: 'Following are a few example directives. For complete information, read smartd.conf manpage.<br> \
 To monitor all possible errors on all disks: <br> <strong>DEVICESCAN -a</strong> <br> \
 To monitor /dev/sdb and /dev/sdc but ignore other devices: <br> <strong>/dev/sdb -a</strong> <br> <strong>/dev/sdc -a</strong> <br> \
 To email potential problems: <br> <strong>DEVICESCAN -m user@example.com</strong> <br> \
-To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br>'
+To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br>'
         });
         this.$('#nut-form #mode').tooltip({
             html: true,
@@ -255,6 +267,11 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             html: true,
             placement: 'right',
             title: 'Device name for how this UPS is connected. E.g for the first serial port use "/dev/ttyS0" or if using a USB to serial port adapter then "/dev/ttyUSB0". Use "auto" if connected direct via USB.'
+        });
+        this.$('#nut-form #shutdowntimer').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'How long the UPS is "On Battery (OB)" before NUT triggers a Full System Shutdown.'
         });
         this.$('#replication-form #network_interface').tooltip({
             html: true,
@@ -510,6 +527,29 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
                     html += '<option value="' + driver + '">' + driver + '</option>';
                 }
             });
+            return new Handlebars.SafeString(html);
+        });
+
+        // NUT-UPS helper to fill dropdown with shutdown timing values
+        // eg by dynamically generating lines of the following form:
+        // <option value="60">After 1 minute</option>
+        Handlebars.registerHelper('display_nutShutdownTimer_options', function () {
+
+            var html = '',
+                _this = this;
+            if (_this.config.shutdowntimer == null){
+                // if no previous setting then default to 0 = "when Battery Low"
+                _this.config.shutdowntimer = '0'
+            }
+            for (var timeString in this.nutShutdownTimes) {
+                if (this.nutShutdownTimes[timeString] == _this.config.shutdowntimer) {
+                    // we have found our current setting so mark it selected
+                    html += '<option value="' + this.nutShutdownTimes[timeString] + '" selected="selected">';
+                    html += timeString + '</option>';
+                } else {
+                    html += '<option value="' + this.nutShutdownTimes[timeString] + '">' + timeString + '</option>';
+                }
+            }
             return new Handlebars.SafeString(html);
         });
 
