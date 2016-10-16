@@ -104,6 +104,18 @@
             <input class="form-control" type="text" id="password" name="password" value="{{config.password}}" placeholder="NUT user password">
           </div>
         </div>
+
+        <!--  nut shutdown timer -->
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="shutdowntimer">Shutdown Timing<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="shutdowntimer" name="shutdowntimer">
+            {{display_nutShutdownTimer_options}}
+            </select>
+          </div>
+        </div>
+
+        <!-- Cancel and Submit buttons -->
         <div class="form-group">
         <div class="col-sm-offset-4 col-sm-8">
           <button id="cancel" class="btn btn-default">Cancel</button>
