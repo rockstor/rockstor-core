@@ -157,6 +157,14 @@ def update_upssched_early_shutdown(seconds):
     timer_stop_line = 'AT ONLINE * CANCEL-TIMER early-shutdown'
     start_timer_found = False
     stop_timer_found = False
+    # Ensure we have a sane 'seconds' value:
+    try:
+        int(seconds)
+    except:
+        logger.info('Enforcing default NUT timed shutdown value of 0 '
+                    '(When Battery Low) as the passed seconds value could not '
+                    'be interpreted as an integer.')
+        seconds = '0'
     # Establish our upssched.conf template file.
     upssched_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
     # Check for the existence of this template file.
