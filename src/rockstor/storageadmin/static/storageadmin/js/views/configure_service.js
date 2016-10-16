@@ -271,7 +271,7 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         this.$('#nut-form #shutdowntimer').tooltip({
             html: true,
             placement: 'right',
-            title: 'How long the UPS is "On Battery (OB)" before NUT triggers a Full System Shutdown.'
+            title: 'How long the UPS is "On Battery (OB)" before NUT initiates a "Forced Shutdown" (FSD) event.'
         });
         this.$('#replication-form #network_interface').tooltip({
             html: true,
