@@ -271,7 +271,7 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         this.$('#nut-form #shutdowntimer').tooltip({
             html: true,
             placement: 'right',
-            title: 'How long the UPS is "On Battery (OB)" before NUT initiates a "Forced Shutdown" (FSD) event.'
+            title: 'How long the UPS is "On Battery (OB)" before NUT initiates a "Forced Shutdown" (FSD) event. In netclient mode the netserver setting, if set for a shorter period, takes priority and the netserver will attempt to ensuring all netclients are shutdown first.'
         });
         this.$('#replication-form #network_interface').tooltip({
             html: true,
