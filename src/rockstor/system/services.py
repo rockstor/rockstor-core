@@ -216,14 +216,15 @@ def refresh_afp_config(afpl):
     fo, npath = mkstemp()
     with open(AFP_CONFIG) as afo, open(npath, 'w') as tfo:
         rockstor_section = False
+        tfo.write('; Netatalk 3.x configuration file\n\n')
+        tfo.write('[Global]\n')
+        tfo.write('mimic model = RackMac\n\n')
         for line in afo.readlines():
             if (re.match(';####BEGIN: Rockstor AFP CONFIG####', line)
                     is not None):
                 rockstor_section = True
                 rockstor_afp_config(tfo, afpl)
                 break
-            else:
-                tfo.write(line)
         if (rockstor_section is False):
             rockstor_afp_config(tfo, afpl)
     shutil.move(npath, AFP_CONFIG)
