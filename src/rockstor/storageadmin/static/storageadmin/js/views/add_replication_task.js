@@ -32,6 +32,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
     },
 
     initialize: function() {
+    this.options = options || {}
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.replication_add_replication_task;
 	this.shares = new ShareCollection();

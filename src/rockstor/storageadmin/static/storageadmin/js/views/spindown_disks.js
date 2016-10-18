@@ -29,7 +29,8 @@ SpindownDiskView = RockstorLayoutView.extend({
         'click #cancel': 'cancel'
     },
 
-    initialize: function () {
+    initialize: function (options) {
+        this.options = options || {}
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_spindown_disks;

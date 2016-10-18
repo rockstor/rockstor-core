@@ -29,7 +29,8 @@ EditNFSExportView = RockstorLayoutView.extend({
 		'click #cancel': 'cancel'
 	},
 
-	initialize: function() {
+    initialize: function(options) {
+        this.options = options || {}
 		this.constructor.__super__.initialize.apply(this, arguments);
 		this.template = window.JST.nfs_edit_nfs_export;
 		this.shares = new ShareCollection();

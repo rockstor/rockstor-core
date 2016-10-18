@@ -26,7 +26,8 @@
 
 PoolDetailsLayoutView = RockstorLayoutView.extend({
 
-	initialize: function() {
+    initialize: function(options) {
+        this.options = options || {}
 		// call initialize of base
 		this.constructor.__super__.initialize.apply(this, arguments);
 		this.poolName = this.options.poolName;
