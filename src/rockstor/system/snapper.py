@@ -6,7 +6,6 @@ from osi import run_command
 from dbus import SystemBus, Interface, DBusException
 from contextlib import contextmanager
 from storageadmin.util import handle_exception
-from rest_framework.exceptions import NotFound
 
 """
 Copyright (c) 2016 RockStor, Inc. <http://rockstor.com>
@@ -48,13 +47,8 @@ class Snapper(Interface):
         """Apply some parsing to output of GetConfig, which returns a list of
         str, str, {} representing the name, subvolume and settings.
         """
-        config = {}
-        try:
-            output = self.GetConfig(name)
-        except:
-            raise NotFound('Configuration \'%s\' not found.' % name)
-        else:
-            return self._parse_config(output)
+        output = self.GetConfig(name)
+        return self._parse_config(output)
 
     def _parse_config(self, raw):
         """Return the relevant options as a dictionary.

@@ -45,7 +45,12 @@ class SnapperConfigDetail(views.APIView):
     """Create/edit/delete a snapper configuration.
     """
     def get(self, request, name):
-        return Response(snapper.get_config(name))
+        try:
+            config = snapper.get_config(name)
+        except:
+            raise NotFound('Configuration \'%s\' not found.' % name)
+        else:
+            return Response(config)
 
     def delete(self, request, name):
         return
@@ -56,6 +61,6 @@ class SnapperSnapshotList(views.APIView):
         try:
             snapshots = snapper.ListSnapshots(name)
         except:
-            return NotFound
+            raise NotFound
         else:
             return Response(snapshots)
