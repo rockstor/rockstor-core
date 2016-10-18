@@ -27,9 +27,9 @@
 SetupSystemView = Backbone.View.extend({
   tagName: 'div',
   
-  initialize: function(options) {
+  initialize: function() {
     this.template = window.JST.setup_system;
-    this.sysinfo = options.sysinfo;
+    this.sysinfo = this.options.sysinfo;
   },
 
   render: function() {

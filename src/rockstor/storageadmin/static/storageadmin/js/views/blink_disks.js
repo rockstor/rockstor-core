@@ -29,11 +29,11 @@ BlinkDiskView = RockstorLayoutView.extend({
     'click #cancel': 'cancel'
   },
 
-  initialize: function(options) {
+  initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.disk_blink_disks;
     this.disks = new DiskCollection();
-    this.diskName = options.diskName;
+    this.diskName = this.options.diskName;
     this.dependencies.push(this.disks);
   },
 

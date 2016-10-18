@@ -29,12 +29,12 @@ AddUserView = RockstorLayoutView.extend({
 	"click #cancel": "cancel"
     },
 
-    initialize: function(options) {
+    initialize: function() {
 	// call initialize of base
 	this.constructor.__super__.initialize.apply(this, arguments);
 	// set template
 	this.template = window.JST.users_add_user;
-	this.username = options.username;
+	this.username = this.options.username;
 	if (!_.isUndefined(this.username)) {
 	    this.user = new User({username: this.username});
 	    this.dependencies.push(this.user);

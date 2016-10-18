@@ -38,10 +38,10 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		"click #js-confirm-share-delete": "confirmShareDelete",
 	},
 
-	initialize: function(options) {
+	initialize: function() {
 		// call initialize of base
 		this.constructor.__super__.initialize.apply(this, arguments);
-		this.shareName = options.shareName;
+		this.shareName = this.options.shareName;
 		this.template = window.JST.share_share_details_layout;
 		this.rollback_btn_template = window.JST.share_share_details_rollback_btn;
 		this.shareAclTemplate = window.JST.share_share_acl;
@@ -81,7 +81,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		                          ];
 		this.on('snapshotsModified', this.renderRollbackBtn, this);
 		this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
-		this.cView = options.cView;
+		this.cView = this.options.cView;
 		this.initHandlebarHelpers();
 	},
 

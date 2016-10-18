@@ -29,13 +29,13 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 	events: {
 	},
 
-	initialize: function(options) {
+	initialize: function() {
 		// call initialize of base
 		this.constructor.__super__.initialize.apply(this, arguments);
 		// set template
 		this.template = window.JST.replication_replica_trails;
 		// add dependencies
-		this.replicaId = options.replicaId;
+		this.replicaId = this.options.replicaId;
 		this.replica = new Replica({id: this.replicaId});
 		this.dependencies.push(this.replica);
 		this.collection = new ReplicaTrailCollection(null, {

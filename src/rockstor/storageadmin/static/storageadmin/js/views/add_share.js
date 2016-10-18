@@ -33,11 +33,11 @@ AddShareView = Backbone.View.extend({
     "click #js-cancel": "cancel"
   },
 
-  initialize: function(options) {
+  initialize: function() {
     var _this = this;
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
-    this.preSelectedPoolName = options.poolName || null;
+    this.preSelectedPoolName = this.options.poolName || null;
     this.tickFormatter = function(d) {
       var formatter = d3.format(",.1f");
       if (d > 1024) {

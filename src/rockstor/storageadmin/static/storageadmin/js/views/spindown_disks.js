@@ -29,12 +29,12 @@ SpindownDiskView = RockstorLayoutView.extend({
         'click #cancel': 'cancel'
     },
 
-    initialize: function (options) {
+    initialize: function () {
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_spindown_disks;
         this.disks = new DiskCollection();
-        this.diskName = options.diskName;
+        this.diskName = this.options.diskName;
         this.dependencies.push(this.disks);
         this.tickFormatter = function (d) {
             var formatter = d3.format(",.0f");

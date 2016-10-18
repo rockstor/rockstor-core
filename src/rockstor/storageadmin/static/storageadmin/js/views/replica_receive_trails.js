@@ -29,13 +29,13 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
 	events: {
 	},
 
-	initialize: function(options) {
+	initialize: function() {
 		// call initialize of base
 		this.constructor.__super__.initialize.apply(this, arguments);
 		// set template
 		this.template = window.JST.replication_receive_trails;
 		// add dependencies
-		this.replicaShareId = options.replicaShareId;
+		this.replicaShareId = this.options.replicaShareId;
 		this.replicaShare = new ReplicaShare({id: this.replicaShareId});
 		this.dependencies.push(this.replicaShare);
 		this.collection = new ReceiveTrailCollection(null, {

@@ -29,11 +29,11 @@ EditNFSExportView = RockstorLayoutView.extend({
 		'click #cancel': 'cancel'
 	},
 
-	initialize: function(options) {
+	initialize: function() {
 		this.constructor.__super__.initialize.apply(this, arguments);
 		this.template = window.JST.nfs_edit_nfs_export;
 		this.shares = new ShareCollection();
-		this.nfsExportGroupId = options.nfsExportGroupId;
+		this.nfsExportGroupId = this.options.nfsExportGroupId;
 		if(this.nfsExportGroupId > 0) {
 			this.nfsExportGroup = new NFSExportGroup({id: this.nfsExportGroupId});
 			this.nfsExportNotEmpty = true;

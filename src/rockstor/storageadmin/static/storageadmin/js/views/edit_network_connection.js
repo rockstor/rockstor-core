@@ -33,9 +33,9 @@ NetworkConnectionView = RockstorLayoutView.extend({
 	'change #ctype': 'renderCTypeOptionalFields'
     },
 
-    initialize: function(options) {
+    initialize: function() {
 	this.constructor.__super__.initialize.apply(this, arguments);
-	this.connectionId = options.connectionId || null;
+	this.connectionId = this.options.connectionId || null;
 	this.connection = null;
 	this.template = window.JST.network_new_connection;
 	this.devices = new NetworkDeviceCollection();

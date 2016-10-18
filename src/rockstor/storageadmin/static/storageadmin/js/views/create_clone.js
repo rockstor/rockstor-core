@@ -29,12 +29,12 @@ CreateCloneView = RockstorLayoutView.extend({
     "click #js-cancel": "cancel"
   },
   
-  initialize: function(options) {
+  initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.share_create_clone;
-    this.sourceType = options.sourceType;
-    this.shareName = options.shareName;
-    this.snapName = options.snapName;
+    this.sourceType = this.options.sourceType;
+    this.shareName = this.options.shareName;
+    this.snapName = this.options.snapName;
   },
 
   render: function() {

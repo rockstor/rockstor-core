@@ -34,12 +34,12 @@ SnapshotsView = SnapshotsCommonView.extend({
 	"click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
     },
 
-    initialize: function(options) {
+    initialize: function() {
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.share_snapshots;
 	this.addTemplate = window.JST.share_snapshot_add_template;
 	this.module_name = 'snapshots';
-	this.snapshots = options.snapshots;
+	this.snapshots = this.options.snapshots;
 	this.collection = new SnapshotsCollection();
 	this.shares = new ShareCollection();
 	this.dependencies.push(this.shares);
@@ -52,7 +52,7 @@ SnapshotsView = SnapshotsCommonView.extend({
 	    {name: 'yes', value: 'yes'},
 	    {name: 'no', value: 'no'},
 	];
-	this.parentView = options.parentView;
+	this.parentView = this.options.parentView;
 	this.collection.on("reset", this.renderSnapshots, this);
 	this.initHandlebarHelpers();
     },

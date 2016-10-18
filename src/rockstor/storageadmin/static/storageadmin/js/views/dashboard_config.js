@@ -29,10 +29,10 @@ DashboardConfigView = Backbone.View.extend({
 	"click .widget-name": "widgetClicked"
     },
 
-    initialize: function(options) {
-	this.dashboardconfig = options.dashboardconfig;
+    initialize: function() {
+	this.dashboardconfig = this.options.dashboardconfig;
 	this.template = window.JST.dashboard_dashboard_config;
-	this.parentView = options.parentView;
+	this.parentView = this.options.parentView;
 	this.initHandlebarHelpers();
     },
 
