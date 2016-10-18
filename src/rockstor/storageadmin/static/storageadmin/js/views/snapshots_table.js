@@ -35,7 +35,8 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
 	"click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
     },
 
-    initialize: function() {
+    initialize: function(options) {
+    this.options = options || {}
 	this.template = window.JST.share_snapshots_table_template;
 	this.addTemplate = window.JST.share_snapshot_add;
 	this.module_name = 'snapshots';
