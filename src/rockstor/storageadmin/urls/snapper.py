@@ -17,11 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import SnapperConfigList, SnapperConfigDetail
+from storageadmin import views
 
 
 urlpatterns = patterns(
     '',
-    url(r'^$', SnapperConfigList.as_view()),
-    url(r'^/([\w-]+)$', SnapperConfigDetail.as_view()),
+    url(r'^$', views.SnapperConfigList.as_view()),
+    url(r'^/([\w-]+)$', views.SnapperConfigDetail.as_view()),
+    url(r'^/([\w-]+)/$', views.SnapperSnapshotList.as_view()),
 )

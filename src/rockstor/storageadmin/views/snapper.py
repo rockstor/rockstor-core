@@ -6,6 +6,7 @@ from storageadmin.models import SnapperConfig
 from storageadmin.serializers import SnapperConfigSerializer
 from rest_framework import views
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from system.snapper import Snapper
 
 """
@@ -48,3 +49,13 @@ class SnapperConfigDetail(views.APIView):
 
     def delete(self, request, name):
         return
+
+
+class SnapperSnapshotList(views.APIView):
+    def get(self, request, name):
+        try:
+            snapshots = snapper.ListSnapshots(name)
+        except:
+            return NotFound
+        else:
+            return Response(snapshots)
