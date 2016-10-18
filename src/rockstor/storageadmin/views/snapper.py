@@ -59,8 +59,8 @@ class SnapperConfigDetail(views.APIView):
 class SnapperSnapshotList(views.APIView):
     def get(self, request, name):
         try:
-            snapshots = snapper.ListSnapshots(name)
+            snapshot_list = snapper.list_snapshots(name)
         except:
-            raise NotFound
+            raise NotFound('Configuration \'%s\' not found.' % name)
         else:
-            return Response(snapshots)
+            return Response(snapshot_list)
