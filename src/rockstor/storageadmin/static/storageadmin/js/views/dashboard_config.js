@@ -29,7 +29,8 @@ DashboardConfigView = Backbone.View.extend({
 	"click .widget-name": "widgetClicked"
     },
 
-    initialize: function() {
+    initialize: function(options) {
+    this.options = options || {}
 	this.dashboardconfig = this.options.dashboardconfig;
 	this.template = window.JST.dashboard_dashboard_config;
 	this.parentView = this.options.parentView;

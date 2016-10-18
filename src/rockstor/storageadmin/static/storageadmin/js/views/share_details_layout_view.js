@@ -38,7 +38,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		"click #js-confirm-share-delete": "confirmShareDelete",
 	},
 
-	initialize: function() {
+    initialize: function(options) {
+        this.options = options || {}
 		// call initialize of base
 		this.constructor.__super__.initialize.apply(this, arguments);
 		this.shareName = this.options.shareName;

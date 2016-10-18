@@ -33,7 +33,8 @@ NetworkConnectionView = RockstorLayoutView.extend({
 	'change #ctype': 'renderCTypeOptionalFields'
     },
 
-    initialize: function() {
+    initialize: function(options) {
+    this.options = options || {}
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.connectionId = this.options.connectionId || null;
 	this.connection = null;

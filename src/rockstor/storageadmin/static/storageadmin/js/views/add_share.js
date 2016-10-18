@@ -33,7 +33,8 @@ AddShareView = Backbone.View.extend({
     "click #js-cancel": "cancel"
   },
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = options || {}
     var _this = this;
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
