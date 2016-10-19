@@ -69,12 +69,6 @@ class Snapper(Interface):
         """
         snapshots = self.ListSnapshots(name)
         snapshot_list = []
-        snapshot_types = ['single', 'pre', 'post']
-
-        def timestamp(t):
-            """Convert unix time to human-readable.
-            """
-            return asctime(gmtime(t)) if t != -1 else ''
 
         for snapshot in snapshots:
             # If this snapshot has a pre-number, combine its data with the
@@ -82,26 +76,16 @@ class Snapper(Interface):
             if snapshot[2]:
                 data = snapshot_list[-1]
                 data['number'] += ', %s' % snapshot[0]
-                data['end_time'] = timestamp(snapshot[3])
+                data['end_time'] = self._parse_timestamp(snapshot[3])
                 data['type'] += ', post'
                 continue
 
-            userdata = ' '.join('%s=%s' % (key, value)
-                                for key, value in snapshot[7].items())
-            data = {
-                'number': str(snapshot[0]),
-                'type': snapshot_types[snapshot[1]],
-                'start_time': timestamp(snapshot[3]),
-                'end_time': '',
-                'user': getpwuid(snapshot[4])[0],
-                'description': snapshot[5],
-                'cleanup': snapshot[6],
-                'userdata': userdata
-            }
-
-            snapshot_list.append(data)
+            snapshot_list.append(self._parse_snapshot(snapshot))
 
         return snapshot_list
+
+    def get_snapshot(self, config, number):
+        return self._parse_snapshot(self.GetSnapshot(config, number))
 
     def _parse_config(self, raw):
         """Return the relevant options as a dictionary.
@@ -110,3 +94,26 @@ class Snapper(Interface):
         config['NAME'] = raw[0]
         config['SUBVOLUME'] = raw[1]
         return config
+
+    def _parse_snapshot(self, snapshot):
+        snapshot_types = ['single', 'pre', 'post']
+        userdata = ' '.join('%s=%s' % (key, value)
+                            for key, value in snapshot[7].items())
+        return {
+            'number': str(snapshot[0]),
+            'type': snapshot_types[snapshot[1]],
+            'start_time': self._parse_timestamp(snapshot[3]),
+            'end_time': '',
+            'user': getpwuid(snapshot[4])[0],
+            'description': snapshot[5],
+            'cleanup': snapshot[6],
+            'userdata': userdata
+        }
+
+    def _parse_timestamp(self, t):
+        """Convert a snapshot timestamp to human-readable format.
+
+        Snapper reports either an integer representing seconds since UNIX
+        epoch, or -1 for the "current" snapshot.
+        """
+        return asctime(gmtime(t)) if t != -1 else ''
