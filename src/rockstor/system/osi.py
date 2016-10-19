@@ -84,9 +84,14 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, stdin=subprocess.PIPE, throw=True,
                 log=False, input=None):
     try:
+        #We force run_command to always use en_US
+        #to avoid issues on date and number formats
+        #on not Anglo-Saxon systems (ex. it, es, fr, de, etc)
+        fake_env = dict(os.environ)
+        fake_env['LANG'] = 'en_US.UTF-8'
         cmd = map(str, cmd)
         p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr,
-                             stdin=stdin)
+                             stdin=stdin, env=fake_env)
         out, err = p.communicate(input=input)
         out = out.split('\n')
         err = err.split('\n')
