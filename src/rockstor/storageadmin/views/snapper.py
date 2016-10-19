@@ -2,8 +2,6 @@
 Views for all things related to snapper
 """
 
-from storageadmin.models import SnapperConfig
-from storageadmin.serializers import SnapperConfigSerializer
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
