@@ -24,5 +24,7 @@ urlpatterns = patterns(
     '',
     url(r'^$', views.SnapperConfigList.as_view()),
     url(r'^/([\w-]+)$', views.SnapperConfigDetail.as_view()),
-    url(r'^/([\w-]+)/$', views.SnapperSnapshotList.as_view()),
+    url(r'^/([\w-]+)/snapshots$', views.SnapperSnapshotList.as_view()),
+    url(r'^/([\w-]+)/snapshots/([0-9]+)$',
+        views.SnapperSnapshotDetail.as_view()),
 )

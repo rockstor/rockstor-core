@@ -55,6 +55,8 @@ class SnapperConfigDetail(views.APIView):
 
 
 class SnapperSnapshotList(views.APIView):
+    """Return the list of snapshots for the given snapper configuration.
+    """
     def get(self, request, name):
         try:
             snapshot_list = snapper.list_snapshots(name)
@@ -62,3 +64,15 @@ class SnapperSnapshotList(views.APIView):
             raise NotFound('Configuration \'%s\' not found.' % name)
         else:
             return Response(snapshot_list)
+
+
+class SnapperSnapshotDetail(views.APIView):
+    """Return information about a specific snapshot.
+    """
+    def get(self, request, name, number):
+        try:
+            snapshot = snapper.get_snapshot(name, number)
+        except Exception as e:
+            raise NotFound(e)
+        else:
+            return Response(snapshot)
