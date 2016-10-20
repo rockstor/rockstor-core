@@ -2,10 +2,11 @@
 Views for all things related to snapper
 """
 
-from rest_framework import views
+from dbus import DBusException
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from system.snapper import Snapper
+import rest_framework_custom as rfc
 
 """
 Copyright (c) 2016 RockStor, Inc. <http://rockstor.com>
@@ -29,50 +30,56 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 snapper = Snapper()
 
 
-class SnapperConfigList(views.APIView):
+class SnapperConfigList(rfc.GenericAPIView):
     """List all snapper configurations or create a new one.
     """
     def get(self, request):
         return Response(snapper.config_list())
 
-    def put(self, request, name):
-        return
+    def post(self, request):
+        with self._handle_exception('Failed to create configuration'):
+            name = request.data.get('NAME')
+            subvolume = request.data.get('SUBVOLUME')
+            snapper.CreateConfig(name, subvolume, 'btrfs', 'default')
+        return Response(request.data)
 
 
-class SnapperConfigDetail(views.APIView):
+class SnapperConfigDetail(rfc.GenericAPIView):
     """Create/edit/delete a snapper configuration.
     """
     def get(self, request, name):
         try:
             config = snapper.get_config(name)
-        except:
+        except DBusException:
             raise NotFound('Configuration \'%s\' not found.' % name)
         else:
             return Response(config)
 
     def delete(self, request, name):
-        return
+        with self._handle_exception('Failed to delete configuration'):
+            snapper.DeleteConfig(name)
+        return Response()
 
 
-class SnapperSnapshotList(views.APIView):
+class SnapperSnapshotList(rfc.GenericAPIView):
     """Return the list of snapshots for the given snapper configuration.
     """
     def get(self, request, name):
         try:
             snapshot_list = snapper.list_snapshots(name)
-        except:
+        except DBusException:
             raise NotFound('Configuration \'%s\' not found.' % name)
         else:
             return Response(snapshot_list)
 
 
-class SnapperSnapshotDetail(views.APIView):
+class SnapperSnapshotDetail(rfc.GenericAPIView):
     """Return information about a specific snapshot.
     """
     def get(self, request, name, number):
         try:
             snapshot = snapper.get_snapshot(name, number)
-        except Exception as e:
+        except DBusException as e:
             raise NotFound(e)
         else:
             return Response(snapshot)
