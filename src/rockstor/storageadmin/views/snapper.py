@@ -5,6 +5,7 @@ Views for all things related to snapper
 from dbus import DBusException
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
+from rest_framework import status
 from system.snapper import Snapper
 import rest_framework_custom as rfc
 
@@ -41,7 +42,7 @@ class SnapperConfigList(rfc.GenericAPIView):
             name = request.data.get('NAME')
             subvolume = request.data.get('SUBVOLUME')
             snapper.CreateConfig(name, subvolume, 'btrfs', 'default')
-        return Response(request.data)
+        return Response(request.data, status=status.HTTP_201_CREATED)
 
 
 class SnapperConfigDetail(rfc.GenericAPIView):
@@ -58,7 +59,7 @@ class SnapperConfigDetail(rfc.GenericAPIView):
     def delete(self, request, name):
         with self._handle_exception('Failed to delete configuration'):
             snapper.DeleteConfig(name)
-        return Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SnapperSnapshotList(rfc.GenericAPIView):
