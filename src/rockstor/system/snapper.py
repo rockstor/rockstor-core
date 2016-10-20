@@ -44,30 +44,17 @@ class Snapper(Interface):
     def config_list(self):
         return [self._parse_config(config) for config in self.ListConfigs()]
 
-    def get_config(self, name):
+    def get_config(self, config):
         """Apply some parsing to output of GetConfig, which returns a list of
         str, str, {} representing the name, subvolume and settings.
         """
-        output = self.GetConfig(name)
+        output = self.GetConfig(config)
         return self._parse_config(output)
 
-    def list_snapshots(self, name):
-        """Return snapshot information as a dictionary.
-
-        The output of ListSnapshots is a list with the following elements:
-            int: snapshot number
-            int: snapshot type (0 = single, 1 = pre, 2 = post)
-            int: pre-number if a post snapshot, else 0
-            int: -1 or timestamp in seconds since Unix epoch
-            int: uid
-            str: description
-            str: cleanup algorithm
-            dict: userdata
-
-        These are parsed into a more readable dictionary format, where pairs
-        of pre and post snapshots are combined into one listing.
+    def list_snapshots(self, config):
+        """Return snapshot information as a list of dictionaries.
         """
-        snapshots = self.ListSnapshots(name)
+        snapshots = self.ListSnapshots(config)
         snapshot_list = []
 
         for snapshot in snapshots:
@@ -80,12 +67,15 @@ class Snapper(Interface):
                 data['type'] += ', post'
                 continue
 
-            snapshot_list.append(self._parse_snapshot(snapshot))
+            snapshot_list.append(self._parse_snapshot(config, snapshot))
 
         return snapshot_list
 
     def get_snapshot(self, config, number):
-        return self._parse_snapshot(self.GetSnapshot(config, number))
+        """Return single snapshot information.
+        """
+        snapshot = self.GetSnapshot(config, number)
+        return self._parse_snapshot(config, snapshot)
 
     def _parse_config(self, raw):
         """Return the relevant options as a dictionary.
@@ -95,19 +85,31 @@ class Snapper(Interface):
         config['SUBVOLUME'] = raw[1]
         return config
 
-    def _parse_snapshot(self, snapshot):
-        snapshot_types = ['single', 'pre', 'post']
-        userdata = ' '.join('%s=%s' % (key, value)
-                            for key, value in snapshot[7].items())
+    def _parse_snapshot(self, config, snapshot):
+        """Parse raw snapshot data.
+
+        The output produced by snapper is a list with the following elements:
+            int: snapshot number
+            int: snapshot type (0 = single, 1 = pre, 2 = post)
+            int: pre-number if a post snapshot, else 0
+            int: -1 or timestamp in seconds since Unix epoch
+            int: uid
+            str: description
+            str: cleanup algorithm
+            dict: userdata
+        Also append the config name to make it function as a nested resource.
+        """
         return {
             'number': str(snapshot[0]),
-            'type': snapshot_types[snapshot[1]],
+            'type': ['single', 'pre', 'post'][snapshot[1]],
             'start_time': self._parse_timestamp(snapshot[3]),
             'end_time': '',
             'user': getpwuid(snapshot[4])[0],
             'description': snapshot[5],
             'cleanup': snapshot[6],
-            'userdata': userdata
+            'userdata': ' '.join('%s=%s' % (key, value)
+                                 for key, value in snapshot[7].items()),
+            'config': config
         }
 
     def _parse_timestamp(self, t):
