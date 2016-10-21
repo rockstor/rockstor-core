@@ -8,7 +8,6 @@ from rest_framework.exceptions import NotFound
 from rest_framework import status
 from system.snapper import Snapper
 import rest_framework_custom as rfc
-import logging
 
 """
 Copyright (c) 2016 RockStor, Inc. <http://rockstor.com>
@@ -78,8 +77,16 @@ class SnapperConfigDetail(rfc.GenericAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def extract_snapshot_data(request):
+    """Extract the right data for creating/updating snapshots from a request.
+    """
+    return [request.data.get(item) for item in
+            ('description', 'cleanup', 'userdata')]
+
+
 class SnapperSnapshotList(rfc.GenericAPIView):
-    """Return the list of snapshots for the given snapper configuration.
+    """Return the list of snapshots for the given snapper configuration, or
+    create a new snapshot.
     """
     def get(self, request, name):
         try:
@@ -88,6 +95,15 @@ class SnapperSnapshotList(rfc.GenericAPIView):
             raise NotFound('Configuration \'%s\' not found.' % name)
         else:
             return Response(snapshot_list)
+
+    def post(self, request, name):
+        number = 0
+        with self._handle_exception(request):
+            number = snapper.CreateSingleSnapshot(
+                name, *extract_snapshot_data(request)
+            )
+        return Response(snapper.get_snapshot(name, number),
+                        status=status.HTTP_201_CREATED)
 
 
 class SnapperSnapshotDetail(rfc.GenericAPIView):
@@ -103,10 +119,8 @@ class SnapperSnapshotDetail(rfc.GenericAPIView):
 
     def put(self, request, name, number):
         with self._handle_exception(request):
-            args = [request.data.get(item) for item in
-                    ['description', 'cleanup', 'userdata']]
-            snapper.SetSnapshot(name, number, args[0], args[1], args[2])
-        return Response(request.data)
+            snapper.SetSnapshot(name, number, *extract_snapshot_data(request))
+        return Response(request.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, name, number):
         try:
