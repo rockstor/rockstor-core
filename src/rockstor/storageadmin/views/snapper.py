@@ -8,6 +8,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework import status
 from system.snapper import Snapper
 import rest_framework_custom as rfc
+import logging
 
 """
 Copyright (c) 2016 RockStor, Inc. <http://rockstor.com>
@@ -90,7 +91,7 @@ class SnapperSnapshotList(rfc.GenericAPIView):
 
 
 class SnapperSnapshotDetail(rfc.GenericAPIView):
-    """Return information about a specific snapshot.
+    """Retrieve, update or delete a particular snapshot.
     """
     def get(self, request, name, number):
         try:
@@ -99,3 +100,19 @@ class SnapperSnapshotDetail(rfc.GenericAPIView):
             raise NotFound(e)
         else:
             return Response(snapshot)
+
+    def put(self, request, name, number):
+        with self._handle_exception(request):
+            args = [request.data.get(item) for item in
+                    ['description', 'cleanup', 'userdata']]
+            snapper.SetSnapshot(name, number, args[0], args[1], args[2])
+        return Response(request.data)
+
+    def delete(self, request, name, number):
+        try:
+            snapper.DeleteSnapshots(name, [number])
+            snapper.Sync(name)
+        except DBusException as e:
+            raise NotFound(e)
+        else:
+            return Response(status=status.HTTP_204_NO_CONTENT)
