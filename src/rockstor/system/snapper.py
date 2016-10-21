@@ -82,7 +82,6 @@ class Snapper(Interface):
         """
         config = raw[2].copy()
         config['NAME'] = raw[0]
-        config['SUBVOLUME'] = raw[1]
         return config
 
     def _parse_snapshot(self, config, snapshot):
@@ -107,8 +106,7 @@ class Snapper(Interface):
             'user': getpwuid(snapshot[4])[0],
             'description': snapshot[5],
             'cleanup': snapshot[6],
-            'userdata': ' '.join('%s=%s' % (key, value)
-                                 for key, value in snapshot[7].items()),
+            'userdata': snapshot[7].copy(),
             'config': config
         }
 
