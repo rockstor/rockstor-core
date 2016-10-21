@@ -56,6 +56,21 @@ class SnapperConfigDetail(rfc.GenericAPIView):
         else:
             return Response(config)
 
+    def put(self, request, name):
+        try:
+            config = snapper.get_config(name)
+        except DBusException:
+            # Config does not exist
+            with self._handle_exception(request):
+                subvolume = request.data.get('SUBVOLUME')
+                snapper.CreateConfig(name, subvolume, 'btrfs', 'default')
+
+        # Ignore the read-only properties
+        config = {key: value for key, value in request.data.items()
+                  if key not in ['NAME', 'SUBVOLUME', 'FSTYPE']}
+        snapper.SetConfig(name, config)
+        return Response(request.data)
+
     def delete(self, request, name):
         with self._handle_exception('Failed to delete configuration'):
             snapper.DeleteConfig(name)
