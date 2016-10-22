@@ -706,3 +706,31 @@ var UpdateSubscriptionCollection = RockStorPaginatedCollection.extend({
     model: UpdateSubscription,
     baseUrl: '/api/update-subscriptions'
 });
+
+var SnapperSnapshot = Backbone.Model.extend({
+    idAttribute: 'number'
+});
+
+// The Snapshot collection does not have predefined URL as it is nested below a config
+var SnapperSnapshotCollection = Backbone.Collection.extend({
+    model: SnapperSnapshot
+});
+
+var SnapperConfig = Backbone.Model.extend({
+    idAttribute: 'NAME',
+
+    initialize: function() {
+        this.snapshots = new SnapperSnapshotCollection();
+        this.snapshots.url = this.url() + '/snapshots';
+        this.listenTo(this.snapshots, 'reset', this.onReset);
+    },
+
+    onReset: function() {
+        this.trigger('change:snapshots', this);
+    }
+});
+
+var SnapperConfigCollection = Backbone.Collection.extend({
+    model: SnapperConfig,
+    url: '/api/snapper'
+});
