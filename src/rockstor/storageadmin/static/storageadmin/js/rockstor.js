@@ -44,6 +44,11 @@ PaginationMixin = {
     }
 };
 
+// Set global DataTables defaults
+$.extend($.fn.dataTable.defaults, {
+    lengthMenu: [[15, 30, 45, -1], [15, 30, 45, "All"]]
+});
+
 RockstorLayoutView = Backbone.View.extend({
     tagName: 'div',
     className: 'layout',
@@ -63,15 +68,10 @@ RockstorLayoutView = Backbone.View.extend({
         });
     },
 
-    renderDataTables: function(){
-        $('table.data-table').DataTable({
-            "iDisplayLength": 15,
-            "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]],
-        });
+    renderDataTables: function() {
+        $('table.data-table').DataTable();
     },
-
 });
-
 
 // RockstorModuleView
 
