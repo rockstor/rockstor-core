@@ -54,28 +54,14 @@ class Snapper(Interface):
     def list_snapshots(self, config):
         """Return snapshot information as a list of dictionaries.
         """
-        snapshots = self.ListSnapshots(config)
-        snapshot_list = []
-
-        for snapshot in snapshots:
-            # If this snapshot has a pre-number, combine its data with the
-            # previous snapshot and don't make a new entry.
-            if snapshot[2]:
-                data = snapshot_list[-1]
-                data['number'] += ', %s' % snapshot[0]
-                data['end_time'] = self._parse_timestamp(snapshot[3])
-                data['type'] += ', post'
-                continue
-
-            snapshot_list.append(self._parse_snapshot(config, snapshot))
-
-        return snapshot_list
+        return [self._parse_snapshot(snapshot) for snapshot
+                in self.ListSnapshots(config)]
 
     def get_snapshot(self, config, number):
         """Return single snapshot information.
         """
         snapshot = self.GetSnapshot(config, number)
-        return self._parse_snapshot(config, snapshot)
+        return self._parse_snapshot(snapshot)
 
     def _parse_config(self, raw):
         """Return the relevant options as a dictionary.
@@ -84,7 +70,7 @@ class Snapper(Interface):
         config['NAME'] = raw[0]
         return config
 
-    def _parse_snapshot(self, config, snapshot):
+    def _parse_snapshot(self, snapshot):
         """Parse raw snapshot data.
 
         The output produced by snapper is a list with the following elements:
@@ -96,18 +82,16 @@ class Snapper(Interface):
             str: description
             str: cleanup algorithm
             dict: userdata
-        Also append the config name to make it function as a nested resource.
         """
         return {
-            'number': str(snapshot[0]),
+            'number': snapshot[0],
             'type': ['single', 'pre', 'post'][snapshot[1]],
-            'start_time': self._parse_timestamp(snapshot[3]),
-            'end_time': '',
+            'pre_number': snapshot[2],
+            'timestamp': self._parse_timestamp(snapshot[3]),
             'user': getpwuid(snapshot[4])[0],
             'description': snapshot[5],
             'cleanup': snapshot[6],
-            'userdata': snapshot[7].copy(),
-            'config': config
+            'userdata': snapshot[7].copy()
         }
 
     def _parse_timestamp(self, t):
