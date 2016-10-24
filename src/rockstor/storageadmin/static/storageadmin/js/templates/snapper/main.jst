@@ -1,0 +1,74 @@
+{{!<script>
+/*
+ * Copyright (c) 2016 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>}}
+
+<div class="row">
+    <div class="form-inline col-xs-12 col-md-4 text-center">
+        <label for="config">Selected Configuration: </label>
+        <select id="config" class="form-group"></select>
+        <a href="#snapper_edit_config" class="btn btn-primary">
+            <i class="fa fa-edit" aria-hidden="true"></i> Edit
+        </a>
+        <a href="#snapper_create_config" class="btn btn-primary">
+            <i class="fa fa-plus" aria-hidden="true"></i> Create New
+        </a>
+    </div>
+    <div class="form-inline col-xs-12 col-md-4 text-center">
+        <div class="btn-group">
+            <button id="select" class="btn btn-primary">
+                <i class="fa fa-check-square-o" aria-hidden="true"></i> Select All
+            </button>
+            <button id="unselect" class="btn btn-primary">
+                <i class="fa fa-square-o" aria-hidden="true"></i> Select None
+            </button>
+        </div>
+        <button id="delete" class="btn btn-danger">
+            <i class="fa fa-trash-o" aria-hidden="true"></i> Delete Selected
+        </button>
+    </div>
+    <div class="form-inline col-xs-12 col-md-4 text-center">
+        <label for="cleanup">Manual Cleanup: </label>
+        <select id="cleanup" class="form-group">
+            <option value="number">Number</option>
+            <option value="timeline">Timeline</option>
+            <option value="empty-pre-post">Empty pre/post snapshots</option>
+        </select>
+        <a href="#snapper_cleanup" class="btn btn-primary">
+            <i class="fa fa-cog" aria-hidden="true"></i> Run
+        </a>
+    </div>
+</div> {{! /row }}
+<div class="table-responsive">
+    <h1>List of Snapshots <span></span></h1>
+    <table class="table table-condensed table-bordered table-hover" width="100%">
+<!--        <thead>
+            <tr>
+                <th></th>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Description</th>
+                <th>Cleanup Algorithm</th>
+                <th>User Data</th>
+            </tr>
+        </thead>-->
+    </table>
+</div>

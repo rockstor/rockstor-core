@@ -201,6 +201,7 @@ PIPELINE_JS = {
             'storageadmin/js/d3.slider2.js',
             'storageadmin/js/models/models.js',
             'storageadmin/js/views/common/*.js',
+            'storageadmin/js/views/snapper/*.js',
             'storageadmin/js/views/*.js',
             'storageadmin/js/views/pool/**/*.js',
             'storageadmin/js/views/dashboard/*.js',

@@ -52,6 +52,7 @@ var AppRouter = Backbone.Router.extend({
 	    "shares/:shareName/rollback": "rollbackShare",
 	    "shares/:shareName/?cView=:cView": "showShare",
 	    "snapshots": "showSnapshots",
+        "snapper": "showSnapper",
 	    "services": "showServices",
         "services/:serviceName/edit": "configureService",
 	    "services/:serviceName/edit/?adStatus=:adStatus": "configureService",
@@ -751,6 +752,12 @@ var AppRouter = Backbone.Router.extend({
         this.currentLayout = new LogsView();
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
+    },
+
+    showSnapper: function() {
+        this.renderSidebar('storage', 'snapshots');
+        this.currentLayout = new SnapperMainView({el: $('#maincontent')});
+        this.currentLayout.render();
     },
 	
 	showShell: function() {
