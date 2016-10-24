@@ -26,7 +26,6 @@
 
 var SnapperMainView = RockstorLayoutView.extend({
     events: {
-        'change select#config': 'updateSelectedConfig',
         'click button#select': function() {
             this.table.rows().select();
         },
@@ -39,21 +38,18 @@ var SnapperMainView = RockstorLayoutView.extend({
     initialize: function() {
         this.template = window.JST.snapper_main;
         this.collection = new SnapperConfigCollection();
-        // A collection to store the available configuration names
-        this.configs = new Backbone.Collection();
         this.selector = new BootstrapSelect({
-            collection: this.configs
+            collection: this.collection
         });
 
-        this.listenTo(this.collection, 'update', this.updateSelect);
         this.listenTo(this.collection, 'change:snapshots', this.updateSnapshots);
+        this.listenTo(this.selector, 'change:selection', this.updateSelectedConfig);
     },
 
     render: function() {
         this.collection.fetch();
         this.$el.html(this.template);
         this.selector.setElement(this.$('select#config'));
-        this.selector.render();
         this.table = this.$('table').DataTable({
             saveState: true,
             order: [[2,'asc']],
@@ -71,28 +67,9 @@ var SnapperMainView = RockstorLayoutView.extend({
         return this;
     },
 
-    updateSelectedConfig: function() {
-        this.selectedConfig = this.collection.at(this.$('select#config').val());
-        this.$('h1 > span').text('for ' + this.selectedConfig.get('SUBVOLUME'));
-        this.selectedConfig.snapshots.fetch({reset: true});
-    },
-
-    deleteSelected: function() {
-        var ids = this.table
-            .rows({selected: true})
-            .data()
-            .pluck('number')
-            .join(' ')
-            .match(/\d+/g);
-        var test = this.selectedConfig.snapshots.remove(ids);
-    },
-
-    updateSelect: function() {
-        var newChoices = this.collection.map(function(config, index) {
-            return { value: index, label: config.get('NAME') };
-        });
-        this.configs.reset(newChoices);
-        this.updateSelectedConfig();
+    updateSelectedConfig: function(config) {
+        this.$('h1 > span').text('for ' + config.get('SUBVOLUME'));
+        config.snapshots.fetch({reset: true});
     },
 
     updateSnapshots: function(config) {
@@ -115,6 +92,16 @@ var SnapperMainView = RockstorLayoutView.extend({
         });
         this.table.clear().rows.add(data).draw();
         this.table.select();
+    },
+
+    deleteSelected: function() {
+        var ids = this.table
+        .rows({selected: true})
+        .data()
+        .pluck('number')
+        .join(' ')
+        .match(/\d+/g);
+        this.selector.model.snapshots.remove(ids);
     }
 });
 

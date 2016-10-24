@@ -24,25 +24,65 @@
  *
  */
 
-// Construct using a collection of models with a 'label' property to populate
-// the options list.
+// Internal option view for Select
+var SelectOption = Backbone.View.extend({
+    tagName: 'option',
+
+    events: {
+        'change:selection': 'onSelectionChanged'
+    },
+
+    initialize: function(options) {
+        this.options = options || {};
+    },
+
+    render: function() {
+        content = this.model.get(this.options.attribute) || this.model.id;
+        this.$el.html(content);
+        return this;
+    },
+
+    onSelectionChanged: function() {
+        this.model.trigger('change:selection', this.model);
+    }
+});
+
+// Display a <select> for a Backbone collection. The select option text can be
+// set to a model attribute passed in as the 'attribute' option, otherwise it
+// displays the model IDs. The currently selected model is available as the
+// view's model and a 'change:selection' event is fired by the view when the
+// selection changes.
 var BootstrapSelect = Backbone.View.extend({
     tagName: 'select',
 
     className: 'selectpicker',
 
-    initialize: function() {
-        this.listenTo(this.collection, 'reset', this.render);
+    events: {
+        'change': 'onSelectionChanged'
+    },
+
+    initialize: function(options) {
+        this.options = options || {};
+        this.listenTo(this.collection, 'sync', this.render);
+        this.listenTo(this.collection, 'change:selection', this.selectedModel);
     },
 
     render: function() {
-        this.collection.each(function(element, index) {
-            this.$el.append($('<option>', {
-                value: index,
-                text: element.get('label')
-            }));
+        this.collection.each(function(model) {
+            var option = new SelectOption(_.extend({model: model}, this.options));
+            this.$el.append(option.render().el);
         }, this);
+        this.onSelectionChanged();
         return this;
+    },
+
+    selectedModel: function(model) {
+        this.model = model;
+        this.trigger('change:selection', model);
+    },
+
+    onSelectionChanged: function() {
+        this.$(':selected').trigger('change:selection');
     }
 });
 
