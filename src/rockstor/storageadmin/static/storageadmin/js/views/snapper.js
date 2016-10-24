@@ -32,7 +32,7 @@ var SnapperMainView = RockstorLayoutView.extend({
         'click button#unselect': function() {
             this.table.rows().deselect();
         },
-        'click button#delete': 'deleteSelected'
+        'click button#delete': 'onDeleteClicked'
     },
 
     initialize: function() {
@@ -41,17 +41,15 @@ var SnapperMainView = RockstorLayoutView.extend({
         this.selector = new BootstrapSelect({
             collection: this.collection
         });
-
         this.listenTo(this.collection, 'change:snapshots', this.updateSnapshots);
         this.listenTo(this.selector, 'change:selection', this.updateSelectedConfig);
+        this.collection.fetch();
     },
 
     render: function() {
-        this.collection.fetch();
         this.$el.html(this.template);
         this.selector.setElement(this.$('select#config'));
         this.table = this.$('table').DataTable({
-            saveState: true,
             order: [[2,'asc']],
             select: true,
             columns: [
@@ -69,7 +67,7 @@ var SnapperMainView = RockstorLayoutView.extend({
 
     updateSelectedConfig: function(config) {
         this.$('h1 > span').text('for ' + config.get('SUBVOLUME'));
-        config.snapshots.fetch({reset: true});
+        config.snapshots.fetch();
     },
 
     updateSnapshots: function(config) {
@@ -94,14 +92,29 @@ var SnapperMainView = RockstorLayoutView.extend({
         this.table.select();
     },
 
-    deleteSelected: function() {
+    onDeleteClicked: function() {
         var ids = this.table
-        .rows({selected: true})
-        .data()
-        .pluck('number')
-        .join(' ')
-        .match(/\d+/g);
-        this.selector.model.snapshots.remove(ids);
+            .rows({selected: true})
+            .data()
+            .pluck('number')
+            .join(' ')
+            .match(/\d+/g);
+
+        var deleteSnapshots = function() {
+            this.selector.model.snapshots.remove(ids);
+        };
+
+        // Show confirmation dialog if multiple snapshots are to be deleted at
+        // once.
+        if (ids.length == 1) {
+            deleteSnapshots();
+        } else if (ids.length > 1) {
+            var dialog = new ModalView({
+                el: this.$('.snapper-modal'),
+                template: window.JST.snapper_delete_dialog
+            }).render();
+            this.listenToOnce(dialog, 'submit', deleteSnapshots);
+        }
     }
 });
 
