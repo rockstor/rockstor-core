@@ -722,10 +722,16 @@ var SnapperConfig = Backbone.Model.extend({
     initialize: function() {
         this.snapshots = new SnapperSnapshotCollection();
         this.snapshots.url = this.url() + '/snapshots';
-        this.listenTo(this.snapshots, 'reset', this.onReset);
+        this.listenTo(this.snapshots, 'sync', this.onReset);
+        this.listenTo(this.snapshots, 'remove', this.onRemove);
     },
 
     onReset: function() {
+        this.trigger('change:snapshots', this);
+    },
+
+    onRemove: function(snapshot) {
+        snapshot.destroy();
         this.trigger('change:snapshots', this);
     }
 });
