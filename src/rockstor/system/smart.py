@@ -177,23 +177,23 @@ def error_logs(device, custom_options='', test_mode=TESTMODE):
     # log contains errors but otherwise executes successfully so we catch this.
     overide_rc = 64
     e_msg = 'Drive %s has logged S.M.A.R.T errors. Please view ' \
-                 'the Error logs tab for this device.' % local_base_dev
+            'the Error logs tab for this device.' % local_base_dev
     screen_return_codes(e_msg, overide_rc, o, e, rc, smart_command)
     ecode_map = {
-        'ABRT' : 'Command ABoRTed',
-        'AMNF' : 'Address Mark Not Found',
-        'CCTO' :  'Command Completion Timed Out',
-        'EOM' : 'End Of Media',
-        'ICRC' : 'Interface Cyclic Redundancy Code (CRC) error',
-        'IDNF' : 'IDentity Not Found',
-        'ILI' : '(packet command-set specific)',
-        'MC' : 'Media Changed',
-        'MCR' : 'Media Change Request',
-        'NM' : 'No Media',
-        'obs' : 'obsolete',
-        'TK0NF' : 'TracK 0 Not Found',
-        'UNC' : 'UNCorrectable Error in Data',
-        'WP' : 'Media is Write Protected',
+        'ABRT': 'Command ABoRTed',
+        'AMNF': 'Address Mark Not Found',
+        'CCTO': 'Command Completion Timed Out',
+        'EOM': 'End Of Media',
+        'ICRC': 'Interface Cyclic Redundancy Code (CRC) error',
+        'IDNF': 'IDentity Not Found',
+        'ILI': '(packet command-set specific)',
+        'MC': 'Media Changed',
+        'MCR': 'Media Change Request',
+        'NM': 'No Media',
+        'obs': 'obsolete',
+        'TK0NF': 'TracK 0 Not Found',
+        'UNC': 'UNCorrectable Error in Data',
+        'WP': 'Media is Write Protected',
     }
     summary = {}
     log_l = []
@@ -211,8 +211,11 @@ def error_logs(device, custom_options='', test_mode=TESTMODE):
                     fields = o[j].split()
                     err_num = fields[1]
                     if ('lifetime:' in fields):
-                        lifetime_hours = int(fields[fields.index('lifetime:')+1])
-                if (re.match('When the command that caused the error occurred, the device was', o[j].strip()) is not None):
+                        lifetime_hours = int(
+                            fields[fields.index('lifetime:') + 1])
+                if (re.match('When the command that caused the error occurred, '
+                             'the device was',
+                             o[j].strip()) is not None):
                     state = o[j].strip().split('the device was ')[1]
                 if (re.search('Error: ', o[j]) is not None):
                     e_substr = o[j].split('Error: ')[1]
@@ -220,8 +223,10 @@ def error_logs(device, custom_options='', test_mode=TESTMODE):
                     etype = e_fields[0]
                     if (etype in ecode_map):
                         etype = ecode_map[etype]
-                    details = ' '.join(e_fields[1:]) if (len(e_fields) > 1) else 'No Sector Details Available'
-                    summary[err_num] = list([lifetime_hours, state, etype, details])
+                    details = ' '.join(e_fields[1:]) if (
+                        len(e_fields) > 1) else 'No Sector Details Available'
+                    summary[err_num] = list(
+                        [lifetime_hours, state, etype, details])
                     err_num = lifetime_hours = state = etype = details = None
     print ('summary_d %s' % summary)
     logger.debug('SMART ERROR LOGS RETURNING summary=%s' % summary)
