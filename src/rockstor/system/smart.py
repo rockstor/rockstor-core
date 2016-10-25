@@ -220,7 +220,7 @@ def error_logs(device, custom_options='', test_mode=TESTMODE):
                     etype = e_fields[0]
                     if (etype in ecode_map):
                         etype = ecode_map[etype]
-                    details = ' '.join(e_fields[1:]) if (len(e_fields) > 1) else None
+                    details = ' '.join(e_fields[1:]) if (len(e_fields) > 1) else 'No Sector Details Available'
                     summary[err_num] = list([lifetime_hours, state, etype, details])
                     err_num = lifetime_hours = state = etype = details = None
     print ('summary_d %s' % summary)
