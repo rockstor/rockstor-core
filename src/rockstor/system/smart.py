@@ -31,7 +31,7 @@ CAT = '/usr/bin/cat'
 # enables reading file dumps of smartctl output instead of running smartctl
 # currently hardwired to read from eg:- /root/smartdumps/smart-H--info.out
 # default setting = False
-TESTMODE = False
+TESTMODE = True
 
 
 def info(device, custom_options='', test_mode=TESTMODE):
@@ -224,6 +224,8 @@ def error_logs(device, custom_options='', test_mode=TESTMODE):
                     summary[err_num] = list([lifetime_hours, state, etype, details])
                     err_num = lifetime_hours = state = etype = details = None
     print ('summary_d %s' % summary)
+    logger.debug('SMART ERROR LOGS RETURNING summary=%s' % summary)
+    logger.debug('SMART ERROR LOGS RETURNING log_l=%s' % log_l)
     return (summary, log_l)
 
 
