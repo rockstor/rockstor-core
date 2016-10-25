@@ -57,6 +57,10 @@ var BootstrapSelect = Backbone.View.extend({
 
     className: 'selectpicker',
 
+    attributes: {
+        'data-width': 'auto'
+    },
+
     events: {
         'change': 'onSelectionChanged'
     },
@@ -68,10 +72,12 @@ var BootstrapSelect = Backbone.View.extend({
     },
 
     render: function() {
+        this.$el.attr(this.attributes);
         this.collection.each(function(model) {
             var option = new SelectOption(_.extend({model: model}, this.options));
             this.$el.append(option.render().el);
         }, this);
+        this.$el.selectpicker('refresh');
         this.onSelectionChanged();
         return this;
     },

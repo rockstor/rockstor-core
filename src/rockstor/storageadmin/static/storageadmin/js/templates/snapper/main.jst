@@ -20,56 +20,66 @@
 </script>}}
 
 <div class="row">
-    <div class="form-inline col-xs-12 col-md-4 text-center">
-        <label for="config">Selected Configuration: </label>
-        <select id="config" class="form-group"></select>
-        <a href="#snapper_edit_config" class="btn btn-primary">
-            <i class="fa fa-edit" aria-hidden="true"></i> Edit
-        </a>
-        <a href="#snapper_create_config" class="btn btn-primary">
-            <i class="fa fa-plus" aria-hidden="true"></i> Create New
-        </a>
-    </div>
-    <div class="form-inline col-xs-12 col-md-4 text-center">
+    <div class="col-xs-12 col-md-4 text-center">
         <div class="btn-group">
-            <button id="select" class="btn btn-primary">
-                <i class="fa fa-check-square-o" aria-hidden="true"></i> Select All
+            <span class="input-group-addon">Selected Configuration</span>
+            <span class="input-group-btn">
+                <select id="config"></select>
+            </span>
+        </div>
+        <div class="btn-group">
+            <button id="config-edit" class="btn btn-primary">
+                <i class="fa fa-edit" aria-hidden="true"></i>
+                <span class="hidden-xs">Edit</span>
             </button>
-            <button id="unselect" class="btn btn-primary">
-                <i class="fa fa-square-o" aria-hidden="true"></i> Select None
+            <button id="config-delete" class="btn btn-danger">
+                <i class="fa fa-trash-o" aria-hidden="true"></i>
+                <span class="hidden-xs">Delete</span>
+            </button>
+            <button id="config-create" class="btn btn-primary">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span class="hidden-xs">New</span>
             </button>
         </div>
+    </div>
+    <div class="col-xs-12 col-md-4 text-center">
+        <div class="btn-group">
+            <span class="input-group-addon">Select Snapshots</span>
+            <span class="input-group-btn">
+                <button id="select" class="btn btn-primary">
+                    <i class="fa fa-check-square-o" aria-hidden="true"></i> All
+                </button>
+                <button id="unselect" class="btn btn-primary">
+                    <i class="fa fa-square-o" aria-hidden="true"></i> None
+                </button>
+            </span>
+        </div>
         <button id="delete" class="btn btn-danger">
-            <i class="fa fa-trash-o" aria-hidden="true"></i> Delete Selected
+            <i class="fa fa-trash-o" aria-hidden="true"></i> Delete Selection
+        </button>
+        <button id="create" class="btn btn-primary">
+            <i class="fa fa-camera" aria-hidden="true"></i> Create Snapshot
         </button>
     </div>
-    <div class="form-inline col-xs-12 col-md-4 text-center">
-        <label for="cleanup">Manual Cleanup: </label>
-        <select id="cleanup" class="form-group">
-            <option value="number">Number</option>
-            <option value="timeline">Timeline</option>
-            <option value="empty-pre-post">Empty pre/post snapshots</option>
-        </select>
-        <a href="#snapper_cleanup" class="btn btn-primary">
-            <i class="fa fa-cog" aria-hidden="true"></i> Run
-        </a>
+    <div class="col-xs-12 col-md-4 text-center">
+        <div class="btn-group">
+            <span class="input-group-addon">Cleanup</span>
+            <span class="input-group-btn">
+                <select id="cleanup" class="selectpicker" data-width="auto">
+                    <option value="number">Number</option>
+                    <option value="timeline">Timeline</option>
+                    <option value="empty-pre-post">Pre/post</option>
+                </select>
+                <button id="cleanup-run" class="btn btn-primary">
+                    <i class="fa fa-cog" aria-hidden="true"></i>
+                    <span class="hidden-xs">Run</span>
+                </button>
+            </span>
+        </div>
     </div>
 </div> {{! /row }}
 <div class="table-responsive">
     <h1>List of Snapshots <span></span></h1>
-    <table class="table table-condensed table-hover" width="100%">
-<!--        <thead>
-            <tr>
-                <th></th>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Description</th>
-                <th>Cleanup Algorithm</th>
-                <th>User Data</th>
-            </tr>
-        </thead>-->
-    </table>
+    <table class="table table-condensed table-hover" width="100%"></table>
 </div>
 <div class="snapper-modal"></div>
