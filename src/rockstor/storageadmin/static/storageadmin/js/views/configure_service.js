@@ -25,6 +25,7 @@
  */
 
 ConfigureServiceView = RockstorLayoutView.extend({
+
     events: {
         "click #cancel": "cancel",
         "click #security": "toggleFormFields",
@@ -468,10 +469,10 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             return key != 'workgroup';
         });
 
-        Handlebars.registerHelper('isEnabledAD', function(opts){
+        Handlebars.registerHelper('isEnabledAD', function(opts) {
 
             var _this = this;
-            if(_this.adStatus == 0) {
+            if (_this.adStatus == 0) {
                 return opts.fn(this);
             }
             return opts.inverse(this);
