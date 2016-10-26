@@ -24,7 +24,8 @@
  *
  */
 
-/* Construct and display a new Bootstrap-styled modal dialog as follows:
+/* Construct and display a new Bootstrap-styled modal dialog by putting a
+ * placeholder target element in your document and attaching the dialog:
  *      var dialog = new ModalView({el: target, template: myTemplate}).render();
  *
  * Manually control the created modal:
@@ -32,26 +33,32 @@
  *
  * It is only necessary to define the modal-header/body/content divs in the
  * supplied template; the view takes care of the required outer tags.
+ * Additionally, the options passed to the constructor are also passed into
+ * the template context.
+ *
+ * Submit events, such as from type="submit" buttons, are re-triggered on the
+ * view.
  */
 var ModalView = Backbone.View.extend({
     events: {
-        'click [type="submit"]': 'onSubmitClicked'
+        'submit': 'onSubmitClicked'
     },
 
     initialize: function(options) {
-        _.extend(this, options);
+        this.options = options || {};
+        this.baseTemplate = window.JST.common_modal_base;
     },
 
     render: function() {
-        this.$el.html(window.JST.common_modal_base);
-        this.$('.modal-content').html(this.template);
+        this.$el.html(this.baseTemplate);
+        this.$('.modal-content').html(this.template(this.options));
         this.modal('show');
         return this;
     },
 
     // Propagate submit event
     onSubmitClicked: function() {
-        this.trigger('submit');
+        this.trigger('submit', this);
         this.modal('hide');
     },
 
@@ -61,4 +68,14 @@ var ModalView = Backbone.View.extend({
     }
 });
 
-
+/* The warning dialog has a predefined "Warning" header section and a footer
+ * section with Cancel and Confirm buttons. The confirm button triggers a
+ * submit event. Pass the body message text on construction:
+ *      var warning = new WarningDialog({el: target, message: 'warning'}).render();
+ */
+var WarningDialog = ModalView.extend({
+    initialize: function(options) {
+        ModalView.prototype.initialize.call(this, options);
+        this.template = window.JST.common_modal_warning;
+    }
+});
