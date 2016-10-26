@@ -1,6 +1,6 @@
 <script>
   /*
-  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+  * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
   *
   * RockStor is free software; you can redistribute it and/or modify
@@ -20,53 +20,57 @@
 </script>
 
 <div class="row">
-  <div class="col-md-8">
-    <div class="panel panel-default">
+    <div class="col-md-12">
+        <div class="panel panel-default">
 
-<div class="panel-heading">Configure {{serviceName}}</div>
+            <div class="panel-heading">Configure {{serviceName}}</div>
 
-  <div class="panel-body">
-      <form class="form-horizontal" id="snmpd-form" name="aform">
-        <div class="messages"></div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="syslocation">System Location<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="syslocation" name="syslocation" value="{{config.syslocation}}" placeholder="System Location" title="A string indicating the location of the system" >
-          </div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="snmpd-form" name="aform">
+                    <div class="messages"></div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="syslocation">System Location<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="syslocation" name="syslocation" value="{{config.syslocation}}" placeholder="System Location" title="A string indicating the location of the system">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="syscontact">System Contact<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="syscontact" name="syscontact" value="{{config.syscontact}}" placeholder="System Contact" title="contact(e-mail) information for the administrator">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="rocommunity">RO Community<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="rocommunity" name="rocommunity" value="{{config.rocommunity}}" placeholder="RO Community" title="a community name to allow read-only access">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="options">Below directives will be put in /etc/snmp/snmpd.conf file</label>
+                        <div class="col-sm-8">
+                            <textarea class="form-control" id="options" name="options" rows="5" columns="40">{{config.aux}}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+            <!-- panel-body-->
         </div>
-
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="syscontact">System Contact<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="syscontact" name="syscontact" value="{{config.syscontact}}" placeholder="System Contact" title="contact(e-mail) information for the administrator">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="rocommunity">RO Community<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="rocommunity" name="rocommunity" value="{{config.rocommunity}}" placeholder="RO Community" title="a community name to allow read-only access">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="options">Below directives will be put in /etc/snmp/snmpd.conf file</label>
-          <div class="col-sm-8">
-           <textarea class="form-control" id="options" name="options" rows="5" columns="40" >{{config.aux}}</textarea>
-           </div>
-        </div>
-
-    <!-- Submit -->
-      <div class="form-group">
-        <div class="col-sm-offset-4 col-sm-8">
-	      <button id="cancel" class="btn btn-default">Cancel</button>
-        <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
-      </div>
+        <!--panel-default-->
     </div>
-
-      </form>
-
-    </div> <!-- panel-body-->
-  </div> <!--panel-default-->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+    <!-- col-md-8 -->
+</div>
+<!-- row -->
