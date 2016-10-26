@@ -26,6 +26,7 @@
 
 var SnapperMainView = RockstorLayoutView.extend({
     events: {
+        'click button#config-delete': 'onConfigDeleteClicked',
         'click button#select': function() {
             this.table.rows().select();
         },
@@ -41,6 +42,7 @@ var SnapperMainView = RockstorLayoutView.extend({
         this.selector = new BootstrapSelect({
             collection: this.collection
         });
+        this.selectedSnapshots = [];
         this.listenTo(this.collection, 'change:snapshots', this.updateSnapshots);
         this.listenTo(this.selector, 'change:selection', this.updateSelectedConfig);
         this.collection.fetch();
@@ -61,6 +63,16 @@ var SnapperMainView = RockstorLayoutView.extend({
                 {data: 'cleanup', title: 'Cleanup Algorithm'},
                 {data: 'userdata', title: 'User Data'}
             ]
+        });
+
+        // Enable snapshot delete button only when there is a selection
+        var deleteButton = this.$('#delete');
+        disableButton(deleteButton);
+        this.table.on('select.dt deselect.dt', function(event, dt, type, indexes) {
+            if (dt.rows({selected: true}).count())
+                enableButton(deleteButton);
+            else
+                disableButton(deleteButton);
         });
         return this;
     },
@@ -89,32 +101,46 @@ var SnapperMainView = RockstorLayoutView.extend({
             }
         });
         this.table.clear().rows.add(data).draw();
-        this.table.select();
     },
 
     onDeleteClicked: function() {
-        var ids = this.table
+        // Filter out the list of IDs from the table selection.
+        this.selectedSnapshots = this.table
             .rows({selected: true})
             .data()
             .pluck('number')
             .join(' ')
             .match(/\d+/g);
 
-        var deleteSnapshots = function() {
-            this.selector.model.snapshots.remove(ids);
-        };
-
         // Show confirmation dialog if multiple snapshots are to be deleted at
         // once.
-        if (ids.length == 1) {
-            deleteSnapshots();
-        } else if (ids.length > 1) {
-            var dialog = new ModalView({
+        if (!this.selectedSnapshots) {
+            return;
+        } else if (this.selectedSnapshots.length == 1) {
+            this.deleteSnapshots();
+        } else {
+            var dialog = new WarningDialog({
                 el: this.$('.snapper-modal'),
-                template: window.JST.snapper_delete_dialog
+                message: 'You are about to delete multiple snapshots. ' +
+                    'This action cannot be undone. Proceed?'
             }).render();
-            this.listenToOnce(dialog, 'submit', deleteSnapshots);
+            dialog.once('submit', this.deleteSnapshots, this);
         }
+    },
+
+    deleteSnapshots: function() {
+        this.selector.model.snapshots.remove(this.selectedSnapshots);
+    },
+
+    onConfigDeleteClicked: function() {
+        var dialog = new WarningDialog({
+            el: this.$('.snapper-modal'),
+            message: 'All snapshots associated with the selected configuration ' +
+                'will also be deleted. This action cannot be undone. Proceed?'
+        }).render();
+        dialog.once('submit', function() {
+            this.selector.model.destroy();
+        }, this);
     }
 });
 
