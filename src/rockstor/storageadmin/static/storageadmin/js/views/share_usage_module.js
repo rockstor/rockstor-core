@@ -32,7 +32,8 @@ ShareUsageModule = RockstorModuleView.extend({
 
 	},
 
-	initialize: function() {
+    initialize: function(options) {
+        this.options = options || {}
 		this.template = window.JST.share_share_usage_module;
 		this.editTemplate = window.JST.share_share_usage_edit;
 		this.module_name = 'share-usage';

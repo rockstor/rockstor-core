@@ -55,3 +55,5 @@ from config_backup import (ConfigBackupListView, ConfigBackupDetailView,
 from email_client import EmailClientView
 from update_subscription import (UpdateSubscriptionListView,
                                  UpdateSubscriptionDetailView)
+from snapper import (SnapperConfigList, SnapperConfigDetail,
+                     SnapperSnapshotList, SnapperSnapshotDetail)

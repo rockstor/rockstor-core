@@ -34,7 +34,8 @@ SnapshotsView = SnapshotsCommonView.extend({
 	"click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
     },
 
-    initialize: function() {
+    initialize: function(options) {
+    this.options = options || {}
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.share_snapshots;
 	this.addTemplate = window.JST.share_snapshot_add_template;

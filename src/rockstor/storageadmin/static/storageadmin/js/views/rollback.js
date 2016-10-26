@@ -30,7 +30,8 @@ RollbackView = RockstorLayoutView.extend({
 		'click #js-confirm-rollback-submit': 'confirmRollback'
 	},
 
-	initialize: function() {
+    initialize: function(option) {
+        this.options = options || {}
 		this.constructor.__super__.initialize.apply(this, arguments);
 		// Templates
 		this.template = window.JST.share_rollback;

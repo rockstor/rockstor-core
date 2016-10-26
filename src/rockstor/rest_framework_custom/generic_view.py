@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.generics import ListCreateAPIView
+from rest_framework.views import APIView
 from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
@@ -27,11 +28,12 @@ from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 
 
-# TODO: Only allow put, and patch where necessary. This works right now
-class GenericView(ListCreateAPIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication, RockstorOAuth2Authentication,)
-    permission_classes = (IsAuthenticated, )
+class GenericMixin:
+    authentication_classes = [DigestAuthentication,
+                              SessionAuthentication,
+                              BasicAuthentication,
+                              RockstorOAuth2Authentication]
+    permission_classes = [IsAuthenticated]
 
     @staticmethod
     @contextmanager
@@ -40,5 +42,14 @@ class GenericView(ListCreateAPIView):
             yield
         except RockStorAPIException:
             raise
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request, msg)
+
+
+# TODO: Only allow put, and patch where necessary. This works right now
+class GenericView(GenericMixin, ListCreateAPIView):
+    pass
+
+
+class GenericAPIView(GenericMixin, APIView):
+    pass
