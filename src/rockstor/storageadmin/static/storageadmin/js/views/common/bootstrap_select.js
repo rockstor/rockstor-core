@@ -37,7 +37,7 @@ var SelectOption = Backbone.View.extend({
     },
 
     render: function() {
-        content = this.model.get(this.options.attribute) || this.model.id;
+        var content = this.model.get(this.options.attribute) || this.model.id;
         this.$el.html(content);
         return this;
     },
@@ -67,11 +67,12 @@ var BootstrapSelect = Backbone.View.extend({
 
     initialize: function(options) {
         this.options = options || {};
-        this.listenTo(this.collection, 'sync', this.render);
+        this.listenTo(this.collection, 'update', this.render);
         this.listenTo(this.collection, 'change:selection', this.selectedModel);
     },
 
     render: function() {
+        this.$el.empty();
         this.$el.attr(this.attributes);
         this.collection.each(function(model) {
             var option = new SelectOption(_.extend({model: model}, this.options));
