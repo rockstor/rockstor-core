@@ -345,9 +345,7 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 
                 jqxhr.done(function() {
                     enableButton(button);
-                    app_router.navigate("services", {
-                        trigger: true
-                    });
+                    $('#services_modal').modal('hide');
                 });
 
                 jqxhr.fail(function(xhr, status, error) {
@@ -364,9 +362,7 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     cancel: function(event) {
 
         event.preventDefault();
-        app_router.navigate("services", {
-            trigger: true
-        });
+        $('#services_modal').modal('hide');
     },
 
     toggleFormFields: function() {
