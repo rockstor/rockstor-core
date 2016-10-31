@@ -163,7 +163,7 @@ PoolsView = RockstorLayoutView.extend({
         enableButton(button);
         _this.$('#delete-pool-modal').modal('hide');
         $('.modal-backdrop').remove();
-        app_router.navigate('pools', {trigger: true})
+        location.reload();
       },
       error: function(xhr, status, error) {
         enableButton(button);

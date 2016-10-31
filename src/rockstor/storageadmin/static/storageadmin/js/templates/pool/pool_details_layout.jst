@@ -119,11 +119,14 @@
       </div>
       <div class="modal-body">
         <div class="messages"></div>
-        <h4>Pool {{pool.name}} will be deleted along with the following shares (and all information associated with shares including Snapshots, NFSExports, Samba configs, SFTP, Replics). Are you sure?</h4>
-        <ul id="pool-shares"></ul>
+        <h4>Pool {{this.name}} will be deleted (along with the Snapshots, NFSExports, Samba configs, SFTP, Replics). Are you sure?</h4>
+        <h3>The following shares will be deleted! Are you sure?</h3>
+        <ul>
         {{#each share}}
         <li>{{this.name}} ({{this.size_gb}} GB)</li>
         {{/each}}
+        </ul>
+        <br>
         <label><input type="checkbox" id="force-delete" name="force-delete"> Force Delete &nbsp;<i class="fa fa-info-circle fa-lg"></i></label>
       </div>
       <div class="modal-footer">
