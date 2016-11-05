@@ -69,7 +69,7 @@ class DiskSMARTDetailView(rfc.GenericView):
         ts = datetime.utcnow().replace(tzinfo=utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()
-        for k in attributes:
+        for k in sorted(attributes.keys(), reverse=True):
             t = attributes[k]
             sa = SMARTAttribute(info=si, aid=t[0], name=t[1], flag=t[2],
                                 normed_value=t[3], worst=t[4], threshold=t[5],
