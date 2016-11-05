@@ -138,7 +138,6 @@
       <table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
 	<thead>
 	  <tr>
-	    <th>Id</th>
 	    <th>Name</th>
 	    <th>Failed</th>
 	    <th>Norm-ed Value</th>
@@ -148,13 +147,13 @@
 	    <th>Type</th>
 	    <th>Updated</th>
 	    <th>Flag</th>
+      <th>Id</th>
 	  </tr>
 	</thead>
 	<tbody>
 	  {{#each attributes as |attribute|}}
 	  <tr>
-	    <td>{{attribute.aid}}</td>
-	    <td>{{attribute.name}}</td>
+      <td>{{attribute.name}}</td>
 	    <td>{{attribute.failed}}</td>
 	    <td>{{attribute.normed_value}}</td>
 	    <td>{{attribute.worst}}</td>
@@ -163,6 +162,7 @@
 	    <td>{{attribute.atype}}</td>
 	    <td>{{attribute.updated}}</td>
 	    <td>{{attribute.flag}}</td>
+      <td>{{attribute.aid}}</td>
 	  </tr>
 	  {{else}}
 	  <h3>No S.M.A.R.T Attributes found (ATA/SATA only)</h3>
