@@ -987,7 +987,7 @@ $(document).ready(function() {
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
     RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
-    RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software-update');
+    RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software_update');
 
     //insert pagination partial helper functions here
     Handlebars.registerHelper('pagination', function() {
