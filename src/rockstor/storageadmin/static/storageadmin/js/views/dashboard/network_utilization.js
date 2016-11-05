@@ -27,7 +27,7 @@
 NetworkUtilizationWidget = RockStorWidgetView.extend({
 
     initialize: function() {
-        RockStorSocket.networkWidget = io.connect('/network-widget', {
+        RockStorSocket.networkWidget = io.connect('/network_widget', {
             'secure': true,
             'force new connection': true
         });

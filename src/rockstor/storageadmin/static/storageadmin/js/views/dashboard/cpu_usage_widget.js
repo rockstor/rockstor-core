@@ -28,7 +28,7 @@
 CpuUsageWidget = RockStorWidgetView.extend({
 
     initialize: function() {
-        RockStorSocket.cpuWidget = io.connect('/cpu-widget', {
+        RockStorSocket.cpuWidget = io.connect('/cpu_widget', {
             'secure': true,
             'force new connection': true
         });
@@ -118,7 +118,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
         this.AvgCpuChartOptions = {
             showLines: true,
             animation: {
-                duration: 1000,
+                duration: 1250,
                 easing: 'linear'
             },
             responsive: true,
