@@ -278,6 +278,34 @@ DisksView = RockstorLayoutView.extend({
             return false;
         });
 
+        // Identify root device by return of true / false.
+        // Works by examining the Disk.role field. Based on sister handlebars
+        // helper 'displayInfo'.
+        // true = device hosts the / partition
+        // false = root not found on this device
+        Handlebars.registerHelper('isRootDevice', function (role) {
+            // check if our role is null = db default
+            if (role == null) {
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // @todo not sure if this is redundant?
+            try {
+                var roleAsJson = JSON.parse(role);
+            } catch (e) {
+                return false;
+            }
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('root')) {
+                // Only the system device will have a 'root' role entry, we
+                // are not interested in the associated value, only the key.
+                // Non root members will have no 'root' property.
+                return true;
+            }
+            // In all other cases return false.
+            return false;
+        });
+
         Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
             if (btrfsUid && _.isNull(poolName)) {
                 return true;
