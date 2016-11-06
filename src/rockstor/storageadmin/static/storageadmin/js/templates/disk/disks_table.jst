@@ -26,6 +26,9 @@
         {{else if (displayInfo this.role)}}
             <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Disk is a mdraid member." rel="tooltip">
               <i class="glyphicon glyphicon-info-sign"></i></a>
+        {{else if (isRootDevice this.role)}}
+            <a href="#" class="root_drive" data-disk-name="{{this.name}}" title="Rockstor System Drive" rel="tooltip">
+              <i class="glyphicon glyphicon-registration-mark"></i></a>
         {{else if this.parted}}
             <a href="#" class="wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has a non btrfs filesystem on it.
             Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
