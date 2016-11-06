@@ -368,6 +368,9 @@ def scan_disks(min_size):
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+        # logger.debug('ADDING disks LIST ELEMENT=%s' % Disk(*dnames[d]))
+        logger.debug('disks item = %s ', Disk(*dnames[d]))
+    logger.debug('scan_disks() returning %s' % disks)
     return disks
 
 
