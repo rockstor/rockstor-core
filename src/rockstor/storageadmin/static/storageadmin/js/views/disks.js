@@ -306,6 +306,31 @@ DisksView = RockstorLayoutView.extend({
             return false;
         });
 
+        // Identify LUKS container by return of true / false.
+        // Works by examining the Disk.role field. Based on sister handlebars
+        // helper 'isRootDevice'
+               Handlebars.registerHelper('isLuksContainer', function (role) {
+            // check if our role is null = db default
+            if (role == null) {
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // @todo not sure if this is redundant?
+            try {
+                var roleAsJson = JSON.parse(role);
+            } catch (e) {
+                return false;
+            }
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('LUKS')) {
+                // Once a container is created it has an fstype of crypto_LUKS
+                // and we attribute it the role of 'LUKS' as a result.
+                return true;
+            }
+            // In all other cases return false.
+            return false;
+        });
+
         Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
             if (btrfsUid && _.isNull(poolName)) {
                 return true;
