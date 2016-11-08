@@ -32,11 +32,14 @@
         {{else if this.parted}}
             <a href="#" class="wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has a non btrfs filesystem on it.
             Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
-
         {{else if (displayBtrfs this.btrfs_uuid this.pool_name)}}
             <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has a BTRFS filesystem on it.
             Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically." rel="tooltip">
             <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+        {{/if}}
+        {{#if (isLuksContainer this.role)}}
+            <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container" rel="tooltip">
+            <i class="glyphicon glyphicon-lock"></i></a>
         {{/if}}
       </td>
       <td>
