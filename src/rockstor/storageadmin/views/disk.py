@@ -42,7 +42,8 @@ logger = logging.getLogger(__name__)
 # the output of lsblk with the following switches:
 # -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
 # and the post processing present in scan_disks()
-SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root']
+# LUKS currently stands for full disk crypto container.
+SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS']
 
 class DiskMixin(object):
     serializer_class = DiskInfoSerializer
@@ -187,6 +188,12 @@ class DiskMixin(object):
                 # regarding mdraid membership via d.fstype indicators.
                 # create or update an mdraid dictionary entry
                 disk_roles_identified['mdraid'] = str(d.fstype)
+            if d.fstype == 'crypto_LUKS':
+                # LUKS FULL DISK: scan_disks() can inform us of the truth
+                # regarding full disk LUKS containers which on creation have a
+                # unique uuid. Stash this uuid so we might later work out our
+                # container mapping.
+                disk_roles_identified['LUKS'] = str(d.uuid)
             if d.root is True:
                 # ROOT DISK: scan_disks() has already identified the current
                 # truth regarding the device hosting our root '/' fs so update
