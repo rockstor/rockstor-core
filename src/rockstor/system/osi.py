@@ -891,6 +891,7 @@ def get_disk_serial(device_name, test=None):
     # set flag for md personality if need be
     if re.match('md', device_name) is not None:
         md_device = True
+    # TODO: set flag for dm personality if need be
     for line in out:
         if line == '':
             continue
@@ -911,6 +912,8 @@ def get_disk_serial(device_name, test=None):
             else:  # we are md_device but haven't found our MD_UUID line
                 # move to next line of output and skip serial cascade search
                 continue
+        # TODO: serial attribution from DM_UUID line akin to "if md_device"
+        # TODO: section above.
         if line_fields[1] == 'ID_SCSI_SERIAL':
             # we have an instance of SCSI_SERIAL being more reliably unique
             # when present than SERIAL_SHORT or SERIAL so overwrite whatever
