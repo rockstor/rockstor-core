@@ -59,7 +59,7 @@ WIPEFS = '/usr/sbin/wipefs'
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
-                              'hctl type fstype label btrfs_uuid parted root')
+                              'hctl type fstype label uuid parted root')
 
 
 def inplace_replace(of, nf, regex, nl):

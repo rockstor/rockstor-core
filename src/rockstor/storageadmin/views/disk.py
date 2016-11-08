@@ -137,7 +137,12 @@ class DiskMixin(object):
             dob.model = d.model
             dob.transport = d.transport
             dob.vendor = d.vendor
-            dob.btrfs_uuid = d.btrfs_uuid
+            # N.B. The Disk.btrfs_uuid is in some senses becoming misleading
+            # as we begin to deal with Disk.role managed drives such as mdraid
+            # members and full disk LUKS drives where we can make use of the
+            # non btrfs uuids to track filesystems or LUKS containers.
+            # Leaving as is for now to avoid db changes.
+            dob.btrfs_uuid = d.uuid
             # If attached disk has an fs and it isn't btrfs
             if (d.fstype is not None and d.fstype != 'btrfs'):
                 # blank any btrfs_uuid it may have had previously.
