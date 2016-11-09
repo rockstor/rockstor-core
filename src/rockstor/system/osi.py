@@ -884,6 +884,9 @@ def get_disk_serial(device_name, device_type=None, test=None):
         device_name = '/dev/mapper/%s' % device_name
         # Assuming device mapped (DM) so without it's own serial.
         uuid_search_string = 'DM_UUID'
+        # TODO: Could just get uuid via "cryptsetup luksUUID <device>" as
+        # TODO: then the serial is stable between mapper name changes so tracks
+        # TODO: the underlying container.
     # Set search string / flag for md personality if need be.
     if re.match('md', device_name) is not None:
         uuid_search_string = 'MD_UUID'
@@ -911,6 +914,8 @@ def get_disk_serial(device_name, device_type=None, test=None):
         if uuid_search_string != '':
             # md or dm device so search for the appropriate uuid string
             if line_fields[1] == uuid_search_string:
+                # TODO: in the case of DM_UUID consider extracting only the
+                # TODO: UUID to cope with container mount point changes
                 serial_num = line_fields[2]
                 # we have found our hw serial equivalent so break to return
                 break
