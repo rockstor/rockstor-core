@@ -41,6 +41,10 @@
             <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container" rel="tooltip">
             <i class="glyphicon glyphicon-lock"></i></a>
         {{/if}}
+        {{#if (isOpenLuks this.role)}}
+            <a href="#" class="open_luks_drive" data-disk-name="{{this.name}}" title="Open LUKS Container" rel="tooltip">
+            <i class="glyphicon glyphicon-eye-open"></i></a>
+        {{/if}}
       </td>
       <td>
         {{#checkSerialStatus this.serial this.name}}
