@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 # -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
 # and the post processing present in scan_disks()
 # LUKS currently stands for full disk crypto container.
-SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS']
+SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS']
 
 class DiskMixin(object):
     serializer_class = DiskInfoSerializer
@@ -194,6 +194,11 @@ class DiskMixin(object):
                 # unique uuid. Stash this uuid so we might later work out our
                 # container mapping.
                 disk_roles_identified['LUKS'] = str(d.uuid)
+            if d.type == 'crypt':
+                # OPEN LUKS DISK: scan_disks() can inform us of the truth
+                # regarding an opened LUKS container which appears as a mapped
+                # device. Assign the /dev/disk/by-id name as a value.
+                disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
             if d.root is True:
                 # ROOT DISK: scan_disks() has already identified the current
                 # truth regarding the device hosting our root '/' fs so update
