@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-system level helper methods to interact with the btrfs filesystem
-"""
-
 import re
 import time
 import os
@@ -29,8 +25,12 @@ from system.osi import run_command, create_tmp_dir, is_share_mounted, \
 from system.exceptions import (CommandException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
-
 import logging
+
+"""
+system level helper methods to interact with the btrfs filesystem
+"""
+
 logger = logging.getLogger(__name__)
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
@@ -95,7 +95,7 @@ def get_pool_info(disk):
     """
     cmd = [BTRFS, 'fi', 'show', '/dev/disk/by-id/%s' % disk]
     o, e, rc = run_command(cmd)
-    pool_info = {'disks': [],}
+    pool_info = {'disks': [], }
     for l in o:
         if (re.match('Label', l) is not None):
             fields = l.split()
@@ -107,11 +107,11 @@ def get_pool_info(disk):
             # it's by-id references as that is the new format for Disks.name.
             # Original sda extraction:
             # pool_info['disks'].append(l.split()[-1].split('/')[-1])
-            # Updated '/dev/sda' extraction to save on a split we no longer need
-            # and use this 'now' name to get our by-id name with path removed.
-            # This is required as that is how device names  are stored in the
-            # db Disk.name so that we can locate a drive and update it's pool
-            # field reference.
+            # Updated '/dev/sda' extraction to save on a split we no longer
+            # need and use this 'now' name to get our by-id name with path
+            # removed. This is required as that is how device names are stored
+            # in the db Disk.name so that we can locate a drive and update it's
+            # pool field reference.
             dev_byid, is_byid = get_dev_byid_name(l.split()[-1], True)
             pool_info['disks'].append(dev_byid)
     return pool_info
@@ -127,7 +127,7 @@ def pool_raid(mnt_pt):
         if (len(fields) > 1):
             block = fields[0][:-1].lower()
             raid = fields[1][:-1].lower()
-            if not block in raid_d and raid is not 'DUP':
+            if block not in raid_d and raid is not 'DUP':
                 raid_d[block] = raid
     if (raid_d['metadata'] == 'single'):
         raid_d['data'] = raid_d['metadata']
@@ -171,12 +171,13 @@ def resize_pool(pool, dev_list_byid, add=True):
     If any device in the supplied dev_list fails this test then no command is
     executed and None is returned.
     :param pool: btrfs pool name
-    :param dev_list_byid: list of devices to add/delete in by-id (without path).
+    :param dev_list_byid: list of devices to add/delete in by-id (without
+        path).
     :param add: when true (default) or not specified then attempt to add
-    dev_list devices to pool, or when specified as True attempt to delete
-    dev_list devices from pool.
+        dev_list devices to pool, or when specified as True attempt to delete
+        dev_list devices from pool.
     :return: Tuple of results from run_command(generated command) or None if
-    the device member/pool sanity check fails.
+        the device member/pool sanity check fails.
     """
     dev_list_byid = ['/dev/disk/by-id/' + d for d in dev_list_byid]
     root_mnt_pt = mount_root(pool)
@@ -204,9 +205,9 @@ def mount_root(pool):
     """
     Mounts a given pool at the default mount root (usually /mnt2/) using the
     pool.name as the final path entry. Ie pool.name = test-pool will be mounted
-    at /mnt2/test-pool. Any mount options held in pool.mnt_options will be added
-    to the mount command via the -o option as will a compress=pool.compression
-    entry.
+    at /mnt2/test-pool. Any mount options held in pool.mnt_options will be
+    added to the mount command via the -o option as will a compress =
+    pool.compression entry.
     N.B. Initially the mount target is defined by /dev/disk/by-label/pool.name,
     if this fails then an attempt to mount by each member of
     /dev/disk/by-id/pool.disk_set.all() but only if there are any members.
@@ -235,10 +236,12 @@ def mount_root(pool):
             mnt_cmd.extend(['-o', mnt_options])
         run_command(mnt_cmd)
         return root_pool_mnt
+
     # If we cannot mount by-label, let's try mounting by device; one by one
     # until we get our first success.
     if (pool.disk_set.count() < 1):
-        raise Exception('Cannot mount Pool(%s) as it has no disks in it.' % pool.name)
+        raise Exception('Cannot mount Pool(%s) as it has no disks in it.'
+                        % pool.name)
     last_device = pool.disk_set.last()
     for device in pool.disk_set.all():
         mnt_device = ('/dev/disk/by-id/%s' % device.name)
@@ -249,13 +252,15 @@ def mount_root(pool):
             try:
                 run_command(mnt_cmd)
                 return root_pool_mnt
-            except Exception, e:
+            except Exception as e:
                 if (device.name == last_device.name):
                     # exhausted mounting using all devices in the pool
                     raise e
-                logger.error('Error mounting: %s. Will try using another device.' % mnt_cmd)
+                logger.error('Error mouting: %s. '
+                             'Will try using another device.' % mnt_cmd)
                 logger.exception(e)
-    raise Exception('Failed to mount Pool(%s) due to an unknown reason.' % pool.name)
+    raise Exception('Failed to mount Pool(%s) due to an unknown reason.'
+                    % pool.name)
 
 
 def umount_root(root_pool_mnt):
@@ -263,7 +268,7 @@ def umount_root(root_pool_mnt):
         return
     try:
         o, e, rc = run_command([UMOUNT, '-l', root_pool_mnt])
-    except CommandException, ce:
+    except CommandException as ce:
         if (ce.rc == 32):
             for l in ce.err:
                 l = l.strip()
@@ -357,7 +362,7 @@ def subvol_list_helper(mnt_pt):
     while (True):
         try:
             return run_command([BTRFS, 'subvolume', 'list', mnt_pt])
-        except CommandException, ce:
+        except CommandException as ce:
             if (ce.rc != 19):
                 # rc == 19 is due to the slow kernel cleanup thread. It should
                 # eventually succeed.
@@ -381,12 +386,12 @@ def shares_info(pool):
     # useful to gather names of all shares in a pool
     try:
         mnt_pt = mount_root(pool)
-    except CommandException, e:
+    except CommandException as e:
         if (e.rc == 32):
-            #mount failed, so we just assume that something has gone wrong at a
-            #lower level, like a device failure. Return empty share map.
-            #application state can be removed. If the low level failure is
-            #recovered, state gets reconstructed anyway.
+            # mount failed, so we just assume that something has gone wrong at
+            # a lower level, like a device failure. Return empty share map.
+            # application state can be removed. If the low level failure is
+            # recovered, state gets reconstructed anyway.
             return {}
         raise
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
@@ -411,7 +416,8 @@ def shares_info(pool):
             clone = False
             if (len(snap_idmap[vol_id].split('/')) == 1):
                 o, e, rc = run_command([BTRFS, 'property', 'get',
-                                        '%s/%s' % (mnt_pt, snap_idmap[vol_id])])
+                                        '%s/%s' % (mnt_pt,
+                                                   snap_idmap[vol_id])])
                 for l in o:
                     if (l == 'ro=false'):
                         clone = True
@@ -431,6 +437,7 @@ def shares_info(pool):
             share_ids.append(vol_id)
     return shares_d
 
+
 def parse_snap_details(mnt_pt, fields):
     writable = True
     snap_name = None
@@ -448,8 +455,10 @@ def parse_snap_details(mnt_pt, fields):
             snap_name = fields[-1].split('/')[-1]
     return snap_name, writable
 
+
 def snaps_info(mnt_pt, share_name):
-    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-u', '-p', '-q', mnt_pt])
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-u', '-p', '-q',
+                            mnt_pt])
     share_id = share_uuid = None
     for l in o:
         if (re.match('ID ', l) is not None):
@@ -457,7 +466,8 @@ def snaps_info(mnt_pt, share_name):
             if (fields[-1] == share_name):
                 share_id = fields[1]
                 share_uuid = fields[12]
-    if (share_id is None): return {}
+    if (share_id is None):
+        return {}
 
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', '-p', '-q',
                             '-u', mnt_pt])
@@ -468,15 +478,15 @@ def snaps_info(mnt_pt, share_name):
             fields = l.split()
             # parent uuid must be share_uuid or another snapshot's uuid
             if (fields[7] != share_id and fields[15] != share_uuid and
-                fields[15] not in snap_uuids):
+                    fields[15] not in snap_uuids):
                 continue
             snap_name, writable = parse_snap_details(mnt_pt, fields)
             if (snap_name is not None):
                 snaps_d[snap_name] = ('0/%s' % fields[1], writable, )
-                # we rely on the observation that child snaps are listed after their
-                # parents, so no need to iterate through results separately.
-                # Instead, we add the uuid of a snap to the list and look up if
-                # it's a parent of subsequent entries.
+                # we rely on the observation that child snaps are listed after
+                # their parents, so no need to iterate through results
+                # separately. Instead, we add the uuid of a snap to the list
+                # and look up if it's a parent of subsequent entries.
                 snap_uuids.append(fields[17])
 
     return snaps_d
@@ -492,7 +502,8 @@ def share_id(pool, share_name):
     'ID 257 gen 13616 top level 5 path rock-ons-root'
     :param pool: a pool object.
     :param share_name: target share name to find
-    :return: the id for the given share_name or an Exception stating no id found
+    :return: the id for the given share_name or an Exception stating no id
+    found
     """
     root_pool_mnt = mount_root(pool)
     out, err, rc = subvol_list_helper(root_pool_mnt)
@@ -521,7 +532,8 @@ def remove_share(pool, share_name, pqgroup, force=False):
     if (not is_subvol(subvol_mnt_pt)):
         return
     if (force):
-        o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-o', subvol_mnt_pt])
+        o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-o',
+                                subvol_mnt_pt])
         for l in o:
             if (re.match('ID ', l) is not None):
                 subvol = root_pool_mnt + '/' + l.split()[-1]
@@ -531,6 +543,7 @@ def remove_share(pool, share_name, pqgroup, force=False):
     run_command(delete_cmd, log=True)
     qgroup_destroy(qgroup, root_pool_mnt)
     return qgroup_destroy(pqgroup, root_pool_mnt)
+
 
 def remove_snap(pool, share_name, snap_name):
     root_mnt = mount_root(pool)
@@ -545,10 +558,11 @@ def remove_snap(pool, share_name, snap_name):
     else:
         o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
         for l in o:
-            #just give the first match.
+            # just give the first match.
             if (re.match('ID.*%s$' % snap_name, l) is not None):
                 snap = '%s/%s' % (root_mnt, l.split()[-1])
-                return run_command([BTRFS, 'subvolume', 'delete', snap], log=True)
+                return run_command([BTRFS, 'subvolume', 'delete', snap],
+                                   log=True)
 
 
 def add_snap_helper(orig, snap, writable):
@@ -557,7 +571,7 @@ def add_snap_helper(orig, snap, writable):
         cmd.insert(3, '-r')
     try:
         return run_command(cmd)
-    except CommandException, ce:
+    except CommandException as ce:
         if (ce.rc != 19):
             # rc == 19 is due to the slow kernel cleanup thread. snapshot gets
             # created just fine. lookup is delayed arbitrarily.
@@ -633,6 +647,7 @@ def qgroup_id(pool, share_name):
     sid = share_id(pool, share_name)
     return '0/' + sid
 
+
 def qgroup_max(mnt_pt):
     o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt], log=True)
     res = 0
@@ -642,6 +657,7 @@ def qgroup_max(mnt_pt):
             if (cid > res):
                 res = cid
     return res
+
 
 def qgroup_create(pool):
     # mount pool
@@ -667,10 +683,11 @@ def qgroup_is_assigned(qid, pqid, mnt_pt):
     for l in o:
         fields = l.split()
         if (len(fields) > 3 and
-            fields[0] == qid and
-            fields[3] == pqid):
+                fields[0] == qid and
+                fields[3] == pqid):
             return True
     return False
+
 
 def qgroup_assign(qid, pqid, mnt_pt):
     if (qgroup_is_assigned(qid, pqid, mnt_pt)):
@@ -681,23 +698,25 @@ def qgroup_assign(qid, pqid, mnt_pt):
     # exit code 1.
     try:
         run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt])
-    except CommandException, e:
+    except CommandException as e:
         wmsg = 'WARNING: quotas may be inconsistent, rescan needed'
         if (e.rc == 1 and e.err[0] == wmsg):
-            #schedule a rescan if one is not currently running.
+            # schedule a rescan if one is not currently running.
             dmsg = ('Quota inconsistency while assigning %s. Rescan scheduled.'
                     % qid)
             try:
                 run_command([BTRFS, 'quota', 'rescan', mnt_pt])
                 return logger.debug(dmsg)
-            except CommandException, e2:
+            except CommandException as e2:
                 emsg = 'ERROR: quota rescan failed: Operation now in progress'
                 if (e2.rc == 1 and e2.err[0] == emsg):
-                    return logger.debug('%s.. Another rescan already in progress.' % dmsg)
+                    return logger.debug('%s.. Another rescan already in '
+                                        'progress.' % dmsg)
                 logger.exception(e2)
                 raise e2
         logger.exception(e)
         raise e
+
 
 def update_quota(pool, qgroup, size_bytes):
     root_pool_mnt = mount_root(pool)
@@ -773,49 +792,92 @@ def shares_usage(pool, share_map, snap_map):
 
 
 def pool_usage(mnt_pt):
-    # @todo: remove temporary raid5/6 custom logic once fi usage
-    # supports raid5/6.
-    cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
-    total = 0
-    inuse = 0
-    free = 0
-    data_ratio = 1
-    raid56 = False
-    parity = 1
-    disks = set()
-    out, err, rc = run_command(cmd)
-    for e in err:
-        e = e.strip()
-        if (re.match('WARNING: RAID56', e) is not None):
-            raid56 = True
+    """Return used space of the storage pool mounted at mnt_pt.
 
-    for o in out:
-        o = o.strip()
-        if (raid56 is True and re.match('/dev/', o) is not None):
-            disks.add(o.split()[0])
-        elif (raid56 is True and re.match('Data,RAID', o) is not None):
-            if (o[5:10] == 'RAID6'):
-                parity = 2
-        elif (re.match('Device size:', o) is not None):
-            total = int(o.split()[2]) / 1024
-        elif (re.match('Used:', o) is not None):
-            inuse = int(o.split()[1]) / 1024
-        elif (re.match('Free ', o) is not None):
-            free = int(o.split()[2]) / 1024
-        elif (re.match('Data ratio:', o) is not None):
-            data_ratio = float(o.split()[2])
-            if (data_ratio < 0.01):
-                data_ratio = 0.01
-    if (raid56 is True):
-        num_disks = len(disks)
-        if (num_disks > 0):
-            per_disk = total / num_disks
-            total = (num_disks - parity) * per_disk
-    else:
-        total = total / data_ratio
-        inuse = inuse / data_ratio
-    free = total - inuse
-    return (total, inuse, free)
+    Used space is considered to be:
+    - All space currently used by data;
+    - All space currently allocated for metadata and system data.
+    """
+    cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
+    out, err, rc = run_command(cmd)
+
+    used = 0
+    for line in out:
+        fields = re.split('\W+', line)
+        if line.startswith('Data'):
+            used += int(fields[5])
+        elif re.search('Size', line):
+            used += int(fields[3])
+
+    return used / 1024
+
+
+def usage_bound(disk_sizes, num_devices, raid_level):
+    """Return the total amount of storage possible within this pool's set
+    of disks, in bytes.
+
+    Algorithm adapted from Hugo Mills' implementation at:
+    http://carfax.org.uk/btrfs-usage/js/btrfs-usage.js
+    """
+    # Determine RAID parameters
+    data_ratio = 1
+    stripes = 1
+    parity = 0
+
+    # Number of chunks to write at a time: as many as possible within the
+    # number of stripes
+    chunks = num_devices
+
+    if raid_level == 'single':
+        chunks = 1
+    elif raid_level == 'raid0':
+        stripes = 2
+    elif raid_level == 'raid1':
+        data_ratio = 2
+        chunks = 2
+    elif raid_level == 'raid10':
+        data_ratio = 2
+        stripes = max(2, int(num_devices / 2))
+    elif raid_level == 'raid5':
+        parity = 1
+    elif raid_level == 'raid6':
+        parity = 2
+
+    # Round down so that we have an exact number of duplicate copies
+    chunks -= chunks % data_ratio
+
+    # Check for feasibility at the lower end
+    if num_devices < data_ratio * (stripes + parity):
+        return 0
+
+    # Compute the trivial bound
+    bound = int(sum(disk_sizes) / chunks)
+
+    # For each partition point q, compute B_q (the test predicate) and
+    # modify the trivial bound if it passes.
+    bounding_q = -1
+    for q in range(chunks - 1):
+        slice = sum(disk_sizes[q + 1:])
+        b = int(slice / (chunks - q - 1))
+        if disk_sizes[q] >= b and b < bound:
+            bound = b
+            bounding_q = q
+
+    # The bound is the number of allocations we can make in total. If we
+    # have no bounding_q, then we have hit the trivial bound, and exhausted
+    # all space, so we can return immediately.
+    if bounding_q == -1:
+        return bound * ((chunks / data_ratio) - parity)
+
+    # If we have a bounding_q, then all the devices past q are full, and
+    # we can remove them. The devices up to q have been used in every one
+    # of the allocations, so we can just reduce them by bound.
+    disk_sizes = [size - bound for index, size in enumerate(disk_sizes)
+                  if index <= bounding_q]
+
+    new_bound = usage_bound(disk_sizes, bounding_q + 1, raid_level)
+
+    return bound * ((chunks / data_ratio) - parity) + new_bound
 
 
 def scrub_start(pool, force=False):
@@ -927,7 +989,8 @@ def set_property(mnt_pt, name, val, mount=True):
 
 
 def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
-    if (not os.path.isdir(subvol_path)): return None
+    if (not os.path.isdir(subvol_path)):
+        return None
     share_name = subvol_path.split('/')[-1]
     cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]
     o, e, rc = run_command(cmd)
@@ -936,12 +999,12 @@ def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
         fields = l.split()
         if (len(fields) > 0):
             snap_fields = fields[-1].split('/')
-            if (len(snap_fields) != 3 or
-                snap_fields[1] != share_name):
-                #not the Share we are interested in.
+            if (len(snap_fields) != 3 or snap_fields[1] != share_name):
+                # not the Share we are interested in.
                 continue
-            if (regex is not None and re.search(regex, snap_fields[2]) is None):
-                #regex not in the name
+            if (regex is not None and
+                    re.search(regex, snap_fields[2]) is None):
+                # regex not in the name
                 continue
             snaps[int(fields[1])] = snap_fields[2]
     snap_ids = sorted(snaps.keys())
@@ -954,7 +1017,8 @@ def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
 
 
 def get_oldest_snap(subvol_path, num_retain, regex=None):
-    return get_snap(subvol_path, oldest=True, num_retain=num_retain, regex=regex)
+    return get_snap(subvol_path, oldest=True, num_retain=num_retain,
+                    regex=regex)
 
 
 def get_lastest_snap(subvol_path, regex=None):

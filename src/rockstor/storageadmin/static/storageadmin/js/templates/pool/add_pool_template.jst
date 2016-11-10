@@ -1,105 +1,109 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
- * This file is part of RockStor.
- *
- * RockStor is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published
- * by the Free Software Foundation; either version 2 of the License,
- * or (at your option) any later version.
- *
- * RockStor is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- */
+* Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+* This file is part of RockStor.
+*
+* RockStor is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published
+* by the Free Software Foundation; either version 2 of the License,
+* or (at your option) any later version.
+*
+* RockStor is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 </script>
 
 <div class="row">
 <div class="col-md-8">
 <div class="panel panel-default">
-<div class="panel-heading">Create Pool</div>
+    <div class="panel-heading">Create Pool</div>
 
     <div class="panel-body">
-      <form class="form-horizontal" name="add-pool-form" id="add-pool-form" >
-        <div class="messages"></div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="pool_name">Name<span class="required"> *</span></label>
-          <div class="col-sm-6">
-            <input class="form-control" type="text" name="pool_name" id="pool_name" title="Following characters are allowed: letter(a-z or A-Z), digit(0-9), hyphen(-), underscore(_) or a period(.). ">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="raid_level">Raid configuration<span class="required"> *</span></label>
-          <div class="col-sm-6">
-            <select class="form-control" id="raid_level" name="raid_level">
-	      <option value="single">Single</option>
-	      <option value="raid0">Raid0</option>
-	      <option value="raid1">Raid1</option>
-	      <option value="raid10">Raid10</option>
-	      <option value="raid5">Raid5</option>
-	      <option value="raid6">Raid6</option>
-            </select>
-          </div>
-        </div>
-	<div class="form-group">
-          <label class="col-sm-4 control-label" for="compression">Compression</label>
-          <div class="col-sm-6">
-            <select class="form-control" id="compression" name="compression">
-	      <option value="no">Dont enable compression</option>
-	      <option value="zlib">zlib</option>
-	      <option value="lzo">lzo</option>
-            </select>
-          </div>
-        </div>
-	<div class="form-group">
-          <label class="col-sm-4 control-label" for="mnt_options">Mount options</label>
-          <div class="col-sm-6">
-            <input class="form-control" type="text" name="mnt_options" id="mnt_options" data-html="true" title="This is for <strong>Advanced users</strong> to provide specific BTRFS mount options.<br>Type them as a commma separated string of options without any spaces.<br> Allowed options are <strong>alloc_start, autodefrag, clear_cache, commit, compress-force, discard, fatal_errors, inode_cache, max_inline, metadata_ratio, noacl, noatime, nodatacow, nodatasum, nospace_cache, space_cache, ssd, nossd, ssd_spread, thread_pool</strong>">
-          </div>
-        </div>
-          <div id="SelectedDisksTable"> </div>
-          <div id="testTab"> </div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="disks">Select disks<span class="required"> *</span></label>
-          <div class="col-sm-6">
-          <div class="poolDiskTableScroll">
-              <table id="disks-table" class="table table-condensed table-bordered share-table tablesorter" summary="List of disks">
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>Disk Name</th>
-                  <th>Capacity</th>
-                  <th>Select all <input type="checkbox" id="checkAll"/></th>
-                </tr>
-              </thead>
-              <tbody>
-                {{#each disks}}
-                    <tr>
-                        <td>{{mathHelper @index}}</td>
-                        <td>{{this.name}}</td>
-                        <td>{{humanReadableSize this.size}}</td>
-                        <td>
-                            <input type="checkbox" class="disk" name="{{this.name}}" id="{{this.id}}" value="{{this.name}}" />
-                        </td>
-                    </tr>
-                {{/each}}
-              </tbody>
-            </table>
-            </div><!--poolDiskTableScroll-->
-          </div>
-        </div>
-        <div class="form-group">
-	  <div class="col-sm-offset-4 col-sm-8">
-            <a id="js-cancel" class="btn btn-default" href="#">Cancel</a>
-            <input type="Submit" id="create_pool" class="btn btn-primary" value="Submit"></input>
-          </div>
-	</div>
-      </form>
+        <form class="form-horizontal" name="add-pool-form" id="add-pool-form" >
+            <div class="messages"></div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="pool_name">Name<span class="required"> *</span></label>
+                <div class="col-sm-6">
+                    <input class="form-control" type="text" name="pool_name" id="pool_name" title="Following characters are allowed: letter(a-z or A-Z), digit(0-9), hyphen(-), underscore(_) or a period(.). ">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="raid_level">Raid configuration<span class="required"> *</span></label>
+                <div class="col-sm-6">
+                    <select class="form-control" id="raid_level" name="raid_level">
+                        <option value="single">Single</option>
+                        <option value="raid0">Raid0</option>
+                        <option value="raid1">Raid1</option>
+                        <option value="raid10">Raid10</option>
+                        <option value="raid5">Raid5</option>
+                        <option value="raid6">Raid6</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="compression">Compression</label>
+                <div class="col-sm-6">
+                    <select class="form-control" id="compression" name="compression">
+                        <option value="no">Don't enable compression</option>
+                        <option value="zlib">zlib</option>
+                        <option value="lzo">lzo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="mnt_options">Mount options</label>
+                <div class="col-sm-6">
+                    <input class="form-control" type="text" name="mnt_options" id="mnt_options" data-html="true" title="This is for <strong>Advanced users</strong> to provide specific BTRFS mount options.<br>Type them as a commma separated string of options without any spaces.<br> Allowed options are <strong>alloc_start, autodefrag, clear_cache, commit, compress-force, discard, fatal_errors, inode_cache, max_inline, metadata_ratio, noacl, noatime, nodatacow, nodatasum, nospace_cache, space_cache, ssd, nossd, ssd_spread, thread_pool</strong>">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="disks">Select disks<span class="required"> *</span></label>
+                <div class="col-sm-6">
+                    <div class="poolDiskTableScroll">
+                        <table id="disks-table" class="table table-condensed table-bordered share-table tablesorter" summary="List of disks">
+                            <thead>
+                                <tr>
+                                <th>No.</th>
+                                <th>Disk Name</th>
+                                <th>Capacity</th>
+                                <th>Select all <input type="checkbox" id="checkAll"/></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each disks}}
+                                    <tr>
+                                        <td>{{mathHelper @index}}</td>
+                                        <td>{{this.name}}</td>
+                                        <td>{{humanReadableSize this.size}}</td>
+                                        <td>
+                                            <input type="checkbox" class="disk" name="{{this.name}}" id="{{this.id}}" value="{{this.name}}" />
+                                        </td>
+                                    </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div><!--poolDiskTableScroll-->
+                </div>
+            </div>
+            <div class=form-group>
+                <label class="col-sm-4 control-label">Selected disks summary</label>
+                <div class="col-sm-6">
+                    <table id="selected-disks-table" class= "table table-condensed table-bordered share-table tablesorter"></table>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-4 col-sm-8">
+                    <a id="js-cancel" class="btn btn-default" href="#">Cancel</a>
+                    <input type="Submit" id="create_pool" class="btn btn-primary" value="Submit"></input>
+                </div>
+            </div>
+        </form>
     </div> <!-- panel-body -->
 </div><!--panel-default-->
 </div><!--col-md-8-->

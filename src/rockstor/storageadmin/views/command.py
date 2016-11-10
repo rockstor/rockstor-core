@@ -67,7 +67,7 @@ class CommandView(NFSExportMixin, APIView):
                 pool_info = get_pool_info(fd.name)
                 p.name = pool_info['label']
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
-                p.size = pool_usage('%s%s' % (settings.MNT_PT, p.name))[0]
+                p.size = p.usage_bound()
                 p.save()
             except Exception, e:
                 logger.error('Exception while refreshing state for '
