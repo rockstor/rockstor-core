@@ -148,9 +148,6 @@ class DiskMixin(object):
             if (d.fstype is not None and d.fstype != 'btrfs'):
                 # blank any btrfs_uuid it may have had previously.
                 dob.btrfs_uuid = None
-                # TODO: Readdress this parted overload as our Disk.role use
-                # TODO: matures.
-                dob.parted = True  # overload use of parted as non btrfs flag.
             # ### BEGINNING OF ROLE FIELD UPDATE ###
             # Update the role field with scan_disks findings.
             # SCAN_DISKS_KNOWN_ROLES a list of scan_disks identifiable roles.
