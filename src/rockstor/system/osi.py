@@ -228,8 +228,9 @@ def scan_disks(min_size):
         # End readability variables assignment
         if is_partition:
             dmap['parted'] = True
-            # We don't account for partitions within partitions.
-            dmap['partitions'] = None
+            # We don't account for partitions within partitions, but making
+            # an empty list here simplifies conditionals as always a list then.
+            dmap['partitions'] = []
             # Search our working dictionary of already scanned devices by name
             # We are assuming base devices are listed first and if of interest
             # we have recorded it and can now back port it's partitioned status.
