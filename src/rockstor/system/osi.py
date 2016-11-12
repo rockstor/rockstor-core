@@ -226,6 +226,7 @@ def scan_disks(min_size):
             is_btrfs = True
         # End readability variables assignment
         if is_partition:
+            dmap['parted'] = True
             # Search our working dictionary of already scanned devices by name
             # We are assuming base devices are listed first and if of interest
             # we have recorded it and can now back port it's partitioned status.
@@ -273,14 +274,15 @@ def scan_disks(min_size):
                     # role will know which partition on the role based device
                     # to work with. Has one role per device limit but helps to
                     # keep usability and underlying disk management simpler.
+        else:
+            # We are not a partition so record this.
+            dmap['parted'] = False
         if ((not is_root_disk and not is_partition) or
                 (is_btrfs)):
             # We have a non system disk that is not a partition
             # or
             # We have a device that is btrfs formatted
-            # In the case of a btrfs partition we override the parted flag.
             # Or we may just be a non system disk without partitions.
-            dmap['parted'] = False  # could be corrected later
             dmap['root'] = False  # until we establish otherwise as we might be.
             if is_btrfs:
                 # a btrfs file system
