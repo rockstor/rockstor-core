@@ -311,6 +311,8 @@ def scan_disks(min_size):
                     # Note we may be looking at the base_root_disk or one of
                     # it's partitions there after.
                     dmap['root'] = True
+                    # TODO: The following clause on using model to hold member
+                    # device into can be useful beyond the system disk.
                     # If we are an md device then use get_md_members string
                     # to populate our MODEL since it is otherwise unused.
                     if (re.match('md', dmap['NAME']) is not None):
