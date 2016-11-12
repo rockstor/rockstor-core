@@ -264,6 +264,15 @@ def scan_disks(min_size):
                         # device (the base device) as a raid member, at least in
                         # part.
                         dnames[dname][8] = dmap['FSTYPE']
+                    # TODO: we may also in the future want to build a list of
+                    # of the partitions we find for each base device for use
+                    # later in roles such as import / export devices or
+                    # external backup drives so that the role config mechanism
+                    # can offer up the known partitions found here and stored
+                    # against the base device so that the eventual configured
+                    # role will know which partition on the role based device
+                    # to work with. Has one role per device limit but helps to
+                    # keep usability and underlying disk management simpler.
         if ((not is_root_disk and not is_partition) or
                 (is_btrfs)):
             # We have a non system disk that is not a partition
