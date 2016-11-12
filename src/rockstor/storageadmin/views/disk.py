@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 # -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
 # and the post processing present in scan_disks()
 # LUKS currently stands for full disk crypto container.
-SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS']
+SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'partitions']
 
 class DiskMixin(object):
     serializer_class = DiskInfoSerializer
@@ -203,6 +203,10 @@ class DiskMixin(object):
                 # N.B. value of d.fstype here is essentially a place holder as
                 # the presence or otherwise of the 'root' key is all we need.
                 disk_roles_identified['root'] = str(d.fstype)
+            if d.partitions != []:
+                # PARTITIONS: scan_disks() has built an updated partitions list
+                # so create a partitions role containing this list.
+                disk_roles_identified['partitions'] = d.partitions
             # Now we join the previous non scan_disks identified roles dict
             # with those we have identified from our fresh scan_disks() data
             # and return the result to our db entry in json format.
