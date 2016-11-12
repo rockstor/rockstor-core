@@ -59,7 +59,8 @@ WIPEFS = '/usr/sbin/wipefs'
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
-                              'hctl type fstype label uuid parted root')
+                              'hctl type fstype label uuid parted root '
+                              'partitions')
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -227,6 +228,8 @@ def scan_disks(min_size):
         # End readability variables assignment
         if is_partition:
             dmap['parted'] = True
+            # We don't account for partitions within partitions.
+            dmap['partitions'] = None
             # Search our working dictionary of already scanned devices by name
             # We are assuming base devices are listed first and if of interest
             # we have recorded it and can now back port it's partitioned status.
@@ -265,18 +268,27 @@ def scan_disks(min_size):
                         # device (the base device) as a raid member, at least in
                         # part.
                         dnames[dname][8] = dmap['FSTYPE']
-                    # TODO: we may also in the future want to build a list of
-                    # of the partitions we find for each base device for use
-                    # later in roles such as import / export devices or
-                    # external backup drives so that the role config mechanism
-                    # can offer up the known partitions found here and stored
-                    # against the base device so that the eventual configured
-                    # role will know which partition on the role based device
-                    # to work with. Has one role per device limit but helps to
-                    # keep usability and underlying disk management simpler.
+                    # Build a list of the partitions we find.
+                    # Back port our current name as a partition entry in our
+                    # base devices 'partitions' list 14th item (index 13).
+                    dnames[dname][13].append(dmap['NAME'])
+                    # This list is intended for use later in roles such as
+                    # import / export devices or external backup drives so
+                    # that the role config mechanism can offer up the known
+                    # partitions found so that the eventual configured role
+                    # will know which partition on the role based device to
+                    # work with.
+                    # Has one role per device limit but helps to keep usability
+                    # and underlying disk management simpler.
         else:
             # We are not a partition so record this.
             dmap['parted'] = False
+            # As we are not a partition it is assumed that we might hold a
+            # partition so start an empty partition list for this purpose.
+            # N.B. This assumes base devices are listed before their partitions.
+            dmap['partitions'] = []
+            # this list will be populated when we find our partitions and back
+            # port their names into this list.
         if ((not is_root_disk and not is_partition) or
                 (is_btrfs)):
             # We have a non system disk that is not a partition
@@ -375,7 +387,7 @@ def scan_disks(min_size):
                                     dmap['HCTL'], dmap['TYPE'],
                                     dmap['FSTYPE'], dmap['LABEL'],
                                     dmap['UUID'], dmap['parted'],
-                                    dmap['root'], ]
+                                    dmap['root'], dmap['partitions'], ]
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
