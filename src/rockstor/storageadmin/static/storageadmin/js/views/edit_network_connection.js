@@ -84,14 +84,6 @@ NetworkConnectionView = RockstorLayoutView.extend({
 			}
 		    }
 		},
-		gateway: {
-		    required: {
-			depends: function(element){
-			    return (_this.$('#method').val() == 'manual');
-			}
-
-		    }
-		},
 		team_profile: {
 		    required: {
 			depends: function(element){
