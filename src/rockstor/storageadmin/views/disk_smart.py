@@ -69,17 +69,17 @@ class DiskSMARTDetailView(rfc.GenericView):
         ts = datetime.utcnow().replace(tzinfo=utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()
-        for k in attributes:
+        for k in sorted(attributes.keys(), reverse=True):
             t = attributes[k]
             sa = SMARTAttribute(info=si, aid=t[0], name=t[1], flag=t[2],
                                 normed_value=t[3], worst=t[4], threshold=t[5],
                                 atype=t[6], updated=t[7], failed=t[8],
                                 raw_value=t[9])
             sa.save()
-        for c in cap:
+        for c in sorted(cap.keys(), reverse=True):
             t = cap[c]
             SMARTCapability(info=si, name=c, flag=t[0], capabilities=t[1]).save()
-        for enum in sorted(e_summary.keys(), reverse=True):
+        for enum in sorted(e_summary.keys(), key=int, reverse=True):
             l = e_summary[enum]
             SMARTErrorLogSummary(info=si, error_num=enum, lifetime_hours=l[0],
                                  state=l[1], etype=l[2], details=l[3]).save()

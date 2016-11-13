@@ -138,7 +138,6 @@
       <table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
 	<thead>
 	  <tr>
-	    <th>Id</th>
 	    <th>Name</th>
 	    <th>Failed</th>
 	    <th>Norm-ed Value</th>
@@ -148,21 +147,22 @@
 	    <th>Type</th>
 	    <th>Updated</th>
 	    <th>Flag</th>
+      <th>Id</th>
 	  </tr>
 	</thead>
 	<tbody>
 	  {{#each attributes as |attribute|}}
 	  <tr>
-	    <td>{{attribute.aid}}</td>
-	    <td>{{attribute.name}}</td>
+      <td><strong>{{attribute.name}}</strong></td>
 	    <td>{{attribute.failed}}</td>
 	    <td>{{attribute.normed_value}}</td>
 	    <td>{{attribute.worst}}</td>
 	    <td>{{attribute.threshold}}</td>
-	    <td>{{attribute.raw_value}}</td>
+	    <td><strong>{{attribute.raw_value}}</strong></td>
 	    <td>{{attribute.atype}}</td>
 	    <td>{{attribute.updated}}</td>
 	    <td>{{attribute.flag}}</td>
+      <td>{{attribute.aid}}</td>
 	  </tr>
 	  {{else}}
 	  <h3>No S.M.A.R.T Attributes found (ATA/SATA only)</h3>
@@ -177,7 +177,6 @@
       <table id="smartcapabilites-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T capabilities">
 	<thead>
 	  <tr>
-	    <th>Id</th>
 	    <th>Name</th>
 	    <th>Flag</th>
 	    <th>Capabilities</th>
@@ -186,8 +185,7 @@
 	<tbody>
 	  {{#each capabilities as |capability|}}
 	  <tr>
-	    <td>{{capability.id}}</td>
-	    <td>{{capability.name}}</td>
+	    <td><strong>{{capability.name}}</strong></td>
 	    <td>{{capability.flag}}</td>
 	    <td>{{capability.capabilities}}</td>
 	  </tr>
