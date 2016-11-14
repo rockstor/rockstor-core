@@ -54,7 +54,7 @@ PoolAddDisks = RockstorWizardPage.extend({
 
     renderDisks: function () {
         var disks = this.disks.filter(function (disk) {
-            return disk.available() && disk.isSerialUsable();
+            return disk.available() && disk.isSerialUsable() && disk.isRoleUsable();
         }, this);
         //convert the array elements which are backbone models/collections to JSON object
         for (var i = 0; i < disks.length; i++) {

@@ -49,6 +49,40 @@ var Disk = Backbone.Model.extend({
             return false;
         }
         return true;
+    },
+    // Using the disk.role system we can filter drives on their usability.
+    // Roles for inclusion: openLUKS containers
+    // Roles to dismiss: LUKS containers, mdraid members, the 'root' role,
+    // and partitioned.
+    // Defaults to reject (return false)
+    isRoleUsable: function () {
+        // check if our role is null = db default
+        // A drive with no role shouldn't present a problem for use.
+        var role = this.get('role');
+        if (role == null) {
+            console.log("bb DISK model: ACCEPTING ROLE OF null")
+            return true;
+        }
+        // try json conversion and return false if it fails
+        // @todo not sure if this is redundant?
+        try {
+            var roleAsJson = JSON.parse(role);
+        } catch (e) {
+            // as we can't read this drives role we play save and exclude
+            // it's isRoleUsable status by false
+            return false;
+        }
+        // We have a json object, look for acceptable roles in the keys
+        //
+        // Accept use of 'openLUKS' device
+        if (roleAsJson.hasOwnProperty('openLUKS')) {
+            console.log("bb DISK model: ACCEPTING ROLE OF openLUKS json = " + role);
+            return true;
+        }
+        // In all other cases return false, ie:
+        // reject roles of for example root, mdraid, LUKS, partitioned etc
+        console.log("bb DISK model: REJECTING ROLE with json = " + role);
+        return false;
     }
 });
 

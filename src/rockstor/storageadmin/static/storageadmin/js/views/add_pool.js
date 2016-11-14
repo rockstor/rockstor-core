@@ -101,8 +101,8 @@ AddPoolView = Backbone.View.extend({
                 isRoleUsable(disk.get('role'));
         });
 
-        // N.B. the isSerialUsable() code below is now duplicated in the
-        // Backbone Disk model as the property isSerialUsable()
+        // N.B. isSerialUsable() and isRoleUsable() are duplicated in the
+        // Backbone Disk model as the property isSerialUsable() isRoleUsable()
         // storageadmin/static/storageadmin/js/models/models.js
         // It would be better not to have this duplication if possible.
         function isSerialUsable(diskSerialNumber) {
