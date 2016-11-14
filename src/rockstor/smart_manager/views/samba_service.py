@@ -69,7 +69,7 @@ class SambaServiceView(BaseServiceDetailView):
                 #if AD configured and ON set workgroup to AD retrieved workgroup
                 #else AD not running and leave workgroup to one choosen by user
                 adso = Service.objects.get(name='active-directory')
-                adconfig = {}
+                adconfig = None
                 adso_status = 1
                 if (adso.config is not None):
                     adconfig = self._get_config(adso)
