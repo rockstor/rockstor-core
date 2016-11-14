@@ -624,11 +624,14 @@ class MemoryWidgetNamespace(socketio.Namespace):
 
 class ServicesNamespace(socketio.Namespace):
 
+    start = False
+
     def on_connect(self, sid, environ):
 
         self.emit('connected', {
             'key': 'services:connected', 'data': 'connected'
         })
+        self.start = True
         gevent.spawn(self.send_service_statuses)
 
     def on_disconnect(self, sid):
@@ -637,7 +640,7 @@ class ServicesNamespace(socketio.Namespace):
 
     def send_service_statuses(self):
 
-        while True:
+        while self.start:
             data = {}
             for service in Service.objects.all():
                 config = None
