@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -23,10 +23,9 @@ import psutil
 import re
 import json
 import gevent
-from socketio.server import SocketIOServer
-from socketio import socketio_manage
-from socketio.namespace import BaseNamespace
-from socketio.mixins import BroadcastMixin
+import socketio
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
 
 from gevent.subprocess import Popen, PIPE
 from os import path
@@ -50,37 +49,33 @@ from system.pkg_mgmt import update_check
 import logging
 logger = logging.getLogger(__name__)
 
-class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
-    
-    def initialize(self):
 
-        self.connected = True
+class PincardManagerNamespace(socketio.Namespace):
 
-    def recv_connect(self):
+    def on_connect(self, sid, environ):
 
-        self.emit("pincardManager:pincardwelcome", {
-            "key": "pincardManager:pincardwelcome", "data": "Welcome to Rockstor PincardManager"
+        self.emit('pincardwelcome', {
+            'key': 'pincardManager:pincardwelcome', 'data': 'Welcome to Rockstor PincardManager'
         })
 
-    def recv_disconnect(self):
+    def on_disconnect(self, sid):
         
         self.pins_user_uname = None
         self.pins_user_uid = None
         self.pins_check = None
         self.pass_reset_time = None
         self.otp = 'none'
-        self.disconnect()
     
-    def on_generatepincard(self, uid):
+    def on_generatepincard(self, sid, uid):
         
         def create_pincard(uid):
 
             new_pincard = save_pincard(uid)
-            self.emit('pincardManager:newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
+            self.emit('newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
 
         gevent.spawn(create_pincard, uid)
     
-    def on_haspincard(self, user):
+    def on_haspincard(self, sid, user):
         
         def check_has_pincard(user):
             
@@ -115,11 +110,11 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
                     self.otp = generate_otp(user)
                     otp = True
 
-            self.emit('pincardManager:haspincard', {'key': 'pincardManager:haspincard', 'has_pincard': user_has_pincard, 'pins_check': pins, 'otp': otp})
+            self.emit('haspincard', {'key': 'pincardManager:haspincard', 'has_pincard': user_has_pincard, 'pins_check': pins, 'otp': otp})
 
         gevent.spawn(check_has_pincard, user)
     
-    def on_passreset(self, pinlist, otp='none'):
+    def on_passreset(self, sid, pinlist, otp='none'):
         
         def password_reset(pinlist, otp):
             
@@ -144,59 +139,56 @@ class PincardManagerNamespace(BaseNamespace, BroadcastMixin):
             else:
                 reset_response = 'Sent OTP doesn\'t match. Password reset denied'
                 
-            self.emit('pincardManager:passresetresponse', {'key': 'pincardManager:passresetresponse', 'response': reset_response, 'status': reset_status})
+            self.emit('passresetresponse', {'key': 'pincardManager:passresetresponse', 'response': reset_response, 'status': reset_status})
             
         gevent.spawn(password_reset, pinlist, otp)
 
-class LogManagerNamespace(BaseNamespace, BroadcastMixin):
+class LogManagerNamespace(socketio.Namespace):
 
-    def initialize(self):
+    #Livereader subprocess append with self so accessible by all funcs
+    livereader_process = None
+    #Live reading switch to kill/stop tail -f process
+    livereading = False
+    #Set common vars used both for log reading and downloading
+    system_logs = '/var/log/'
+    rockstor_logs = '%svar/log/' % settings.ROOT_DIR
+    samba_subd_logs = '%ssamba/' % system_logs
+    nginx_subd_logs = '%snginx/' % system_logs
 
-        #Livereader subprocess append with self so accessible by all funcs
-        self.livereader_process = None
-        #Live reading switch to kill/stop tail -f process
-        self.livereading = False
-        #Set common vars used both for log reading and downloading
-        self.system_logs = '/var/log/'
-        self.rockstor_logs = '%svar/log/' % settings.ROOT_DIR
-        self.samba_subd_logs = '%ssamba/' % self.system_logs
-        self.nginx_subd_logs = '%snginx/' % self.system_logs
-
-        self.readers = {'cat' : {'command' : '/usr/bin/cat', 'args' : '-n'},
-               'tail200' : {'command' : '/usr/bin/tail', 'args' : '-n 200'},
-               'tail30' : {'command' : '/usr/bin/tail', 'args' : '-n 30'},
-               'tailf' : {'command' : '/usr/bin/tail', 'args' : '-f'}
-        }
+    readers = {'cat' : {'command' : '/usr/bin/cat', 'args' : '-n'},
+           'tail200' : {'command' : '/usr/bin/tail', 'args' : '-n 200'},
+           'tail30' : {'command' : '/usr/bin/tail', 'args' : '-n 30'},
+           'tailf' : {'command' : '/usr/bin/tail', 'args' : '-f'}
+    }
+       
+    logs = {'rockstor' : {'logfile' : 'rockstor.log', 'logdir' : rockstor_logs},
+        'dmesg' : {'logfile' : 'dmesg', 'logdir' : system_logs},
+        'nmbd' : {'logfile' : 'log.nmbd', 'logdir' : samba_subd_logs, 'rotatingdir' : 'old/'},
+        'smbd' : {'logfile' : 'log.smbd', 'logdir' : samba_subd_logs, 'rotatingdir' : 'old/'},
+        'winbindd' : {'logfile' : 'log.winbindd', 'logdir' : samba_subd_logs, 'rotatingdir' : 'old/',
+                      'excluded' : ['dc-connect', 'idmap', 'locator']},
+        'nginx' : {'logfile' : 'access.log', 'logdir' : nginx_subd_logs},
+        'nginx_stdout' : {'logfile' : 'supervisord_nginx_stdout.log', 'logdir' : rockstor_logs},
+        'nginx_stderr' : {'logfile' : 'supervisord_nginx_stderr.log', 'logdir' : rockstor_logs},
+        'gunicorn' : {'logfile' : 'gunicorn.log', 'logdir' : rockstor_logs},
+        'gunicorn_stdout' : {'logfile' : 'supervisord_gunicorn_stdout.log', 'logdir' : rockstor_logs},
+        'gunicorn_stderr' : {'logfile' : 'supervisord_gunicorn_stderr.log', 'logdir' : rockstor_logs},
+        'supervisord' : {'logfile' : 'supervisord.log', 'logdir' : rockstor_logs},
+        'yum' : {'logfile' : 'yum.log', 'logdir' : system_logs},
+    }
         
-        self.logs = {'rockstor' : {'logfile' : 'rockstor.log', 'logdir' : self.rockstor_logs},
-            'dmesg' : {'logfile' : 'dmesg', 'logdir' : self.system_logs},
-            'nmbd' : {'logfile' : 'log.nmbd', 'logdir' : self.samba_subd_logs, 'rotatingdir' : 'old/'},
-            'smbd' : {'logfile' : 'log.smbd', 'logdir' : self.samba_subd_logs, 'rotatingdir' : 'old/'},
-            'winbindd' : {'logfile' : 'log.winbindd', 'logdir' : self.samba_subd_logs, 'rotatingdir' : 'old/',
-                          'excluded' : ['dc-connect', 'idmap', 'locator']},
-            'nginx' : {'logfile' : 'access.log', 'logdir' : self.nginx_subd_logs},
-            'nginx_stdout' : {'logfile' : 'supervisord_nginx_stdout.log', 'logdir' : self.rockstor_logs},
-            'nginx_stderr' : {'logfile' : 'supervisord_nginx_stderr.log', 'logdir' : self.rockstor_logs},
-            'gunicorn' : {'logfile' : 'gunicorn.log', 'logdir' : self.rockstor_logs},
-            'gunicorn_stdout' : {'logfile' : 'supervisord_gunicorn_stdout.log', 'logdir' : self.rockstor_logs},
-            'gunicorn_stderr' : {'logfile' : 'supervisord_gunicorn_stderr.log', 'logdir' : self.rockstor_logs},
-            'supervisord' : {'logfile' : 'supervisord.log', 'logdir' : self.rockstor_logs},
-            'yum' : {'logfile' : 'yum.log', 'logdir' : self.system_logs},
-        }
-        
-        self.tar_utility = ['/usr/bin/tar', 'czf']
+    tar_utility = ['/usr/bin/tar', 'czf']
 
-    def recv_connect(self):
+    def on_connect(self, sid, environ):
 
         #On first connection emit a welcome just to have a recv_connect func
-        self.emit("logManager:logwelcome", {
-            "key": "logManager:logwelcome", "data": "Welcome to Rockstor LogManager"
+        self.emit('logwelcome', {
+            'key': 'logManager:logwelcome', 'data': 'Welcome to Rockstor LogManager'
         })
         gevent.spawn(self.find_rotating_logs)
 
-    def recv_disconnect(self):
+    def on_disconnect(self, sid):
 
-        self.disconnect()
         #Func to secure tail -f reader
         #If browser close/crash/accidentally ends while a tail -f running,
         #this ensures running process to get stopped
@@ -216,15 +208,8 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
         self.livereading = False
         if self.livereader_process is not None:
             self.livereader_process.kill()
-            self.livereader_process = None
-            
-        #Emit current state only for checking purpose, no funcs handle on frontend
-        self.emit('logManager:logskilltailf', {
-            'key' : 'logManager:logskilltailf', 'data': {
-            'status' : self.livereading
-            }
-        })    
-    
+            self.livereader_process = None  
+
     def find_rotating_logs(self):
         
         #First build our rotated logs list, removing current log and
@@ -255,13 +240,13 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
                 self.logs.update({rotated_key : {'logfile' : rotated_logfile, 'logdir' : rotated_logdir}})
                 rotated_logs_list.append({'log' : rotated_key, 'logfamily' : log_key})
         
-        self.emit('logManager:rotatedlogs', {'key': 'logManager:rotatedlogs', 'data': {'rotated_logs_list' : rotated_logs_list}})
+        self.emit('rotatedlogs', {'key': 'logManager:rotatedlogs', 'data': {'rotated_logs_list' : rotated_logs_list}})
         
-    def on_livereading(self, action):
+    def on_livereading(self, sid, action):
 
         gevent.spawn(self.kill_live_reading)
 
-    def on_downloadlogs(self, logs_queued, recipient):
+    def on_downloadlogs(self, sid, logs_queued, recipient):
 
         def logs_downloader(logs_queued, recipient):
             #Build tar command with tar command and logs sent by client
@@ -285,7 +270,7 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
             download_result = download_process.communicate()[0]
 
             #Return ready state for logs archive download specifying recipient (logManager or LogDownloader)
-            self.emit('logManager:logsdownload', {
+            self.emit('logsdownload', {
                 'key': 'logManager:logsdownload', 'data': {
                 'archive_name' : '/logs/%s' % archive_file,
                 'recipient' : recipient
@@ -294,7 +279,7 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
         
         gevent.spawn(logs_downloader, logs_queued, recipient)
 
-    def on_readlog(self, reader, logfile):
+    def on_readlog(self, sid, reader, logfile):
 
         logs_loader = {'slow' : {'lines' : 200, 'sleep' : 0.50},
                    'fast' : {'lines' : 1, 'sleep' : 0.05},
@@ -357,7 +342,7 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
             for data_chunks in log_content_chunks:
                 chunk_content = ''.join(data_chunks)
                 current_rows += len(data_chunks)
-                self.emit('logManager:logcontent', {
+                self.emit('logcontent', {
                     'key': 'logManager:logcontent', 'data': {
                     'current_rows' : current_rows,
                     'total_rows' : total_rows,
@@ -378,7 +363,7 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
             self.livereader_process = Popen(read_command, bufsize=1, stdout=PIPE)
             while self.livereading:
                 live_out = self.livereader_process.stdout.readline()
-                self.emit('logManager:logcontent', {
+                self.emit('logcontent', {
                     'key': 'logManager:logcontent', 'data': {
                     'current_rows' : 1,
                     'total_rows' : 1,
@@ -394,31 +379,35 @@ class LogManagerNamespace(BaseNamespace, BroadcastMixin):
         else:
             gevent.spawn(static_reader, reader, log_path)
         
-    def on_getfilesize(self, logfile):
+    def on_getfilesize(self, sid, logfile):
 
         def file_size(logfile):
+        
             file_size = path.getsize(self.build_log_path(logfile))
-            self.emit('logManager:logsize', {'key': 'logManager:logsize', 'data': file_size})
+            self.emit('logsize', {'key': 'logManager:logsize', 'data': file_size})
         
         gevent.spawn(file_size, logfile)
 
 
-class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
+class DisksWidgetNamespace(socketio.Namespace):
+
     switch = False
     byid_disk_map = {}
 
-    def recv_connect(self):
+    def on_connect(self, sid, environ):
+
         self.byid_disk_map = get_byid_name_map()
         self.switch = True
-        self.spawn(self.send_top_disks)
+        gevent.spawn(self.send_top_disks)
 
-    def recv_disconnect(self):
+    def on_disconnect(self, sid):
+
         self.switch = False
-        self.disconnect()
 
     def send_top_disks(self):
 
         def disk_stats(prev_stats):
+
             disks_stats = []
             # invoke body of disk_stats with empty cur_stats
             stats_file_path = '/proc/diskstats'
@@ -472,7 +461,7 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
                         'ts': str(datetime.utcnow().replace(tzinfo=utc).isoformat())
                         })
 
-            self.emit('diskWidget:top_disks',{ 'key': 'diskWidget:top_disks', 'data': disks_stats })
+            self.emit('top_disks',{ 'key': 'diskWidget:top_disks', 'data': disks_stats })
             return cur_stats
 
         def get_stats():
@@ -484,19 +473,22 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
         get_stats()
 
 
-class CPUWidgetNamespace(BaseNamespace, BroadcastMixin):
+class CPUWidgetNamespace(socketio.Namespace):
+
     send_cpu = False
 
-    def recv_connect(self):
+    def on_connect(self, sid, environ):
+
         # Switch for emitting cpu data
         self.send_cpu = True
-        self.spawn(self.send_cpu_data)
+        gevent.spawn(self.send_cpu_data)
 
-    def recv_disconnect(self):
+    def on_disconnect(self, sid):
+
         self.send_cpu = False
-        self.disconnect()
 
     def send_cpu_data(self):
+
         while self.send_cpu:
             cpu_stats = {}
             cpu_stats['results'] = []
@@ -509,27 +501,30 @@ class CPUWidgetNamespace(BaseNamespace, BroadcastMixin):
                     'umode_nice': val.nice, 'smode': val.system,
                     'idle': val.idle, 'ts': str(ts)
                 })
-            self.emit('cpuWidget:cpudata', {
+            self.emit('cpudata', {
                 'key': 'cpuWidget:cpudata', 'data': cpu_stats
             })
             gevent.sleep(1)
 
 
-class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
+class NetworkWidgetNamespace(socketio.Namespace):
     send = False
 
-    def recv_connect(self):
-        self.send = True
-        self.spawn(self.network_stats)
+    def on_connect(self, sid, environ):
 
-    def recv_disconnect(self):
+        self.send = True
+        gevent.spawn(self.network_stats)
+
+    def on_disconnect(self, sid):
+
         self.send = False
-        self.disconnect()
 
     def network_stats(self):
+
         from storageadmin.models import NetworkDevice
 
         def retrieve_network_stats(prev_stats):
+
             interfaces = [i.name for i in NetworkDevice.objects.all()]
             interval = 1
             cur_stats = {}
@@ -561,12 +556,13 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
                             'compressed_tx': data[15], 'ts': str(ts)
                         })
                 if len(results) > 0 :
-                    self.emit('networkWidget:network', {
+                    self.emit('network', {
                         'key': 'networkWidget:network', 'data': {'results': results}
                     })
             return cur_stats
 
         def send_network_stats():
+
             cur_stats = {}
             while self.send:
                 cur_stats = retrieve_network_stats(cur_stats)
@@ -574,18 +570,21 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
         send_network_stats()
 
 
-class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
+class MemoryWidgetNamespace(socketio.Namespace):
+
     switch = False
 
-    def recv_connect(self):
+    def on_connect(self, sid, environ):
+
         self.switch = True
-        self.spawn(self.send_meminfo_data)
+        gevent.spawn(self.send_meminfo_data)
 
-    def recv_disconnect(self):
+    def on_disconnect(self, sid):
+
         self.switch = False
-        self.disconnect()
-
+        
     def send_meminfo_data(self):
+
         while self.switch:
             stats_file = '/proc/meminfo'
             (total, free, buffers, cached, swap_total, swap_free, active, inactive,
@@ -612,7 +611,7 @@ class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
                         dirty = int(l.split()[1])
                         break  # no need to look at lines after dirty.
             ts = datetime.utcnow().replace(tzinfo=utc).isoformat()
-            self.emit('memoryWidget:memory', {
+            self.emit('memory', {
                 'key': 'memoryWidget:memory', 'data': {'results': [{
                     'total': total, 'free': free, 'buffers': buffers,
                     'cached': cached, 'swap_total': swap_total,
@@ -623,19 +622,25 @@ class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
             })
             gevent.sleep(1)
 
-class ServicesNamespace(BaseNamespace, BroadcastMixin):
+class ServicesNamespace(socketio.Namespace):
 
-    def recv_connect(self):
-        self.emit('services:connected', {
+    start = False
+
+    def on_connect(self, sid, environ):
+
+        self.emit('connected', {
             'key': 'services:connected', 'data': 'connected'
         })
-        self.spawn(self.send_service_statuses)
+        self.start = True
+        gevent.spawn(self.send_service_statuses)
 
-    def recv_disconnect(self):
-        self.disconnect()
+    def on_disconnect(self, sid):
+
+        self.start = False
 
     def send_service_statuses(self):
-        while True:
+
+        while self.start:
             data = {}
             for service in Service.objects.all():
                 config = None
@@ -650,72 +655,62 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
                 output, error, return_code = service_status(service.name, config=config)
                 data[service.name]['running'] = return_code
 
-            self.emit('services:get_services', {
+            self.emit('get_services', {
                 'data': data, 'key': 'services:get_services'
             })
             gevent.sleep(15)
 
 
-class SysinfoNamespace(BaseNamespace, BroadcastMixin):
+class SysinfoNamespace(socketio.Namespace):
+
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
 
-    # Called before the connection is established
-    def initialize(self):
-        self.aw = APIWrapper()
-
     # This function is run once on every connection
-    def recv_connect(self):
-        self.emit("sysinfo:sysinfo", {
-            "key": "sysinfo:connected", "data": "connected"
-        })
+    def on_connect(self, sid, environ):
+
+        self.aw = APIWrapper()
+        self.emit('connected', {'key' : 'sysinfo:connected', 'data' : 'connected'})
         self.start = True
         gevent.spawn(self.update_storage_state)
         gevent.spawn(self.update_check)
         gevent.spawn(self.update_rockons)
-        gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.prune_logs)
         gevent.spawn(self.send_localtime)
+        gevent.spawn(self.send_uptime)
 
     # Run on every disconnect
-    def recv_disconnect(self):
+    def on_disconnect(self, sid):
+
         self.start = False
-        self.disconnect()
 
     def send_uptime(self):
         # Seems redundant
         while self.start:
-            self.emit('sysinfo:uptime', {
-                'data': uptime(), 'key': 'sysinfo:uptime'
-            })
+            self.emit('uptime', {'key': 'sysinfo:uptime', 'data': uptime()})
             gevent.sleep(60)
 
     def send_localtime(self):
         
         while self.start:
             
-            self.emit('sysinfo:localtime', {
-                'data': time.strftime('%H:%M (%z %Z)'), 'key': 'sysinfo:localtime'
-            })
+            self.emit('localtime', {'key': 'sysinfo:localtime', 'data': time.strftime('%H:%M (%z %Z)')})
             gevent.sleep(40)
 
     def send_kernel_info(self):
+
             try:
-                self.emit('sysinfo:kernel_info', {
-                    'data': kernel_info(self.supported_kernel),
-                    'key': 'sysinfo:kernel_info'
-                })
+                self.emit('kernel_info', {'key': 'sysinfo:kernel_info', 'data': kernel_info(self.supported_kernel)})
             except Exception as e:
                 logger.error('Exception while gathering kernel info: %s' % e.__str__())
                 # Emit an event to the front end to capture error report
-                self.emit('sysinfo:kernel_error', {
-                    'data': str(e),
-                    'key': 'sysinfo:kernel_error'
-                })
+                self.emit('kernel_error', {
+                    'key': 'sysinfo:kernel_error', 'data': str(e)})
                 self.error('unsupported_kernel', str(e))
 
     def update_rockons(self):
+
         try:
             self.aw.api_call('rockons/update', data=None, calltype='post', save_error=False)
         except Exception, e:
@@ -746,65 +741,34 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             gevent.sleep(60)
 
     def update_check(self):
+        
         uinfo = update_check()
-        self.emit('sysinfo:software-update', {
-            'data': uinfo,
-            'key': 'sysinfo:software-update'
-        })
+        self.emit('software_update', {'key': 'sysinfo:software_update', 'data': uinfo})
 
     def prune_logs(self):
+
         while self.start:
             self.aw.api_call('sm/tasks/log/prune', data=None, calltype='post', save_error=False)
             gevent.sleep(3600)
 
-class Application(object):
-    def __init__(self):
-        self.buffer = []
-        self.scan_interval = 300
-        self.scan_ts = datetime.utcnow() - timedelta(seconds=self.scan_interval)
-
-    def __call__(self, environ, start_response):
-        path = environ['PATH_INFO'].strip('/') or 'index.html'
-
-        if path.startswith('/static') or path == 'index.html':
-            try:
-                data = open(path).read()
-            except Exception:
-                return not_found(start_response)
-
-            if path.endswith(".js"):
-                content_type = "text/javascript"
-            elif path.endswith(".css"):
-                content_type = "text/css"
-            elif path.endswith(".swf"):
-                content_type = "application/x-shockwave-flash"
-            else:
-                content_type = "text/html"
-
-            start_response('200 OK', [('Content-Type', content_type)])
-            return [data]
-        if path.startswith("socket.io"):
-            environ['scan_ts'] = self.scan_ts
-            environ['scan_interval'] = self.scan_interval
-            cur_ts = datetime.utcnow()
-            socketio_manage(environ, {'/services': ServicesNamespace,
-                                      '/sysinfo': SysinfoNamespace,
-                                      '/cpu-widget': CPUWidgetNamespace,
-                                      '/memory-widget': MemoryWidgetNamespace,
-                                      '/network-widget': NetworkWidgetNamespace,
-                                      '/disk-widget': DisksWidgetNamespace,
-                                      '/logmanager': LogManagerNamespace,
-                                      '/pincardmanager': PincardManagerNamespace
-            })
-            if ((cur_ts - self.scan_ts).total_seconds() > self.scan_interval):
-                self.scan_ts = cur_ts
-
-def not_found(start_response):
-    start_response('404 Not Found', [])
-    return ['<h1>Not found</h1>']
-
-
 def main():
-    logger.debug('Listening on port http://127.0.0.1:8080 and on port 10843 (flash policy server)')
-    SocketIOServer(('127.0.0.1', 8001), Application(),resource="socket.io",
-                   policy_server=True).serve_forever()
+    
+    #Reference to new python-socket-io lib: http://python-socketio.readthedocs.io/
+    #IMPORTANT: to listen on a new event always have it on_youreventname(self, sid, yourparams)
+    #IMPORTANT: never use hypens (minus) on events and namespaces : open issue about this on github repo
+    sio_namespaces = [ServicesNamespace('/services'),
+                      SysinfoNamespace('/sysinfo'),
+                      CPUWidgetNamespace('/cpu_widget'),
+                      MemoryWidgetNamespace('/memory_widget'),
+                      NetworkWidgetNamespace('/network_widget'),
+                      DisksWidgetNamespace('/disk_widget'),
+                      LogManagerNamespace('/logmanager'),
+                      PincardManagerNamespace('/pincardmanager')
+                     ]
+    sio_server = socketio.Server(async_mode='gevent')
+    for namespace in sio_namespaces:
+        sio_server.register_namespace(namespace)
+    app = socketio.Middleware(sio_server)
+    logger.debug('Python-socketio listening on port http://127.0.0.1:8001')
+    pywsgi.WSGIServer(('', 8001), app,
+                  handler_class=WebSocketHandler).serve_forever()

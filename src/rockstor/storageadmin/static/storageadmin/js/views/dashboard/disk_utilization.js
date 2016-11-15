@@ -29,7 +29,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
     initialize: function() {
 
-        RockStorSocket.diskWidget = io.connect('/disk-widget', {
+        RockStorSocket.diskWidget = io.connect('/disk_widget', {
             'secure': true,
             'force new connection': true
         });

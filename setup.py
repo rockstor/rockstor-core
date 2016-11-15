@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -70,13 +70,13 @@ setup(
         'South == 1.0.2',
         'psycopg2 == 2.6',
         'django-oauth-toolkit == 0.9.0',
-        'six == 1.7.3',
+        'six == 1.10.0',
         'django-ztask == 0.1.5',
         'mock == 1.0.1',
         'coverage',
-        'gevent == 1.0.2',
+        'gevent == 1.1.2',
         'gevent-websocket == 0.9.5',
-        'gevent-socketio == 0.3.6',
+        'python-socketio',
         'psycogreen == 1.0',
         'psutil == 3.3.0',
         'chardet == 2.3.0',

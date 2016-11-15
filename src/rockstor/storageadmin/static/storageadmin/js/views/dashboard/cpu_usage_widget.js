@@ -28,7 +28,7 @@
 CpuUsageWidget = RockStorWidgetView.extend({
 
     initialize: function() {
-        RockStorSocket.cpuWidget = io.connect('/cpu-widget', {
+        RockStorSocket.cpuWidget = io.connect('/cpu_widget', {
             'secure': true,
             'force new connection': true
         });
