@@ -27,7 +27,7 @@
 MemoryUtilizationWidget = RockStorWidgetView.extend({
 
     initialize: function() {
-        RockStorSocket.memoryWidget = io.connect('/memory-widget', {
+        RockStorSocket.memoryWidget = io.connect('/memory_widget', {
             'secure': true,
             'force new connection': true
         });
