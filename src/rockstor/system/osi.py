@@ -1347,6 +1347,7 @@ def get_dev_byid_name(device_name, remove_path=False):
     without path as per remove_path). The second boolean element of the tuple
     indicates if a by-id type name was found. ie (return_name, is_byid)
     """
+    logger.debug('GET_DEV_BYID_NAME CALLED WITH DEV-NAME=%s' % device_name)
     # Until we find a by-id type name set this flag as False.
     is_byid = False
     # Until we find a by-id type name we will be returning device_name
@@ -1368,6 +1369,14 @@ def get_dev_byid_name(device_name, remove_path=False):
                     # check if device name is by-id type
                     if re.match('/dev/disk/by-id', fields[index]) is not None:
                         is_byid = True
+                        # for openLUKS dm mapper device use dm-name-<dev-name>
+                        # as we can most easily use this format for working
+                        # form lsblk device name to by-id name via dm-name-
+                        # patch on the front.
+                        if re.match('/dev/disk/by-id/dm-name-', fields[index]):
+                            # we have our dm-name match so assign it
+                            byid_name = fields[index]
+                            break
                         dev_name_length = len(fields[index])
                         # check if longer than any found previously
                         if dev_name_length > longest_byid_name_length:
