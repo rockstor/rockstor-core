@@ -33,6 +33,7 @@ from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
 from django_ztask.models import Task
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -208,6 +209,8 @@ class PoolListView(PoolMixin, rfc.GenericView):
         with self._handle_exception(request):
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks')]
+            logger.debug('pool.py POST DISK LIST = %s' % disks)
+            logger.debug('disks is of type %s' % type(disks))
             pname = request.data['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
                 e_msg = ('Invalid characters in Pool name. Following '
@@ -264,7 +267,22 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             compression = self._validate_compression(request)
             mnt_options = self._validate_mnt_options(request)
-            dnames = [d.name for d in disks]
+            # TODO: re-name d.name to d.role openLUKS element value if present.
+            # build dictionary of crypt drives with their openLUKS role values.
+            # TODO: json.loads errors if role=None so CHECK THIS HERE
+            crypt_disks = {d.name: json.loads(d.role).get("openLUKS", None) for
+                           d in disks if 'openLUKS' in json.loads(d.role)}
+            # replace d.name with openLUKS mapper name for crypt type disks.
+            disk_info = {d.name: d.role for d in disks}
+            logger.debug('DISK_INFO HERE=%s' % disk_info)
+            logger.debug('CRYPT NAME TO PATH DICT=%s' % crypt_disks)
+            # substitute openLUKS role value for crypt (openLuks) mapped disks.
+            # Our role system stores the dm mapped /dev/disk/by-id name for
+            # /dev/mapper mount points so use that instead value instead.
+            dnames = [
+                d.name if d.name not in crypt_disks else crypt_disks[d.name] for
+                d in disks]
+            logger.debug('DNAMES PASSED TO BTRFS COMMANDS=%s' % dnames)
             p = Pool(name=pname, raid=raid_level, compression=compression,
                      mnt_options=mnt_options)
             p.save()
