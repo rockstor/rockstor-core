@@ -340,7 +340,7 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
                     url: "/api/sm/services/" + _this.serviceName + "/config",
                     type: "POST",
                     contentType: 'application/json',
-                    dataType: "json",
+                    dataType: "html",
                     data: data
                 });
 
