@@ -51,6 +51,41 @@ class PoolMixin(object):
             e_msg = ('Disk(%s) does not exist' % d)
             handle_exception(Exception(e_msg), request)
 
+
+    @staticmethod
+    def _role_filter_disk_names(disks, request):
+        """
+        Takes a series of disk objects and filters them based on their roles.
+        For disk with an openLUKS role the openLUKS role value is substituted
+        for that disks name. This effects a name re-direction for crypt disks.
+        :param disks:  list of disks object
+        :param request:
+        :return: list of disk names post role filter processing
+        """
+        try:
+            # Build dictionary of disks with roles
+            role_disks = {d for d in disks if d.role is not None}
+            logger.debug('role_filter role only disks=%s' % role_disks)
+            # Build dictionary of crypt drives with their openLUKS role values.
+            # by using only role_disks we avoid json.load(None)
+            crypt_disks = {d.name: json.loads(d.role).get("openLUKS", None) for
+                           d in role_disks if
+                           'openLUKS' in json.loads(d.role)}
+            logger.debug('role_filter_disk_names crypt_disk=%s' % crypt_disks)
+            # Replace d.name with openLUKS mapper name for crypt type disks.
+            # Substitute openLUKS role value for crypt (openLUKS) mapped disks.
+            # Our role system stores the dm mapped /dev/disk/by-id name for
+            # /dev/mapper mount points so use that value instead name:
+            dnames = [
+                d.name if d.name not in crypt_disks else crypt_disks[d.name] for
+                d in disks]
+            logger.debug('role_filter_disk_names RETURNING=%s' % dnames)
+            return dnames
+        except:
+            e_msg = ('Problem with role filter of disks' % disks)
+            handle_exception(Exception(e_msg), request)
+
+
     @staticmethod
     def _validate_compression(request):
         compression = request.data.get('compression', 'no')
@@ -267,22 +302,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             compression = self._validate_compression(request)
             mnt_options = self._validate_mnt_options(request)
-            # TODO: re-name d.name to d.role openLUKS element value if present.
-            # build dictionary of crypt drives with their openLUKS role values.
-            # TODO: json.loads errors if role=None so CHECK THIS HERE
-            crypt_disks = {d.name: json.loads(d.role).get("openLUKS", None) for
-                           d in disks if 'openLUKS' in json.loads(d.role)}
-            # replace d.name with openLUKS mapper name for crypt type disks.
-            disk_info = {d.name: d.role for d in disks}
-            logger.debug('DISK_INFO HERE=%s' % disk_info)
-            logger.debug('CRYPT NAME TO PATH DICT=%s' % crypt_disks)
-            # substitute openLUKS role value for crypt (openLuks) mapped disks.
-            # Our role system stores the dm mapped /dev/disk/by-id name for
-            # /dev/mapper mount points so use that instead value instead.
-            dnames = [
-                d.name if d.name not in crypt_disks else crypt_disks[d.name] for
-                d in disks]
-            logger.debug('DNAMES PASSED TO BTRFS COMMANDS=%s' % dnames)
+            dnames = self._role_filter_disk_names(disks, request)
             p = Pool(name=pname, raid=raid_level, compression=compression,
                      mnt_options=mnt_options)
             p.save()
@@ -334,7 +354,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks', [])]
             num_new_disks = len(disks)
-            dnames = [d.name for d in disks]
+            dnames = self._role_filter_disk_names(disks, request)
+            logger.debug("POOL DETAIL VIEW PUT dnames=%s" % dnames)
             new_raid = request.data.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
