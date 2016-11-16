@@ -380,11 +380,12 @@ class DiskDetailView(rfc.GenericView):
     @transaction.atomic
     def _wipe(self, dname, request):
         disk = self._validate_disk(dname, request)
-        disk_role_dict = json.loads(disk.role)
-        if 'openLUKS' in disk_role_dict:
-            wipe_disk(disk_role_dict.get('openLUKS', None))
-        else:
-            wipe_disk(disk.name)
+        disk_name = disk.name
+        if disk.role is not None:
+            disk_role_dict = json.loads(disk.role)
+            if 'openLUKS' in disk_role_dict:
+                disk_name = disk_role_dict.get('openLUKS', None)
+        wipe_disk(disk_name)
         disk.parted = False
         disk.btrfs_uuid = None
         disk.save()
