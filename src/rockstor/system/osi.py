@@ -1348,6 +1348,7 @@ def get_dev_byid_name(device_name, remove_path=False):
     indicates if a by-id type name was found. ie (return_name, is_byid)
     """
     logger.debug('GET_DEV_BYID_NAME CALLED WITH DEV-NAME=%s' % device_name)
+    logger.debug('GET_DEV_BYID_NAME remove path = %s' % remove_path)
     # Until we find a by-id type name set this flag as False.
     is_byid = False
     # Until we find a by-id type name we will be returning device_name
@@ -1387,7 +1388,9 @@ def get_dev_byid_name(device_name, remove_path=False):
         # Return the longest by-id name found in the DEVLINKS line
         # or the first if multiple by-id names were of equal length.
         return_name = byid_name
-    # Honour our path strip request in all cases if we can.
+    # Honour our path strip request in all cases if we can, or if
+    # no remove_path request by parameter flag or no path delimiter chars found
+    # in return_name then leave as is.
     if remove_path:
         # Strip the path from the beginning of our return_name.
         # For use in Disk.name db field for example.
@@ -1395,9 +1398,9 @@ def get_dev_byid_name(device_name, remove_path=False):
         return_name_fields = return_name.split('/')
         if len(return_name_fields) > 1:
             # Original device_name has path delimiters in: assume it has a path.
-            return return_name_fields[-1], is_byid
-    # No remove_path request by parameter flag or no path delimiter chars found
-    # in return_name so leave as is and returning.
+            # return return_name_fields[-1], is_byid
+            return_name = return_name_fields[-1]
+    logger.debug('GET_DEV_BYID_NAME RETURN=%s %s' % (return_name, is_byid))
     return return_name, is_byid
 
 
