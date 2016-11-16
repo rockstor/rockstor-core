@@ -28,8 +28,7 @@ ServicesView = Backbone.View.extend({
 
     events: {
         'click .configure': 'configureService',
-        'switchChange.bootstrapSwitch': 'switchStatus',
-        'hidden.bs.modal #services_modal': 'backToServices'
+        'switchChange.bootstrapSwitch': 'switchStatus'
     },
 
     initialize: function() {
@@ -182,11 +181,6 @@ ServicesView = Backbone.View.extend({
         app_router.navigate('services/' + serviceName + '/edit' + adStatus, {
             trigger: true
         });
-    },
-
-    backToServices: function() {
-
-        app_router.navigate("services");
     },
 
     setStatusLoading: function(serviceName, show) {
