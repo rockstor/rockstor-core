@@ -78,34 +78,51 @@ PoolsView = RockstorLayoutView.extend({
 		}));
 
 		this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
-		
+
 		this.renderDataTables();
 		
 		//X-editable Inline Edit. 
 		$.fn.editable.defaults.mode = 'inline';
-			var compr = $('.status').data('comp');
-			$('.status').editable({
-			value: compr,  
-	        source: [
-	              {value: 'no', text: 'no'},
-	              {value: 'zlib', text: 'zlib'},
-	              {value: 'lzo', text: 'lzo'}
-	           ],
-	       success: function(response, newValue){
-	    	   //use $(this) to dynamically get pool name from select dropdown.
-	    	   var poolName = $(this).data('pname');
-		       $.ajax({
-					url: "/api/pools/" + poolName + '/remount',
+		var compr = $('.status').data('comp');
+		$('.status').editable({
+			source: [
+			         {value: 'no', text: 'no'},
+			         {value: 'zlib', text: 'zlib'},
+			         {value: 'lzo', text: 'lzo'}
+			         ],
+			         success: function(response, newValue){
+			        	 //use $(this) to dynamically get pool name from select dropdown.
+			        	 var poolName = $(this).data('pname');
+			        	 $.ajax({
+			        		 url: "/api/pools/" + poolName + "/remount",
+			        		 type: "PUT",
+			        		 dataType: "json",
+			        		 data: {
+			        			 "compression": newValue,
+			        		 },
+			        	 });
+			         }
+		});
+
+
+		$('.mntOptns').editable({
+			title: 'Edit Mount Options',
+			emptytext: 'None',
+			success: function(response, newMntOptns){
+				 var poolName = $(this).data('pname');
+				$.ajax({
+					url: "/api/pools/" + poolName + "/remount",
 					type: "PUT",
 					dataType: "json",
 					data: {
-						"compression": newValue
+						"mnt_options": newMntOptns
 					},
 				});
-	        }
+			}
 		});
-		
-			
+
+
+
 		return this;
 	},
 
