@@ -45,5 +45,9 @@ class Share(models.Model):
         rusage = models.BigIntegerField(default=0)
         eusage = models.BigIntegerField(default=0)
 
+        @property
+        def size_gb(self):
+            return self.size / (1024.0 * 1024.0)
+
 	class Meta:
 		app_label = 'storageadmin'

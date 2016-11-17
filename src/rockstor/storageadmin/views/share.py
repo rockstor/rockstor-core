@@ -29,7 +29,7 @@ from fs.btrfs import (add_share, remove_share, update_quota, share_usage,
                       set_property, mount_share, qgroup_id, qgroup_create)
 from system.osi import is_share_mounted
 from system.services import systemctl
-from storageadmin.serializers import ShareSerializer
+from storageadmin.serializers import ShareSerializer, SharePoolSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -182,6 +182,13 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 set_property(mnt_pt, 'compression', compression)
             return Response(ShareSerializer(s).data)
 
+
+class PoolShareListView(ShareMixin, rfc.GenericView):
+    serializer_class = SharePoolSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        pool = Pool.objects.get(name=self.kwargs.get('pname'))
+        return pool.share_set.all()
 
 class ShareDetailView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer

@@ -125,6 +125,13 @@ class IscsiSerializer(serializers.ModelSerializer):
         model = IscsiTarget
 
 
+class SharePoolSerializer(serializers.ModelSerializer):
+    size_gb = serializers.FloatField()
+
+    class Meta:
+        model = Share
+
+
 class ShareSerializer(serializers.ModelSerializer):
     snapshots = SnapshotSerializer(many=True, source='snapshot_set')
     pool = PoolInfoSerializer()

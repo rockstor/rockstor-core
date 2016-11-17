@@ -58,6 +58,29 @@
                 {{/if}}
             </td>
         </tr>
+        <div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+         <div class="modal-dialog">
+          <div class="modal-content">
+           <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="myModalLabel">Delete Pool</h3>
+           </div>
+           <div class="modal-body">
+            <div class="messages"></div>
+            <h4>Pool {{this.name}} will be deleted (along with the Snapshots, NFSExports, Samba configs, SFTP, Replics). Are you sure?</h4>
+            <!-- Fill in share names here -->
+            <h3>The following shares will be deleted! Are you sure?</h3>
+            <ul id="pool-shares"></ul>
+            <br>
+            <label><input type="checkbox" id="force-delete" name="force-delete"> Force Delete &nbsp;<i class="fa fa-info-circle fa-lg"></i></label>
+           </div>
+           <div class="modal-footer">
+            <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+            <button id="js-confirm-pool-delete" class="btn btn-primary">Confirm</button>
+           </div
+          </div
+         </div>
+        </div>
     {{/each}}
   </tbody>
 </table>
