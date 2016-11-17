@@ -1,6 +1,6 @@
-  <script>
+<script>
     /*
-    * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+    * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
     * This file is part of RockStor.
     *
     * RockStor is free software; you can redistribute it and/or modify
@@ -17,34 +17,36 @@
     * along with this program. If not, see <http://www.gnu.org/licenses/>.
     *
     */
-  </script>
+</script>
 
-  <div class="row">
-    <div class="col-md-8">
-      <div class="panel panel-default">
-        <div class="panel-heading">Configure {{serviceName}} Daemon</div>
-      <div class="panel-body">
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Configure {{serviceName}} Daemon</div>
+            <div class="panel-body">
 
-    <form class="form-horizontal" id="smartd-form" name="aform">
-  	<div class="messages"></div>
-  	<div class="form-group">
-  	  <label class="col-sm-4 control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
-  	  <div class="col-sm-8">
-      {{#if config.custom_config}}
-            <textarea  class="form-control" id="smartd_config" name="custom_config" rows="10">{{config.custom_config}}</textarea>
-  	  {{else}}
-            <textarea class="form-control" id="smartd_config" name="custom_config" rows="10"></textarea>
-  	  {{/if}}
+                <form class="form-horizontal" id="smartd-form" name="aform">
+                    <div class="messages"></div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
+                        <div class="col-sm-8">
+                            {{#if config.custom_config}}
+                            <textarea class="form-control" id="smartd_config" name="custom_config" rows="10">{{config.custom_config}}</textarea> {{else}}
+                            <textarea class="form-control" id="smartd_config" name="custom_config" rows="10"></textarea> {{/if}}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="save-smartd-config" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <!-- panel-body -->
+        </div>
+        <!-- panel-default -->
     </div>
-  	</div>
-  	<div class="form-group">
-  	  <div class="col-sm-offset-4 col-sm-8">
-  	    <button id="cancel" class="btn btn-default">Cancel</button>
-  	    <button type="Submit" id="save-smartd-config" class="btn btn-primary">Submit</button>
-  	  </div>
-  	</div>
-        </form>
-      </div> <!-- panel-body -->
-    </div> <!-- panel-default -->
-  </div> <!-- col-md-8-->
-</div> <!-- row-->
+    <!-- col-md-8-->
+</div>
+<!-- row-->

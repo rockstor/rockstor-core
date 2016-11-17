@@ -292,7 +292,11 @@ var AppRouter = Backbone.Router.extend({
 
     configureService: function(serviceName, adStatus) {
         this.renderSidebar('system', 'services');
-        this.cleanup();
+        //Left here like a comment for documentation purpose
+        //Having configurations in modal windows we're leaving service page navigating
+        //to service config page, but we don't cleanup up to avoid closing socketio
+        //Add: this let us have also a nice view of services real state updating while saving/changing configs
+        //this.cleanup();
         var service_options = _.isUndefined(adStatus) ? {serviceName: serviceName} : {serviceName: serviceName, adStatus: adStatus}
         this.currentLayout = new ConfigureServiceView(service_options);
         $('#services_modal .modal-body').empty();
@@ -873,6 +877,12 @@ $(document).ready(function() {
         $('#globalerrmsg').empty();
     });
 
+    //Function to handle services configuration modal closing on
+    //Grant both on submit or cancel we move back to services page,
+    //without trigger so we don't have a page refresh
+    $('#services_modal').on('hidden.bs.modal', function (e) {
+        app_router.navigate('services');
+    });
 
     // Initialize global error popup
     $('#global-err-overlay').overlay({load: false});

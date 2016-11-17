@@ -20,7 +20,7 @@
 </script>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-12">
         <div class="panel panel-default">
             <div class="panel-heading">Configure {{serviceName}}</div>
 
@@ -44,9 +44,9 @@
                         <div class="col-sm-8">
                             <textarea rows="5" columns="40" id="global_config" name="global_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the [global] section of smb.conf">
               {{#each config}}
-			    {{#if (smb_check_custom_params @key)}} 
+                {{#if (smb_check_custom_params @key)}} 
                     {{@key}} = {{this}}
-			    {{/if}}
+                {{/if}}
               {{/each}}
             </textarea>
                         </div>

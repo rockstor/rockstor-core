@@ -25,6 +25,7 @@
  */
 
 ConfigureServiceView = RockstorLayoutView.extend({
+
     events: {
         "click #cancel": "cancel",
         "click #security": "toggleFormFields",
@@ -339,15 +340,13 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
                     url: "/api/sm/services/" + _this.serviceName + "/config",
                     type: "POST",
                     contentType: 'application/json',
-                    dataType: "json",
+                    dataType: "html",
                     data: data
                 });
 
                 jqxhr.done(function() {
                     enableButton(button);
-                    app_router.navigate("services", {
-                        trigger: true
-                    });
+                    $('#services_modal').modal('hide');
                 });
 
                 jqxhr.fail(function(xhr, status, error) {
@@ -364,9 +363,7 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     cancel: function(event) {
 
         event.preventDefault();
-        app_router.navigate("services", {
-            trigger: true
-        });
+        $('#services_modal').modal('hide');
     },
 
     toggleFormFields: function() {
@@ -472,10 +469,10 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             return key != 'workgroup';
         });
 
-        Handlebars.registerHelper('isEnabledAD', function(opts){
+        Handlebars.registerHelper('isEnabledAD', function(opts) {
 
             var _this = this;
-            if(_this.adStatus == 0) {
+            if (_this.adStatus == 0) {
                 return opts.fn(this);
             }
             return opts.inverse(this);

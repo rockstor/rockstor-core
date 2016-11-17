@@ -1,6 +1,6 @@
 <script>
   /*
-  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+  * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
   *
   * RockStor is free software; you can redistribute it and/or modify
@@ -20,35 +20,39 @@
 </script>
 
 <div class="alert alert-warning">
-  <p>We strongly recommend that you create a separate Share(at least 5GB size) for this purpose. During the lifetime of Rock-ons, several snapshots will be created and space could fill up quickly. It is best managed in a separate Share to avoid clobbering other data.</p>
-  <p>To create a new Share, <a href="#add_share">click here.</a></p>
+    <p>We strongly recommend that you create a separate Share(at least 5GB size) for this purpose. During the lifetime of Rock-ons, several snapshots will be created and space could fill up quickly. It is best managed in a separate Share to avoid clobbering other data.</p>
+    <p>To create a new Share, <a href="#add_share">click here.</a></p>
 </div>
 
 <div class="row">
-  <div class="col-md-8">
-  <div class="panel panel-default">
-    <div class="panel-heading">Configure {{serviceName}} Service</div>
-    <div class="panel-body">
-      <form class="form-horizontal" id="docker-form" name="aform">
-        <div class="messages"></div>
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Configure {{serviceName}} Service</div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="docker-form" name="aform">
+                    <div class="messages"></div>
 
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="root_share">Root Share<span class="required"> *</span></label>
-          <div class="col-sm-4">
-	    {{display_rockon_shares}}
-          </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="root_share">Root Share<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            {{display_rockon_shares}}
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+            <!-- panel-body -->
         </div>
-        
-
-      <div class="form-group">
-        <div class="col-sm-offset-4 col-sm-8">
-        <button id="cancel" class="btn btn-default">Cancel</button>
-        <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+        <!-- panel-default -->
     </div>
-    </div>
-      </form>
-
-    </div> <!-- panel-body -->
-  </div> <!-- panel-default -->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+    <!-- col-md-8 -->
+</div>
+<!-- row -->

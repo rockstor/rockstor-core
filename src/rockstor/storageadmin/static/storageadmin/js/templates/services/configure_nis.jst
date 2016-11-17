@@ -1,6 +1,6 @@
 <script>
   /*
-  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+  * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
   *
   * RockStor is free software; you can redistribute it and/or modify
@@ -20,33 +20,37 @@
 </script>
 
 <div class="row">
-  <div class="col-md-8">
-    <div class="panel panel-default">
-    <div class="panel-heading">Configure {{serviceName}}</div>
-    <div class="panel-body">
-      <form class="form-horizontal" id="nis-form" name="aform">
-        <div class="messages"></div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="domain">Domain<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="domain" name="domain" value="{{config.domain}}" placeholder="Domain" title="NIS domain" >
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="server">Server<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="server" name="server" value="{{config.server}}" placeholder="Server" title="Address of NIS server">
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="col-sm-offset-4 col-sm-8">
-            <button id="cancel" class="btn btn-default">Cancel</button>
-            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
-          </div>
-        </div>
-      </form>
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Configure {{serviceName}}</div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="nis-form" name="aform">
+                    <div class="messages"></div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="domain">Domain<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="domain" name="domain" value="{{config.domain}}" placeholder="Domain" title="NIS domain">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="server">Server<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="server" name="server" value="{{config.server}}" placeholder="Server" title="Address of NIS server">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </form>
 
-    </div> <!-- panel-body -->
-  </div> <!--panel-default-->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+            </div>
+            <!-- panel-body -->
+        </div>
+        <!--panel-default-->
+    </div>
+    <!-- col-md-8 -->
+</div>
+<!-- row -->
