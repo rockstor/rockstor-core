@@ -221,7 +221,7 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
             if (method == 'manual'):
                 #ipaddr is of the format <IP>/<netmask>. eg: 192.168.1.2/24. If netmask is not given, it defaults to 32.
                 ipaddr = request.data.get('ipaddr')
-                gateway = request.data.get('gateway')
+                gateway = request.data.get('gateway', None)
                 dns_servers = request.data.get('dns_servers', None)
                 search_domains = request.data.get('search_domains', None)
 
