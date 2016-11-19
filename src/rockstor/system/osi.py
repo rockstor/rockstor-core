@@ -1355,6 +1355,12 @@ def get_dev_byid_name(device_name, remove_path=False):
     return_name = device_name
     byid_name = ''  # Should never be returned prior to reassignment.
     longest_byid_name_length = 0
+    # caveats for mapped devices that require paths for udevadm to work
+    # ie openLUKS containers are named eg luks-<uuid> but are not found by
+    # udevadmin via --name unless a /dev/mapper path is provided.
+    if re.match('luks-', str(device_name)) is not None:
+        device_name = '/dev/mapper/%s' % device_name
+    # other special device name considerations can go here.
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
         throw=False)
@@ -1374,7 +1380,7 @@ def get_dev_byid_name(device_name, remove_path=False):
                         # as we can most easily use this format for working
                         # form lsblk device name to by-id name via dm-name-
                         # patch on the front.
-                        if re.match('/dev/disk/by-id/dm-name-', fields[index]):
+                        if re.match('/dev/disk/by-id/dm-name-', fields[index]) is not None:
                             # we have our dm-name match so assign it
                             byid_name = fields[index]
                             break
