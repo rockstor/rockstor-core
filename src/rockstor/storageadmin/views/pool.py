@@ -29,7 +29,8 @@ from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, start_balance, usage_bound)
+                      btrfs_uuid, mount_root, start_balance, usage_bound,
+                      remove_share)
 from system.osi import remount
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -458,6 +459,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
                              'all shares in the pool are deleted' % (pname))
                     handle_exception(Exception(e_msg), request)
+                for so in Share.objects.filter(pool=pool):
+                    remove_share(so.pool, so.subvol_name, so.pqgroup, force=force)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
             umount_root(pool_path)
             pool.delete()

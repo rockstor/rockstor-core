@@ -21,7 +21,7 @@ import time
 import os
 import shutil
 from system.osi import run_command, create_tmp_dir, is_share_mounted, \
-    is_mounted, get_dev_byid_name, convert_to_kib
+    is_mounted, get_dev_byid_name, convert_to_kib, toggle_path_rw
 from system.exceptions import (CommandException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
@@ -223,6 +223,7 @@ def mount_root(pool):
         return root_pool_mnt
     # Creates a directory to act as the mount point.
     create_tmp_dir(root_pool_mnt)
+    toggle_path_rw(root_pool_mnt, rw=False)
     mnt_device = '/dev/disk/by-label/%s' % pool.name
     mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
     mnt_options = ''
@@ -277,10 +278,12 @@ def umount_root(root_pool_mnt):
             raise ce
     for i in range(20):
         if (not is_mounted(root_pool_mnt)):
+            toggle_path_rw(root_pool_mnt, rw=True)
             run_command([RMDIR, root_pool_mnt])
             return
         time.sleep(2)
     run_command([UMOUNT, '-f', root_pool_mnt])
+    toggle_path_rw(root_pool_mnt, rw=True)
     run_command([RMDIR, root_pool_mnt])
     return
 
@@ -333,6 +336,7 @@ def mount_share(share, mnt_pt):
     pool_device = ('/dev/disk/by-id/%s' % share.pool.disk_set.first().name)
     subvol_str = 'subvol=%s' % share.subvol_name
     create_tmp_dir(mnt_pt)
+    toggle_path_rw(mnt_pt, rw=False)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
     return run_command(mnt_cmd)
 
