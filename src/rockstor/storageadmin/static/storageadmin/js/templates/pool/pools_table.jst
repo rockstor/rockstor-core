@@ -17,21 +17,21 @@
         <tr>
             <td><a href="#pools/{{this.name}}"><i class="glyphicon glyphicon-list"></i>&nbsp;{{this.name}}</a>
             {{#if (isRoot this.role)}}
-                <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. 
-                You can create Shares in it like in any other pool on the system. 
+                <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS.
+                You can create Shares in it like in any other pool on the system.
                 However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>
             {{/if}}</td>
-            
+
             <td>{{humanReadableSize 'size' this.size this.reclaimable this.free}}
                 {{#unless (isRoot this.role)}}
                       &nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
                 {{/unless}}
             </td>
-            
+
             <td>{{humanReadableSize 'usage' this.size this.reclaimable this.free}}
                 <strong>({{humanReadableSize 'usagePercent' this.size this.reclaimable this.free}} %)</strong>
             </td>
-            
+
             <td>{{this.raid}}
                 {{#unless (isRoot this.role)}}
                       &nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
@@ -50,14 +50,33 @@
                 {{/unless}}
             </td>
             <td>{{getDisks this.disks}}</td>
-            <td>{{#if (isRoot this.role)}} 
-                    N/A 
+            <td>{{#if (isRoot this.role)}}
+                    N/A
                 {{else}}
                     <a id="delete_pool_{{this.name}}" data-name="{{this.name}}" data-action="delete" rel="tooltip" title="Delete pool">
                     <i class="glyphicon glyphicon-trash"></i></a>
                 {{/if}}
             </td>
         </tr>
+        <div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+         <div class="modal-dialog">
+          <div class="modal-content">
+           <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="myModalLabel">Delete Pool ({{this.name}})</h3>
+           </div>
+           <div class="modal-body">
+            <div class="messages"></div>
+            <h4>{{this.name}} will be deleted including it's Shares listed below and their Snapshots, NFS exports, Samba and SFTP config and Replics. Are you sure?</h4>
+            <ul id="pool-shares"></ul>
+           </div>
+           <div class="modal-footer">
+            <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+            <button id="js-confirm-pool-delete" data-name="{{this.name}}" class="btn btn-primary">Confirm</button>
+           </div
+          </div
+         </div>
+        </div>
     {{/each}}
   </tbody>
 </table>
@@ -65,29 +84,10 @@
 <h4>No Pools have been created</h4>
 {{/if}}
 <div>
-    <a {{#if disksAvailable}} 
-            href="#add_pool" 
+    <a {{#if disksAvailable}}
+            href="#add_pool"
         {{else}}
             disabled title="There are no Disks available to create a Pool at this time.
-        {{/if}} 
+        {{/if}}
     id="add_pool" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i>&nbsp;Create Pool</a>
-</div>
-
-<div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="myModalLabel">Delete Pool</h3>
-      </div>
-      <div class="modal-body">
-        <div class="messages"></div>
-        <h4>Pool (<span id="pass-pool-name"></span>) will be deleted. Are you sure?</h4>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
-        <button id="js-confirm-pool-delete" class="btn btn-primary">Confirm</button>
-      </div><!--end modal-footer-->
-    </div><!--end modal-content-->
-  </div><!--end modal-dialog-->
 </div>

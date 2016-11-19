@@ -28,7 +28,6 @@ from rest_framework.decorators import api_view
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
-from storageadmin.views import DiskMixin
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
                       btrfs_uuid, mount_root, start_balance, usage_bound)
 from system.osi import remount
@@ -279,7 +278,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
             return Response(PoolInfoSerializer(p).data)
 
 
-class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
+class PoolDetailView(PoolMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
             pool = Pool.objects.get(name=self.kwargs['pname'])
@@ -440,7 +439,8 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
             return Response(PoolInfoSerializer(pool).data)
 
     @transaction.atomic
-    def delete(self, request, pname):
+    def delete(self, request, pname, command=''):
+        force = True if (command == 'force') else False
         with self._handle_exception(request):
             try:
                 pool = Pool.objects.get(name=pname)
@@ -454,9 +454,10 @@ class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(pool=pool).exists()):
-                e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
-                         'all shares in the pool are deleted' % (pname))
-                handle_exception(Exception(e_msg), request)
+                if not force:
+                    e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
+                             'all shares in the pool are deleted' % (pname))
+                    handle_exception(Exception(e_msg), request)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
             umount_root(pool_path)
             pool.delete()

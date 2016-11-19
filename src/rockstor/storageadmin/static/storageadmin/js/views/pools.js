@@ -29,164 +29,187 @@
  */
 
 PoolsView = RockstorLayoutView.extend({
-	events: {
-		"click a[data-action=delete]": "deletePool",
-		'click #js-cancel': 'cancel',
-		'click #js-confirm-pool-delete': 'confirmPoolDelete'
-	},
+    events: {
+        "click a[data-action=delete]": "deletePool",
+        'click #js-cancel': 'cancel',
+        'click #js-confirm-pool-delete': 'confirmPoolDelete'
+    },
 
-	initialize: function() {
+    initialize: function() {
 
-		this.constructor.__super__.initialize.apply(this, arguments);
-		this.pools_table_template = window.JST.pool_pools_table;
-		this.collection = new PoolCollection();
-		this.disks = new DiskCollection();
-		this.disks.pageSize = RockStorGlobals.maxPageSize;
-		this.dependencies.push(this.disks);
-		this.dependencies.push(this.collection);
-		this.collection.on("reset", this.renderPools, this);
-		this.initHandlebarHelpers();
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.pools_table_template = window.JST.pool_pools_table;
+        this.collection = new PoolCollection();
+        this.disks = new DiskCollection();
+        this.disks.pageSize = RockStorGlobals.maxPageSize;
+        this.dependencies.push(this.disks);
+        this.dependencies.push(this.collection);
+        this.collection.on("reset", this.renderPools, this);
+        this.initHandlebarHelpers();
 
-	},
+    },
 
-	render: function() {
-		this.fetch(this.renderPools,this);
-		return this;
-	},
+    render: function() {
+        this.fetch(this.renderPools,this);
+        return this;
+    },
 
-	renderPools: function() {
-		var _this = this;
-		if (this.$('[rel=tooltip]')) {
-			this.$('[rel=tooltip]').tooltip('hide');
-		}
+    renderPools: function() {
+        var _this = this;
+        if (this.$('[rel=tooltip]')) {
+            this.$('[rel=tooltip]').tooltip('hide');
+        }
 
-		var freedisks = this.disks.filter(function(disk) {
-			return (disk.get('pool') == null) && !(disk.get('offline')) &&
-			!(disk.get('parted'));
-		});
+        var freedisks = this.disks.filter(function(disk) {
+            return (disk.get('pool') == null) && !(disk.get('offline')) &&
+                !(disk.get('parted'));
+        });
 
-		var disksAvailable = false;
-		if(_.size(freedisks) > 0){
-			disksAvailable = true;
-		}
+        var disksAvailable = false;
+        if(_.size(freedisks) > 0){
+            disksAvailable = true;
+        }
 
-		$(this.el).html(this.pools_table_template({
-			collection: this.collection,
-			poolCollection: this.collection.toJSON(),
-			collectionNotEmpty: !this.collection.isEmpty(),
-			disksAvailable: disksAvailable
-		}));
+        $(this.el).html(this.pools_table_template({
+            collection: this.collection,
+            poolCollection: this.collection.toJSON(),
+            collectionNotEmpty: !this.collection.isEmpty(),
+            disksAvailable: disksAvailable
+        }));
 
-		this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
-		
-		this.renderDataTables();
-		
-		//X-editable Inline Edit. 
-		$.fn.editable.defaults.mode = 'inline';
-			var compr = $('.status').data('comp');
-			$('.status').editable({
-			value: compr,  
-	        source: [
-	              {value: 'no', text: 'no'},
-	              {value: 'zlib', text: 'zlib'},
-	              {value: 'lzo', text: 'lzo'}
-	           ],
-	       success: function(response, newValue){
-	    	   //use $(this) to dynamically get pool name from select dropdown.
-	    	   var poolName = $(this).data('pname');
-		       $.ajax({
-					url: "/api/pools/" + poolName + '/remount',
-					type: "PUT",
-					dataType: "json",
-					data: {
-						"compression": newValue
-					},
-				});
-	        }
-		});
-		
-			
-		return this;
-	},
+        this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
 
-	deletePool: function(event) {
-		var _this = this;
-		var button = $(event.currentTarget);
-		if (buttonDisabled(button)) return false;
-		poolName = button.attr('data-name');
-		// set share name in confirm dialog
-		_this.$('#pass-pool-name').html(poolName);
-		//show the dialog
-		_this.$('#delete-pool-modal').modal();
-		return false;
-	},
+        this.renderDataTables();
 
-	//modal confirm button handler
-	confirmPoolDelete: function(event) {
-		var _this = this;
-		var button = $(event.currentTarget);
-		if (buttonDisabled(button)) return false;
-		disableButton(button);
-		$.ajax({
-			url: "/api/pools/" + poolName,
-			type: "DELETE",
-			dataType: "json",
-			success: function() {
-				_this.collection.fetch({reset: true});
-				enableButton(button);
-				_this.$('#delete-pool-modal').modal('hide');
-				$('.modal-backdrop').remove();
-				app_router.navigate('pools', {trigger: true})
-			},
-			error: function(xhr, status, error) {
-				enableButton(button);
-			}
-		});
-	},
+        //X-editable Inline Edit.
+        $.fn.editable.defaults.mode = 'inline';
+        var compr = $('.status').data('comp');
+        $('.status').editable({
+            value: compr,
+            source: [
+                {value: 'no', text: 'no'},
+                {value: 'zlib', text: 'zlib'},
+                {value: 'lzo', text: 'lzo'}
+            ],
+            success: function(response, newValue){
+                //use $(this) to dynamically get pool name from select dropdown.
+                var poolName = $(this).data('pname');
+                $.ajax({
+                    url: "/api/pools/" + poolName + '/remount',
+                    type: "PUT",
+                    dataType: "json",
+                    data: {
+                        "compression": newValue
+                    },
+                });
+            }
+        });
 
-	cancel: function(event) {
-		if (event) event.preventDefault();
-		app_router.navigate('pools', {trigger: true})
-	},
 
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('humanReadableSize', function(type, size, poolReclaim, poolFree) {
-			var html = '';
-			if(type == "size"){
-				html += humanize.filesize(size * 1024);
-			}else if(type == "usage"){
-				html += humanize.filesize((size - poolReclaim - poolFree) * 1024);
-			}else if (type == "usagePercent"){
-				html += (((size - poolReclaim - poolFree) / size) * 100).toFixed(2);
-			}
-			return new Handlebars.SafeString(html);
+        return this;
+    },
 
-		});
+    displayPoolInformation: function (poolName) {
+        // set share name in confirm dialog
+        this.$('#pass-pool-name').html(poolName);
+        //show the dialog
+        this.$('#delete-pool-modal').modal();
+        return false;
+    },
 
-		Handlebars.registerHelper('checkCompressionStatus', function(poolCompression, opts) {
-			if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
-				return opts.fn(this);
-			}
-			return opts.inverse(this);
-		});
+    deletePool: function(event) {
+        var _this = this;
+        var button = $(event.currentTarget);
+        var $poolShares = $("#pool-shares");
+        // Remove share names upon reopening
+        $poolShares.html("");
+        if (buttonDisabled(button)) return false;
+        var poolName = button.attr('data-name');
+        var poolShares = new PoolShareCollection([], {poolName: poolName});
+        poolShares.fetch({
+            success: function (data) {
+                var shares = poolShares.models[0].attributes.results;
+                // Only display shares if they exist
+                if (!_.isUndefined(shares)) {
+                    _.each(shares, function(share) {
+                        $poolShares.append("<li>" + share.name +  " (" + share.size_gb + " GB)</li>");
+                    });
+                    _this.displayPoolInformation(poolName);
+                }
+            },
+            error: function (err) {
+                // Display anyways
+                _this.displayPoolInformation(poolName);
+            }
+        });
+    },
 
-		Handlebars.registerHelper('getDisks', function(disks) {
-			var dNames =  _.reduce(disks,
-					function(s, disk, i, list) {
-				if (i < (list.length-1)){
-					return s + disk.name + ',';
-				} else {
-					return s + disk.name;
-				}
-			}, '');
-			return dNames;
-		});
+    confirmPoolDelete: function(event) {
+        var _this = this;
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var poolName = button.attr('data-name');
+        var url = "/api/pools/" + poolName + "/force";
+        $.ajax({
+            url: url,
+            type: "DELETE",
+            dataType: "json",
+            success: function() {
+                enableButton(button);
+                _this.$('#delete-pool-modal').modal('hide');
+                $('.modal-backdrop').remove();
+                _this.render();
+            },
+            error: function(xhr, status, error) {
+                enableButton(button);
+            }
+        });
+    },
 
-		Handlebars.registerHelper('isRoot', function(role) {
-			if (role == 'root') {
-				return true;
-			}
-			return false;
-		});
-	}
+    cancel: function(event) {
+        if (event) event.preventDefault();
+        app_router.navigate('pools', {trigger: true})
+    },
+
+    initHandlebarHelpers: function(){
+        Handlebars.registerHelper('humanReadableSize', function(type, size, poolReclaim, poolFree) {
+            var html = '';
+            if(type == "size"){
+                html += humanize.filesize(size * 1024);
+            }else if(type == "usage"){
+                html += humanize.filesize((size - poolReclaim - poolFree) * 1024);
+            }else if (type == "usagePercent"){
+                html += (((size - poolReclaim - poolFree) / size) * 100).toFixed(2);
+            }
+            return new Handlebars.SafeString(html);
+
+        });
+
+        Handlebars.registerHelper('checkCompressionStatus', function(poolCompression, opts) {
+            if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
+                return opts.fn(this);
+            }
+            return opts.inverse(this);
+        });
+
+        Handlebars.registerHelper('getDisks', function(disks) {
+            var dNames =  _.reduce(disks,
+                                   function(s, disk, i, list) {
+                                       if (i < (list.length-1)){
+                                           return s + disk.name + ',';
+                                       } else {
+                                           return s + disk.name;
+                                       }
+                                   }, '');
+            return dNames;
+        });
+
+        Handlebars.registerHelper('isRoot', function(role) {
+            if (role == 'root') {
+                return true;
+            }
+            return false;
+        });
+    }
 });

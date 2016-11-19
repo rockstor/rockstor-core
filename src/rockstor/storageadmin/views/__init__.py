@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from home import (login_page, login_submit, logout_user, home)
 from snapshot import SnapshotView
-from share import (ShareListView, ShareDetailView)
+from share import (ShareListView, ShareDetailView, PoolShareListView)
 from disk import (DiskMixin, DiskListView, DiskDetailView)
 from pool import (PoolListView, PoolDetailView, get_usage_bound)
 from command import CommandView
