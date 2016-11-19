@@ -83,22 +83,23 @@ PoolsView = RockstorLayoutView.extend({
 		
 		//X-editable Inline Edit. 
 		$.fn.editable.defaults.mode = 'inline';
-		var compr = $('.status').data('comp');
 		$('.status').editable({
 			source: [
 			         {value: 'no', text: 'no'},
 			         {value: 'zlib', text: 'zlib'},
 			         {value: 'lzo', text: 'lzo'}
-			         ],
+			        ],
 			         success: function(response, newValue){
 			        	 //use $(this) to dynamically get pool name from select dropdown.
 			        	 var poolName = $(this).data('pname');
+			        	 var mntOptn = $(this).data('mntoptn');
 			        	 $.ajax({
 			        		 url: "/api/pools/" + poolName + "/remount",
 			        		 type: "PUT",
 			        		 dataType: "json",
 			        		 data: {
 			        			 "compression": newValue,
+			        			 "mnt_options": mntOptn
 			        		 },
 			        	 });
 			         }
@@ -110,11 +111,13 @@ PoolsView = RockstorLayoutView.extend({
 			emptytext: 'None',
 			success: function(response, newMntOptns){
 				 var poolName = $(this).data('pname');
+				 var compr = $(this).data('comp');
 				$.ajax({
 					url: "/api/pools/" + poolName + "/remount",
 					type: "PUT",
 					dataType: "json",
 					data: {
+						"compression": compr,
 						"mnt_options": newMntOptns
 					},
 				});
