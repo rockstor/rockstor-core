@@ -322,6 +322,30 @@ class DiskDetailView(rfc.GenericView):
             e_msg = ('Disk(%s) does not exist' % dname)
             handle_exception(Exception(e_msg), request)
 
+
+    @staticmethod
+    def _role_filter_disk_name(disk, request):
+        """
+        Takes a disk object and filters it based on it's roles.
+        If disk has an openLUKS role the openLUKS role value is substituted
+        for that disk's name. This effects a name re-direction for crypt disks.
+        :param disk:  disk object
+        :param request:
+        :return: by-id disk name (without path) post role filter processing
+        """
+        try:
+            disk_name = disk.name
+            if disk.role is not None:
+                disk_role_dict = json.loads(disk.role)
+                if 'openLUKS' in disk_role_dict:
+                    disk_name = disk_role_dict.get('openLUKS', None)
+            logger.debug('disk.py role_filter_disk_name RETURNING=%s' % disk_name)
+            return disk_name
+        except:
+            e_msg = ('Problem with role filter of disk' % disk)
+            handle_exception(Exception(e_msg), request)
+
+
     def get(self, *args, **kwargs):
         if 'dname' in self.kwargs:
             try:
@@ -380,11 +404,7 @@ class DiskDetailView(rfc.GenericView):
     @transaction.atomic
     def _wipe(self, dname, request):
         disk = self._validate_disk(dname, request)
-        disk_name = disk.name
-        if disk.role is not None:
-            disk_role_dict = json.loads(disk.role)
-            if 'openLUKS' in disk_role_dict:
-                disk_name = disk_role_dict.get('openLUKS', None)
+        disk_name = self._role_filter_disk_name(disk, request)
         wipe_disk(disk_name)
         disk.parted = False
         disk.btrfs_uuid = None
