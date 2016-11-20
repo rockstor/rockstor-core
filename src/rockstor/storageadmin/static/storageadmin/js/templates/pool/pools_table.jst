@@ -41,12 +41,13 @@
             {{#if (isRoot this.role)}}
                     OFF
             {{else}}
-                <a href="#" class="status" data-type="select" data-comp="{{this.compression}}" data-pname="{{this.name}}">
-                <strong>{{this.compression}}</strong></a>
+                <strong><a href="#" class="status" data-type="select" data-mntoptn="{{this.mnt_options}}" data-pname="{{this.name}}">
+                {{this.compression}}</a></strong>
             {{/if}}
             </td>
             <td>{{#unless (isRoot this.role)}}
-                   {{this.mnt_options}}&nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
+                <strong><a href="#" class="mntOptns" data-type="text" data-comp="{{this.compression}}" data-pname="{{this.name}}">
+                {{this.mnt_options}}</a></strong>
                 {{/unless}}
             </td>
             <td>{{getDisks this.disks}}</td>

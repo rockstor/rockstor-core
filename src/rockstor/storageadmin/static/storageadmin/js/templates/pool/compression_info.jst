@@ -1,27 +1,31 @@
-<table>
+<table id="comp-mnt-optns-table">
     <tr>
-        <td>Compression algorithm:</td>
-        <td>
+        <td>Compression algorithm: </td>
+        <td>&nbsp;&nbsp;
         <strong>
-        {{#isPoolCompressionNone pool.compression}}
-            None
-         {{else}}
-            {{pool.compression}}
-        {{/isPoolCompressionNone}}
+            <a href="#" id="comprOptn" data-type="select"
+            data-title="Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>
+            slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>
+            Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you 
+            like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
+            >{{pool.compression}}
+            </a>
         </strong>
         </td>
     </tr>
     <tr>
-        <td>Extra mount options:</td>
-        <td>
+        <td>Extra mount options: </td>
+        <td>&nbsp;&nbsp;
         <strong>
-        {{#isMntOptionNone pool.mnt_options}}
-            None
-        {{else}}
-            {{pool.mnt_options}}
-        {{/isMntOptionNone}}
+            <a href="#" id="mntOptions" data-type='text' data-title="This is for <strong>Advanced users</strong> to provide specific BTRFS mount options.<br>
+            Type them as a commma separated string of options without any spaces.<br> 
+            Allowed options are <strong>alloc_start, autodefrag, clear_cache, commit, compress-force, discard, 
+            fatal_errors, inode_cache, max_inline, metadata_ratio, noacl, noatime, nodatacow, nodatasum, nospace_cache, 
+            space_cache, ssd, nossd, ssd_spread, thread_pool</strong>">
+            {{pool.mnt_options}}</a>
+        </strong>
         </td>
     </tr>
 </table>
-<a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
+
 

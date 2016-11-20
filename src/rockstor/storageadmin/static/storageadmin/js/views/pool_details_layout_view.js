@@ -34,7 +34,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.template = window.JST.pool_pool_details_layout;
         this.resize_pool_info_template = window.JST.pool_resize_pool_info;
         this.compression_info_template = window.JST.pool_compression_info;
-        this.compression_info_edit_template = window.JST.pool_compression_info_edit;
         this.pool = new Pool({poolName: this.poolName});
         // create poolscrub models
         this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
@@ -62,9 +61,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         "click #js-resize-pool": "resizePool",
         "click #js-submit-resize": "resizePoolSubmit",
         "click #js-resize-cancel": "resizePoolCancel",
-        "click #js-edit-compression": "editCompression",
-        "click #js-edit-compression-cancel": "editCompressionCancel",
-        "click #js-submit-compression": "updateCompression",
     },
 
     render: function() {
@@ -96,23 +92,71 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
         this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
 
-        if (!_.isUndefined(this.cView) && this.cView == 'edit') {
-            this.$('#ph-compression-info').html(this.compression_info_edit_template({
-                pool: this.pool.toJSON(),
-                cOpts: this.cOpts,
-            }));
-            this.showCompressionTooltips(); } else {
-                this.$('#ph-compression-info').html(this.compression_info_template({
-                    pool: this.pool.toJSON(),
-                })); }
 
-        this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool:
-                                                                            this.pool.toJSON()})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
-                                                                                (!_.isUndefined(this.cView) && this.cView == 'resize') { // scroll to resize section
-                                                                                    $('#content').scrollTop($('#ph-resize-pool-info').offset().top); }
+        this.$('#ph-compression-info').html(this.compression_info_template({
+            pool: this.pool.toJSON(),
+        }));
+
+        this.$('#ph-resize-pool-info').html(
+                this.resize_pool_info_template({
+                    pool: this.pool.toJSON()
+                })
+        );
+        this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); 
+        if (!_.isUndefined(this.cView) && this.cView == 'resize') {
+            // scroll to resize section
+            $('#content').scrollTop($('#ph-resize-pool-info').offset().top); 
+        }
 
         //$('#pool-resize-raid-modal').modal({show: false});
         $('#pool-resize-raid-overlay').overlay({load: false});
+
+        //Bootstrap Inline Edit
+        $.fn.editable.defaults.mode = 'inline';
+        var compr = this.pool.get('compression');
+        var poolName = this.pool.get('poolName');
+        var mntOptn = this.pool.get('mnt_options');
+        var url = "/api/pools/" + poolName + "/remount";
+        $('#comprOptn').editable({
+            value: compr,
+            source: [{value: 'no', text: 'no'},
+                     {value: 'zlib', text: 'zlib'},
+                     {value: 'lzo', text: 'lzo'}
+                     ],
+                     success: function(response, newCompr){
+                         $.ajax({
+                             url: url,
+                             type: "PUT",
+                             dataType: "json",
+                             data: {
+                                 "compression": newCompr,
+                                 "mnt_options": mntOptn
+                             },
+                         });
+                     }
+        });
+
+        $('#mntOptions').editable({
+            title: 'Edit Mount Options',
+            emptytext: 'None',
+            success: function(response, newMntOptns){
+                $.ajax({
+                    url: url,
+                    type: "PUT",
+                    dataType: "json",
+                    data: {
+                        "compression": compr,
+                        "mnt_options": newMntOptns
+                    },
+                });
+            }
+        });
+
+        $("#comp-mnt-optns-table").tooltip({
+            selector: '[data-title]',
+            html: true,
+            placement:'right'
+        });
 
     },
 
@@ -145,7 +189,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
             }
         });
     },
-
 
     resizePool: function(event) {
         event.preventDefault();
@@ -246,67 +289,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
     },
 
-    editCompression: function(event) {
-        event.preventDefault();
-        this.$('#ph-compression-info').html(this.compression_info_edit_template({
-            pool: this.pool.toJSON(),
-            cOpts: this.cOpts,
-        }));
-        this.showCompressionTooltips();
-    },
-
-    editCompressionCancel: function(event) {
-        event.preventDefault();
-        this.hideCompressionTooltips();
-        this.$('#ph-compression-info').html(this.compression_info_template({
-            pool: this.pool.toJSON(),
-        }));
-    },
-
-    updateCompression: function(event) {
-        var _this = this;
-        event.preventDefault();
-        var button = this.$('#js-submit-compression');
-        if (buttonDisabled(button)) return false;
-        disableButton(button);
-        $.ajax({
-            url: "/api/pools/" + this.pool.get('name') + '/remount',
-            type: "PUT",
-            dataType: "json",
-            data: {
-                "compression": this.$('#compression').val(),
-                "mnt_options": this.$('#mnt_options').val(),
-            },
-            success: function() {
-                _this.hideCompressionTooltips();
-                _this.pool.fetch({
-                    success: function(collection, response, options) {
-                        _this.cView = 'view';
-                        _this.renderSubViews();
-                    }
-                });
-            },
-            error: function(xhr, status, error) {
-                enableButton(button);
-            }
-        });
-    },
-
-    showCompressionTooltips: function() {
-        this.$('#ph-compression-info #compression').tooltip({
-            html: true,
-            placement: 'top',
-            container: 'body',
-            title: "Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
-        });
-        this.$('#ph-compression-info #mnt_options').tooltip({ placement: 'top' });
-    },
-
-    hideCompressionTooltips: function() {
-        this.$('#ph-compression-info #compression').tooltip('hide');
-        this.$('#ph-compression-info #mnt_options').tooltip('hide');
-    },
-
     showResizeTooltips: function() {
         this.$('#ph-resize-pool-info #raid_level').tooltip({
             html: true,
@@ -333,27 +315,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
         Handlebars.registerHelper('getPoolCreationDate', function(date){
             return moment(date).format(RS_DATE_FORMAT);
-        });
-
-        Handlebars.registerHelper('isPoolCompressionNone', function(compression,opts){
-            if (compression == 'no') {
-                return opts.fn(this);
-            }
-            return opts.inverse(this);
-        });
-
-        Handlebars.registerHelper('isMntOptionNone', function(mtOptions,opts){
-            if (_.isUndefined(mtOptions) || _.isNull(mtOptions) || _.isEmpty(mtOptions)) {
-                return opts.fn(this);
-            }
-            return opts.inverse(this);
-        });
-
-        Handlebars.registerHelper('selectedCompressionOption', function(existingComp,c,opts){
-            if (existingComp == c) {
-                return opts.fn(this);
-            }
-            return opts.inverse(this);
         });
 
         Handlebars.registerHelper('humanReadableSize', function(size){

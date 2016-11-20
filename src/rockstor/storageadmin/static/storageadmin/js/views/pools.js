@@ -29,6 +29,7 @@
  */
 
 PoolsView = RockstorLayoutView.extend({
+
     events: {
         "click a[data-action=delete]": "deletePool",
         'click #js-cancel': 'cancel',
@@ -62,7 +63,7 @@ PoolsView = RockstorLayoutView.extend({
 
         var freedisks = this.disks.filter(function(disk) {
             return (disk.get('pool') == null) && !(disk.get('offline')) &&
-                !(disk.get('parted'));
+            !(disk.get('parted'));
         });
 
         var disksAvailable = false;
@@ -83,28 +84,45 @@ PoolsView = RockstorLayoutView.extend({
 
         //X-editable Inline Edit.
         $.fn.editable.defaults.mode = 'inline';
-        var compr = $('.status').data('comp');
         $('.status').editable({
-            value: compr,
             source: [
-                {value: 'no', text: 'no'},
-                {value: 'zlib', text: 'zlib'},
-                {value: 'lzo', text: 'lzo'}
-            ],
-            success: function(response, newValue){
-                //use $(this) to dynamically get pool name from select dropdown.
+                     {value: 'no', text: 'no'},
+                     {value: 'zlib', text: 'zlib'},
+                     {value: 'lzo', text: 'lzo'}
+                     ],
+                     success: function(response, newCompr){
+                         //use $(this) to dynamically get pool name from select dropdown.
+                         var poolName = $(this).data('pname');
+                         var mntOptn = $(this).data('mntoptn');
+                         $.ajax({
+                             url: "/api/pools/" + poolName + '/remount',
+                             type: "PUT",
+                             dataType: "json",
+                             data: {
+                                 "compression": newCompr,
+                                 "mnt_options": mntOptn
+                             },
+                         });
+                     }
+        });
+
+        $('.mntOptns').editable({
+            title: 'Edit Mount Options',
+            emptytext: 'None',
+            success: function(response, newMntOptns){
                 var poolName = $(this).data('pname');
+                var compr = $(this).data('comp');
                 $.ajax({
                     url: "/api/pools/" + poolName + '/remount',
                     type: "PUT",
                     dataType: "json",
                     data: {
-                        "compression": newValue
+                        "compression": compr,
+                        "mnt_options": newMntOptns
                     },
                 });
             }
         });
-
 
         return this;
     },
@@ -195,13 +213,13 @@ PoolsView = RockstorLayoutView.extend({
 
         Handlebars.registerHelper('getDisks', function(disks) {
             var dNames =  _.reduce(disks,
-                                   function(s, disk, i, list) {
-                                       if (i < (list.length-1)){
-                                           return s + disk.name + ',';
-                                       } else {
-                                           return s + disk.name;
-                                       }
-                                   }, '');
+                    function(s, disk, i, list) {
+                if (i < (list.length-1)){
+                    return s + disk.name + ',';
+                } else {
+                    return s + disk.name;
+                }
+            }, '');
             return dNames;
         });
 
