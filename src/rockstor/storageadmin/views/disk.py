@@ -169,7 +169,6 @@ class DiskMixin(object):
             # from our recent scan_disks data so we assert the new truth.
             logger.debug('########### STARTING NEW DISK ROLE UPDATE ##########')
             logger.debug('## disk name = %s ##' % dob.name)
-            logger.debug('DOB.ROLE=%s' % dob.role)
             if dob.role is not None:  # db default null=True so None here.
                 # Get our previous roles into a dictionary
                 logger.debug('dob.role=%s' % dob.role)
@@ -210,18 +209,15 @@ class DiskMixin(object):
             # Now we join the previous non scan_disks identified roles dict
             # with those we have identified from our fresh scan_disks() data
             # and return the result to our db entry in json format.
-            logger.debug('non_scan_disks_roles=%s' % non_scan_disks_roles)
-            logger.debug('disk_roles_identified=%s' % disk_roles_identified)
             # Note that dict of {} isn't None
             if (non_scan_disks_roles != {}) or (disk_roles_identified != {}):
                 logger.debug('######### WRITING NEW DOB.ROLE ###############')
                 combined_roles = dict(non_scan_disks_roles,
                                       **disk_roles_identified)
-                logger.debug('THESE 2 DICTS COMBINED =%s' % combined_roles)
                 logger.debug('and in JSON=%s' % json.dumps(combined_roles))
                 dob.role = json.dumps(combined_roles)
             else:
-                logger.debug('SETTING DEFAULT ROLE = NONE')
+                logger.debug('SETTING DEFAULT ROLE = None')
                 dob.role = None
             # END OF ROLE FIELD UPDATE
             # If our existing Pool db knows of this disk's pool via it's label:
@@ -271,7 +267,7 @@ class DiskMixin(object):
                 # not have a by-id type name expected by the smart subsystem.
                 # This has only been observed in no serial virtio devices.
                 if (re.match('fake-serial-', do.serial) is not None) or \
-                        (re.match('virtio-|md-|mmc-|nvme-|luks-',
+                        (re.match('virtio-|md-|mmc-|nvme-|dm-name-luks-',
                                   do.name) is not None):
                     # Virtio disks (named virtio-*), md devices (named md-*),
                     # and an sdcard reader that provides devs named mmc-* have
@@ -327,8 +323,9 @@ class DiskDetailView(rfc.GenericView):
     def _role_filter_disk_name(disk, request):
         """
         Takes a disk object and filters it based on it's roles.
-        If disk has an openLUKS role the openLUKS role value is substituted
-        for that disk's name. This effects a name re-direction for crypt disks.
+        If disk has a redirect role the redirect role value is substituted
+        for that disk's name. This effects a device name re-direction:
+        ie base dev to partition on base dev for example.
         :param disk:  disk object
         :param request:
         :return: by-id disk name (without path) post role filter processing
@@ -337,12 +334,48 @@ class DiskDetailView(rfc.GenericView):
             disk_name = disk.name
             if disk.role is not None:
                 disk_role_dict = json.loads(disk.role)
-                if 'openLUKS' in disk_role_dict:
-                    disk_name = disk_role_dict.get('openLUKS', None)
+                if 'redirect' in disk_role_dict:
+                    disk_name = disk_role_dict.get('redirect', None)
             logger.debug('disk.py role_filter_disk_name RETURNING=%s' % disk_name)
             return disk_name
         except:
-            e_msg = ('Problem with role filter of disk' % disk)
+            e_msg = ('Problem with role filter of disk(%s)' % disk)
+            handle_exception(Exception(e_msg), request)
+
+
+    @staticmethod
+    def _reverse_role_filter_name(disk_name, request):
+        """
+        Simple syntactic reversal of what _update_disk_state does to assign
+        disk role name values.
+        Here we reverse the special role assigned names and return the original
+        db disks base name.
+        Initially only aware of partition redirection from base dev name.
+        :param disk_name: role based disk name
+        :param request:
+        :return: the disk_name as passed unless the name matches a known
+        syntactic pattern assigned in _update_disk_state() in which case the
+        name returned is the original db disk base name.
+        """
+        logger.debug('reverse disk filter disk_name=%s' % disk_name)
+        try:
+            # test for role redirect type re-naming, ie a partition name:
+            # base name "ata-QEMU_DVD-ROM_QM00001"
+            # partition redirect name "ata-QEMU_DVD-ROM_QM00001-part1"
+            fields = disk_name.split('-')
+            logger.debug('reverse_role_filter_name fields=%s' % fields)
+            logger.debug('len fields=%s' % len(fields))
+            # check the last field for part#
+            if len(fields) > 0:
+                if re.match('part.+', fields[-1]) is not None:
+                    # strip the redirection to partition device.
+                    logger.debug('return=%s' % fields[:-1]).join('-')
+                    return fields[:-1].join('-')
+            # we have found no indication of role name based changes.
+            logger.debug('return=%s' % disk_name)
+            return disk_name
+        except:
+            e_msg = ('Problem reversing role filter disk name(%s)' % disk_name)
             handle_exception(Exception(e_msg), request)
 
 
@@ -427,14 +460,17 @@ class DiskDetailView(rfc.GenericView):
     def _btrfs_disk_import(self, dname, request):
         try:
             disk = self._validate_disk(dname, request)
-            p_info = get_pool_info(dname)
+            disk_name = self._role_filter_disk_name(disk, request)
+            p_info = get_pool_info(disk_name)
             # get some options from saved config?
             po = Pool(name=p_info['label'], raid="unknown")
             # need to save it so disk objects get updated properly in the for
             # loop below.
             po.save()
             for d in p_info['disks']:
-                do = Disk.objects.get(name=d)
+                logger.debug('_btrfs_disk_import looking at disk name=%s' % d)
+                disk_name = self._reverse_role_filter_name(d, request)
+                do = Disk.objects.get(name=disk_name)
                 do.pool = po
                 do.parted = False
                 do.save()

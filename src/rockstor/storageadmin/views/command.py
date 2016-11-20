@@ -64,14 +64,15 @@ class CommandView(NFSExportMixin, APIView):
                 first_dev = p.disk_set.first()
                 logger.debug('first_dev.role=%s' % first_dev.role)
                 first_dev_name = first_dev.name
+                # if we are looking at a device with a redirect role then
+                # redirect accordingly.
                 if first_dev.role is not None:
                     disk_role_dict = json.loads(first_dev.role)
                     logger.debug('disk_role_dict=%s' % disk_role_dict)
-                    if 'openLUKS' in disk_role_dict:
-                        logger.debug('FOUND openLUKS role')
-                        # consider replacing None with first_dev.name and
-                        # loosing our if 'openLUKS'
-                        first_dev_name = disk_role_dict.get('openLUKS', None)
+                    if 'redirect' in disk_role_dict:
+                        logger.debug('FOUND redirect role')
+                        # consider replacing None with first_dev.name
+                        first_dev_name = disk_role_dict.get('redirect', None)
                 pool_info = get_pool_info(first_dev_name)
                 p.name = pool_info['label']
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
