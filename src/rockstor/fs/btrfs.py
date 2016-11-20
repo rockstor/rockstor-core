@@ -183,6 +183,7 @@ def resize_pool(pool, dev_list_byid, add=True):
         the device member/pool sanity check fails.
     """
     dev_list_byid = ['/dev/disk/by-id/' + d for d in dev_list_byid]
+    logger.debug('resize_pool called with pool name=%s, dev_list_byid=%s, add = %s' %(pool, dev_list_byid, add))
     root_mnt_pt = mount_root(pool)
     cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
