@@ -394,7 +394,7 @@ def scan_disks(min_size):
         disks.append(Disk(*dnames[d]))
         # logger.debug('ADDING disks LIST ELEMENT=%s' % Disk(*dnames[d]))
         logger.debug('disks item = %s ', Disk(*dnames[d]))
-    logger.debug('scan_disks() returning %s' % disks)
+    # logger.debug('scan_disks() returning %s' % disks)
     return disks
 
 
@@ -1348,7 +1348,6 @@ def get_dev_byid_name(device_name, remove_path=False):
     indicates if a by-id type name was found. ie (return_name, is_byid)
     """
     logger.debug('GET_DEV_BYID_NAME CALLED WITH DEV-NAME=%s' % device_name)
-    logger.debug('GET_DEV_BYID_NAME remove path = %s' % remove_path)
     # Until we find a by-id type name set this flag as False.
     is_byid = False
     # Until we find a by-id type name we will be returning device_name
