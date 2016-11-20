@@ -1,6 +1,6 @@
 <script>
   /*
-  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+  * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
   *
   * RockStor is free software; you can redistribute it and/or modify
@@ -20,63 +20,67 @@
 </script>
 
 <div class="row">
-  <div class="col-md-8">
-    <div class="panel panel-default">
+    <div class="col-md-12">
+        <div class="panel panel-default">
 
-<div class="panel-heading">Configure {{serviceName}}</div>
+            <div class="panel-heading">Configure {{serviceName}}</div>
 
-  <div class="panel-body">
-      <form class="form-horizontal" id="active-directory-form" name="aform">
-        <div class="messages"></div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="active-directory-form" name="aform">
+                    <div class="messages"></div>
 
-        <!-- AD Domain/Realm name -->
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="domain">Domain/Realm Name<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="domain" name="domain" value="{{config.domain}}" placeholder="Domain" >
-          </div>
-        </div>
+                    <!-- AD Domain/Realm name -->
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="domain">Domain/Realm Name<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="domain" name="domain" value="{{config.domain}}" placeholder="Domain">
+                        </div>
+                    </div>
 
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="username">Administrator Username<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="username" name="username" value="{{config.username}}" placeholder="Administrator">
-          </div>
-        </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="username">Administrator Username<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="username" name="username" value="{{config.username}}" placeholder="Administrator">
+                        </div>
+                    </div>
 
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="password">Password<span class="required"> *</span></label>
-	  <div class="col-sm-4">
-	    <input class="form-control" type="password" id="password" name="password" placeholder="Password">
-	  </div>
-	</div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="password">Password<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="password" id="password" name="password" placeholder="Password">
+                        </div>
+                    </div>
 
-	<div class="form-group">
-          <label class="col-sm-4 control-label" for="idmap_range">Idmap Range</label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="idmap_range" name="idmap_range" value="{{config.idmap_range}}" placeholder="10000 - 999999">
-          </div>
-        </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="idmap_range">Idmap Range</label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="idmap_range" name="idmap_range" value="{{config.idmap_range}}" placeholder="10000 - 999999">
+                        </div>
+                    </div>
 
-    <div class="form-group">
-      <div class="col-sm-offset-4 col-sm-8">
-        <label class="checkbox inline">
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <label class="checkbox inline">
           <input type="checkbox" id="rfc2307" name="rfc2307" {{#if config.rfc2307}}checked{{/if}}> Enable RFC2307 and use UIDS and homes/shells AD DC values
         </label>
-      </div>
-    </div>
+                        </div>
+                    </div>
 
-        <!-- Submit -->
-        <div class="form-group">
-          <div class="col-sm-8 col-sm-offset-4">
-            <button id="cancel" class="btn btn-default">Cancel</button>
-            <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
-          </div>
+                    <!-- Submit -->
+                    <div class="form-group">
+                        <div class="col-sm-8 col-sm-offset-4">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+            <!-- panel-body -->
         </div>
-
-      </form>
-
-    </div> <!-- panel-body -->
-  </div><!--panel-default-->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+        <!--panel-default-->
+    </div>
+    <!-- col-md-8 -->
+</div>
+<!-- row -->

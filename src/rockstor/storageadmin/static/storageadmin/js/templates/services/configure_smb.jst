@@ -1,6 +1,6 @@
 <script>
   /*
-  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+  * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
   *
   * RockStor is free software; you can redistribute it and/or modify
@@ -20,40 +20,51 @@
 </script>
 
 <div class="row">
-  <div class="col-md-8">
-    <div class="panel panel-default">
-<div class="panel-heading">Configure {{serviceName}}</div>
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Configure {{serviceName}}</div>
 
-    <div class="panel-body">
-      <form class="form-horizontal" id="smb-form" name="aform">
-        <div class="messages"></div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="workgroup">Workgroup<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="workgroup" name="workgroup" value="{{config.workgroup}}" placeholder="MYGROUP" title="the Windows NT domain name or workgroup name, for example, MYGROUP.">
-          </div>
-        </div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="smb-form" name="aform">
+                    <div class="messages"></div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="workgroup">Workgroup<span class="required"> * 
+                            {{#isEnabledAD}}
+                            <i class="fa fa-info-circle" title="Workgroup field disabled: Active Directory is running and workgroup name has been retrieved from domain"></i>
+                            {{/isEnabledAD}}                          
+                            </span>
+                        </label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="workgroup" name="workgroup" value="{{config.workgroup}}" placeholder="MYGROUP" {{#isEnabledAD}} disabled {{/isEnabledAD}} title="the Windows NT domain name or workgroup name, for example, MYGROUP.">
+                        </div>
+                    </div>
 
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="global_config">Custom global configuration </label>
-          <div class="col-sm-8">
-            <textarea rows="5" columns="40" id="global_config" name="global_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the [global] section of smb.conf">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="global_config">Custom global configuration </label>
+                        <div class="col-sm-8">
+                            <textarea rows="5" columns="40" id="global_config" name="global_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the [global] section of smb.conf">
               {{#each config}}
-              {{@key}} = {{this}}
+                {{#if (smb_check_custom_params @key)}} 
+                    {{@key}} = {{this}}
+                {{/if}}
               {{/each}}
             </textarea>
-          </div>
-        </div>
+                        </div>
+                    </div>
 
-        <div class="form-group">
-          <div class="col-sm-8 col-sm-offset-4">
-            <button id="cancel" class="btn btn-default">Cancel</button>
-            <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
-          </div>
-        </div>
-      </form>
+                    <div class="form-group">
+                        <div class="col-sm-8 col-sm-offset-4">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </form>
 
-    </div> <!-- panel-body -->
-  </div><!--panel-default-->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+            </div>
+            <!-- panel-body -->
+        </div>
+        <!--panel-default-->
+    </div>
+    <!-- col-md-8 -->
+</div>
+<!-- row -->

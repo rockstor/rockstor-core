@@ -121,8 +121,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         qgroup_id = '0/na'
         if (snap_type == 'replication'):
             writable = False
-        add_snap(share.pool, share.subvol_name, snap_name, readonly=not
-                 writable)
+        add_snap(share.pool, share.subvol_name, snap_name, writable)
         snap_id = share_id(share.pool, snap_name)
         qgroup_id = ('0/%s' % snap_id)
         qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT, share.pool.name)))
@@ -143,8 +142,10 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             snap_type = request.data.get('snap_type', 'admin')
-            writable = request.data.get('writable', 'rw')
-            writable = True if (writable == 'rw') else False
+            writable = request.data.get('writable', False)
+            if (type(writable) != bool):
+                e_msg = ('writable must be a boolean, not %s' % type(writable))
+                handle_exception(Exception(e_msg), request)
             if (command is None):
                 ret = self._create(share, snap_name, request,
                                    uvisible=uvisible, snap_type=snap_type,

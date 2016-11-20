@@ -1,6 +1,6 @@
 <script>
   /*
-  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+  * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
   *
   * RockStor is free software; you can redistribute it and/or modify
@@ -20,55 +20,56 @@
 </script>
 
 <div class="row">
-  <div class="col-md-8">
-    <div class="panel panel-default">
-    <div class="panel-heading">Configure {{serviceName}}</div>
-    <div class="panel-body">
-      <form class="form-horizontal" id="ldap-form" name="aform">
-        <div class="messages"></div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="server">LDAP Server<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="server" name="server" value="{{config.server}}" placeholder="LDAP Server" title="IP address of LDAP Server">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="basedn">Search base DN<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="basedn" name="basedn" value="{{config.basedn}}" placeholder="Search base DN" title="Distinguished Name ">
-          </div>
-        </div>
-	<div class="checkbox">
-          <label class="col-sm-4 control-label" for="enableTLS"></label>
-          {{#if config.enabletls}}
-            <div class="col-sm-4">
-            <input type="checkbox" name="enabletls" id="enabletls" checked="true">
-            </div>
-	    {{else}}
-      <div class="col-sm-4">
-	    <input type="checkbox" name="enabletls" id="enabletls">
-	    {{/if}}
-	     Enable TLS to encrypt connections?</div>
-        </div>
-        {{#if config.enabletls}}
-          <div class="form-group" id="cert-ph">
-           {{else}}
-            <div class="form-group" id="cert-ph" style="visibility: hidden">
-        {{/if}}
-          <label class="col-sm-4 control-label" for="cert-utl">Certificate URL<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input type="text" class="form-control" id="cert" name="cert" value="{{config.cert}}" placeholder="Certificate URL" title="URL to download Certificate in PEM format">
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="col-sm-offset-4 col-sm-8">
-            <button id="cancel" class="btn btn-default">Cancel</button>
-            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
-          </div>
-        </div>
-      </form>
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Configure {{serviceName}}</div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="ldap-form" name="aform">
+                    <div class="messages"></div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="server">LDAP Server<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="server" name="server" value="{{config.server}}" placeholder="LDAP Server" title="IP address of LDAP Server">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="basedn">Search base DN<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="basedn" name="basedn" value="{{config.basedn}}" placeholder="Search base DN" title="Distinguished Name ">
+                        </div>
+                    </div>
+                    <div class="checkbox">
+                        <label class="col-sm-4 control-label" for="enableTLS"></label> {{#if config.enabletls}}
+                        <div class="col-sm-4">
+                            <input type="checkbox" name="enabletls" id="enabletls" checked="true">
+                        </div>
+                        {{else}}
+                        <div class="col-sm-4">
+                            <input type="checkbox" name="enabletls" id="enabletls"> {{/if}} Enable TLS to encrypt connections?</div>
+                    </div>
+                    {{#if config.enabletls}}
+                    <div class="form-group" id="cert-ph">
+                        {{else}}
+                        <div class="form-group" id="cert-ph" style="visibility: hidden">
+                            {{/if}}
+                            <label class="col-sm-4 control-label" for="cert-utl">Certificate URL<span class="required"> *</span></label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" id="cert" name="cert" value="{{config.cert}}" placeholder="Certificate URL" title="URL to download Certificate in PEM format">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-4 col-sm-8">
+                                <button id="cancel" class="btn btn-default">Cancel</button>
+                                <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+                            </div>
+                        </div>
+                </form>
 
-    </div> <!-- panel-body -->
-  </div> <!--panel-default-->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+                </div>
+                <!-- panel-body -->
+            </div>
+            <!--panel-default-->
+        </div>
+        <!-- col-md-8 -->
+    </div>
+    <!-- row -->

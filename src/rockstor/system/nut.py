@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-# todo revise comments for brevity
+# TODO: revise comments for brevity
 
 # for CentOS nut systemd files are:-
 # from nut package
@@ -35,7 +35,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # N.B. if this config arrangement fails to prove robust then re-write using
 # http://augeas.net/ configuration API and use python-augeas package
 # and augeas and augeas-libs and lensens from nut source "nut/scripts/augeas"
-
+import os
 import re
 import collections
 from tempfile import mkstemp
@@ -115,24 +115,113 @@ nut_option_delimiter = {"LISTEN": " ", "MAXAGE": " ",
                         "NOTIFYFLAG NOPARENT": " "}
 
 
-def config_upssched():
+def config_upssched(seconds):
     """
     Overwite nut default upssched.conf and upssched-cmd files with Rockstor
     versions. Set owner.group and permissions to originals.
     """
-    # the upssched config file
-    upsshed_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
-    # would be better if we could set a file creation mask first then copy
-    # todo set file creation mask to 640
-    shutil.copyfile(upsshed_conf_template, UPSSCHED_CONF)
-    run_command([CHOWN, 'root.nut', UPSSCHED_CONF])
-    run_command([CHMOD, '640', UPSSCHED_CONF])
+    # As our custom parser for nut.conf, ups.conf, upsd.conf, upsd.users
+    # and upsmon.conf can only work on whole word keys we cannot use it
+    # for editing upssched.conf which can have multiple simultaneous entries
+    # of multi word keys, ie:
+    # "AT ONBATT * START-TIMER on-batt 10"
+    # "AT ONBATT * START-TIMER early-shutdown 120"
+    # "AT ONLINE * CANCEL-TIMER early-shutdown"
+    # so calling upssched.conf specific parser / editor
+    update_upssched_early_shutdown(seconds)
     # the upssched command file
     upsshed_cmd_template = ('%s/upssched-cmd' % settings.CONFROOT)
     shutil.copyfile(upsshed_cmd_template, UPSSCHED_CMD)
     run_command([CHOWN, 'root.root', UPSSCHED_CMD])
     # going with existing rights but this should be reviewed
     run_command([CHMOD, '755', UPSSCHED_CMD])
+
+
+def update_upssched_early_shutdown(seconds):
+    """
+    Updates the upssched.conf file by re-reading and inline editing the
+    template file to applying the given seconds early-shutdown START-TIMER
+    directive and it's associated CANCEL-TIMER directive.
+    Example target config lines within upssched.conf given 240 seconds:
+    AT ONBATT * START-TIMER early-shutdown 240
+    AT ONLINE * CANCEL-TIMER early-shutdown
+    :param seconds: number of seconds after which an early-shutdown schedule
+    timer event is triggered. A value of 0 is used to disabling early shutdown
+    which is the default when no relevant START-TIMER directives are defined.
+    :return: True if no errors were encountered
+    """
+    # setup out match patterns (with escaped '*') and associated lines
+    timer_start_pattern = 'AT ONBATT \* START-TIMER early-shutdown'
+    timer_start_line = 'AT ONBATT * START-TIMER early-shutdown'
+    timer_stop_pattern = 'AT ONLINE \* CANCEL-TIMER early-shutdown'
+    timer_stop_line = 'AT ONLINE * CANCEL-TIMER early-shutdown'
+    start_timer_found = False
+    stop_timer_found = False
+    # Ensure we have a sane 'seconds' value:
+    try:
+        int(seconds)
+    except:
+        logger.info('Enforcing default NUT timed shutdown value of 0 '
+                    '(When Battery Low) as the passed seconds value could not '
+                    'be interpreted as an integer.')
+        seconds = '0'
+    # Establish our upssched.conf template file.
+    upssched_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
+    # Check for the existence of this template file.
+    if not os.path.isfile(upssched_conf_template):
+        # We have no template file so log the error and return False.
+        logger.error('Skipping early shutdown settings: no upssched.conf '
+                     'template file found.')
+        return False
+    # Create a temp file to use as our output until we are done editing.
+    tfo, npath = mkstemp()
+    infile = upssched_conf_template
+    # Populate our temporary file with the template file contents plus edits
+    # or additions if no existing early-shutdown timer directives are found
+    with open(infile) as ino, open(npath, 'w') as outo:
+        for line in ino.readlines():  # readlines reads whole file.
+            if (re.match(timer_start_pattern, line) is not None):
+                # we have found an early-shutdown start timer line so
+                # replace it with one containing our seconds parameter
+                # but only if seconds !=0
+                if start_timer_found or seconds == '0':
+                    # we have a duplicate line or seconds = 0 so omit this
+                    # line by moving along to the next line in our template.
+                    continue
+                # replace our template start timer line with our own version
+                outo.write(timer_start_line + ' %s' % seconds + '\n')
+                # set our flag to cope with future duplicate entries
+                start_timer_found = True
+            else:
+                if (re.match(timer_stop_pattern, line) is not None):
+                    # we have found an existing early-shutdown cancel timer
+                    # line so set out flag and leave it be but only if we
+                    # haven't already found such a line and seconds != 0
+                    if stop_timer_found or seconds == '0':
+                        # we have a duplicate line or seconds = 0 so omit this
+                        # line by moving along to the next line in our template.
+                        continue
+                    # set our flag to cope with future duplicate entries
+                    stop_timer_found = True
+                # copy template file line over to temporary file unaltered
+                outo.write(line)
+        # Only bother checking if we need to add our start and top timer lines
+        # if seconds != 0
+        if seconds != '0':
+            if not start_timer_found:
+                # add our missing start timer line with the appropriate seconds
+                outo.write(timer_start_line + ' %s' % seconds + '\n')
+            if not stop_timer_found:
+                # add out missing stop timer line
+                outo.write(timer_stop_line + '\n')
+    # Now we deploy our template derived upssched.conf temp file by file move.
+    # Would be better if we could set a file creation mask first then do the
+    # move / overwrite.
+    # TODO: set file creation mask to 640
+    shutil.move(npath, UPSSCHED_CONF)
+    run_command([CHOWN, 'root.nut', UPSSCHED_CONF])
+    run_command([CHMOD, '640', UPSSCHED_CONF])
+    return True
 
 
 def establish_config_defaults(config):
@@ -146,7 +235,7 @@ def establish_config_defaults(config):
     """
     # An empty config dictionary will be false so raise exception as what else.
     if not config:
-        # todo I am unsure if this is the best way to raise an exception here.
+        # TODO: I am unsure if this is the best way to raise an exception here.
         e_msg = ('No NUT-UPS configuration found, make sure you have'
                  'configured this service properly.')
         raise Exception(e_msg)
@@ -160,6 +249,16 @@ def establish_config_defaults(config):
         config['upsname'] = 'ups'
     if ('nutserver' in config) and (config['nutserver'] == ''):
         config['nutserver'] = 'localhost'
+    # Establish a port default of auto as this works with most USB connected
+    # UPS devices which is a more common connection type going forward.
+    # Note that this setting persists but netclient mode, which doesn't use
+    # the port option, is unaffected by this setting so persistence is harmless.
+    if ('port' in config) and (config['port'] == ''):
+        config['port'] = 'auto'
+    # Establish a default Shutdown Timing setting of 0 as this was the effective
+    # default behaviour prior to the timed shutdown config option
+    if ('shutdowntimer' in config) and (config['shutdowntimer'] == ''):
+        config['shutdowntimer'] = '0'
 
 
 def configure_nut(config):
@@ -207,7 +306,7 @@ def configure_nut(config):
         # read access. Fixed by chown root.nut on all files we edit as a matter
         # of course.
         run_command([CHOWN, 'root.nut', config_file])
-    config_upssched()
+    config_upssched(config['shutdowntimer'])
 
 
 def pre_process_nut_config(config):
@@ -216,7 +315,7 @@ def pre_process_nut_config(config):
     by a config file path & name string, each top level entry (config file) is
     paired with an OrderedDict of options. This way we have:-
     "file -> options_in_order" pairs.
-    OrderedDict allows for section head sub-sectin ordering eg:-
+    OrderedDict allows for section head sub-section ordering eg:-
     [myups]
     driver = apcsmart
     port = /dev/ttyS1
@@ -253,7 +352,8 @@ def pre_process_nut_config(config):
     # set nut shutdown command wrapped in double inverted commas
     config['SHUTDOWNCMD'] = ('"%s"' % settings.NUT_SYSTEM_SHUTDOWNCMD)
 
-    # set nut network LISTEN to LISTEN_ON_IP when in netserver mode, else ll.
+    # set nut network LISTEN to LISTEN_ON_IP when in netserver mode, else set
+    # to local loop back / localhost.
     if config['MODE'] == 'netserver':
         config['LISTEN'] = settings.NUT_LISTEN_ON_IP
     else:
@@ -274,8 +374,6 @@ def pre_process_nut_config(config):
     nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = ('%s@%s 1 %s %s %s' % (
         config['upsname'], config['nutserver'], config['nutuser'],
         config['password'], config['upsmon']))
-    logger.info(
-        'NUT MONITOR LINE = %s' % nut_configs[NUT_MONITOR_CONFIG]['MONITOR'])
 
     # move section headings from config to nut_configs OrderedDicts
     # this way all following entries will pertain to them in their respective
@@ -309,6 +407,7 @@ def update_config_in(config_file, config, remove_all, header):
     :param config_file: path and filename of config file to update
     :param config: OrderedDict of options with possible section-- tags on index
     :param remove_all: list of entries to always remark out regardless
+    :param header: string to announce automated config file entries boundary
     :return:
     """
     file_descriptor, tempNamePath = mkstemp(prefix='rocknut')

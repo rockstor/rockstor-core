@@ -1,6 +1,6 @@
 <script>
   /*
-   * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+   * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
    * This file is part of RockStor.
    *
    * RockStor is free software; you can redistribute it and/or modify
@@ -18,104 +18,121 @@
    *
    */
 </script>
+
 <div class="row">
-  <div class="col-md-8">
-    <div class="panel panel-default">
-    <div class="panel-heading">Configure {{serviceName}}</div>
-    <div class="panel-body">
-      <form class="form-horizontal" id="nut-form" name="aform">
-        <div class="messages"></div>
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Configure {{serviceName}}</div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="nut-form" name="aform">
+                    <div class="messages"></div>
 
-        <!-- NUT mode -->
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="mode">NUT Mode<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <select class="form-control" id="mode" name="mode">
-            {{display_nutMode_options}}
-            </select>
-          </div>
+                    <!-- NUT mode -->
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="mode">NUT Mode<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <select class="form-control" id="mode" name="mode">
+                            {{display_nutMode_options}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Monitor mode -->
+                    <!-- upsmon either master or slave -->
+                    <div class="form-group" id="monitor-mode">
+                        <label class="col-sm-4 control-label" for="upsmon">Monitor Mode<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <select class="form-control" id="upsmon" name="upsmon">
+                            {{display_monitorMode_options}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Internal UPS name -->
+                    <div class="form-group" id="ups-name">
+                        <label class="col-sm-4 control-label" for="upsname">Internal UPS name<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="upsname" name="upsname" value="{{config.upsname}}" placeholder="internal ups name">
+                        </div>
+                    </div>
+
+                    <!--  UPS Descriptive Name -->
+                    <div class="form-group" id="ups-description">
+                        <label class="col-sm-4 control-label" for="desc">UPS Description</label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="desc" name="desc" value="{{config.desc}}" placeholder="Rockstor UPS Unit">
+                        </div>
+                    </div>
+
+                    <!-- nut driver -->
+                    <div class="form-group" id="nut-driver">
+                        <label class="col-sm-4 control-label" for="driver">NUT Driver<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <select class="form-control" id="driver" name="driver">
+                            {{display_nutDriver_options}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!--  UPS port -->
+                    <div class="form-group" id="ups-port">
+                        <label class="col-sm-4 control-label" for="port">UPS Port</label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="port" name="port" value="{{config.port}}" placeholder="auto or serial device name">
+                        </div>
+                    </div>
+
+                    <!-- nut server name / ip -->
+                    <div class="form-group" id="nut-server">
+                        <label class="col-sm-4 control-label" for="nutserver">NUT Server <span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="nutserver" name="nutserver" value="{{config.nutserver}}" placeholder="hostname or ip of nutserver">
+                        </div>
+                    </div>
+
+                    <!-- nut user name -->
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="nutuser">NUT User<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="nutuser" name="nutuser" value="{{config.nutuser}}" placeholder="NUT username eg 'monuser'">
+                        </div>
+                    </div>
+
+                    <!-- nut user password (no spaces)-->
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="password">NUT User Password<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <input class="form-control" type="text" id="password" name="password" value="{{config.password}}" placeholder="NUT user password">
+                        </div>
+                    </div>
+
+                    <!--  nut shutdown timer -->
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="shutdowntimer">Shutdown Timing<span class="required"> *</span></label>
+                        <div class="col-sm-4">
+                            <select class="form-control" id="shutdowntimer" name="shutdowntimer">
+                            {{display_nutShutdownTimer_options}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Cancel and Submit buttons -->
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="create-user" class="btn btn-primary">
+                            Submit
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <!-- nut-form -->
+
+            </div>
+            <!-- panel-body -->
         </div>
-
-        <!-- Monitor mode -->
-        <!-- upsmon either master or slave -->
-        <div class="form-group" id="monitor-mode">
-          <label class="col-sm-4 control-label" for="upsmon">Monitor Mode<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <select class="form-control" id="upsmon" name="upsmon">
-              {{display_monitorMode_options}}
-            </select>
-          </div>
-        </div>
-
-        <!-- Internal UPS name -->
-        <div class="form-group" id="ups-name">
-          <label class="col-sm-4 control-label" for="upsname">Internal UPS name<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="upsname" name="upsname" value="{{config.upsname}}" placeholder="internal ups name">
-          </div>
-        </div>
-
-        <!--  UPS Descriptive Name -->
-        <div class="form-group" id="ups-description">
-          <label class="col-sm-4 control-label" for="desc">UPS Description</label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="desc" name="desc" value="{{config.desc}}" placeholder="Rockstor UPS Unit">
-          </div>
-        </div>
-
-        <!-- nut driver -->
-        <div class="form-group" id="nut-driver">
-          <label class="col-sm-4 control-label" for="driver">NUT Driver<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <select class="form-control" id="driver" name="driver">
-            {{display_nutDriver_options}}
-            </select>
-          </div>
-        </div>
-
-        <!--  UPS port -->
-        <div class="form-group" id="ups-port">
-          <label class="col-sm-4 control-label" for="port">UPS Port</label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="port" name="port" value="{{config.port}}" placeholder="auto">
-          </div>
-        </div>
-
-        <!-- nut server name / ip -->
-        <div class="form-group" id="nut-server">
-          <label class="col-sm-4 control-label" for="nutserver">NUT Server <span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="nutserver" name="nutserver" value="{{config.nutserver}}" placeholder="hostname or ip of nutserver">
-          </div>
-        </div>
-
-        <!-- nut user name -->
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="nutuser">NUT User<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="nutuser" name="nutuser" value="{{config.nutuser}}" placeholder="NUT username eg 'monuser'">
-          </div>
-        </div>
-
-        <!-- nut user password (no spaces)-->
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="password">NUT User Password<span class="required"> *</span></label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="password" name="password" value="{{config.password}}" placeholder="NUT user password">
-          </div>
-        </div>
-        <div class="form-group">
-        <div class="col-sm-offset-4 col-sm-8">
-          <button id="cancel" class="btn btn-default">Cancel</button>
-          <button type="Submit" id="create-user" class="btn btn-primary">
-            Submit
-          </button>
-      </div>
-      </div>
-      </form>
-      <!-- nut-form -->
-
-    </div><!-- panel-body -->
-  </div><!-- panel-default -->
-  </div><!-- col-md-8 -->
-</div> <!-- row -->
+        <!-- panel-default -->
+    </div>
+    <!-- col-md-8 -->
+</div>
+<!-- row -->

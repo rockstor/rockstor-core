@@ -26,279 +26,299 @@
 
 PoolDetailsLayoutView = RockstorLayoutView.extend({
 
-	initialize: function() {
-		// call initialize of base
-		this.constructor.__super__.initialize.apply(this, arguments);
-		this.poolName = this.options.poolName;
-		this.cView = this.options.cView;
-		this.template = window.JST.pool_pool_details_layout;
-		this.resize_pool_info_template = window.JST.pool_resize_pool_info;
-		this.compression_info_template = window.JST.pool_compression_info;
-		this.pool = new Pool({poolName: this.poolName});
-		// create poolscrub models
-		this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
-		this.poolscrubs.pageSize = 5;
-		this.poolscrubs.setUrl(this.poolName);
-		// create pool re-balance models
-		this.poolrebalances = new PoolRebalanceCollection([],{snapType: 'admin'});
-		this.poolrebalances.pageSize = 5;
-		this.poolrebalances.setUrl(this.poolName);
+    initialize: function() {
+        // call initialize of base
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.poolName = this.options.poolName;
+        this.cView = this.options.cView;
+        this.template = window.JST.pool_pool_details_layout;
+        this.resize_pool_info_template = window.JST.pool_resize_pool_info;
+        this.compression_info_template = window.JST.pool_compression_info;
+        this.pool = new Pool({poolName: this.poolName});
+        // create poolscrub models
+        this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
+        this.poolscrubs.pageSize = 5;
+        this.poolscrubs.setUrl(this.poolName);
+        // create pool re-balance models
+        this.poolrebalances = new PoolRebalanceCollection([],{snapType: 'admin'});
+        this.poolrebalances.pageSize = 5;
+        this.poolrebalances.setUrl(this.poolName);
 
-		this.dependencies.push(this.pool);
-		this.dependencies.push(this.poolscrubs);
-		this.dependencies.push(this.poolrebalances);
-		this.disks = new DiskCollection();
-		this.disks.pageSize = RockStorGlobals.maxPageSize;
-		this.dependencies.push(this.disks);
-		this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
-		this.initHandlebarHelpers();
+        this.dependencies.push(this.pool);
+        this.dependencies.push(this.poolscrubs);
+        this.dependencies.push(this.poolrebalances);
+        this.disks = new DiskCollection();
+        this.disks.pageSize = RockStorGlobals.maxPageSize;
+        this.dependencies.push(this.disks);
+        this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
+        this.initHandlebarHelpers();
+        this.poolShares = new PoolShareCollection([], {poolName: this.poolName});
+    },
 
-	},
+    events: {
+        'click #delete-pool': 'deletePool',
+        "click #js-confirm-pool-delete": "confirmPoolDelete",
+        "click #js-resize-pool": "resizePool",
+        "click #js-submit-resize": "resizePoolSubmit",
+        "click #js-resize-cancel": "resizePoolCancel",
+    },
 
-	events: {
-		'click #delete-pool': 'deletePool',
-		"click #js-resize-pool": "resizePool",
-		"click #js-submit-resize": "resizePoolSubmit",
-		"click #js-resize-cancel": "resizePoolCancel",
-	},
+    render: function() {
+        this.poolShares.fetch();
+        this.fetch(this.renderSubViews, this);
+        return this;
+    },
 
-	render: function() {
-		this.fetch(this.renderSubViews, this);
-		return this;
-	},
+    renderSubViews: function() {
+        var poolNameIsRockstor = false;
+        if (this.pool.get('role') == 'root') {
+            poolNameIsRockstor = true;
+        }
+        $(this.el).html(this.template({
+            share: this.poolShares.models[0].attributes.results,
+            poolName: this.pool.get('name'),
+            isPoolNameRockstor: poolNameIsRockstor,
+        }));
 
-	renderSubViews: function() {
-		var poolNameIsRockstor = false;
-		if (this.pool.get('role') == 'root') {
-			poolNameIsRockstor = true;
-		}
-		$(this.el).html(this.template({
-			pool: this.pool,
-			poolName: this.pool.get('name'),
-			isPoolNameRockstor: poolNameIsRockstor,
-		}));
+        this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool.toJSON() });
+        this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
+        this.subviews['pool-scrubs'] = new PoolScrubTableModule({poolscrubs: this.poolscrubs, pool: this.pool, parentView: this });
+        this.subviews['pool-rebalances'] = new PoolRebalanceTableModule({poolrebalances: this.poolrebalances, pool: this.pool, parentView: this });
+        this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
+        this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
+        this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
+        this.$('#ph-pool-info').html(this.subviews['pool-info'].render().el);
+        this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
+        this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
+        this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
 
-		this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool.toJSON() });
-		this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
-		this.subviews['pool-scrubs'] = new PoolScrubTableModule({poolscrubs: this.poolscrubs, pool: this.pool, parentView: this });
-		this.subviews['pool-rebalances'] = new PoolRebalanceTableModule({poolrebalances: this.poolrebalances, pool: this.pool, parentView: this });
-		this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
-		this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
-		this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
-		this.$('#ph-pool-info').html(this.subviews['pool-info'].render().el);
-		this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
-		this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
-		this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
 
-		this.$('#ph-compression-info').html(this.compression_info_template({
-			pool: this.pool.toJSON(),
-		})); 
+        this.$('#ph-compression-info').html(this.compression_info_template({
+            pool: this.pool.toJSON(),
+        }));
 
-		this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool:
-			this.pool.toJSON()})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
-			(!_.isUndefined(this.cView) && this.cView == 'resize') { // scroll to resize section
-				$('#content').scrollTop($('#ph-resize-pool-info').offset().top); }
+        this.$('#ph-resize-pool-info').html(
+                this.resize_pool_info_template({
+                    pool: this.pool.toJSON()
+                })
+        );
+        this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); 
+        if (!_.isUndefined(this.cView) && this.cView == 'resize') {
+            // scroll to resize section
+            $('#content').scrollTop($('#ph-resize-pool-info').offset().top); 
+        }
 
-			//$('#pool-resize-raid-modal').modal({show: false});
-			$('#pool-resize-raid-overlay').overlay({load: false});
+        //$('#pool-resize-raid-modal').modal({show: false});
+        $('#pool-resize-raid-overlay').overlay({load: false});
 
-			//Bootstrap Inline Edit
-			$.fn.editable.defaults.mode = 'inline';
-			var compr = this.pool.get('compression');
-			var poolName = this.pool.get('poolName');
-			var mntOptn = this.pool.get('mnt_options');
-			var url = "/api/pools/" + poolName + "/remount";
-			$('#comprOptn').editable({
-				value: compr,
-				source: [{value: 'no', text: 'no'},
-				         {value: 'zlib', text: 'zlib'},
-				         {value: 'lzo', text: 'lzo'}
-				         ],
-				         success: function(response, newCompr){
-				        	 $.ajax({
-				        		 url: url,
-				        		 type: "PUT",
-				        		 dataType: "json",
-				        		 data: {
-				        			 "compression": newCompr,
-				        			 "mnt_options": mntOptn
-				        		 },
-				        	 });
-				         }
-			});
-			
-			$('#mntOptions').editable({
-				title: 'Edit Mount Options',
-				emptytext: 'None',
-				success: function(response, newMntOptns){
-					$.ajax({
-						url: url,
-						type: "PUT",
-						dataType: "json",
-						data: {
-							"compression": compr,
-							"mnt_options": newMntOptns
-						},
-					});
-				}
-			});
+        //Bootstrap Inline Edit
+        $.fn.editable.defaults.mode = 'inline';
+        var compr = this.pool.get('compression');
+        var poolName = this.pool.get('poolName');
+        var mntOptn = this.pool.get('mnt_options');
+        var url = "/api/pools/" + poolName + "/remount";
+        $('#comprOptn').editable({
+            value: compr,
+            source: [{value: 'no', text: 'no'},
+                     {value: 'zlib', text: 'zlib'},
+                     {value: 'lzo', text: 'lzo'}
+                     ],
+                     success: function(response, newCompr){
+                         $.ajax({
+                             url: url,
+                             type: "PUT",
+                             dataType: "json",
+                             data: {
+                                 "compression": newCompr,
+                                 "mnt_options": mntOptn
+                             },
+                         });
+                     }
+        });
 
-			$("#comp-mnt-optns-table").tooltip({
-				selector: '[data-title]',
-				html: true,
-				placement:'right'
-			});
-	},
+        $('#mntOptions').editable({
+            title: 'Edit Mount Options',
+            emptytext: 'None',
+            success: function(response, newMntOptns){
+                $.ajax({
+                    url: url,
+                    type: "PUT",
+                    dataType: "json",
+                    data: {
+                        "compression": compr,
+                        "mnt_options": newMntOptns
+                    },
+                });
+            }
+        });
 
-	deletePool: function() {
-		var button = this.$('#delete-pool');
-		if (buttonDisabled(button)) return false;
-		if(confirm("Delete pool: "+ this.pool.get('name') + "... Are you sure?")){
-			disableButton(button);
-			$.ajax({
-				url: "/api/pools/" + this.pool.get('name'),
-				type: "DELETE",
-				dataType: "json",
-				data: { "name": this.pool.get('name') },
-				success: function() {
-					app_router.navigate('pools', {trigger: true});
-				},
-				error: function(xhr, status, error) {
-					enableButton(button);
-				}
-			});
-		}
-	},
+        $("#comp-mnt-optns-table").tooltip({
+            selector: '[data-title]',
+            html: true,
+            placement:'right'
+        });
 
-	resizePool: function(event) {
-		event.preventDefault();
-		var wizardView = new PoolResizeWizardView({
-			model: new Backbone.Model({ pool: this.pool }),
-			title: 'Resize Pool / Change RAID level for ' + this.pool.get('name'),
-			parent: this
-		});
-		$('.overlay-content', '#pool-resize-raid-overlay').html(wizardView.render().el);
-		$('#pool-resize-raid-overlay').overlay().load();
-	},
+    },
 
-	resizePoolSubmit: function(event) {
-		event.preventDefault();
-		var button = this.$('#js-submit-resize');
-		if (buttonDisabled(button)) return false;
-		if(confirm(" Are you sure about Resizing this pool?")){
-			disableButton(button);
-			var _this = this;
-			var raid_level = $('#raid_level').val();
-			var disk_names = [];
-			var err_msg = "Please select atleast one disk";
-			var n = _this.$(".disknew:checked").length;
-			var m = _this.$(".diskadded:unchecked").length;
-			var resize_msg = ('Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
-			if(n >= 0){
-				$('#pool-resize-raid-modal').modal('show');
-			} else if(m > 0) {
-				_this.$(".diskadded:unchecked").each(function(i) {
-					if (i < m) {
-						disk_names.push($(this).val());
-					}
-				});
-				$.ajax({
-					url: '/api/pools/'+_this.pool.get('name')+'/remove',
-					type: 'PUT',
-					dataType: 'json',
-					contentType: 'application/json',
-					data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
-					success: function() {
-						_this.hideResizeTooltips();
-						alert(resize_msg);
-						_this.pool.fetch({
-							success: function(collection, response, options) {
-								_this.cView = 'view';
-								_this.render();
-							}
-						});
+    deletePool: function() {
+        var _this = this;
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        _this.$('#delete-pool-modal').modal();
+    },
 
-					},
-					error: function(request, status, error) {
-						enableButton(button);
-					}
-				});
-			}
-		}
-	},
-	
-	resizePoolCancel: function(event) {
-		event.preventDefault();
-		this.hideResizeTooltips();
-		this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
-	},
+    confirmPoolDelete: function() {
+        var _this = this;
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
 
-	resizePoolModalSubmit: function(event) {
-		var _this = this;
-		var raid_level = $('#raid_level').val();
-		var disk_names = [];
-		var err_msg = "Please select atleast one disk";
-		var n = _this.$(".disknew:checked").length;
-		var m = _this.$(".diskadded:unchecked").length;
-		var resize_msg = ('Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
-		_this.$(".disknew:checked").each(function(i) {
-			if (i < n) {
-				disk_names.push($(this).val());
-			}
-		});
-		$.ajax({
-			url: '/api/pools/'+_this.pool.get('name')+'/add',
-			type: 'PUT',
-			dataType: 'json',
-			contentType: 'application/json',
-			data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
-			success: function() {
-				_this.hideResizeTooltips();
-				alert(resize_msg);
-				_this.pool.fetch({
-					success: function(collection, response, options) {
-						_this.cView = 'view';
-						_this.render();
-					}
-				});
-			},
-			error: function(request, status, error) {
-				enableButton(button);
-			}
-		});
+        var url = "/api/pools/" + this.poolName + "/force";
+        $.ajax({
+            url: url,
+            type: "DELETE",
+            dataType: "json",
+            success: function() {
+                enableButton(button);
+                _this.$('#delete-pool-modal').modal('hide');
+                $('.modal-backdrop').remove();
+                app_router.navigate('pools', {trigger: true})
+            },
+            error: function(xhr, status, error) {
+                enableButton(button);
+            }
+        });
+    },
 
-	},
-	
-	showResizeTooltips: function() {
-		this.$('#ph-resize-pool-info #raid_level').tooltip({
-			html: true,
-			placement: 'top',
-			title: "You can transition raid level of this pool to change it's redundancy profile.",
-		});
-	},
+    resizePool: function(event) {
+        event.preventDefault();
+        var wizardView = new PoolResizeWizardView({
+            model: new Backbone.Model({ pool: this.pool }),
+            title: 'Resize Pool / Change RAID level for ' + this.pool.get('name'),
+            parent: this
+        });
+        $('.overlay-content', '#pool-resize-raid-overlay').html(wizardView.render().el);
+        $('#pool-resize-raid-overlay').overlay().load();
+    },
 
-	hideResizeTooltips: function() {
-		this.$('#ph-resize-pool-info #raid_level').tooltip('hide');
-	},
+    resizePoolSubmit: function(event) {
+        event.preventDefault();
+        var button = this.$('#js-submit-resize');
+        if (buttonDisabled(button)) return false;
+        if(confirm(" Are you sure about Resizing this pool?")){
+            disableButton(button);
+            var _this = this;
+            var raid_level = $('#raid_level').val();
+            var disk_names = [];
+            var err_msg = "Please select atleast one disk";
+            var n = _this.$(".disknew:checked").length;
+            var m = _this.$(".diskadded:unchecked").length;
+            var resize_msg = ('Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
+            if(n >= 0){
+                $('#pool-resize-raid-modal').modal('show');
+            } else if(m > 0) {
+                _this.$(".diskadded:unchecked").each(function(i) {
+                    if (i < m) {
+                        disk_names.push($(this).val());
+                    }
+                });
+                $.ajax({
+                    url: '/api/pools/'+_this.pool.get('name')+'/remove',
+                    type: 'PUT',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
+                    success: function() {
+                        _this.hideResizeTooltips();
+                        alert(resize_msg);
+                        _this.pool.fetch({
+                            success: function(collection, response, options) {
+                                _this.cView = 'view';
+                                _this.render();
+                            }
+                        });
 
-	attachModalActions: function() {
+                    },
+                    error: function(request, status, error) {
+                        enableButton(button);
+                    }
+                });
+            }
+        }
+    },
 
-	},
+    resizePoolCancel: function(event) {
+        event.preventDefault();
+        this.hideResizeTooltips();
+        this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
+    },
 
-	cleanup: function() {
-		if (!_.isUndefined(this.statusIntervalId)) {
-			window.clearInterval(this.statusIntervalId);
-		}
-	},
+    resizePoolModalSubmit: function(event) {
+        var _this = this;
+        var raid_level = $('#raid_level').val();
+        var disk_names = [];
+        var err_msg = "Please select atleast one disk";
+        var n = _this.$(".disknew:checked").length;
+        var m = _this.$(".diskadded:unchecked").length;
+        var resize_msg = ('Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
+        _this.$(".disknew:checked").each(function(i) {
+            if (i < n) {
+                disk_names.push($(this).val());
+            }
+        });
+        $.ajax({
+            url: '/api/pools/'+_this.pool.get('name')+'/add',
+            type: 'PUT',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
+            success: function() {
+                _this.hideResizeTooltips();
+                alert(resize_msg);
+                _this.pool.fetch({
+                    success: function(collection, response, options) {
+                        _this.cView = 'view';
+                        _this.render();
+                    }
+                });
+            },
+            error: function(request, status, error) {
+                enableButton(button);
+            }
+        });
 
-	initHandlebarHelpers: function(){
+    },
 
-		Handlebars.registerHelper('getPoolCreationDate', function(date){
-			return moment(date).format(RS_DATE_FORMAT);
-		});
+    showResizeTooltips: function() {
+        this.$('#ph-resize-pool-info #raid_level').tooltip({
+            html: true,
+            placement: 'top',
+            title: "You can transition raid level of this pool to change it's redundancy profile.",
+        });
+    },
 
-		Handlebars.registerHelper('humanReadableSize', function(size){
-			return humanize.filesize(size * 1024);
-		});
-	}
+    hideResizeTooltips: function() {
+        this.$('#ph-resize-pool-info #raid_level').tooltip('hide');
+    },
+
+    attachModalActions: function() {
+
+    },
+
+    cleanup: function() {
+        if (!_.isUndefined(this.statusIntervalId)) {
+            window.clearInterval(this.statusIntervalId);
+        }
+    },
+
+    initHandlebarHelpers: function(){
+
+        Handlebars.registerHelper('getPoolCreationDate', function(date){
+            return moment(date).format(RS_DATE_FORMAT);
+        });
+
+        Handlebars.registerHelper('humanReadableSize', function(size){
+            return humanize.filesize(size * 1024);
+        });
+    }
 });

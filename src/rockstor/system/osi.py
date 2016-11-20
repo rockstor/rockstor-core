@@ -36,26 +36,26 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-MKDIR = '/bin/mkdir'
-RMDIR = '/bin/rmdir'
-MOUNT = '/bin/mount'
-UMOUNT = '/bin/umount'
-EXPORTFS = '/usr/sbin/exportfs'
-HOSTID = '/usr/bin/hostid'
-DEFAULT_MNT_DIR = '/mnt2/'
-SHUTDOWN = '/usr/sbin/shutdown'
-GRUBBY = '/usr/sbin/grubby'
 CAT = '/usr/bin/cat'
-UDEVADM = '/usr/sbin/udevadm'
-NMCLI = '/usr/bin/nmcli'
-HOSTNAMECTL = '/usr/bin/hostnamectl'
-LSBLK = '/usr/bin/lsblk'
-HDPARM = '/usr/sbin/hdparm'
-SYSTEMCTL_BIN = '/usr/bin/systemctl'
-WIPEFS = '/usr/sbin/wipefs'
+CHATTR = '/usr/bin/chattr'
 DD = '/bin/dd'
+DEFAULT_MNT_DIR = '/mnt2/'
+EXPORTFS = '/usr/sbin/exportfs'
+GRUBBY = '/usr/sbin/grubby'
+HDPARM = '/usr/sbin/hdparm'
+HOSTID = '/usr/bin/hostid'
+HOSTNAMECTL = '/usr/bin/hostnamectl'
 LS = '/usr/bin/ls'
-
+LSBLK = '/usr/bin/lsblk'
+MKDIR = '/bin/mkdir'
+MOUNT = '/bin/mount'
+NMCLI = '/usr/bin/nmcli'
+RMDIR = '/bin/rmdir'
+SHUTDOWN = '/usr/sbin/shutdown'
+SYSTEMCTL_BIN = '/usr/bin/systemctl'
+UDEVADM = '/usr/sbin/udevadm'
+UMOUNT = '/bin/umount'
+WIPEFS = '/usr/sbin/wipefs'
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
@@ -84,9 +84,14 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, stdin=subprocess.PIPE, throw=True,
                 log=False, input=None):
     try:
+        #We force run_command to always use en_US
+        #to avoid issues on date and number formats
+        #on not Anglo-Saxon systems (ex. it, es, fr, de, etc)
+        fake_env = dict(os.environ)
+        fake_env['LANG'] = 'en_US.UTF-8'
         cmd = map(str, cmd)
         p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr,
-                             stdin=stdin)
+                             stdin=stdin, env=fake_env)
         out, err = p.communicate(input=input)
         out = out.split('\n')
         err = err.split('\n')
@@ -395,12 +400,20 @@ def kernel_info(supported_version):
 
 
 def create_tmp_dir(dirname):
+    # TODO: suggest name change to create_dir
     return run_command([MKDIR, '-p', dirname])
 
 
 def rm_tmp_dir(dirname):
+    # TODO: suggest name change to remove_dir
     return run_command([RMDIR, dirname])
 
+
+def toggle_path_rw(path, rw=True):
+    attr = '-i'
+    if not rw:
+        attr = '+i'
+    return run_command([CHATTR, attr, path])
 
 def nfs4_mount_teardown(export_pt):
     """
@@ -410,17 +423,20 @@ def nfs4_mount_teardown(export_pt):
         run_command([UMOUNT, '-l', export_pt])
         for i in range(10):
             if (not is_mounted(export_pt)):
+                toggle_path_rw(export_pt, rw=True)
                 return run_command([RMDIR, export_pt])
             time.sleep(1)
         run_command([UMOUNT, '-f', export_pt])
     if (os.path.exists(export_pt)):
-        return run_command([RMDIR, export_pt])
+        toggle_path_rw(export_pt, rw=True)
+        run_command([RMDIR, export_pt])
     return True
 
 
 def bind_mount(mnt_pt, export_pt):
     if (not is_mounted(export_pt)):
         run_command([MKDIR, '-p', export_pt])
+        toggle_path_rw(export_pt, rw=False)
         return run_command([MOUNT, '--bind', mnt_pt, export_pt])
     return True
 
@@ -1660,13 +1676,17 @@ def hostid():
     change.
 
     There's a lazy vendor problem where uuid is not set and defaults to
-    03000200-0400-0500-0006-000700080009. non-persistent uuid is generated even
-    in this case.
+    03000200-0400-0500-0006-000700080009 or
+    00020003-0004-0005-0006-000700080009. I don't know how these values are
+    populated, but emperically it seems to be just these
+    two. non-persistent uuid is generated even in this case.
+
     """
+    fake_puuids = ('03000200-0400-0500-0006-000700080009', '00020003-0004-0005-0006-00070008000')
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
             puuid = fo.readline().strip()
-            if (puuid == '03000200-0400-0500-0006-000700080009'):
+            if (puuid in fake_puuids):
                 raise
             return puuid
     except:

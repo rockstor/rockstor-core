@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -21,51 +21,53 @@
 
 <h4>Create Snapshot</h4>
 
+<h4>Create Snapshot</h4>
+
 <div class="row">
-  <div class="col-md-8">
-    <label class="control-label"></label>
-    <div class="form-box">
-      <form name="add-snapshot-form" id="add-snapshot-form" class="form-horizontal">
-        <div class="messages"></div>
+    <div class="col-md-8">
+        <label class="control-label"></label>
+        <div class="form-box">
+            <form name="add-snapshot-form" id="add-snapshot-form" class="form-horizontal">
+                <div class="messages"></div>
 
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="snapshot-name">Name<span class="required"> *</span></label>
-          <div class="controls">
-	    <div class="col-sm-8">
-              <input class="form-control shorten-input" type="text" name="snapshot-name" id="snapshot-name" title="Following characters are allowed: letter(a-z or A-Z), digit(0-9), hyphen(-), underscore(_) or a period(.).">
-	    </div>
-          </div>
+                <div class="form-group">
+                    <label class="col-sm-4 control-label" for="snapshot-name">Name<span class="required"> *</span></label>
+                    <div class="controls">
+                        <div class="col-sm-8">
+                            <input class="form-control shorten-input" type="text" name="snapshot-name" id="snapshot-name" title="Following characters are allowed: letter(a-z or A-Z), digit(0-9), hyphen(-), underscore(_) or a period(.).">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-4 control-label" for="writable">Writable<span class="required"> *</span></label>
+                    <div class="controls">
+                        <div class="col-sm-8">
+                            <input type="checkbox" name="writable" id="snapshot-writable" title="Snapshots can be made writable by selecting this checkbox">
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label class="col-sm-4 control-label" for="snapshot-visible"> </label>
+                    <div class="controls">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <input type="checkbox" name="uvisible" id="snapshot-visible" title="Snapshots can be visible or hidden to the end user of the Share"> Visible to user?
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="controls">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <a class="btn btn-default" href="#" id="js-snapshot-cancel"> Cancel</a>
+                            <input type="Submit" class="btn btn-primary" value="Submit" id="js-snapshot-save"></input>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
         </div>
-
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="writable">Writable<span class="required"> *</span></label>
-          <div class="controls">
-	    <div class="col-sm-8">
-             {{show_writable_options}}
-	    </div>
-           </div>
-        </div>
-
-
-       <div class="form-group">
-          <label class="col-sm-4 control-label" for="snapshot-visible"> </label>
-          <div class="controls">
-	    <div class="col-sm-offset-4 col-sm-8">
-              <input type="checkbox" name="uvisible" id="snapshot-visible" title="Snapshots can be visible or hidden to the end user of the Share"> Visible to user?
-	    </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <div class="controls">
-	    <div class="col-sm-offset-4 col-sm-8">
-              <a class="btn btn-default" href="#" id="js-snapshot-cancel"> Cancel</a>
-              <input type="Submit" class="btn btn-primary" value="Submit" id="js-snapshot-save"></input>
-	    </div>
-          </div>
-        </div>
-
-      </form>
     </div>
-  </div>
 </div>

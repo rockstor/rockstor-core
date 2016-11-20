@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -24,13 +24,14 @@
  *
  */
 
-
 StorageMetricsWidget = RockStorWidgetView.extend({
 
     initialize: function() {
+
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.dashboard_widgets_storage_metrics;
+        this.legendTemplate = window.JST.dashboard_widgets_storage_metrics_legend;
         // Dependencies
         this.disks = new DiskCollection();
         this.pools = new PoolCollection();
@@ -41,21 +42,147 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         this.dependencies.push(this.disks);
         this.dependencies.push(this.pools);
         this.dependencies.push(this.shares);
-        // svg
-        this.svgEl = '#ph-metrics-viz';
-        this.svgLegendEl = '#ph-metrics-legend';
-        // Metrics
-        this.raw = 0; // raw storage capacity in GB
-        this.allocated = 0;
-        this.free = 0;
-        this.poolCapacity = 0;
-        this.usage = 0;
-        this.margin = {top: 0, right: 40, bottom: 20, left: 30};
+
+        this.data = [];
+        this.colors = [{
+            Used: '250, 198, 112',
+            Allocated: '11, 214, 227',
+            Provisioned: '145, 191, 242'
+        }, {
+            Capacity: '250, 232, 202',
+            'Raid Overhead': '176, 241, 245',
+            Free: '228, 237, 247'
+        }];
+
+        //Chart.js Storage Metrics Widget default options
+        Chart.defaults.global.tooltips.enabled = false;
+        Chart.defaults.global.elements.rectangle.borderWidth = 1;
+
+        this.StorageMetricsChart = null;
+        this.StorageMetricsChartOptions = {
+            title: {
+                display: false,
+            },
+            showLines: false,
+            legend: {
+                display: false,
+            },
+            tooltips: {
+                enabled: false
+            },
+            hover: {
+                animationDuration: 0
+            },
+            animation: {
+                duration: 1000,
+                onComplete: function() {
+
+                    var ctx = this.chart.ctx;
+                    var font_size = 12;
+                    var labels = ['Shares', 'Pools', 'Disks'];
+                    ctx.font = Chart.helpers.fontString(font_size,
+                        Chart.defaults.global.defaultFontStyle,
+                        Chart.defaults.global.defaultFontFamily);
+                    ctx.fillStyle = '#000000';
+                    ctx.textBaseline = 'top';
+                    _.each(this.data.datasets, function(dataset, index, datasets) {
+                        ctx.textAlign = (index % 2 === 0) ? 'left' : 'right';
+
+                        for (var i = 0; i < dataset.data.length; i++) {
+                            var model = dataset._meta[Object.keys(dataset._meta)[0]].data[i]._model;
+                            var x_pos = (index % 2 === 0) ? model.base + 1 : model.x - 1;
+                            var y_pos = (index % 2 === 0) ? model.y + model.height / 2 - font_size - 2 : model.y - model.height / 2 + 2;
+                            var label = humanize.filesize(dataset.data[i]);
+                            if (index % 2 === 0) {
+                                var pct = datasets[0].data[i] * 100 / (datasets[0].data[i] + datasets[1].data[i]);
+                                label += ' (' + pct.toFixed(2) + '%)';
+                                ctx.save();
+                                ctx.textAlign = 'center';
+                                ctx.translate(model.base - font_size, model.y);
+                                ctx.rotate(-0.5 * Math.PI);
+                                ctx.fillText(labels[i], 0, 0);
+                                ctx.restore();
+                            }
+                            ctx.fillText(label, x_pos, y_pos);
+
+                        }
+                    });
+                }
+            },
+            scales: {
+                yAxes: [{
+                    stacked: true,
+                    ticks: {
+                        fontSize: 9,
+                        minRotation: 60,
+                    },
+                    gridLines: {
+                        display: false,
+                        zeroLineWidth: 0,
+                        drawTicks: true,
+                        offsetGridLines: true
+                    }
+                }],
+                xAxes: [{
+                    stacked: true,
+                    gridLines: {
+                        display: false,
+                        drawTicks: false,
+                        tickMarkLength: 0
+                    },
+                    ticks: {
+                        fontSize: 10,
+                        min: 0,
+                        maxTicksLimit: 2,
+                        autoSkip: false,
+                        padding: 0,
+                        callback: function(value) {
+                            return (value > 0 ? humanize.filesize(value) : null);
+                        }
+                    }
+                }]
+            },
+        };
+
+        this.StorageMetricsChartData = {
+            labels: ['', '', ''],
+            datasets: [{
+                fill: true,
+                backgroundColor: this.setColors(0, 0.8),
+                borderColor: this.setColors(0, 1),
+                data: []
+            }, {
+                fill: true,
+                backgroundColor: this.setColors(1, 0.8),
+                borderColor: this.setColors(1, 1),
+                data: []
+            }]
+        };
+    },
+
+    setColors: function(index, alpha) {
+
+        var _this = this;
+        var color_array = [];
+        _.each(_this.colors[index], function(val) {
+            color_array.push('rgba(' + val + ', ' + alpha + ')');
+        });
+        return color_array;
+    },
+
+    initGraph: function() {
+
+        var _this = this;
+        _this.StorageMetricsChart = new Chart(this.$('#metrics-chart'), {
+            type: 'horizontalBar',
+            data: _this.StorageMetricsChartData,
+            options: _this.StorageMetricsChartOptions
+        });
     },
 
     render: function() {
+
         var _this = this;
-        // call render of base
         this.constructor.__super__.render.apply(this, arguments);
         $(this.el).html(this.template({
             module_name: this.module_name,
@@ -64,296 +191,88 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         }));
         this.fetch(function() {
             _this.setData();
-            _this.setDimensions();
-            _this.setupSvg();
-            _this.renderMetrics();
+            _this.updateStorageMetricsChart();
+            _this.initGraph();
+            this.$('#metrics-legend').html(this.legendTemplate());
+            _this.genStorageMetricsChartLegend();
         }, this);
         return this;
     },
 
     setData: function() {
-        var gb = 1024*1024;
-        this.raw = this.disks.reduce(function(sum, disk) {
+
+        var _this = this;
+        _this.raw = this.disks.reduce(function(sum, disk) {
             sum += disk.get('size');
             return sum;
         }, 0);
-        this.provisioned = this.disks.reduce(function(sum, disk) {
+        _this.provisioned = _this.disks.reduce(function(sum, disk) {
             sum = disk.get('pool') != null ? sum + disk.get('size') : sum;
             return sum;
         }, 0);
-        this.free = this.raw - this.provisioned;
+        _this.free = _this.raw - _this.provisioned;
 
-        this.pool = this.pools.reduce(function(sum, pool) {
+        _this.pool = _this.pools.reduce(function(sum, pool) {
             sum += pool.get('size');
             return sum;
         }, 0);
-        this.raidOverhead = this.provisioned - this.pool;
-        this.share = this.shares.reduce(function(sum, share) {
-            sum += share.get('size');
+        _this.raidOverhead = _this.provisioned - _this.pool;
+        _this.share = _.map(_this.shares.groupBy(function(model) {
+            return model.get('pool').name;
+        }), function(val, key) {
+            return {
+                pool_name: key,
+                pool_size: _.reduce(val, function(v, k) {
+                    return k.get('pool').size;
+                }, 0),
+                shares_size: _.reduce(val, function(v, k) {
+                    return v + k.get('size');
+                }, 0)
+            };
+        }).reduce(function(sum, share) {
+            sum += share.shares_size < share.pool_size ? share.shares_size : share.pool_size;
             return sum;
         }, 0);
-        this.usage = this.shares.reduce(function(sum, share) {
+        _this.usage = _this.shares.reduce(function(sum, share) {
             sum += share.get('rusage');
             return sum;
         }, 0);
-        this.pctUsed = parseFloat(((this.usage/this.raw).toFixed(0)) * 100);
+        _this.sharesfree = _this.share - _this.usage;
 
-        this.data = [
-            {name: 'used', label: 'Usage', value: this.usage},
-            {name: 'pool', label: 'Pool Capacity', value: this.poolCapacity},
-            {name: 'raw', label: 'Raw Capacity', value: this.raw}
-        ];
-
-        this.data1 = [
-            { name: 'share', label: 'Share Capacity', value: this.share },
-            { name: 'pool-provisioned', label: 'Provisioned', value: this.provisioned },
-            { name: 'raw', label: 'Raw Capacity', value: this.raw },
-        ];
-        this.data2 = [
-            { name: 'usage', label: 'Usage', value: this.usage},
-            { name: 'pool', label: 'Pool Capacity', value: this.pool },
-            { name: 'provisioned', label: 'Provisioned', value: this.provisioned },
-        ];
+        _this.data.push([_this.usage * 1024, _this.pool * 1024, _this.provisioned * 1024]);
+        _this.data.push([_this.sharesfree * 1024, _this.raidOverhead * 1024, _this.free * 1024]);
 
     },
 
-    setDimensions: function() {
-        //this.graphWidth = this.maximized ? 500 : 250;
-        //this.graphHeight = this.maximized ? 300 : 150;
-        this.barPadding = this.maximized ? 40 : 20;
-        this.barWidth = this.maximized ? 400 : 200;
-        if (this.maximized) {
-            this.width = 500 - this.margin.left - this.margin.right;
-            this.height = 500 - this.margin.top - this.margin.bottom;
-        } else {
-            this.width = 250 - this.margin.left - this.margin.right;
-            this.height = 190 - this.margin.top - this.margin.bottom;
-        }
-        this.x = d3.scale.linear().domain([0,this.raw]).range([0, this.width]);
-        this.y = d3.scale.linear().domain([0, this.data1.length]).range([0, this.height]);
-        this.barHeight = (this.height / this.data1.length );
-    },
+    updateStorageMetricsChart: function() {
 
-    setupSvg: function() {
-        // svg for viz
-        this.$(this.svgEl).empty();
-        this.svg = d3.select(this.el).select(this.svgEl)
-            .append('svg')
-            .attr('class', 'metrics')
-            .attr('width', this.width + this.margin.left + this.margin.right)
-            .attr('height', this.height + this.margin.top + this.margin.bottom);
-        this.svgG = this.svg.append("g")
-            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
-
-        // svg for legend
-        this.$(this.svgLegendEl).empty();
-        this.svgLegend = d3.select(this.el).select(this.svgLegendEl)
-            .append('svg')
-            .attr('class', 'metrics-legend')
-            .attr('width', this.width + this.margin.left + this.margin.right)
-            .attr('height', 80);
-    },
-
-    renderMetrics: function() {
         var _this = this;
-
-        // tickValues(this.x.domain()) sets tick values at beginning and end of the scale
-        this.xAxis = d3.svg.axis().scale(this.x).orient('bottom').tickValues(_this.x.domain()).tickFormat(function(d) {
-            return humanize.filesize(d*1024);
+        _.each(_this.data, function(dataset, index) {
+            _this.StorageMetricsChartData.datasets[index].data = dataset;
         });
-        this.yAxis = d3.svg.axis().scale(this.y).orient('left').tickValues([0,1,2]).tickFormat(function(d) {
-            if (d==0) {
-                return 'Shares';
-            } else if (d==1) {
-                return 'Pools';
-            } else if (d==2) {
-                return 'Disks';
-            }
+        _this.StorageMetricsChartOptions.scales.xAxes[0].ticks.max = _.max(_.union(_this.StorageMetricsChartData.datasets[0].data, _this.StorageMetricsChartData.datasets[1].data));
+    },
+
+    genStorageMetricsChartLegend: function() {
+
+        var _this = this;
+        var dataset = _this.StorageMetricsChartData.datasets;
+        _.each(_this.colors, function(color, index) {
+            _.each(_.keys(color), function(key, i) {
+                var legend = ''
+                legend += '<span style="background-color: ' + dataset[index].backgroundColor[i] + '; ';
+                legend += 'border-style: solid; border-color: ' + dataset[index].borderColor[i] + '; ';
+                legend += 'border-width: 1px; display: inline; width: 10px; height: 10px; float: left; margin: 2px;"></span> ';
+                legend += key;
+                this.$('#metrics-legend table tr:eq(' + index + ') td:eq(' + i + ')').html(legend);
+            });
         });
-
-        this.svgG.append("g")
-            .attr("class", "metrics-axis")
-            .attr("transform", "translate(0," + _this.height + ")")
-            .call(this.xAxis);
-
-        // render data1
-        this.svgG.selectAll('metrics-rect1')
-            .data(this.data1)
-            .enter()
-            .append('rect')
-            .attr('class', function(d) {
-                return d.name;
-            })
-            .attr('x',0)
-            .attr('y', function(d,i) {
-                //return _this.y(i) + _this.barHeight/2 + _this.barPadding;
-                return _this.y(i);
-            })
-            .attr('width', function(d) { return _this.x(d.value); })
-            .attr('height', function() { return _this.barHeight-4; });
-
-        // render data2
-        this.svgG.selectAll('metrics-rect2')
-            .data(this.data2)
-            .enter()
-            .append('rect')
-            .attr('class', function(d) {
-                return d.name;
-            })
-            .attr('x',0)
-            .attr('y', function(d,i) {
-                return _this.y(i);
-            })
-            .attr('width', function(d) { return _this.x(d.value); })
-            .attr('height', function() { return _this.barHeight-4; });
-
-        // text labels
-        this.svgG.selectAll('metrics-text-data1')
-            .data(this.data1)
-            .enter()
-            .append('text')
-            .attr("class", "metrics-text-data1")
-            .attr('x', function(d){
-                var xOff = _this.x(d.value) - 4;
-                return (xOff > 0 ? xOff : 0);
-            })
-            .attr('y', function(d,i) {
-                return _this.y(i) + 12;
-            })
-            .style('text-anchor', function(d) {
-                var xOff = _this.x(d.value) - 4;
-                return (xOff > 30 ?  'end' : 'start');
-            })
-            .text(function(d,i) {
-                //return humanize.filesize(d.value*1024);
-                var tmp = d.value - _this.data2[i].value;
-                var pct = (tmp/d.value) * 100;
-                return humanize.filesize(tmp*1024);
-            });
-
-        // text labels
-        this.svgG.selectAll('metrics-text-data2')
-            .data(this.data2)
-            .enter()
-            .append('text')
-            .attr("class", "metrics-text-data1")
-            .attr('x', function(d){
-                return 4;
-            })
-            .attr('y', function(d,i) {
-                return _this.y(i) + _this.barHeight - 12;
-            })
-            .style('text-anchor', function(d) {
-                return 'start';
-            })
-            .text(function(d,i) {
-                var pct = (d.value/_this.data1[i].value)*100;
-                return humanize.filesize(d.value*1024) + ' (' + pct.toFixed() + '%)';
-            });
-
-        this.gDisk = this.svgLegend.append('g')
-            .attr('class', 'metrics-disk-legend');
-
-        var diskLabelData = [
-            {label: 'Provisioned', fill: '#91BFF2'},
-            {label: 'Free', fill: '#E4EDF7'},
-        ];
-
-        var poolLabelData = [
-            {label: 'Capacity', fill: '#0BD6E3'},
-            {label: 'Raid overhead', fill: '#B0F1F5'},
-        ];
-
-        var shareLabelData = [
-            {label: 'Capacity', fill: '#FAE8CA'},
-            {label: 'Used', fill: '#FAC670'},
-        ];
-
-        var diskLabels = this.gDisk.selectAll('legend-disk')
-            .data(diskLabelData)
-            .enter();
-
-        var diskLabelG = diskLabels.append('g')
-            .attr("transform", function(d,i) {
-                return "translate(0, " + (i*14) + ")";
-            });
-
-        diskLabelG.append("rect")
-            .attr("width", 13)
-            .attr("height", 13)
-            .attr("fill", function(d) { return d.fill;});
-
-        diskLabelG.append("text")
-            .attr("text-anchor", "left")
-            .attr("class", "metrics-legend-text")
-            .attr("transform", function(d,i) {
-                return "translate(16,12)";
-            })
-            .text(function(d) { return d.label;});
-
-        var poolLabels = this.gDisk.selectAll('legend-pool')
-            .data(poolLabelData)
-            .enter();
-
-        var poolLabelG = poolLabels.append('g')
-            .attr("transform", function(d,i) {
-                return "translate(75, " + (i*14) + ")";
-            });
-
-        poolLabelG.append("rect")
-            .attr("width", 13)
-            .attr("height", 13)
-            .attr("fill", function(d) { return d.fill;});
-
-        poolLabelG.append("text")
-            .attr("text-anchor", "left")
-            .attr("class", "metrics-legend-text")
-            .attr("transform", function(d,i) {
-                return "translate(16,12)";
-            })
-            .text(function(d) { return d.label;});
-
-        var shareLabels = this.gDisk.selectAll('legend-share')
-            .data(shareLabelData)
-            .enter();
-
-        var shareLabelG = shareLabels.append('g')
-            .attr("transform", function(d,i) {
-                return "translate(160, " + (i*14) + ")";
-            });
-
-        shareLabelG.append("rect")
-            .attr("width", 13)
-            .attr("height", 13)
-            .attr("fill", function(d) { return d.fill;});
-
-        shareLabelG.append("text")
-            .attr("text-anchor", "left")
-            .attr("class", "metrics-legend-text")
-            .attr("transform", function(d,i) {
-                return "translate(16,12)"
-            })
-            .text(function(d) { return d.label;});
-
-        // draw y axis last so that it is above all rects
-        this.svgG.append("g")
-            .attr("class", "metrics-axis")
-            .call(this.yAxis)
-            .selectAll("text")
-            .style("text-anchor", "end")
-            .attr("transform", function(d) {
-                return "rotate(-90)";
-            })
-            .attr("dx", "-.4em")
-            .attr("dy", "-.30em");
-
     },
 
     resize: function(event) {
+
         this.constructor.__super__.resize.apply(this, arguments);
-        this.setDimensions();
-        this.setupSvg();
-        this.renderMetrics();
+        this.StorageMetricsChart.resize();
     }
 
 });

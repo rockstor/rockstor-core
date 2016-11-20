@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import enable_quota, btrfs_uuid, pool_usage, mount_root, \
-    get_pool_info, pool_raid, enable_quota
+    get_pool_info, pool_raid
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from share_helpers import (import_shares, import_snapshots)
@@ -213,7 +213,7 @@ class DiskMixin(object):
                 # update disk db object to reflect special root pool status
                 dob.pool = p
                 dob.save()
-                p.size = pool_usage(mount_root(p))[0]
+                p.size = p.usage_bound()
                 enable_quota(p)
                 p.uuid = btrfs_uuid(dob.name)
                 p.save()
@@ -379,7 +379,7 @@ class DiskDetailView(rfc.GenericView):
                 do.save()
                 mount_root(po)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
-            po.size = pool_usage('%s%s' % (settings.MNT_PT, po.name))[0]
+            po.size = po.usage_bound()
             po.save()
             enable_quota(po)
             import_shares(po, request)
