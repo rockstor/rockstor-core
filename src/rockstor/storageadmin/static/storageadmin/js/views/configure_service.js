@@ -176,9 +176,16 @@ ConfigureServiceView = RockstorLayoutView.extend({
             html: true,
             placement: 'right'
         });
-        this.$('#smb-form :input').tooltip({
+        this.$('#smb-form #global_config').tooltip({
             html: true,
-            placement: 'right'
+            placement: 'right',
+            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div> \
+                    <div class="tooltip-inner size300"></div></div>',
+            title: 'These lines will be added to the [global] section of smb.conf<br/><br/> \
+                    - <strong>Inline comments with # or ; not allowed, Samba testparm <u>will fail</u></strong><br/><br/> \
+                    - <strong>Samba params syntax</strong>:<br/>param = value (1 space both sides of equal sign)<br/><br/> \
+                    - <strong>Samba params with equals inside value field (ex. socket options param)</strong>:<br/>socket options = SO_SNDBUF=131072<br/>(spaces on first equal, <u>no spaces</u> around others)<br/><br/> \
+                    Please check <a href="https://www.samba.org/samba/docs/man/manpages/smb.conf.5.html" target="_new">Samba official docs</a> for further infos'
         });
         this.$('#docker-form #root_share').tooltip({
             html: true,
