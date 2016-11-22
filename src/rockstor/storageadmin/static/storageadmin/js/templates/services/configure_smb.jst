@@ -42,13 +42,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label" for="global_config">Custom global configuration </label>
                         <div class="col-sm-8">
-                            <textarea rows="5" columns="40" id="global_config" name="global_config" class="form-control">
-              {{#each config}}
-                {{#if (smb_check_custom_params @key)}} 
-                    {{@key}} = {{this}}
-                {{/if}}
-              {{/each}}
-            </textarea>
+                            <textarea rows="5" columns="40" id="global_config" name="global_config" class="form-control">{{display_smb_params}}</textarea>
                         </div>
                     </div>
 

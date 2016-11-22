@@ -471,9 +471,16 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         });
 
         //Samba Config page
-        Handlebars.registerHelper('smb_check_custom_params', function(key) {
+        Handlebars.registerHelper('display_smb_params', function() {
 
-            return key != 'workgroup';
+            var params = [],
+                _this = this;
+            _.each(_this.config, function(val, key) {
+                if (key != 'workgroup') {
+                    params.push(key + ' = ' + val);
+                }
+            });
+            return params.join('\n');
         });
 
         Handlebars.registerHelper('isEnabledAD', function(opts) {
