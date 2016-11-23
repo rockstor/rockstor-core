@@ -1067,6 +1067,28 @@ def get_base_device_byid(dev_byid, test_mode=False):
     # return the consequent result
     return base_dev_byid
 
+def get_bcache_device_type(device):
+    """
+    Helper function for scan_disks() to identify specific bcache device types:
+    We can either parse the output of bcache-super-show for the following lines:
+    sb.version....1 [backing device]
+    sb.version....3 [cache device]
+    or we can look for signature file entries within /sys/block/sdX/bcache :
+    Backing devices have an "label" entry
+    Cache devices have a "cache_replacement_policy"
+    The passed device will have already been identified as having:
+    lsblk FSTYPE=bcache
+    :param device: as presented by lsblk output ie sdX type with no path
+    :return: "bdev" for "backing device" or "cdev" for "cache device" or
+    None ie neither indicator is found.
+    """
+    sys_path = ('/sys/block/%s/bcache/' % device)
+    if os.path.isfile(sys_path + 'label'):
+        return "bdev"
+    if os.path.isfile(sys_path + 'cache_replacement_policy'):
+        return "cdev"
+    return None
+
 
 def get_base_device(device, test_mode=False):
     """
