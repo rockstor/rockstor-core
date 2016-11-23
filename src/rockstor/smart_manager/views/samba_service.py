@@ -60,8 +60,11 @@ class SambaServiceView(BaseServiceDetailView):
                 global_config = {}
                 gc_lines = config['global_config'].split('\n')
                 for l in gc_lines:
-                    gc_param = l.strip().split('=')
+                    gc_param = l.strip().split(' = ')
                     if (len(gc_param) == 2):
+                        if '=' in gc_param[0]:
+                            raise Exception('Syntax error, one param has wrong spaces around equal signs, '
+                                            'please check syntax of \'%s\'' % ''.join(gc_param))
                         global_config[gc_param[0].strip().lower()] = gc_param[1].strip()
                 #Default set current workgroup to one got via samba config page
                 global_config['workgroup'] = config['workgroup']

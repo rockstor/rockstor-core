@@ -1727,6 +1727,26 @@ input[type="radio"].selectedRoot {
   box-shadow: 0 0 12px #555;
 }
 
+.size200.tooltip-inner {
+    width: 200px;
+    max-width: 200px;
+}
+
+.size250.tooltip-inner {
+    width: 250px;
+    max-width: 250px;
+}
+
+.size300.tooltip-inner {
+    width: 300px;
+    max-width: 300px;
+}
+
+.size350.tooltip-inner {
+    width: 350px;
+    max-width: 350px;
+}
+
 /* cpu graph */
 .cpugraph path {
   stroke: steelblue;

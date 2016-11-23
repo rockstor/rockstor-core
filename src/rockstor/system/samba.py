@@ -211,7 +211,7 @@ def get_global_config():
                 re.match('\[', l) is not None):
                 global_section = False
                 continue
-            fields = l.strip().split('=')
+            fields = l.strip().split(' = ')
             if len(fields) < 2:
                 continue
             config[fields[0].strip()] = fields[1].strip()
