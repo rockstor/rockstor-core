@@ -59,14 +59,14 @@ class RockstorIO(socketio.Namespace):
 
     def cleanup(self, sid):
 
-        if sid in self.threads.keys():
+        if sid in self.threads:
             gevent.killall(self.threads[sid])
             del self.threads[sid]
 
     def spawn(self, func, sid, *args, **kwargs):
 
         thread = gevent.spawn(func, *args, **kwargs)
-        if sid in self.threads.keys():
+        if sid in self.threads:
             self.threads[sid].append(thread)
         else:
             self.threads[sid] = [thread]
