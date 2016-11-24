@@ -132,6 +132,8 @@ def scan_disks(min_size):
     serials_seen = []  # List tally of serials seen during this scan.
     # Stash variables to pass base info on root_disk to root device proper.
     root_serial = root_model = root_transport = root_vendor = root_hctl = None
+    # flag to indicate bcache backing device found.
+    bdev_flag = False
     # To use udevadm to retrieve serial number rather than lsblk, make this True
     # N.B. when lsblk returns no serial for a device then udev is used anyway.
     always_use_udev_serial = False
@@ -226,6 +228,34 @@ def scan_disks(min_size):
         if (dmap['FSTYPE'] == 'btrfs'):
             is_btrfs = True
         # End readability variables assignment
+        # We propagate the uuid for a bcache backing device to it's virtual
+        # counterpart device for use as a serial number.
+        # Note however that we are only interested in the 'backing device' type
+        # of bcache as it has the counterpart virtual block device.
+        if (dmap['FSTYPE'] == 'bcache') and \
+                        get_bcache_device_type(dmap['NAME']) == 'bdev':
+            bdev_uuid = dmap['UUID']
+            # We set out bdev_flag to inform the next device interpretation.
+            bdev_flag = True
+        else:
+            # we are a non bcache bdev but we might be the virtual device if we
+            # are listed directly after a bcache bdev.
+            if bdev_flag:
+                # Assumption is there is only one virtual device for each bdev
+                # and that it is listed directly after it's associated bdev.
+                # We are listed directly after a bcache bdev but could still be
+                # any device. As no cheap distinguishing properties we for now
+                # rely on device name:
+                if re.match('bcache', dmap['NAME']) is not None:
+                    # We avoid overwriting any serial just in case, normal
+                    # bcache virtual devices have no serial reported by lsblk
+                    # but future lsblk versions may change this.
+                    if dmap['SERIAL'] == '':
+                        # transfer our stashed bdev uuid as a serial.
+                        dmap['SERIAL'] = bdev_uuid
+            # reset the bdev_flag as we are only interested in devices listed
+            # directly after a bdev anyway.
+            bdev_flag = False
         if is_partition:
             dmap['parted'] = True
             # We don't account for partitions within partitions, but making
