@@ -66,7 +66,7 @@ setup(
         'distribute >= 0.6.35',
         'django == 1.6.11',
         'django-oauth-toolkit == 0.9.0',
-        'django-pipeline == 1.2.23',
+        'django-pipeline == 1.6.9',
         'django-ztask == 0.1.5',
         'djangorestframework == 3.1.1',
         'gevent == 1.1.2',

@@ -169,46 +169,35 @@ INSTALLED_APPS = (
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
-#yum install npm, then npm install yuglify, then ln -s ..../yuglify /usr/bin/yuglify
-#using yuglify compresses js and css to some extent. What do we do with .jst files?
-#PIPELINE_CSS_COMPRESSOR = 'pipeline.compressors.yuglify.YuglifyCompressor'
-#PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yuglify.YuglifyCompressor'
-PIPELINE_CSS_COMPRESSOR = None
-PIPELINE_JS_COMPRESSOR = None
-
-#for handlebars
-#PIPELINE_TEMPLATE_EXT = '.handlebars'
-PIPELINE_TEMPLATE_FUNC = 'Handlebars.compile'
-#PIPELINE_TEMPLATE_NAMESPACE = 'Handlebars.templates'
-
-# Don't wrap in anonymous function so that license is at the top.
-PIPELINE_DISABLE_WRAPPER = True
-
-
-PIPELINE_JS = {
-    'storageadmin': {
-        'source_filenames': (
-            'storageadmin/js/license.js',
-            'storageadmin/js/templates/**/*.jst',
-            'storageadmin/js/templates/**/**/*.jst',
-            'storageadmin/js/socket_listen.js',
-            'storageadmin/js/rockstor.js',
-            'storageadmin/js/rockstor_widgets.js',
-            'storageadmin/js/rockstor_logger.js',
-            'storageadmin/js/paginated_collection.js',
-            'storageadmin/js/router.js',
-            'storageadmin/js/graph.js',
-            'storageadmin/js/d3.slider2.js',
-            'storageadmin/js/models/models.js',
-            'storageadmin/js/views/common/*.js',
-            'storageadmin/js/views/*.js',
-            'storageadmin/js/views/pool/**/*.js',
-            'storageadmin/js/views/dashboard/*.js',
-            ),
-        'output_filename': 'storageadmin/js/storageadmin.js'
-        },
-    }
-
+PIPELINE = {
+    'DISABLE_WRAPPER': True,
+    'JS_COMPRESSOR': None,
+    'CSS_COMPRESSOR': None,
+    'TEMPLATE_FUNC': 'Handlebars.compile',
+    'JAVASCRIPT': {
+        'storageadmin': {
+            'source_filenames': (
+                'storageadmin/js/license.js',
+                'storageadmin/js/templates/**/*.jst',
+                'storageadmin/js/templates/**/**/*.jst',
+                'storageadmin/js/socket_listen.js',
+                'storageadmin/js/rockstor.js',
+                'storageadmin/js/rockstor_widgets.js',
+                'storageadmin/js/rockstor_logger.js',
+                'storageadmin/js/paginated_collection.js',
+                'storageadmin/js/router.js',
+                'storageadmin/js/graph.js',
+                'storageadmin/js/d3.slider2.js',
+                'storageadmin/js/models/models.js',
+                'storageadmin/js/views/common/*.js',
+                'storageadmin/js/views/*.js',
+                'storageadmin/js/views/pool/**/*.js',
+                'storageadmin/js/views/dashboard/*.js',
+                ),
+            'output_filename': 'storageadmin/js/storageadmin.js'
+            },
+        }
+}
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -423,3 +412,5 @@ ZTASKD_URL = 'ipc:///var/run/rockon-ztaskd'
 TASK_SCHEDULER = {
 	       'max_log': 100 #max number of task log entries to keep
 }
+
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
