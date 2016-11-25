@@ -59,12 +59,11 @@ setup(
     },
 
     install_requires=[
-        'South == 1.0.2',
         'URLObject == 2.1.1',
         'chardet == 2.3.0',
         'coverage',
         'distribute >= 0.6.35',
-        'django == 1.6.11',
+        'django == 1.8.16',
         'django-oauth-toolkit == 0.9.0',
         'django-pipeline == 1.6.9',
         'django-ztask == 0.1.5',

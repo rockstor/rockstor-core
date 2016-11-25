@@ -162,7 +162,6 @@ INSTALLED_APPS = (
     'pipeline',
     'rest_framework',
     'smart_manager',
-    'south',
     'oauth2_provider',
     'django_ztask',
 )
