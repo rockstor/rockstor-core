@@ -208,8 +208,8 @@ class DiskMixin(object):
                 # setup our special root disk db entry in Pool
                 # TODO: dynamically retrieve raid level.
                 p = Pool(name=d.label, raid='single', role='root')
-                p.disk_set.add(dob)
                 p.save()
+                p.disk_set.add(dob)
                 # update disk db object to reflect special root pool status
                 dob.pool = p
                 dob.save()
