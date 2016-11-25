@@ -44,7 +44,7 @@ class AFPServiceView(BaseServiceDetailView):
         except Exception, e:
             handle_exception(e, request, msg)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service

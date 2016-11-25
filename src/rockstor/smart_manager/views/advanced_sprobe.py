@@ -84,7 +84,7 @@ class AdvancedSProbeView(rfc.GenericView):
             e_msg = ('Probe: %s with id: %s does not exist' % (pname, pid))
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, pid=None, command=None):
         """
         start or stop a smart probe

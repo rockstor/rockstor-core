@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 class ServiceMonitorView(BaseServiceDetailView):
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service

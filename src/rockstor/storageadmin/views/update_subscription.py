@@ -74,7 +74,7 @@ class UpdateSubscriptionListView(rfc.GenericView):
         switch_repo(ono)
         return ono
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         with self._handle_exception(request):
             if (command == 'activate-stable'):

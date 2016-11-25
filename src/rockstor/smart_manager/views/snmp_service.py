@@ -34,7 +34,7 @@ class SNMPServiceView(BaseServiceDetailView):
 
     service_name = 'snmpd'
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
