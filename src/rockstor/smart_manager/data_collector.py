@@ -49,8 +49,30 @@ from system.pkg_mgmt import update_check
 import logging
 logger = logging.getLogger(__name__)
 
+class RockstorIO(socketio.Namespace):
+    "RockstorIO socketio.NameSpace SubClass"
+    
+    def __init__(self, *args, **kwargs):
 
-class PincardManagerNamespace(socketio.Namespace):
+        super(RockstorIO, self).__init__(*args, **kwargs)
+        self.threads = {}
+
+    def cleanup(self, sid):
+
+        if sid in self.threads:
+            gevent.killall(self.threads[sid])
+            del self.threads[sid]
+
+    def spawn(self, func, sid, *args, **kwargs):
+
+        thread = gevent.spawn(func, *args, **kwargs)
+        if sid in self.threads:
+            self.threads[sid].append(thread)
+        else:
+            self.threads[sid] = [thread]
+
+
+class PincardManagerNamespace(RockstorIO):
 
     def on_connect(self, sid, environ):
 
@@ -65,6 +87,7 @@ class PincardManagerNamespace(socketio.Namespace):
         self.pins_check = None
         self.pass_reset_time = None
         self.otp = 'none'
+        self.cleanup(sid)
     
     def on_generatepincard(self, sid, uid):
         
@@ -73,7 +96,7 @@ class PincardManagerNamespace(socketio.Namespace):
             new_pincard = save_pincard(uid)
             self.emit('newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
 
-        gevent.spawn(create_pincard, uid)
+        self.spawn(create_pincard, sid, uid)
     
     def on_haspincard(self, sid, user):
         
@@ -112,7 +135,7 @@ class PincardManagerNamespace(socketio.Namespace):
 
             self.emit('haspincard', {'key': 'pincardManager:haspincard', 'has_pincard': user_has_pincard, 'pins_check': pins, 'otp': otp})
 
-        gevent.spawn(check_has_pincard, user)
+        self.spawn(check_has_pincard, sid, user)
     
     def on_passreset(self, sid, pinlist, otp='none'):
         
@@ -141,9 +164,9 @@ class PincardManagerNamespace(socketio.Namespace):
                 
             self.emit('passresetresponse', {'key': 'pincardManager:passresetresponse', 'response': reset_response, 'status': reset_status})
             
-        gevent.spawn(password_reset, pinlist, otp)
+        self.spawn(password_reset, sid, pinlist, otp)
 
-class LogManagerNamespace(socketio.Namespace):
+class LogManagerNamespace(RockstorIO):
 
     #Livereader subprocess append with self so accessible by all funcs
     livereader_process = None
@@ -185,14 +208,15 @@ class LogManagerNamespace(socketio.Namespace):
         self.emit('logwelcome', {
             'key': 'logManager:logwelcome', 'data': 'Welcome to Rockstor LogManager'
         })
-        gevent.spawn(self.find_rotating_logs)
+        self.spawn(self.find_rotating_logs, sid)
 
     def on_disconnect(self, sid):
 
         #Func to secure tail -f reader
         #If browser close/crash/accidentally ends while a tail -f running,
         #this ensures running process to get stopped
-        gevent.spawn(self.kill_live_reading)
+        self.spawn(self.kill_live_reading, sid)
+        self.cleanup(sid)
     
     def build_log_path(self, selectedlog):
         
@@ -244,7 +268,7 @@ class LogManagerNamespace(socketio.Namespace):
         
     def on_livereading(self, sid, action):
 
-        gevent.spawn(self.kill_live_reading)
+        self.spawn(self.kill_live_reading, sid)
 
     def on_downloadlogs(self, sid, logs_queued, recipient):
 
@@ -277,7 +301,7 @@ class LogManagerNamespace(socketio.Namespace):
                 }
             })
         
-        gevent.spawn(logs_downloader, logs_queued, recipient)
+        self.spawn(logs_downloader, sid, logs_queued, recipient)
 
     def on_readlog(self, sid, reader, logfile):
 
@@ -375,9 +399,9 @@ class LogManagerNamespace(socketio.Namespace):
         log_path = self.build_log_path(logfile)
 
         if (reader == 'tailf'):
-            gevent.spawn(live_reader, log_path)
+            self.spawn(live_reader, sid, log_path)
         else:
-            gevent.spawn(static_reader, reader, log_path)
+            self.spawn(static_reader, sid, reader, log_path)
         
     def on_getfilesize(self, sid, logfile):
 
@@ -386,10 +410,10 @@ class LogManagerNamespace(socketio.Namespace):
             file_size = path.getsize(self.build_log_path(logfile))
             self.emit('logsize', {'key': 'logManager:logsize', 'data': file_size})
         
-        gevent.spawn(file_size, logfile)
+        self.spawn(file_size, sid, logfile)
 
 
-class DisksWidgetNamespace(socketio.Namespace):
+class DisksWidgetNamespace(RockstorIO):
 
     switch = False
     byid_disk_map = {}
@@ -398,10 +422,11 @@ class DisksWidgetNamespace(socketio.Namespace):
 
         self.byid_disk_map = get_byid_name_map()
         self.switch = True
-        gevent.spawn(self.send_top_disks)
+        self.spawn(self.send_top_disks, sid)
 
     def on_disconnect(self, sid):
 
+        self.cleanup(sid)
         self.switch = False
 
     def send_top_disks(self):
@@ -473,7 +498,7 @@ class DisksWidgetNamespace(socketio.Namespace):
         get_stats()
 
 
-class CPUWidgetNamespace(socketio.Namespace):
+class CPUWidgetNamespace(RockstorIO):
 
     send_cpu = False
 
@@ -481,10 +506,11 @@ class CPUWidgetNamespace(socketio.Namespace):
 
         # Switch for emitting cpu data
         self.send_cpu = True
-        gevent.spawn(self.send_cpu_data)
+        self.spawn(self.send_cpu_data, sid)
 
     def on_disconnect(self, sid):
 
+        self.cleanup(sid)
         self.send_cpu = False
 
     def send_cpu_data(self):
@@ -507,16 +533,18 @@ class CPUWidgetNamespace(socketio.Namespace):
             gevent.sleep(1)
 
 
-class NetworkWidgetNamespace(socketio.Namespace):
+class NetworkWidgetNamespace(RockstorIO):
+
     send = False
 
     def on_connect(self, sid, environ):
 
         self.send = True
-        gevent.spawn(self.network_stats)
+        self.spawn(self.network_stats, sid)
 
     def on_disconnect(self, sid):
 
+        self.cleanup(sid)
         self.send = False
 
     def network_stats(self):
@@ -570,17 +598,18 @@ class NetworkWidgetNamespace(socketio.Namespace):
         send_network_stats()
 
 
-class MemoryWidgetNamespace(socketio.Namespace):
+class MemoryWidgetNamespace(RockstorIO):
 
     switch = False
 
     def on_connect(self, sid, environ):
 
         self.switch = True
-        gevent.spawn(self.send_meminfo_data)
+        self.spawn(self.send_meminfo_data, sid)
 
     def on_disconnect(self, sid):
 
+        self.cleanup(sid)
         self.switch = False
         
     def send_meminfo_data(self):
@@ -622,7 +651,7 @@ class MemoryWidgetNamespace(socketio.Namespace):
             })
             gevent.sleep(1)
 
-class ServicesNamespace(socketio.Namespace):
+class ServicesNamespace(RockstorIO):
 
     start = False
 
@@ -632,15 +661,17 @@ class ServicesNamespace(socketio.Namespace):
             'key': 'services:connected', 'data': 'connected'
         })
         self.start = True
-        gevent.spawn(self.send_service_statuses)
+        self.spawn(self.send_service_statuses, sid)
 
     def on_disconnect(self, sid):
 
+        self.cleanup(sid)
         self.start = False
 
     def send_service_statuses(self):
 
         while self.start:
+
             data = {}
             for service in Service.objects.all():
                 config = None
@@ -661,7 +692,7 @@ class ServicesNamespace(socketio.Namespace):
             gevent.sleep(15)
 
 
-class SysinfoNamespace(socketio.Namespace):
+class SysinfoNamespace(RockstorIO):
 
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
@@ -672,17 +703,18 @@ class SysinfoNamespace(socketio.Namespace):
         self.aw = APIWrapper()
         self.emit('connected', {'key' : 'sysinfo:connected', 'data' : 'connected'})
         self.start = True
-        gevent.spawn(self.update_storage_state)
-        gevent.spawn(self.update_check)
-        gevent.spawn(self.update_rockons)
-        gevent.spawn(self.send_kernel_info)
-        gevent.spawn(self.prune_logs)
-        gevent.spawn(self.send_localtime)
-        gevent.spawn(self.send_uptime)
+        self.spawn(self.update_storage_state, sid)
+        self.spawn(self.update_check, sid)
+        self.spawn(self.update_rockons, sid)
+        self.spawn(self.send_kernel_info, sid)
+        self.spawn(self.prune_logs, sid)
+        self.spawn(self.send_localtime, sid)
+        self.spawn(self.send_uptime, sid)
 
     # Run on every disconnect
     def on_disconnect(self, sid):
 
+        self.cleanup(sid)
         self.start = False
 
     def send_uptime(self):

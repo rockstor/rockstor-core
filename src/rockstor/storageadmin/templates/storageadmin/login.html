@@ -248,8 +248,8 @@
 	
 	$('#pincard_req_reset').on('click', PincardManager.checkUserHasPincard);
 	$('#pincard_pins').on('click', '#pincard_apply_reset', PincardManager.SubmitResetForm);
-	PincardSocket.on('pincardManager:haspincard', PincardManager.RenderResetForm);
-	PincardSocket.on('pincardManager:passresetresponse', PincardManager.RenderResponse);
+	PincardSocket.on('haspincard', PincardManager.RenderResetForm);
+	PincardSocket.on('passresetresponse', PincardManager.RenderResponse);
 	
     $('#forgot-pw-info').overlay({load: false});
     $('#forgot-pw').click(function () {
