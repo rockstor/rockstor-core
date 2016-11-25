@@ -157,15 +157,15 @@ ALTER SEQUENCE smart_manager_loadavg_id_seq OWNED BY smart_manager_loadavg.id;
 
 CREATE TABLE smart_manager_meminfo (
     id integer NOT NULL,
-    total integer NOT NULL,
-    free integer NOT NULL,
-    buffers integer NOT NULL,
-    cached integer NOT NULL,
-    swap_total integer NOT NULL,
-    swap_free integer NOT NULL,
-    active integer NOT NULL,
-    inactive integer NOT NULL,
-    dirty integer NOT NULL,
+    total bigint NOT NULL,
+    free bigint NOT NULL,
+    buffers bigint NOT NULL,
+    cached bigint NOT NULL,
+    swap_total bigint NOT NULL,
+    swap_free bigint NOT NULL,
+    active bigint NOT NULL,
+    inactive bigint NOT NULL,
+    dirty bigint NOT NULL,
     ts timestamp with time zone NOT NULL
 );
 
@@ -203,19 +203,19 @@ CREATE TABLE smart_manager_netstat (
     kb_rx double precision NOT NULL,
     packets_rx double precision NOT NULL,
     errs_rx double precision NOT NULL,
-    drop_rx integer NOT NULL,
-    fifo_rx integer NOT NULL,
-    frame integer NOT NULL,
-    compressed_rx integer NOT NULL,
-    multicast_rx integer NOT NULL,
+    drop_rx bigint NOT NULL,
+    fifo_rx bigint NOT NULL,
+    frame bigint NOT NULL,
+    compressed_rx bigint NOT NULL,
+    multicast_rx bigint NOT NULL,
     kb_tx double precision NOT NULL,
-    packets_tx integer NOT NULL,
-    errs_tx integer NOT NULL,
-    drop_tx integer NOT NULL,
-    fifo_tx integer NOT NULL,
-    colls integer NOT NULL,
-    carrier integer NOT NULL,
-    compressed_tx integer NOT NULL,
+    packets_tx bigint NOT NULL,
+    errs_tx bigint NOT NULL,
+    drop_tx bigint NOT NULL,
+    fifo_tx bigint NOT NULL,
+    colls bigint NOT NULL,
+    carrier bigint NOT NULL,
+    compressed_tx bigint NOT NULL,
     ts timestamp with time zone NOT NULL
 );
 
@@ -251,14 +251,14 @@ CREATE TABLE smart_manager_nfsdcalldistribution (
     id integer NOT NULL,
     rid_id integer NOT NULL,
     ts timestamp with time zone NOT NULL,
-    num_lookup integer NOT NULL,
-    num_read integer NOT NULL,
-    num_write integer NOT NULL,
-    num_create integer NOT NULL,
-    num_commit integer NOT NULL,
-    num_remove integer NOT NULL,
-    sum_read integer NOT NULL,
-    sum_write integer NOT NULL
+    num_lookup bigint NOT NULL,
+    num_read bigint NOT NULL,
+    num_write bigint NOT NULL,
+    num_create bigint NOT NULL,
+    num_commit bigint NOT NULL,
+    num_remove bigint NOT NULL,
+    sum_read bigint NOT NULL,
+    sum_write bigint NOT NULL
 );
 
 
@@ -294,14 +294,14 @@ CREATE TABLE smart_manager_nfsdclientdistribution (
     rid_id integer NOT NULL,
     ts timestamp with time zone NOT NULL,
     ip character varying(15) NOT NULL,
-    num_lookup integer NOT NULL,
-    num_read integer NOT NULL,
-    num_write integer NOT NULL,
-    num_create integer NOT NULL,
-    num_commit integer NOT NULL,
-    num_remove integer NOT NULL,
-    sum_read integer NOT NULL,
-    sum_write integer NOT NULL
+    num_lookup bigint NOT NULL,
+    num_read bigint NOT NULL,
+    num_write bigint NOT NULL,
+    num_create bigint NOT NULL,
+    num_commit bigint NOT NULL,
+    num_remove bigint NOT NULL,
+    sum_read bigint NOT NULL,
+    sum_write bigint NOT NULL
 );
 
 
@@ -338,14 +338,14 @@ CREATE TABLE smart_manager_nfsdshareclientdistribution (
     ts timestamp with time zone NOT NULL,
     share character varying(255) NOT NULL,
     client character varying(100) NOT NULL,
-    num_lookup integer NOT NULL,
-    num_read integer NOT NULL,
-    num_write integer NOT NULL,
-    num_create integer NOT NULL,
-    num_commit integer NOT NULL,
-    num_remove integer NOT NULL,
-    sum_read integer NOT NULL,
-    sum_write integer NOT NULL
+    num_lookup bigint NOT NULL,
+    num_read bigint NOT NULL,
+    num_write bigint NOT NULL,
+    num_create bigint NOT NULL,
+    num_commit bigint NOT NULL,
+    num_remove bigint NOT NULL,
+    sum_read bigint NOT NULL,
+    sum_write bigint NOT NULL
 );
 
 
@@ -381,14 +381,14 @@ CREATE TABLE smart_manager_nfsdsharedistribution (
     rid_id integer NOT NULL,
     ts timestamp with time zone NOT NULL,
     share character varying(255) NOT NULL,
-    num_lookup integer NOT NULL,
-    num_read integer NOT NULL,
-    num_write integer NOT NULL,
-    num_create integer NOT NULL,
-    num_commit integer NOT NULL,
-    num_remove integer NOT NULL,
-    sum_read integer NOT NULL,
-    sum_write integer NOT NULL
+    num_lookup bigint NOT NULL,
+    num_read bigint NOT NULL,
+    num_write bigint NOT NULL,
+    num_create bigint NOT NULL,
+    num_commit bigint NOT NULL,
+    num_remove bigint NOT NULL,
+    sum_read bigint NOT NULL,
+    sum_write bigint NOT NULL
 );
 
 
@@ -427,14 +427,14 @@ CREATE TABLE smart_manager_nfsduidgiddistribution (
     client character varying(100) NOT NULL,
     uid integer NOT NULL,
     gid integer NOT NULL,
-    num_lookup integer NOT NULL,
-    num_read integer NOT NULL,
-    num_write integer NOT NULL,
-    num_create integer NOT NULL,
-    num_commit integer NOT NULL,
-    num_remove integer NOT NULL,
-    sum_read integer NOT NULL,
-    sum_write integer NOT NULL
+    num_lookup bigint NOT NULL,
+    num_read bigint NOT NULL,
+    num_write bigint NOT NULL,
+    num_create bigint NOT NULL,
+    num_commit bigint NOT NULL,
+    num_remove bigint NOT NULL,
+    sum_read bigint NOT NULL,
+    sum_write bigint NOT NULL
 );
 
 
@@ -468,9 +468,10 @@ ALTER SEQUENCE smart_manager_nfsduidgiddistribution_id_seq OWNED BY smart_manage
 CREATE TABLE smart_manager_poolusage (
     id integer NOT NULL,
     pool character varying(4096) NOT NULL,
-    usage integer NOT NULL,
     ts timestamp with time zone NOT NULL,
-    count integer NOT NULL
+    count bigint NOT NULL,
+    free bigint NOT NULL,
+    reclaimable bigint NOT NULL
 );
 
 
@@ -505,7 +506,7 @@ CREATE TABLE smart_manager_receivetrail (
     id integer NOT NULL,
     rshare_id integer NOT NULL,
     snap_name character varying(1024) NOT NULL,
-    kb_received integer NOT NULL,
+    kb_received bigint NOT NULL,
     receive_pending timestamp with time zone,
     receive_succeeded timestamp with time zone,
     receive_failed timestamp with time zone,
@@ -551,10 +552,11 @@ CREATE TABLE smart_manager_replica (
     dpool character varying(4096) NOT NULL,
     dshare character varying(4096),
     enabled boolean NOT NULL,
-    frequency integer NOT NULL,
     data_port integer NOT NULL,
     meta_port integer NOT NULL,
-    ts timestamp with time zone
+    ts timestamp with time zone,
+    crontab character varying(64),
+    replication_ip character varying(4096)
 );
 
 
@@ -628,7 +630,7 @@ CREATE TABLE smart_manager_replicatrail (
     id integer NOT NULL,
     replica_id integer NOT NULL,
     snap_name character varying(1024) NOT NULL,
-    kb_sent integer NOT NULL,
+    kb_sent bigint NOT NULL,
     snapshot_created timestamp with time zone,
     snapshot_failed timestamp with time zone,
     send_pending timestamp with time zone,
@@ -706,7 +708,7 @@ CREATE TABLE smart_manager_servicestatus (
     id integer NOT NULL,
     service_id integer NOT NULL,
     status boolean NOT NULL,
-    count integer NOT NULL,
+    count bigint NOT NULL,
     ts timestamp with time zone NOT NULL
 );
 
@@ -741,10 +743,10 @@ ALTER SEQUENCE smart_manager_servicestatus_id_seq OWNED BY smart_manager_service
 CREATE TABLE smart_manager_shareusage (
     id integer NOT NULL,
     name character varying(4096) NOT NULL,
-    r_usage integer NOT NULL,
-    e_usage integer NOT NULL,
+    r_usage bigint NOT NULL,
+    e_usage bigint NOT NULL,
     ts timestamp with time zone NOT NULL,
-    count integer NOT NULL
+    count bigint NOT NULL
 );
 
 
@@ -816,7 +818,7 @@ ALTER SEQUENCE smart_manager_sprobe_id_seq OWNED BY smart_manager_sprobe.id;
 CREATE TABLE smart_manager_task (
     id integer NOT NULL,
     task_def_id integer NOT NULL,
-    state character varying(7) NOT NULL,
+    state character varying(64) NOT NULL,
     start timestamp with time zone NOT NULL,
     "end" timestamp with time zone
 );
@@ -853,10 +855,10 @@ CREATE TABLE smart_manager_taskdefinition (
     id integer NOT NULL,
     name character varying(255) NOT NULL,
     task_type character varying(100) NOT NULL,
-    ts timestamp with time zone NOT NULL,
-    frequency integer,
     json_meta character varying(8192) NOT NULL,
-    enabled boolean NOT NULL
+    enabled boolean NOT NULL,
+    crontab character varying(64),
+    crontabwindow character varying(64)
 );
 
 
@@ -889,7 +891,7 @@ ALTER SEQUENCE smart_manager_taskdefinition_id_seq OWNED BY smart_manager_taskde
 
 CREATE TABLE smart_manager_vmstat (
     id integer NOT NULL,
-    free_pages integer NOT NULL,
+    free_pages bigint NOT NULL,
     ts timestamp with time zone NOT NULL
 );
 
@@ -1267,7 +1269,7 @@ SELECT pg_catalog.setval('smart_manager_nfsduidgiddistribution_id_seq', 1, false
 -- Data for Name: smart_manager_poolusage; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY smart_manager_poolusage (id, pool, usage, ts, count) FROM stdin;
+COPY smart_manager_poolusage (id, pool, ts, count, free, reclaimable) FROM stdin;
 \.
 
 
@@ -1297,7 +1299,7 @@ SELECT pg_catalog.setval('smart_manager_receivetrail_id_seq', 1, false);
 -- Data for Name: smart_manager_replica; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY smart_manager_replica (id, task_name, share, pool, appliance, dpool, dshare, enabled, frequency, data_port, meta_port, ts) FROM stdin;
+COPY smart_manager_replica (id, task_name, share, pool, appliance, dpool, dshare, enabled, data_port, meta_port, ts, crontab, replication_ip) FROM stdin;
 \.
 
 
@@ -1343,14 +1345,23 @@ SELECT pg_catalog.setval('smart_manager_replicatrail_id_seq', 1, false);
 --
 
 COPY smart_manager_service (id, name, display_name, config) FROM stdin;
-1	replication	Replication	\N
+9	rockstor	Rockstor	\N
+10	smartd	S.M.A.R.T	\N
 2	smb	Samba	\N
-3	nfs	NFS	\N
-4	winbind	AD	\N
+11	active-directory	Active Directory	\N
 5	ntpd	NTP	\N
-6	nis	NIS	\N
-7	ldap	LDAP	\N
+12	nut	NUT-UPS	\N
+13	snmpd	SNMP	\N
 8	sftp	SFTP	\N
+14	docker	Rock-on	\N
+1	replication	Replication	\N
+15	shellinaboxd	Shell In A Box	{"detach": false, "css": "white-on-black", "shelltype": "LOGIN"}
+3	nfs	NFS	\N
+7	ldap	LDAP	\N
+6	nis	NIS	\N
+16	netatalk	AFP	\N
+17	ztask-daemon	ZTaskd	\N
+18	rockstor-bootstrap	Bootstrap	\N
 \.
 
 
@@ -1358,7 +1369,7 @@ COPY smart_manager_service (id, name, display_name, config) FROM stdin;
 -- Name: smart_manager_service_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
 --
 
-SELECT pg_catalog.setval('smart_manager_service_id_seq', 8, true);
+SELECT pg_catalog.setval('smart_manager_service_id_seq', 18, true);
 
 
 --
@@ -1425,7 +1436,7 @@ SELECT pg_catalog.setval('smart_manager_task_id_seq', 1, false);
 -- Data for Name: smart_manager_taskdefinition; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY smart_manager_taskdefinition (id, name, task_type, ts, frequency, json_meta, enabled) FROM stdin;
+COPY smart_manager_taskdefinition (id, name, task_type, json_meta, enabled, crontab, crontabwindow) FROM stdin;
 \.
 
 
@@ -1457,6 +1468,13 @@ SELECT pg_catalog.setval('smart_manager_vmstat_id_seq', 1, false);
 
 COPY south_migrationhistory (id, app_name, migration, applied) FROM stdin;
 1	smart_manager	0001_initial	2014-02-26 20:51:51.436702-08
+2	smart_manager	0002_auto__chg_field_task_state	2016-11-24 15:00:34.323794-08
+3	smart_manager	0003_auto__chg_field_nfsdsharedistribution_num_write__chg_field_nfsdsharedi	2016-11-24 15:00:36.965905-08
+4	smart_manager	0004_auto__del_field_poolusage_usage__add_field_poolusage_free__add_field_p	2016-11-24 15:00:37.071916-08
+5	smart_manager	0005_auto__del_field_taskdefinition_frequency__del_field_taskdefinition_ts_	2016-11-24 15:00:37.133887-08
+6	smart_manager	0006_auto__del_field_replica_frequency__add_field_replica_crontab	2016-11-24 15:00:37.197753-08
+7	smart_manager	0007_auto__add_field_replica_replication_ip	2016-11-24 15:00:37.255385-08
+8	smart_manager	0008_add_field_TaskDefinition_crontabwindow	2016-11-24 15:00:37.315807-08
 \.
 
 
@@ -1464,7 +1482,7 @@ COPY south_migrationhistory (id, app_name, migration, applied) FROM stdin;
 -- Name: south_migrationhistory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
 --
 
-SELECT pg_catalog.setval('south_migrationhistory_id_seq', 1, false);
+SELECT pg_catalog.setval('south_migrationhistory_id_seq', 8, true);
 
 
 --
@@ -1912,13 +1930,6 @@ CREATE INDEX smart_manager_task_task_def_id ON smart_manager_task USING btree (t
 --
 
 CREATE INDEX smart_manager_taskdefinition_name_like ON smart_manager_taskdefinition USING btree (name varchar_pattern_ops);
-
-
---
--- Name: smart_manager_taskdefinition_ts; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
---
-
-CREATE INDEX smart_manager_taskdefinition_ts ON smart_manager_taskdefinition USING btree (ts);
 
 
 --

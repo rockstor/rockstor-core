@@ -363,6 +363,176 @@ ALTER SEQUENCE django_site_id_seq OWNED BY django_site.id;
 
 
 --
+-- Name: django_ztask_task; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE django_ztask_task (
+    uuid character varying(36) NOT NULL,
+    function_name character varying(255) NOT NULL,
+    args text NOT NULL,
+    kwargs text NOT NULL,
+    retry_count integer NOT NULL,
+    last_exception text,
+    next_attempt double precision,
+    failed timestamp with time zone,
+    created timestamp with time zone
+);
+
+
+ALTER TABLE public.django_ztask_task OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_accesstoken; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE oauth2_provider_accesstoken (
+    id integer NOT NULL,
+    user_id integer,
+    token character varying(255) NOT NULL,
+    application_id integer NOT NULL,
+    expires timestamp with time zone NOT NULL,
+    scope text NOT NULL
+);
+
+
+ALTER TABLE public.oauth2_provider_accesstoken OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_accesstoken_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE oauth2_provider_accesstoken_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.oauth2_provider_accesstoken_id_seq OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_accesstoken_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE oauth2_provider_accesstoken_id_seq OWNED BY oauth2_provider_accesstoken.id;
+
+
+--
+-- Name: oauth2_provider_application; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE oauth2_provider_application (
+    id integer NOT NULL,
+    client_id character varying(100) NOT NULL,
+    user_id integer NOT NULL,
+    redirect_uris text NOT NULL,
+    client_type character varying(32) NOT NULL,
+    authorization_grant_type character varying(32) NOT NULL,
+    client_secret character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    skip_authorization boolean NOT NULL
+);
+
+
+ALTER TABLE public.oauth2_provider_application OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_application_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE oauth2_provider_application_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.oauth2_provider_application_id_seq OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_application_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE oauth2_provider_application_id_seq OWNED BY oauth2_provider_application.id;
+
+
+--
+-- Name: oauth2_provider_grant; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE oauth2_provider_grant (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    code character varying(255) NOT NULL,
+    application_id integer NOT NULL,
+    expires timestamp with time zone NOT NULL,
+    redirect_uri character varying(255) NOT NULL,
+    scope text NOT NULL
+);
+
+
+ALTER TABLE public.oauth2_provider_grant OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_grant_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE oauth2_provider_grant_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.oauth2_provider_grant_id_seq OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_grant_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE oauth2_provider_grant_id_seq OWNED BY oauth2_provider_grant.id;
+
+
+--
+-- Name: oauth2_provider_refreshtoken; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE oauth2_provider_refreshtoken (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    token character varying(255) NOT NULL,
+    application_id integer NOT NULL,
+    access_token_id integer NOT NULL
+);
+
+
+ALTER TABLE public.oauth2_provider_refreshtoken OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_refreshtoken_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE oauth2_provider_refreshtoken_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.oauth2_provider_refreshtoken_id_seq OWNER TO rocky;
+
+--
+-- Name: oauth2_provider_refreshtoken_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE oauth2_provider_refreshtoken_id_seq OWNED BY oauth2_provider_refreshtoken.id;
+
+
+--
 -- Name: south_migrationhistory; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -395,6 +565,39 @@ ALTER TABLE public.south_migrationhistory_id_seq OWNER TO rocky;
 --
 
 ALTER SEQUENCE south_migrationhistory_id_seq OWNED BY south_migrationhistory.id;
+
+
+--
+-- Name: storageadmin_advancednfsexport; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_advancednfsexport (
+    id integer NOT NULL,
+    export_str character varying(4096) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_advancednfsexport OWNER TO rocky;
+
+--
+-- Name: storageadmin_advancednfsexport_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_advancednfsexport_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_advancednfsexport_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_advancednfsexport_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_advancednfsexport_id_seq OWNED BY storageadmin_advancednfsexport.id;
 
 
 --
@@ -441,7 +644,9 @@ CREATE TABLE storageadmin_appliance (
     ip character varying(4096) NOT NULL,
     current_appliance boolean NOT NULL,
     hostname character varying(128) NOT NULL,
-    mgmt_port integer NOT NULL
+    mgmt_port integer NOT NULL,
+    client_id character varying(100),
+    client_secret character varying(255)
 );
 
 
@@ -466,6 +671,112 @@ ALTER TABLE public.storageadmin_appliance_id_seq OWNER TO rocky;
 --
 
 ALTER SEQUENCE storageadmin_appliance_id_seq OWNED BY storageadmin_appliance.id;
+
+
+--
+-- Name: storageadmin_bondconnection; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_bondconnection (
+    id integer NOT NULL,
+    connection_id integer,
+    name character varying(64),
+    config character varying(2048)
+);
+
+
+ALTER TABLE public.storageadmin_bondconnection OWNER TO rocky;
+
+--
+-- Name: storageadmin_bondconnection_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_bondconnection_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_bondconnection_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_bondconnection_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_bondconnection_id_seq OWNED BY storageadmin_bondconnection.id;
+
+
+--
+-- Name: storageadmin_configbackup; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_configbackup (
+    id integer NOT NULL,
+    filename character varying(64) NOT NULL,
+    md5sum character varying(32),
+    size integer,
+    config_backup character varying(100)
+);
+
+
+ALTER TABLE public.storageadmin_configbackup OWNER TO rocky;
+
+--
+-- Name: storageadmin_configbackup_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_configbackup_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_configbackup_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_configbackup_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_configbackup_id_seq OWNED BY storageadmin_configbackup.id;
+
+
+--
+-- Name: storageadmin_containeroption; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_containeroption (
+    id integer NOT NULL,
+    container_id integer NOT NULL,
+    name character varying(1024) NOT NULL,
+    val character varying(1024) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_containeroption OWNER TO rocky;
+
+--
+-- Name: storageadmin_containeroption_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_containeroption_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_containeroption_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_containeroption_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_containeroption_id_seq OWNED BY storageadmin_containeroption.id;
 
 
 --
@@ -503,16 +814,206 @@ ALTER SEQUENCE storageadmin_dashboardconfig_id_seq OWNED BY storageadmin_dashboa
 
 
 --
+-- Name: storageadmin_dcontainer; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_dcontainer (
+    id integer NOT NULL,
+    rockon_id integer NOT NULL,
+    dimage_id integer NOT NULL,
+    name character varying(1024) NOT NULL,
+    launch_order integer NOT NULL,
+    uid integer
+);
+
+
+ALTER TABLE public.storageadmin_dcontainer OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcontainer_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_dcontainer_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_dcontainer_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcontainer_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_dcontainer_id_seq OWNED BY storageadmin_dcontainer.id;
+
+
+--
+-- Name: storageadmin_dcontainerenv; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_dcontainerenv (
+    id integer NOT NULL,
+    container_id integer NOT NULL,
+    key character varying(1024) NOT NULL,
+    val character varying(1024),
+    description character varying(2048),
+    label character varying(64)
+);
+
+
+ALTER TABLE public.storageadmin_dcontainerenv OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcontainerenv_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_dcontainerenv_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_dcontainerenv_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcontainerenv_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_dcontainerenv_id_seq OWNED BY storageadmin_dcontainerenv.id;
+
+
+--
+-- Name: storageadmin_dcontainerlink; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_dcontainerlink (
+    id integer NOT NULL,
+    source_id integer NOT NULL,
+    destination_id integer NOT NULL,
+    name character varying(64)
+);
+
+
+ALTER TABLE public.storageadmin_dcontainerlink OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcontainerlink_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_dcontainerlink_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_dcontainerlink_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcontainerlink_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_dcontainerlink_id_seq OWNED BY storageadmin_dcontainerlink.id;
+
+
+--
+-- Name: storageadmin_dcustomconfig; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_dcustomconfig (
+    id integer NOT NULL,
+    rockon_id integer NOT NULL,
+    key character varying(1024) NOT NULL,
+    val character varying(1024),
+    description character varying(2048),
+    label character varying(64)
+);
+
+
+ALTER TABLE public.storageadmin_dcustomconfig OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcustomconfig_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_dcustomconfig_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_dcustomconfig_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_dcustomconfig_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_dcustomconfig_id_seq OWNED BY storageadmin_dcustomconfig.id;
+
+
+--
+-- Name: storageadmin_dimage; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_dimage (
+    id integer NOT NULL,
+    name character varying(1024) NOT NULL,
+    tag character varying(1024) NOT NULL,
+    repo character varying(1024) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_dimage OWNER TO rocky;
+
+--
+-- Name: storageadmin_dimage_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_dimage_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_dimage_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_dimage_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_dimage_id_seq OWNED BY storageadmin_dimage.id;
+
+
+--
 -- Name: storageadmin_disk; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
 --
 
 CREATE TABLE storageadmin_disk (
     id integer NOT NULL,
     pool_id integer,
-    name character varying(10) NOT NULL,
-    size integer NOT NULL,
+    name character varying(128) NOT NULL,
+    size bigint NOT NULL,
     offline boolean NOT NULL,
-    parted boolean NOT NULL
+    parted boolean NOT NULL,
+    btrfs_uuid character varying(1024),
+    model character varying(1024),
+    serial character varying(1024),
+    transport character varying(1024),
+    vendor character varying(1024),
+    smart_available boolean NOT NULL,
+    smart_enabled boolean NOT NULL,
+    smart_options character varying(64),
+    role character varying(256)
 );
 
 
@@ -537,6 +1038,194 @@ ALTER TABLE public.storageadmin_disk_id_seq OWNER TO rocky;
 --
 
 ALTER SEQUENCE storageadmin_disk_id_seq OWNED BY storageadmin_disk.id;
+
+
+--
+-- Name: storageadmin_dport; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_dport (
+    id integer NOT NULL,
+    hostp integer NOT NULL,
+    containerp integer NOT NULL,
+    container_id integer NOT NULL,
+    protocol character varying(32),
+    uiport boolean NOT NULL,
+    description character varying(1024),
+    hostp_default integer,
+    label character varying(1024)
+);
+
+
+ALTER TABLE public.storageadmin_dport OWNER TO rocky;
+
+--
+-- Name: storageadmin_dport_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_dport_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_dport_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_dport_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_dport_id_seq OWNED BY storageadmin_dport.id;
+
+
+--
+-- Name: storageadmin_dvolume; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_dvolume (
+    id integer NOT NULL,
+    container_id integer NOT NULL,
+    share_id integer,
+    dest_dir character varying(1024) NOT NULL,
+    uservol boolean NOT NULL,
+    description character varying(1024),
+    min_size integer,
+    label character varying(1024)
+);
+
+
+ALTER TABLE public.storageadmin_dvolume OWNER TO rocky;
+
+--
+-- Name: storageadmin_dvolume_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_dvolume_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_dvolume_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_dvolume_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_dvolume_id_seq OWNED BY storageadmin_dvolume.id;
+
+
+--
+-- Name: storageadmin_emailclient; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_emailclient (
+    id integer NOT NULL,
+    smtp_server character varying(1024) NOT NULL,
+    name character varying(1024) NOT NULL,
+    sender character varying(1024) NOT NULL,
+    receiver character varying(1024) NOT NULL,
+    port integer NOT NULL,
+    username character varying(1024) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_emailclient OWNER TO rocky;
+
+--
+-- Name: storageadmin_emailclient_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_emailclient_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_emailclient_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_emailclient_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_emailclient_id_seq OWNED BY storageadmin_emailclient.id;
+
+
+--
+-- Name: storageadmin_ethernetconnection; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_ethernetconnection (
+    id integer NOT NULL,
+    connection_id integer,
+    mac character varying(64),
+    cloned_mac character varying(64),
+    mtu character varying(64)
+);
+
+
+ALTER TABLE public.storageadmin_ethernetconnection OWNER TO rocky;
+
+--
+-- Name: storageadmin_ethernetconnection_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_ethernetconnection_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_ethernetconnection_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_ethernetconnection_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_ethernetconnection_id_seq OWNED BY storageadmin_ethernetconnection.id;
+
+
+--
+-- Name: storageadmin_group; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_group (
+    id integer NOT NULL,
+    gid integer NOT NULL,
+    groupname character varying(1024),
+    admin boolean NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_group OWNER TO rocky;
+
+--
+-- Name: storageadmin_group_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_group_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_group_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_group_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_group_id_seq OWNED BY storageadmin_group.id;
 
 
 --
@@ -611,30 +1300,25 @@ ALTER SEQUENCE storageadmin_iscsitarget_id_seq OWNED BY storageadmin_iscsitarget
 
 
 --
--- Name: storageadmin_networkinterface; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+-- Name: storageadmin_netatalkshare; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
 --
 
-CREATE TABLE storageadmin_networkinterface (
+CREATE TABLE storageadmin_netatalkshare (
     id integer NOT NULL,
-    name character varying(100) NOT NULL,
-    alias character varying(100),
-    mac character varying(100) NOT NULL,
-    boot_proto character varying(100),
-    onboot character varying(100),
-    network character varying(100),
-    netmask character varying(100),
-    ipaddr character varying(100),
-    itype character varying(100) NOT NULL
+    share_id integer NOT NULL,
+    path character varying(4096) NOT NULL,
+    description character varying(1024) NOT NULL,
+    time_machine character varying(3) NOT NULL
 );
 
 
-ALTER TABLE public.storageadmin_networkinterface OWNER TO rocky;
+ALTER TABLE public.storageadmin_netatalkshare OWNER TO rocky;
 
 --
--- Name: storageadmin_networkinterface_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+-- Name: storageadmin_netatalkshare_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
 --
 
-CREATE SEQUENCE storageadmin_networkinterface_id_seq
+CREATE SEQUENCE storageadmin_netatalkshare_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -642,13 +1326,98 @@ CREATE SEQUENCE storageadmin_networkinterface_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.storageadmin_networkinterface_id_seq OWNER TO rocky;
+ALTER TABLE public.storageadmin_netatalkshare_id_seq OWNER TO rocky;
 
 --
--- Name: storageadmin_networkinterface_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+-- Name: storageadmin_netatalkshare_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
 --
 
-ALTER SEQUENCE storageadmin_networkinterface_id_seq OWNED BY storageadmin_networkinterface.id;
+ALTER SEQUENCE storageadmin_netatalkshare_id_seq OWNED BY storageadmin_netatalkshare.id;
+
+
+--
+-- Name: storageadmin_networkconnection; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_networkconnection (
+    id integer NOT NULL,
+    name character varying(256),
+    uuid character varying(256) NOT NULL,
+    state character varying(64),
+    autoconnect boolean NOT NULL,
+    ipv4_method character varying(64),
+    ipv4_addresses character varying(1024),
+    ipv4_gw character varying(64),
+    ipv4_dns character varying(256),
+    ipv4_dns_search character varying(256),
+    ipv6_method character varying(1024),
+    ipv6_addresses character varying(1024),
+    ipv6_gw character varying(64),
+    ipv6_dns character varying(256),
+    ipv6_dns_search character varying(256),
+    master_id integer
+);
+
+
+ALTER TABLE public.storageadmin_networkconnection OWNER TO rocky;
+
+--
+-- Name: storageadmin_networkconnection_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_networkconnection_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_networkconnection_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_networkconnection_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_networkconnection_id_seq OWNED BY storageadmin_networkconnection.id;
+
+
+--
+-- Name: storageadmin_networkdevice; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_networkdevice (
+    id integer NOT NULL,
+    name character varying(256) NOT NULL,
+    dtype character varying(100),
+    mac character varying(100),
+    connection_id integer,
+    state character varying(64),
+    mtu character varying(64)
+);
+
+
+ALTER TABLE public.storageadmin_networkdevice OWNER TO rocky;
+
+--
+-- Name: storageadmin_networkdevice_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_networkdevice_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_networkdevice_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_networkdevice_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_networkdevice_id_seq OWNED BY storageadmin_networkdevice.id;
 
 
 --
@@ -697,7 +1466,8 @@ CREATE TABLE storageadmin_nfsexportgroup (
     syncable character varying(5) NOT NULL,
     mount_security character varying(8) NOT NULL,
     nohide boolean NOT NULL,
-    enabled boolean NOT NULL
+    enabled boolean NOT NULL,
+    admin_host character varying(1024)
 );
 
 
@@ -722,6 +1492,76 @@ ALTER TABLE public.storageadmin_nfsexportgroup_id_seq OWNER TO rocky;
 --
 
 ALTER SEQUENCE storageadmin_nfsexportgroup_id_seq OWNED BY storageadmin_nfsexportgroup.id;
+
+
+--
+-- Name: storageadmin_oauthapp; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_oauthapp (
+    id integer NOT NULL,
+    application_id integer NOT NULL,
+    name character varying(128) NOT NULL,
+    user_id integer NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_oauthapp OWNER TO rocky;
+
+--
+-- Name: storageadmin_oauthapp_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_oauthapp_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_oauthapp_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_oauthapp_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_oauthapp_id_seq OWNED BY storageadmin_oauthapp.id;
+
+
+--
+-- Name: storageadmin_pincard; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_pincard (
+    id integer NOT NULL,
+    "user" integer NOT NULL,
+    pin_number integer NOT NULL,
+    pin_code character varying(32) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_pincard OWNER TO rocky;
+
+--
+-- Name: storageadmin_pincard_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_pincard_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_pincard_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_pincard_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_pincard_id_seq OWNED BY storageadmin_pincard.id;
 
 
 --
@@ -770,9 +1610,12 @@ CREATE TABLE storageadmin_pool (
     id integer NOT NULL,
     name character varying(4096) NOT NULL,
     uuid character varying(100),
-    size integer NOT NULL,
+    size bigint NOT NULL,
     raid character varying(10) NOT NULL,
-    toc timestamp with time zone NOT NULL
+    toc timestamp with time zone NOT NULL,
+    compression character varying(256),
+    mnt_options character varying(4096),
+    role character varying(256)
 );
 
 
@@ -800,6 +1643,45 @@ ALTER SEQUENCE storageadmin_pool_id_seq OWNED BY storageadmin_pool.id;
 
 
 --
+-- Name: storageadmin_poolbalance; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_poolbalance (
+    id integer NOT NULL,
+    pool_id integer NOT NULL,
+    status character varying(10) NOT NULL,
+    start_time timestamp with time zone NOT NULL,
+    end_time timestamp with time zone,
+    percent_done integer NOT NULL,
+    tid character varying(36),
+    message character varying(1024)
+);
+
+
+ALTER TABLE public.storageadmin_poolbalance OWNER TO rocky;
+
+--
+-- Name: storageadmin_poolbalance_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_poolbalance_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_poolbalance_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_poolbalance_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_poolbalance_id_seq OWNED BY storageadmin_poolbalance.id;
+
+
+--
 -- Name: storageadmin_poolscrub; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -810,8 +1692,21 @@ CREATE TABLE storageadmin_poolscrub (
     pid integer NOT NULL,
     start_time timestamp with time zone NOT NULL,
     end_time timestamp with time zone,
-    kb_scrubbed integer,
-    errors integer
+    kb_scrubbed bigint,
+    data_extents_scrubbed bigint NOT NULL,
+    tree_extents_scrubbed bigint NOT NULL,
+    tree_bytes_scrubbed bigint NOT NULL,
+    read_errors integer NOT NULL,
+    csum_errors integer NOT NULL,
+    verify_errors integer NOT NULL,
+    no_csum integer NOT NULL,
+    csum_discards integer NOT NULL,
+    super_errors integer NOT NULL,
+    malloc_errors integer NOT NULL,
+    uncorrectable_errors integer NOT NULL,
+    unverified_errors integer NOT NULL,
+    corrected_errors integer NOT NULL,
+    last_physical bigint NOT NULL
 );
 
 
@@ -836,42 +1731,6 @@ ALTER TABLE public.storageadmin_poolscrub_id_seq OWNER TO rocky;
 --
 
 ALTER SEQUENCE storageadmin_poolscrub_id_seq OWNED BY storageadmin_poolscrub.id;
-
-
---
--- Name: storageadmin_poolstatistic; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
---
-
-CREATE TABLE storageadmin_poolstatistic (
-    id integer NOT NULL,
-    pool_id integer NOT NULL,
-    total_capacity integer NOT NULL,
-    used integer NOT NULL,
-    ts timestamp with time zone NOT NULL
-);
-
-
-ALTER TABLE public.storageadmin_poolstatistic OWNER TO rocky;
-
---
--- Name: storageadmin_poolstatistic_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
---
-
-CREATE SEQUENCE storageadmin_poolstatistic_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.storageadmin_poolstatistic_id_seq OWNER TO rocky;
-
---
--- Name: storageadmin_poolstatistic_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
---
-
-ALTER SEQUENCE storageadmin_poolstatistic_id_seq OWNED BY storageadmin_poolstatistic.id;
 
 
 --
@@ -910,6 +1769,84 @@ ALTER SEQUENCE storageadmin_posixacls_id_seq OWNED BY storageadmin_posixacls.id;
 
 
 --
+-- Name: storageadmin_rockon; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_rockon (
+    id integer NOT NULL,
+    name character varying(1024) NOT NULL,
+    description character varying(2048) NOT NULL,
+    version character varying(2048) NOT NULL,
+    state character varying(2048) NOT NULL,
+    status character varying(2048) NOT NULL,
+    link character varying(1024),
+    website character varying(2048),
+    https boolean NOT NULL,
+    icon character varying(1024),
+    ui boolean NOT NULL,
+    volume_add_support boolean NOT NULL,
+    more_info character varying(4096)
+);
+
+
+ALTER TABLE public.storageadmin_rockon OWNER TO rocky;
+
+--
+-- Name: storageadmin_rockon_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_rockon_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_rockon_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_rockon_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_rockon_id_seq OWNED BY storageadmin_rockon.id;
+
+
+--
+-- Name: storageadmin_sambacustomconfig; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_sambacustomconfig (
+    id integer NOT NULL,
+    smb_share_id integer NOT NULL,
+    custom_config character varying(1024)
+);
+
+
+ALTER TABLE public.storageadmin_sambacustomconfig OWNER TO rocky;
+
+--
+-- Name: storageadmin_sambacustomconfig_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_sambacustomconfig_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_sambacustomconfig_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_sambacustomconfig_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_sambacustomconfig_id_seq OWNED BY storageadmin_sambacustomconfig.id;
+
+
+--
 -- Name: storageadmin_sambashare; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -921,8 +1858,8 @@ CREATE TABLE storageadmin_sambashare (
     browsable character varying(3) NOT NULL,
     read_only character varying(3) NOT NULL,
     guest_ok character varying(3) NOT NULL,
-    create_mask character varying(4) NOT NULL,
-    admin_users character varying(128) NOT NULL
+    shadow_copy boolean NOT NULL,
+    snapshot_prefix character varying(128)
 );
 
 
@@ -1029,13 +1966,17 @@ CREATE TABLE storageadmin_share (
     qgroup character varying(100) NOT NULL,
     name character varying(4096) NOT NULL,
     uuid character varying(100),
-    size integer NOT NULL,
+    size bigint NOT NULL,
     owner character varying(4096) NOT NULL,
     "group" character varying(4096) NOT NULL,
     perms character varying(9) NOT NULL,
     toc timestamp with time zone NOT NULL,
     subvol_name character varying(4096) NOT NULL,
-    replica boolean NOT NULL
+    replica boolean NOT NULL,
+    compression_algo character varying(1024),
+    rusage bigint NOT NULL,
+    eusage bigint NOT NULL,
+    pqgroup character varying(32) NOT NULL
 );
 
 
@@ -1063,25 +2004,32 @@ ALTER SEQUENCE storageadmin_share_id_seq OWNED BY storageadmin_share.id;
 
 
 --
--- Name: storageadmin_sharestatistic; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+-- Name: storageadmin_smartattribute; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
 --
 
-CREATE TABLE storageadmin_sharestatistic (
+CREATE TABLE storageadmin_smartattribute (
     id integer NOT NULL,
-    share_id integer NOT NULL,
-    total_capacity integer NOT NULL,
-    used integer NOT NULL,
-    ts timestamp with time zone NOT NULL
+    info_id integer NOT NULL,
+    aid integer NOT NULL,
+    name character varying(256) NOT NULL,
+    flag character varying(64) NOT NULL,
+    normed_value integer NOT NULL,
+    worst integer NOT NULL,
+    threshold integer NOT NULL,
+    atype character varying(64) NOT NULL,
+    raw_value character varying(256) NOT NULL,
+    updated character varying(64) NOT NULL,
+    failed character varying(64) NOT NULL
 );
 
 
-ALTER TABLE public.storageadmin_sharestatistic OWNER TO rocky;
+ALTER TABLE public.storageadmin_smartattribute OWNER TO rocky;
 
 --
--- Name: storageadmin_sharestatistic_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+-- Name: storageadmin_smartattribute_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
 --
 
-CREATE SEQUENCE storageadmin_sharestatistic_id_seq
+CREATE SEQUENCE storageadmin_smartattribute_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1089,13 +2037,277 @@ CREATE SEQUENCE storageadmin_sharestatistic_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.storageadmin_sharestatistic_id_seq OWNER TO rocky;
+ALTER TABLE public.storageadmin_smartattribute_id_seq OWNER TO rocky;
 
 --
--- Name: storageadmin_sharestatistic_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+-- Name: storageadmin_smartattribute_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
 --
 
-ALTER SEQUENCE storageadmin_sharestatistic_id_seq OWNED BY storageadmin_sharestatistic.id;
+ALTER SEQUENCE storageadmin_smartattribute_id_seq OWNED BY storageadmin_smartattribute.id;
+
+
+--
+-- Name: storageadmin_smartcapability; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_smartcapability (
+    id integer NOT NULL,
+    info_id integer NOT NULL,
+    name character varying(1024) NOT NULL,
+    flag character varying(64) NOT NULL,
+    capabilities character varying(2048) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_smartcapability OWNER TO rocky;
+
+--
+-- Name: storageadmin_smartcapability_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_smartcapability_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_smartcapability_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_smartcapability_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_smartcapability_id_seq OWNED BY storageadmin_smartcapability.id;
+
+
+--
+-- Name: storageadmin_smarterrorlog; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_smarterrorlog (
+    id integer NOT NULL,
+    info_id integer NOT NULL,
+    line character varying(128) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_smarterrorlog OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarterrorlog_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_smarterrorlog_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_smarterrorlog_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarterrorlog_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_smarterrorlog_id_seq OWNED BY storageadmin_smarterrorlog.id;
+
+
+--
+-- Name: storageadmin_smarterrorlogsummary; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_smarterrorlogsummary (
+    id integer NOT NULL,
+    info_id integer NOT NULL,
+    error_num integer NOT NULL,
+    lifetime_hours integer NOT NULL,
+    state character varying(64) NOT NULL,
+    etype character varying(256) NOT NULL,
+    details character varying(1024) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_smarterrorlogsummary OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarterrorlogsummary_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_smarterrorlogsummary_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_smarterrorlogsummary_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarterrorlogsummary_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_smarterrorlogsummary_id_seq OWNED BY storageadmin_smarterrorlogsummary.id;
+
+
+--
+-- Name: storageadmin_smartidentity; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_smartidentity (
+    id integer NOT NULL,
+    info_id integer NOT NULL,
+    model_family character varying(64) NOT NULL,
+    device_model character varying(64) NOT NULL,
+    serial_number character varying(64) NOT NULL,
+    world_wide_name character varying(64) NOT NULL,
+    firmware_version character varying(64) NOT NULL,
+    capacity character varying(64) NOT NULL,
+    sector_size character varying(64) NOT NULL,
+    rotation_rate character varying(64) NOT NULL,
+    in_smartdb character varying(64) NOT NULL,
+    ata_version character varying(64) NOT NULL,
+    sata_version character varying(64) NOT NULL,
+    scanned_on character varying(64) NOT NULL,
+    supported character varying(64) NOT NULL,
+    enabled character varying(64) NOT NULL,
+    version character varying(64) NOT NULL,
+    assessment character varying(64) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_smartidentity OWNER TO rocky;
+
+--
+-- Name: storageadmin_smartidentity_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_smartidentity_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_smartidentity_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_smartidentity_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_smartidentity_id_seq OWNED BY storageadmin_smartidentity.id;
+
+
+--
+-- Name: storageadmin_smartinfo; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_smartinfo (
+    id integer NOT NULL,
+    disk_id integer NOT NULL,
+    toc timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_smartinfo OWNER TO rocky;
+
+--
+-- Name: storageadmin_smartinfo_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_smartinfo_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_smartinfo_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_smartinfo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_smartinfo_id_seq OWNED BY storageadmin_smartinfo.id;
+
+
+--
+-- Name: storageadmin_smarttestlog; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_smarttestlog (
+    id integer NOT NULL,
+    info_id integer NOT NULL,
+    test_num integer NOT NULL,
+    description character varying(64) NOT NULL,
+    status character varying(256) NOT NULL,
+    pct_completed integer NOT NULL,
+    lifetime_hours integer NOT NULL,
+    lba_of_first_error character varying(1024) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_smarttestlog OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarttestlog_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_smarttestlog_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_smarttestlog_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarttestlog_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_smarttestlog_id_seq OWNED BY storageadmin_smarttestlog.id;
+
+
+--
+-- Name: storageadmin_smarttestlogdetail; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_smarttestlogdetail (
+    id integer NOT NULL,
+    info_id integer NOT NULL,
+    line character varying(128) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_smarttestlogdetail OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarttestlogdetail_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_smarttestlogdetail_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_smarttestlogdetail_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_smarttestlogdetail_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_smarttestlogdetail_id_seq OWNED BY storageadmin_smarttestlogdetail.id;
 
 
 --
@@ -1108,11 +2320,13 @@ CREATE TABLE storageadmin_snapshot (
     name character varying(4096) NOT NULL,
     real_name character varying(4096) NOT NULL,
     writable boolean NOT NULL,
-    size integer NOT NULL,
+    size bigint NOT NULL,
     toc timestamp with time zone NOT NULL,
     qgroup character varying(100) NOT NULL,
     uvisible boolean NOT NULL,
-    snap_type character varying(64) NOT NULL
+    snap_type character varying(64) NOT NULL,
+    rusage bigint NOT NULL,
+    eusage bigint NOT NULL
 );
 
 
@@ -1176,6 +2390,114 @@ ALTER SEQUENCE storageadmin_supportcase_id_seq OWNED BY storageadmin_supportcase
 
 
 --
+-- Name: storageadmin_teamconnection; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_teamconnection (
+    id integer NOT NULL,
+    connection_id integer,
+    name character varying(64),
+    config character varying(2048)
+);
+
+
+ALTER TABLE public.storageadmin_teamconnection OWNER TO rocky;
+
+--
+-- Name: storageadmin_teamconnection_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_teamconnection_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_teamconnection_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_teamconnection_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_teamconnection_id_seq OWNED BY storageadmin_teamconnection.id;
+
+
+--
+-- Name: storageadmin_tlscertificate; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_tlscertificate (
+    id integer NOT NULL,
+    name character varying(1024) NOT NULL,
+    certificate character varying(12288),
+    key character varying(12288)
+);
+
+
+ALTER TABLE public.storageadmin_tlscertificate OWNER TO rocky;
+
+--
+-- Name: storageadmin_tlscertificate_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_tlscertificate_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_tlscertificate_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_tlscertificate_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_tlscertificate_id_seq OWNED BY storageadmin_tlscertificate.id;
+
+
+--
+-- Name: storageadmin_updatesubscription; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_updatesubscription (
+    id integer NOT NULL,
+    name character varying(64) NOT NULL,
+    description character varying(128) NOT NULL,
+    url character varying(512) NOT NULL,
+    appliance_id integer NOT NULL,
+    password character varying(64),
+    status character varying(64) NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_updatesubscription OWNER TO rocky;
+
+--
+-- Name: storageadmin_updatesubscription_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_updatesubscription_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_updatesubscription_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_updatesubscription_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_updatesubscription_id_seq OWNED BY storageadmin_updatesubscription.id;
+
+
+--
 -- Name: storageadmin_user; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -1184,7 +2506,13 @@ CREATE TABLE storageadmin_user (
     user_id integer,
     username character varying(4096) NOT NULL,
     uid integer NOT NULL,
-    gid integer NOT NULL
+    gid integer NOT NULL,
+    public_key character varying(4096),
+    shell character varying(1024),
+    homedir character varying(1024),
+    email character varying(1024),
+    admin boolean NOT NULL,
+    group_id integer
 );
 
 
@@ -1209,6 +2537,40 @@ ALTER TABLE public.storageadmin_user_id_seq OWNER TO rocky;
 --
 
 ALTER SEQUENCE storageadmin_user_id_seq OWNED BY storageadmin_user.id;
+
+
+--
+-- Name: storageadmin_user_smb_shares; Type: TABLE; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE TABLE storageadmin_user_smb_shares (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    sambashare_id integer NOT NULL
+);
+
+
+ALTER TABLE public.storageadmin_user_smb_shares OWNER TO rocky;
+
+--
+-- Name: storageadmin_user_smb_shares_id_seq; Type: SEQUENCE; Schema: public; Owner: rocky
+--
+
+CREATE SEQUENCE storageadmin_user_smb_shares_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.storageadmin_user_smb_shares_id_seq OWNER TO rocky;
+
+--
+-- Name: storageadmin_user_smb_shares_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rocky
+--
+
+ALTER SEQUENCE storageadmin_user_smb_shares_id_seq OWNED BY storageadmin_user_smb_shares.id;
 
 
 --
@@ -1278,7 +2640,42 @@ ALTER TABLE ONLY django_site ALTER COLUMN id SET DEFAULT nextval('django_site_id
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
+ALTER TABLE ONLY oauth2_provider_accesstoken ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_accesstoken_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_application ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_application_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_grant ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_grant_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_refreshtoken_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
 ALTER TABLE ONLY south_migrationhistory ALTER COLUMN id SET DEFAULT nextval('south_migrationhistory_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_advancednfsexport ALTER COLUMN id SET DEFAULT nextval('storageadmin_advancednfsexport_id_seq'::regclass);
 
 
 --
@@ -1299,6 +2696,27 @@ ALTER TABLE ONLY storageadmin_appliance ALTER COLUMN id SET DEFAULT nextval('sto
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
+ALTER TABLE ONLY storageadmin_bondconnection ALTER COLUMN id SET DEFAULT nextval('storageadmin_bondconnection_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_configbackup ALTER COLUMN id SET DEFAULT nextval('storageadmin_configbackup_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_containeroption ALTER COLUMN id SET DEFAULT nextval('storageadmin_containeroption_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
 ALTER TABLE ONLY storageadmin_dashboardconfig ALTER COLUMN id SET DEFAULT nextval('storageadmin_dashboardconfig_id_seq'::regclass);
 
 
@@ -1306,7 +2724,77 @@ ALTER TABLE ONLY storageadmin_dashboardconfig ALTER COLUMN id SET DEFAULT nextva
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
+ALTER TABLE ONLY storageadmin_dcontainer ALTER COLUMN id SET DEFAULT nextval('storageadmin_dcontainer_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerenv ALTER COLUMN id SET DEFAULT nextval('storageadmin_dcontainerenv_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerlink ALTER COLUMN id SET DEFAULT nextval('storageadmin_dcontainerlink_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcustomconfig ALTER COLUMN id SET DEFAULT nextval('storageadmin_dcustomconfig_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dimage ALTER COLUMN id SET DEFAULT nextval('storageadmin_dimage_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
 ALTER TABLE ONLY storageadmin_disk ALTER COLUMN id SET DEFAULT nextval('storageadmin_disk_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dport ALTER COLUMN id SET DEFAULT nextval('storageadmin_dport_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dvolume ALTER COLUMN id SET DEFAULT nextval('storageadmin_dvolume_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_emailclient ALTER COLUMN id SET DEFAULT nextval('storageadmin_emailclient_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_ethernetconnection ALTER COLUMN id SET DEFAULT nextval('storageadmin_ethernetconnection_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_group ALTER COLUMN id SET DEFAULT nextval('storageadmin_group_id_seq'::regclass);
 
 
 --
@@ -1327,7 +2815,21 @@ ALTER TABLE ONLY storageadmin_iscsitarget ALTER COLUMN id SET DEFAULT nextval('s
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
-ALTER TABLE ONLY storageadmin_networkinterface ALTER COLUMN id SET DEFAULT nextval('storageadmin_networkinterface_id_seq'::regclass);
+ALTER TABLE ONLY storageadmin_netatalkshare ALTER COLUMN id SET DEFAULT nextval('storageadmin_netatalkshare_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_networkconnection ALTER COLUMN id SET DEFAULT nextval('storageadmin_networkconnection_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_networkdevice ALTER COLUMN id SET DEFAULT nextval('storageadmin_networkdevice_id_seq'::regclass);
 
 
 --
@@ -1348,6 +2850,20 @@ ALTER TABLE ONLY storageadmin_nfsexportgroup ALTER COLUMN id SET DEFAULT nextval
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
+ALTER TABLE ONLY storageadmin_oauthapp ALTER COLUMN id SET DEFAULT nextval('storageadmin_oauthapp_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_pincard ALTER COLUMN id SET DEFAULT nextval('storageadmin_pincard_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
 ALTER TABLE ONLY storageadmin_plugin ALTER COLUMN id SET DEFAULT nextval('storageadmin_plugin_id_seq'::regclass);
 
 
@@ -1362,6 +2878,13 @@ ALTER TABLE ONLY storageadmin_pool ALTER COLUMN id SET DEFAULT nextval('storagea
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
+ALTER TABLE ONLY storageadmin_poolbalance ALTER COLUMN id SET DEFAULT nextval('storageadmin_poolbalance_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
 ALTER TABLE ONLY storageadmin_poolscrub ALTER COLUMN id SET DEFAULT nextval('storageadmin_poolscrub_id_seq'::regclass);
 
 
@@ -1369,14 +2892,21 @@ ALTER TABLE ONLY storageadmin_poolscrub ALTER COLUMN id SET DEFAULT nextval('sto
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
-ALTER TABLE ONLY storageadmin_poolstatistic ALTER COLUMN id SET DEFAULT nextval('storageadmin_poolstatistic_id_seq'::regclass);
+ALTER TABLE ONLY storageadmin_posixacls ALTER COLUMN id SET DEFAULT nextval('storageadmin_posixacls_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
-ALTER TABLE ONLY storageadmin_posixacls ALTER COLUMN id SET DEFAULT nextval('storageadmin_posixacls_id_seq'::regclass);
+ALTER TABLE ONLY storageadmin_rockon ALTER COLUMN id SET DEFAULT nextval('storageadmin_rockon_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_sambacustomconfig ALTER COLUMN id SET DEFAULT nextval('storageadmin_sambacustomconfig_id_seq'::regclass);
 
 
 --
@@ -1411,7 +2941,56 @@ ALTER TABLE ONLY storageadmin_share ALTER COLUMN id SET DEFAULT nextval('storage
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
-ALTER TABLE ONLY storageadmin_sharestatistic ALTER COLUMN id SET DEFAULT nextval('storageadmin_sharestatistic_id_seq'::regclass);
+ALTER TABLE ONLY storageadmin_smartattribute ALTER COLUMN id SET DEFAULT nextval('storageadmin_smartattribute_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smartcapability ALTER COLUMN id SET DEFAULT nextval('storageadmin_smartcapability_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarterrorlog ALTER COLUMN id SET DEFAULT nextval('storageadmin_smarterrorlog_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarterrorlogsummary ALTER COLUMN id SET DEFAULT nextval('storageadmin_smarterrorlogsummary_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smartidentity ALTER COLUMN id SET DEFAULT nextval('storageadmin_smartidentity_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smartinfo ALTER COLUMN id SET DEFAULT nextval('storageadmin_smartinfo_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarttestlog ALTER COLUMN id SET DEFAULT nextval('storageadmin_smarttestlog_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarttestlogdetail ALTER COLUMN id SET DEFAULT nextval('storageadmin_smarttestlogdetail_id_seq'::regclass);
 
 
 --
@@ -1432,7 +3011,35 @@ ALTER TABLE ONLY storageadmin_supportcase ALTER COLUMN id SET DEFAULT nextval('s
 -- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
 --
 
+ALTER TABLE ONLY storageadmin_teamconnection ALTER COLUMN id SET DEFAULT nextval('storageadmin_teamconnection_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_tlscertificate ALTER COLUMN id SET DEFAULT nextval('storageadmin_tlscertificate_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_updatesubscription ALTER COLUMN id SET DEFAULT nextval('storageadmin_updatesubscription_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
 ALTER TABLE ONLY storageadmin_user ALTER COLUMN id SET DEFAULT nextval('storageadmin_user_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_user_smb_shares ALTER COLUMN id SET DEFAULT nextval('storageadmin_user_smb_shares_id_seq'::regclass);
 
 
 --
@@ -1629,6 +3236,120 @@ COPY auth_permission (id, name, content_type_id, codename) FROM stdin;
 157	Can add backup policy	53	add_backuppolicy
 158	Can change backup policy	53	change_backuppolicy
 159	Can delete backup policy	53	delete_backuppolicy
+160	Can add network connection	54	add_networkconnection
+161	Can change network connection	54	change_networkconnection
+162	Can delete network connection	54	delete_networkconnection
+163	Can add network device	55	add_networkdevice
+164	Can change network device	55	change_networkdevice
+165	Can delete network device	55	delete_networkdevice
+166	Can add ethernet connection	56	add_ethernetconnection
+167	Can change ethernet connection	56	change_ethernetconnection
+168	Can delete ethernet connection	56	delete_ethernetconnection
+169	Can add team connection	57	add_teamconnection
+170	Can change team connection	57	change_teamconnection
+171	Can delete team connection	57	delete_teamconnection
+172	Can add bond connection	58	add_bondconnection
+173	Can change bond connection	58	change_bondconnection
+174	Can delete bond connection	58	delete_bondconnection
+175	Can add group	59	add_group
+176	Can change group	59	change_group
+177	Can delete group	59	delete_group
+178	Can add samba custom config	60	add_sambacustomconfig
+179	Can change samba custom config	60	change_sambacustomconfig
+180	Can delete samba custom config	60	delete_sambacustomconfig
+181	Can add advanced nfs export	61	add_advancednfsexport
+182	Can change advanced nfs export	61	change_advancednfsexport
+183	Can delete advanced nfs export	61	delete_advancednfsexport
+184	Can add oauth app	62	add_oauthapp
+185	Can change oauth app	62	change_oauthapp
+186	Can delete oauth app	62	delete_oauthapp
+187	Can add netatalk share	63	add_netatalkshare
+188	Can change netatalk share	63	change_netatalkshare
+189	Can delete netatalk share	63	delete_netatalkshare
+190	Can add pool balance	64	add_poolbalance
+191	Can change pool balance	64	change_poolbalance
+192	Can delete pool balance	64	delete_poolbalance
+193	Can add tls certificate	65	add_tlscertificate
+194	Can change tls certificate	65	change_tlscertificate
+195	Can delete tls certificate	65	delete_tlscertificate
+196	Can add rock on	66	add_rockon
+197	Can change rock on	66	change_rockon
+198	Can delete rock on	66	delete_rockon
+199	Can add d image	67	add_dimage
+200	Can change d image	67	change_dimage
+201	Can delete d image	67	delete_dimage
+202	Can add d container	68	add_dcontainer
+203	Can change d container	68	change_dcontainer
+204	Can delete d container	68	delete_dcontainer
+205	Can add d container link	69	add_dcontainerlink
+206	Can change d container link	69	change_dcontainerlink
+207	Can delete d container link	69	delete_dcontainerlink
+208	Can add d port	70	add_dport
+209	Can change d port	70	change_dport
+210	Can delete d port	70	delete_dport
+211	Can add d volume	71	add_dvolume
+212	Can change d volume	71	change_dvolume
+213	Can delete d volume	71	delete_dvolume
+214	Can add container option	72	add_containeroption
+215	Can change container option	72	change_containeroption
+216	Can delete container option	72	delete_containeroption
+217	Can add d custom config	73	add_dcustomconfig
+218	Can change d custom config	73	change_dcustomconfig
+219	Can delete d custom config	73	delete_dcustomconfig
+220	Can add d container env	74	add_dcontainerenv
+221	Can change d container env	74	change_dcontainerenv
+222	Can delete d container env	74	delete_dcontainerenv
+223	Can add smart capability	75	add_smartcapability
+224	Can change smart capability	75	change_smartcapability
+225	Can delete smart capability	75	delete_smartcapability
+226	Can add smart attribute	76	add_smartattribute
+227	Can change smart attribute	76	change_smartattribute
+228	Can delete smart attribute	76	delete_smartattribute
+229	Can add smart error log	77	add_smarterrorlog
+230	Can change smart error log	77	change_smarterrorlog
+231	Can delete smart error log	77	delete_smarterrorlog
+232	Can add smart error log summary	78	add_smarterrorlogsummary
+233	Can change smart error log summary	78	change_smarterrorlogsummary
+234	Can delete smart error log summary	78	delete_smarterrorlogsummary
+235	Can add smart test log	79	add_smarttestlog
+236	Can change smart test log	79	change_smarttestlog
+237	Can delete smart test log	79	delete_smarttestlog
+238	Can add smart test log detail	80	add_smarttestlogdetail
+239	Can change smart test log detail	80	change_smarttestlogdetail
+240	Can delete smart test log detail	80	delete_smarttestlogdetail
+241	Can add smart identity	81	add_smartidentity
+242	Can change smart identity	81	change_smartidentity
+243	Can delete smart identity	81	delete_smartidentity
+244	Can add smart info	82	add_smartinfo
+245	Can change smart info	82	change_smartinfo
+246	Can delete smart info	82	delete_smartinfo
+247	Can add config backup	83	add_configbackup
+248	Can change config backup	83	change_configbackup
+249	Can delete config backup	83	delete_configbackup
+250	Can add email client	84	add_emailclient
+251	Can change email client	84	change_emailclient
+252	Can delete email client	84	delete_emailclient
+253	Can add update subscription	85	add_updatesubscription
+254	Can change update subscription	85	change_updatesubscription
+255	Can delete update subscription	85	delete_updatesubscription
+256	Can add pincard	86	add_pincard
+257	Can change pincard	86	change_pincard
+258	Can delete pincard	86	delete_pincard
+259	Can add application	87	add_application
+260	Can change application	87	change_application
+261	Can delete application	87	delete_application
+262	Can add grant	88	add_grant
+263	Can change grant	88	change_grant
+264	Can delete grant	88	delete_grant
+265	Can add access token	89	add_accesstoken
+266	Can change access token	89	change_accesstoken
+267	Can delete access token	89	delete_accesstoken
+268	Can add refresh token	90	add_refreshtoken
+269	Can change refresh token	90	change_refreshtoken
+270	Can delete refresh token	90	delete_refreshtoken
+271	Can add task	91	add_task
+272	Can change task	91	change_task
+273	Can delete task	91	delete_task
 \.
 
 
@@ -1636,7 +3357,7 @@ COPY auth_permission (id, name, content_type_id, codename) FROM stdin;
 -- Name: auth_permission_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
 --
 
-SELECT pg_catalog.setval('auth_permission_id_seq', 159, true);
+SELECT pg_catalog.setval('auth_permission_id_seq', 273, true);
 
 
 --
@@ -1757,6 +3478,44 @@ COPY django_content_type (id, name, app_label, model) FROM stdin;
 51	receive trail	smart_manager	receivetrail
 52	migration history	south	migrationhistory
 53	backup policy	backup	backuppolicy
+54	network connection	storageadmin	networkconnection
+55	network device	storageadmin	networkdevice
+56	ethernet connection	storageadmin	ethernetconnection
+57	team connection	storageadmin	teamconnection
+58	bond connection	storageadmin	bondconnection
+59	group	storageadmin	group
+60	samba custom config	storageadmin	sambacustomconfig
+61	advanced nfs export	storageadmin	advancednfsexport
+62	oauth app	storageadmin	oauthapp
+63	netatalk share	storageadmin	netatalkshare
+64	pool balance	storageadmin	poolbalance
+65	tls certificate	storageadmin	tlscertificate
+66	rock on	storageadmin	rockon
+67	d image	storageadmin	dimage
+68	d container	storageadmin	dcontainer
+69	d container link	storageadmin	dcontainerlink
+70	d port	storageadmin	dport
+71	d volume	storageadmin	dvolume
+72	container option	storageadmin	containeroption
+73	d custom config	storageadmin	dcustomconfig
+74	d container env	storageadmin	dcontainerenv
+75	smart capability	storageadmin	smartcapability
+76	smart attribute	storageadmin	smartattribute
+77	smart error log	storageadmin	smarterrorlog
+78	smart error log summary	storageadmin	smarterrorlogsummary
+79	smart test log	storageadmin	smarttestlog
+80	smart test log detail	storageadmin	smarttestlogdetail
+81	smart identity	storageadmin	smartidentity
+82	smart info	storageadmin	smartinfo
+83	config backup	storageadmin	configbackup
+84	email client	storageadmin	emailclient
+85	update subscription	storageadmin	updatesubscription
+86	pincard	storageadmin	pincard
+87	application	oauth2_provider	application
+88	grant	oauth2_provider	grant
+89	access token	oauth2_provider	accesstoken
+90	refresh token	oauth2_provider	refreshtoken
+91	task	django_ztask	task
 \.
 
 
@@ -1764,7 +3523,7 @@ COPY django_content_type (id, name, app_label, model) FROM stdin;
 -- Name: django_content_type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
 --
 
-SELECT pg_catalog.setval('django_content_type_id_seq', 53, true);
+SELECT pg_catalog.setval('django_content_type_id_seq', 91, true);
 
 
 --
@@ -1792,11 +3551,130 @@ SELECT pg_catalog.setval('django_site_id_seq', 1, true);
 
 
 --
+-- Data for Name: django_ztask_task; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY django_ztask_task (uuid, function_name, args, kwargs, retry_count, last_exception, next_attempt, failed, created) FROM stdin;
+\.
+
+
+--
+-- Data for Name: oauth2_provider_accesstoken; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY oauth2_provider_accesstoken (id, user_id, token, application_id, expires, scope) FROM stdin;
+\.
+
+
+--
+-- Name: oauth2_provider_accesstoken_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('oauth2_provider_accesstoken_id_seq', 1, false);
+
+
+--
+-- Data for Name: oauth2_provider_application; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY oauth2_provider_application (id, client_id, user_id, redirect_uris, client_type, authorization_grant_type, client_secret, name, skip_authorization) FROM stdin;
+\.
+
+
+--
+-- Name: oauth2_provider_application_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('oauth2_provider_application_id_seq', 1, false);
+
+
+--
+-- Data for Name: oauth2_provider_grant; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY oauth2_provider_grant (id, user_id, code, application_id, expires, redirect_uri, scope) FROM stdin;
+\.
+
+
+--
+-- Name: oauth2_provider_grant_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('oauth2_provider_grant_id_seq', 1, false);
+
+
+--
+-- Data for Name: oauth2_provider_refreshtoken; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY oauth2_provider_refreshtoken (id, user_id, token, application_id, access_token_id) FROM stdin;
+\.
+
+
+--
+-- Name: oauth2_provider_refreshtoken_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('oauth2_provider_refreshtoken_id_seq', 1, false);
+
+
+--
 -- Data for Name: south_migrationhistory; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
 COPY south_migrationhistory (id, app_name, migration, applied) FROM stdin;
 1	storageadmin	0001_initial	2014-02-26 20:51:28.513789-08
+2	storageadmin	0002_auto__del_poolstatistic__del_sharestatistic__chg_field_disk_size__chg_	2016-11-24 15:00:22.229152-08
+3	storageadmin	0003_auto__add_field_nfsexportgroup_admin_host	2016-11-24 15:00:22.305448-08
+4	storageadmin	0004_auto__add_advancednfsexport	2016-11-24 15:00:22.385798-08
+5	storageadmin	0005_auto__add_field_networkinterface_gateway__add_field_networkinterface_d	2016-11-24 15:00:22.466101-08
+6	oauth2_provider	0001_initial	2016-11-24 15:00:22.623774-08
+7	storageadmin	0006_auto__add_oauthapp	2016-11-24 15:00:22.72043-08
+8	storageadmin	0007_auto__add_field_appliance_client_id__add_field_appliance_client_secret	2016-11-24 15:00:22.787495-08
+9	storageadmin	0008_auto__add_field_user_public_key	2016-11-24 15:00:22.878428-08
+10	storageadmin	0009_auto__del_field_sambashare_admin_users	2016-11-24 15:00:22.979581-08
+11	storageadmin	0010_auto__add_field_disk_btrfs_uuid	2016-11-24 15:00:23.050654-08
+12	storageadmin	0011_auto__add_netatalkshare	2016-11-24 15:00:23.196709-08
+13	storageadmin	0012_auto__add_field_disk_model__add_field_disk_serial__add_field_disk_tran	2016-11-24 15:00:23.300911-08
+14	storageadmin	0013_auto__add_field_user_shell__add_field_user_homedir__add_field_user_ema	2016-11-24 15:00:23.411772-08
+15	storageadmin	0014_auto__add_group	2016-11-24 15:00:23.496991-08
+16	storageadmin	0015_auto__add_field_user_group	2016-11-24 15:00:23.577821-08
+17	storageadmin	0016_auto__del_field_poolscrub_errors__add_field_poolscrub_data_extents_scr	2016-11-24 15:00:23.806425-08
+18	storageadmin	0017_auto__add_field_pool_compression__add_field_pool_mnt_options	2016-11-24 15:00:23.903415-08
+19	storageadmin	0018_auto__add_field_share_compression_algo	2016-11-24 15:00:23.981453-08
+20	storageadmin	0019_auto__add_poolbalance	2016-11-24 15:00:24.074491-08
+21	storageadmin	0020_auto__add_sambacustomconfig	2016-11-24 15:00:24.197021-08
+22	storageadmin	0021_auto__del_field_sambashare_create_mask	2016-11-24 15:00:24.279596-08
+23	storageadmin	0022_auto__add_dvolume__add_unique_dvolume_container_dest_dir__add_containe	2016-11-24 15:00:24.587711-08
+24	storageadmin	0023_auto__add_tlscertificate	2016-11-24 15:00:24.704861-08
+25	storageadmin	0024_auto__add_smarttestlogdetail__add_smartinfo__add_smarttestlog__add_sma	2016-11-24 15:00:25.043911-08
+26	storageadmin	0025_auto__add_field_dport_uiport	2016-11-24 15:00:25.228022-08
+27	storageadmin	0026_auto__chg_field_rockon_state__chg_field_rockon_version	2016-11-24 15:00:25.399766-08
+28	storageadmin	0027_auto__chg_field_rockon_status	2016-11-24 15:00:25.558567-08
+29	storageadmin	0028_auto__add_field_snapshot_rusage__add_field_snapshot_eusage__add_field_	2016-11-24 15:00:25.77558-08
+30	storageadmin	0029_auto__add_dcontainerlink__add_unique_dcontainerlink_destination_name__	2016-11-24 15:00:26.050806-08
+31	storageadmin	0030_auto__add_field_share_pqgroup	2016-11-24 15:00:26.218429-08
+32	storageadmin	0031_auto__add_configbackup	2016-11-24 15:00:26.409911-08
+33	storageadmin	0032_auto__add_emailclient__chg_field_snapshot_toc__chg_field_configbackup_	2016-11-24 15:00:26.700356-08
+34	storageadmin	0033_auto__del_field_poolbalance_pid__add_field_poolbalance_tid__add_field_	2016-11-24 15:00:26.867215-08
+35	storageadmin	0034_auto__chg_field_tlscertificate_name	2016-11-24 15:00:27.068869-08
+36	storageadmin	0035_auto__del_field_networkinterface_domain__del_field_networkinterface_bo	2016-11-24 15:00:27.616151-08
+37	storageadmin	0036_auto__add_field_sambashare_shadow_copy__add_field_sambashare_snapshot_	2016-11-24 15:00:27.828542-08
+38	storageadmin	0037_auto__chg_field_networkinterface_autoconnect__chg_field_networkinterfa	2016-11-24 15:00:28.10755-08
+39	storageadmin	0038_auto__add_updatesubscription	2016-11-24 15:00:28.332387-08
+40	storageadmin	0039_auto__chg_field_tlscertificate_certificate__chg_field_tlscertificate_k	2016-11-24 15:00:28.601724-08
+41	storageadmin	0040_auto__add_dcontainerenv__add_unique_dcontainerenv_container_key__add_f	2016-11-24 15:00:28.806253-08
+42	storageadmin	0041_auto__add_field_pool_role	2016-11-24 15:00:28.977006-08
+43	storageadmin	0042_auto__add_field_disk_smart_options__add_field_disk_role	2016-11-24 15:00:29.144169-08
+44	storageadmin	0043_auto__add_field_emailclient_port	2016-11-24 15:00:29.328424-08
+45	storageadmin	0044_add_field_EmailClient_username	2016-11-24 15:00:29.549593-08
+46	storageadmin	0045_auto__del_networkinterface__add_networkdevice__add_ethernetconnection_	2016-11-24 15:00:29.874075-08
+47	storageadmin	0046_auto__add_pincard__add_unique_pincard_user_pin_number	2016-11-24 15:00:30.087085-08
+48	storageadmin	0047_auto__chg_field_disk_name	2016-11-24 15:00:30.478595-08
+49	oauth2_provider	0002_adding_indexes	2016-11-24 15:00:32.042776-08
+50	oauth2_provider	0003_auto__add_field_application_skip_authorization__chg_field_accesstoken_	2016-11-24 15:00:32.15144-08
+51	django_ztask	0001_initial	2016-11-24 15:00:33.202597-08
+52	django_ztask	0002_auto__add_field_task_created	2016-11-24 15:00:33.222337-08
 \.
 
 
@@ -1804,7 +3682,22 @@ COPY south_migrationhistory (id, app_name, migration, applied) FROM stdin;
 -- Name: south_migrationhistory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
 --
 
-SELECT pg_catalog.setval('south_migrationhistory_id_seq', 3, true);
+SELECT pg_catalog.setval('south_migrationhistory_id_seq', 52, true);
+
+
+--
+-- Data for Name: storageadmin_advancednfsexport; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_advancednfsexport (id, export_str) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_advancednfsexport_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_advancednfsexport_id_seq', 1, false);
 
 
 --
@@ -1826,7 +3719,7 @@ SELECT pg_catalog.setval('storageadmin_apikeys_id_seq', 1, false);
 -- Data for Name: storageadmin_appliance; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_appliance (id, uuid, ip, current_appliance, hostname, mgmt_port) FROM stdin;
+COPY storageadmin_appliance (id, uuid, ip, current_appliance, hostname, mgmt_port, client_id, client_secret) FROM stdin;
 \.
 
 
@@ -1835,6 +3728,51 @@ COPY storageadmin_appliance (id, uuid, ip, current_appliance, hostname, mgmt_por
 --
 
 SELECT pg_catalog.setval('storageadmin_appliance_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_bondconnection; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_bondconnection (id, connection_id, name, config) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_bondconnection_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_bondconnection_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_configbackup; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_configbackup (id, filename, md5sum, size, config_backup) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_configbackup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_configbackup_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_containeroption; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_containeroption (id, container_id, name, val) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_containeroption_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_containeroption_id_seq', 1, false);
 
 
 --
@@ -1853,10 +3791,85 @@ SELECT pg_catalog.setval('storageadmin_dashboardconfig_id_seq', 1, false);
 
 
 --
+-- Data for Name: storageadmin_dcontainer; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_dcontainer (id, rockon_id, dimage_id, name, launch_order, uid) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_dcontainer_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_dcontainer_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_dcontainerenv; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_dcontainerenv (id, container_id, key, val, description, label) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_dcontainerenv_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_dcontainerenv_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_dcontainerlink; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_dcontainerlink (id, source_id, destination_id, name) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_dcontainerlink_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_dcontainerlink_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_dcustomconfig; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_dcustomconfig (id, rockon_id, key, val, description, label) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_dcustomconfig_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_dcustomconfig_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_dimage; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_dimage (id, name, tag, repo) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_dimage_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_dimage_id_seq', 1, false);
+
+
+--
 -- Data for Name: storageadmin_disk; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_disk (id, pool_id, name, size, offline, parted) FROM stdin;
+COPY storageadmin_disk (id, pool_id, name, size, offline, parted, btrfs_uuid, model, serial, transport, vendor, smart_available, smart_enabled, smart_options, role) FROM stdin;
 \.
 
 
@@ -1865,6 +3878,81 @@ COPY storageadmin_disk (id, pool_id, name, size, offline, parted) FROM stdin;
 --
 
 SELECT pg_catalog.setval('storageadmin_disk_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_dport; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_dport (id, hostp, containerp, container_id, protocol, uiport, description, hostp_default, label) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_dport_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_dport_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_dvolume; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_dvolume (id, container_id, share_id, dest_dir, uservol, description, min_size, label) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_dvolume_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_dvolume_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_emailclient; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_emailclient (id, smtp_server, name, sender, receiver, port, username) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_emailclient_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_emailclient_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_ethernetconnection; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_ethernetconnection (id, connection_id, mac, cloned_mac, mtu) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_ethernetconnection_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_ethernetconnection_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_group; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_group (id, gid, groupname, admin) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_group_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_group_id_seq', 1, false);
 
 
 --
@@ -1898,18 +3986,48 @@ SELECT pg_catalog.setval('storageadmin_iscsitarget_id_seq', 1, false);
 
 
 --
--- Data for Name: storageadmin_networkinterface; Type: TABLE DATA; Schema: public; Owner: rocky
+-- Data for Name: storageadmin_netatalkshare; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_networkinterface (id, name, alias, mac, boot_proto, onboot, network, netmask, ipaddr, itype) FROM stdin;
+COPY storageadmin_netatalkshare (id, share_id, path, description, time_machine) FROM stdin;
 \.
 
 
 --
--- Name: storageadmin_networkinterface_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+-- Name: storageadmin_netatalkshare_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
 --
 
-SELECT pg_catalog.setval('storageadmin_networkinterface_id_seq', 1, false);
+SELECT pg_catalog.setval('storageadmin_netatalkshare_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_networkconnection; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_networkconnection (id, name, uuid, state, autoconnect, ipv4_method, ipv4_addresses, ipv4_gw, ipv4_dns, ipv4_dns_search, ipv6_method, ipv6_addresses, ipv6_gw, ipv6_dns, ipv6_dns_search, master_id) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_networkconnection_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_networkconnection_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_networkdevice; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_networkdevice (id, name, dtype, mac, connection_id, state, mtu) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_networkdevice_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_networkdevice_id_seq', 1, false);
 
 
 --
@@ -1931,7 +4049,7 @@ SELECT pg_catalog.setval('storageadmin_nfsexport_id_seq', 1, false);
 -- Data for Name: storageadmin_nfsexportgroup; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_nfsexportgroup (id, host_str, editable, syncable, mount_security, nohide, enabled) FROM stdin;
+COPY storageadmin_nfsexportgroup (id, host_str, editable, syncable, mount_security, nohide, enabled, admin_host) FROM stdin;
 \.
 
 
@@ -1940,6 +4058,36 @@ COPY storageadmin_nfsexportgroup (id, host_str, editable, syncable, mount_securi
 --
 
 SELECT pg_catalog.setval('storageadmin_nfsexportgroup_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_oauthapp; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_oauthapp (id, application_id, name, user_id) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_oauthapp_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_oauthapp_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_pincard; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_pincard (id, "user", pin_number, pin_code) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_pincard_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_pincard_id_seq', 1, false);
 
 
 --
@@ -1962,7 +4110,7 @@ SELECT pg_catalog.setval('storageadmin_plugin_id_seq', 1, true);
 -- Data for Name: storageadmin_pool; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_pool (id, name, uuid, size, raid, toc) FROM stdin;
+COPY storageadmin_pool (id, name, uuid, size, raid, toc, compression, mnt_options, role) FROM stdin;
 \.
 
 
@@ -1974,10 +4122,25 @@ SELECT pg_catalog.setval('storageadmin_pool_id_seq', 1, false);
 
 
 --
+-- Data for Name: storageadmin_poolbalance; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_poolbalance (id, pool_id, status, start_time, end_time, percent_done, tid, message) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_poolbalance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_poolbalance_id_seq', 1, false);
+
+
+--
 -- Data for Name: storageadmin_poolscrub; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_poolscrub (id, pool_id, status, pid, start_time, end_time, kb_scrubbed, errors) FROM stdin;
+COPY storageadmin_poolscrub (id, pool_id, status, pid, start_time, end_time, kb_scrubbed, data_extents_scrubbed, tree_extents_scrubbed, tree_bytes_scrubbed, read_errors, csum_errors, verify_errors, no_csum, csum_discards, super_errors, malloc_errors, uncorrectable_errors, unverified_errors, corrected_errors, last_physical) FROM stdin;
 \.
 
 
@@ -1986,21 +4149,6 @@ COPY storageadmin_poolscrub (id, pool_id, status, pid, start_time, end_time, kb_
 --
 
 SELECT pg_catalog.setval('storageadmin_poolscrub_id_seq', 1, false);
-
-
---
--- Data for Name: storageadmin_poolstatistic; Type: TABLE DATA; Schema: public; Owner: rocky
---
-
-COPY storageadmin_poolstatistic (id, pool_id, total_capacity, used, ts) FROM stdin;
-\.
-
-
---
--- Name: storageadmin_poolstatistic_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
---
-
-SELECT pg_catalog.setval('storageadmin_poolstatistic_id_seq', 1, false);
 
 
 --
@@ -2019,10 +4167,40 @@ SELECT pg_catalog.setval('storageadmin_posixacls_id_seq', 1, false);
 
 
 --
+-- Data for Name: storageadmin_rockon; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_rockon (id, name, description, version, state, status, link, website, https, icon, ui, volume_add_support, more_info) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_rockon_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_rockon_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_sambacustomconfig; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_sambacustomconfig (id, smb_share_id, custom_config) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_sambacustomconfig_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_sambacustomconfig_id_seq', 1, false);
+
+
+--
 -- Data for Name: storageadmin_sambashare; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_sambashare (id, share_id, path, comment, browsable, read_only, guest_ok, create_mask, admin_users) FROM stdin;
+COPY storageadmin_sambashare (id, share_id, path, comment, browsable, read_only, guest_ok, shadow_copy, snapshot_prefix) FROM stdin;
 \.
 
 
@@ -2068,7 +4246,7 @@ SELECT pg_catalog.setval('storageadmin_sftp_id_seq', 1, false);
 -- Data for Name: storageadmin_share; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_share (id, pool_id, qgroup, name, uuid, size, owner, "group", perms, toc, subvol_name, replica) FROM stdin;
+COPY storageadmin_share (id, pool_id, qgroup, name, uuid, size, owner, "group", perms, toc, subvol_name, replica, compression_algo, rusage, eusage, pqgroup) FROM stdin;
 \.
 
 
@@ -2080,25 +4258,130 @@ SELECT pg_catalog.setval('storageadmin_share_id_seq', 1, false);
 
 
 --
--- Data for Name: storageadmin_sharestatistic; Type: TABLE DATA; Schema: public; Owner: rocky
+-- Data for Name: storageadmin_smartattribute; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_sharestatistic (id, share_id, total_capacity, used, ts) FROM stdin;
+COPY storageadmin_smartattribute (id, info_id, aid, name, flag, normed_value, worst, threshold, atype, raw_value, updated, failed) FROM stdin;
 \.
 
 
 --
--- Name: storageadmin_sharestatistic_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+-- Name: storageadmin_smartattribute_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
 --
 
-SELECT pg_catalog.setval('storageadmin_sharestatistic_id_seq', 1, false);
+SELECT pg_catalog.setval('storageadmin_smartattribute_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_smartcapability; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_smartcapability (id, info_id, name, flag, capabilities) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_smartcapability_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_smartcapability_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_smarterrorlog; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_smarterrorlog (id, info_id, line) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_smarterrorlog_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_smarterrorlog_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_smarterrorlogsummary; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_smarterrorlogsummary (id, info_id, error_num, lifetime_hours, state, etype, details) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_smarterrorlogsummary_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_smarterrorlogsummary_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_smartidentity; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_smartidentity (id, info_id, model_family, device_model, serial_number, world_wide_name, firmware_version, capacity, sector_size, rotation_rate, in_smartdb, ata_version, sata_version, scanned_on, supported, enabled, version, assessment) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_smartidentity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_smartidentity_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_smartinfo; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_smartinfo (id, disk_id, toc) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_smartinfo_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_smartinfo_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_smarttestlog; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_smarttestlog (id, info_id, test_num, description, status, pct_completed, lifetime_hours, lba_of_first_error) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_smarttestlog_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_smarttestlog_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_smarttestlogdetail; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_smarttestlogdetail (id, info_id, line) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_smarttestlogdetail_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_smarttestlogdetail_id_seq', 1, false);
 
 
 --
 -- Data for Name: storageadmin_snapshot; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_snapshot (id, share_id, name, real_name, writable, size, toc, qgroup, uvisible, snap_type) FROM stdin;
+COPY storageadmin_snapshot (id, share_id, name, real_name, writable, size, toc, qgroup, uvisible, snap_type, rusage, eusage) FROM stdin;
 \.
 
 
@@ -2125,10 +4408,55 @@ SELECT pg_catalog.setval('storageadmin_supportcase_id_seq', 1, false);
 
 
 --
+-- Data for Name: storageadmin_teamconnection; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_teamconnection (id, connection_id, name, config) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_teamconnection_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_teamconnection_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_tlscertificate; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_tlscertificate (id, name, certificate, key) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_tlscertificate_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_tlscertificate_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_updatesubscription; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_updatesubscription (id, name, description, url, appliance_id, password, status) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_updatesubscription_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_updatesubscription_id_seq', 1, false);
+
+
+--
 -- Data for Name: storageadmin_user; Type: TABLE DATA; Schema: public; Owner: rocky
 --
 
-COPY storageadmin_user (id, user_id, username, uid, gid) FROM stdin;
+COPY storageadmin_user (id, user_id, username, uid, gid, public_key, shell, homedir, email, admin, group_id) FROM stdin;
 \.
 
 
@@ -2137,6 +4465,21 @@ COPY storageadmin_user (id, user_id, username, uid, gid) FROM stdin;
 --
 
 SELECT pg_catalog.setval('storageadmin_user_id_seq', 1, false);
+
+
+--
+-- Data for Name: storageadmin_user_smb_shares; Type: TABLE DATA; Schema: public; Owner: rocky
+--
+
+COPY storageadmin_user_smb_shares (id, user_id, sambashare_id) FROM stdin;
+\.
+
+
+--
+-- Name: storageadmin_user_smb_shares_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rocky
+--
+
+SELECT pg_catalog.setval('storageadmin_user_smb_shares_id_seq', 1, false);
 
 
 --
@@ -2276,11 +4619,75 @@ ALTER TABLE ONLY django_site
 
 
 --
+-- Name: django_ztask_task_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY django_ztask_task
+    ADD CONSTRAINT django_ztask_task_pkey PRIMARY KEY (uuid);
+
+
+--
+-- Name: oauth2_provider_accesstoken_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_accesstoken
+    ADD CONSTRAINT oauth2_provider_accesstoken_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth2_provider_application_client_id_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_application
+    ADD CONSTRAINT oauth2_provider_application_client_id_key UNIQUE (client_id);
+
+
+--
+-- Name: oauth2_provider_application_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_application
+    ADD CONSTRAINT oauth2_provider_application_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth2_provider_grant_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_grant
+    ADD CONSTRAINT oauth2_provider_grant_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth2_provider_refreshtoken_access_token_id_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT oauth2_provider_refreshtoken_access_token_id_key UNIQUE (access_token_id);
+
+
+--
+-- Name: oauth2_provider_refreshtoken_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT oauth2_provider_refreshtoken_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: south_migrationhistory_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
 ALTER TABLE ONLY south_migrationhistory
     ADD CONSTRAINT south_migrationhistory_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_advancednfsexport_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_advancednfsexport
+    ADD CONSTRAINT storageadmin_advancednfsexport_pkey PRIMARY KEY (id);
 
 
 --
@@ -2332,6 +4739,30 @@ ALTER TABLE ONLY storageadmin_appliance
 
 
 --
+-- Name: storageadmin_bondconnection_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_bondconnection
+    ADD CONSTRAINT storageadmin_bondconnection_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_configbackup_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_configbackup
+    ADD CONSTRAINT storageadmin_configbackup_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_containeroption_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_containeroption
+    ADD CONSTRAINT storageadmin_containeroption_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: storageadmin_dashboardconfig_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -2348,6 +4779,86 @@ ALTER TABLE ONLY storageadmin_dashboardconfig
 
 
 --
+-- Name: storageadmin_dcontainer_name_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcontainer
+    ADD CONSTRAINT storageadmin_dcontainer_name_key UNIQUE (name);
+
+
+--
+-- Name: storageadmin_dcontainer_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcontainer
+    ADD CONSTRAINT storageadmin_dcontainer_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_dcontainerenv_container_id_383a395903b381d4_uniq; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerenv
+    ADD CONSTRAINT storageadmin_dcontainerenv_container_id_383a395903b381d4_uniq UNIQUE (container_id, key);
+
+
+--
+-- Name: storageadmin_dcontainerenv_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerenv
+    ADD CONSTRAINT storageadmin_dcontainerenv_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_dcontainerlink_destination_id_81d8db230d3f58c_uniq; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerlink
+    ADD CONSTRAINT storageadmin_dcontainerlink_destination_id_81d8db230d3f58c_uniq UNIQUE (destination_id, name);
+
+
+--
+-- Name: storageadmin_dcontainerlink_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerlink
+    ADD CONSTRAINT storageadmin_dcontainerlink_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_dcontainerlink_source_id_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerlink
+    ADD CONSTRAINT storageadmin_dcontainerlink_source_id_key UNIQUE (source_id);
+
+
+--
+-- Name: storageadmin_dcustomconfig_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcustomconfig
+    ADD CONSTRAINT storageadmin_dcustomconfig_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_dcustomconfig_rockon_id_7a8ba22579ce6c05_uniq; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dcustomconfig
+    ADD CONSTRAINT storageadmin_dcustomconfig_rockon_id_7a8ba22579ce6c05_uniq UNIQUE (rockon_id, key);
+
+
+--
+-- Name: storageadmin_dimage_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dimage
+    ADD CONSTRAINT storageadmin_dimage_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: storageadmin_disk_name_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -2361,6 +4872,86 @@ ALTER TABLE ONLY storageadmin_disk
 
 ALTER TABLE ONLY storageadmin_disk
     ADD CONSTRAINT storageadmin_disk_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_dport_container_id_7fb3c9d6da48afa2_uniq; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dport
+    ADD CONSTRAINT storageadmin_dport_container_id_7fb3c9d6da48afa2_uniq UNIQUE (container_id, containerp);
+
+
+--
+-- Name: storageadmin_dport_hostp_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dport
+    ADD CONSTRAINT storageadmin_dport_hostp_key UNIQUE (hostp);
+
+
+--
+-- Name: storageadmin_dport_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dport
+    ADD CONSTRAINT storageadmin_dport_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_dvolume_container_id_50f2d35751ce43a0_uniq; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dvolume
+    ADD CONSTRAINT storageadmin_dvolume_container_id_50f2d35751ce43a0_uniq UNIQUE (container_id, dest_dir);
+
+
+--
+-- Name: storageadmin_dvolume_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_dvolume
+    ADD CONSTRAINT storageadmin_dvolume_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_emailclient_name_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_emailclient
+    ADD CONSTRAINT storageadmin_emailclient_name_key UNIQUE (name);
+
+
+--
+-- Name: storageadmin_emailclient_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_emailclient
+    ADD CONSTRAINT storageadmin_emailclient_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_ethernetconnection_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_ethernetconnection
+    ADD CONSTRAINT storageadmin_ethernetconnection_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_group_gid_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_group
+    ADD CONSTRAINT storageadmin_group_gid_key UNIQUE (gid);
+
+
+--
+-- Name: storageadmin_group_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_group
+    ADD CONSTRAINT storageadmin_group_pkey PRIMARY KEY (id);
 
 
 --
@@ -2404,11 +4995,59 @@ ALTER TABLE ONLY storageadmin_iscsitarget
 
 
 --
--- Name: storageadmin_networkinterface_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+-- Name: storageadmin_netatalkshare_path_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
-ALTER TABLE ONLY storageadmin_networkinterface
-    ADD CONSTRAINT storageadmin_networkinterface_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY storageadmin_netatalkshare
+    ADD CONSTRAINT storageadmin_netatalkshare_path_key UNIQUE (path);
+
+
+--
+-- Name: storageadmin_netatalkshare_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_netatalkshare
+    ADD CONSTRAINT storageadmin_netatalkshare_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_netatalkshare_share_id_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_netatalkshare
+    ADD CONSTRAINT storageadmin_netatalkshare_share_id_key UNIQUE (share_id);
+
+
+--
+-- Name: storageadmin_networkconnection_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_networkconnection
+    ADD CONSTRAINT storageadmin_networkconnection_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_networkconnection_uuid_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_networkconnection
+    ADD CONSTRAINT storageadmin_networkconnection_uuid_key UNIQUE (uuid);
+
+
+--
+-- Name: storageadmin_networkdevice_name_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_networkdevice
+    ADD CONSTRAINT storageadmin_networkdevice_name_key UNIQUE (name);
+
+
+--
+-- Name: storageadmin_networkdevice_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_networkdevice
+    ADD CONSTRAINT storageadmin_networkdevice_pkey PRIMARY KEY (id);
 
 
 --
@@ -2425,6 +5064,46 @@ ALTER TABLE ONLY storageadmin_nfsexport
 
 ALTER TABLE ONLY storageadmin_nfsexportgroup
     ADD CONSTRAINT storageadmin_nfsexportgroup_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_oauthapp_application_id_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_oauthapp
+    ADD CONSTRAINT storageadmin_oauthapp_application_id_key UNIQUE (application_id);
+
+
+--
+-- Name: storageadmin_oauthapp_name_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_oauthapp
+    ADD CONSTRAINT storageadmin_oauthapp_name_key UNIQUE (name);
+
+
+--
+-- Name: storageadmin_oauthapp_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_oauthapp
+    ADD CONSTRAINT storageadmin_oauthapp_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_pincard_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_pincard
+    ADD CONSTRAINT storageadmin_pincard_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_pincard_user_2f0d1c6819ec8904_uniq; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_pincard
+    ADD CONSTRAINT storageadmin_pincard_user_2f0d1c6819ec8904_uniq UNIQUE ("user", pin_number);
 
 
 --
@@ -2476,6 +5155,14 @@ ALTER TABLE ONLY storageadmin_pool
 
 
 --
+-- Name: storageadmin_poolbalance_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_poolbalance
+    ADD CONSTRAINT storageadmin_poolbalance_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: storageadmin_poolscrub_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -2484,19 +5171,27 @@ ALTER TABLE ONLY storageadmin_poolscrub
 
 
 --
--- Name: storageadmin_poolstatistic_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
---
-
-ALTER TABLE ONLY storageadmin_poolstatistic
-    ADD CONSTRAINT storageadmin_poolstatistic_pkey PRIMARY KEY (id);
-
-
---
 -- Name: storageadmin_posixacls_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
 ALTER TABLE ONLY storageadmin_posixacls
     ADD CONSTRAINT storageadmin_posixacls_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_rockon_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_rockon
+    ADD CONSTRAINT storageadmin_rockon_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_sambacustomconfig_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_sambacustomconfig
+    ADD CONSTRAINT storageadmin_sambacustomconfig_pkey PRIMARY KEY (id);
 
 
 --
@@ -2564,11 +5259,67 @@ ALTER TABLE ONLY storageadmin_share
 
 
 --
--- Name: storageadmin_sharestatistic_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+-- Name: storageadmin_smartattribute_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
-ALTER TABLE ONLY storageadmin_sharestatistic
-    ADD CONSTRAINT storageadmin_sharestatistic_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY storageadmin_smartattribute
+    ADD CONSTRAINT storageadmin_smartattribute_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_smartcapability_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_smartcapability
+    ADD CONSTRAINT storageadmin_smartcapability_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_smarterrorlog_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_smarterrorlog
+    ADD CONSTRAINT storageadmin_smarterrorlog_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_smarterrorlogsummary_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_smarterrorlogsummary
+    ADD CONSTRAINT storageadmin_smarterrorlogsummary_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_smartidentity_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_smartidentity
+    ADD CONSTRAINT storageadmin_smartidentity_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_smartinfo_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_smartinfo
+    ADD CONSTRAINT storageadmin_smartinfo_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_smarttestlog_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_smarttestlog
+    ADD CONSTRAINT storageadmin_smarttestlog_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_smarttestlogdetail_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_smarttestlogdetail
+    ADD CONSTRAINT storageadmin_smarttestlogdetail_pkey PRIMARY KEY (id);
 
 
 --
@@ -2596,11 +5347,67 @@ ALTER TABLE ONLY storageadmin_supportcase
 
 
 --
+-- Name: storageadmin_teamconnection_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_teamconnection
+    ADD CONSTRAINT storageadmin_teamconnection_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_tlscertificate_name_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_tlscertificate
+    ADD CONSTRAINT storageadmin_tlscertificate_name_key UNIQUE (name);
+
+
+--
+-- Name: storageadmin_tlscertificate_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_tlscertificate
+    ADD CONSTRAINT storageadmin_tlscertificate_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_updatesubscription_name_key; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_updatesubscription
+    ADD CONSTRAINT storageadmin_updatesubscription_name_key UNIQUE (name);
+
+
+--
+-- Name: storageadmin_updatesubscription_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_updatesubscription
+    ADD CONSTRAINT storageadmin_updatesubscription_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: storageadmin_user_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
 --
 
 ALTER TABLE ONLY storageadmin_user
     ADD CONSTRAINT storageadmin_user_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_user_smb_shares_pkey; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_user_smb_shares
+    ADD CONSTRAINT storageadmin_user_smb_shares_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storageadmin_user_smb_shares_user_id_f25f9d868ba1e52_uniq; Type: CONSTRAINT; Schema: public; Owner: rocky; Tablespace: 
+--
+
+ALTER TABLE ONLY storageadmin_user_smb_shares
+    ADD CONSTRAINT storageadmin_user_smb_shares_user_id_f25f9d868ba1e52_uniq UNIQUE (user_id, sambashare_id);
 
 
 --
@@ -2711,6 +5518,90 @@ CREATE INDEX django_session_session_key_like ON django_session USING btree (sess
 
 
 --
+-- Name: django_ztask_task_uuid_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX django_ztask_task_uuid_like ON django_ztask_task USING btree (uuid varchar_pattern_ops);
+
+
+--
+-- Name: oauth2_provider_accesstoken_application_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_accesstoken_application_id ON oauth2_provider_accesstoken USING btree (application_id);
+
+
+--
+-- Name: oauth2_provider_accesstoken_token; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_accesstoken_token ON oauth2_provider_accesstoken USING btree (token);
+
+
+--
+-- Name: oauth2_provider_accesstoken_user_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_accesstoken_user_id ON oauth2_provider_accesstoken USING btree (user_id);
+
+
+--
+-- Name: oauth2_provider_application_client_id_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_application_client_id_like ON oauth2_provider_application USING btree (client_id varchar_pattern_ops);
+
+
+--
+-- Name: oauth2_provider_application_user_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_application_user_id ON oauth2_provider_application USING btree (user_id);
+
+
+--
+-- Name: oauth2_provider_grant_application_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_grant_application_id ON oauth2_provider_grant USING btree (application_id);
+
+
+--
+-- Name: oauth2_provider_grant_code; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_grant_code ON oauth2_provider_grant USING btree (code);
+
+
+--
+-- Name: oauth2_provider_grant_user_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_grant_user_id ON oauth2_provider_grant USING btree (user_id);
+
+
+--
+-- Name: oauth2_provider_refreshtoken_application_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_refreshtoken_application_id ON oauth2_provider_refreshtoken USING btree (application_id);
+
+
+--
+-- Name: oauth2_provider_refreshtoken_token; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_refreshtoken_token ON oauth2_provider_refreshtoken USING btree (token);
+
+
+--
+-- Name: oauth2_provider_refreshtoken_user_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX oauth2_provider_refreshtoken_user_id ON oauth2_provider_refreshtoken USING btree (user_id);
+
+
+--
 -- Name: storageadmin_apikeys_key_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -2739,6 +5630,62 @@ CREATE INDEX storageadmin_appliance_uuid_like ON storageadmin_appliance USING bt
 
 
 --
+-- Name: storageadmin_bondconnection_connection_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_bondconnection_connection_id ON storageadmin_bondconnection USING btree (connection_id);
+
+
+--
+-- Name: storageadmin_containeroption_container_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_containeroption_container_id ON storageadmin_containeroption USING btree (container_id);
+
+
+--
+-- Name: storageadmin_dcontainer_dimage_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dcontainer_dimage_id ON storageadmin_dcontainer USING btree (dimage_id);
+
+
+--
+-- Name: storageadmin_dcontainer_name_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dcontainer_name_like ON storageadmin_dcontainer USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: storageadmin_dcontainer_rockon_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dcontainer_rockon_id ON storageadmin_dcontainer USING btree (rockon_id);
+
+
+--
+-- Name: storageadmin_dcontainerenv_container_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dcontainerenv_container_id ON storageadmin_dcontainerenv USING btree (container_id);
+
+
+--
+-- Name: storageadmin_dcontainerlink_destination_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dcontainerlink_destination_id ON storageadmin_dcontainerlink USING btree (destination_id);
+
+
+--
+-- Name: storageadmin_dcustomconfig_rockon_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dcustomconfig_rockon_id ON storageadmin_dcustomconfig USING btree (rockon_id);
+
+
+--
 -- Name: storageadmin_disk_name_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -2750,6 +5697,41 @@ CREATE INDEX storageadmin_disk_name_like ON storageadmin_disk USING btree (name 
 --
 
 CREATE INDEX storageadmin_disk_pool_id ON storageadmin_disk USING btree (pool_id);
+
+
+--
+-- Name: storageadmin_dport_container_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dport_container_id ON storageadmin_dport USING btree (container_id);
+
+
+--
+-- Name: storageadmin_dvolume_container_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dvolume_container_id ON storageadmin_dvolume USING btree (container_id);
+
+
+--
+-- Name: storageadmin_dvolume_share_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_dvolume_share_id ON storageadmin_dvolume USING btree (share_id);
+
+
+--
+-- Name: storageadmin_emailclient_name_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_emailclient_name_like ON storageadmin_emailclient USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: storageadmin_ethernetconnection_connection_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_ethernetconnection_connection_id ON storageadmin_ethernetconnection USING btree (connection_id);
 
 
 --
@@ -2781,6 +5763,41 @@ CREATE INDEX storageadmin_iscsitarget_tname_like ON storageadmin_iscsitarget USI
 
 
 --
+-- Name: storageadmin_netatalkshare_path_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_netatalkshare_path_like ON storageadmin_netatalkshare USING btree (path varchar_pattern_ops);
+
+
+--
+-- Name: storageadmin_networkconnection_master_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_networkconnection_master_id ON storageadmin_networkconnection USING btree (master_id);
+
+
+--
+-- Name: storageadmin_networkconnection_uuid_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_networkconnection_uuid_like ON storageadmin_networkconnection USING btree (uuid varchar_pattern_ops);
+
+
+--
+-- Name: storageadmin_networkdevice_connection_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_networkdevice_connection_id ON storageadmin_networkdevice USING btree (connection_id);
+
+
+--
+-- Name: storageadmin_networkdevice_name_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_networkdevice_name_like ON storageadmin_networkdevice USING btree (name varchar_pattern_ops);
+
+
+--
 -- Name: storageadmin_nfsexport_export_group_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -2792,6 +5809,20 @@ CREATE INDEX storageadmin_nfsexport_export_group_id ON storageadmin_nfsexport US
 --
 
 CREATE INDEX storageadmin_nfsexport_share_id ON storageadmin_nfsexport USING btree (share_id);
+
+
+--
+-- Name: storageadmin_oauthapp_name_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_oauthapp_name_like ON storageadmin_oauthapp USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: storageadmin_oauthapp_user_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_oauthapp_user_id ON storageadmin_oauthapp USING btree (user_id);
 
 
 --
@@ -2823,6 +5854,13 @@ CREATE INDEX storageadmin_pool_name_like ON storageadmin_pool USING btree (name 
 
 
 --
+-- Name: storageadmin_poolbalance_pool_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_poolbalance_pool_id ON storageadmin_poolbalance USING btree (pool_id);
+
+
+--
 -- Name: storageadmin_poolscrub_pool_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
 --
 
@@ -2830,17 +5868,17 @@ CREATE INDEX storageadmin_poolscrub_pool_id ON storageadmin_poolscrub USING btre
 
 
 --
--- Name: storageadmin_poolstatistic_pool_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
---
-
-CREATE INDEX storageadmin_poolstatistic_pool_id ON storageadmin_poolstatistic USING btree (pool_id);
-
-
---
 -- Name: storageadmin_posixacls_smb_share_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
 --
 
 CREATE INDEX storageadmin_posixacls_smb_share_id ON storageadmin_posixacls USING btree (smb_share_id);
+
+
+--
+-- Name: storageadmin_sambacustomconfig_smb_share_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_sambacustomconfig_smb_share_id ON storageadmin_sambacustomconfig USING btree (smb_share_id);
 
 
 --
@@ -2865,10 +5903,59 @@ CREATE INDEX storageadmin_share_pool_id ON storageadmin_share USING btree (pool_
 
 
 --
--- Name: storageadmin_sharestatistic_share_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+-- Name: storageadmin_smartattribute_info_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
 --
 
-CREATE INDEX storageadmin_sharestatistic_share_id ON storageadmin_sharestatistic USING btree (share_id);
+CREATE INDEX storageadmin_smartattribute_info_id ON storageadmin_smartattribute USING btree (info_id);
+
+
+--
+-- Name: storageadmin_smartcapability_info_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_smartcapability_info_id ON storageadmin_smartcapability USING btree (info_id);
+
+
+--
+-- Name: storageadmin_smarterrorlog_info_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_smarterrorlog_info_id ON storageadmin_smarterrorlog USING btree (info_id);
+
+
+--
+-- Name: storageadmin_smarterrorlogsummary_info_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_smarterrorlogsummary_info_id ON storageadmin_smarterrorlogsummary USING btree (info_id);
+
+
+--
+-- Name: storageadmin_smartidentity_info_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_smartidentity_info_id ON storageadmin_smartidentity USING btree (info_id);
+
+
+--
+-- Name: storageadmin_smartinfo_disk_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_smartinfo_disk_id ON storageadmin_smartinfo USING btree (disk_id);
+
+
+--
+-- Name: storageadmin_smarttestlog_info_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_smarttestlog_info_id ON storageadmin_smarttestlog USING btree (info_id);
+
+
+--
+-- Name: storageadmin_smarttestlogdetail_info_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_smarttestlogdetail_info_id ON storageadmin_smarttestlogdetail USING btree (info_id);
 
 
 --
@@ -2879,10 +5966,107 @@ CREATE INDEX storageadmin_snapshot_share_id ON storageadmin_snapshot USING btree
 
 
 --
+-- Name: storageadmin_teamconnection_connection_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_teamconnection_connection_id ON storageadmin_teamconnection USING btree (connection_id);
+
+
+--
+-- Name: storageadmin_tlscertificate_name_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_tlscertificate_name_like ON storageadmin_tlscertificate USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: storageadmin_updatesubscription_appliance_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_updatesubscription_appliance_id ON storageadmin_updatesubscription USING btree (appliance_id);
+
+
+--
+-- Name: storageadmin_updatesubscription_name_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_updatesubscription_name_like ON storageadmin_updatesubscription USING btree (name varchar_pattern_ops);
+
+
+--
+-- Name: storageadmin_user_group_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_user_group_id ON storageadmin_user USING btree (group_id);
+
+
+--
+-- Name: storageadmin_user_smb_shares_sambashare_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_user_smb_shares_sambashare_id ON storageadmin_user_smb_shares USING btree (sambashare_id);
+
+
+--
+-- Name: storageadmin_user_smb_shares_user_id; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
+--
+
+CREATE INDEX storageadmin_user_smb_shares_user_id ON storageadmin_user_smb_shares USING btree (user_id);
+
+
+--
 -- Name: storageadmin_user_username_like; Type: INDEX; Schema: public; Owner: rocky; Tablespace: 
 --
 
 CREATE INDEX storageadmin_user_username_like ON storageadmin_user USING btree (username varchar_pattern_ops);
+
+
+--
+-- Name: access_token_id_refs_id_4eca7025; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT access_token_id_refs_id_4eca7025 FOREIGN KEY (access_token_id) REFERENCES oauth2_provider_accesstoken(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: appliance_id_refs_id_dc20906c; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_updatesubscription
+    ADD CONSTRAINT appliance_id_refs_id_dc20906c FOREIGN KEY (appliance_id) REFERENCES storageadmin_appliance(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: application_id_refs_id_3a4939c0; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_grant
+    ADD CONSTRAINT application_id_refs_id_3a4939c0 FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: application_id_refs_id_50af46ef; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_accesstoken
+    ADD CONSTRAINT application_id_refs_id_50af46ef FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: application_id_refs_id_96fa9bab; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT application_id_refs_id_96fa9bab FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: application_id_refs_id_bfbcdfad; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_oauthapp
+    ADD CONSTRAINT application_id_refs_id_bfbcdfad FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -2910,11 +6094,99 @@ ALTER TABLE ONLY auth_user_user_permissions
 
 
 --
+-- Name: connection_id_refs_id_1db23ec5; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_networkdevice
+    ADD CONSTRAINT connection_id_refs_id_1db23ec5 FOREIGN KEY (connection_id) REFERENCES storageadmin_networkconnection(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: connection_id_refs_id_5d7c704d; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_teamconnection
+    ADD CONSTRAINT connection_id_refs_id_5d7c704d FOREIGN KEY (connection_id) REFERENCES storageadmin_networkconnection(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: connection_id_refs_id_61d432b3; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_ethernetconnection
+    ADD CONSTRAINT connection_id_refs_id_61d432b3 FOREIGN KEY (connection_id) REFERENCES storageadmin_networkconnection(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: connection_id_refs_id_6207f2c5; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_bondconnection
+    ADD CONSTRAINT connection_id_refs_id_6207f2c5 FOREIGN KEY (connection_id) REFERENCES storageadmin_networkconnection(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: container_id_refs_id_494adbb2; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerenv
+    ADD CONSTRAINT container_id_refs_id_494adbb2 FOREIGN KEY (container_id) REFERENCES storageadmin_dcontainer(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: container_id_refs_id_65b98668; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dvolume
+    ADD CONSTRAINT container_id_refs_id_65b98668 FOREIGN KEY (container_id) REFERENCES storageadmin_dcontainer(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: container_id_refs_id_86340f46; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dport
+    ADD CONSTRAINT container_id_refs_id_86340f46 FOREIGN KEY (container_id) REFERENCES storageadmin_dcontainer(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: container_id_refs_id_9f9a4ebb; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_containeroption
+    ADD CONSTRAINT container_id_refs_id_9f9a4ebb FOREIGN KEY (container_id) REFERENCES storageadmin_dcontainer(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: content_type_id_refs_id_d043b34a; Type: FK CONSTRAINT; Schema: public; Owner: rocky
 --
 
 ALTER TABLE ONLY auth_permission
     ADD CONSTRAINT content_type_id_refs_id_d043b34a FOREIGN KEY (content_type_id) REFERENCES django_content_type(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: destination_id_refs_id_aea0cae7; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerlink
+    ADD CONSTRAINT destination_id_refs_id_aea0cae7 FOREIGN KEY (destination_id) REFERENCES storageadmin_dcontainer(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: dimage_id_refs_id_f41f79d2; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcontainer
+    ADD CONSTRAINT dimage_id_refs_id_f41f79d2 FOREIGN KEY (dimage_id) REFERENCES storageadmin_dimage(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: disk_id_refs_id_c956c226; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smartinfo
+    ADD CONSTRAINT disk_id_refs_id_c956c226 FOREIGN KEY (disk_id) REFERENCES storageadmin_disk(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -2934,11 +6206,147 @@ ALTER TABLE ONLY django_admin_log
 
 
 --
+-- Name: group_id_refs_id_82c98608; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_user
+    ADD CONSTRAINT group_id_refs_id_82c98608 FOREIGN KEY (group_id) REFERENCES storageadmin_group(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: group_id_refs_id_f4b32aac; Type: FK CONSTRAINT; Schema: public; Owner: rocky
 --
 
 ALTER TABLE ONLY auth_group_permissions
     ADD CONSTRAINT group_id_refs_id_f4b32aac FOREIGN KEY (group_id) REFERENCES auth_group(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: info_id_refs_id_22f076e4; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarterrorlog
+    ADD CONSTRAINT info_id_refs_id_22f076e4 FOREIGN KEY (info_id) REFERENCES storageadmin_smartinfo(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: info_id_refs_id_31af95b7; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarterrorlogsummary
+    ADD CONSTRAINT info_id_refs_id_31af95b7 FOREIGN KEY (info_id) REFERENCES storageadmin_smartinfo(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: info_id_refs_id_334f88ba; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smartidentity
+    ADD CONSTRAINT info_id_refs_id_334f88ba FOREIGN KEY (info_id) REFERENCES storageadmin_smartinfo(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: info_id_refs_id_347c5948; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smartcapability
+    ADD CONSTRAINT info_id_refs_id_347c5948 FOREIGN KEY (info_id) REFERENCES storageadmin_smartinfo(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: info_id_refs_id_3b539131; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarttestlogdetail
+    ADD CONSTRAINT info_id_refs_id_3b539131 FOREIGN KEY (info_id) REFERENCES storageadmin_smartinfo(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: info_id_refs_id_4a394feb; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smartattribute
+    ADD CONSTRAINT info_id_refs_id_4a394feb FOREIGN KEY (info_id) REFERENCES storageadmin_smartinfo(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: info_id_refs_id_5ecc771a; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_smarttestlog
+    ADD CONSTRAINT info_id_refs_id_5ecc771a FOREIGN KEY (info_id) REFERENCES storageadmin_smartinfo(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: master_id_refs_id_d6caccb5; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_networkconnection
+    ADD CONSTRAINT master_id_refs_id_d6caccb5 FOREIGN KEY (master_id) REFERENCES storageadmin_networkconnection(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: pool_id_refs_id_5461e944; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_poolbalance
+    ADD CONSTRAINT pool_id_refs_id_5461e944 FOREIGN KEY (pool_id) REFERENCES storageadmin_pool(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: rockon_id_refs_id_2e2b6fa6; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcontainer
+    ADD CONSTRAINT rockon_id_refs_id_2e2b6fa6 FOREIGN KEY (rockon_id) REFERENCES storageadmin_rockon(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: rockon_id_refs_id_8ab363eb; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcustomconfig
+    ADD CONSTRAINT rockon_id_refs_id_8ab363eb FOREIGN KEY (rockon_id) REFERENCES storageadmin_rockon(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: sambashare_id_refs_id_4b495b6c; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_user_smb_shares
+    ADD CONSTRAINT sambashare_id_refs_id_4b495b6c FOREIGN KEY (sambashare_id) REFERENCES storageadmin_sambashare(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: share_id_refs_id_eb01e197; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_netatalkshare
+    ADD CONSTRAINT share_id_refs_id_eb01e197 FOREIGN KEY (share_id) REFERENCES storageadmin_share(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: share_id_refs_id_ec6f6dcb; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dvolume
+    ADD CONSTRAINT share_id_refs_id_ec6f6dcb FOREIGN KEY (share_id) REFERENCES storageadmin_share(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: smb_share_id_refs_id_6c4ec14e; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_sambacustomconfig
+    ADD CONSTRAINT smb_share_id_refs_id_6c4ec14e FOREIGN KEY (smb_share_id) REFERENCES storageadmin_sambashare(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: source_id_refs_id_aea0cae7; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_dcontainerlink
+    ADD CONSTRAINT source_id_refs_id_aea0cae7 FOREIGN KEY (source_id) REFERENCES storageadmin_dcontainer(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -2998,14 +6406,6 @@ ALTER TABLE ONLY storageadmin_poolscrub
 
 
 --
--- Name: storageadmin_poolstatistic_pool_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: rocky
---
-
-ALTER TABLE ONLY storageadmin_poolstatistic
-    ADD CONSTRAINT storageadmin_poolstatistic_pool_id_fkey FOREIGN KEY (pool_id) REFERENCES storageadmin_pool(id) DEFERRABLE INITIALLY DEFERRED;
-
-
---
 -- Name: storageadmin_posixacls_smb_share_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: rocky
 --
 
@@ -3038,14 +6438,6 @@ ALTER TABLE ONLY storageadmin_share
 
 
 --
--- Name: storageadmin_sharestatistic_share_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: rocky
---
-
-ALTER TABLE ONLY storageadmin_sharestatistic
-    ADD CONSTRAINT storageadmin_sharestatistic_share_id_fkey FOREIGN KEY (share_id) REFERENCES storageadmin_share(id) DEFERRABLE INITIALLY DEFERRED;
-
-
---
 -- Name: storageadmin_snapshot_share_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: rocky
 --
 
@@ -3062,6 +6454,22 @@ ALTER TABLE ONLY storageadmin_user
 
 
 --
+-- Name: user_id_refs_id_11f4dade; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_accesstoken
+    ADD CONSTRAINT user_id_refs_id_11f4dade FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: user_id_refs_id_27d71a58; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_grant
+    ADD CONSTRAINT user_id_refs_id_27d71a58 FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: user_id_refs_id_40c41112; Type: FK CONSTRAINT; Schema: public; Owner: rocky
 --
 
@@ -3075,6 +6483,38 @@ ALTER TABLE ONLY auth_user_groups
 
 ALTER TABLE ONLY auth_user_user_permissions
     ADD CONSTRAINT user_id_refs_id_4dc23c39 FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: user_id_refs_id_74e0195e; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_oauthapp
+    ADD CONSTRAINT user_id_refs_id_74e0195e FOREIGN KEY (user_id) REFERENCES storageadmin_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: user_id_refs_id_76772602; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT user_id_refs_id_76772602 FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: user_id_refs_id_7b636ccc; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY storageadmin_user_smb_shares
+    ADD CONSTRAINT user_id_refs_id_7b636ccc FOREIGN KEY (user_id) REFERENCES storageadmin_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: user_id_refs_id_f9cca3bd; Type: FK CONSTRAINT; Schema: public; Owner: rocky
+--
+
+ALTER TABLE ONLY oauth2_provider_application
+    ADD CONSTRAINT user_id_refs_id_f9cca3bd FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
