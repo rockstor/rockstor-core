@@ -228,34 +228,7 @@ def scan_disks(min_size):
         if (dmap['FSTYPE'] == 'btrfs'):
             is_btrfs = True
         # End readability variables assignment
-        # We propagate the uuid for a bcache backing device to it's virtual
-        # counterpart device for use as a serial number.
-        # Note however that we are only interested in the 'backing device' type
-        # of bcache as it has the counterpart virtual block device.
-        if (dmap['FSTYPE'] == 'bcache') and \
-                        get_bcache_device_type(dmap['NAME']) == 'bdev':
-            bdev_uuid = dmap['UUID']
-            # We set out bdev_flag to inform the next device interpretation.
-            bdev_flag = True
-        else:
-            # we are a non bcache bdev but we might be the virtual device if we
-            # are listed directly after a bcache bdev.
-            if bdev_flag:
-                # Assumption is there is only one virtual device for each bdev
-                # and that it is listed directly after it's associated bdev.
-                # We are listed directly after a bcache bdev but could still be
-                # any device. As no cheap distinguishing properties we for now
-                # rely on device name:
-                if re.match('bcache', dmap['NAME']) is not None:
-                    # We avoid overwriting any serial just in case, normal
-                    # bcache virtual devices have no serial reported by lsblk
-                    # but future lsblk versions may change this.
-                    if dmap['SERIAL'] == '':
-                        # transfer our stashed bdev uuid as a serial.
-                        dmap['SERIAL'] = bdev_uuid
-            # reset the bdev_flag as we are only interested in devices listed
-            # directly after a bdev anyway.
-            bdev_flag = False
+
         if is_partition:
             dmap['parted'] = True
             # We don't account for partitions within partitions, but making
@@ -398,6 +371,36 @@ def scan_disks(min_size):
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices and md devices so try specialized function.
                 dmap['SERIAL'] = get_disk_serial(dmap['NAME'], dmap['TYPE'])
+            # Now try specialized serial propogation methods:
+            # Bcache virtual block devices get their backing devices uuid
+            # We propagate the uuid for a bcache backing device to it's virtual
+            # counterpart device for use as a serial number.
+            # Note however that we are only interested in the 'backing device'
+            # type of bcache as it has the counterpart virtual block device.
+            if (dmap['FSTYPE'] == 'bcache') and \
+                            get_bcache_device_type(dmap['NAME']) == 'bdev':
+                bdev_uuid = dmap['UUID']
+                # We set out bdev_flag to inform the next device interpretation.
+                bdev_flag = True
+            else:
+                # we are a non bcache bdev but we might be the virtual device
+                # if we are listed directly after a bcache bdev.
+                if bdev_flag:
+                    # Assumption is there is only one virtual device for each
+                    # bdev and that it is listed directly after it's associated
+                    # bdev. We are listed directly after a bcache bdev but
+                    # could still be any device. As no cheap distinguishing
+                    # properties we for now rely on device name:
+                    if re.match('bcache', dmap['NAME']) is not None:
+                        # We avoid overwriting any serial just in case, normal
+                        # bcache virtual devices have no serial reported by
+                        # lsblk but future lsblk versions may change this.
+                        if dmap['SERIAL'] == '':
+                            # transfer our stashed bdev uuid as a serial.
+                            dmap['SERIAL'] = 'bcache-%s' % bdev_uuid
+                # reset the bdev_flag as we are only interested in devices
+                # listed directly after a bdev anyway.
+                bdev_flag = False
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials_seen)):
                 # No serial number still or its a repeat.
                 # Overwrite drive serial entry in dmap with fake-serial- + uuid4
