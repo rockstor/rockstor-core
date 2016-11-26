@@ -8,6 +8,7 @@ base = os.path.dirname(base)
 
 import sys
 sys.path[0:0] = [
+    base,
     join(base, 'eggs/Django-1.8.16-py2.7.egg'),
     join(base, 'eggs/South-1.0.2-py2.7.egg'),
     join(base, 'eggs/URLObject-2.1.1-py2.7.egg'),
@@ -34,9 +35,8 @@ sys.path[0:0] = [
     join(base, 'eggs/six-1.10.0-py2.7.egg'),
     join(base, 'eggs/zc.buildout-2.5.3-py2.7.egg'),
     join(base, 'eggs/zc.recipe.egg-2.0.3-py2.7.egg'),
+    join(base, 'src'),
     join(base, 'src/rockstor'),
-    '/opt/rockstor',
-    '/opt/rockstor/src',
 ]
 
 import djangorecipe.manage
