@@ -45,6 +45,14 @@
             <a href="#" class="open_luks_drive" data-disk-name="{{this.name}}" title="Open LUKS Container" rel="tooltip">
             <i class="glyphicon glyphicon-eye-open"></i></a>
         {{/if}}
+        {{#if (isBcache this.role)}}
+            <a href="#" class="bcache_backing_drive" data-disk-name="{{this.name}}" title="Bcache Backing Drive" rel="tooltip">
+            <i class="glyphicon glyphicon-link"></i></a>
+        {{/if}}
+        {{#if (isBcacheCdev this.role)}}
+            <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive" rel="tooltip">
+            <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
+        {{/if}}
       </td>
       <td>
         {{#checkSerialStatus this.serial this.name}}
