@@ -356,6 +356,57 @@ DisksView = RockstorLayoutView.extend({
             return false;
         });
 
+        // Identify bcache backing devices by return of true / false.
+        // Works by examining the Disk.role field. Based on sister handlebars
+        // helper 'isRootDevice'
+        Handlebars.registerHelper('isBcache', function (role) {
+            // check if our role is null = db default
+            if (role == null) {
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // @todo not sure if this is redundant?
+            try {
+                var roleAsJson = JSON.parse(role);
+            } catch (e) {
+                return false;
+            }
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('bcache')) {
+                // We have a bcache backing device which must now be accessed
+                // indirectly via a virtual device, hence we tag it to avoid
+                // accidental re-use / delete.
+                return true;
+            }
+            // In all other cases return false.
+            return false;
+        });
+
+        // Identify bcache caching devices by return of true / false.
+        // Works by examining the Disk.role field. Based on sister handlebars
+        // helper 'isBcache'
+        Handlebars.registerHelper('isBcacheCdev', function (role) {
+            // check if our role is null = db default
+            if (role == null) {
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // @todo not sure if this is redundant?
+            try {
+                var roleAsJson = JSON.parse(role);
+            } catch (e) {
+                return false;
+            }
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('bcachecdev')) {
+                // We have a bcache caching device which we tag to avoid
+                // it's accidental re-use / delete.
+                return true;
+            }
+            // In all other cases return false.
+            return false;
+        });
+
         Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
             if (btrfsUid && _.isNull(poolName)) {
                 return true;
