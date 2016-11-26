@@ -43,7 +43,8 @@ logger = logging.getLogger(__name__)
 # -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
 # and the post processing present in scan_disks()
 # LUKS currently stands for full disk crypto container.
-SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'partitions']
+SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'bcache',
+                          'bcache-cdev', 'partitions']
 
 class DiskMixin(object):
     serializer_class = DiskInfoSerializer
@@ -195,6 +196,22 @@ class DiskMixin(object):
                 # regarding an opened LUKS container which appears as a mapped
                 # device. Assign the /dev/disk/by-id name as a value.
                 disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
+            if d.fstype == 'bcache':
+                # BCACHE: scan_disks() can inform us of the truth regarding
+                # bcache "backing devices" so we assign a role to avoid these
+                # devices being seen as unused and accidentally deleted. Once
+                # formatted with make-bcache -B they are accessed via a virtual
+                # device which should end up with a serial of bcache-(d.uuid)
+                # here we tag our backing device with it's virtual counterparts
+                # serial number.
+                disk_roles_identified['bcache'] = 'bcache-%s' % d.uuid
+            if d.fstype == 'bcache-cdev':
+                # BCACHE: continued; here we use the scan_disks() added info
+                # of this bcache device being a cache device not a backing
+                # device, so it will have no virtual block device counterpart
+                # but likewise must be specifically attributed (ie to fast
+                # ssd type drives) so we flag in the role system differently.
+                disk_roles_identified['bcachecdev'] = 'bcache-%s' % d.uuid
             if d.root is True:
                 # ROOT DISK: scan_disks() has already identified the current
                 # truth regarding the device hosting our root '/' fs so update
