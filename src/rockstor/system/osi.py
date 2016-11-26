@@ -377,11 +377,19 @@ def scan_disks(min_size):
             # counterpart device for use as a serial number.
             # Note however that we are only interested in the 'backing device'
             # type of bcache as it has the counterpart virtual block device.
-            if (dmap['FSTYPE'] == 'bcache') and \
-                            get_bcache_device_type(dmap['NAME']) == 'bdev':
-                bdev_uuid = dmap['UUID']
-                # We set out bdev_flag to inform the next device interpretation.
-                bdev_flag = True
+            if (dmap['FSTYPE'] == 'bcache'):
+                bcache_dev_type = get_bcache_device_type(dmap['NAME'])
+                logger.debug('bcache_dev_type=%s' % bcache_dev_type)
+                if bcache_dev_type == 'bdev':
+                    bdev_uuid = dmap['UUID']
+                    # We set out bdev_flag to inform the next device
+                    # interpretation.
+                    bdev_flag = True
+                elif bcache_dev_type == 'cdev':
+                    # We have a bcache caching device, not a backing device.
+                    # Change fstype as an indicator to _update_disk_state()
+                    # role system. N.B. fstype bcache-cdev is fictitious.
+                    dmap['FSTYPE'] = 'bcache-cdev'
             else:
                 # we are a non bcache bdev but we might be the virtual device
                 # if we are listed directly after a bcache bdev.
