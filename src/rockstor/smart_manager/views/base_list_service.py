@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class BaseServiceListView(ServiceMixin, rfc.GenericView):
     serializer_class = ServiceStatusSerializer
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
             limit = self.request.query_params.get('limit',

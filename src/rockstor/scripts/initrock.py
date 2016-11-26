@@ -360,7 +360,9 @@ def main():
                         '%s/django' % BASE_BIN)
         run_command([SYSCTL, 'enable', 'postgresql'])
         logging.debug('Progresql enabled')
-        shutil.rmtree('/var/lib/pgsql/data')
+        pg_data = '/var/lib/pgsql/data'
+        if (os.path.isdir(pg_data)):
+            shutil.rmtree('/var/lib/pgsql/data')
         logging.info('initializing Postgresql...')
         run_command(['/usr/bin/postgresql-setup', 'initdb'])
         logging.info('Done.')
@@ -381,10 +383,6 @@ def main():
         logging.debug('storageadmin app database loaded')
         run_command(['su', '-', 'postgres', '-c', "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR])
         logging.debug('smartdb app database loaded')
-        run_command(['su', '-', 'postgres', '-c', "psql storageadmin -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
-        logging.debug('storageadmin migration history copied')
-        run_command(['su', '-', 'postgres', '-c', "psql smartdb -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
-        logging.debug('smartdb migration history copied')
         logging.info('Done')
         run_command(['cp', '-f', '%s/conf/postgresql.conf' % BASE_DIR,
                      '/var/lib/pgsql/data/'])
@@ -395,17 +393,15 @@ def main():
         run_command([SYSCTL, 'restart', 'postgresql'])
         logging.info('Postgresql restarted')
         logging.info('Running app database migrations...')
-        run_command([DJANGO, 'migrate', 'oauth2_provider', '--database=default',
-                     '--noinput'])
-        run_command([DJANGO, 'migrate', 'storageadmin', '--database=default',
-                     '--noinput'])
-        logging.debug('storageadmin migrated')
-        run_command([DJANGO, 'migrate', 'django_ztask', '--database=default',
-                     '--noinput'])
-        logging.debug('django_ztask migrated')
-        run_command([DJANGO, 'migrate', 'smart_manager',
-                     '--database=smart_manager', '--noinput'])
-        logging.debug('smart manager migrated')
+        migration_cmd = [DJANGO, 'migrate', '--noinput',]
+        fake_migration_cmd = migration_cmd + ['--fake']
+        smartdb_opts = ['--database=smart_manager', 'smart_manager']
+        run_command(fake_migration_cmd + ['storageadmin', '0001_initial'])
+        run_command(fake_migration_cmd + smartdb_opts + ['0001_initial'])
+        run_command(migration_cmd + ['storageadmin'])
+        run_command(migration_cmd + smartdb_opts)
+        run_command(migration_cmd + ['auth'])
+        run_command(migration_cmd + ['django_ztask'])
         logging.info('Done')
         logging.info('Running prepdb...')
         run_command([PREP_DB, ])

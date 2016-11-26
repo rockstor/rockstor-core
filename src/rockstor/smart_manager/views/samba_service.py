@@ -47,13 +47,13 @@ class SambaServiceView(BaseServiceDetailView):
             sd = ServiceStatusSerializer(self._get_or_create_sso(so))
             return Response(sd.data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
         service = Service.objects.get(name=self.service_name)
-        
+
         if (command == 'config'):
             try:
                 config = request.data.get('config', {})

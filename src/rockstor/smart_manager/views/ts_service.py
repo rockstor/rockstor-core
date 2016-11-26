@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class TaskSchedulerServiceView(BaseServiceDetailView):
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
@@ -57,4 +57,3 @@ class TaskSchedulerServiceView(BaseServiceDetailView):
                 handle_exception(Exception(e_msg), request)
 
         return Response()
-
