@@ -951,9 +951,12 @@ def get_disk_serial(device_name, device_type=None, test=None):
         device_name = '/dev/mapper/%s' % device_name
         # Assuming device mapped (DM) so without it's own serial.
         uuid_search_string = 'DM_UUID'
-        # TODO: Could just get uuid via "cryptsetup luksUUID <device>" as
-        # TODO: then the serial is stable between mapper name changes so tracks
-        # TODO: the underlying container.
+        # Note that we can't use "cryptsetup luksUUID <device>" as this is for
+        # use with the container, not the consequent mapped virtual device of
+        # the open container. Default udev rules include the virtual device
+        # name so this precludes name changes of the vdev as it would also
+        # change that devices serial which in turn makes it appear as a
+        # different device to Rockstor.
     # Set search string / flag for md personality if need be.
     if re.match('md', device_name) is not None:
         uuid_search_string = 'MD_UUID'
@@ -982,7 +985,7 @@ def get_disk_serial(device_name, device_type=None, test=None):
             # md or dm device so search for the appropriate uuid string
             if line_fields[1] == uuid_search_string:
                 # TODO: in the case of DM_UUID consider extracting only the
-                # TODO: UUID to cope with container mount point changes
+                # TODO: UUID to cope with open container name changes
                 serial_num = line_fields[2]
                 # we have found our hw serial equivalent so break to return
                 break
