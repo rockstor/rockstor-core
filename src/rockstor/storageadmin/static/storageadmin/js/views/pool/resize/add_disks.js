@@ -44,6 +44,10 @@ PoolAddDisks = RockstorWizardPage.extend({
 
     render: function () {
         RockstorWizardPage.prototype.render.apply(this, arguments);
+        $(this.el).html(this.template({
+            model: this.model.toJSON(),
+            raidLevel: this.model.get('pool').get('raid'),
+        }));
         this.disks.fetch();
         return this;
     },
@@ -57,6 +61,16 @@ PoolAddDisks = RockstorWizardPage.extend({
             disks[i] = disks[i].toJSON();
         }
         this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
+        this.$('#add-disks-form').validate({
+            rules: {
+                'raid-level': {
+                    required: true
+                }
+            },
+            messages: {
+                'raid-level': 'Please select a RAID level'
+            }
+        });
     },
 
     selectAllCheckboxes: function (event) {
@@ -72,7 +86,14 @@ PoolAddDisks = RockstorWizardPage.extend({
         });
     },
 
+    /* valid() can be applied on any form element but validate() has to applied on the form.
+     * valid calls validate function internally
+     */
     save: function () {
+        var valid = this.$('#add-disks-form').valid();
+        if(!valid){
+            return $.Deferred().reject();
+        }
         var _this = this;
         var checked = this.$(".diskname:checked").length;
         var diskNames = [];
@@ -82,31 +103,23 @@ PoolAddDisks = RockstorWizardPage.extend({
         this.model.set('diskNames', diskNames);
         if (this.model.get('raidChange')) {
             this.model.set('raidLevel', this.$('#raid-level').val());
-        }
+        } 
         return $.Deferred().resolve();
     },
 
     initHandlebarHelpers: function () {
-        Handlebars.registerHelper('display_raidLevel_dropdown', function () {
-            var html = '',
-                _this = this;
-            if (this.model.get('raidChange')) {
-                html += '<h4>Select a new raid level<br>raid5 & raid6 are not production-ready</h4>';
-                var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6'];
-                html += '<div class="">';
-                html += '<select id="raid-level" name="raid-level" title="Select a new raid level for the pool">';
-                html += '<option value="">Select a new raid level</option>';
-                _.each(levels, function (level) {
-                    if (_this.model.get('pool').get('raid') != level) {
-                        html += '<option value="' + level + '">' + level + '</option>';
-                    }
-                });
-                html += '</select>';
-                html += '</div>';
-            }
+        Handlebars.registerHelper('display_raid_levels', function(){
+            var html = '';
+            var _this = this;
+            var levels = ['raid0', 'raid1', 'raid10', 'raid5', 'raid6']; 
+            _.each(levels, function(level) { 
+                if (_this.raidLevel != level) {
+                    html += '<option value="' + level + '">' + level + '</option>';
+                }
+            });
             return new Handlebars.SafeString(html);
         });
-
+        
         Handlebars.registerHelper("mathHelper", function (value, options) {
             return parseInt(value) + 1;
         });
