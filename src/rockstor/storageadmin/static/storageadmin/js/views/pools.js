@@ -129,9 +129,9 @@ PoolsView = RockstorLayoutView.extend({
 
     displayPoolInformation: function (poolName) {
         // set share name in confirm dialog
-        this.$('#pass-pool-name').html(poolName);
+        // this.$('#pass-pool-name').html(poolName);
         //show the dialog
-        this.$('#delete-pool-modal').modal();
+        this.$('#delete-pool-modal-' + poolName).modal();
         return false;
     },
 
@@ -175,7 +175,7 @@ PoolsView = RockstorLayoutView.extend({
             dataType: "json",
             success: function() {
                 enableButton(button);
-                _this.$('#delete-pool-modal').modal('hide');
+                _this.$('#delete-pool-modal-' + poolName).modal('hide');
                 $('.modal-backdrop').remove();
                 _this.render();
             },

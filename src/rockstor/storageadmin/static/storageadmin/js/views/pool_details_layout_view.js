@@ -102,10 +102,10 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
                     pool: this.pool.toJSON()
                 })
         );
-        this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); 
+        this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
         if (!_.isUndefined(this.cView) && this.cView == 'resize') {
             // scroll to resize section
-            $('#content').scrollTop($('#ph-resize-pool-info').offset().top); 
+            $('#content').scrollTop($('#ph-resize-pool-info').offset().top);
         }
 
         //$('#pool-resize-raid-modal').modal({show: false});
@@ -160,14 +160,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
     },
 
-    deletePool: function() {
+    deletePool: function(event) {
         var _this = this;
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         _this.$('#delete-pool-modal').modal();
     },
 
-    confirmPoolDelete: function() {
+    confirmPoolDelete: function(event) {
         var _this = this;
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
