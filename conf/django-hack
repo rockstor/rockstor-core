@@ -10,7 +10,6 @@ import sys
 sys.path[0:0] = [
     base,
     join(base, 'eggs/Django-1.8.16-py2.7.egg'),
-    join(base, 'eggs/South-1.0.2-py2.7.egg'),
     join(base, 'eggs/URLObject-2.1.1-py2.7.egg'),
     join(base, 'eggs/chardet-2.3.0-py2.7.egg'),
     join(base, 'eggs/distribute-0.7.3-py2.7.egg'),
