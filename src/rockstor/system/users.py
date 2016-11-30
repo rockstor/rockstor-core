@@ -127,7 +127,7 @@ def usermod(username, passwd):
     cmd = [PASSWD, '--stdin', username]
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    out, err = p.communicate(input=passwd)
+    out, err = p.communicate(input=passwd.encode('utf8'))
     rc = p.returncode
     if (rc != 0):
         raise CommandException(cmd, out, err, rc)
@@ -139,7 +139,7 @@ def smbpasswd(username, passwd):
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     pstr = ('%s\n%s\n' % (passwd, passwd))
-    out, err = p.communicate(input=pstr)
+    out, err = p.communicate(input=pstr.encode('utf8'))
     rc = p.returncode
     if (rc != 0):
         raise CommandException(cmd, out, err, rc)
