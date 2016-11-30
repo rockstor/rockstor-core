@@ -267,7 +267,6 @@ class PoolListView(PoolMixin, rfc.GenericView):
                      mnt_options=mnt_options)
             p.save()
             p.disk_set.add(*disks)
-            p.save()
             # added for loop to save disks
             # appears p.disk_set.add(*disks) was not saving disks in test environment
             for d in disks:
