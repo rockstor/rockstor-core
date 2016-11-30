@@ -416,7 +416,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 size_cut = 0
                 for d in disks:
                     size_cut += d.size
-                if (size_cut >= usage):
+                if size_cut >= (pool.size - usage):
                     e_msg = ('Removing these(%s) disks may shrink the pool by '
                              '%dKB, which is greater than available free space'
                              ' %dKB. This is not supported.' %
