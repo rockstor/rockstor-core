@@ -39,7 +39,7 @@ var Disk = Backbone.Model.extend({
         // serial number looks fake or untrustworthy.
         // In the case of a repeat or missing serial scan_disks() will use a
         // placeholder of fake-serial-<uuid4> so look for this signature text.
-        var diskSerial = this.get('serial')
+        var diskSerial = this.get('serial');
         if (diskSerial.substring(0, 12) == 'fake-serial-') {
             return false;
         }
@@ -54,7 +54,7 @@ var Disk = Backbone.Model.extend({
 
 var DiskCollection = RockStorPaginatedCollection.extend({
     model: Disk,
-    baseUrl: '/api/disks',
+    baseUrl: '/api/disks'
 });
 
 var Pool = Backbone.Model.extend({
@@ -103,25 +103,6 @@ var Share = Backbone.Model.extend({
 
 var PoolShare = Backbone.Model.extend({
     url: function () {
-        console.log('poolshare');
-        return '/api/pools/' + this.get('poolName');
-    }
-});
-
-var PoolShareCollection = Backbone.Collection.extend({
-    model: PoolShare,
-    initialize: function(model, options) {
-        this.options = options;
-    },
-    url: function () {
-        return '/api/pools/' + this.options.poolName + '/shares';
-    }
-});
-
-
-var PoolShare = Backbone.Model.extend({
-    url: function () {
-        console.log('poolshare');
         return '/api/pools/' + this.get('poolName');
     }
 });
@@ -183,7 +164,7 @@ var SnapshotCollection = RockStorPaginatedCollection.extend({
         }
     },
     setUrl: function (shareName) {
-        this.baseUrl = '/api/shares/' + shareName + '/snapshots'
+        this.baseUrl = '/api/shares/' + shareName + '/snapshots';
     },
     extraParams: function () {
         var p = this.constructor.__super__.extraParams.apply(this, arguments);
@@ -259,7 +240,7 @@ var NFSExport = Backbone.Model.extend();
 var NFSExportCollection = RockStorPaginatedCollection.extend({
     model: NFSExport,
     setUrl: function (shareName) {
-        this.baseUrl = '/api/shares/' + shareName + '/nfs'
+        this.baseUrl = '/api/shares/' + shareName + '/nfs';
     }
 });
 
@@ -274,24 +255,19 @@ var NFSExportGroupCollection = RockStorPaginatedCollection.extend({
 
 var SMBShare = Backbone.Model.extend({
     url: function () {
-        return '/api/shares/' + this.get('shareName') + '/samba'
-    },
-
+        return '/api/shares/' + this.get('shareName') + '/samba';
+    }
 });
 
 var SMBShareCollection = Backbone.Collection.extend({
-
     model: SMBShare
-
 });
-
 
 var SambaCollection = RockStorPaginatedCollection.extend({
     model: SMBShare,
     baseUrl: '/api/samba',
     idAttribute: 'sambaShareId'
 });
-
 
 var Service = Backbone.Model.extend({
     idAttribute: "name",
@@ -331,7 +307,7 @@ var GroupCollection = RockStorPaginatedCollection.extend({
 
 var ISCSITarget = Backbone.Model.extend({
     url: function () {
-        return '/api/shares/' + this.get('shareName') + '/iscsi/'
+        return '/api/shares/' + this.get('shareName') + '/iscsi/';
     }
 });
 
@@ -417,13 +393,13 @@ var ProbeRun = Backbone.Model.extend({
             + "/data" + "?"
             + "t1=" + this.get("start") + "&t2=" + this.get("end")
             + "&download=true";
-    },
+    }
 });
 
 var ProbeRunCollection = RockStorPaginatedCollection.extend({
     model: ProbeRun,
     baseUrl: "/api/sm/sprobes/metadata"
-})
+});
 
 var ProbeTemplate = Backbone.Model.extend({idAttribute: "uuid"});
 var ProbeTemplateCollection = Backbone.Collection.extend({
@@ -612,20 +588,16 @@ var AccessKeyCollection = RockStorPaginatedCollection.extend({
 });
 
 var Certificate = Backbone.Model.extend({
-    urlRoot: '/api/certificate',
+    urlRoot: '/api/certificate'
 });
 
 var ConfigBackup = Backbone.Model.extend({
-    urlRoot: '/api/config-backup',
+    urlRoot: '/api/config-backup'
 });
 
 var ConfigBackupCollection = RockStorPaginatedCollection.extend({
     model: ConfigBackup,
     baseUrl: '/api/config-backup'
-});
-
-var EmailAccount = Backbone.Model.extend({
-    urlRoot: '/api/email',
 });
 
 var RockOn = Backbone.Model.extend({
