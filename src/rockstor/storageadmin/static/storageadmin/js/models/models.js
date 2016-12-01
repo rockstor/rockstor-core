@@ -352,10 +352,9 @@ var DashboardConfig = Backbone.Model.extend({
     getConfig: function () {
         if (!_.isUndefined(this.get('widgets')) && !_.isNull(this.get('widgets'))) {
             return JSON.parse(this.get('widgets'));
-        } else {
-            this.setConfig(RockStorWidgets.defaultWidgets());
-            return JSON.parse(this.get("widgets"));
         }
+        this.setConfig(RockStorWidgets.defaultWidgets());
+        return JSON.parse(this.get("widgets"));
     }
 
 });
@@ -370,9 +369,8 @@ var Probe = Backbone.Model.extend({
     parse: function (response) {
         if (response.results && response.results.length > 0) {
             return response.results[0];
-        } else {
-            return {};
         }
+        return {};
     }
 });
 
@@ -456,9 +454,8 @@ var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
     baseUrl: function () {
         if (this.replicaId) {
             return '/api/sm/replicas/trail/replica/' + this.replicaId;
-        } else {
-            return '/api/sm/replicas/trail';
         }
+        return '/api/sm/replicas/trail';
     }
 });
 
@@ -486,9 +483,8 @@ var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
     baseUrl: function () {
         if (this.replicaShareId) {
             return '/api/sm/replicas/rtrail/rshare/' + this.replicaShareId;
-        } else {
-            return '/api/sm/replicas/rtrail';
         }
+        return '/api/sm/replicas/rtrail';
     }
 });
 
@@ -497,44 +493,38 @@ var TaskDef = Backbone.Model.extend({
     max_count: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).max_count;
-        } else {
-            return 0;
         }
+        return 0;
     },
     share: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).share;
-        } else {
-            return '';
         }
+        return '';
     },
     prefix: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).prefix;
-        } else {
-            return '';
         }
+        return '';
     },
     pool: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).pool;
-        } else {
-            return '';
         }
+        return '';
     },
     visible: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).visible;
-        } else {
-            return false;
         }
+        return false;
     },
     writable: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).writable;
-        } else {
-            return false;
         }
+        return false;
     }
 
 });
@@ -559,9 +549,8 @@ var TaskCollection = RockStorPaginatedCollection.extend({
     baseUrl: function () {
         if (this.taskDefId) {
             return '/api/sm/tasks/log/taskdef/' + this.taskDefId;
-        } else {
-            return '/api/sm/tasks/log';
         }
+        return '/api/sm/tasks/log';
     }
 });
 
@@ -663,9 +652,8 @@ var RockOnVolumeCollection = RockStorPaginatedCollection.extend({
     baseUrl: function () {
         if (this.rid) {
             return '/api/rockons/volumes/' + this.rid;
-        } else {
-            return '/api/rockons/volumes';
         }
+        return '/api/rockons/volumes';
     }
 });
 
@@ -684,9 +672,8 @@ var RockOnPortCollection = RockStorPaginatedCollection.extend({
     baseUrl: function () {
         if (this.rid) {
             return '/api/rockons/ports/' + this.rid;
-        } else {
-            return '/api/rockons/ports';
         }
+        return '/api/rockons/ports';
     }
 });
 
@@ -705,9 +692,8 @@ var RockOnCustomConfigCollection = RockStorPaginatedCollection.extend({
     baseUrl: function () {
         if (this.rid) {
             return '/api/rockons/customconfig/' + this.rid;
-        } else {
-            return '/api/rockons/customconfig';
         }
+        return '/api/rockons/customconfig';
     }
 });
 
@@ -726,9 +712,8 @@ var RockOnEnvironmentCollection = RockStorPaginatedCollection.extend({
     baseUrl: function () {
         if (this.rid) {
             return '/api/rockons/environment/' + this.rid;
-        } else {
-            return '/api/rockons/environment';
         }
+        return '/api/rockons/environment';
     }
 });
 
