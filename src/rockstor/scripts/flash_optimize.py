@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import re
 from tempfile import mkstemp
 from shutil import move

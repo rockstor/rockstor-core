@@ -44,7 +44,7 @@ class SmartManagerDBRouter(object):
             return True
         return None
 
-    def allow_syncdb(self, db, model):
+    def allow_migrate(self, db, model):
         from django.conf import settings
         if not settings.DATABASES.has_key(APP_LABEL):
             return None

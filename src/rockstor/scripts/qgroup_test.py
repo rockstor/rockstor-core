@@ -20,7 +20,6 @@ BTRFS = '/usr/sbin/btrfs'
 
 import sys
 import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import re
 from django.conf import settings
 from storageadmin.models import (Pool, Share)

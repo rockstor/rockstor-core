@@ -17,9 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-import os
 import pwd
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from django.db import transaction
 from django.contrib.auth.models import User as DjangoUser
 from storageadmin.models import User
