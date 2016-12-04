@@ -19,8 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from storageadmin.models import (RockOn, DContainer)
 from system.osi import run_command
 

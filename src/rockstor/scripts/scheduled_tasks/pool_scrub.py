@@ -17,8 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import time
-import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import sys
 import json
 from datetime import datetime

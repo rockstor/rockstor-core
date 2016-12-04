@@ -16,8 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import json
 import sys
 from storageadmin.views.rockon_json import rockons

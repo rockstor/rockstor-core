@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import shutil
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from system.osi import (run_command, md5sum)
 from system import services
 import logging
