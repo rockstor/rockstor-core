@@ -193,6 +193,22 @@ def scan_disks(min_size):
         # N.B. this also facilitates a simpler mechanism of classification.
         if (dmap['FSTYPE'] == 'swap'):
             continue
+        # convert size into KB
+        size_str = dmap['SIZE']
+        if (size_str[-1] == 'G'):
+            dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024)
+        elif (size_str[-1] == 'T'):
+            dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
+        else:
+            # Move to next line if we don't understand the size as GB or TB
+            # Note that this may cause an entry to be ignored if formatting
+            # changes.
+            # Previous to the explicit ignore swap clause this often caught
+            # swap but if swap was in GB and above min_size then it could
+            # show up when not in a partition (the previous caveat clause).
+            continue
+        if (dmap['SIZE'] < min_size):
+            continue
         # ----- Now we are done with easy exclusions we begin classification.
         # ------------ Start more complex classification -------------
         if (dmap['NAME'] == base_root_disk):  # as returned by root_disk()
@@ -365,22 +381,6 @@ def scan_disks(min_size):
                     # then ignore / skip this btrfs device if it's a partition
                     if is_partition:
                         continue
-            # convert size into KB
-            size_str = dmap['SIZE']
-            if (size_str[-1] == 'G'):
-                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024)
-            elif (size_str[-1] == 'T'):
-                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
-            else:
-                # Move to next line if we don't understand the size as GB or TB
-                # Note that this may cause an entry to be ignored if formatting
-                # changes.
-                # Previous to the explicit ignore swap clause this often caught
-                # swap but if swap was in GB and above min_size then it could
-                # show up when not in a partition (the previous caveat clause).
-                continue
-            if (dmap['SIZE'] < min_size):
-                continue
             # No more continues so the device we have is to be passed to our db
             # entry system views/disk.py ie _update_disk_state()
             # Do final tidy of data in dmap and ready for entry in dnames dict.
