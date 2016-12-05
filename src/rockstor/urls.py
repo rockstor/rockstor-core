@@ -118,7 +118,9 @@ urlpatterns = patterns('',
                            ConfigBackupUpload.as_view()),
                        url(r'^api/email$', EmailClientView.as_view()),
                        url(r'^api/email/(?P<command>.*)$', EmailClientView.as_view()),
-
+                       # Pincard
+                       url(r'^api/pincardmanager',
+                        include('storageadmin.urls.pincard')),
                        #update subscription
                        (r'^api/update-subscriptions',
                         include('storageadmin.urls.update_subscription')),
