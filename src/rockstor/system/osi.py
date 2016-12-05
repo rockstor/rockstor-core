@@ -272,6 +272,25 @@ def scan_disks(min_size):
                         # device (the base device) as a raid member, at least in
                         # part.
                         dnames[dname][8] = dmap['FSTYPE']
+                    # Akin to back porting a partitions FSTYPE to it's base
+                    # device, as with 'linux_raid_member' above, we can do the
+                    # same for btrfs if found in a partition.
+                    # This is intended to facilitate the user redirection role
+                    # so that the base disk can be labeled with it's partitions
+                    # fstype, label (for pool updates) uuid, and size.
+                    # N.B. The base device info will end up pertaining to the
+                    # highest partition numbers details. Design limitation.
+                    if dmap['FSTYPE'] == 'btrfs' and dnames[dname][8] is None:
+                        # We are a btrfs partition where the base device has
+                        # no fstype entry: backport: fstype, label, uuid & size.
+                        # fstype backport
+                        dnames[dname][8] = dmap['FSTYPE']
+                        # label backport is at index 9
+                        dnames[dname][9] = dmap['LABEL']
+                        # and uuid backport
+                        dnames[dname][10] = dmap['UUID']
+                        # and size backport
+                        dnames[dname][3] = dmap['SIZE']
                     # Build a list of the partitions we find.
                     # Back port our current name as a partition entry in our
                     # base devices 'partitions' list 14th item (index 13).
