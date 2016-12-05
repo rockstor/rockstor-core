@@ -56,8 +56,8 @@ class PoolMixin(object):
     def _role_filter_disk_names(disks, request):
         """
         Takes a series of disk objects and filters them based on their roles.
-        For disk with an openLUKS role the openLUKS role value is substituted
-        for that disks name. This effects a name re-direction for crypt disks.
+        For disk with a redirect role the role's value is substituted for that
+        disks name. This effects a name re-direction for redirect disks.
         :param disks:  list of disks object
         :param request:
         :return: list of disk names post role filter processing
@@ -66,19 +66,19 @@ class PoolMixin(object):
             # Build dictionary of disks with roles
             role_disks = {d for d in disks if d.role is not None}
             logger.debug('role_filter role only disks=%s' % role_disks)
-            # Build dictionary of crypt drives with their openLUKS role values.
-            # by using only role_disks we avoid json.load(None)
-            crypt_disks = {d.name: json.loads(d.role).get("openLUKS", None) for
-                           d in role_disks if
-                           'openLUKS' in json.loads(d.role)}
-            logger.debug('role_filter_disk_names crypt_disk=%s' % crypt_disks)
-            # Replace d.name with openLUKS mapper name for crypt type disks.
-            # Substitute openLUKS role value for crypt (openLUKS) mapped disks.
-            # Our role system stores the dm mapped /dev/disk/by-id name for
-            # /dev/mapper mount points so use that value instead name:
+            # Build a dictionary of redirected disk names with their associated
+            # redirect role values.
+            # By using only role_disks we avoid json.load(None)
+            redirect_disks = {d.name: json.loads(d.role).get("redirect", None)
+                              for d in role_disks if
+                              'redirect' in json.loads(d.role)}
+            logger.debug('role_filter_disk_names redirect_disk=%s' % redirect_disks)
+            # Replace d.name with redirect role value for redirect role disks.
+            # Our role system stores the /dev/disk/by-id name (without path) for
+            # redirected disks so use that value instead as our disk name:
             dnames = [
-                d.name if d.name not in crypt_disks else crypt_disks[d.name] for
-                d in disks]
+                d.name if d.name not in redirect_disks else redirect_disks[
+                    d.name] for d in disks]
             logger.debug('role_filter_disk_names RETURNING=%s' % dnames)
             return dnames
         except:
