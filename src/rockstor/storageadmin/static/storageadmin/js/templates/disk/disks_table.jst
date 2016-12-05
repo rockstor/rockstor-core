@@ -53,6 +53,10 @@
             <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive" rel="tooltip">
             <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
         {{/if}}
+        {{#if (hasUserRole this.role)}}
+            <a href="#" class="User_Role_drive" data-disk-name="{{this.name}}" title="User Assigned Role" rel="tooltip">
+            <i class="glyphicon glyphicon-tag"></i></a>
+        {{/if}}
       </td>
       <td>
         {{#checkSerialStatus this.serial this.name}}
