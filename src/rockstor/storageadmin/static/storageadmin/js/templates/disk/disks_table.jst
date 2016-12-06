@@ -30,12 +30,30 @@
             <a href="#" class="root_drive" data-disk-name="{{this.name}}" title="Rockstor System Drive" rel="tooltip">
               <i class="glyphicon glyphicon-registration-mark"></i></a>
         {{else if this.parted}}
-            <a href="#" class="wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has a non btrfs filesystem on it.
-            Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
-        {{else if (displayBtrfs this.btrfs_uuid this.pool_name)}}
-            <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has a BTRFS filesystem on it.
-            Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically." rel="tooltip">
-            <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+            {{#if (hasUserRole this.role)}}
+                <a href="#" class="user_role_part" data-disk-name="{{this.name}}" title="User Assigned Role found, click to edit (pending feature)" rel="tooltip">
+                <i class="glyphicon glyphicon-tags"></i></a>
+                {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
+                    <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Partition is unusable because it has an existing BTRFS filesystem on it.
+                    Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this partition automatically (Note: only a single device is supported with btrfs in partition)." rel="tooltip">
+                    <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+                {{/if}}
+            {{else}}
+                <a href="#" class="wipe" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions and no User Assigned Role (pending feature)
+                Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
+                <!-- Later we can have this click do User Assigned Role config -->
+                <!-- which can also wipe if need be, either whole or partition -->
+            {{/if}}
+        {{else}} <!-- We are non of the above top level ifs / else ifs at this point -->
+            {{#if (hasUserRole this.role)}}
+                <a href="#" class="user_role_drive" data-disk-name="{{this.name}}" title="Whole Disk User Assigned Role found, click to edit (pending feature)" rel="tooltip">
+                <i class="glyphicon glyphicon-tag"></i></a>
+            {{/if}}
+            {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
+                <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
+                Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically. Multi-device support included; assuming all members are whole disk" rel="tooltip">
+                <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+            {{/if}}
         {{/if}}
         {{#if (isLuksContainer this.role)}}
             <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container" rel="tooltip">
@@ -52,10 +70,6 @@
         {{#if (isBcacheCdev this.role)}}
             <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive" rel="tooltip">
             <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
-        {{/if}}
-        {{#if (hasUserRole this.role)}}
-            <a href="#" class="User_Role_drive" data-disk-name="{{this.name}}" title="User Assigned Role" rel="tooltip">
-            <i class="glyphicon glyphicon-tag"></i></a>
         {{/if}}
       </td>
       <td>

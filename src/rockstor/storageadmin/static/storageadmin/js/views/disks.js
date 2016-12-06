@@ -433,7 +433,7 @@ DisksView = RockstorLayoutView.extend({
             return false;
         });
 
-        Handlebars.registerHelper('displayBtrfs', function (btrfsUid, poolName) {
+        Handlebars.registerHelper('isNullPoolBtrfs', function (btrfsUid, poolName) {
             if (btrfsUid && _.isNull(poolName)) {
                 return true;
             }
