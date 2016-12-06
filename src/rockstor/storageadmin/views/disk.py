@@ -386,8 +386,8 @@ class DiskDetailView(rfc.GenericView):
             if len(fields) > 0:
                 if re.match('part.+', fields[-1]) is not None:
                     # strip the redirection to partition device.
-                    logger.debug('return=%s' % fields[:-1]).join('-')
-                    return fields[:-1].join('-')
+                    logger.debug('return=%s' % '-'.join(fields[:-1]))
+                    return '-'.join(fields[:-1])
             # we have found no indication of role name based changes.
             logger.debug('return=%s' % disk_name)
             return disk_name
