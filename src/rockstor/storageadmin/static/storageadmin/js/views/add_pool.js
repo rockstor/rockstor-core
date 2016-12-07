@@ -95,7 +95,7 @@ AddPoolView = Backbone.View.extend({
         $(this.el).empty();
         var _this = this;
         this.filteredCollection = _.reject(this.collection.models, function (disk) {
-            return _.isNull(disk.get('pool')) && !disk.get('parted') &&
+            return _.isNull(disk.get('pool')) &&
                 !disk.get('offline') && _.isNull(disk.get('btrfs_uuid')) &&
                 isSerialUsable(disk.get('serial')) &&
                 isRoleUsable(disk.get('role'));
@@ -124,7 +124,7 @@ AddPoolView = Backbone.View.extend({
         // Using the disk.role system we can filter drives on their usability.
         // Roles for inclusion: openLUKS containers
         // Roles to dismiss: LUKS containers, mdraid members, the 'root' role,
-        // and partitioned.
+        // and partitions (if not accompanied by a redirect role).
         // Defaults to reject (return false)
         function isRoleUsable(role) {
             // check if our role is null = db default
@@ -147,6 +147,13 @@ AddPoolView = Backbone.View.extend({
             // Accept use of 'openLUKS' device
             if (roleAsJson.hasOwnProperty('openLUKS')) {
                 console.log("add_pool ACCEPTING ROLE OF openLUKS json = " + role);
+                return true;
+            }
+            // Accept use of 'partitions' device but only if it is accompanied
+            // by a 'redirect' role, ie so there is info to 'redirect' to the
+            // by-id name held as the value to the 'redirect' role key.
+            if (roleAsJson.hasOwnProperty('partitions') && roleAsJson.hasOwnProperty('redirect')) {
+                console.log("add_pool ACCEPTING ROLE OF partitioned COMBINED WITH redirect ROLE")
                 return true;
             }
             // In all other cases return false, ie:
