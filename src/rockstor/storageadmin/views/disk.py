@@ -370,27 +370,30 @@ class DiskDetailView(rfc.GenericView):
         Initially only aware of partition redirection from base dev name.
         :param disk_name: role based disk name
         :param request:
-        :return: the disk_name as passed unless the name matches a known
-        syntactic pattern assigned in _update_disk_state() in which case the
-        name returned is the original db disk base name.
+        :return: tuple of disk_name and isPartition: Disk_name is as passed
+        unless the name matches a known syntactic pattern assigned in
+        _update_disk_state() in which case the name returned is the original
+        db disk base name.
         """
         logger.debug('reverse disk filter disk_name=%s' % disk_name)
+        # until we find otherwise we assume False on partition status.
+        isPartition = False
         try:
             # test for role redirect type re-naming, ie a partition name:
             # base name "ata-QEMU_DVD-ROM_QM00001"
             # partition redirect name "ata-QEMU_DVD-ROM_QM00001-part1"
             fields = disk_name.split('-')
             logger.debug('reverse_role_filter_name fields=%s' % fields)
-            logger.debug('len fields=%s' % len(fields))
             # check the last field for part#
             if len(fields) > 0:
                 if re.match('part.+', fields[-1]) is not None:
+                    isPartition = True
                     # strip the redirection to partition device.
                     logger.debug('return=%s' % '-'.join(fields[:-1]))
-                    return '-'.join(fields[:-1])
-            # we have found no indication of role name based changes.
+                    return '-'.join(fields[:-1]), isPartition
+            # we have found no indication of redirect role name changes.
             logger.debug('return=%s' % disk_name)
-            return disk_name
+            return disk_name, isPartition
         except:
             e_msg = ('Problem reversing role filter disk name(%s)' % disk_name)
             handle_exception(Exception(e_msg), request)
@@ -484,13 +487,30 @@ class DiskDetailView(rfc.GenericView):
             # need to save it so disk objects get updated properly in the for
             # loop below.
             po.save()
-            for d in p_info['disks']:
-                logger.debug('_btrfs_disk_import looking at disk name=%s' % d)
-                disk_name = self._reverse_role_filter_name(d, request)
+            for device in p_info['disks']:
+                logger.debug('_btrfs_disk_import looking at disk name=%s' % device)
+                disk_name, isPartition = self._reverse_role_filter_name(device,
+                                                                        request)
                 do = Disk.objects.get(name=disk_name)
                 do.pool = po
-                do.parted = False
+                # update this disk's parted property
+                do.parted = isPartition
+                if isPartition:
+                    # ensure a redirect role to reach this partition; ie:
+                    # "redirect": "virtio-serial-3-part2"
+                    if do.role is not None:  # db default is null / None.
+                        # Get our previous roles into a dictionary
+                        logger.debug('btrfs import - existing do.role=%s' % do.role)
+                        roles = json.loads(do.role)
+                        # update or add our "redirect" role with our part name
+                        roles['redirect'] = '%s' % device
+                        # convert back to json and store in disk object
+                        do.role = json.dumps(roles)
+                    else:
+                        # role=None so just add a json formatted redirect role
+                        do.role = '{"redirect": "%s"}' % device.name
                 do.save()
+                logger.debug('btrfs import left disk(%s) role as %s' % (do.name, do.role))
                 mount_root(po)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
             po.size = po.usage_bound()
