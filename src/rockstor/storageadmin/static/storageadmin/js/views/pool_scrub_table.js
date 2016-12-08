@@ -53,9 +53,6 @@ PoolScrubTableModule  = RockstorModuleView.extend({
 		this.$('[rel=tooltip]').tooltip({
 			placement: 'bottom'
 		});
-		this.$('#poolscrubs-table').tablesorter({
-			headers: { 0: {sorter: false}}
-		});
 		return this;
 	},
 
