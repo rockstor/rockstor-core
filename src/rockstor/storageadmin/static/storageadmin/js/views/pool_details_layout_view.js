@@ -91,6 +91,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
         this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
         this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
+        this.renderDataTables();
 
 
         this.$('#ph-compression-info').html(this.compression_info_template({
