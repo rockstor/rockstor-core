@@ -67,6 +67,7 @@ UsersView = RockstorLayoutView.extend({
 		this.$('[rel=tooltip]').tooltip({
 			placement: 'bottom'
 		});
+                this.renderDataTables();
 	},
 
 	deleteUser: function(event) {
@@ -249,6 +250,3 @@ UsersView = RockstorLayoutView.extend({
 	}
 
 });
-
-//Add pagination
-Cocktail.mixin(UsersView, PaginationMixin);
