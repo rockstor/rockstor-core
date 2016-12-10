@@ -26,7 +26,7 @@
     <div class="messages"></div>
     <!-- Content -->
     <h3> Rockstor Admin users </h3>
-    <table id="users-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of user">
+    <table id="users-table" class="table table-bordered table-striped share-table data-table" summary="List of user">
       <thead>
         <tr>
           <th scope="col" abbr="Name">Username</th>
@@ -42,10 +42,9 @@
       </tbody>
     </table>
     <a href="#add-user" id="add-user" class="btn btn-primary">Add User</a>
-    <div>{{pagination}}</div>
 
     <h3> Other system users </h3>
-    <table id="users-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of user">
+    <table id="users-table" class="table table-bordered table-striped share-table data-table" summary="List of user">
       <thead>
         <tr>
           <th scope="col" abbr="Name">Username</th>
@@ -60,7 +59,6 @@
       {{display_users_table false}}
       </tbody>
       </table>
-      <div>{{pagination}}</div>
 </div> <!-- col-md-12 -->
 </div> <!-- row -->
 
