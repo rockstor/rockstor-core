@@ -184,35 +184,9 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
     @transaction.atomic
     def post(self, request):
-        models = {'storageadmin':
-                  ['user', 'group', 'sambashare', 'netatalkshare', 'nfsexport',
-                   'nfsexportgroup', 'advancednfsexport', ],
-                  'smart_manager':
-                  ['service', ], }
-        model_list = []
-        for a in models:
-            for m in models[a]:
-                model_list.append('%s.%s' % (a, m))
-        logger.debug('model list = %s' % model_list)
+        logger.debug('backing up config...')
         with self._handle_exception(request):
-            filename = ('backup-%s.json' %
-                        datetime.now().strftime('%Y-%m-%d-%H%M%S'))
-            if (not os.path.isdir(self.cb_dir)):
-                os.mkdir(self.cb_dir)
-            fp = os.path.join(self.cb_dir, filename)
-            with open(fp, 'w') as dfo:
-                call_command('dumpdata', *model_list, stdout=dfo)
-                dfo.write('\n')
-                call_command('dumpdata', database='smart_manager', *model_list,
-                             stdout=dfo)
-            run_command(['/usr/bin/gzip', fp])
-            gz_name = ('%s.gz' % filename)
-            fp = os.path.join(self.cb_dir, gz_name)
-            md5sum = self._md5sum(fp)
-            size = os.stat(fp).st_size
-            cbo = ConfigBackup(filename=gz_name, md5sum=md5sum, size=size)
-            cbo.save()
-            return Response(ConfigBackupSerializer(cbo).data)
+            return Response(backup_config(self.cb_dir, self._md5sum))
 
 
 class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
