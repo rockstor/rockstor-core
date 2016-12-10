@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -91,6 +91,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
         this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
         this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
+        this.renderDataTables();
 
 
         this.$('#ph-compression-info').html(this.compression_info_template({

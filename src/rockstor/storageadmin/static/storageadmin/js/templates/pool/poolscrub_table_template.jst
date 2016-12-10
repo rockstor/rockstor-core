@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -22,14 +22,14 @@
   <a class="btn btn-primary btn-spacing" href="#" id="js-poolscrub-start"><i class="glyphicon glyphicon-edit "></i>Start a new scrub</a> or you can schedule a periodic scrub by clicking <a href="#add-scheduled-task">here.</a>
 <br>
 {{#if collectionNotEmpty}}
-  <table id="poolscrubs-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of poolscrubs">
+  <table id="poolscrubs-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of poolscrubs">
     <thead>
       <tr>
-        <th>Id</th>
-        <th>Status</th>
-        <th>Start Time</th>
-        <th>End Time</th>
-        <th>Data Scrubbed</th>
+        <th scope="col" abbr="Id">Id</th>
+        <th scope="col" abbr="Status">Status</th>
+        <th scope="col" abbr="STime">Start Time</th>
+        <th scope="col" abbr="ETime">End Time</th>
+        <th scope="col" abbr="DScrubbed">Data Scrubbed</th>
       </tr>
     </thead>
     <tbody>

@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -22,21 +22,20 @@
   <a class="btn btn-primary btn-spacing" href="#" id="js-poolrebalance-start" title="Rebalance data and metadata across all disks in this pool. WARNING: very intense and potentially long operation. Do this only if needed."><i class="glyphicon glyphicon-edit "></i>Start a new balance</a>
 <br>
 {{#if collectionNotEmpty}}
-  <table id="poolrebalances-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pool balances">
+  <table id="poolrebalances-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of pool balances">
     <thead>
       <tr>
-        <th>Id</th>
-        <th>Status</th>
-        <th>Start Time</th>
-        <th>Percent finished</th>
-        <th>Errors or Notes</th>
+        <th scope="col" abbr="Id">Id</th>
+        <th scope="col" abbr="Status">Status</th>
+        <th scope="col" abbr="STime">Start Time</th>
+        <th scope="col" abbr="Updates">Percent finished</th>
+        <th scope="col" abbr="Infos">Errors or Notes</th>
       </tr>
     </thead>
     <tbody>
       {{display_poolRebalance_table}}
     </tbody>
   </table>
-<div>{{pagination}}</div>
 {{else}}
   <div class="alert alert-warning"><h4>There are no balances to display</h4></div>
 {{/if}}
