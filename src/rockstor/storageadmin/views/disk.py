@@ -219,9 +219,9 @@ class DiskMixin(object):
                 # N.B. value of d.fstype here is essentially a place holder as
                 # the presence or otherwise of the 'root' key is all we need.
                 disk_roles_identified['root'] = str(d.fstype)
-            if d.partitions != []:
-                # PARTITIONS: scan_disks() has built an updated partitions list
-                # so create a partitions role containing this list.
+            if d.partitions != {}:
+                # PARTITIONS: scan_disks() has built an updated partitions dict
+                # so create a partitions role containing this dictionary.
                 disk_roles_identified['partitions'] = d.partitions
             # Now we join the previous non scan_disks identified roles dict
             # with those we have identified from our fresh scan_disks() data

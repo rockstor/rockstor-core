@@ -248,8 +248,8 @@ def scan_disks(min_size):
         if is_partition:
             dmap['parted'] = True
             # We don't account for partitions within partitions, but making
-            # an empty list here simplifies conditionals as always a list then.
-            dmap['partitions'] = []
+            # an empty dict here simplifies conditionals as always a dict then.
+            dmap['partitions'] = {}
             # Search our working dictionary of already scanned devices by name
             # We are assuming base devices are listed first and if of interest
             # we have recorded it and can now back port it's partitioned status.
@@ -296,7 +296,7 @@ def scan_disks(min_size):
                     # fstype, label (for pool updates) uuid, and size.
                     # N.B. The base device info will end up pertaining to the
                     # highest partition numbers details. Design limitation.
-                    if dmap['FSTYPE'] == 'btrfs' and dnames[dname][8] is None:
+                    if is_btrfs and dnames[dname][8] is None:
                         # We are a btrfs partition where the base device has
                         # no fstype entry: backport: fstype, label, uuid & size.
                         # fstype backport
@@ -307,27 +307,27 @@ def scan_disks(min_size):
                         dnames[dname][10] = dmap['UUID']
                         # and size backport
                         dnames[dname][3] = dmap['SIZE']
-                    # Build a list of the partitions we find.
+                    # Build a dictionary of the partitions we find.
                     # Back port our current name as a partition entry in our
-                    # base devices 'partitions' list 14th item (index 13).
-                    dnames[dname][13].append(dmap['NAME'])
-                    # This list is intended for use later in roles such as
+                    # base devices 'partitions' dictionary 14th item (index 13).
+                    dnames[dname][13][dmap['NAME']] = dmap['FSTYPE']
+                    # This dict is intended for use later in roles such as
                     # import / export devices or external backup drives so
                     # that the role config mechanism can offer up the known
                     # partitions found so that the eventual configured role
                     # will know which partition on the role based device to
-                    # work with.
+                    # work with and it current filesystem type.
                     # Has one role per device limit but helps to keep usability
                     # and underlying disk management simpler.
         else:
             # We are not a partition so record this.
             dmap['parted'] = False
             # As we are not a partition it is assumed that we might hold a
-            # partition so start an empty partition list for this purpose.
+            # partition so start an empty partition dictionary for this purpose.
             # N.B. This assumes base devices are listed before their partitions.
-            dmap['partitions'] = []
-            # this list will be populated when we find our partitions and back
-            # port their names into this list.
+            dmap['partitions'] = {}
+            # This dict will be populated when we find our partitions and back
+            # port their names and fstype (as values).
         if ((not is_root_disk and not is_partition) or
                 (is_btrfs)):
             # We have a non system disk that is not a partition

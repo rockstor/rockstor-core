@@ -154,6 +154,8 @@ AddPoolView = Backbone.View.extend({
             // by-id name held as the value to the 'redirect' role key.
             if (roleAsJson.hasOwnProperty('partitions') && roleAsJson.hasOwnProperty('redirect')) {
                 console.log("add_pool ACCEPTING ROLE OF partitioned COMBINED WITH redirect ROLE")
+                // then we need to confirm if the fstype of the redirected
+                // partition is "" else we can't use it
                 return true;
             }
             // In all other cases return false, ie:
