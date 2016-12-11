@@ -222,7 +222,15 @@ class DiskMixin(object):
             if d.partitions != {}:
                 # PARTITIONS: scan_disks() has built an updated partitions dict
                 # so create a partitions role containing this dictionary.
-                disk_roles_identified['partitions'] = d.partitions
+                # Convert scan_disks() transient (but just scanned so current)
+                # sda type names to a more useful by-id type name as found
+                # in /dev/disk/by-id for each partition name.
+                byid_partitions = {
+                    get_dev_byid_name(part, True)[0]:
+                        d.partitions.get(part, "") for part in d.partitions}
+                # In the above we fail over to "" on failed index for now.
+                logger.debug('byid_partitons=%s' % byid_partitions)
+                disk_roles_identified['partitions'] = byid_partitions
             # Now we join the previous non scan_disks identified roles dict
             # with those we have identified from our fresh scan_disks() data
             # and return the result to our db entry in json format.
