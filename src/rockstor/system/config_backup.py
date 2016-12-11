@@ -16,16 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import logging
 import os
+from datetime import datetime
+from django.conf import settings
 from django.core.management import call_command
-from system.osi import run_command
 from storageadmin.models import ConfigBackup
 from storageadmin.serializers import ConfigBackupSerializer
-from datetime import datetime
-import logging
+from system.osi import run_command
+
 logger = logging.getLogger(__name__)
 
-def backup_config(cb_dir, _md5sum):
+def backup_config():
     models = {'storageadmin':
                   ['user', 'group', 'sambashare', 'netatalkshare', 'nfsexport',
                    'nfsexportgroup', 'advancednfsexport', ],
@@ -38,6 +40,8 @@ def backup_config(cb_dir, _md5sum):
     logger.debug('model list = %s' % model_list)
 
     filename = ('backup-%s.json' % datetime.now().strftime('%Y-%m-%d-%H%M%S'))
+    cb_dir = ConfigBackupMixin().cb_dir
+
     if (not os.path.isdir(cb_dir)):
         os.mkdir(cb_dir)
     fp = os.path.join(cb_dir, filename)
@@ -48,8 +52,17 @@ def backup_config(cb_dir, _md5sum):
     run_command(['/usr/bin/gzip', fp])
     gz_name = ('%s.gz' % filename)
     fp = os.path.join(cb_dir, gz_name)
-    md5sum = _md5sum(fp)
+    md5sum = ConfigBackupMixin()._md5sum(fp)
     size = os.stat(fp).st_size
     cbo = ConfigBackup(filename=gz_name, md5sum=md5sum, size=size)
     cbo.save()
     return ConfigBackupSerializer(cbo).data
+
+
+class ConfigBackupMixin(object):
+    serializer_class = ConfigBackupSerializer
+    cb_dir = os.path.join(settings.MEDIA_ROOT, 'config-backups')
+
+    @staticmethod
+    def _md5sum(fp):
+        return run_command(['/usr/bin/md5sum', fp])[0][0].split()[0]
