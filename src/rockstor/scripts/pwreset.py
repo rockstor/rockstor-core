@@ -21,7 +21,7 @@ import pwd
 from django.db import transaction
 from django.contrib.auth.models import User as DjangoUser
 from storageadmin.models import User
-from system.users import (usermod, smbpasswd)
+from system import users
 
 
 @transaction.atomic
@@ -44,8 +44,8 @@ def change_password(username, password):
         sys.exit('username: %s does not exist in the system' % username)
 
     try:
-        usermod(username, password)
-        smbpasswd(username, password)
+        users.usermod(username, password)
+        users.smbpasswd(username, password)
     except:
         sys.exit('Low level error occured while changing password of user: %s'
         % username)
