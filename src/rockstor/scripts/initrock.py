@@ -44,7 +44,7 @@ OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
 RPM = '/usr/bin/rpm'
 YUM = '/usr/bin/yum'
-
+IP = '/usr/sbin/ip'
 
 def delete_old_kernels(logging, num_retain=5):
     #Don't keep more than num_retain kernels
@@ -89,23 +89,24 @@ def init_update_issue():
             pass
     if (ipaddr is None):
         default_if = None
-        some_if = None
-
-        o, e, c = run_command(['/usr/sbin/route'])
+        o, e, c = run_command([IP, 'route'])
         for i in o:
-            if (len(i.strip()) == 0):
-                continue
-            if (re.match('default', i) is not None):
-                default_if = i.split()[-1]
-            else:
-                some_if = i.split()[-1]
-        if (default_if is None):
-            default_if = some_if
+            if (re.match('default via', i) is not None):
+                rfields = i.split()
+                if len(rfields) > 4:
+                    default_if = rfields[4]
+                    print('default_if = {0}'.format(default_if))
         if (default_if is not None):
-            o2, e, c = run_command(['/usr/sbin/ifconfig', default_if])
+            o2, e, c = run_command([IP, 'address', 'show', default_if])
             for i2 in o2:
                 if (re.match('inet ', i2.strip()) is not None):
-                    ipaddr = i2.split()[1]
+                    inet_fields = i2.split()
+                    if len(inet_fields) > 1:
+                        ip_fields = inet_fields[1].split('/')
+                        if len(ip_fields) == 2:
+                            ipaddr = ip_fields[0]
+                            print('ipaddr = {0}'.format(ipaddr))
+                    break
 
     with open('/etc/issue', 'w') as ifo:
         if (ipaddr is None):
@@ -442,8 +443,8 @@ def main():
             logging.debug('Exception occurred while running update_issue: %s. '
                          'Trying again after 2 seconds.' % e.__str__())
             if (i > 28):
-                logging.error('Waited too long and tried too many times. '
-                              'Quiting.')
+                logging.error('Failed to retrieve default interface IP address'
+                              ' necessary for remote administration. Quitting.')
                 raise e
             time.sleep(2)
 
