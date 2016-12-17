@@ -153,13 +153,23 @@ AddPoolView = Backbone.View.extend({
             // by a 'redirect' role, ie so there is info to 'redirect' to the
             // by-id name held as the value to the 'redirect' role key.
             if (roleAsJson.hasOwnProperty('partitions') && roleAsJson.hasOwnProperty('redirect')) {
-                console.log("add_pool ACCEPTING ROLE OF partitioned COMBINED WITH redirect ROLE")
+                console.log("add_pool EXAMINING ROLE OF partitioned COMBINED WITH redirect ROLE")
                 // then we need to confirm if the fstype of the redirected
                 // partition is "" else we can't use it
-                return true;
+                console.log("the redirect value = " + roleAsJson.redirect);
+                console.log("the fstype at the redirect partition = " + roleAsJson.partitions[roleAsJson.redirect]);
+                if (roleAsJson.partitions.hasOwnProperty(roleAsJson.redirect)) {
+                    console.log("redirect value found in partition list")
+                    if (roleAsJson.partitions[roleAsJson.redirect] == "") {
+                        console.log("add_pool ACCEPTING partition as empty fs type")
+                        return true;
+                    }
+                }
+                console.log("rejecting as non empty fstype in redirect partition")
             }
             // In all other cases return false, ie:
-            // reject roles of for example root, mdraid, LUKS, partitioned etc
+            // reject roles of for example root, mdraid, LUKS,
+            // partitioned (when not accompanied by a valid redirect role) etc
             console.log("add_pool REJECTING ROLE with json = " + role);
             return false;
         }
