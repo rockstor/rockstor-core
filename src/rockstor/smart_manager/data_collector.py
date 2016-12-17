@@ -32,9 +32,8 @@ from os import path
 from sys import getsizeof
 from glob import glob
 
-from system.pinmanager import (save_pincard, has_pincard, 
-                               username_to_uid, email_notification_enabled,
-                               reset_random_pins, reset_password, generate_otp)
+from system.pinmanager import (has_pincard, username_to_uid, email_notification_enabled,
+                               reset_random_pins, generate_otp)
 
 from django.conf import settings
 from system.osi import uptime, kernel_info, get_byid_name_map
@@ -76,6 +75,7 @@ class PincardManagerNamespace(RockstorIO):
 
     def on_connect(self, sid, environ):
 
+        self.aw = APIWrapper()
         self.emit('pincardwelcome', {
             'key': 'pincardManager:pincardwelcome', 'data': 'Welcome to Rockstor PincardManager'
         })
@@ -93,8 +93,13 @@ class PincardManagerNamespace(RockstorIO):
         
         def create_pincard(uid):
 
-            new_pincard = save_pincard(uid)
-            self.emit('newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
+            try:
+                url = 'pincardmanager/create/%s' % uid
+                new_pincard = self.aw.api_call(url, data=None, calltype='post', save_error=False)
+                self.emit('newpincard', {'key': 'pincardManager:newpincard', 'data': new_pincard})
+            except Exception, e:
+                logger.error('Failed to create Pincard with '
+                             'exception: %s' % e.__str__())       
 
         self.spawn(create_pincard, sid, uid)
     
@@ -154,7 +159,13 @@ class PincardManagerNamespace(RockstorIO):
                     
                     #If received pins equal expected pins, check for values via reset_password func
                     if all(int(key) in self.pins_check for key in pinlist):
-                        reset_response, reset_status = reset_password(self.pins_user_uname, self.pins_user_uid, pinlist)
+                        data = {'uid': self.pins_user_uid,
+                                'pinlist': pinlist}
+                        url = 'pincardmanager/reset/%s' % self.pins_user_uname
+                        headers = {'content-type': 'application/json'}
+                        reset_data = self.aw.api_call(url, data=data, calltype='post', headers=headers, save_error=False)
+                        reset_response = reset_data['response']
+                        reset_status = reset_data['status']
                     else:
                         reset_response = 'Received pins set differs from expected one. Password reset denied'
                 else:
