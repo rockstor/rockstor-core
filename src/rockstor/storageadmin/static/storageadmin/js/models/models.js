@@ -32,7 +32,8 @@ var Disk = Backbone.Model.extend({
         return '/api/disks/' + this.get('diskName');
     },
     available: function () {
-        return _.isNull(this.get('pool')) && !this.get('parted') && !this.get('offline') && _.isNull(this.get('btrfs_uuid'));
+        return _.isNull(this.get('pool')) && !this.get('offline') &&
+            _.isNull(this.get('btrfs_uuid'));
     },
     isSerialUsable: function () {
         // Simple disk serial validator to return true unless the given disk
@@ -53,7 +54,7 @@ var Disk = Backbone.Model.extend({
     // Using the disk.role system we can filter drives on their usability.
     // Roles for inclusion: openLUKS containers
     // Roles to dismiss: LUKS containers, mdraid members, the 'root' role,
-    // and partitioned.
+    // and partitioned (if not accompanied by a redirect role).
     // Defaults to reject (return false)
     isRoleUsable: function () {
         // check if our role is null = db default
@@ -79,8 +80,27 @@ var Disk = Backbone.Model.extend({
             console.log("bb DISK model: ACCEPTING ROLE OF openLUKS json = " + role);
             return true;
         }
+        // Accept use of 'partitions' device but only if it is accompanied
+        // by a 'redirect' role, ie so there is info to 'redirect' to the
+        // by-id name held as the value to the 'redirect' role key.
+        if (roleAsJson.hasOwnProperty('partitions') && roleAsJson.hasOwnProperty('redirect')) {
+            console.log("bb DISK model: EXAMINING ROLE OF partitioned COMBINED WITH redirect ROLE")
+            // then we need to confirm if the fstype of the redirected
+            // partition is "" else we can't use it
+            console.log("the redirect value = " + roleAsJson.redirect);
+            console.log("the fstype at the redirect partition = " + roleAsJson.partitions[roleAsJson.redirect]);
+            if (roleAsJson.partitions.hasOwnProperty(roleAsJson.redirect)) {
+                console.log("redirect value found in partition list")
+                if (roleAsJson.partitions[roleAsJson.redirect] == "") {
+                    console.log("bb DISK model: ACCEPTING partition as empty fs type")
+                    return true;
+                }
+            }
+            console.log("rejecting as non empty fstype in redirect partition")
+        }
         // In all other cases return false, ie:
-        // reject roles of for example root, mdraid, LUKS, partitioned etc
+        // reject roles of for example root, mdraid, LUKS,
+        // partitioned (when not accompanied by a valid redirect role) etc
         console.log("bb DISK model: REJECTING ROLE with json = " + role);
         return false;
     }
