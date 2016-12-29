@@ -456,6 +456,8 @@ class DiskDetailView(rfc.GenericView):
                 return self._spindown_drive(dname, request)
             if (command == 'pause'):
                 return self._pause(dname, request)
+            if (command == 'role-drive'):
+                return self._role_disk(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
                  ' btrfs-disk-import, blink-drive, enable-smart, disable-smart,'
@@ -530,6 +532,36 @@ class DiskDetailView(rfc.GenericView):
             return Response(DiskInfoSerializer(disk).data)
         except Exception, e:
             e_msg = ('Failed to import any pool on this device(%s). Error: %s'
+                     % (dname, e.__str__()))
+            handle_exception(Exception(e_msg), request)
+
+    @transaction.atomic
+    def _role_disk(self, dname, request):
+        try:
+            disk = self._validate_disk(dname, request)
+            # We can use this disk name directly as it is our db reference
+            # no need to user _role_filter_disk_name as we only want to change
+            # the db fields anyway.
+            # Now to add or change an existing redirect role.
+            new_redirect_role = str(request.data.get('redirect_part', ''))
+            # Get our previous roles into a dictionary
+            logger.debug('role_disk has previous disk.role=%s' % disk.role)
+            roles = json.loads(disk.role)
+            # If we have received a redirect role then add/update our dict
+            # with it's value (the by-id partition)
+            if new_redirect_role != '':
+                roles['redirect'] = new_redirect_role
+            else:
+                # no redirect role requested so remove from dict if one exists
+                if 'redirect' in roles:
+                    del roles['redirect']
+            # return our dict back to a json format and stash in disk.role
+            disk.role = json.dumps(roles)
+            disk.save()
+            logger.debug('role_disk just asserted disk.role=%s' % disk.role)
+            return Response(DiskInfoSerializer(disk).data)
+        except Exception, e:
+            e_msg = ('Failed to set disk role on device(%s). Error: %s'
                      % (dname, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
