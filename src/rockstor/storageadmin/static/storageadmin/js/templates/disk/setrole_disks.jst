@@ -1,30 +1,38 @@
 <h3>Add a drive specific Role</h3>
-<p>
   Drive specific Roles are a way for Rockstor to know how you want to use this
   specific drive and can drastically alter the options associated with a device.
   Below is a list of disk roles and their intended use. Note that not
   all roles can be combined.
-  <p class="text-warning">
-    Changing a disk role can result in loss of data, please take care when
-    making any changes on this page.
-  </p>
+<br>
+<p class="text-warning">
+  Changing a disk role can result in loss of data, please take care when
+  making any changes on this page.
 </p>
+<p class="bg-info">
+  <strong>Note: </strong> No drive role is required for general purpose
+  data drives. Roles are intended primarily for specific single drive use
+  and not recommended for multi device pool members.
+</p>
+<h4>Roles and their use:</h4>
 <ul>
   <li>
     The <strong>Redirect</strong> role. This role is always require for any
     drive that is partitioned. Without it Rockstor cannot be sure which of the
     partitions on a drive you wish to use. It is required even if there is only
     one partition found. Without the addition of this role the only way a
-    partitioned drive can be used is for it's entire contents to be wiped,
-    including any and all partitions and all date there in.
-    The only time Rockstor will add this role itself is when a user imports a
+    partitioned drive can be used is for it's entire contents to first be wiped,
+    including any and all partitions and all date there in: resulting in the
+    drive no longer being partitioned. The drive can then be used in the
+    Rockstor default <i>whole disk</i> configuration: no partitions and no roles.
+    The only time Rockstor will add the <i>redirect</i> role itself is when a
+    user imports a
     multi device pool that has a btrfs in partition member. All other cases
     require the user to manually set the desired partition, including the
     initial btrfs import device; only additional devices within the imported
     pool will automatically have a redirect role set if required.
     <p>
-      N.B.Rockstor only supports the use of one partition per device. This
-      means that each device can have a maximum of one redirect role.
+      N.B.Rockstor only supports the use of one partition (redirect role) per
+      device. Although other partitions may exist they will be ignored.
     </p>
     <p class="text-warning">
       Please note that a drive's <i>Redirect</i> role will affect the action
@@ -33,31 +41,31 @@
       partiton will be deleted. But if there is no redirect role then the entire
       drive and all it's partitions and associated data will be wiped.
     </p>
-    <p class="bg-info">
-      <strong>Note: </strong> No drive role is required for general purpose
-      data drives. Roles are intended primarily for specific single drive use
-      and not recommended for multi device pool members.
-    </p>
   </li>
   <li>
     The <strong>Archive</strong> role is intended to be used by a single
-    external drive (eg USB) and can be combined with the
-    <strong>Redirect</strong> role. <i>N.B. Not currently implemented</i>
+    external drive (eg USB).
+    <br>
+    The <i>Archive</i> role can be combined with the <i>Redirect</i> role.
+    <br>
+    <i>N.B. Not currently implemented</i>
   </li>
   <li>
     The <strong>External Import</strong> role is, like the <i>Archive</i> role
     above, intended to be used by a single external drive (eg USB) and is
     primarily aimed at sync type use where you wish for an external drives data
-    to be imported onto a specifically designated internal Rockstor pool.
-    This role can be combined with the <i>Redirect</i> role.
+    to be imported onto a specifically designated internal Rockstor share.
+    <br>
+    The <i>External Import</i> role can be combined with the <i>Redirect</i> role.
+    <br>
+    <i>N.B. Not currently implemented</i>
     <p class="text-warning">
       Please note that with this role the external drive is considered to be
       the master source of truth. If a file is changed on the external drive
       and the drive is then re-attached to Rockstor then the next sync
-      opperation will update Rockstor's version of that file. Not the other way
+      operation will update Rockstor's version of that file. Not the other way
       around.
     </p>
-    <i>N.B. Not currently implemented</i>
   </li>
 </ul>
 
@@ -78,11 +86,11 @@
 
         <!-- redirect partition selection -->
         <div class="form-group">
-          <label class="col-sm-4 control-label" for="disk_partitions">Select
-            the Partition to use<span class="required"> *</span></label>
+          <label class="col-sm-4 control-label" for="redirect_part">Select
+            Partition to use (filesystem)<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <select class="form-control" id="disk_partitions"
-                    name="disk_partitions">
+            <select class="form-control" id="redirect_part"
+                    name="redirect_part">
               {{display_disk_partitions}}
             </select>
           </div>
