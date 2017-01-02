@@ -101,25 +101,28 @@ SetroleDiskView = RockstorLayoutView.extend({
             return err_msg;
         };
 
-        // $.validator.addMethod('validateRedirect', function (value) {
-        //     var redirect_role = $('#redirect_part').val();
-        //     if (partitions[current_redirect] == 'btrfs') {
-        //         err_msg = 'Existing btrfs partition found; if you wish to ' +
-        //             'use the redirect role either select this btrfs partition ' +
-        //             'or delete the partition / whole disk and re-assign as ' +
-        //             'redirecting to a non btrfs partiton when one exists is' +
-        //             'not supported.';
-        //         return false;
-        //     }
-        //     return true;
-        // }, role_err_msg);
+        $.validator.addMethod('validateRedirect', function (value) {
+            var redirect_role = $('#redirect_part').val();
+            // check to see if we are attempting to change an existing btrfs
+            // redirect, if so refuse the action and explain why.
+            if ((partitions[current_redirect] == 'btrfs') && (redirect_role != current_redirect)) {
+                err_msg = 'Existing btrfs partition found; if you wish to ' +
+                    'use the redirect role either select this btrfs partition ' +
+                    'or remove the btrfs partition or whipe the whole disk and re-assign.' +
+                    'Redirecting is only supported to a non btrfs partiton when ' +
+                    'no btrfs partition exists on the same device.';
+                return false;
+            }
+            return true;
+        }, role_err_msg);
 
 
         this.$('#add-role-disk-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-                redirect_part: 'required',
+                // redirect_part: 'required',
+                redirect_part: 'validateRedirect'
             },
 
             submitHandler: function () {
