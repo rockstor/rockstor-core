@@ -284,6 +284,37 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         }
     },
 
+    resizeTopDisksData: function() {
+
+        var _this = this;
+        var num_disks = Object.keys(_this.disksData).length < _this.numTop ? Object.keys(_this.disksData).length : _this.numTop;
+        var disks_delta = num_disks - _this.TopDisksChartData.datasets.length;
+        // When resizing Disks widget we check if expected disks number is greater
+        // then current disks on chart, if so we push data to chart array else
+        // we slice data
+        if (disks_delta > 0) {
+            var current_disks = _this.TopDisksChartData.datasets.length;
+            for (var i = 0; i < disks_delta; i++) {
+                var disk_index = current_disks + i;
+                var dataset = {
+                    label: '',
+                    borderWidth: 1,
+                    fill: true,
+                    borderColor: 'rgba(' + _this.TopDiskscolors[disk_index] + ', 1)',
+                    backgroundColor: 'rgba(' + _this.TopDiskscolors[disk_index] + ', 0.1)',
+                    pointBackgroundColor: 'rgba(' + _this.TopDiskscolors[disk_index] + ', 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(' + _this.TopDiskscolors[disk_index] + ', 1)',
+                    data: [0, 0, 0, 0, 0, 0, 0]
+                };
+                _this.TopDisksChartData.datasets.push(dataset);                
+            }
+        } else {
+            _this.TopDisksChartData.datasets = _this.TopDisksChartData.datasets.slice(0, num_disks);
+        }
+    },
+
     initSingleDiskData: function() {
 
         var _this = this;
@@ -507,6 +538,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             _this.SingleDiskgraphRendered = false;
             this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
         }
+        _this.resizeTopDisksData();
         _this.TopDisksChart.resize();
     },
 
