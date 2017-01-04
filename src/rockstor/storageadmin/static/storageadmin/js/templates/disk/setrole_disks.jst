@@ -81,6 +81,7 @@
           <div class="col-sm-offset-4 col-sm-8">
             <h4>Drive name:&nbsp;&nbsp;<strong>{{diskName}}</strong></h4>
             <h4>Serial number:&nbsp;&nbsp;<strong>{{serialNumber}}</strong></h4>
+            <h5>A selection of "Whole disk" means no Redirect role.</h5>
           </div>
         </div>
 
@@ -93,6 +94,21 @@
                     name="redirect_part">
               {{display_disk_partitions}}
             </select>
+          </div>
+        </div>
+
+        <div class="checkbox">
+          <label class="col-sm-4 control-label" for="delete_tick"></label>
+          <div class="col-sm-4">
+            <input type="checkbox" name="delete_tick" id="delete_tick">
+            Tick to permanently delete the contents of the above device.
+          </div>
+        </div>
+
+        <div class="form-group" id="delete_tick_warning">
+          <div class="col-sm-offset-4 col-sm-8">
+            <h4><strong>WARNING: THIS WILL DELETE ALL DATA ON THE ABOVE DEVICE.</strong></h4>
+            If unsure please click Cancel.
           </div>
         </div>
 

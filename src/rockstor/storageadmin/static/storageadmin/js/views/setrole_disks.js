@@ -26,7 +26,9 @@
 
 SetroleDiskView = RockstorLayoutView.extend({
     events: {
-        'click #cancel': 'cancel'
+        'click #cancel': 'cancel',
+        'click #redirect_part': 'redirect_part_changed',
+        'click #delete_tick': 'delete_tick_toggle'
     },
 
     initialize: function () {
@@ -58,6 +60,10 @@ SetroleDiskView = RockstorLayoutView.extend({
         var diskRole = this.disks.find(function (d) {
             return (d.get('name') == disk_name);
         }).get('role');
+        // get the btrfsuuid for this device
+        var disk_btrfs_uuid = this.disks.find(function(d) {
+            return (d.get('name') == disk_name);
+        }).get('btrfs_uuid');
         // parse the diskRole json to a local object
         try {
             var role_obj = JSON.parse(diskRole);
@@ -88,7 +94,8 @@ SetroleDiskView = RockstorLayoutView.extend({
             diskRole: diskRole,
             role_obj: role_obj,
             partitions: partitions,
-            current_redirect: current_redirect
+            current_redirect: current_redirect,
+            disk_btrfs_uuid: disk_btrfs_uuid
         }));
 
         this.$('#add-role-disk-form :input').tooltip({
@@ -116,13 +123,26 @@ SetroleDiskView = RockstorLayoutView.extend({
             return true;
         }, role_err_msg);
 
+        $.validator.addMethod('validateDeleteTick', function (value) {
+            var delete_tick = $('#delete_tick');
+            var redirect_role = $('#redirect_part').val();
+            if (delete_tick.prop('checked')) {
+                if (redirect_role != current_redirect) {
+                    err_msg = 'Please first submit your new Redirect Role ' +
+                        'before selecting delete, or Cancel and start over.';
+                    return false;
+                }
+            }
+            return true;
+        }, role_err_msg);
 
         this.$('#add-role-disk-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
                 // redirect_part: 'required',
-                redirect_part: 'validateRedirect'
+                redirect_part: 'validateRedirect',
+                delete_tick: 'validateDeleteTick'
             },
 
             submitHandler: function () {
@@ -149,6 +169,26 @@ SetroleDiskView = RockstorLayoutView.extend({
                 return false;
             }
         });
+        this.delete_tick_toggle();
+    },
+
+    delete_tick_toggle: function () {
+
+        var delete_tick = this.$('#delete_tick');
+        if (delete_tick.prop('checked')) {
+            this.$('#delete_tick_warning').css('visibility', 'visible');
+        } else {
+            this.$('#delete_tick_warning').css('visibility', 'hidden');
+        }
+    },
+
+    redirect_part_changed: function() {
+        var part_selected = this.$('#redirect_part');
+        if (part_selected != this.current_redirect) {
+            if (this.$('#delete_tick').prop('checked')) {
+                this.$('#delete_tick').attr('checked', false);
+            }
+        }
     },
 
     initHandlebarHelpers: function () {
@@ -157,6 +197,20 @@ SetroleDiskView = RockstorLayoutView.extend({
         // <option value="virtio-serial-6-part-2">part2 (ntfs)</option>
         Handlebars.registerHelper('display_disk_partitions', function () {
             var html = '';
+            // Add our 'use whole disk' option which will allow for an existing
+            // redirect to be removed, preparing for whole disk btrfs.
+            if ( (this.disk_btrfs_uuid != null) && (this.partitions == {}) ){
+                uuid_message = 'btrfs'
+            } else {
+                uuid_message = 'None'
+            }
+            html +=  '<option value=""> Whole disk (' + uuid_message + ')';
+            // if (this.current_redirect == '') {
+            //     html += ' selected="selected"';
+            // } else {
+            //     html += '>';
+            // }
+            console.log('current html=' + html);
             // loop through this devices partitions and mark one as selected
             // if it equals the current redirect role, hence defaulting to the
             // partition of the current redirect settings.
@@ -179,6 +233,7 @@ SetroleDiskView = RockstorLayoutView.extend({
                 short_part_name = part.split('-').slice(-1)[0];
                 html += short_part_name + ' (' + partition_fstype + ')' + '</option>';
             }
+            console.log('final html=' + html);
             return new Handlebars.SafeString(html);
         });
     },
