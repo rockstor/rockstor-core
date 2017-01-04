@@ -533,6 +533,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 _this.selectedDisk = _this.$('#disk-select').val();
             });
             this.$('#top-disks-container').css('width', '60%');
+            this.$('#single-disk-chart').css('width', '100%');
+            this.$('#single-disk-chart').css('height', '100%');
+            this.$('#single-disk-chart').width =  this.$('#single-disk-chart').offsetWidth;
+            this.$('#single-disk-chart').height =  this.$('#single-disk-chart').offsetHeight;
         } else {
             this.$('#top-disks-container').css('width', '70%');
             _this.SingleDiskgraphRendered = false;
