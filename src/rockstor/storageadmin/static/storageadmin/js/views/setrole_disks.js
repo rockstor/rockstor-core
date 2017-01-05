@@ -87,6 +87,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         } else {
             var current_redirect = '';
         }
+        this.current_redirect = current_redirect;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -170,10 +171,10 @@ SetroleDiskView = RockstorLayoutView.extend({
             }
         });
         this.delete_tick_toggle();
+        this.redirect_part_changed();
     },
 
     delete_tick_toggle: function () {
-
         var delete_tick = this.$('#delete_tick');
         if (delete_tick.prop('checked')) {
             this.$('#delete_tick_warning').css('visibility', 'visible');
@@ -183,11 +184,24 @@ SetroleDiskView = RockstorLayoutView.extend({
     },
 
     redirect_part_changed: function() {
-        var part_selected = this.$('#redirect_part');
-        if (part_selected != this.current_redirect) {
+        var part_selected = this.$('#redirect_part').val();
+        var current_redirect = this.current_redirect;
+        console.log('redirect_part_changed, part_selected = ' + part_selected);
+        console.log('current_redirect=' + current_redirect);
+        if (part_selected != current_redirect) {
             if (this.$('#delete_tick').prop('checked')) {
-                this.$('#delete_tick').attr('checked', false);
+                // un-tick to reassure user & remove the warning via tick_toggle
+                this.$('#delete_tick').removeAttr('checked');
+                this.delete_tick_toggle();
             }
+            // now disable delete_tick to avoid it being activated on an
+            // as yet uninitialized / un-applied redirect.
+            this.$('#delete_tick').attr('disabled', true);
+        } else {
+            console.log('part_selected == current_redirect =' + current_redirect);
+            // we are showing the current redirect so re-enable the delete_tick
+            this.$('#delete_tick').removeAttr('disabled');
+            this.delete_tick_toggle();
         }
     },
 
@@ -199,17 +213,24 @@ SetroleDiskView = RockstorLayoutView.extend({
             var html = '';
             // Add our 'use whole disk' option which will allow for an existing
             // redirect to be removed, preparing for whole disk btrfs.
-            if ( (this.disk_btrfs_uuid != null) && (this.partitions == {}) ){
-                uuid_message = 'btrfs'
+            // Also serves to indicate no redirect role in operation.
+            if ( (this.disk_btrfs_uuid != null) && (this.partitions == {}) ) {
+                var uuid_message = 'btrfs'
             } else {
-                uuid_message = 'None'
+                var uuid_message = 'None';
             }
-            html +=  '<option value=""> Whole disk (' + uuid_message + ')';
-            // if (this.current_redirect == '') {
-            //     html += ' selected="selected"';
-            // } else {
-            //     html += '>';
-            // }
+            var selected = '';
+            if (this.current_redirect == '') {
+                var selected = ' selected="selected"';
+            }
+            html += '<option value=""' + selected + '> Whole Disk (' + uuid_message + ')';
+            // if no current redirect role then select whole disk entry and
+            // give indication of this " - active"
+            if (selected != '') {
+                html += ' - active';
+            }
+            // close the "Whole Disk" option
+            html += '</option>';
             console.log('current html=' + html);
             // loop through this devices partitions and mark one as selected
             // if it equals the current redirect role, hence defaulting to the
@@ -218,8 +239,10 @@ SetroleDiskView = RockstorLayoutView.extend({
             // the partition name and add it's value which is the fstype.
             // Default to the partition matching a current redirect, if any.
             for (var part in this.partitions) {
+                var active_redirect = false;
                 if (part == this.current_redirect) {
                     html += '<option value="' + part + '" selected="selected">';
+                    active_redirect = true;
                 } else {
                     html += '<option value="' + part + '">';
                 }
@@ -230,8 +253,14 @@ SetroleDiskView = RockstorLayoutView.extend({
                 }
                 // strip the last part of our by-id name to get our partition
                 // ie virtio-serial-part2 but we want part2
-                short_part_name = part.split('-').slice(-1)[0];
-                html += short_part_name + ' (' + partition_fstype + ')' + '</option>';
+                var short_part_name = part.split('-').slice(-1)[0];
+                html += short_part_name + ' (' + partition_fstype + ')';
+                // if this is our active setting then indicate in text
+                if (active_redirect) {
+                    html += ' - active'
+                }
+                // end this partition option
+                html += '</option>';
             }
             console.log('final html=' + html);
             return new Handlebars.SafeString(html);
