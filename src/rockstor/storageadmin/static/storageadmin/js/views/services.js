@@ -227,8 +227,21 @@ ServicesView = Backbone.View.extend({
         });
 
         Handlebars.registerHelper('isServiceAD', function(serviceName, opts) {
-
             if (serviceName == "active-directory") {
+                return opts.fn(this);
+            }
+            return opts.inverse(this);
+        });
+        
+        Handlebars.registerHelper('isServiceBootstrap', function(serviceName, opts) {
+            if (serviceName == "rockstor-bootstrap") {
+                return opts.fn(this);
+            }
+            return opts.inverse(this);
+        });
+        
+        Handlebars.registerHelper('isServiceZtask', function(serviceName, opts) {
+            if (serviceName == "ztask-daemon") {
                 return opts.fn(this);
             }
             return opts.inverse(this);
