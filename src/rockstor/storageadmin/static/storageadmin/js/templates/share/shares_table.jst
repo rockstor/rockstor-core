@@ -28,8 +28,13 @@
         <td>
         {{displayCompressionAlgo this.compression_algo this.name}}
         </td>
-        <td><a id="delete_share_{{this.name}}" data-name="{{this.name}}" data-action="delete"
-        data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" data-usage="{{humanize_size this.eusage}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
+        <td>{{#if (isSystemShare this.id this.pool.id)}}
+                N/A
+            {{else}}
+                <a id="delete_share_{{this.name}}" data-name="{{this.name}}" data-action="delete"
+                data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" data-usage="{{humanize_size this.eusage}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a>
+            {{/if}}
+		</td>
     </tr>
     {{/each}}
     </tbody>

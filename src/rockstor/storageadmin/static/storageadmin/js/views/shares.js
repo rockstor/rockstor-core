@@ -128,6 +128,7 @@ SharesView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('humanize_size', function(num) {
 			return humanize.filesize(num * 1024);
 		});
+
 		Handlebars.registerHelper('displayCompressionAlgo', function(shareCompression,shareName) {
 			var html = '';
 			if(shareCompression && shareCompression != 'no'){
@@ -138,5 +139,16 @@ SharesView = RockstorLayoutView.extend({
 			}
 			return new Handlebars.SafeString(html);
 		});
+
+        Handlebars.registerHelper('isSystemShare', function(id, pool_id) {
+
+            //During Rockstor installation we create first pool with pool_id == 1
+            //and root and home shares with id 1 and 2; this let us filter on ids
+            //instead of share names
+            if (pool_id == '1' && parseInt(id) < 3) {
+                return true;
+            }
+            return false;
+        });
 	}
 });
