@@ -10,8 +10,14 @@
 </p>
 <p class="bg-info">
   <strong>Note: </strong> No drive role is required for general purpose
-  data drives. Roles are intended primarily for specific single drive use
-  and not recommended for multi device pool members.
+  data drives. Roles are intended primarily for specific <strong>single</strong>
+  drive use and not recommended for multi device pool members.
+  <br>
+  "Whole Disk" is the default and recommended setting for general purpose use.
+  <br>
+  A device must first be wiped before it can take part as a pool member. Unless
+  a btrfs import is desired, in which case select the (btrfs) labeled device
+  and Submit. An import icon will then be offered on the Disk Page.
 </p>
 <h4>Roles and their use:</h4>
 <ul>
@@ -49,6 +55,7 @@
     The <i>Archive</i> role can be combined with the <i>Redirect</i> role.
     <br>
     <i>N.B. Not currently implemented</i>
+    <p></p>
   </li>
   <li>
     The <strong>External Import</strong> role is, like the <i>Archive</i> role
@@ -59,12 +66,13 @@
     The <i>External Import</i> role can be combined with the <i>Redirect</i> role.
     <br>
     <i>N.B. Not currently implemented</i>
+    <p></p>
     <p class="text-warning">
-      Please note that with this role the external drive is considered to be
-      the master source of truth. If a file is changed on the external drive
-      and the drive is then re-attached to Rockstor then the next sync
-      operation will update Rockstor's version of that file. Not the other way
-      around.
+      Please note: With the <i>External Import</i> role the external drive is
+      considered to be the master source of truth. If a file is changed on the
+      external drive and the drive is then re-attached to Rockstor then the
+      next sync operation will update Rockstor's version of that file.
+      Not the other way around.
     </p>
   </li>
 </ul>
@@ -101,13 +109,14 @@
           <label class="col-sm-4 control-label" for="delete_tick"></label>
           <div class="col-sm-4">
             <input type="checkbox" name="delete_tick" id="delete_tick">
-            Tick to permanently delete the contents of the above device.
+            Tick to wipe the contents of the above 'active' device (including
+            it's filesystem).
           </div>
         </div>
 
         <div class="form-group" id="delete_tick_warning">
           <div class="col-sm-offset-4 col-sm-8">
-            <h4><strong>WARNING: THIS WILL DELETE ALL DATA ON THE ABOVE DEVICE.</strong></h4>
+            <h4><strong><p style="color:red">WARNING: THIS WILL DELETE ALL DATA ON THE ABOVE DEVICE.</p></strong></h4>
             If unsure please click Cancel.
           </div>
         </div>
