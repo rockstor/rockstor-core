@@ -469,6 +469,11 @@ class DiskDetailView(rfc.GenericView):
         disk = self._validate_disk(dname, request)
         disk_name = self._role_filter_disk_name(disk, request)
         wipe_disk(disk_name)
+        # if we are wiping a partition then the following 2 changes will be
+        # re-established on the next scan_disks() call anyway.
+        # TODO: we should be able to more intelligently update the following
+        # could consider using _reverse_role_filter_name() to assess if we were
+        # passed a partition and update disk.parted accordingly.
         disk.parted = False
         disk.btrfs_uuid = None
         disk.save()
@@ -537,28 +542,66 @@ class DiskDetailView(rfc.GenericView):
 
     @transaction.atomic
     def _role_disk(self, dname, request):
+        """
+        Resets device role db entries and wraps _wipe() but will only call
+        _wipe() if no redirect role changes are also requested. If we fail
+        to associate these 2 tasks then there is a risk of the redirect not
+        coming into play prior to the wipe.
+        :param dname: disk name
+        :param request:
+        :return:
+        """
+        # Until we find otherwise:
+        prior_redirect = ''
+        redirect_role_change = False
         try:
             disk = self._validate_disk(dname, request)
             # We can use this disk name directly as it is our db reference
             # no need to user _role_filter_disk_name as we only want to change
             # the db fields anyway.
-            # Now to add or change an existing redirect role.
+            # And when we call _wipe() it honours any existing redirect role
+            # so we make sure to not wipe and redirect at the same time.
             new_redirect_role = str(request.data.get('redirect_part', ''))
-            # Get our previous roles into a dictionary
+            is_delete_ticked = request.data.get('delete_tick', False)
+            logger.debug('delete_tick value in disk.py=%s' % is_delete_ticked)
             logger.debug('role_disk has previous disk.role=%s' % disk.role)
+            # Get our previous roles into a dictionary
             roles = json.loads(disk.role)
             # If we have received a redirect role then add/update our dict
             # with it's value (the by-id partition)
-            if new_redirect_role != '':
-                roles['redirect'] = new_redirect_role
+            # First establish our prior_redirect if it exists.
+            # A redirect removal is indicated by '', so our prior_redirect
+            # default is the same to aid comparison.
+            if 'redirect' in roles:
+                prior_redirect = roles['redirect']
+            if new_redirect_role != prior_redirect:
+                redirect_role_change = True
+                if new_redirect_role != '':
+                    # add or update our new redirect role
+                    roles['redirect'] = new_redirect_role
+                else:
+                    # no redirect role requested (''), so remove if present
+                    if 'redirect' in roles:
+                        del roles['redirect']
+            # Having now checked our new_redirect_role against the disks
+            # prior redirect role we can perform validation tasks.
+            logger.debug('redirect_role_change=%s and is_delete_ticked=%s' % (redirect_role_change, is_delete_ticked))
+            if redirect_role_change:
+                if is_delete_ticked:
+                    # changing redirect and wiping concurrently are blocked
+                    e_msg = ("Wiping a device while changing it's redirct role"
+                             " is not supported. Please do one at a time")
+                    raise Exception(e_msg)
+                # We have a redirect role change and no delete ticked so
+                # return our dict back to a json format and stash in disk.role
+                disk.role = json.dumps(roles)
+                disk.save()
+                logger.debug('role_disk just asserted disk.role=%s' % disk.role)
             else:
-                # no redirect role requested so remove from dict if one exists
-                if 'redirect' in roles:
-                    del roles['redirect']
-            # return our dict back to a json format and stash in disk.role
-            disk.role = json.dumps(roles)
-            disk.save()
-            logger.debug('role_disk just asserted disk.role=%s' % disk.role)
+                # no redirect role change so we can wipe if requested by tick
+                if is_delete_ticked:
+                    # Not sure if this is the correct way to call our wipe.
+                    return self._wipe(dname, request)
             return Response(DiskInfoSerializer(disk).data)
         except Exception, e:
             e_msg = ('Failed to set disk role on device(%s). Error: %s'

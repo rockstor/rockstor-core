@@ -191,6 +191,8 @@ SetroleDiskView = RockstorLayoutView.extend({
         if (part_selected != current_redirect) {
             if (this.$('#delete_tick').prop('checked')) {
                 // un-tick to reassure user & remove the warning via tick_toggle
+                // Remark out the following line to test backend redirect
+                // & wipe validation by enabling their combination in the UI.
                 this.$('#delete_tick').removeAttr('checked');
                 this.delete_tick_toggle();
             }
