@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+"""
+Pool view. for all things at pool level
+"""
 import re
 import pickle
 import time
@@ -51,6 +54,23 @@ class PoolMixin(object):
             e_msg = ('Disk(%s) does not exist' % d)
             handle_exception(Exception(e_msg), request)
 
+    @staticmethod
+    def _get_disk_names(disks, request):
+        """
+        simply logger abstraction to display the disks names withing a disks
+        object.
+        :param disks: list of disks object
+        :param request:
+        :return: list of disk names in passed disk object list
+        """
+        disk_names = []
+        try:
+            for d in disks:
+                disk_names.append(d.name)
+            return disk_names
+        except:
+            e_msg = ('Problem with display_disk_names logger' % disks)
+            handle_exception(Exception(e_msg), request)
 
     @staticmethod
     def _role_filter_disk_names(disks, request):
@@ -222,7 +242,6 @@ class PoolMixin(object):
         logger.debug('balance tid = %s' % tid)
         return tid
 
-
 class PoolListView(PoolMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         sort_col = self.request.query_params.get('sortby', None)
@@ -244,13 +263,12 @@ class PoolListView(PoolMixin, rfc.GenericView):
         with self._handle_exception(request):
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks')]
-            logger.debug('pool.py POST DISK LIST = %s' % disks)
-            logger.debug('disks is of type %s' % type(disks))
+            logger.debug('pool.py POST received a DISK LIST = %s' %
+                         self._get_disk_names(disks, request))
             pname = request.data['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
                 e_msg = ('Invalid characters in Pool name. Following '
-                         'characters are allowed: letter(a-z or A-Z), '
-                         'digit(0-9), '
+                         'characters are allowed: letter(a-z or A-Z), digit(0-9), '
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
@@ -259,13 +277,11 @@ class PoolListView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (Pool.objects.filter(name=pname).exists()):
-                e_msg = ('Pool(%s) already exists. Choose a different name'
-                         % pname)
+                e_msg = ('Pool(%s) already exists. Choose a different name' % pname)
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=pname).exists()):
-                e_msg = ('A Share with this name(%s) exists. Pool and Share '
-                         'names '
+                e_msg = ('A Share with this name(%s) exists. Pool and Share names '
                          'must be distinct. Choose a different name' % pname)
                 handle_exception(Exception(e_msg), request)
 
@@ -278,8 +294,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             raid_level = request.data['raid_level']
             if (raid_level not in self.RAID_LEVELS):
-                e_msg = ('Unsupported raid level. use one of: {}'.format(
-                    self.RAID_LEVELS))
+                e_msg = ('Unsupported raid level. use one of: {}'.format(self.RAID_LEVELS))
                 handle_exception(Exception(e_msg), request)
             # consolidated raid0 & raid 1 disk check
             if (raid_level in self.RAID_LEVELS[1:3] and len(disks) <= 1):
@@ -307,8 +322,9 @@ class PoolListView(PoolMixin, rfc.GenericView):
                      mnt_options=mnt_options)
             p.save()
             p.disk_set.add(*disks)
-            # added for loop to save disks appears p.disk_set.add(*disks) was
-            # not saving disks in test environment
+            logger.debug('pool.py POST dnames LIST = %s' % dnames)
+            # added for loop to save disks
+            # appears p.disk_set.add(*disks) was not saving disks in test environment
             for d in disks:
                 d.pool = p
                 d.save()
@@ -379,9 +395,9 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
                 if (new_raid == 'raid10' and num_total_disks < 4):
-                    e_msg = ('A minimum of Four drives are required for the '
-                             'raid level: raid10')
-                    handle_exception(Exception(e_msg), request)
+                     e_msg = ('A minimum of Four drives are required for the '
+                              'raid level: raid10')
+                     handle_exception(Exception(e_msg), request)
 
                 if (new_raid == 'raid6' and num_total_disks < 3):
                     e_msg = ('A minimum of Three drives are required for the '
@@ -390,12 +406,12 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
 
                 if (new_raid == 'raid5' and num_total_disks < 2):
                     e_msg = ('A minimum of Two drives are required for the '
-                             'raid level: raid5')
+                              'raid level: raid5')
                     handle_exception(Exception(e_msg), request)
 
                 if (PoolBalance.objects.filter(
                         pool=pool,
-                        status__regex=r'(started|running|cancelling|pausing|paused)').exists()):  # noqa E501
+                        status__regex=r'(started|running|cancelling|pausing|paused)').exists()):
                     e_msg = ('A Balance process is already running or paused '
                              'for this pool(%s). Resize is not supported '
                              'during a balance process.' % pool.name)
@@ -498,21 +514,18 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
 
             if (Share.objects.filter(pool=pool).exists()):
                 if not force:
-                    e_msg = ('Pool(%s) is not empty. Delete is not allowed '
-                             'until '
+                    e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
                              'all shares in the pool are deleted' % (pname))
                     handle_exception(Exception(e_msg), request)
                 for so in Share.objects.filter(pool=pool):
-                    remove_share(so.pool, so.subvol_name, so.pqgroup,
-                                 force=force)
+                    remove_share(so.pool, so.subvol_name, so.pqgroup, force=force)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
             umount_root(pool_path)
             pool.delete()
             try:
                 self._update_disk_state()
             except Exception as e:
-                logger.error('Exception while updating disk state: %s'
-                             % e.__str__())
+                logger.error('Exception while updating disk state: %s' % e.__str__())
             return Response()
 
 
