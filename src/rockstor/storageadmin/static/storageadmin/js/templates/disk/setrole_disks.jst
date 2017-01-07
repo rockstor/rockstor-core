@@ -1,9 +1,9 @@
-<h3>Add a drive specific Role</h3>
+<h3>Configure drive Role or Wipe an existing Filesystem.</h3>
   Drive specific Roles are a way for Rockstor to know how you want to use this
   specific drive and can drastically alter the options associated with a device.
   Below is a list of disk roles and their intended use. Note that not
   all roles can be combined.
-<br>
+<p></p>
 <p class="text-warning">
   Changing a disk role can result in loss of data, please take care when
   making any changes on this page.
@@ -29,7 +29,7 @@
     partitioned drive can be used is for it's entire contents to first be wiped,
     including any and all partitions and all date there in: resulting in the
     drive no longer being partitioned. The drive can then be used in the
-    Rockstor default <i>whole disk</i> configuration: no partitions and no roles.
+    Rockstor default <i>Whole Disk</i> configuration: no partitions and no roles.
     The only time Rockstor will add the <i>redirect</i> role itself is when a
     user imports a
     multi device pool that has a btrfs in partition member. All other cases
@@ -42,10 +42,11 @@
     </p>
     <p class="text-warning">
       Please note that a drive's <i>Redirect</i> role will affect the action
-      taken when it is wiped from withing the Rockstor interface. If a valid
+      taken when it is wiped from within the Rockstor interface. If a valid
       redirect to an existing partition exists then the contents of that
-      partiton will be deleted. But if there is no redirect role then the entire
-      drive and all it's partitions and associated data will be wiped.
+      partition will be deleted. But if there is no redirect role then the
+      entire drive and all it's partitions and associated data will be wiped.
+      The command used internally to accomplish the wipe is "wipefs -a devname".
     </p>
   </li>
   <li>
@@ -109,6 +110,7 @@
           <label class="col-sm-4 control-label" for="delete_tick"></label>
           <div class="col-sm-4">
             <input type="checkbox" name="delete_tick" id="delete_tick">
+            <i class="fa fa-eraser"></i>
             Tick to wipe the contents of the above 'active' device (including
             it's filesystem).
           </div>
