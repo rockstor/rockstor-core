@@ -139,6 +139,8 @@ SetroleDiskView = RockstorLayoutView.extend({
                 } else {
                     // we have redirect_role == current_redirect
                     // now check if the device is in an active Rockstor pool
+                    // Un-remark next line to test backend validation of same.
+                    // disk_pool = null;
                     if (disk_pool != null) {
                         // device is part of Rockstor pool, reject wipe request
                         err_msg = "Selected device is part of a Rockstor " +
@@ -206,7 +208,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         if (part_selected != current_redirect) {
             if (this.$('#delete_tick').prop('checked')) {
                 // un-tick to reassure user & remove the warning via tick_toggle
-                // Remark out the following line to test backend redirect
+                // Un-Remark the following line to test backend redirect
                 // & wipe validation by enabling their combination in the UI.
                 this.$('#delete_tick').removeAttr('checked');
                 this.delete_tick_toggle();

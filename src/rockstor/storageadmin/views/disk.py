@@ -593,7 +593,7 @@ class DiskDetailView(rfc.GenericView):
             if redirect_role_change:
                 if is_delete_ticked:
                     # changing redirect and wiping concurrently are blocked
-                    e_msg = ("Wiping a device while changing it's redirct role"
+                    e_msg = ("Wiping a device while changing it's redirect role"
                              " is not supported. Please do one at a time")
                     raise Exception(e_msg)
                 # We have a redirect role change and no delete ticked so
@@ -604,11 +604,18 @@ class DiskDetailView(rfc.GenericView):
             else:
                 # no redirect role change so we can wipe if requested by tick
                 if is_delete_ticked:
+                    if disk.pool != None:
+                        # Disk is a member of a Rockstor pool so refuse to wipe.
+                        e_msg = ('Wiping a Rockstor pool member is '
+                                 'not supported. Please use pool resize to '
+                                 'remove this disk from the pool first.')
+                        raise Exception(e_msg)
                     # Not sure if this is the correct way to call our wipe.
                     return self._wipe(dname, request)
             return Response(DiskInfoSerializer(disk).data)
         except Exception, e:
-            e_msg = ('Failed to set disk role on device(%s). Error: %s'
+            e_msg = ('Failed to configure drive role or wipe existing '
+                     'filesystem on device (%s). Error: %s'
                      % (dname, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
