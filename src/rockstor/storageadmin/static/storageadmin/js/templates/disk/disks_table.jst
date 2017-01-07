@@ -31,27 +31,27 @@
               <i class="glyphicon glyphicon-registration-mark"></i></a>
         {{else if this.parted}}
             {{#if (hasUserRole this.role)}}
-                <a href="#" class="user_role_part" data-disk-name="{{this.name}}" title="User Assigned Role found, click to edit (pending feature)" rel="tooltip">
+                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="User Assigned Role found on partitioned disk, click to edit." rel="tooltip">
                 <i class="glyphicon glyphicon-tags"></i></a>
                 {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
-                    <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Partition is unusable because it has an existing BTRFS filesystem on it.
-                    Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this partition automatically (Note: only a single device is supported with btrfs in partition)." rel="tooltip">
+                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Partition is unusable because it has an existing BTRFS filesystem on it.
+                    Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this partition automatically (Note: whole disk btrfs is recommended)." rel="tooltip">
                     <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
                 {{/if}}
             {{else}}
-                <a href="#" class="wipe" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions and no User Assigned Role (pending feature)
-                Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
+                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions and no User Assigned Role.
+                Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
                 <!-- Later we can have this click do User Assigned Role config -->
                 <!-- which can also wipe if need be, either whole or partition -->
             {{/if}}
         {{else}} <!-- We are non of the above top level ifs / else ifs at this point -->
             {{#if (hasUserRole this.role)}}
-                <a href="#" class="user_role_drive" data-disk-name="{{this.name}}" title="Whole Disk User Assigned Role found, click to edit (pending feature)" rel="tooltip">
+                <a href="#" class="user_role_drive" data-disk-name="{{this.name}}" title="Whole Disk User Assigned Role found, click to edit" rel="tooltip">
                 <i class="glyphicon glyphicon-tag"></i></a>
             {{/if}}
             {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
-                <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
-                Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically. Multi-device support included; assuming all members are whole disk" rel="tooltip">
+                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
+                Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically. Multi-device support included." rel="tooltip">
                 <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
             {{/if}}
         {{/if}}
