@@ -565,8 +565,12 @@ class DiskDetailView(rfc.GenericView):
             is_delete_ticked = request.data.get('delete_tick', False)
             logger.debug('delete_tick value in disk.py=%s' % is_delete_ticked)
             logger.debug('role_disk has previous disk.role=%s' % disk.role)
-            # Get our previous roles into a dictionary
-            roles = json.loads(disk.role)
+            # Get our previous roles into a dictionary.
+            if disk.role != None:
+                roles = json.loads(disk.role)
+            else:
+                # roles default to None so substitute empty dict for simplicity.
+                roles = {}
             # If we have received a redirect role then add/update our dict
             # with it's value (the by-id partition)
             # First establish our prior_redirect if it exists.

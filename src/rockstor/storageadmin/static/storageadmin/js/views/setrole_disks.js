@@ -64,6 +64,10 @@ SetroleDiskView = RockstorLayoutView.extend({
         var disk_btrfs_uuid = this.disks.find(function(d) {
             return (d.get('name') == disk_name);
         }).get('btrfs_uuid');
+        // get the pool for this device
+        var disk_pool = this.disks.find(function(d) {
+            return (d.get('name') == disk_name);
+        }).get('pool');
         // parse the diskRole json to a local object
         try {
             var role_obj = JSON.parse(diskRole);
@@ -74,14 +78,14 @@ SetroleDiskView = RockstorLayoutView.extend({
                 role_obj = null;
             }
         // extract our partitions obj from the role_obj if there is one.
-        if (role_obj.hasOwnProperty('partitions')) {
+        if (role_obj != null && role_obj.hasOwnProperty('partitions')) {
             var partitions = role_obj.partitions;
         } else {
             // else we set our partitions to be an empty object
             var partitions = {};
         }
         // extract any existing redirect role value.
-        if (role_obj.hasOwnProperty('redirect')) {
+        if (role_obj != null && role_obj.hasOwnProperty('redirect')) {
             // if there is a redirect role then set our current role to it
             var current_redirect = role_obj['redirect'];
         } else {
@@ -132,6 +136,17 @@ SetroleDiskView = RockstorLayoutView.extend({
                     err_msg = 'Please first submit your new Redirect Role ' +
                         'before selecting delete, or Cancel and start over.';
                     return false;
+                } else {
+                    // we have redirect_role == current_redirect
+                    // now check if the device is in an active Rockstor pool
+                    if (disk_pool != null) {
+                        // device is part of Rockstor pool, reject wipe request
+                        err_msg = "Selected device is part of a Rockstor " +
+                            "managed pool. Use Pool resize to remove it from " +
+                            "the relevant pool which in turn will wipe it's " +
+                            "filesystem.";
+                        return false;
+                    }
                 }
             }
             return true;
@@ -216,7 +231,9 @@ SetroleDiskView = RockstorLayoutView.extend({
             // Add our 'use whole disk' option which will allow for an existing
             // redirect to be removed, preparing for whole disk btrfs.
             // Also serves to indicate no redirect role in operation.
-            if ( (this.disk_btrfs_uuid != null) && (this.partitions == {}) ) {
+            console.log('disk_btrfs_uuid=' + this.disk_btrfs_uuid);
+            console.log('partitions=' + this.partitions);
+            if ( (this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions)) ) {
                 var uuid_message = 'btrfs'
             } else {
                 var uuid_message = 'None';
