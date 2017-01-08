@@ -37,8 +37,10 @@
                         {{#each servicesColl}}
                         <tr id="{{this.name}}">
                             <td>{{this.display_name}} &nbsp; {{#isServiceConfigurable this.name}}
-                                <a href="#" class="configure" data-service-name="{{this.name}}"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp; {{/isServiceConfigurable}} {{#isServiceAD this.name}}
-                                <i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join the Active Directory domain using the credentials provided during configuration."></i> {{/isServiceAD}}
+                                <a href="#" class="configure" data-service-name="{{this.name}}"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp; {{/isServiceConfigurable}}
+                                {{#ifTooltipExist this.name}}
+                                    <i class="fa fa-info-circle" title="{{lookup ../tooltipMap this.name}}"></i>
+                                {{/ifTooltipExist}}
                             </td>
                             <td id="{{this.name}}-status">
                                 <input type="checkbox" data-service-name="{{this.name}}" data-size="mini" {{#if this.status}} checked {{/if}}>

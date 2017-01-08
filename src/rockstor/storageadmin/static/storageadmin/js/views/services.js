@@ -43,6 +43,11 @@ ServicesView = Backbone.View.extend({
         };
         this.smTs = null; // current timestamp of sm service
         this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'shellinaboxd', 'rockstor'];
+        this.tooltipMap = {
+                'active-directory': 'By turning this service on, the system will attempt to join the Active Directory domain using the credentials provided during configuration.',
+                'rockstor-bootstrap': 'Service responsible for bootstrapping Rockstor when the system starts.',
+                'ztask-daemon': 'Background service for tasks like Pool scrub.'
+        };
         this.initHandlebarHelpers();
     },
 
@@ -93,7 +98,8 @@ ServicesView = Backbone.View.extend({
         // find service-monitor service
         $(this.el).append(this.template({
             collection: this.collection,
-            servicesColl: this.collection.toJSON()
+            servicesColl: this.collection.toJSON(),
+            tooltipMap: this.tooltipMap,
         }));
 
         //Initialize bootstrap switch
@@ -225,13 +231,13 @@ ServicesView = Backbone.View.extend({
             }
             return opts.inverse(this);
         });
-
-        Handlebars.registerHelper('isServiceAD', function(serviceName, opts) {
-
-            if (serviceName == "active-directory") {
+        
+        Handlebars.registerHelper('ifTooltipExist', function(serviceName, opts) {
+            if (serviceName in _this.tooltipMap) {
                 return opts.fn(this);
+            } else {
+                return opts.inverse(this);
             }
-            return opts.inverse(this);
         });
     }
 });
