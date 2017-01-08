@@ -468,13 +468,24 @@ class DiskDetailView(rfc.GenericView):
     def _wipe(self, dname, request):
         disk = self._validate_disk(dname, request)
         disk_name = self._role_filter_disk_name(disk, request)
+        # Double check sanity of role_filter_disk_name by reversing back to
+        # whole disk name (db name). Also we get isPartition in the process.
+        reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
+                                                                   request)
+        if reverse_name != disk.name:
+            e_msg = ('Wipe operation on whole or partition of device (%s) was '
+                     'aborted as there was a discrepancy in device name '
+                     'resolution. Wipe was called with device name (%s) which '
+                     'redirected to (%s) but a check on this redirection '
+                     'returned device name (%s), which is not equal to the '
+                     'caller name as was expected. A Disks page Rescan may '
+                     'help.'
+                     % (dname, dname, disk_name, reverse_name))
+            raise Exception(e_msg)
         wipe_disk(disk_name)
-        # if we are wiping a partition then the following 2 changes will be
-        # re-established on the next scan_disks() call anyway.
-        # TODO: we should be able to more intelligently update the following
-        # could consider using _reverse_role_filter_name() to assess if we were
-        # passed a partition and update disk.parted accordingly.
-        disk.parted = False
+        disk.parted = isPartition
+        # The following value may well be updated with a more informed truth
+        # from the next scan_disks() run via _update_disk_state()
         disk.btrfs_uuid = None
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
