@@ -1,6 +1,6 @@
 # Rockstor
 
-[![Build Status](http://192.195.81.208:22082/job/build-rockstor-core/badge/icon)](http://192.195.81.208:22082/job/build-rockstor-core/)
+[![Build Status](http://192.195.81.208:22082/buildStatus/icon?job=build-rockstor-core)](http://192.195.81.208:22082/job/build-rockstor-core)
 
 # What is Rockstor?
 
