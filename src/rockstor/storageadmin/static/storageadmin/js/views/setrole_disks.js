@@ -120,7 +120,7 @@ SetroleDiskView = RockstorLayoutView.extend({
             if ((partitions[current_redirect] == 'btrfs') && (redirect_role != current_redirect)) {
                 err_msg = 'Existing btrfs partition found; if you wish to ' +
                     'use the redirect role either select this btrfs partition ' +
-                    'or remove the btrfs partition or whipe the whole disk and re-assign.' +
+                    'or wipe it or the whole disk and re-assign.' +
                     'Redirecting is only supported to a non btrfs partiton when ' +
                     'no btrfs partition exists on the same device.';
                 return false;
