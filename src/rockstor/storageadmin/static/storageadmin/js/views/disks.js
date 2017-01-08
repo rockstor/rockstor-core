@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 
 DisksView = RockstorLayoutView.extend({
     events: {
-        "click #setup": "setupDisks",
+        'click #setup': 'setupDisks',
         'click .wipe': 'wipeDisk',
         'click .delete': 'deleteDisk',
         'click .btrfs_wipe': 'btrfsWipeDisk',
@@ -39,7 +39,7 @@ DisksView = RockstorLayoutView.extend({
         this.template = window.JST.disk_disks;
         this.disks_table_template = window.JST.disk_disks_table;
         this.collection = new DiskCollection;
-        this.collection.on("reset", this.renderDisks, this);
+        this.collection.on('reset', this.renderDisks, this);
         this.initHandlebarHelpers();
     },
 
@@ -51,20 +51,23 @@ DisksView = RockstorLayoutView.extend({
     renderDisks: function () {
         // remove existing tooltips
         if (this.$('[rel=tooltip]')) {
-            this.$("[rel=tooltip]").tooltip('hide');
+            this.$('[rel=tooltip]').tooltip('hide');
         }
         $(this.el).html(this.template({collection: this.collection}));
-        this.$("#disks-table-ph").html(this.disks_table_template({
+        this.$('#disks-table-ph').html(this.disks_table_template({
             diskCollection: this.collection.toJSON(),
             collection: this.collection,
             collectionNotEmpty: !this.collection.isEmpty()
         }));
 
-        this.$("[rel=tooltip]").tooltip({
-            placement: "right",
+        this.$('[rel=tooltip]').tooltip({
+            placement: 'right',
             container: '#disks-table'
         });
-        
+        this.$('[rel=tooltip-top]').tooltip({
+            placement: 'top',
+            container: '#disks-table'
+        });        
         //initialize bootstrap switch
         this.$("[type='checkbox']").bootstrapSwitch();
         this.$("[type='checkbox']").bootstrapSwitch('onColor', 'success'); //left side text color
@@ -72,28 +75,28 @@ DisksView = RockstorLayoutView.extend({
         
         
       //added ext func to sort over SMART input checkboxes
-    	$.fn.dataTable.ext.order['dom-checkbox'] = function ( settings, col ) {
-    		return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
-            	return $('input', td).prop('checked') ? '1' : '0';
-        		});
-    	}
-    	//Added columns definition for sorting purpose
-    	$('table.data-table').DataTable({
-    	    "iDisplayLength": 15,
-    	    "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]],
-    	    "columns": [
-    	    null,null,null,null,null,null,null,null,null,
-    	    { "orderDataType": "dom-checkbox" }
-    	    ]
-    	});
-    	
+        $.fn.dataTable.ext.order['dom-checkbox'] = function ( settings, col ) {
+            return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
+                return $('input', td).prop('checked') ? '1' : '0';
+                });
+        }
+        //Added columns definition for sorting purpose
+        $('table.data-table').DataTable({
+            'iDisplayLength': 15,
+            'aLengthMenu': [[15, 30, 45, -1], [15, 30, 45, 'All']],
+            'columns': [
+            null,null,null,null,null,null,null,null,null,
+            { 'orderDataType': 'dom-checkbox' }
+            ]
+        });
+        
     },
 
     setupDisks: function () {
         var _this = this;
         $.ajax({
-            url: "/api/disks/scan",
-            type: "POST"
+            url: '/api/disks/scan',
+            type: 'POST'
         }).done(function () {
             // reset the current page
             _this.collection.page = 1;
