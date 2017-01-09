@@ -31,7 +31,7 @@ from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
                       btrfs_uuid, mount_root, start_balance, usage_bound,
                       remove_share)
-from system.osi import remount
+from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -369,7 +369,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 for d_o in disks:
                     d_o.pool = pool
                     d_o.save()
-
+                # Now we ensure udev info is updated via system wide trigger
+                trigger_udev_update()
             elif (command == 'remove'):
                 if (new_raid != pool.raid):
                     e_msg = ('Raid configuration cannot be changed while '

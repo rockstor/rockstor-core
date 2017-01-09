@@ -1691,3 +1691,15 @@ def hostid():
             return puuid
     except:
         return '%s-%s' % (run_command([HOSTID])[0][0], str(uuid.uuid4()))
+
+
+def trigger_udev_update():
+    """
+    In some instances udev info can be out of date after some btrfs opperations.
+    To cause a system wide update of all udev info, and the output of lsblk,
+    we can execute:
+    udevadm trigger
+    This function is a simple wrapper to call the above command via run_command
+    :return: o, e, rc as returned by run_command
+    """
+    return run_command([UDEVADM, 'trigger'])
