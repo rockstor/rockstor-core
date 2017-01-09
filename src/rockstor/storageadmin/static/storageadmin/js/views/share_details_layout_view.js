@@ -95,7 +95,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			return appliance.get('current_appliance') == true;
 		});
         var systemShare = false;
-        if (parseInt(this.share.get('id')) < 3 && this.share.get('pool')['id'] == '1') {
+        if (parseInt(this.share.get('id')) < 3 && this.share.get('pool')['role'] == 'root') {
             systemShare = true;
         }
 		this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });

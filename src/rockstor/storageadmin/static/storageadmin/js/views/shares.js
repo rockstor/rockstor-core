@@ -140,12 +140,12 @@ SharesView = RockstorLayoutView.extend({
 			return new Handlebars.SafeString(html);
 		});
 
-        Handlebars.registerHelper('isSystemShare', function(id, pool_id) {
+        Handlebars.registerHelper('isSystemShare', function(id, pool_role) {
 
             //During Rockstor installation we create first pool with pool_id == 1
             //and root and home shares with id 1 and 2; this let us filter on ids
             //instead of share names
-            if (pool_id == '1' && parseInt(id) < 3) {
+            if (pool_role == 'root' && parseInt(id) < 3) {
                 return true;
             }
             return false;
