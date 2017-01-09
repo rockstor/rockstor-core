@@ -84,8 +84,8 @@ def add_pool(pool, disks):
 def get_pool_info(disk):
     """
     Extracts any pool information by running btrfs fi show <disk> and collates
-    the results by 'Label', 'uuid', and current boot disk name. The disk name
-    is then translated to the by-id type found in /dev/disk/by-id so that it's
+    the results by 'Label', 'uuid', and a list of disk names. The disks names
+    found are translated to the by-id type (/dev/disk/by-id)so that their
     counterparts in the db's Disk.name field can be found.
     N.B. devices without serial may have no by-id counterpart.
     Used by CommandView()._refresh_pool_state() and
