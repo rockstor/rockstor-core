@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -94,6 +94,10 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		var current_appliance = this.appliances.find(function(appliance) {
 			return appliance.get('current_appliance') == true;
 		});
+        var systemShare = false;
+        if (parseInt(this.share.get('id')) < 3 && this.share.get('pool')['role'] == 'root') {
+            systemShare = true;
+        }
 		this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });
 		this.subviews['snapshots'] = new SnapshotsTableModule({
 			snapshots: this.snapshots,
@@ -110,6 +114,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			modify_choices: this.modify_choices,
 			sync_choices: this.sync_choices,
 			nsecurity_choices: this.nsecurity_choices,
+            isSystemShare: systemShare
 		}));
 		this.renderRollbackBtn();
 		this.renderAcl();

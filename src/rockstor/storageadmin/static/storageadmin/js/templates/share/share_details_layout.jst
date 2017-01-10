@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -22,7 +22,9 @@
 <div class="pull-right">
   <span id="rollback-btn-ph"></span>
     <a id="js-clone" class="btn btn-primary" href="#shares/{{shareName}}/create-clone"><i class="glyphicon glyphicon-book "></i> Clone</a>
-    <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="glyphicon glyphicon-trash "></i> Delete </button>
+	{{#unless isSystemShare}}
+        <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="glyphicon glyphicon-trash "></i> Delete </button>
+	{{/unless}}
 </div>
 <span class="h2">{{shareName}}</span>
 <div class="alert alert-warning">
@@ -30,6 +32,9 @@
     Share size enforcement is temporarily disabled due to incomplete support in
     BTRFS. Until this status changes, the effective size of a Share is equal to the
     size of the Pool it belongs to.
+	{{#if isSystemShare}}
+	<br/><b>This is a System Share created at installation time on OS Pool and cannot be deleted.</b>
+	{{/if}}
   </p>
 </div>
 
