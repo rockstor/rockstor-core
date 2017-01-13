@@ -4,7 +4,6 @@
       <th>No.</th>
       <th>Name</th>
       <th>Size</th>
-      <th>In use</th>
       <th>Select All <input type="checkbox" id="checkAll"/></th>
     </tr>
   </thead>
@@ -14,7 +13,6 @@
     <td>{{mathHelper @index}}</td>
     <td>{{this.name}}</td>
     <td>{{humanReadableSize this.size}}</td>
-    <td>{{this.parted}}</td>
     <td><input type="checkbox" name="diskname" id="{{this.name}}" value="{{this.name}}" class="diskname"></td>
   {{/each}}
   </tbody>
