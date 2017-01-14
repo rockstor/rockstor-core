@@ -211,18 +211,6 @@ PoolsView = RockstorLayoutView.extend({
             return opts.inverse(this);
         });
 
-        Handlebars.registerHelper('getDisks', function(disks) {
-            var dNames =  _.reduce(disks,
-                    function(s, disk, i, list) {
-                if (i < (list.length-1)){
-                    return s + disk.name + ',';
-                } else {
-                    return s + disk.name;
-                }
-            }, '');
-            return dNames;
-        });
-
         Handlebars.registerHelper('isRoot', function(role) {
             if (role == 'root') {
                 return true;

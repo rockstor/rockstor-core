@@ -321,5 +321,12 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         Handlebars.registerHelper('humanReadableSize', function(size){
             return humanize.filesize(size * 1024);
         });
+
+        Handlebars.registerHelper('isRoot', function(role){
+            if (role == 'root') {
+                return true;
+            }
+            return false;
+        });
     }
 });

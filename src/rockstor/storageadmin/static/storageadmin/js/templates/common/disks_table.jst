@@ -3,7 +3,7 @@
     <tr>
       <th>No.</th>
       <th>Name</th>
-      <th>Size</th>
+      <th>Capacity</th>
       <th>Select All <input type="checkbox" id="checkAll"/></th>
     </tr>
   </thead>
@@ -11,7 +11,12 @@
   {{#each disks}}
   <tr>
     <td>{{mathHelper @index}}</td>
-    <td>{{this.name}}</td>
+    <td>{{this.name}}
+      {{#if this.parted}}
+      <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Partition (Redirect Role), click to review. Note: Capacity is for whole disk when adding so may be inaccurate." rel="tooltip">
+        <i class="glyphicon glyphicon-tags"></i></a>
+      {{/if}}
+    </td>
     <td>{{humanReadableSize this.size}}</td>
     <td><input type="checkbox" name="diskname" id="{{this.name}}" value="{{this.name}}" class="diskname"></td>
   {{/each}}

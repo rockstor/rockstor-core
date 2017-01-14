@@ -1,20 +1,39 @@
- <h3>Disks</h3>
-            
-<table id="pool-disk-table" class="table table-condensed table-bordered table-hover">
-              <thead>
-                <tr>
-                  <th scope="col" abbr="Name">Name</th>
-                  <th scope="col" abbr="Capacity">Capacity</th>
-                </tr>
-              </thead>
-              <tbody>
-              {{#each pool.disks}}
-                <tr>
-                    <td>{{this.name}}</td>
-                    <td>{{humanReadableSize this.size}}</td>
-                </tr>
-              {{/each}}
-              </tbody>
-            </table>
-            
-            <a id="js-resize-pool" class="btn btn-primary" href="#"><i class="glyphicon glyphicon-edit "></i> Resize Pool</a></br>
+<h3>Disks</h3>
+
+<table id="pool-disk-table"
+       class="table table-condensed table-bordered table-hover">
+    <thead>
+    <tr>
+        <th scope="col" abbr="Name">Name</th>
+        <th scope="col" abbr="Capacity">Capacity</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{#if (isRoot pool.role)}}
+    {{#each pool.disks}}
+    <tr>
+        <td>{{this.name}}</td>
+        <td>{{humanReadableSize this.size}}</td>
+    </tr>
+    {{/each}}
+    {{else}}
+    {{#each pool.disks}}
+    <tr>
+        <td>{{this.name}}
+            {{#if this.parted}}
+            <a href="#disks/role/{{this.name}}" class="user_role_part"
+               data-disk-name="{{this.name}}"
+               title="Partition (Redirect Role), click to review."
+               rel="tooltip">
+                <i class="glyphicon glyphicon-tags"></i></a>
+            {{/if}}
+        </td>
+        <td>{{humanReadableSize this.size}}</td>
+    </tr>
+    {{/each}}
+    {{/if}}
+    </tbody>
+</table>
+
+<a id="js-resize-pool" class="btn btn-primary" href="#">
+    <i class="glyphicon glyphicon-edit "></i> Resize Pool</a></br>
