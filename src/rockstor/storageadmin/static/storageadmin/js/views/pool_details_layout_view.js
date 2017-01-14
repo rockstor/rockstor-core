@@ -70,14 +70,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     renderSubViews: function() {
-        var poolNameIsRockstor = false;
+        var poolRoleIsRoot = false;
         if (this.pool.get('role') == 'root') {
-            poolNameIsRockstor = true;
+            poolRoleIsRoot = true;
         }
         $(this.el).html(this.template({
             share: this.poolShares.models[0].attributes.results,
             poolName: this.pool.get('name'),
-            isPoolNameRockstor: poolNameIsRockstor,
+            isPoolRoleRoot: poolRoleIsRoot,
         }));
 
         this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool.toJSON() });

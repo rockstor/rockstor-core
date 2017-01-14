@@ -24,14 +24,14 @@
 
 <div class="pull-right">
  <a href="#add_share?poolName={{poolName}}" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add Share</a>
- {{#if isPoolNameRockstor}}
+ {{#if isPoolRoleRoot}}
  <!-- Don't display the delete button if rockstor_rockstor pool -->
  {{else}}
  <button id="delete-pool" class="btn btn-danger" type="button"><i class="glyphicon glyphicon-trash" data-name="{{pool.name}}" data-action="delete"></i> Delete</button>
  {{/if}}
 </div>
 <span class="h2">{{poolName}}</span>
-{{#if isPoolNameRockstor}}
+{{#if isPoolRoleRoot}}
    <br>
    <div class="alert alert-danger">
      <h4>Warning! This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed.</h4>
