@@ -22,11 +22,10 @@ from oauth2_provider.ext.rest_framework import OAuth2Authentication
 class RockstorOAuth2Authentication(OAuth2Authentication):
 
     def authenticate(self, request):
-        #on success we get a (user, access_token) tuple.
-        #if auth is unsuccessful, we get None
-        #finally, the workaround case is when we get the access_token
-        #but user is None(due to a bug/feature in oauth2_provider). In
-        #this case, we set the user and return the tuple.
+        # on success we get a (user, access_token) tuple.  if auth is
+        # unsuccessful, we get None finally, the workaround case is when we get
+        # the access_token but user is None(due to a bug/feature in
+        # oauth2_provider). In this case, we set the user and return the tuple.
         creds = super(RockstorOAuth2Authentication, self).authenticate(request)
         if (creds is None or len(creds) != 2):
             return None
