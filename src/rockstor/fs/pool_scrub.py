@@ -31,5 +31,5 @@ class PoolScrub(Process):
         cmd = ['btrfs', 'scrub', 'start', '-B', self.mnt_pt]
         if (self.force):
             cmd.insert(3, '-f')
-        sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+        subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
