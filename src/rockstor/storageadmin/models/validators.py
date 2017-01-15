@@ -25,11 +25,11 @@ def validate_nfs_host_str(value):
     error_count = 0
     host_regex = ('^(([a-zA-Z0-9\*]|[a-zA-Z0-9\*][a-zA-Z0-9\-\*]*'
                   '[a-zA-Z0-9\*])\.)*([A-Za-z0-9\*]|[A-Za-z0-9\*]'
-                  '[A-Za-z0-9\-\*]*[A-Za-z0-9\*])$');
+                  '[A-Za-z0-9\-\*]*[A-Za-z0-9\*])$')
     if (re.match(host_regex, value) is None):
         error_count += 1
 
-    #ip networks
+    # ip networks
     try:
         validate_ipv46_address(value)
     except ValidationError:
@@ -38,12 +38,13 @@ def validate_nfs_host_str(value):
     if (error_count == 2):
         raise ValidationError('Invalid host string: %s' % value)
 
+
 def validate_nfs_modify_str(value):
     if (value != 'ro' and value != 'rw'):
         raise ValidationError('Invalid mod choice. Possible options: ro, rw')
+
 
 def validate_nfs_sync_choice(value):
     if (value != 'async' and value != 'sync'):
         msg = ('Invalid sync choice. Possible options: async, sync')
         raise ValidationError(msg)
-

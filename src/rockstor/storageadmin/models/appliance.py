@@ -34,7 +34,8 @@ class Appliance(models.Model):
 
     @property
     def ipaddr(self, *args, **kwargs):
-        #@todo this implementation is hacky. Once issue #1271 is fixed, we can simplify this.
+        # @todo this implementation is hacky. Once issue #1271 is fixed, we can
+        # simplify this.
         if (not self.current_appliance):
             return self.ip
         try:
@@ -44,7 +45,8 @@ class Appliance(models.Model):
                 if (so.config is not None):
                     try:
                         config = json.loads(so.config)
-                        nco = NetworkConnection.objects.get(name=config['network_interface'])
+                        nco = NetworkConnection.objects.get(
+                            name=config['network_interface'])
                         if (nco.ipaddr is not None):
                             return nco.ipaddr
                     except:
@@ -52,9 +54,7 @@ class Appliance(models.Model):
             except Service.DoesNotExist:
                 pass
             return ip
-        except Exception, e:
-            msg = ('Failed to grab the management IP of the appliance '
-                   'due to an error: %s' % e.__str__())
+        except Exception as e:
             raise Exception(e)
 
     class Meta:

@@ -19,12 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class Pincard(models.Model):
     user = models.IntegerField()
     pin_number = models.IntegerField(validators=[MinValueValidator(1),
                                                  MaxValueValidator(24)])
-    pin_code = models.CharField(max_length=32,null=False)
+    pin_code = models.CharField(max_length=32, null=False)
 
     class Meta:
-        unique_together = ('user','pin_number')
+        unique_together = ('user', 'pin_number')
         app_label = 'storageadmin'

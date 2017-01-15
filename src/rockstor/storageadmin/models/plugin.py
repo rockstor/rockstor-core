@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 
+
 class Plugin(models.Model):
     name = models.CharField(max_length=4096, unique=True)
     display_name = models.CharField(max_length=4096, unique=True, default='')
@@ -28,4 +29,3 @@ class Plugin(models.Model):
 
     class Meta:
         app_label = 'storageadmin'
-

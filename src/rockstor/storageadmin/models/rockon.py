@@ -62,9 +62,9 @@ class DContainer(models.Model):
     dimage = models.ForeignKey(DImage)
     name = models.CharField(max_length=1024, unique=True)
     launch_order = models.IntegerField(default=1)
-    #if uid is None, container's owner is not set. defaults to root.
-    #if it's -1, then owner is set to the owner of first volume, if any.
-    #if it's an integer other than -1, like 0, then owner is set to that uid.
+    # if uid is None, container's owner is not set. defaults to root.  if it's
+    # -1, then owner is set to the owner of first volume, if any.  if it's an
+    # integer other than -1, like 0, then owner is set to that uid.
     uid = models.IntegerField(null=True)
 
     class Meta:
@@ -73,7 +73,8 @@ class DContainer(models.Model):
 
 class DContainerLink(models.Model):
     source = models.OneToOneField(DContainer)
-    destination = models.ForeignKey(DContainer, related_name='destination_container')
+    destination = models.ForeignKey(DContainer,
+                                    related_name='destination_container')
     name = models.CharField(max_length=64, null=True)
 
     class Meta:

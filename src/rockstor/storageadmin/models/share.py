@@ -18,36 +18,36 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from django.conf import settings
-from storageadmin.models import Pool, Snapshot
-from smart_manager.models import ShareUsage
+from storageadmin.models import Pool
 
 
 class Share(models.Model):
-	"""pool that this share is part of"""
-	pool = models.ForeignKey(Pool)
-        """auto created 0/x qgroup"""
-	qgroup = models.CharField(max_length=100)
-        """quota group y/x explicitly created for this Share"""
-        pqgroup = models.CharField(max_length=32, default=settings.MODEL_DEFS['pqgroup'])
-	"""name of the share, kind of like id"""
-	name = models.CharField(max_length=4096, unique=True)
-	"""id of the share. numeric in case of btrfs"""
-	uuid = models.CharField(max_length=100, null=True)
-	"""total size in KB"""
-	size = models.BigIntegerField(default=0)
-	owner = models.CharField(max_length=4096, default='root')
-	group = models.CharField(max_length=4096, default='root')
-	perms = models.CharField(max_length=9, default='755')
-	toc = models.DateTimeField(auto_now=True)
-	subvol_name = models.CharField(max_length=4096)
-	replica = models.BooleanField(default=False)
-	compression_algo = models.CharField(max_length=1024, null=True)
-        rusage = models.BigIntegerField(default=0)
-        eusage = models.BigIntegerField(default=0)
+    "pool that this share is part of"""
+    pool = models.ForeignKey(Pool)
+    """auto created 0/x qgroup"""
+    qgroup = models.CharField(max_length=100)
+    """quota group y/x explicitly created for this Share"""
+    pqgroup = models.CharField(max_length=32,
+                               default=settings.MODEL_DEFS['pqgroup'])
+    """name of the share, kind of like id"""
+    name = models.CharField(max_length=4096, unique=True)
+    """id of the share. numeric in case of btrfs"""
+    uuid = models.CharField(max_length=100, null=True)
+    """total size in KB"""
+    size = models.BigIntegerField(default=0)
+    owner = models.CharField(max_length=4096, default='root')
+    group = models.CharField(max_length=4096, default='root')
+    perms = models.CharField(max_length=9, default='755')
+    toc = models.DateTimeField(auto_now=True)
+    subvol_name = models.CharField(max_length=4096)
+    replica = models.BooleanField(default=False)
+    compression_algo = models.CharField(max_length=1024, null=True)
+    rusage = models.BigIntegerField(default=0)
+    eusage = models.BigIntegerField(default=0)
 
-        @property
-        def size_gb(self):
-            return self.size / (1024.0 * 1024.0)
+    @property
+    def size_gb(self):
+        return self.size / (1024.0 * 1024.0)
 
-	class Meta:
-		app_label = 'storageadmin'
+    class Meta:
+        app_label = 'storageadmin'
