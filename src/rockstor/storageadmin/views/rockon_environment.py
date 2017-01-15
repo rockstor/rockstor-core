@@ -33,4 +33,5 @@ class RockOnEnvironmentView(rfc.GenericView):
             handle_exception(Exception(e_msg), self.request)
 
         containers = DContainer.objects.filter(rockon=rockon)
-        return DContainerEnv.objects.filter(container__in=containers).order_by('id')
+        return DContainerEnv.objects.filter(
+            container__in=containers).order_by('id')

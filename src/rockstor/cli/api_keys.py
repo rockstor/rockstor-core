@@ -33,7 +33,7 @@ class APIKeyConsole(BaseConsole):
         url = self.baseurl
         if (args):
             url = ('%s/%s' % (url, args))
-        print api_call(url)
+        print(api_call(url))
 
     def help_list(self):
         snps = 'Print details of one or all disks in the appliance'
@@ -49,8 +49,8 @@ class APIKeyConsole(BaseConsole):
         arg_fields = args.split()
         input_data = {'name': arg_fields[0],
                       'username': arg_fields[1], }
-        print api_call(self.baseurl, data=input_data, calltype='post')
+        print(api_call(self.baseurl, data=input_data, calltype='post'))
 
     @api_error
     def do_delete(self, args):
-        print api_call(self.baseurl, data={'name': args, }, calltype='delete')
+        print(api_call(self.baseurl, data={'name': args, }, calltype='delete'))

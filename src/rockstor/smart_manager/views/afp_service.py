@@ -41,7 +41,7 @@ class AFPServiceView(BaseServiceDetailView):
             yield
         except RockStorAPIException:
             raise
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request, msg)
 
     @transaction.atomic

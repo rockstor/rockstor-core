@@ -28,4 +28,3 @@ def archive_logs(outfile, log_dir):
     """
     cmd = [TAR, '-c', '-z', '-f', outfile, log_dir]
     return run_command(cmd)
-

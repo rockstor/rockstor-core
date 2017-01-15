@@ -23,7 +23,6 @@ from smart_manager.models import (Replica, ReplicaTrail)
 from smart_manager.serializers import ReplicaTrailSerializer
 from datetime import (datetime, timedelta)
 import rest_framework_custom as rfc
-from django.conf import settings
 
 
 class ReplicaTrailListView(rfc.GenericView):

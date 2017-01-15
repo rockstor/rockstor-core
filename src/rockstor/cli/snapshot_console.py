@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from base_console import BaseConsole
-from rest_util import (api_error, api_call, print_export_info,
-                       print_share_info)
+from rest_util import (api_error, api_call)
+
 
 class SnapshotConsole(BaseConsole):
 
@@ -34,7 +34,7 @@ class SnapshotConsole(BaseConsole):
         List all snapshots
         """
         snap_info = api_call(self.url)
-        print snap_info
+        print(snap_info)
 
     @api_error
     def do_add(self, args):
@@ -55,11 +55,11 @@ class SnapshotConsole(BaseConsole):
             if (fields[0] != '-v'):
                 return self.do_help(args)
             snap_name = fields[1]
-            data = {'uvisible': True,}
-            headers = {'content-type': 'application/json',}
+            data = {'uvisible': True, }
+            headers = {'content-type': 'application/json', }
         url = ('%s/%s' % (self.url, snap_name))
         snap_info = api_call(url, data=data, calltype='post', headers=headers)
-        print snap_info
+        print(snap_info)
 
     @api_error
     def do_delete(self, args):
@@ -70,7 +70,7 @@ class SnapshotConsole(BaseConsole):
         """
         url = ('%s/%s' % (self.url, args))
         snap_info = api_call(url, data=None, calltype='delete')
-        print snap_info
+        print(snap_info)
 
     @api_error
     def do_rollback(self, args):
@@ -81,7 +81,7 @@ class SnapshotConsole(BaseConsole):
         """
         url = ('%s/%s/rollback' % (self.url, args))
         snap_info = api_call(url, data=None, calltype='post')
-        print snap_info
+        print(snap_info)
 
     @api_error
     def do_clone(self, args):
@@ -92,6 +92,5 @@ class SnapshotConsole(BaseConsole):
         """
         fields = args.split()
         url = ('%s/%s/clone' % (self.url, fields[0]))
-        input_data = {'name': fields[1],}
-        print api_call(url, data=input_data, calltype='post')
-
+        input_data = {'name': fields[1], }
+        print(api_call(url, data=input_data, calltype='post'))

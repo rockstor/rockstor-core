@@ -22,15 +22,13 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from django.conf import settings
 from storageadmin.util import handle_exception
-from django.contrib.auth.models import User
 from storageadmin.models import DashboardConfig
 from storageadmin.serializers import DashboardConfigSerializer
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class DashboardConfigView(APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
@@ -46,7 +44,7 @@ class DashboardConfigView(APIView):
                 return Response(DashboardConfigSerializer(dc).data)
             else:
                 return Response()
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request)
 
     def post(self, request):
@@ -58,11 +56,11 @@ class DashboardConfigView(APIView):
                 dc = dcs[0]
                 dc.widgets = widgets
             else:
-                dc = DashboardConfig(widgets = widgets)
+                dc = DashboardConfig(widgets=widgets)
                 dc.user_id = current_user.id
             dc.save()
             return Response(DashboardConfigSerializer(dc).data)
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request)
 
     def put(self, request):
@@ -74,11 +72,9 @@ class DashboardConfigView(APIView):
                 dc = dcs[0]
                 dc.widgets = widgets
             else:
-                dc = DashboardConfig(widgets = widgets)
+                dc = DashboardConfig(widgets=widgets)
                 dc.user_id = current_user.id
             dc.save()
             return Response(DashboardConfigSerializer(dc).data)
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request)
-
-

@@ -37,6 +37,7 @@ from backup_plugin_console import BackupPluginConsole
 from rest_util import api_call
 from nfs_export_console import NFSExportConsole
 from api_keys import APIKeyConsole
+from rest_util import set_token
 
 
 ASCII_LOGO = """
@@ -64,7 +65,7 @@ class RockConsole(BaseConsole):
 
     def postloop(self):
         cmd.Cmd.postloop(self)
-        print "Thanks for Rocking on the Console"
+        print("Thanks for Rocking on the Console")
         try:
             readline.write_history_file(self.user_hist_file)
         except:
@@ -78,14 +79,14 @@ class RockConsole(BaseConsole):
         returns utc time on the server
         """
         url = ('%scommands/utcnow' % BaseConsole.url)
-        print api_call(url, calltype='post')
+        print(api_call(url, calltype='post'))
 
     def do_uptime(self, args):
         """
         return uptime(in seconds) of the server
         """
         url = ('%scommands/uptime' % BaseConsole.url)
-        print api_call(url, calltype='post')
+        print(api_call(url, calltype='post'))
 
     def do_bootstrap(self, args):
         """
@@ -93,7 +94,7 @@ class RockConsole(BaseConsole):
         etc..
         """
         url = ('%scommands/bootstrap' % BaseConsole.url)
-        print api_call(url, calltype='post')
+        print(api_call(url, calltype='post'))
 
     def do_shares(self, args):
         """
@@ -144,7 +145,7 @@ class RockConsole(BaseConsole):
         Display the list of disks: %(c)sdisks list%(e)s
         Scan for new disks:        %(c)sdisks scan%(e)s
         """ % BaseConsole.c_params
-        print s
+        print(s)
 
     def do_services(self, args):
         """
@@ -256,9 +257,6 @@ class RockConsole(BaseConsole):
             ak.cmdloop()
         else:
             ak.cmdloop(args)
-
-
-from rest_util import set_token
 
 
 def main():

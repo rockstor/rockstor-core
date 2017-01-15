@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 from tempfile import mkstemp
-from shutil import move
 from osi import run_command
 from services import systemctl
 import shutil
@@ -34,14 +33,17 @@ SYSTEMCTL = '/usr/bin/systemctl'
 AT = '/usr/bin/at'
 YCFILE = '/etc/yum/yum-cron.conf'
 
+
 def install_pkg(name):
     return run_command([YUM, '--setopt=timeout=600', '-y', 'install', name])
 
+
 def downgrade_pkgs(*packages):
-    cmd = [YUM, '--setopt=timeout=600', '-y', 'downgrade',]
+    cmd = [YUM, '--setopt=timeout=600', '-y', 'downgrade', ]
     for p in packages:
         cmd.append(p)
     return run_command(cmd)
+
 
 def auto_update(enable=True):
     service = 'yum-cron'
@@ -68,6 +70,7 @@ def auto_update(enable=True):
         systemctl(service, 'stop')
         systemctl(service, 'disable')
 
+
 def auto_update_status():
     enabled = False
     with open(YCFILE) as ifo:
@@ -79,6 +82,7 @@ def auto_update_status():
         systemctl('yum-cron', 'status')
     return enabled
 
+
 def current_version():
     out, err, rc = run_command([RPM, '-qi', 'rockstor'], throw=False)
     if (rc != 0):
@@ -86,14 +90,15 @@ def current_version():
     return ('%s-%s' % (out[1].split(':')[-1].strip(),
                        out[2].split(':')[-1].strip()))
 
+
 def rpm_build_info(pkg):
     version = None
     date = None
     o, e, rc = run_command([RPM, '-qi', pkg])
     for l in o:
         if (re.match('Build Date', l) is not None):
-            #eg: Build Date  : Tue 11 Aug 2015 02:25:24 PM PDT
-            #we return 2015-Aug-11
+            # eg: Build Date  : Tue 11 Aug 2015 02:25:24 PM PDT
+            # we return 2015-Aug-11
             dfields = l.strip().split()
             dstr = ' '.join(dfields[3:7])
             bdate = datetime.strptime(dstr, '%a %d %b %Y')
@@ -120,9 +125,10 @@ def switch_repo(subscription, on=True):
                 rfo.write('baseurl=http://%s\n' % subscription.url)
             rfo.write('enabled=1\n')
             rfo.write('gpgcheck=1\n')
-            rfo.write('gpgkey=file://%sconf/ROCKSTOR-GPG-KEY\n' % settings.ROOT_DIR)
+            rfo.write('gpgkey=file://%sconf/ROCKSTOR-GPG-KEY\n'
+                      % settings.ROOT_DIR)
             rfo.write('metadata_expire=1m\n')
-        os.chmod(yum_file, 0600)
+        os.chmod(yum_file, 600)
     else:
         if (os.path.exists(yum_file)):
             os.remove(yum_file)
@@ -134,15 +140,17 @@ def repo_status(subscription):
 
     try:
         res = requests.get('http://%s' % subscription.url,
-                           auth=(subscription.appliance.uuid, subscription.password))
+                           auth=(subscription.appliance.uuid,
+                                 subscription.password))
         if (res.status_code == 401):
             return ('inactive', res.text)
         elif (res.status_code == 200):
             return ('active', res.text)
         return (res.status_code, res.text)
-    except requests.ConnectionError, e:
+    except requests.ConnectionError as e:
         e_msg = ('Failed to connect to %s. Is the Rockstor system connected '
-                 'to the internet?. Lower level exception: %s' % (subscription.url, e.__str__()))
+                 'to the internet?. Lower level exception: %s'
+                 % (subscription.url, e.__str__()))
         raise Exception(e_msg)
 
 
@@ -163,7 +171,8 @@ def update_check(subscription=None):
         if (not available):
             continue
         if (new_version is None and (re.match('rockstor-', l) is not None)):
-            new_version = l.split()[0].split('rockstor-')[1].split('.x86_64')[0]
+            new_version = l.split()[0].split(
+                'rockstor-')[1].split('.x86_64')[0]
         if (log is True):
             updates.append(l)
             if (len(l.strip()) == 0):
@@ -172,8 +181,8 @@ def update_check(subscription=None):
             log = True
     if (new_version is None):
         new_version = version
-        #do a second check which is valid for updates without changelog
-        #updates. eg: same day updates, testing updates.
+        # do a second check which is valid for updates without changelog
+        # updates. eg: same day updates, testing updates.
         o, e, rc = run_command([YUM, 'update', pkg, '--assumeno'], throw=False)
         if (rc == 1):
             for l in o:
@@ -192,7 +201,8 @@ def update_run(subscription=None):
     fh, npath = mkstemp()
     with open(npath, 'w') as atfo:
         atfo.write('%s stop rockstor\n' % SYSTEMCTL)
-        atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n' % settings.ROOT_DIR)
+        atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n'
+                   % settings.ROOT_DIR)
         atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
         atfo.write('%s start rockstor\n' % SYSTEMCTL)
         atfo.write('/bin/rm -f %s\n' % npath)

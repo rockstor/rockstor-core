@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 STAP_RUN = '/usr/bin/staprun'
 
+
 class StapWorker(Process):
 
     def __init__(self, task):
@@ -42,14 +43,14 @@ class StapWorker(Process):
             ctx = zmq.Context()
             sink_socket = ctx.socket(zmq.PUSH)
             sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
-        except Exception, e:
+        except Exception as e:
             msg = ('Exception while creating initial sockets. Aborting.')
             logger.error(msg)
             logger.exception(e)
             raise e
         try:
             return self._run_worker(sink_socket)
-        except Exception, e:
+        except Exception as e:
             msg = ('Unhandled exception in smart probe worker. Exiting.')
             logger.error(msg)
             logger.exception(e)
@@ -59,13 +60,13 @@ class StapWorker(Process):
 
     def _run_worker(self, sink_socket):
         retval = 0
-        cmd = [STAP_RUN, self.task['module'],]
+        cmd = [STAP_RUN, self.task['module'], ]
         rp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         fcntl.fcntl(rp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         probe_stopped = False
         sink_data = {'cb': TAP_MAP[self.task['tap']]['cb'],
-                     'rid': self.task['roid'],}
+                     'rid': self.task['roid'], }
         while True:
             if (os.getppid() != self.ppid):
                 logger.error('Parent process(stap dispatcher) exited.')
@@ -82,9 +83,9 @@ class StapWorker(Process):
                 pass
             finally:
                 if (not self.task['queue'].empty()):
-                    #stop or pause received.
+                    # stop or pause received.
                     msg = self.task['queue'].get()
-                    #@todo: handle pause.
+                    # @todo: handle pause.
                     rp.terminate()
                     probe_stopped = True
                     break

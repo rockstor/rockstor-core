@@ -92,7 +92,7 @@ class ShareNFSConsole(BaseConsole):
             self.do_help(args)
         url = ('%s/%d/' % (self.url, export_id))
         export_info = api_call(url, data=None, calltype='delete')
-        print export_info
+        print(export_info)
 
     def _toggle_export(self, args, switch):
         try:

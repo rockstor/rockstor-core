@@ -17,13 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.response import Response
-from storageadmin.util import handle_exception
 from system.services import systemctl
 from system.pkg_mgmt import install_pkg
 from django.db import transaction
 from base_service import BaseServiceDetailView
-from contextlib import contextmanager
-from storageadmin.exceptions import RockStorAPIException
 import os
 from system import smart
 from smart_manager.models import Service

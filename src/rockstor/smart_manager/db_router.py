@@ -18,11 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 APP_LABEL = 'smart_manager'
 
+
 class SmartManagerDBRouter(object):
 
     def db_for_read(self, model, **hints):
         from django.conf import settings
-        if not settings.DATABASES.has_key(APP_LABEL):
+        if APP_LABEL not in settings.DATABASES:
             return None
         if model._meta.app_label == APP_LABEL:
             return APP_LABEL
@@ -30,7 +31,7 @@ class SmartManagerDBRouter(object):
 
     def db_for_write(self, model, **hints):
         from django.conf import settings
-        if not settings.DATABASES.has_key(APP_LABEL):
+        if APP_LABEL not in settings.DATABASES:
             return None
         if model._meta.app_label == APP_LABEL:
             return APP_LABEL
@@ -38,15 +39,16 @@ class SmartManagerDBRouter(object):
 
     def allow_relation(self, obj1, obj2, **hints):
         from django.conf import settings
-        if not settings.DATABASES.has_key(APP_LABEL):
+        if APP_LABEL not in settings.DATABASES:
             return None
-        if obj1._meta.app_label == APP_LABEL or obj2._meta.app_label == APP_LABEL:
+        if (obj1._meta.app_label == APP_LABEL or
+                obj2._meta.app_label == APP_LABEL):
             return True
         return None
 
     def allow_migrate(self, db, model):
         from django.conf import settings
-        if not settings.DATABASES.has_key(APP_LABEL):
+        if APP_LABEL not in settings.DATABASES:
             return None
         if db == APP_LABEL:
             return model._meta.app_label == APP_LABEL

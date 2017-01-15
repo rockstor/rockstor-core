@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from storageadmin.models import Share
+from storageadmin.models import Share  # noqa F401
 
 
 class SFTP(models.Model):

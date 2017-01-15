@@ -30,6 +30,6 @@ urlpatterns = patterns(
     url(r'^/environment/(?P<rid>\d+)$', RockOnEnvironmentView.as_view(), ),
     url(r'^/(?P<command>update)$', RockOnView.as_view(), ),
     url(r'^/(?P<rid>\d+)$', RockOnIdView.as_view(), ),
-    url(r'^/(?P<rid>\d+)/(?P<command>install|uninstall|update|start|stop|state_update|status_update)$',
+    url(r'^/(?P<rid>\d+)/(?P<command>install|uninstall|update|start|stop|state_update|status_update)$',  # noqa E501
         RockOnIdView.as_view(), ),
     )

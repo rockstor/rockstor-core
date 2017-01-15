@@ -42,10 +42,11 @@ def register_services():
         }
 
     services_configs = {
-        'shellinaboxd': '{"detach": false, "css": "white-on-black", "shelltype": "LOGIN"}'
+        'shellinaboxd': ('{"detach": false, "css": "white-on-black", '
+                         '"shelltype": "LOGIN"}')
         }
 
-    for k,v in services.items():
+    for k, v in services.items():
         try:
             so = Service.objects.get(name=v)
             so.display_name = k

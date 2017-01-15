@@ -17,28 +17,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from smart_manager.models import ShareUsage
 
 
 class Snapshot(models.Model):
-        """share which this snapshot belongs to"""
-	share = models.ForeignKey('Share') # Resolve circular dependency
-	"""display name of the snapshot"""
-	name = models.CharField(max_length=4096)
-	"""real name of the snapshot"""
-	real_name = models.CharField(max_length=4096, default='unknownsnap')
-	"""read-only by default"""
-	writable = models.BooleanField(default=False)
-	"""size of the snapshot in KB"""
-	size = models.BigIntegerField(default=0)
-	toc = models.DateTimeField(auto_now_add=True)
-	qgroup = models.CharField(max_length=100)
-	uvisible = models.BooleanField(default=False)
-	"""replication, admin etc.."""
-	snap_type = models.CharField(max_length=64, default='admin')
-        rusage = models.BigIntegerField(default=0)
-        eusage = models.BigIntegerField(default=0)
+    """share which this snapshot belongs to"""
+    share = models.ForeignKey('Share')  # Resolve circular dependency
+    """display name of the snapshot"""
+    name = models.CharField(max_length=4096)
+    """real name of the snapshot"""
+    real_name = models.CharField(max_length=4096, default='unknownsnap')
+    """read-only by default"""
+    writable = models.BooleanField(default=False)
+    """size of the snapshot in KB"""
+    size = models.BigIntegerField(default=0)
+    toc = models.DateTimeField(auto_now_add=True)
+    qgroup = models.CharField(max_length=100)
+    uvisible = models.BooleanField(default=False)
+    """replication, admin etc.."""
+    snap_type = models.CharField(max_length=64, default='admin')
+    rusage = models.BigIntegerField(default=0)
+    eusage = models.BigIntegerField(default=0)
 
-	class Meta:
-		unique_together = ('share', 'name',)
-		app_label = 'storageadmin'
+    class Meta:
+        unique_together = ('share', 'name',)
+        app_label = 'storageadmin'

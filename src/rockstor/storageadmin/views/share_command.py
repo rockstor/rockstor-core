@@ -18,18 +18,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (Share, Snapshot, Disk, NFSExport, SambaShare)
+from storageadmin.models import (Share, Snapshot, NFSExport, SambaShare)
 from fs.btrfs import (update_quota, rollback_snap)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from clone_helpers import create_clone
-from django.conf import settings
-from system.osi import is_share_mounted
 from share import ShareMixin
+from django.core.exceptions import ObjectDoesNotExist
 import logging
 logger = logging.getLogger(__name__)
-from django.core.exceptions import ObjectDoesNotExist
 
 
 class ShareCommandView(ShareMixin, rfc.GenericView):

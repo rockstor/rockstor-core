@@ -21,7 +21,6 @@ from storageadmin.util import handle_exception
 from system.services import superctl
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ class ZTaskdServiceView(BaseServiceDetailView):
         try:
             superctl(service.name, command)
             return Response()
-        except Exception, e:
+        except Exception as e:
             e_msg = ('Failed to %s ZTaskd due to an error: %s' %
                      (command, e.__str__()))
             handle_exception(Exception(e_msg), request)

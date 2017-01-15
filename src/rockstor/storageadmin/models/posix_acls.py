@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import SambaShare
 
+
 class PosixACLs(models.Model):
     smb_share = models.ForeignKey(SambaShare)
     USER = 'user'

@@ -18,8 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op, systemctl
-from system.nis import configure_nis
+from system.services import systemctl
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
@@ -38,11 +37,11 @@ class NFSServiceView(BaseServiceDetailView):
         service = Service.objects.get(name='nfs')
         service_name = 'nfs-server'
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
+            # nothing to really configure atm. just save the model
             try:
                 config = request.data['config']
                 self._save_config(service, config)
-            except Exception, e:
+            except Exception as e:
                 e_msg = ('NFS could not be configured due to the following '
                          'exception. You could try again. %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
@@ -54,12 +53,13 @@ class NFSServiceView(BaseServiceDetailView):
                     systemctl(service_name, 'stop')
                 else:
                     systemctl(service_name, 'enable')
-                    #chkconfig('rpcbind', 'on')
-                    #init_service_op('rpcbind', command)
+                    # chkconfig('rpcbind', 'on')
+                    # init_service_op('rpcbind', command)
                     systemctl(service_name, 'restart')
-                #init_service_op('nfs', command)
-            except Exception, e:
-                e_msg = ('Failed to %s NFS due to this error: %s' % (command, e.__str__()))
+                # init_service_op('nfs', command)
+            except Exception as e:
+                e_msg = ('Failed to %s NFS due to this error: %s'
+                         % (command, e.__str__()))
                 handle_exception(Exception(e_msg), request)
 
         return Response()

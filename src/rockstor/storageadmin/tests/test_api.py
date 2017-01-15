@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase
 from mock import patch
 
 
@@ -49,11 +49,13 @@ class APITestMixin(APITestCase):
         3. Get nonexistant object
         """
         response = self.client.get(baseurl)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.data)
 
         # get object that doesn't exist
         if (name):
             response1 = self.client.get('%s/invalid' % baseurl)
         else:
             response1 = self.client.get('%s/1234567' % baseurl)
-        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1)
+        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND,
+                         msg=response1)

@@ -20,6 +20,7 @@ import json
 import sys
 from storageadmin.views.rockon_json import rockons
 
+
 def main():
     out_file = sys.argv[1]
     with open(out_file, 'w') as ofo:

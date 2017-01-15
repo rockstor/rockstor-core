@@ -34,7 +34,7 @@ def change_password(username, password):
         sys.exit('username: %s does not exist in the admin database' %
                  username)
     try:
-        user = User.objects.get(username=username)
+        User.objects.get(username=username)
     except:
         sys.exit('username: %s does not exist in the database' % username)
 
@@ -48,11 +48,12 @@ def change_password(username, password):
         users.smbpasswd(username, password)
     except:
         sys.exit('Low level error occured while changing password of user: %s'
-        % username)
+                 % username)
+
 
 def main():
     if (len(sys.argv) < 3 or
-        (len(sys.argv) > 1 and sys.argv[1] == '-h')):
+            (len(sys.argv) > 1 and sys.argv[1] == '-h')):
         sys.exit('Usage: pwreset <username> <new_password>')
 
     try:

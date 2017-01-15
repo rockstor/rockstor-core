@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (Share, Disk, Snapshot)
+from storageadmin.models import (Share, Snapshot)
 from storageadmin.util import handle_exception
 from fs.btrfs import (add_clone, share_id, update_quota)
 from rest_framework.response import Response
@@ -54,5 +54,5 @@ def create_clone(share, new_name, request, logger, snapshot=None):
                           size=share.size, subvol_name=new_name)
         new_share.save()
         return Response(ShareSerializer(new_share).data)
-    except Exception, e:
+    except Exception as e:
         handle_exception(e, request)

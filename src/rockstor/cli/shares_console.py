@@ -131,7 +131,7 @@ class SharesConsole(BaseConsole):
         fields = args.split()
         input_data = {'name': fields[1], }
         url = ('%s/%s/clone' % (self.url, fields[0]))
-        print api_call(url, data=input_data, calltype='post')
+        print(api_call(url, data=input_data, calltype='post'))
 
     def help_clone(self):
         args = ('share_name', 'clone_name',)
@@ -147,7 +147,7 @@ class SharesConsole(BaseConsole):
         fields = args.split()
         input_data = {'name': fields[1], }
         url = ('%s/%s/rollback' % (self.url, fields[0]))
-        print api_call(url, data=input_data, calltype='post')
+        print(api_call(url, data=input_data, calltype='post'))
 
     @api_error
     def do_change_op(self, args):

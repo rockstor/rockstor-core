@@ -16,9 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-System info etc..
-"""
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -27,13 +24,12 @@ from rest_framework.authentication import (BasicAuthentication,
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, kernel_info)
-from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
-                      get_pool_info, pool_raid, pool_usage,
-                      share_usage, snaps_info, mount_snap)
+from fs.btrfs import (mount_share, mount_root, qgroup_create, get_pool_info,
+                      pool_raid, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
-from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot,
+from storageadmin.models import (Share, NFSExport, SFTP, Pool, Snapshot,
                                  UpdateSubscription, AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from datetime import datetime
@@ -51,7 +47,8 @@ logger = logging.getLogger(__name__)
 
 class CommandView(NFSExportMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication, RockstorOAuth2Authentication,)
+                              BasicAuthentication,
+                              RockstorOAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
 
     @staticmethod
@@ -69,7 +66,7 @@ class CommandView(NFSExportMixin, APIView):
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = p.usage_bound()
                 p.save()
-            except Exception, e:
+            except Exception as e:
                 logger.error('Exception while refreshing state for '
                              'Pool(%s). Moving on: %s' %
                              (p.name, e.__str__()))
@@ -91,7 +88,7 @@ class CommandView(NFSExportMixin, APIView):
                     if (not is_share_mounted(share.name)):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                         mount_share(share, mnt_pt)
-                except Exception, e:
+                except Exception as e:
                     e_msg = ('Exception while mounting a share(%s) during '
                              'bootstrap: %s' % (share.name, e.__str__()))
                     logger.error(e_msg)
@@ -99,7 +96,7 @@ class CommandView(NFSExportMixin, APIView):
 
                 try:
                     import_snapshots(share)
-                except Exception, e:
+                except Exception as e:
                     e_msg = ('Exception while importing Snapshots of '
                              'Share(%s): %s' % (share.name, e.__str__()))
                     logger.error(e_msg)
@@ -109,9 +106,10 @@ class CommandView(NFSExportMixin, APIView):
                 if (snap.uvisible):
                     try:
                         mount_snap(snap.share, snap.real_name)
-                    except Exception, e:
+                    except Exception as e:
                         e_msg = ('Failed to make the Snapshot(%s) visible. '
-                                 'Exception: %s' % (snap.real_name, e.__str__()))
+                                 'Exception: %s' %
+                                 (snap.real_name, e.__str__()))
                         logger.error(e_msg)
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
@@ -120,18 +118,20 @@ class CommandView(NFSExportMixin, APIView):
                     sftp_mount(sftpo.share, settings.MNT_PT,
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
                     sftp_snap_toggle(sftpo.share)
-                except Exception, e:
+                except Exception as e:
                     e_msg = ('Exception while exportin a sftp share during '
                              'bootstrap: %s' % e.__str__())
                     logger.error(e_msg)
 
             try:
-                adv_entries = [a.export_str for a in AdvancedNFSExport.objects.all()]
-                exports_d = self.create_adv_nfs_export_input(adv_entries, request)
+                adv_entries = [a.export_str for a in
+                               AdvancedNFSExport.objects.all()]
+                exports_d = self.create_adv_nfs_export_input(adv_entries,
+                                                             request)
                 exports = self.create_nfs_export_input(NFSExport.objects.all())
                 exports.update(exports_d)
                 self.refresh_wrapper(exports, request, logger)
-            except Exception, e:
+            except Exception as e:
                 e_msg = ('Exception while bootstrapping NFS: %s' % e.__str__())
                 logger.error(e_msg)
 
@@ -143,7 +143,7 @@ class CommandView(NFSExportMixin, APIView):
                 systemctl('nginx', 'disable')
                 systemctl('atd', 'enable')
                 systemctl('atd', 'start')
-            except Exception, e:
+            except Exception as e:
                 e_msg = ('Exception while setting service statuses during '
                          'bootstrap: %s' % e.__str__())
                 logger.error(e_msg)
@@ -161,36 +161,40 @@ class CommandView(NFSExportMixin, APIView):
         if (command == 'kernel'):
             try:
                 return Response(kernel_info(settings.SUPPORTED_KERNEL_VERSION))
-            except Exception, e:
+            except Exception as e:
                 handle_exception(e, request)
 
         if (command == 'update-check'):
             try:
                 subo = None
                 try:
-                    subo = UpdateSubscription.objects.get(name='Stable', status='active')
+                    subo = UpdateSubscription.objects.get(name='Stable',
+                                                          status='active')
                 except UpdateSubscription.DoesNotExist:
                     try:
-                        subo = UpdateSubscription.objects.get(name='Testing', status='active')
+                        subo = UpdateSubscription.objects.get(name='Testing',
+                                                              status='active')
                     except UpdateSubscription.DoesNotExist:
                         pass
                 return Response(update_check(subscription=subo))
-            except Exception, e:
-                e_msg = ('Unable to check update due to a system error: %s' % e.__str__())
+            except Exception as e:
+                e_msg = ('Unable to check update due to a system error: %s'
+                         % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'update'):
             try:
                 update_run()
                 return Response('Done')
-            except Exception, e:
-                e_msg = ('Update failed due to this exception: %s' % e.__str__())
+            except Exception as e:
+                e_msg = ('Update failed due to this exception: %s'
+                         % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'current-version'):
             try:
                 return Response(current_version())
-            except Exception, e:
+            except Exception as e:
                 e_msg = ('Unable to check current version due to this '
                          'exception: ' % e.__str__())
                 handle_exception(Exception(e_msg), request)
@@ -200,7 +204,7 @@ class CommandView(NFSExportMixin, APIView):
             try:
                 request.session.flush()
                 system_shutdown()
-            except Exception, e:
+            except Exception as e:
                 msg = ('Failed to shutdown the system due to a low level '
                        'error: %s' % e.__str__())
                 handle_exception(Exception(msg), request)
@@ -212,7 +216,7 @@ class CommandView(NFSExportMixin, APIView):
             try:
                 request.session.flush()
                 system_reboot()
-            except Exception, e:
+            except Exception as e:
                 msg = ('Failed to reboot the system due to a low level error: '
                        '%s' % e.__str__())
                 handle_exception(Exception(msg), request)
@@ -235,7 +239,7 @@ class CommandView(NFSExportMixin, APIView):
             try:
                 auto_update(enable=True)
                 return Response({'enabled': True, })
-            except Exception, e:
+            except Exception as e:
                 msg = ('Failed to enable auto update due to this exception: '
                        '%s' % e.__str__())
                 handle_exception(Exception(msg), request)
@@ -244,7 +248,7 @@ class CommandView(NFSExportMixin, APIView):
             try:
                 auto_update(enable=False)
                 return Response({'enabled': False, })
-            except Exception, e:
+            except Exception as e:
                 msg = ('Failed to disable auto update due to this exception:  '
                        '%s' % e.__str__())
                 handle_exception(Exception(msg), request)

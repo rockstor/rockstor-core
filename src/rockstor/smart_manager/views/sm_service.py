@@ -22,8 +22,6 @@ from system.services import superctl
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-from django.conf import settings
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -37,11 +35,11 @@ class ServiceMonitorView(BaseServiceDetailView):
         """
         service = Service.objects.get(name='service-monitor')
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
+            # nothing to really configure atm. just save the model
             try:
                 config = request.data['config']
                 self._save_config(service, config)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 e_msg = ('Service Monitor could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)
@@ -49,10 +47,10 @@ class ServiceMonitorView(BaseServiceDetailView):
         else:
             try:
                 superctl(service.name, command)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
-                e_msg = ('Failed to %s Service Monitor due to a system error.' %
-                         command)
+                e_msg = ('Failed to %s Service Monitor due to a system '
+                         'error.' % command)
                 handle_exception(Exception(e_msg), request)
 
         return Response()

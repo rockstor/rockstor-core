@@ -20,14 +20,15 @@ from smart_manager.models import SProbe
 from django.conf import settings
 from django.db import transaction
 from storageadmin.util import handle_exception
-from smart_manager.serializers import SProbeSerializer
+from smart_manager.serializers import (SProbeSerializer, PaginatedSProbe)
 from rest_framework.response import Response
 import zmq
 import os
-from django.http import Http404
 import rest_framework_custom as rfc
 from django.core.paginator import Paginator
 from smart_manager.taplib.probe_config import TAP_MAP
+import logging
+logger = logging.getLogger(__name__)
 
 
 class AdvancedSProbeView(rfc.GenericView):
@@ -36,8 +37,8 @@ class AdvancedSProbeView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         self.page_size = None
         pname = self.request.path.split('/')[4]
-        limit = self.request.query_params.get('limit',
-                                              settings.REST_FRAMEWORK['MAX_LIMIT'])
+        limit = self.request.query_params.get(
+            'limit', settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
         t1 = self.request.query_params.get('t1', None)
         t2 = self.request.query_params.get('t2', None)
@@ -47,7 +48,8 @@ class AdvancedSProbeView(rfc.GenericView):
         if (pid is None):
             self.serializer_class = SProbeSerializer
             try:
-                return SProbe.objects.filter(name=pname).order_by('-start')[0:limit]
+                return SProbe.objects.filter(
+                    name=pname).order_by('-start')[0:limit]
             except:
                 e_msg = ('No smart probe instances exist for: %s' % pname)
                 handle_exception(Exception(e_msg), self.request)
@@ -89,25 +91,26 @@ class AdvancedSProbeView(rfc.GenericView):
         """
         start or stop a smart probe
         """
-        #get the task uuid from the url string
+        # get the task uuid from the url string
         pname = request.path.split('/')[4]
         task = {}
         ro = None
-        if (pid is None): #start a probe
-            #if there's a recipe already running, throw error
-            if (SProbe.objects.filter(name=pname,
-                                      state__regex=r'(created|running)').exists()):
+        if (pid is None):  # start a probe
+            # if there's a recipe already running, throw error
+            if (SProbe.objects.filter(
+                    name=pname, state__regex=r'(created|running)').exists()):
                 e_msg = ('Smart probe: %s already running' % pname)
                 handle_exception(Exception(e_msg), request)
-            #if max number of probes already running, throw error
-            num_live = len(SProbe.objects.filter(state__regex=r'(created|running'))
+            # if max number of probes already running, throw error
+            num_live = len(SProbe.objects.filter(
+                state__regex=r'(created|running'))
             if (num_live > settings.MAX_TAP_WORKERS):
                 e_msg = ('Maximum number(%d) of smart probes running. Cannot '
                          'start another one until one of them is stopped' %
                          settings.MAX_TAP_WORKERS)
                 handle_exception(Exception(e_msg), request)
 
-            #get last id
+            # get last id
             cur_id = 0
             try:
                 cur_id = SProbe.objects.all().order_by('-start')[0].id

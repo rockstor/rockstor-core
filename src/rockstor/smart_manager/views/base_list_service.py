@@ -16,16 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from smart_manager.models import (Service, ServiceStatus)
+from smart_manager.models import Service
 from django.conf import settings
 from smart_manager.serializers import ServiceStatusSerializer
-import json
 import rest_framework_custom as rfc
-from rest_framework.response import Response
-from system.services import service_status
 from django.db import transaction
-from django.utils.timezone import utc
-from datetime import datetime
 from service_mixin import ServiceMixin
 import logging
 logger = logging.getLogger(__name__)
@@ -38,8 +33,8 @@ class BaseServiceListView(ServiceMixin, rfc.GenericView):
     @transaction.atomic
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            limit = self.request.query_params.get('limit',
-                                                  settings.REST_FRAMEWORK['MAX_LIMIT'])
+            limit = self.request.query_params.get(
+                'limit', settings.REST_FRAMEWORK['MAX_LIMIT'])
             limit = int(limit)
             url_fields = self.request.path.strip('/').split('/')
             if (len(url_fields) < 4):

@@ -36,13 +36,14 @@ def discourse_repo(rockon):
     mount_share(vo.share, share_mnt)
     return '%s/%s' % (share_mnt, rockon.name.lower())
 
+
 def discourse_install(rockon):
-    #1. install git
+    # 1. install git
     git = '/usr/bin/git'
     if (not os.path.isfile(git)):
         install_pkg('git')
 
-    #2. prep Discourse.yml
+    # 2. prep Discourse.yml
     repo = discourse_repo(rockon)
     if (not os.path.isdir(repo)):
         run_command([git, 'clone',
@@ -68,29 +69,34 @@ def discourse_install(rockon):
             elif (re.match('  #UNICORN_WORKERS:', line) is not None):
                 tfo.write('  UNICORN_WORKERS: 3\n')
             elif (re.match('  DISCOURSE_DEVELOPER_EMAILS:', line) is not None):
-                tfo.write("  DISCOURSE_DEVELOPER_EMAILS: '%s'\n" % cc_map['admin-email'])
+                tfo.write("  DISCOURSE_DEVELOPER_EMAILS: '%s'\n" %
+                          cc_map['admin-email'])
             elif (re.match('  DISCOURSE_HOSTNAME:', line) is not None):
                 tfo.write("  DISCOURSE_HOSTNAME: '%s'\n" % cc_map['hostname'])
             elif (re.match('  DISCOURSE_SMTP_ADDRESS:', line) is not None):
-                tfo.write('  DISCOURSE_SMTP_ADDRESS: %s\n' % cc_map['smtp-address'])
+                tfo.write('  DISCOURSE_SMTP_ADDRESS: %s\n' %
+                          cc_map['smtp-address'])
             elif (re.match('  #DISCOURSE_SMTP_PORT:', line) is not None):
                 tfo.write('  DISCOURSE_SMTP_PORT: %s\n' % cc_map['smtp-port'])
             elif (re.match('  #DISCOURSE_SMTP_USER_NAME:', line) is not None):
-                tfo.write('  DISCOURSE_SMTP_USER_NAME: %s\n' % cc_map['smtp-username'])
+                tfo.write('  DISCOURSE_SMTP_USER_NAME: %s\n' %
+                          cc_map['smtp-username'])
             elif (re.match('  #DISCOURSE_SMTP_PASSWORD:', line) is not None):
-                tfo.write('  DISCOURSE_SMTP_PASSWORD: %s\n' % cc_map['smtp-password'])
-            elif (re.match('      host: /var/discourse/shared/standalone', line) is not None):
+                tfo.write('  DISCOURSE_SMTP_PASSWORD: %s\n' %
+                          cc_map['smtp-password'])
+            elif (re.match('      host: /var/discourse/shared/standalone', line) is not None):  # noqa E501
                 tfo.write('      host: %s/shares/standalone\n' % repo)
-            elif (re.match('      host: /var/discourse/shared/standalone/log/var-log', line) is not None):
-                tfo.write('      host: %s/shared/standalone/log/var-log\n' % repo)
+            elif (re.match('      host: /var/discourse/shared/standalone/log/var-log', line) is not None):  # noqa E501
+                tfo.write('      host: %s/shared/standalone/log/var-log\n'
+                          % repo)
             else:
                 tfo.write(line)
     move(npath, dst_yml)
 
-    #3. bootstrap: launcher bootstrap app
+    # 3. bootstrap: launcher bootstrap app
     run_command(['%s/launcher' % repo, 'bootstrap', rockon.name.lower()])
 
-    #4. start: launcher start app
+    # 4. start: launcher start app
     run_command(['%s/launcher' % repo, 'start', rockon.name.lower()])
 
 
@@ -105,9 +111,11 @@ def discourse_stop(rockon):
     repo = discourse_repo(rockon)
     return run_command(['%s/launcher' % repo, 'stop', rockon.name.lower()])
 
+
 def discourse_start(rockon):
     repo = discourse_repo(rockon)
     return run_command(['%s/launcher' % repo, 'start', rockon.name.lower()])
+
 
 def discourse_status(rockon):
     return container_status(rockon.name.lower())

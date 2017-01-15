@@ -24,6 +24,7 @@ from storageadmin.util import handle_exception
 import logging
 logger = logging.getLogger(__name__)
 
+
 class PincardView(rfc.GenericView):
 
     @transaction.atomic
@@ -38,11 +39,14 @@ class PincardView(rfc.GenericView):
             if (command == 'reset'):
                 uid = request.data.get('uid')
                 pinlist = request.data.get('pinlist')
-                reset_response, reset_status = reset_password(user, uid, pinlist)
+                reset_response, reset_status = reset_password(
+                    user, uid, pinlist)
                 response_data = {'response': reset_response,
                                  'status': reset_status}
-                logger.debug('Received password reset request for user %s' % user)
-                
+                logger.debug('Received password reset request for user %s'
+                             % user)
+
             return Response(response_data)
-        e_msg = ('Unsupported command(%s). Valid commands are create, reset' % command)
+        e_msg = ('Unsupported command(%s). Valid commands are create, reset'
+                 % command)
         handle_exception(Exception(e_msg), request)

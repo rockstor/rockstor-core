@@ -16,17 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
 import requests
 import time
 import json
 import base64
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import OauthApp
-from oauth2_provider.models import AccessToken
 from django.conf import settings
-from django.utils.timezone import utc
-from datetime import datetime
 
 
 class APIWrapper(object):
@@ -36,11 +32,11 @@ class APIWrapper(object):
         self.expiration = time.time()
         self.client_id = client_id
         self.client_secret = client_secret
-        #directly connect to gunicorn, bypassing nginx as we are on the same
-        #host.
+        # directly connect to gunicorn, bypassing nginx as we are on the same
+        # host.
         self.url = 'http://127.0.0.1:8000'
         if (url is not None):
-            #for remote urls.
+            # for remote urls.
             self.url = url
 
     def set_token(self):
@@ -62,20 +58,20 @@ class APIWrapper(object):
         content = None
         try:
             response = requests.post('%s/o/token/' % self.url,
-                                     data=token_request_data, headers=auth_headers,
-                                     verify=False)
+                                     data=token_request_data,
+                                     headers=auth_headers, verify=False)
             content = json.loads(response.content.decode("utf-8"))
             self.access_token = content['access_token']
             self.expiration = int(time.time()) + content['expires_in'] - 600
-        except Exception, e:
+        except Exception as e:
             msg = ('Exception while setting access_token for url(%s): %s. '
                    'content: %s' % (self.url, e.__str__(), content))
             raise Exception(msg)
 
-
-    def api_call(self, url, data=None, calltype='get', headers=None, save_error=True):
+    def api_call(self, url, data=None, calltype='get', headers=None,
+                 save_error=True):
         if (self.access_token is None or
-            (time.time() > self.expiration)):
+                time.time() > self.expiration):
             self.set_token()
 
         api_auth_header = {'Authorization': 'Bearer ' + self.access_token, }
@@ -111,13 +107,15 @@ class APIWrapper(object):
                             efo.write('%s\n' % line)
                         print('Error detail is saved at %s' % err_file)
                 if ('detail' in error_d):
-                    if (error_d['detail'] == 'Authentication credentials were not provided.'):
-                        set_token()
-                        return api_call(url, data=data, calltype=calltype,
-                                        headers=headers, save_error=save_error)
+                    if (error_d['detail'] == 'Authentication credentials were not provided.'):  # noqa E501
+                        self.set_token()
+                        return self.api_call(url, data=data, calltype=calltype,
+                                             headers=headers,
+                                             save_error=save_error)
                     raise RockStorAPIException(detail=error_d['detail'])
-            except ValueError, e:
-                raise RockStorAPIException(detail='Internal Server Error: %s' % e.__str__())
+            except ValueError as e:
+                raise RockStorAPIException(detail='Internal Server Error: %s'
+                                           % e.__str__())
             r.raise_for_status()
 
         try:

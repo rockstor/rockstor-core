@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from base_console import BaseConsole
 from rest_util import api_call
 
+
 class SupportConsole(BaseConsole):
 
     def __init__(self, prompt):
@@ -38,7 +39,7 @@ class SupportConsole(BaseConsole):
             if (len(case_fields) > 0):
                 url = ('%s%s/' % (url, case_fields[0]))
         case_info = api_call(url)
-        print case_info
+        print(case_info)
 
     def do_add(self, args):
         """
@@ -50,7 +51,7 @@ class SupportConsole(BaseConsole):
         if (len(case_fields) < 1):
             return self.do_help(args)
 
-        input_data = {'type' : 'manual',}
+        input_data = {'type': 'manual', }
         for f in case_fields:
             if (f[0:2] == '-n'):
                 input_data['notes'] = f[2:]
@@ -58,7 +59,7 @@ class SupportConsole(BaseConsole):
             return self.do_help(args)
 
         case_info = api_call(self.baseurl, data=input_data, calltype='put')
-        print case_info
+        print(case_info)
 
     def do_update(self, args):
         """
@@ -73,4 +74,4 @@ class SupportConsole(BaseConsole):
         input_data = {'status': case_fields[1]}
         url = ('%s%s/' % (self.baseurl, case_fields[0]))
         case_info = api_call(url, data=input_data, calltype='put')
-        print case_info
+        print(case_info)

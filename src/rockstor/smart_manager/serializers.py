@@ -33,14 +33,17 @@ class CPUMetricSerializer(serializers.ModelSerializer):
     class Meta:
         model = CPUMetric
 
+
 class LoadAvgSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoadAvg
         fields = ('uptime',)
 
+
 class MemInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemInfo
+
 
 class DiskStatSerializer(serializers.ModelSerializer):
     class Meta:
@@ -147,14 +150,17 @@ class ReplicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Replica
 
+
 class ReplicaTrailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReplicaTrail
 
+
 class ReplicaShareSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReplicaShare
+
 
 class ReceiveTrailSerializer(serializers.ModelSerializer):
     class Meta:

@@ -16,14 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from exceptions import CommandException
-from osi import (run_command, inplace_replace)
-import subprocess
-import re
+from osi import inplace_replace
 from tempfile import mkstemp
 from shutil import move
-from os import (remove, close)
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -31,6 +26,7 @@ NETWORK_FILE = '/etc/sysconfig/network'
 AUTH_FILE = '/etc/sysconfig/authconfig'
 YP_FILE = '/etc/yp.conf'
 NSSWITCH_FILE = '/etc/nsswitch.conf'
+
 
 def configure_nis(nis_domain, server):
 

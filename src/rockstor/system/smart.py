@@ -39,7 +39,7 @@ def info(device, custom_options='', test_mode=TESTMODE):
     Retrieve matching properties found in smartctl -H --info output.
     Used to populate the Identity / general info tab by views/disk_smart.py
     :param device: disk device name
-    :param test_mode: Not True causes cat from file rather than smartctl command
+    :param test_mode: False causes cat from file rather than smartctl command
     :return: list of smart parameters extracted from device or test file
     """
     if not test_mode:
@@ -79,15 +79,16 @@ def info(device, custom_options='', test_mode=TESTMODE):
 
 
 def extended_info(device, custom_options='', test_mode=TESTMODE):
-    """
-    Retrieves a list of SMART attributes found from parsing smartctl -a output
-    Mostly ATA / SATA as SCSI uses a free form syntax for this.
-    Extracts all lines starting with ID# ATTRIBUTE_NAME and creates a dictionary
-    of lists containing each lines column entries indexed in the dictionary via
-    the Attribute name.
+    """Retrieves a list of SMART attributes found from parsing smartctl -a output
+    Mostly ATA / SATA as SCSI uses a free form syntax for this.  Extracts all
+    lines starting with ID# ATTRIBUTE_NAME and creates a dictionary of lists
+    containing each lines column entries indexed in the dictionary via the
+    Attribute name.
+
     :param device: disk device name
     :param testmode: Not True causes cat from file rather than smartctl command
     :return: dictionary of smart attributes extracted from device or test file
+
     """
     if not test_mode:
         o, e, rc = run_command(
@@ -112,15 +113,15 @@ def extended_info(device, custom_options='', test_mode=TESTMODE):
 
 
 def capabilities(device, custom_options='', test_mode=TESTMODE):
-    """
-    Retrieves a list of SMART capabilities found from parsing smartctl -c output
-    ATA / SATA only.
-    Extracts all capabilities and build a dictionary of lists containing
-    ID, Name, Flag, and description for each capability found. The dictionary
-    is indexed by the capability name.
-    :param device: disk device name
-    :param test_mode: Not True causes cat from file rather than smartctl command
-    :return: dictionary of smart capabilities extracted from device or test file
+    """Retrieves a list of SMART capabilities found from parsing smartctl -c
+    output ATA / SATA only.  Extracts all capabilities and build a dictionary
+    of lists containing ID, Name, Flag, and description for each capability
+    found. The dictionary is indexed by the capability name.
+
+    :param device:    disk device name
+    :param test_mode: False causes cat from file rather than smartctl command
+    :return:          dictionary of smart capabilities extracted from device
+                      or test file
     """
     if not test_mode:
         o, e, rc = run_command(
@@ -133,7 +134,6 @@ def capabilities(device, custom_options='', test_mode=TESTMODE):
                      o[i]) is not None):
             prev_line = None
             cur_cap = None
-            cur_val = None
             for j in range(i + 2, len(o)):
                 if (re.match('.*:\s+\(.*\)', o[j]) is not None):
                     cap = o[j][:o[j].index(':')]
@@ -157,14 +157,15 @@ def capabilities(device, custom_options='', test_mode=TESTMODE):
 
 
 def error_logs(device, custom_options='', test_mode=TESTMODE):
-    """
-    Retrieves a parsed list of SMART errors from the output of smartctl -l error
-    May be empty if no errors, also returns a raw output of the error log itself
-    :param device: disk device name
-    :param test_mode: Not True causes cat from file rather than smartctl command
+    """Retrieves a parsed list of SMART errors from the output of smartctl -l
+    error May be empty if no errors, also returns a raw output of the error log
+    itself
+
+    :param device:    disk device name
+    :param test_mode: False causes cat from file rather than smartctl command
     :return: summary: dictionary of lists containing details of error. Index is
-    error number.
-    :return: log_l: A list containing each line in turn of the error log.
+                      error number.
+    :return: log_l:   A list containing each line in turn of the error log.
     """
     local_base_dev = get_dev_options(device, custom_options)
     smart_command = [SMART, '-l', 'error'] + local_base_dev
@@ -213,8 +214,8 @@ def error_logs(device, custom_options='', test_mode=TESTMODE):
                     if ('lifetime:' in fields):
                         lifetime_hours = int(
                             fields[fields.index('lifetime:') + 1])
-                if (re.match('When the command that caused the error occurred, '
-                             'the device was',
+                if (re.match('When the command that caused the error occurred,'
+                             ' the device was',
                              o[j].strip()) is not None):
                     state = o[j].strip().split('the device was ')[1]
                 if (re.search('Error: ', o[j]) is not None):
@@ -228,17 +229,16 @@ def error_logs(device, custom_options='', test_mode=TESTMODE):
                     summary[err_num] = list(
                         [lifetime_hours, state, etype, details])
                     err_num = lifetime_hours = state = etype = details = None
-    print ('summary_d %s' % summary)
     return (summary, log_l)
 
 
 def test_logs(device, custom_options='', test_mode=TESTMODE):
-    """
-    Retrieves information from SMART Self-Test logs held by the drive.
-    Creates a dictionary of previous test info, indexed by test number and a
-    list containing the remaining log info, each line is an item in the list.
+    """Retrieves information from SMART Self-Test logs held by the drive.  Creates
+    a dictionary of previous test info, indexed by test number and a list
+    containing the remaining log info, each line is an item in the list.
+
     :param device: disk device name
-    :param test_mode: Not True causes cat from file rather than smartctl command
+    :param test_mode: False causes cat from file rather than smartctl command
     :return: test_d as a dictionary of summarized test
     """
     smart_command = [SMART, '-l', 'selftest', '-l',
@@ -337,7 +337,8 @@ def toggle_smart(device, custom_options='', enable=False):
 
 def update_config(config):
     SMARTD_CONFIG = '/etc/smartmontools/smartd.conf'
-    ROCKSTOR_HEADER = '###BEGIN: Rockstor smartd config. DO NOT EDIT BELOW THIS LINE###'
+    ROCKSTOR_HEADER = ('###BEGIN: Rockstor smartd config. DO NOT EDIT BELOW '
+                       'THIS LINE###')
     fo, npath = mkstemp()
     with open(SMARTD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
@@ -356,19 +357,20 @@ def update_config(config):
 
 
 def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
-    """
-    Provides a central mechanism to screen return codes from executing smart
+    """Provides a central mechanism to screen return codes from executing smart
     commands. This is required as some non zero return codes would otherwise
-    trigger a generic exception clause in our general purpose run_command.
-    If the target return code is seen then email root with the message
-    provided, otherwise raise a generic exception with the command information.
-    N.B. May be done better by acting as a SMART run_command wrapper (Future).
+    trigger a generic exception clause in our general purpose run_command.  If
+    the target return code is seen then email root with the message provided,
+    otherwise raise a generic exception with the command information.  N.B. May
+    be done better by acting as a SMART run_command wrapper (Future).
+
     :param msg_on_hit: message used to email root
     :param return_code_target: return code to screen for
     :param o: the output from the command when it was run
     :param e: the error from the command when it was run
     :param rc: the return code from running the command
     :param command: the command that produced the previous o, e, and rc params.
+
     """
     # if our return code is our target then log with our message and email root
     # with the same.
@@ -384,17 +386,17 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
 
 
 def get_dev_options(dev_byid, custom_options=''):
-    """
-    Returns device specific options for all smartctl commands.
-    Note that in most cases this requires looking up the base device via
-    get_base_device but in some instances this is not required as in the case
-    of devices behind some raid controllers. If custom_options contains known
-    raid controller smartctl targets then these will be substituted for device
-    name.
+    """Returns device specific options for all smartctl commands.  Note that in
+    most cases this requires looking up the base device via get_base_device but
+    in some instances this is not required as in the case of devices behind
+    some raid controllers. If custom_options contains known raid controller
+    smartctl targets then these will be substituted for device name.
+
     :param dev_byid:  device name as per db entry, ie by-id type without a path
     :param custom_options: string of user entered custom smart options.
     :return: dev_options: list containing the device specific smart options and
     the appropriate smart device target with full path.
+
     """
     # Initially our custom_options parameter may be None, ie db default prior
     # to any changes having been made. Deal with this by adding a guard.
@@ -413,14 +415,15 @@ def get_dev_options(dev_byid, custom_options=''):
         if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
             # add full path to our custom options as we see no raid target dev
             dev_options += [
-                '/dev/disk/by-id/%s' % get_base_device_byid(dev_byid, TESTMODE)]
-    # Note on raid controller target devices.
-    # /dev/twe#, or /dev/twa#, or /dev/twl# are 3ware controller targets devs
-    # respectively 3x-xxxx, 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for
-    # respectively 6000, 7000, 8000 or 9000 or 3ware/LSI 9750 controllers.
-    # /dev/cciss/c0d0 is the first HP/Compaq Smart Array Controller using the
-    # deprecated cciss driver
-    # /dev/sg0 is the first hpsa or hpahcisr driver device for the same adapter.
-    # This same target device is also used by the Areca SATA RAID controller
-    # except that the first device is /dev/sg2.
+                '/dev/disk/by-id/{}'.format(
+                    get_base_device_byid(dev_byid, TESTMODE))
+            ]
+    # Note on raid controller target devices.  /dev/twe#, or /dev/twa#, or
+    # /dev/twl# are 3ware controller targets devs respectively 3x-xxxx,
+    # 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for respectively 6000, 7000,
+    # 8000 or 9000 or 3ware/LSI 9750 controllers.  /dev/cciss/c0d0 is the first
+    # HP/Compaq Smart Array Controller using the deprecated cciss driver
+    # /dev/sg0 is the first hpsa or hpahcisr driver device for the same
+    # adapter.  This same target device is also used by the Areca SATA RAID
+    # controller except that the first device is /dev/sg2.
     return dev_options

@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+
 class TapConfig(object):
 
     def __init__(self, uuid, location, sdetail):
@@ -25,24 +26,24 @@ class TapConfig(object):
         self.sdetail = sdetail
 
 TAP_MAP = {
-    'nfs-1': { 'location': 'nfsd/nfsd_distrib',
-               'sdetail': 'All NFS calls',
-               'cb': 'process_nfsd_calls',},
+    'nfs-1': {'location': 'nfsd/nfsd_distrib',
+              'sdetail': 'All NFS calls',
+              'cb': 'process_nfsd_calls', },
 
-    'nfs-2': { 'location': 'nfsd/nfsd_distrib_client',
-               'sdetail': 'NFS call distribution over clients',
-               'cb': 'process_nfsd_calls',},
+    'nfs-2': {'location': 'nfsd/nfsd_distrib_client',
+              'sdetail': 'NFS call distribution over clients',
+              'cb': 'process_nfsd_calls', },
 
-    'nfs-3': { 'location': 'nfsd/nfsd_distrib_share',
-               'sdetail': 'NFS call distribution over shares',
-               'cb': 'share_distribution',},
+    'nfs-3': {'location': 'nfsd/nfsd_distrib_share',
+              'sdetail': 'NFS call distribution over shares',
+              'cb': 'share_distribution', },
 
-    'nfs-4': { 'location': 'nfsd/nfsd_distrib_share_client',
-               'sdetail': 'NFS call distribution over clients and shares',
-               'cb': 'share_client_distribution',},
+    'nfs-4': {'location': 'nfsd/nfsd_distrib_share_client',
+              'sdetail': 'NFS call distribution over clients and shares',
+              'cb': 'share_client_distribution', },
 
-    'nfs-5': { 'location': 'nfsd/nfsd_distrib_uid_gid',
-               'sdetail': 'NFS call distribution over uids and gids',
-               'cb': 'nfs_uid_gid_distribution',},
+    'nfs-5': {'location': 'nfsd/nfsd_distrib_uid_gid',
+              'sdetail': 'NFS call distribution over uids and gids',
+              'cb': 'nfs_uid_gid_distribution', },
 
     }

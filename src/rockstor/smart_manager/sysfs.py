@@ -16,12 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-IR from sysfs
-"""
 
 from multiprocessing import Process
-import time
 
 
 class SysRetreiver(Process):

@@ -48,7 +48,7 @@ class BaseConsole(cmd.Cmd):
         To exit from this console: %(c)sexit%(e)s
 
         """ % BaseConsole.c_params
-        print s
+        print(s)
 
     def do_EOF(self, args):
         print("")
@@ -59,13 +59,13 @@ class BaseConsole(cmd.Cmd):
 
     def do_hist(self, args):
         for i in range(readline.get_current_history_length()):
-            print readline.get_history_item(i)
+            print(readline.get_history_item(i))
 
     def help_hist(self):
         s = """
         %(c)sHistory of commands in this session%(e)s
         """ % BaseConsole.c_params
-        print s
+        print(s)
 
     def do_shell(self, args):
         pass
@@ -93,12 +93,11 @@ class BaseConsole(cmd.Cmd):
         return self.do_help(args)
 
     def print_help(self, synopsis, cmd, args=[], params={}, examples={}):
-        """
-        @synopsys: One line synopsis of the command
-        @cmd: command name
-        @args: a list of arguments accepted by the command
-        @params: a dictionary of parameter(key) and description(value) pairs
-        @examples: a dictionary of example explanation(key) and invocation(value) pairs
+        """@synopsys: One line synopsis of the command @cmd: command name @args: a
+        list of arguments accepted by the command @params: a dictionary of
+        parameter(key) and description(value) pairs @examples: a dictionary of
+        example explanation(key) and invocation(value) pairs
+
         """
         cmd_args = ['%s%s%s' % (BaseConsole.c_params['u'],
                                 a,

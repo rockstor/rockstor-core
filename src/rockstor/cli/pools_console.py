@@ -78,9 +78,9 @@ class PoolsConsole(BaseConsole):
         if (len(args) == 0):
             return self.help_wrapper('missing pool_name', 'delete')
         url = ('%s/%s' % (self.url, args))
-        print "Deleting pool %s" % args[0]
+        print("Deleting pool %s" % args[0])
         api_call(url, calltype='delete')
-        print "Pool %s deleted" % args[0]
+        print("Pool %s deleted" % args[0])
 
     def help_delete(self):
         params = {'pool_name': 'Name of the pool to delete', }
@@ -111,7 +111,7 @@ class PoolsConsole(BaseConsole):
             return self.help_wrapper('missing pool_name', 'scrub')
         url = ('%s/%s/scrub' % (self.url, args))
         scrub_info = api_call(url, calltype='post')
-        print scrub_info
+        print(scrub_info)
 
     def help_scrub(self):
         params = {'pool_name': 'Name of the pool to scrub', }

@@ -28,7 +28,7 @@ def container_status(name):
     state = 'unknown_error'
     try:
         o, e, rc = run_command([DOCKER, 'inspect', '-f',
-                                '{{range $key, $value := .State}}{{$key}}:{{$value}},{{ end }}', name])
+                                '{{range $key, $value := .State}}{{$key}}:{{$value}},{{ end }}', name])  # noqa E501
         state_d = {}
         for i in o[0].split(','):
             fields = i.split(':')
@@ -42,9 +42,10 @@ def container_status(name):
                 if ('Error' in state_d and 'ExitCode' in state_d):
                     exitcode = int(state_d['ExitCode'])
                     if (exitcode != 0):
-                        state = 'exitcode: %d error: %s' % (exitcode, state_d['Error'])
+                        state = ('exitcode: %d error: %s' %
+                                 (exitcode, state_d['Error']))
         return state
-    except Exception, e:
+    except Exception as e:
         logger.exception(e)
     finally:
         return state

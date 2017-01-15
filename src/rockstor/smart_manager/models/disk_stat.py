@@ -37,4 +37,3 @@ class DiskStat(models.Model):
 
     class Meta:
         app_label = 'smart_manager'
-

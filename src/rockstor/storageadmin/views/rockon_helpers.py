@@ -17,32 +17,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-import re
 import time
-from shutil import move
-from tempfile import mkstemp
-import psutil
 from system.osi import run_command
 from django.conf import settings
 from django_ztask.decorators import task
 from cli.api_wrapper import APIWrapper
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
-                                 DCustomConfig, Share, Disk, DContainerLink,
+                                 DCustomConfig, DContainerLink,
                                  ContainerOption, DContainerEnv)
 from fs.btrfs import mount_share
-from system.pkg_mgmt import install_pkg
 from rockon_utils import container_status
-from rockon_discourse import (discourse_install, discourse_uninstall,
-                              discourse_stop, discourse_start, discourse_status)
-
+import logging
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
 DCMD = [DOCKER, 'run', ]
 DCMD2 = list(DCMD) + ['-d', '--restart=unless-stopped', ]
 
-import logging
+
 logger = logging.getLogger(__name__)
 aw = APIWrapper()
 
@@ -58,7 +51,6 @@ def rockon_status(name):
     ro = RockOn.objects.get(name=name)
     if (globals().get('%s_status' % ro.name.lower()) is not None):
         return globals().get('%s_status' % ro.name.lower())(ro)
-    state = 'unknown error'
     co = DContainer.objects.filter(rockon=ro).order_by('-launch_order')[0]
     return container_status(co.name)
 
@@ -67,7 +59,8 @@ def rm_container(name):
     o, e, rc = run_command([DOCKER, 'stop', name], throw=False)
     o, e, rc = run_command([DOCKER, 'rm', name], throw=False)
     return logger.debug('Attempted to remove a container(%s). out: %s '
-                        'err: %s rc: %s.' %  (name, o, e, rc))
+                        'err: %s rc: %s.' % (name, o, e, rc))
+
 
 @task()
 def start(rid):
@@ -78,9 +71,10 @@ def start(rid):
 def generic_start(rockon):
     new_status = 'started'
     try:
-        for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        for c in DContainer.objects.filter(
+                rockon=rockon).order_by('launch_order'):
             run_command([DOCKER, 'start', c.name])
-    except Exception, e:
+    except Exception as e:
         logger.error('Exception while starting the rockon(%s)' % rockon.name)
         logger.exception(e)
         new_status = 'start_failed'
@@ -99,9 +93,10 @@ def stop(rid):
 def generic_stop(rockon):
     new_status = 'stopped'
     try:
-        for c in DContainer.objects.filter(rockon=rockon).order_by('-launch_order'):
+        for c in DContainer.objects.filter(
+                rockon=rockon).order_by('-launch_order'):
             run_command([DOCKER, 'stop', c.name])
-    except Exception, e:
+    except Exception as e:
         logger.debug('exception while stopping the rockon(%s)' % rockon.name)
         logger.exception(e)
         new_status = 'stop_failed'
@@ -122,30 +117,32 @@ def install(rid):
     new_state = 'installed'
     try:
         rockon = RockOn.objects.get(id=rid)
-        globals().get('%s_install' % rockon.name.lower(), generic_install)(rockon)
-    except Exception, e:
+        globals().get('%s_install' % rockon.name.lower(),
+                      generic_install)(rockon)
+    except Exception as e:
         logger.debug('exception while installing the Rockon(%d)' % rid)
         logger.exception(e)
         new_state = 'install_failed'
     finally:
         url = ('rockons/%d/state_update' % rid)
-        return aw.api_call(url, data={'new_state': new_state, }, calltype='post',
-                           save_error=False)
+        return aw.api_call(url, data={'new_state': new_state, },
+                           calltype='post', save_error=False)
 
 
 @task()
 def uninstall(rid, new_state='available'):
     try:
         rockon = RockOn.objects.get(id=rid)
-        globals().get('%s_uninstall' % rockon.name.lower(), generic_uninstall)(rockon)
-    except Exception, e:
+        globals().get('%s_uninstall' % rockon.name.lower(),
+                      generic_uninstall)(rockon)
+    except Exception as e:
         logger.debug('exception while uninstalling the Rockon(%d)' % rid)
         logger.exception(e)
         new_state = 'installed'
     finally:
         url = ('rockons/%d/state_update' % rid)
-        return aw.api_call(url, data={'new_state': new_state, }, calltype='post',
-                           save_error=False)
+        return aw.api_call(url, data={'new_state': new_state, },
+                           calltype='post', save_error=False)
 
 
 def generic_uninstall(rockon):
@@ -172,8 +169,9 @@ def port_ops(container):
         else:
             tcp = '%s/tcp' % pstr
             udp = '%s/udp' % pstr
-            ops_list.extend(['-p', tcp, '-p', udp,])
+            ops_list.extend(['-p', tcp, '-p', udp, ])
     return ops_list
+
 
 def vol_ops(container):
     ops_list = []
@@ -181,16 +179,19 @@ def vol_ops(container):
         share_mnt = ('%s%s' % (settings.MNT_PT, v.share.name))
         mount_share(v.share, share_mnt)
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
-    #map /etc/localtime for consistency across base rockstor and apps.
+    # map /etc/localtime for consistency across base rockstor and apps.
     ops_list.extend(['-v', '/etc/localtime:/etc/localtime:ro'])
     return ops_list
+
 
 def vol_owner_uid(container):
     # If there are volumes, return the uid of the owner of the first volume.
     vo = DVolume.objects.filter(container=container).first()
-    if (vo is None): return None
+    if (vo is None):
+        return None
     share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
     return os.stat(share_mnt).st_uid
+
 
 def envars(container):
     var_list = []
@@ -198,16 +199,18 @@ def envars(container):
         var_list.extend(['-e', '%s=%s' % (e.key, e.val)])
     return var_list
 
+
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
-        cmd = list(DCMD2) + ['--name', c.name,]
+        cmd = list(DCMD2) + ['--name', c.name, ]
         cmd.extend(vol_ops(c))
         if (c.uid is not None):
             uid = c.uid
             if (c.uid is -1):
                 uid = vol_owner_uid(c)
-            #@todo: what if the uid does not exist? Create a user with username=container-name?
+            # @todo: what if the uid does not exist? Create a user with
+            # username=container-name?
             cmd.extend(['-u', str(uid)])
         cmd.extend(port_ops(c))
         cmd.extend(container_ops(c))
@@ -217,21 +220,22 @@ def generic_install(rockon):
 
 
 def openvpn_install(rockon):
-    #volume container
+    # volume container
     vol_co = DContainer.objects.get(rockon=rockon, launch_order=1)
-    volc_cmd = list(DCMD) + ['--name', vol_co.name,]
+    volc_cmd = list(DCMD) + ['--name', vol_co.name, ]
     volc_cmd.extend(container_ops(vol_co))
     volc_cmd.append(vol_co.dimage.name)
     run_command(volc_cmd)
-    #initialize vol container data
+    # initialize vol container data
     cco = DCustomConfig.objects.get(rockon=rockon)
     oc = DContainer.objects.get(rockon=rockon, launch_order=2)
-    dinit_cmd = list(DCMD) + ['--rm',]
+    dinit_cmd = list(DCMD) + ['--rm', ]
     dinit_cmd.extend(container_ops(oc))
-    dinit_cmd.extend([oc.dimage.name, 'ovpn_genconfig', '-u', 'udp://%s' % cco.val, ])
+    dinit_cmd.extend([oc.dimage.name, 'ovpn_genconfig', '-u',
+                      'udp://%s' % cco.val, ])
     run_command(dinit_cmd)
-    #start the server
-    server_cmd = list(DCMD2) + ['--name', oc.name,]
+    # start the server
+    server_cmd = list(DCMD2) + ['--name', oc.name, ]
     server_cmd.extend(container_ops(oc))
     server_cmd.extend(port_ops(oc))
     server_cmd.append(oc.dimage.name)
@@ -245,7 +249,7 @@ def owncloud_install(rockon):
         db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user').val
         db_pw = DCustomConfig.objects.get(rockon=rockon, key='db_pw').val
         if (c.dimage.name == 'postgres'):
-            #change permissions on the db volume to 700
+            # change permissions on the db volume to 700
             vo = DVolume.objects.get(container=c)
             share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
             run_command(['/usr/bin/chmod', '700', share_mnt])
@@ -256,16 +260,17 @@ def owncloud_install(rockon):
             cmd.extend(['--link', '%s:%s' % (lo.source.name, lo.name)])
         cmd.extend(vol_ops(c))
         if (c.name == 'owncloud'):
-            cmd.extend(['-v', '%s/rockstor.key:/etc/ssl/private/owncloud.key' % settings.CERTDIR,
-                        '-v', '%s/rockstor.cert:/etc/ssl/certs/owncloud.crt' % settings.CERTDIR,
+            cmd.extend(['-v', '%s/rockstor.key:/etc/ssl/private/owncloud.key' % settings.CERTDIR,  # noqa E501
+                        '-v', '%s/rockstor.cert:/etc/ssl/certs/owncloud.crt' % settings.CERTDIR,  # noqa E501
                         '-e', 'HTTPS_ENABLED=true'])
-            cmd.extend(['-e', 'DB_USER=%s' % db_user, '-e', 'DB_PASS=%s' % db_pw,])
+            cmd.extend(['-e', 'DB_USER=%s' % db_user, '-e',
+                        'DB_PASS=%s' % db_pw, ])
         cmd.append(c.dimage.name)
         logger.debug('docker cmd = %s' % cmd)
         run_command(cmd)
         if (c.dimage.name == 'postgres'):
-            #make sure postgres is setup
-            cur_wait = 0;
+            # make sure postgres is setup
+            cur_wait = 0
             while (True):
                 o, e, rc = run_command([DOCKER, 'exec', c.name, 'psql', '-U',
                                         'postgres', '-c', "\l"], throw=False)
@@ -273,7 +278,8 @@ def owncloud_install(rockon):
                     break
                 if (cur_wait > 300):
                     logger.error('Waited too long(300 seconds) for '
-                                 'postgres to initialize for owncloud. giving up.')
+                                 'postgres to initialize for owncloud. '
+                                 'giving up.')
                     break
                 time.sleep(1)
                 cur_wait += 1

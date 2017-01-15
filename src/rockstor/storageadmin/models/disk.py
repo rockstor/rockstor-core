@@ -25,10 +25,10 @@ from system.osi import get_disk_power_status, read_hdparm_setting, \
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
     pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
-    """ Previously the name field contained sda, sdb etc..
-    Revised to contain device names for use with the udev created links at
-    /dev/disk/by-id/ which in turn are symlinks to sda, sdb etc.
-    eg ata-QEMU_HARDDISK_QM00005 ie mostly derived from model and serial number.
+    """Previously the name field contained sda, sdb etc..  Revised to contain
+    device names for use with the udev created links at /dev/disk/by-id/ which
+    in turn are symlinks to sda, sdb etc.  eg ata-QEMU_HARDDISK_QM00005 ie
+    mostly derived from model and serial number.
     """
     name = models.CharField(max_length=128, unique=True)
     """total size in KB"""

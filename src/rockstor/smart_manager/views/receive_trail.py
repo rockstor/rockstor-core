@@ -58,6 +58,7 @@ class ReceiveTrailListView(rfc.GenericView):
                     rshare=rs, end_ts__lt=ts0).delete()
             return Response()
 
+
 class ReceiveTrailDetailView(rfc.GenericView):
     serializer_class = ReceiveTrailSerializer
 
@@ -72,7 +73,8 @@ class ReceiveTrailDetailView(rfc.GenericView):
     def _convert_datestr(request, attr, default):
         val = request.data.get(attr, None)
         if (val is not None):
-            return datetime.strptime(val, settings.SNAP_TS_FORMAT).replace(tzinfo=utc)
+            return datetime.strptime(
+                val, settings.SNAP_TS_FORMAT).replace(tzinfo=utc)
         return default
 
     @transaction.atomic

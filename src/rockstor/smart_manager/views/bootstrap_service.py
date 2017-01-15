@@ -17,17 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.response import Response
-from storageadmin.util import handle_exception
 from system.services import systemctl
-from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-from django.conf import settings
-from storageadmin.models import (Share, Disk)
-from fs.btrfs import (mount_share, is_share_mounted)
-import re
-import shutil
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -36,7 +28,7 @@ class BootstrapServiceView(BaseServiceDetailView):
     name = 'rockstor-bootstrap'
 
     def post(self, request, command):
-        service = Service.objects.get(name=self.name)
+        Service.objects.get(name=self.name)
 
         if (command == 'start'):
             systemctl(self.name, 'enable')

@@ -53,18 +53,18 @@ class ShareSMBConsole(BaseConsole):
         if (len(input_data) == 0):
             return self.do_help(args)
         samba_info = api_call(self.url, data=input_data, calltype='post')
-        print samba_info
+        print(samba_info)
 
     def do_disable(self, args):
         """
         disable smb for the share
         """
         samba_info = api_call(self.url, data=None, calltype='delete')
-        print samba_info
+        print(samba_info)
 
     def do_list(self, args):
         """
         show smb properties for the share
         """
         samba_info = api_call(self.url, data=None)
-        print samba_info
+        print(samba_info)

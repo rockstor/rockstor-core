@@ -16,21 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from storageadmin.exceptions import RockStorAPIException
-from system.osi import run_command
 from system.pkg_mgmt import rpm_build_info
-from django.conf import settings
 import traceback
-import sys
-
 import logging
 logger = logging.getLogger(__name__)
 
-#module level variable so it's computed once per process.
+# module level variable so it's computed once per process.
 version = 'unknown'
 try:
     version, date = rpm_build_info('rockstor')
-except Exception, e:
+except Exception as e:
     logger.exception(e)
+
 
 def handle_exception(e, request, e_msg=None):
     """

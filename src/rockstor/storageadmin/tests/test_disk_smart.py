@@ -19,9 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
-import mock
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+
 
 class DiskSmartTests(APITestMixin, APITestCase):
     fixtures = ['fix1.json']
@@ -30,75 +30,76 @@ class DiskSmartTests(APITestMixin, APITestCase):
     @classmethod
     def setUpClass(cls):
         super(DiskSmartTests, cls).setUpClass()
-        
+
         # post mocks
-        cls.patch_extended_info = patch('storageadmin.views.disk_smart.extended_info')
+        cls.patch_extended_info = patch(
+            'storageadmin.views.disk_smart.extended_info')
         cls.mock_extended_info = cls.patch_extended_info.start()
-        
-        cls.patch_capabilities = patch('storageadmin.views.disk_smart.capabilities')
+
+        cls.patch_capabilities = patch(
+            'storageadmin.views.disk_smart.capabilities')
         cls.mock_capabilities = cls.patch_capabilities.start()
-        
+
         cls.patch_info = patch('storageadmin.views.disk_smart.info')
         cls.mock_info = cls.patch_info.start()
-        
-        cls.patch_error_logs = patch('storageadmin.views.disk_smart.error_logs')
+
+        cls.patch_error_logs = patch(
+            'storageadmin.views.disk_smart.error_logs')
         cls.mock_error_logs = cls.patch_error_logs.start()
-        
+
         cls.patch_test_logs = patch('storageadmin.views.disk_smart.test_logs')
         cls.mock_test_logs = cls.patch_test_logs.start()
-       
-                     
+
     @classmethod
     def tearDownClass(cls):
         super(DiskSmartTests, cls).tearDownClass()
 
     def test_get(self):
-        
+
         # get base URL
         response = self.client.get('%s' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
+
         # get with disk name
         response = self.client.get('%s/sdd' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-         
+
     def test_post_requests(self):
-        
         # invalid disk
-        response = self.client.post('%s/info/invalid' %self.BASE_URL)
+        response = self.client.post('%s/info/invalid' % self.BASE_URL)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
         e_msg = ('Disk: invalid does not exist')
         self.assertEqual(response.data['detail'], e_msg)
-        
+
         # invalid command
-        response = self.client.post('%s/invalid/sdd' %self.BASE_URL)
+        response = self.client.post('%s/invalid/sdd' % self.BASE_URL)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        e_msg = ('Unknown command: invalid. Only valid commands are info and test')
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+        e_msg = ('Unknown command: invalid. Only valid commands are info '
+                 'and test')
         self.assertEqual(response.data['detail'], e_msg)
-        
+
         # unsupported self test
-        data = {'test_type':'invalid'}
-        response = self.client.post('%s/test/sdd' %self.BASE_URL, data=data)
+        data = {'test_type': 'invalid'}
+        response = self.client.post('%s/test/sdd' % self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
         e_msg = ('Unsupported Self-Test: invalid')
         self.assertEqual(response.data['detail'], e_msg)
-        
-        # test command
-        data = {'test_type':'short'}
-        response = self.client.post('%s/test/sdd' %self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-        
-        # happy path
-        response = self.client.post('%s/info/sdd' %self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-        
-        
-             
 
+        # test command
+        data = {'test_type': 'short'}
+        response = self.client.post('%s/test/sdd' % self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+
+        # happy path
+        response = self.client.post('%s/info/sdd' % self.BASE_URL)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)

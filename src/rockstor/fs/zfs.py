@@ -19,16 +19,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
 
+
 def add_zpool(disks):
-    p = subprocess.Popen(['zpool', 'destroy', 'pool1'], shell=False, stdout=subprocess.PIPE)
+    p = subprocess.Popen(['zpool', 'destroy', 'pool1'], shell=False,
+                         stdout=subprocess.PIPE)
     p.communicate()
-    p = subprocess.Popen(['zpool', 'create', '-f', 'pool1'] + disks, shell=False, stdout=subprocess.PIPE)
+    p = subprocess.Popen(['zpool', 'create', '-f', 'pool1'] + disks,
+                         shell=False, stdout=subprocess.PIPE)
     p.communicate()
     return True
+
 
 def add_zfs_share(pool, share):
     share_fullname = pool + '/' + share
-    p = subprocess.Popen(['zfs', 'create', share_fullname], shell=False, stdout=subprocess.PIPE)
+    p = subprocess.Popen(['zfs', 'create', share_fullname], shell=False,
+                         stdout=subprocess.PIPE)
     p.communicate()
     return True
-

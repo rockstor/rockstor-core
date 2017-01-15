@@ -19,11 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import Plugin
 
+
 class InstalledPlugin(models.Model):
     plugin_meta = models.ForeignKey(Plugin)
     install_date = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         app_label = 'storageadmin'
-
-

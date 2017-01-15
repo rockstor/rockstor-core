@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-BTRFS = '/usr/sbin/btrfs'
-
 import re
-from django.conf import settings
 from storageadmin.models import Pool
 from system.osi import run_command
 from fs.btrfs import mount_root
+
+BTRFS = '/usr/sbin/btrfs'
+
 
 def main():
     for p in Pool.objects.all():
@@ -35,7 +35,8 @@ def main():
                 if (re.match('ID ', l) is not None):
                     subvol_ids.append(l.split()[1])
 
-            o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt], throw=False)
+            o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt],
+                                   throw=False)
             if (rc != 0):
                 print('Quotas not enabled on pool(%s). Skipping it.' % p.name)
                 continue
@@ -51,13 +52,14 @@ def main():
             for q in qgroup_ids:
                 if (q not in subvol_ids):
                     print('qgroup %s not in use. deleting' % q)
-                    run_command([BTRFS, 'qgroup', 'destroy', '0/%s' % q, mnt_pt])
+                    run_command([BTRFS, 'qgroup', 'destroy', '0/%s' % q,
+                                 mnt_pt])
                 else:
                     print('qgroup %s is in use. Moving on.' % q)
             print('Finished processing pool(%s)' % p.name)
-        except Exception, e:
-            print ('Exception while qgroup-cleanup of Pool(%s): %s' %
-                   (p.name, e.__str__()))
+        except Exception as e:
+            print('Exception while qgroup-cleanup of Pool(%s): %s' %
+                  (p.name, e.__str__()))
 
 
 if __name__ == '__main__':

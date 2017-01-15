@@ -30,7 +30,7 @@ class NFSExportConsole(BaseConsole):
 
     @api_error
     def do_list(self, args):
-        print api_call(self.baseurl)
+        print(api_call(self.baseurl))
 
     @api_error
     def do_add(self, args):
@@ -49,6 +49,6 @@ class NFSExportConsole(BaseConsole):
         if (args != ''):
             exports = args.split('|')
         input_data = {'entries': exports, }
-        print api_call(self.baseurl, data=input_data,
+        print(api_call(self.baseurl, data=input_data,
                        headers={'content-type': 'application/json'},
-                       calltype='post')
+                       calltype='post'))

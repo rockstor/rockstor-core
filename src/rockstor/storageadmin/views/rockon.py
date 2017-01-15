@@ -44,21 +44,21 @@ class RockOnView(rfc.GenericView):
         if (docker_status()):
             pending_rids = {}
             failed_rids = {}
-            for t in Task.objects.filter(function_name__regex='rockon_helpers'):
+            for t in Task.objects.filter(function_name__regex='rockon_helpers'):  # noqa E501
                 rid = pickle.loads(t.args)[0]
                 if (t.retry_count == 0 and t.failed is not None):
                     failed_rids[rid] = t
                 else:
                     pending_rids[rid] = t
-            #Remove old failed attempts
-            #@todo: we should prune all failed tasks of the past, not here though.
+            # Remove old failed attempts @todo: we should prune all failed
+            # tasks of the past, not here though.
             for rid in pending_rids.keys():
                 if (rid in failed_rids):
                     pt = pending_rids[rid]
                     ft = failed_rids[rid]
                     if (failed_rids[rid].created > pending_rids[rid].created):
-                        #this should never be the case. pending tasks either
-                        #succeed and get deleted or they are marked failed.
+                        # this should never be the case. pending tasks either
+                        # succeed and get deleted or they are marked failed.
                         msg = ('Found a failed Task(%s) in the future of a '
                                'pending Task(%s).' % (ft.uuid, pt.uuid))
                         handle_exception(Exception(msg), self.request)
@@ -72,16 +72,17 @@ class RockOnView(rfc.GenericView):
                         ro.status = rockon_status(ro.name)
                 elif (re.search('pending', ro.state) is not None):
                     if (ro.id in failed_rids):
-                        #we update the status on behalf of the task runner
+                        # we update the status on behalf of the task runner
                         func_name = t.function_name.split('.')[-1]
                         ro.state = '%s_failed' % func_name
                     elif (ro.id not in pending_rids):
-                        logger.error('Rockon(%s) is in pending state but there '
-                                     'is no pending or failed task for it. '
-                                     % ro.name)
+                        logger.error('Rockon(%s) is in pending state but '
+                                     'there is no pending or failed task '
+                                     'for it. ' % ro.name)
                         ro.state = '%s_failed' % ro.state.split('_')[1]
                     else:
-                        logger.debug('Rockon(%s) is in pending state' % ro.name)
+                        logger.debug('Rockon(%s) is in pending state'
+                                     % ro.name)
                 elif (ro.state == 'uninstall_failed'):
                     ro.state = 'installed'
                 ro.save()
@@ -96,14 +97,14 @@ class RockOnView(rfc.GenericView):
         with self._handle_exception(request):
             if (command == 'update'):
                 rockons = self._get_available()
-                #Delete metadata for apps no longer in metastores.
+                # Delete metadata for apps no longer in metastores.
                 self._delete_deprecated(rockons)
 
                 error_str = ''
                 for r in rockons:
                     try:
                         self._create_update_meta(r, rockons[r])
-                    except Exception, e:
+                    except Exception as e:
                         error_str = ('%s: %s' % (r, e.__str__()))
                         logger.exception(e)
                 if (len(error_str) > 0):
@@ -114,11 +115,12 @@ class RockOnView(rfc.GenericView):
 
     @transaction.atomic
     def _delete_deprecated(self, rockons):
-        cur_rockons = [ro.name for ro in RockOn.objects.filter(state__regex=r'available|install_failed')]
+        cur_rockons = [ro.name for ro in
+                       RockOn.objects.filter(
+                           state__regex=r'available|install_failed')]
         for cr in cur_rockons:
             if (cr not in rockons):
                 RockOn.objects.get(name=cr).delete()
-
 
     @staticmethod
     def _next_available_default_hostp(port):
@@ -130,10 +132,9 @@ class RockOnView(rfc.GenericView):
 
     @transaction.atomic
     def _create_update_meta(self, name, r_d):
-        #Update our application state with any changes from hosted app
-        #profiles(app.json files). Some attributes cannot be updated
-        #if the Rock-on is currently installed. These will be logged and
-        #ignored.
+        # Update our application state with any changes from hosted app
+        # profiles(app.json files). Some attributes cannot be updated if the
+        # Rock-on is currently installed. These will be logged and ignored.
         ro_defaults = {'description': r_d['description'],
                        'website': r_d['website'],
                        'version': r_d['version'],
@@ -167,8 +168,8 @@ class RockOnView(rfc.GenericView):
                          'it is not in available state. Uninstall the '
                          'Rock-on first and try again.' % ro.name)
                 handle_exception(Exception(e_msg), self.request)
-            #rock-on is in available state. we can safely wipe metadata
-            #and start fresh.
+            # rock-on is in available state. we can safely wipe metadata
+            # and start fresh.
             DContainer.objects.filter(rockon=ro).delete()
 
         for c in containers:
@@ -179,7 +180,8 @@ class RockOnView(rfc.GenericView):
                 if (co.rockon.id != ro.id):
                     e_msg = ('Duplicate container(%s) definition detected. '
                              'It belongs to another Rock-on(%s). Uninstall '
-                             'one of them and try again.' % (co.name, co.rockon.name))
+                             'one of them and try again.' %
+                             (co.name, co.rockon.name))
                     handle_exception(Exception(e_msg), self.request)
 
                 if (co.dimage.name != c_d['image']):
@@ -193,7 +195,7 @@ class RockOnView(rfc.GenericView):
             if (co is None):
                 co = DContainer(name=c, rockon=ro)
             defaults = {'tag': c_d.get('tag', 'latest'),
-                        'repo': 'na',}
+                        'repo': 'na', }
             io, created = DImage.objects.get_or_create(name=c_d['image'],
                                                        defaults=defaults)
             co.dimage = io
@@ -223,13 +225,15 @@ class RockOnView(rfc.GenericView):
                 if (DPort.objects.filter(containerp=p, container=co).exists()):
                     po = DPort.objects.get(containerp=p, container=co)
                     if (po.hostp_default != p_d['host_default']):
-                        po.hostp_default = self._next_available_default_hostp(p_d['host_default'])
+                        po.hostp_default = self._next_available_default_hostp(
+                            p_d['host_default'])
                     po.description = p_d['description']
                     po.protocol = p_d['protocol']
                     po.label = p_d['label']
                 else:
-                    #let's find next available default if default is already taken
-                    def_hostp = self._next_available_default_hostp(p_d['host_default'])
+                    # let's find next available default if default is already
+                    # taken
+                    def_hostp = self._next_available_default_hostp(p_d['host_default'])  # noqa E501
                     po = DPort(description=p_d['description'],
                                hostp=def_hostp, containerp=p,
                                hostp_default=def_hostp,
@@ -246,11 +250,11 @@ class RockOnView(rfc.GenericView):
             v_d = c_d.get('volumes', {})
             cur_vols = [vo.dest_dir for vo in
                         DVolume.objects.filter(container=co)]
-            # cur_vols can have entries not in the config for Shares mapped post
-            # install.
-            # If we have more volumes defined in the rock-on definition than
-            # we have previously seen for this rockon, ie volumes added in newer
-            # definition, then remove our existing volumes record.
+            # cur_vols can have entries not in the config for Shares mapped
+            # post install.  If we have more volumes defined in the rock-on
+            # definition than we have previously seen for this rockon, ie
+            # volumes added in newer definition, then remove our existing
+            # volumes record.
             if (len(set(v_d.keys()) - set(cur_vols)) != 0):
                 # but only if the current state is 'available' (to install) or
                 # 'install failed', otherwise raise warning about changing an
@@ -284,8 +288,8 @@ class RockOnView(rfc.GenericView):
                 vo_defaults = {'description': cv_d['description'],
                                'label': cv_d['label']}
 
-                vo, created = DVolume.objects.get_or_create(dest_dir=v, container=co,
-                                                            defaults=vo_defaults)
+                vo, created = DVolume.objects.get_or_create(
+                    dest_dir=v, container=co, defaults=vo_defaults)
                 # If this db entry previously existed then update it's
                 # description and label to that found in our rock-on json
                 # This ensures changes made in repo json to the description and
@@ -301,12 +305,14 @@ class RockOnView(rfc.GenericView):
             options = containers[c].get('opts', [])
             id_l = []
             for o in options:
-                #there are no unique constraints on this model, so we need this bandaid.
-                if (ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).count() > 1):
-                    ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).delete()
-                oo, created = ContainerOption.objects.get_or_create(container=co,
-                                                                    name=o[0],
-                                                                    val=o[1])
+                # there are no unique constraints on this model, so we need
+                # this bandaid.
+                if (ContainerOption.objects.filter(
+                        container=co, name=o[0], val=o[1]).count() > 1):
+                    ContainerOption.objects.filter(
+                        container=co, name=o[0], val=o[1]).delete()
+                oo, created = ContainerOption.objects.get_or_create(
+                    container=co, name=o[0], val=o[1])
                 id_l.append(oo.id)
             for oo in ContainerOption.objects.filter(container=co):
                 if (oo.id not in id_l):
@@ -321,13 +327,13 @@ class RockOnView(rfc.GenericView):
                 if (clo.name not in lsources):
                     clo.delete()
             for cl_d in ll:
-                sco = DContainer.objects.get(rockon=ro, name=cl_d['source_container'])
-                clo, created = DContainerLink.objects.get_or_create(source=sco,
-                                                                    destination=co)
+                sco = DContainer.objects.get(rockon=ro,
+                                             name=cl_d['source_container'])
+                clo, created = DContainerLink.objects.get_or_create(
+                    source=sco, destination=co)
                 clo.name = cl_d['name']
                 clo.save()
         self._update_cc(ro, r_d)
-
 
     def _sorted_keys(self, cd):
         sorted_keys = [''] * len(cd.keys())
@@ -344,7 +350,7 @@ class RockOnView(rfc.GenericView):
         return sorted_keys
 
     def _update_model(self, modelinst, ad):
-        for k,v in ad.iteritems():
+        for k, v in ad.iteritems():
             setattr(modelinst, k, v)
         modelinst.save()
 
@@ -356,9 +362,11 @@ class RockOnView(rfc.GenericView):
                         'label': ccc_d['label'], }
             cco, created = DCustomConfig.objects.get_or_create(
                 rockon=ro, key=k, defaults=defaults)
-            if (not created): self._update_model(cco, defaults)
+            if (not created):
+                self._update_model(cco, defaults)
         for cco in DCustomConfig.objects.filter(rockon=ro):
-            if (cco.key not in cc_d): cco.delete()
+            if (cco.key not in cc_d):
+                cco.delete()
 
     def _update_env(self, co, c_d):
         cc_d = c_d.get('environment', {})
@@ -368,13 +376,16 @@ class RockOnView(rfc.GenericView):
                         'label': ccc_d['label'], }
             cco, created = DContainerEnv.objects.get_or_create(
                 container=co, key=k, defaults=defaults)
-            if (not created): self._update_model(cco, defaults)
+            if (not created):
+                self._update_model(cco, defaults)
         for eo in DContainerEnv.objects.filter(container=co):
-            if (eo.key not in cc_d): eo.delete()
+            if (eo.key not in cc_d):
+                eo.delete()
 
     def _get_available(self):
         url_root = settings.ROCKONS.get('remote_metastore')
-        remote_root = ('%s/%s' % (url_root, settings.ROCKONS.get('remote_root')))
+        remote_root = ('%s/%s' %
+                       (url_root, settings.ROCKONS.get('remote_root')))
         msg = ('Error while processing remote metastore at %s' % remote_root)
         with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
@@ -383,9 +394,10 @@ class RockOnView(rfc.GenericView):
             root = response.json()
 
         meta_cfg = {}
-        for k,v in root.items():
+        for k, v in root.items():
             cur_meta_url = '%s/%s' % (url_root, v)
-            msg = ('Error while processing Rock-on profile at %s' % cur_meta_url)
+            msg = ('Error while processing Rock-on profile at %s' %
+                   cur_meta_url)
             with self._handle_exception(self.request, msg=msg):
                 cur_res = requests.get(cur_meta_url, timeout=10)
                 if (cur_res.status_code != 200):

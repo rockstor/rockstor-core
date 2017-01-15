@@ -19,13 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import time
 from rest_framework.response import Response
 from django.db import transaction
-from django.db.models import Q
 from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort,
                                  DCustomConfig, DContainerEnv)
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
-from rockon_helpers import (docker_status, start, stop, install, uninstall, update)
+from rockon_helpers import (docker_status, start, stop, install, uninstall,
+                            update)
 from system.services import superctl
 
 import logging
@@ -71,12 +71,13 @@ class RockOnIdView(rfc.GenericView):
 
             try:
                 dname = 'ztask-daemon'
-                e_msg = ('ztask daemon is not running and could not be started')
+                e_msg = ('ztask daemon is not running and could not be '
+                         'started')
                 o, e, rc = superctl(dname, 'status')
                 if (rc == 1):
                     superctl(dname, 'restart')
                     time.sleep(5)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
             finally:
@@ -98,7 +99,8 @@ class RockOnIdView(rfc.GenericView):
                         if (not Share.objects.filter(name=sname).exists()):
                             e_msg = ('Invalid Share(%s).' % sname)
                             handle_exception(Exception(e_msg), request)
-                        if (DVolume.objects.filter(container=co, dest_dir=s).exists()):
+                        if (DVolume.objects.filter(
+                                container=co, dest_dir=s).exists()):
                             so = Share.objects.get(name=sname)
                             vo = DVolume.objects.get(container=co,
                                                      dest_dir=s)
@@ -110,35 +112,41 @@ class RockOnIdView(rfc.GenericView):
                             dup_po = DPort.objects.get(hostp=p)
                             if (dup_po.container.rockon.id != rockon.id):
                                 if (dup_po.container.rockon.state in
-                                    ('installed', 'pending_install')):
-                                    #cannot claim from a rock-on that's installed.
+                                        ('installed', 'pending_install')):
+                                    # cannot claim from a rock-on that's
+                                    # installed.
                                     conf_ro = dup_po.container.rockon.name
                                     e_msg = (
                                         'Port(%s) belongs to another '
                                         'Rock-n(%s). Choose a different '
                                         'port. If you must choose the same '
-                                        'port, uninstall %s first and try again.'
-                                        % (p, conf_ro, conf_ro))
+                                        'port, uninstall %s first and try '
+                                        'again.' % (p, conf_ro, conf_ro))
                                     handle_exception(Exception(e_msg), request)
-                                #change the host port to next available.
-                                dup_po.hostp = self._next_available_default_hostp(dup_po.hostp)
+                                # change the host port to next available.
+                                dup_po.hostp = self._next_available_default_hostp(dup_po.hostp)  # noqa E501
                                 dup_po.save()
                         for co2 in DContainer.objects.filter(rockon=rockon):
-                            if (DPort.objects.filter(container=co2, containerp=port_map[p]).exists()):
-                                #found the container that needs this port.
-                                po = DPort.objects.get(container=co2, containerp=port_map[p])
+                            if (DPort.objects.filter(
+                                    container=co2,
+                                    containerp=port_map[p]).exists()):
+                                # found the container that needs this port.
+                                po = DPort.objects.get(container=co2,
+                                                       containerp=port_map[p])
                                 po.hostp = p
                                 po.save()
                                 break
                     for c in cc_map.keys():
-                        if (not DCustomConfig.objects.filter(rockon=rockon, key=c).exists()):
+                        if (not DCustomConfig.objects.filter(
+                                rockon=rockon, key=c).exists()):
                             e_msg = ('Invalid custom config key(%s)' % c)
                             handle_exception(Exception(e_msg), request)
                         cco = DCustomConfig.objects.get(rockon=rockon, key=c)
                         cco.val = cc_map[c]
                         cco.save()
                     for e in env_map.keys():
-                        if (not DContainerEnv.objects.filter(container=co, key=e).exists()):
+                        if (not DContainerEnv.objects.filter(
+                                container=co, key=e).exists()):
                             e_msg = ('Invalid environment variabled(%s)' % e)
                             handle_exception(Exception(e_msg), request)
                         ceo = DContainerEnv.objects.get(container=co, key=e)
@@ -153,7 +161,8 @@ class RockOnIdView(rfc.GenericView):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'uninstall it' % rockon.name)
                     handle_exception(Exception(e_msg), request)
-                if (rockon.status == 'started' or rockon.status == 'pending_start'):
+                if (rockon.status == 'started' or
+                        rockon.status == 'pending_start'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be uninstalled. Stop it and try again' %
                              rockon.name)
@@ -169,7 +178,8 @@ class RockOnIdView(rfc.GenericView):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'update it' % rockon.name)
                     handle_exception(Exception(e_msg), request)
-                if (rockon.status == 'started' or rockon.status == 'pending_start'):
+                if (rockon.status == 'started' or
+                        rockon.status == 'pending_start'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be updated. Stop it and try again' %
                              rockon.name)
@@ -182,17 +192,22 @@ class RockOnIdView(rfc.GenericView):
                             e_msg = ('Invalid Share(%s).' % sname)
                             handle_exception(Exception(e_msg), request)
                         so = Share.objects.get(name=sname)
-                        if (DVolume.objects.filter(container=co, share=so).exists()):
-                            e_msg = ('Share(%s) is already assigned to this Rock-on' % sname)
+                        if (DVolume.objects.filter(
+                                container=co, share=so).exists()):
+                            e_msg = ('Share(%s) is already assigned to '
+                                     'this Rock-on' % sname)
                             handle_exception(Exception(e_msg), request)
-                        if (DVolume.objects.filter(container=co, dest_dir=s).exists()):
-                            e_msg = ('Directory(%s) is already mapped for this Rock-on' % s)
+                        if (DVolume.objects.filter(
+                                container=co, dest_dir=s).exists()):
+                            e_msg = ('Directory(%s) is already mapped for '
+                                     'this Rock-on' % s)
                             handle_exception(Exception(e_msg), request)
                         if (not s.startswith('/')):
                             e_msg = ('Invalid Directory(%s). Must provide an '
                                      'absolute path. Eg: /data/media' % s)
                             handle_exception(Exception(e_msg), request)
-                        do = DVolume(container=co, share=so, uservol=True, dest_dir=s)
+                        do = DVolume(container=co, share=so, uservol=True,
+                                     dest_dir=s)
                         do.save()
                 rockon.state = 'pending_update'
                 rockon.save()

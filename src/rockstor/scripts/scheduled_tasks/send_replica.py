@@ -21,7 +21,7 @@ from django.conf import settings
 import zmq
 import logging
 logger = logging.getLogger(__name__)
-import time
+
 
 def main():
     rid = int(sys.argv[1])
@@ -56,6 +56,7 @@ def main():
     ctx.destroy(linger=0)
     sys.exit(0)
 
+
 if __name__ == '__main__':
-    #takes one argument. taskdef object id.
+    # takes one argument. taskdef object id.
     main()

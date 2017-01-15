@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 from django.conf import settings
 from osi import run_command
-from exceptions import CommandException
 import shutil
 from tempfile import mkstemp
 import os
@@ -49,7 +48,8 @@ def init_service_op(service_name, command, throw=True):
     """
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
                           'nslcd', 'netatalk', 'snmpd', 'docker', 'smartd',
-                          'shellinaboxd', 'nut-server', 'rockstor-bootstrap', 'rockstor')
+                          'shellinaboxd', 'nut-server', 'rockstor-bootstrap',
+                          'rockstor')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
@@ -141,8 +141,8 @@ def service_status(service_name, config=None):
                         None):
                     return out, err, rc
             # -1 not appropriate as inconsistent with bash return codes
-            # Returning 1 as Catchall for general errors.
-            # the calling system interprets -1 as enabled, 1 works for disabled.
+            # Returning 1 as Catchall for general errors.  the calling system
+            # interprets -1 as enabled, 1 works for disabled.
             return out, err, 1
     elif (service_name in ('replication', 'data-collector', 'ztask-daemon')):
         return superctl(service_name, 'status')
@@ -165,12 +165,17 @@ def service_status(service_name, config=None):
             # Second checks via auth for admin username
             # If both give us 0 rc Active Directory is running
             wbinfo_trust_cmd = [WBINFO, '-t', '--domain', config.get('domain')]
-            wbinfo_auth_credentials = '{}@{}%{}'.format(config.get('username'), config.get('domain'), config.get('password'))
-            wbinfo_auth_cmd = [WBINFO, '-a', wbinfo_auth_credentials, '--domain', config.get('domain')]
+            wbinfo_auth_credentials = '{}@{}%{}'.format(
+                config.get('username'), config.get('domain'),
+                config.get('password'))
+            wbinfo_auth_cmd = [WBINFO, '-a', wbinfo_auth_credentials,
+                               '--domain', config.get('domain')]
             wbinfo_trust = run_command(wbinfo_trust_cmd, throw=False)
             wbinfo_auth = run_command(wbinfo_auth_cmd, throw=False)
-            active_directory_rc = 0 if (wbinfo_trust[2] == 0 and wbinfo_auth[2] == 0) else 1
-            
+            active_directory_rc = 1
+            if (wbinfo_trust[2] == 0 and wbinfo_auth[2] == 0):
+                active_directory_rc = 0
+
             return '', '', active_directory_rc
         # bootstrap switch subsystem interprets -1 as ON so returning 1 instead
         return '', '', 1
@@ -228,7 +233,7 @@ def refresh_afp_config(afpl):
         if (rockstor_section is False):
             rockstor_afp_config(tfo, afpl)
     shutil.move(npath, AFP_CONFIG)
-    os.chmod(AFP_CONFIG, 0644)
+    os.chmod(AFP_CONFIG, 644)
 
 
 def update_nginx(ip, port):
@@ -239,20 +244,20 @@ def update_nginx(ip, port):
         http_server = False
         lines = ifo.readlines()
         for i in range(len(lines)):
-            if (re.search('server {', lines[i]) is not None and
-                re.search('listen.*80 default_server', lines[i+1]) is not None):
-                #found legacy http server section. don't rewrite it.
+            if ((re.search('server {', lines[i]) is not None and
+                 re.search('listen.*80 default_server', lines[i+1]) is not
+                 None)):
+                # found legacy http server section. don't rewrite it.
                 http_server = True
-            if (not http_server and
-                re.search('listen.*default_server', lines[i]) is not None):
-                substr = 'listen %d default_server' % port
+            if ((not http_server and
+                 re.search('listen.*default_server', lines[i]) is not None)):
+                substr = 'listen %s:%d default_server' % (ip, port)
                 if (ip is not None):
-                    substr = 'listen %s:%d default_server' % (ip, port)
+                    substr = 'listen %d default_server' % port
                 lines[i] = re.sub(r'listen.* default_server', substr, lines[i])
             if (not http_server):
                 tfo.write(lines[i])
             if (http_server is True and lines[i].strip() == '}'):
                 http_server = False
-
     move(npath, conf)
     superctl('nginx', 'restart')

@@ -30,7 +30,8 @@ from storageadmin.exceptions import RockStorAPIException
 # TODO: Only allow put, and patch where necessary. This works right now
 class GenericView(ListCreateAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication, RockstorOAuth2Authentication,)
+                              BasicAuthentication,
+                              RockstorOAuth2Authentication,)
     permission_classes = (IsAuthenticated, )
 
     @staticmethod
@@ -40,5 +41,5 @@ class GenericView(ListCreateAPIView):
             yield
         except RockStorAPIException:
             raise
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request, msg)

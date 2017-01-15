@@ -18,12 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system import services
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.models import NetworkConnection
-from django.conf import settings
 import ztask_helpers
 
 
@@ -46,24 +44,29 @@ class RockstorServiceView(BaseServiceDetailView):
                 try:
                     listener_port = int(config['listener_port'])
                 except ValueError:
-                    raise Exception('Listener Port must be a valid port number between 0-65535')
+                    raise Exception('Listener Port must be a valid port '
+                                    'number between 0-65535')
 
                 if (listener_port < 0 or listener_port > 65535):
-                    raise Exception('Invalid listener port(%d)' % listener_port)
+                    raise Exception('Invalid listener port(%d)'
+                                    % listener_port)
                 ni = config['network_interface']
-                if (len(ni.strip()) == 0): #empty string
+                if (len(ni.strip()) == 0):  # empty string
                     ztask_helpers.restart_rockstor.async(None, listener_port)
                 else:
                     try:
                         nco = NetworkConnection.objects.get(name=ni)
                     except NetworkConnection.DoesNotExist:
-                        raise Exception('Network Connection(%s) does not exist.' % ni)
-                    #@todo: we should make restart transparent to the user.
-                    ztask_helpers.restart_rockstor.async(nco.ipaddr, listener_port)
+                        raise Exception('Network Connection(%s) does not '
+                                        'exist.' % ni)
+                    # @todo: we should make restart transparent to the user.
+                    ztask_helpers.restart_rockstor.async(nco.ipaddr,
+                                                         listener_port)
                 self._save_config(service, config)
                 return Response()
-            except Exception, e:
-                e_msg = ('Failed to configure Rockstor service. Try again. Exception: %s' % e.__str__())
+            except Exception as e:
+                e_msg = ('Failed to configure Rockstor service. Try again. '
+                         'Exception: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         e_msg = ('%s service can only be configured from the UI. When '

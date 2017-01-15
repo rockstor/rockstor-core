@@ -34,16 +34,16 @@ class UsersConsole(BaseConsole):
         if (len(args) > 0):
             url = ('%s%s' % (self.base_url, args.split()[0]))
         user_info = api_call(url)
-        print user_info
+        print(user_info)
 
     def do_add(self, args):
         if (len(args) > 0):
             username, pw, utype = args.split()
             data = {'username': username,
                     'password': pw,
-                    'utype': utype,}
+                    'utype': utype, }
             user_info = api_call(self.base_url, data=data, calltype='post')
-            print user_info
+            print(user_info)
         else:
             self.do_help(args)
 
@@ -53,7 +53,7 @@ class UsersConsole(BaseConsole):
             data = {'password': pw}
             url = ('%s%s/' % (self.base_url, username))
             user_info = api_call(url, data=data, calltype='put')
-            print user_info
+            print(user_info)
         else:
             self.do_help(args)
 
@@ -62,6 +62,6 @@ class UsersConsole(BaseConsole):
             username = args.split()[0]
             url = ('%s%s' % (self.base_url, username))
             user_info = api_call(url, calltype='delete')
-            print user_info
+            print(user_info)
         else:
             self.do_help(args)

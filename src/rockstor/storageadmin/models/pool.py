@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from django.conf import settings
-from smart_manager.models import PoolUsage
 from fs.btrfs import pool_usage, usage_bound
 
 

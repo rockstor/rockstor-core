@@ -32,10 +32,12 @@ class User(models.Model):
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
     public_key = models.CharField(max_length=4096, null=True, blank=True)
-    smb_shares = models.ManyToManyField('SambaShare', related_name='admin_users')
+    smb_shares = models.ManyToManyField('SambaShare',
+                                        related_name='admin_users')
     shell = models.CharField(max_length=1024, null=True)
     homedir = models.CharField(max_length=1024, null=True)
-    email = models.CharField(max_length=1024, null=True, blank=True, validators=[validate_email])
+    email = models.CharField(max_length=1024, null=True, blank=True,
+                             validators=[validate_email])
     admin = models.BooleanField(default=True)
     group = models.ForeignKey(Group, null=True, blank=True)
 
@@ -45,8 +47,8 @@ class User(models.Model):
             return self.group.groupname
         if (self.gid is not None):
             groupname = grp.getgrgid(self.gid).gr_name
-            charset = chardet.detect( groupname )
-            groupname = groupname.decode( charset['encoding'] )
+            charset = chardet.detect(groupname)
+            groupname = groupname.decode(charset['encoding'])
             return groupname
         return None
 

@@ -23,7 +23,6 @@ from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.models import NetworkConnection
-from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -43,33 +42,40 @@ class ReplicationServiceView(BaseServiceDetailView):
                 try:
                     listener_port = int(config['listener_port'])
                 except ValueError:
-                    raise Exception('Listener Port must be a valid port number between 0-65535')
+                    raise Exception('Listener Port must be a valid port '
+                                    'number between 0-65535')
 
                 if (listener_port < 0 or listener_port > 65535):
-                    raise Exception('Invalid listener port(%d)' % listener_port)
+                    raise Exception('Invalid listener port(%d)'
+                                    % listener_port)
                 ni = config['network_interface']
                 if (not NetworkConnection.objects.filter(name=ni).exists()):
-                    raise Exception('Network Interface(%s) does not exist.' % ni)
+                    raise Exception('Network Interface(%s) does not exist.'
+                                    % ni)
                 self._save_config(service, config)
                 return Response()
-            except Exception, e:
-                e_msg = ('Failed to configure Replication. Try again. Exception: %s' % e.__str__())
+            except Exception as e:
+                e_msg = ('Failed to configure Replication. Try again. '
+                         'Exception: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'start'):
             try:
                 config = self._get_config(service)
             except:
-                e_msg = ('Configuration undefined. Configure the service first before starting.')
+                e_msg = ('Configuration undefined. Configure the service '
+                         'first before starting.')
                 handle_exception(Exception(e_msg), request)
 
-            if (not NetworkConnection.objects.filter(name=config['network_interface']).exists()):
-                e_msg = ('Network interface does not exist. Update your configuration and try again.')
+            if (not NetworkConnection.objects.filter(
+                    name=config['network_interface']).exists()):
+                e_msg = ('Network interface does not exist. Update your '
+                         'configuration and try again.')
                 handle_exception(Exception(e_msg), request)
         try:
             superctl(service.name, command)
             return Response()
-        except Exception, e:
+        except Exception as e:
             e_msg = ('Failed to %s Replication due to an error: %s' %
                      (command, e.__str__()))
             handle_exception(Exception(e_msg), request)

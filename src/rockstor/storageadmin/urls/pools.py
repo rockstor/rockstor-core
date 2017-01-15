@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import (PoolListView, PoolDetailView, PoolScrubView,
-                                PoolBalanceView, get_usage_bound, PoolShareListView)
+                                PoolBalanceView, get_usage_bound,
+                                PoolShareListView)
 from django.conf import settings
 
 pool_regex = settings.POOL_REGEX
@@ -35,5 +36,6 @@ urlpatterns = patterns(
     url(r'^/(?P<pname>%s)/scrub$' % pool_regex, PoolScrubView.as_view(),),
     url(r'^/(?P<pname>%s)/scrub/(?P<command>.*)$' % pool_regex,
         PoolScrubView.as_view(),),
-    url(r'^/(?P<pname>%s)/(?P<command>.*)$' % pool_regex, PoolDetailView.as_view(),),
+    url(r'^/(?P<pname>%s)/(?P<command>.*)$'
+        % pool_regex, PoolDetailView.as_view(),),
 )

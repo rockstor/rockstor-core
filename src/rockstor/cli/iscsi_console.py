@@ -21,7 +21,7 @@ from share_iscsi_console import ShareIscsiConsole
 from rest_util import api_call
 
 
-class  IscsiConsole(BaseConsole):
+class IscsiConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
@@ -30,12 +30,12 @@ class  IscsiConsole(BaseConsole):
 
     def do_status(self, args):
         iscsi_info = api_call(self.url)
-        print iscsi_info
+        print(iscsi_info)
 
     def put_wrapper(self, args, command):
-        input_data = {'command': command,}
+        input_data = {'command': command, }
         iscsi_info = api_call(self.url, data=input_data, calltype='put')
-        print iscsi_info
+        print(iscsi_info)
 
     def do_start(self, args):
         return self.put_wrapper(args, 'start')
@@ -51,4 +51,3 @@ class  IscsiConsole(BaseConsole):
                 si_console.onecmd(' '.join(input_share[1:]))
             else:
                 si_console.cmdloop()
-

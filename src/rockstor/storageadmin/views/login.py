@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-Login api. logs the user in, returns error if incorrect login .
-"""
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -41,5 +37,5 @@ class LoginView(APIView):
                 return Response({'msg': 'logged in'})
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-        except Exception, e:
+        except Exception as e:
             handle_exception(e, request)

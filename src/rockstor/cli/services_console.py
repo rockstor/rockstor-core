@@ -37,7 +37,7 @@ class ServicesConsole(BaseConsole):
     def do_list(self, args):
         url = BaseConsole.url + 'sm/services/'
         service_info = api_call(url)
-        print service_info
+        print(service_info)
 
     def do_nfs(self, args):
         return self.sub_service(args, 'nfs')
@@ -79,4 +79,3 @@ class ServicesConsole(BaseConsole):
             return self.do_help(args)
         if (len(args) == 0):
             sub_console.cmdloop()
-

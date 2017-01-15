@@ -22,10 +22,7 @@ from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
 
-"""
-Simple exception middleware that writes to rockstor log instead of emailing
-ADMINS.
-"""
+
 class ProdExceptionMiddleware(object):
 
     def process_exception(self, request, exception):

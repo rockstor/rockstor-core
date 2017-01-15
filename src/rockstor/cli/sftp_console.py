@@ -29,12 +29,12 @@ class SFTPConsole(BaseConsole):
 
     def do_status(self, args):
         sftp_info = api_call(self.url)
-        print sftp_info
+        print(sftp_info)
 
     def put_wrapper(self, args, command):
-        input_data = {'command': command,}
+        input_data = {'command': command, }
         sftp_info = api_call(self.url, data=input_data, calltype='put')
-        print sftp_info
+        print(sftp_info)
 
     def do_start(self, args):
         return self.put_wrapper(args, 'start')
@@ -49,24 +49,24 @@ class SFTPConsole(BaseConsole):
         """
         fields = args.split()
         shares = fields[0].split(',')
-        print shares
+        print(shares)
         input_data = {'shares': shares,
-                      'read_only': True,}
+                      'read_only': True, }
         url = BaseConsole.url + 'sftp'
         headers = {'content-type': 'application/json'}
         sftp_info = api_call(url, data=input_data,
                              headers=headers, calltype='post')
-        print sftp_info
+        print(sftp_info)
 
     def do_list_sftp(self, args):
         """
         list_sftp
         """
-        print api_call(BaseConsole.url + 'sftp')
+        print(api_call(BaseConsole.url + 'sftp'))
 
     def do_delete_sftp(self, args):
         """
         delete_sftp id
         """
         url = ('%ssftp/%s' % (BaseConsole.url, args))
-        print api_call(url, calltype='delete')
+        print(api_call(url, calltype='delete'))

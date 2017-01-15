@@ -30,7 +30,8 @@ class TaskDefinition(models.Model):
     enabled = models.BooleanField(default=True)
     crontab = models.CharField(max_length=64, null=True)
     crontabwindow = models.CharField(max_length=64, null=True)
-    #Added crontabwindow field to storage exec window value - null to true for backward compatibility with old scheduled tasks
+    # Added crontabwindow field to storage exec window value - null to true for
+    # backward compatibility with old scheduled tasks
 
     class Meta:
         app_label = 'smart_manager'

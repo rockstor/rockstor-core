@@ -32,6 +32,5 @@ class UpdateSubscription(models.Model):
     """status of subscription: active, inactive, expired etc.."""
     status = models.CharField(max_length=64)
 
-
     class Meta:
         app_label = 'storageadmin'

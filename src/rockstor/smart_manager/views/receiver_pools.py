@@ -30,7 +30,8 @@ class ReceiverPoolListView(APIView):
             auuid = self.kwargs.get('auuid', None)
             ao = Appliance.objects.get(uuid=auuid)
             url = ('https://%s:%s' % (ao.ip, ao.mgmt_port))
-            aw = APIWrapper(client_id=ao.client_id, client_secret=ao.client_secret, url=url)
+            aw = APIWrapper(client_id=ao.client_id,
+                            client_secret=ao.client_secret, url=url)
             response = aw.api_call('pools')
             res = [p['name'] for p in response['results']]
             return Response(res)
@@ -38,7 +39,7 @@ class ReceiverPoolListView(APIView):
             msg = ('Remote appliance with the given uuid(%s) does not exist.' %
                    auuid)
             handle_exception(Exception(msg), self.request)
-        except Exception, e:
+        except Exception as e:
             msg = ('Failed to retrieve list of Pools on the remote '
                    'appliance(%s). Make sure it is running and try again. '
                    'Here is the exact error: %s' % (ao.ip, e.__str__()))

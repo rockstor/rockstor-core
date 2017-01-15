@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-BTRFS = '/usr/sbin/btrfs'
-
 import re
-from django.conf import settings
 from storageadmin.models import Pool
 from system.osi import run_command
 from fs.btrfs import mount_root
+
+BTRFS = '/usr/sbin/btrfs'
+
 
 def main():
     for p in Pool.objects.all():
@@ -38,7 +38,7 @@ def main():
             qgroup_ids = []
             for l in o:
                 if (re.match('qgroupid', l) is not None or
-                    re.match('-------', l) is not None):
+                        re.match('-------', l) is not None):
                     continue
                 cols = l.strip().split()
                 if (len(cols) != 4):
@@ -54,9 +54,9 @@ def main():
                 run_command([BTRFS, 'qgroup', 'limit', 'none', q, mnt_pt])
 
             print('Finished processing pool(%s)' % p.name)
-        except Exception, e:
-            print ('Exception while qgroup-maxout of Pool(%s): %s' %
-                   (p.name, e.__str__()))
+        except Exception as e:
+            print('Exception while qgroup-maxout of Pool(%s): %s' %
+                  (p.name, e.__str__()))
 
 
 if __name__ == '__main__':

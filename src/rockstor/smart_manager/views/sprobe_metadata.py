@@ -28,8 +28,8 @@ class SProbeMetadataView(AdvancedSProbeView):
 
     def get_queryset(self, *args, **kwargs):
 
-        limit = self.request.query_params.get('limit',
-                                              settings.REST_FRAMEWORK['MAX_LIMIT'])
+        limit = self.request.query_params.get(
+            'limit', settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
         start_t1 = self.request.query_params.get('start_t1', None)
         start_t2 = self.request.query_params.get('start_t2', None)
@@ -51,7 +51,8 @@ class SProbeMetadataView(AdvancedSProbeView):
             filter_params['end__lte'] = end_t2
         if (state is not None):
             filter_params['state'] = state
-        return SProbe.objects.filter(**filter_params).order_by('-start')[0:limit]
+        return SProbe.objects.filter(
+            **filter_params).order_by('-start')[0:limit]
 
     def get_paginate_by(self, foo):
         download = self.request.query_params.get('download', None)

@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import Disk
 
+
 class SMARTCapability(models.Model):
     info = models.ForeignKey('SMARTInfo')
     name = models.CharField(max_length=1024)
@@ -27,6 +28,7 @@ class SMARTCapability(models.Model):
 
     class Meta:
         app_label = 'storageadmin'
+
 
 class SMARTAttribute(models.Model):
     info = models.ForeignKey('SMARTInfo')
@@ -44,12 +46,14 @@ class SMARTAttribute(models.Model):
     class Meta:
         app_label = 'storageadmin'
 
+
 class SMARTErrorLog(models.Model):
     info = models.ForeignKey('SMARTInfo')
     line = models.CharField(max_length=128)
 
     class Meta:
         app_label = 'storageadmin'
+
 
 class SMARTErrorLogSummary(models.Model):
     info = models.ForeignKey('SMARTInfo')
@@ -61,6 +65,7 @@ class SMARTErrorLogSummary(models.Model):
 
     class Meta:
         app_label = 'storageadmin'
+
 
 class SMARTTestLog(models.Model):
     info = models.ForeignKey('SMARTInfo')
@@ -74,12 +79,14 @@ class SMARTTestLog(models.Model):
     class Meta:
         app_label = 'storageadmin'
 
+
 class SMARTTestLogDetail(models.Model):
     info = models.ForeignKey('SMARTInfo')
     line = models.CharField(max_length=128)
 
     class Meta:
         app_label = 'storageadmin'
+
 
 class SMARTIdentity(models.Model):
     info = models.ForeignKey('SMARTInfo')
@@ -115,10 +122,12 @@ class SMARTIdentity(models.Model):
     supported = models.CharField('SMART Supported', max_length=64)
     enabled = models.CharField('SMART Enabled', max_length=64)
     version = models.CharField('Smartctl Version', max_length=64)
-    assessment = models.CharField('Overall Health Self-Assessment Test', max_length=64)
+    assessment = models.CharField('Overall Health Self-Assessment Test',
+                                  max_length=64)
 
     class Meta:
         app_label = 'storageadmin'
+
 
 class SMARTInfo(models.Model):
     disk = models.ForeignKey(Disk)

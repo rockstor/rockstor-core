@@ -21,23 +21,28 @@ from django.conf import settings
 from smart_manager.views import (ReplicaListView, ReplicaTrailListView,
                                  ReplicaShareListView, ReplicaShareDetailView,
                                  ReceiveTrailListView, ReceiveTrailDetailView,
-                                 ReplicaTrailDetailView, ReplicaDetailView, ReceiverPoolListView)
+                                 ReplicaTrailDetailView, ReplicaDetailView,
+                                 ReceiverPoolListView)
 share_regex = settings.SHARE_REGEX
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^$', ReplicaListView.as_view(), name='replica-view'),
-    url(r'^(?P<rid>[0-9]+)$', ReplicaDetailView.as_view(), name='replica-view'),
+    url(r'^(?P<rid>[0-9]+)$', ReplicaDetailView.as_view(),
+        name='replica-view'),
     url(r'^share/(?P<sname>%s)$' % share_regex, ReplicaDetailView.as_view(),
         name='replica-view'),
 
     url(r'^trail$', ReplicaTrailListView.as_view(), name='replica-view'),
-    url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailListView.as_view(), name='replica-view'),
+    url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailListView.as_view(),
+        name='replica-view'),
     url(r'^trail/(?P<rtid>[0-9]+)', ReplicaTrailDetailView.as_view(),
         name='replica-view'),
 
     url(r'^rshare$', ReplicaShareListView.as_view()),
     url(r'^rshare/(?P<rid>[0-9]+)$', ReplicaShareDetailView.as_view()),
-    url(r'^rshare/(?P<sname>%s)$' % share_regex, ReplicaShareDetailView.as_view()),
+    url(r'^rshare/(?P<sname>%s)$' % share_regex,
+        ReplicaShareDetailView.as_view()),
     url(r'^rtrail$', ReceiveTrailListView.as_view()),
     url(r'^rtrail/rshare/(?P<rid>[0-9]+)$', ReceiveTrailListView.as_view()),
     url(r'^rtrail/(?P<rtid>[0-9]+)', ReceiveTrailDetailView.as_view()),

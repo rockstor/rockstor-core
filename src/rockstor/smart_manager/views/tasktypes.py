@@ -16,14 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework.views import APIView
 from rest_framework import generics
-from rest_framework.response import Response
 from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from smart_manager.serializers import (TaskType, TaskTypeSerializer)
+
 
 class TaskTypeView(generics.ListAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
@@ -33,4 +32,4 @@ class TaskTypeView(generics.ListAPIView):
 
     def get_queryset(self):
         return [TaskType('scrub', 'scrub a pool'),
-                TaskType('snapshot', 'take snapshot of a pool'),]
+                TaskType('snapshot', 'take snapshot of a pool'), ]

@@ -47,12 +47,12 @@ class ShareIscsiConsole(BaseConsole):
         if (len(input_data) != 2):
             return self.do_help(args)
         iscsi_info = api_call(self.url, data=input_data, calltype='post')
-        print iscsi_info
+        print(iscsi_info)
 
     def do_disable(self, args):
         iscsi_info = api_call(self.url, data=None, calltype='delete')
-        print iscsi_info
+        print(iscsi_info)
 
     def do_list(self, args):
         iscsi_info = api_call(self.url, data=None)
-        print iscsi_info
+        print(iscsi_info)
