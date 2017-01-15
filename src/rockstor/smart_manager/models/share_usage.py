@@ -31,4 +31,3 @@ class ShareUsage(models.Model):
 
     class Meta:
         app_label = 'smart_manager'
-

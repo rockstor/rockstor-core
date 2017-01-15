@@ -29,8 +29,10 @@ class Replica(models.Model):
     dpool = models.CharField(max_length=4096)
     dshare = models.CharField(max_length=4096, null=True)
     enabled = models.BooleanField(default=False)
-    data_port = models.IntegerField(default=settings.REPLICATION.get('listener_port'))
-    meta_port = models.IntegerField(default=settings.REPLICATION.get('listener_port'))
+    data_port = models.IntegerField(
+        default=settings.REPLICATION.get('listener_port'))
+    meta_port = models.IntegerField(
+        default=settings.REPLICATION.get('listener_port'))
     """enabled/disabled state change ts"""
     ts = models.DateTimeField(null=True, db_index=True)
     crontab = models.CharField(max_length=64, null=True)
@@ -74,8 +76,10 @@ class ReplicaShare(models.Model):
     """ip from the appliance model of storageadmin"""
     appliance = models.CharField(max_length=4096)
     src_share = models.CharField(max_length=4096, null=True)
-    data_port = models.IntegerField(default=settings.REPLICATION.get('listener_port'))
-    meta_port = models.IntegerField(default=settings.REPLICATION.get('listener_port'))
+    data_port = models.IntegerField(
+        default=settings.REPLICATION.get('listener_port'))
+    meta_port = models.IntegerField(
+        default=settings.REPLICATION.get('listener_port'))
     """enabled/disabled state change ts"""
     ts = models.DateTimeField(null=True, db_index=True)
 

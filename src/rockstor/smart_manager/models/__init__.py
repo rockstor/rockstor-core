@@ -16,22 +16,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from cpu_metric import CPUMetric
-from disk_stat import DiskStat
-from load_avg import LoadAvg
-from mem_info import MemInfo
-from vm_stat import VmStat
-from service import (Service, ServiceStatus)
-from sprobe import SProbe
-from nfsd import (NFSDCallDistribution,
-                  NFSDClientDistribution)
-from nfsd_share import NFSDShareDistribution
-from pool_usage import PoolUsage
-from net_stat import NetStat
-from nfsd_share_client import NFSDShareClientDistribution
-from share_usage import ShareUsage
-from nfsd_uid_gid import NFSDUidGidDistribution
-from task_def import TaskDefinition
-from task import Task
-from share_replication import (Replica, ReplicaTrail, ReplicaShare,
-                               ReceiveTrail)
+from cpu_metric import CPUMetric  # noqa E501
+from disk_stat import DiskStat  # noqa E501
+from load_avg import LoadAvg  # noqa E501
+from mem_info import MemInfo  # noqa E501
+from vm_stat import VmStat  # noqa E501
+from service import (Service, ServiceStatus)  # noqa E501
+from sprobe import SProbe  # noqa E501
+from nfsd import (NFSDCallDistribution,  # noqa E501
+                  NFSDClientDistribution)  # noqa E501
+from nfsd_share import NFSDShareDistribution  # noqa E501
+from pool_usage import PoolUsage  # noqa E501
+from net_stat import NetStat  # noqa E501
+from nfsd_share_client import NFSDShareClientDistribution  # noqa E501
+from share_usage import ShareUsage  # noqa E501
+from nfsd_uid_gid import NFSDUidGidDistribution  # noqa E501
+from task_def import TaskDefinition  # noqa E501
+from task import Task  # noqa E501
+from share_replication import (Replica, ReplicaTrail, ReplicaShare,  # noqa E501
+                               ReceiveTrail)  # noqa E501

@@ -41,8 +41,5 @@ class NetStat(models.Model):
     compressed_tx = models.BigIntegerField(default=0)
     ts = models.DateTimeField(db_index=True)
 
-
     class Meta:
         app_label = 'smart_manager'
-
-
