@@ -21,7 +21,6 @@ import time
 from cli.api_wrapper import APIWrapper
 from fs.btrfs import device_scan
 from system.osi import run_command
-import requests
 from django.conf import settings
 from storageadmin.models import Setup
 
@@ -36,14 +35,14 @@ def main():
 
     try:
         device_scan()
-    except Exception, e:
-        print ('BTRFS device scan failed due to an exception. This indicates '
-               'a serious problem. Aborting. Exception: %s' % e.__str__())
+    except Exception as e:
+        print('BTRFS device scan failed due to an exception. This indicates '
+              'a serious problem. Aborting. Exception: %s' % e.__str__())
         sys.exit(1)
     print('BTRFS device scan complete')
 
-    #if the appliance is not setup, there's nothing more to do beyond
-    #device scan
+    # if the appliance is not setup, there's nothing more to do beyond
+    # device scan
     setup = Setup.objects.first()
     if (setup is None or setup.setup_user is False):
         print('Appliance is not yet setup.')
@@ -56,17 +55,17 @@ def main():
             aw.api_call('network')
             aw.api_call('commands/bootstrap', calltype='post')
             break
-        except Exception, e:
-            #Retry on every exception, primarily because of django-oauth related
-            #code behaving unpredictably while setting tokens. Retrying is a
-            #decent workaround for now(11302015).
+        except Exception as e:
+            # Retry on every exception, primarily because of django-oauth
+            # related code behaving unpredictably while setting
+            # tokens. Retrying is a decent workaround for now(11302015).
             if (num_attempts > 15):
                 print('Max attempts(15) reached. Connection errors persist. '
                       'Failed to bootstrap. Error: %s' % e.__str__())
                 sys.exit(1)
-            print('Exception occured while bootstrapping. This could be because '
-                  'rockstor.service is still starting up. will wait 2 seconds '
-                  'and try again. Exception: %s' % e.__str__())
+            print('Exception occured while bootstrapping. This could be '
+                  'because rockstor.service is still starting up. will '
+                  'wait 2 seconds and try again. Exception: %s' % e.__str__())
             time.sleep(2)
             num_attempts += 1
     print('Bootstrapping complete')
@@ -74,14 +73,15 @@ def main():
     try:
         print('Running qgroup cleanup. %s' % QGROUP_CLEAN)
         run_command([QGROUP_CLEAN])
-    except Exception, e:
+    except Exception as e:
         print('Exception while running %s: %s' % (QGROUP_CLEAN, e.__str__()))
 
     try:
         print('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
         run_command([QGROUP_MAXOUT_LIMIT])
-    except Exception, e:
-        print('Exception while running %s: %s' % (QGROUP_MAXOUT_LIMIT, e.__str__()))
+    except Exception as e:
+        print('Exception while running %s: %s' %
+              (QGROUP_MAXOUT_LIMIT, e.__str__()))
 
 
 if __name__ == '__main__':

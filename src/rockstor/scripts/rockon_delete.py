@@ -32,7 +32,8 @@ def delete_rockon():
     try:
         name = sys.argv[1]
     except IndexError:
-        sys.exit('Delete metadata, containers and images of a Rock-on\n\tUsage: %s <rockon name>' % sys.argv[0])
+        sys.exit('Delete metadata, containers and images of a '
+                 'Rock-on\n\tUsage: %s <rockon name>' % sys.argv[0])
 
     try:
         ro = RockOn.objects.get(name=name)
@@ -40,9 +41,9 @@ def delete_rockon():
         sys.exit('Rock-On(%s) does not exist' % name)
 
     for c in DContainer.objects.filter(rockon=ro).order_by('-launch_order'):
-        #We don't throw any exceptions because we want to ensure metadata is
-        #deleted for sure. It would be nice to fully delete containers and
-        #images, but that's not a hard requirement.
+        # We don't throw any exceptions because we want to ensure metadata is
+        # deleted for sure. It would be nice to fully delete containers and
+        # images, but that's not a hard requirement.
         run_command([DOCKER, 'stop', c.name], throw=False)
         run_command([DOCKER, 'rm', c.name], throw=False)
         run_command([DOCKER, 'rmi', c.dimage.name], throw=False)

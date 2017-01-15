@@ -18,13 +18,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime, time
 
-#Crontabwindow created as a separate module to avoid code duplication on snapshots and scrubs tasks
+# Crontabwindow created as a separate module to avoid code duplication on
+# snapshots and scrubs tasks
+
 
 def crontab_range(range):
     inrange = False
-    #logger.debug('Crontab window is %s' % range)
+    # logger.debug('Crontab window is %s' % range)
     if (range == '*-*-*-*-*-*'):
-        inrange = True #on range value equal to always (*-*-*-*-*-*), always exec tasks
+        # on range value equal to always (*-*-*-*-*-*), always exec tasks
+        inrange = True
     else:
         today = datetime.today()
         today_time = today.time()
@@ -37,10 +40,11 @@ def crontab_range(range):
         day_start = int(range_windows[4]) if range_windows[4] != '*' else 0
         day_stop = int(range_windows[5]) if range_windows[5] != '*' else 6
         time_start = time(hour_start, mins_start)
-        time_stop = time(hour_stop, mins_stop,59)
+        time_stop = time(hour_stop, mins_stop, 59)
 
-        #if crontab window isn't clockwise (unconvencional cron window) current time/day will never be true on start <= current <= end
-        #so we get it true if start <= current OR current <= end
+        # if crontab window isn't clockwise (unconvencional cron window)
+        # current time/day will never be true on start <= current <= end so we
+        # get it true if start <= current OR current <= end
 
         if (hour_start <= hour_stop):
             intime = time_start <= today_time <= time_stop

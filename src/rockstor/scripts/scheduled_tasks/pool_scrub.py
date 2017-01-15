@@ -20,21 +20,20 @@ import time
 import sys
 import json
 from datetime import datetime
-import crontabwindow #load crontabwindow module
-from storageadmin.models import (Share, Snapshot)
+import crontabwindow  # load crontabwindow module
 from smart_manager.models import (Task, TaskDefinition)
 from cli.api_wrapper import APIWrapper
 from django.utils.timezone import utc
-from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
+
 
 def update_state(t, pool, aw):
     url = ('pools/%s/scrub/status' % pool)
     try:
         status = aw.api_call(url, data=None, calltype='post', save_error=False)
         t.state = status['status']
-    except Exception, e:
+    except Exception as e:
         logger.error('Failed to get scrub status at %s' % url)
         t.state = 'error'
         logger.exception(e)
@@ -42,10 +41,13 @@ def update_state(t, pool, aw):
         t.save()
     return t.state
 
+
 def main():
     tid = int(sys.argv[1])
     cwindow = sys.argv[2] if len(sys.argv) > 2 else '*-*-*-*-*-*'
-    if (crontabwindow.crontab_range(cwindow)): #Performance note: immediately check task execution time/day window range to avoid other calls
+    if (crontabwindow.crontab_range(cwindow)):
+        # Performance note: immediately check task execution time/day window
+        # range to avoid other calls
         tdo = TaskDefinition.objects.get(id=tid)
         if (tdo.task_type != 'scrub'):
             return logger.error('task_type(%s) is not scrub.' % tdo.task_type)
@@ -60,7 +62,8 @@ def main():
                 cur_state = update_state(ll, meta['pool'], aw)
                 if (cur_state != 'error' and cur_state != 'finished'):
                     return logger.debug('Non terminal state(%s) for task(%d). '
-                                        'A new task will not be run.' % (cur_state, tid))
+                                        'A new task will not be run.' %
+                                        (cur_state, tid))
 
         now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
         t = Task(task_def=tdo, state='started', start=now)
@@ -69,7 +72,7 @@ def main():
             aw.api_call(url, data=None, calltype='post', save_error=False)
             logger.debug('Started scrub at %s' % url)
             t.state = 'running'
-        except Exception, e:
+        except Exception as e:
             logger.error('Failed to start scrub at %s' % url)
             t.state = 'error'
             logger.exception(e)
@@ -83,12 +86,14 @@ def main():
                 logger.debug('task(%d) finished with state(%s).' %
                              (tid, cur_state))
                 break
-            logger.debug('pending state(%s) for scrub task(%d). Will check again '
-                         'in 60 seconds.' % (cur_state, tid))
+            logger.debug('pending state(%s) for scrub task(%d). Will check '
+                         'again in 60 seconds.' % (cur_state, tid))
             time.sleep(60)
     else:
-        logger.debug('Cron scheduled task not executed because outside time/day window ranges')
+        logger.debug('Cron scheduled task not executed because outside '
+                     'time/day window ranges')
+
 
 if __name__ == '__main__':
-    #takes two arguments. taskdef object id and crontabwindow.
+    # takes two arguments. taskdef object id and crontabwindow.
     main()

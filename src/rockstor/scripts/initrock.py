@@ -46,32 +46,33 @@ RPM = '/usr/bin/rpm'
 YUM = '/usr/bin/yum'
 IP = '/usr/sbin/ip'
 
+
 def delete_old_kernels(logging, num_retain=5):
-    #Don't keep more than num_retain kernels
+    # Don't keep more than num_retain kernels
     o, e, rc = run_command([RPM, '-q', 'kernel-ml'])
-    ml_kernels = o[:-1] #last entry is an empty string.
+    ml_kernels = o[:-1]  # last entry is an empty string.
     ml_kernels = sorted(ml_kernels)
-    #centos kernels, may or may not be installed.
+    # centos kernels, may or may not be installed.
     centos_kernels = []
     o, e, rc = run_command([RPM, '-q', 'kernel'], throw=False)
-    if (rc == 0): centos_kernels = o[:-1]
+    if (rc == 0):
+        centos_kernels = o[:-1]
 
-    #Don't delete current running kernel
-    #Don't delete current default kernel
+    # Don't delete current running kernel
+    # Don't delete current default kernel
     running_kernel = os.uname()[2]
     default_kernel = settings.SUPPORTED_KERNEL_VERSION
     deleted = 0
     for k in centos_kernels:
         kv = k.split('kernel-')[1]
-        if (kv != running_kernel and
-            kv != default_kernel):
+        if (kv != running_kernel and kv != default_kernel):
             run_command([YUM, 'remove', '-y', k])
             deleted += 1
             logging.info('Deleted old Kernel: %s' % k)
-    for i in range(len(centos_kernels) + len(ml_kernels) - deleted - num_retain):
+    for i in range(len(centos_kernels) + len(ml_kernels) - deleted -
+                   num_retain):
         kv = ml_kernels[i].split('kernel-ml-')[1]
-        if (kv != running_kernel and
-            kv != default_kernel):
+        if (kv != running_kernel and kv != default_kernel):
             run_command([YUM, 'remove', '-y', ml_kernels[i]])
             logging.info('Deleted old Kernel: %s' % ml_kernels[i])
 
@@ -84,7 +85,8 @@ def init_update_issue():
     if (so.config is not None):
         config = json.loads(so.config)
         try:
-            ipaddr = NetworkConnection.objects.get(name=config['network_interface']).ipaddr
+            ipaddr = NetworkConnection.objects.get(
+                name=config['network_interface']).ipaddr
         except NetworkConnection.DoesNotExist:
             pass
     if (ipaddr is None):
@@ -112,10 +114,10 @@ def init_update_issue():
         if (ipaddr is None):
             ifo.write('The system does not yet have an ip address.\n')
             ifo.write('Rockstor cannot be configured using the web interface '
-                        'without this.\n\n')
+                      'without this.\n\n')
             ifo.write('Press Enter to receive updated network status\n')
-            ifo.write('If this message persists please login as root and configure '
-                      'your network using nmtui, then reboot.\n')
+            ifo.write('If this message persists please login as root and '
+                      'configure your network using nmtui, then reboot.\n')
         else:
             ifo.write('\nRockstor is successfully installed.\n\n')
             ifo.write('You can access the web-ui by pointing your browser to '
@@ -125,8 +127,8 @@ def init_update_issue():
 
 def update_nginx(logger):
     try:
-        #importing here because, APIWrapper needs postgres to be setup, so
-        #importing at the top results in failure the first time.
+        # importing here because, APIWrapper needs postgres to be setup, so
+        # importing at the top results in failure the first time.
         from smart_manager.models import Service
         from storageadmin.models import NetworkConnection
         ip = None
@@ -136,13 +138,15 @@ def update_nginx(logger):
             config = json.loads(so.config)
             port = config['listener_port']
             try:
-                ip = NetworkConnection.objects.get(name=config['network_interface']).ipaddr
+                ip = NetworkConnection.objects.get(
+                    name=config['network_interface']).ipaddr
             except NetworkConnection.DoesNotExist:
                 logger.error('Network interface(%s) configured for rockstor '
-                             'service does not exist' % config['network_interface'])
+                             'service does not exist' %
+                             config['network_interface'])
                 return
         services.update_nginx(ip, port)
-    except Exception, e:
+    except Exception as e:
         logger.error('Exception occured while trying to update nginx')
         logger.exception(e)
 
@@ -157,16 +161,17 @@ def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
         if (o[0] == supported_kernel_path):
             return logging.info('Supported kernel(%s) is already the default' %
                                 supported_kernel_path)
-    except Exception, e:
+    except Exception as e:
         return logger.error('Exception while listing the default kernel: %s'
                             % e.__str__())
 
     try:
         run_command([GRUBBY, '--set-default=%s' % supported_kernel_path])
         return logger.info('Default kernel set to %s' % supported_kernel_path)
-    except Exception, e:
-        return logger.error('Exception while setting kernel(%s) as default: %s' %
-                            (version, e.__str__()))
+    except Exception as e:
+        return logger.error('Exception while setting kernel(%s) as '
+                            'default: %s' % (version, e.__str__()))
+
 
 def update_tz(logging):
     # update timezone variable in settings.py
@@ -194,13 +199,14 @@ def update_tz(logging):
         os.remove(npath)
     return updated
 
+
 def bootstrap_sshd_config(logging):
     # Set AllowUsers if needed
     with open('/etc/ssh/sshd_config', 'a+') as sfo:
         found = False
         for line in sfo.readlines():
             if (re.match(settings.SSHD_HEADER, line) is not None or
-                re.match('AllowUsers ', line) is not None):
+                    re.match('AllowUsers ', line) is not None):
                 # if header is found,
                 found = True
                 logging.info('sshd_config already has the updates.'
@@ -211,6 +217,7 @@ def bootstrap_sshd_config(logging):
             sfo.write('AllowUsers root\n')
             logging.info('updated sshd_config')
             run_command([SYSCTL, 'restart', 'sshd'])
+
 
 def require_postgres(logging):
     rs_dest = '/etc/systemd/system/rockstor-pre.service'
@@ -225,6 +232,7 @@ def require_postgres(logging):
     run_command([SYSCTL, 'daemon-reload'])
     return logging.info('systemd daemon reloaded')
 
+
 def enable_rockstor_service(logging):
     rs_dest = '/etc/systemd/system/rockstor.service'
     rs_src = '%s/conf/rockstor.service' % BASE_DIR
@@ -236,6 +244,7 @@ def enable_rockstor_service(logging):
         run_command([SYSCTL, 'enable', 'rockstor'])
         logging.info('Done.')
     logging.info('rockstor service looks correct. Not updating.')
+
 
 def enable_bootstrap_service(logging):
     name = 'rockstor-bootstrap.service'
@@ -253,6 +262,7 @@ def enable_bootstrap_service(logging):
         return logging.info('Done.')
     return logging.info('%s looks correct. Not updating.' % name)
 
+
 def update_smb_service(logging):
     name = 'smb.service'
     ss_dest = '/etc/systemd/system/%s' % name
@@ -268,13 +278,14 @@ def update_smb_service(logging):
         return logging.info('Done.')
     return logging.info('%s looks correct. Not updating.' % name)
 
-def cleanup_rclocal(logging):
-    #this could potentially be problematic if users want to have a custom
-    #rc.local file, which is not really needed or recommended due to better
-    #systemd alternative method.
 
-    #This cleanup method can be safely removed when we know there are no
-    #<3.8-9 versions out there any more.
+def cleanup_rclocal(logging):
+    # this could potentially be problematic if users want to have a custom
+    # rc.local file, which is not really needed or recommended due to better
+    # systemd alternative method.
+
+    # This cleanup method can be safely removed when we know there are no
+    # <3.8-9 versions out there any more.
 
     rc_dest = '/etc/rc.d/rc.local'
     rc_src = '%s/conf/rc.local' % BASE_DIR
@@ -284,19 +295,23 @@ def cleanup_rclocal(logging):
         logging.info('updating %s' % rc_dest)
         shutil.copy(rc_src, rc_dest)
         logging.info('Done.')
-        return os.chmod(rc_dest, 0755)
+        return os.chmod(rc_dest, 755)
     logging.info('%s looks correct. Not updating.' % rc_dest)
 
+
 def downgrade_python(logging):
-    #With the release of CentOS 7.2, the new python package(2.7.5-34)
-    #backported some questionable changes that break gevent. So we downgrade to
-    #previous version: 2.7.5-18. I've moved these packages to rockrepo for
-    #now. Once the frankenversion resolves itself, we'll remove this workaround.
+    # With the release of CentOS 7.2, the new python package(2.7.5-34)
+    # backported some questionable changes that break gevent. So we downgrade
+    # to previous version: 2.7.5-18. I've moved these packages to rockrepo for
+    # now. Once the frankenversion resolves itself, we'll remove this
+    # workaround.
     o, e, rc = run_command([YUM, 'info', 'python'])
     for l in o:
         if (re.match('Release.*34.el7$', l) is not None):
             logging.info('Downgrading python and python-libs')
-            return downgrade_pkgs('python-2.7.5-18.el7_1.1', 'python-libs-2.7.5-18.el7_1.1')
+            return downgrade_pkgs('python-2.7.5-18.el7_1.1',
+                                  'python-libs-2.7.5-18.el7_1.1')
+
 
 def main():
     loglevel = logging.INFO
@@ -306,14 +321,15 @@ def main():
     set_def_kernel(logging)
     try:
         delete_old_kernels(logging)
-    except Exception, e:
-        logging.debug('Exception while deleting old kernels. Soft error. Moving on.')
+    except Exception as e:
+        logging.debug('Exception while deleting old kernels. Soft error. '
+                      'Moving on.')
         logging.exception(e)
 
     cert_loc = '%s/certs/' % BASE_DIR
     if (os.path.isdir(cert_loc)):
         if (not os.path.isfile('%s/rockstor.cert' % cert_loc) or
-            not os.path.isfile('%s/rockstor.key' % cert_loc)):
+                not os.path.isfile('%s/rockstor.key' % cert_loc)):
             shutil.rmtree(cert_loc)
 
     if (not os.path.isdir(cert_loc)):
@@ -338,20 +354,20 @@ def main():
         run_command([SUPERCTL, 'restart', 'nginx'])
 
     cleanup_rclocal(logging)
-    logging.info('Checking for flash and Running flash optimizations if appropriate.')
+    logging.info('Checking for flash and Running flash optimizations if '
+                 'appropriate.')
     run_command([FLASH_OPTIMIZE, '-x'], throw=False)
-    tz_updated = False
     try:
         logging.info('Updating the timezone from the system')
-        tz_updated = update_tz(logging)
-    except Exception, e:
+        update_tz(logging)
+    except Exception as e:
         logging.error('Exception while updating timezone: %s' % e.__str__())
         logging.exception(e)
 
     try:
         logging.info('Updating sshd_config')
         bootstrap_sshd_config(logging)
-    except Exception, e:
+    except Exception as e:
         logging.error('Exception while updating sshd_config: %s' % e.__str__())
 
     if (not os.path.isfile(STAMP)):
@@ -377,11 +393,12 @@ def main():
         logging.debug('storageadmin created')
         logging.info('Done')
         logging.info('Initializing app databases...')
-        run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])
+        run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])  # noqa E501
         logging.debug('rocky ROLE created')
-        run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f %s/conf/storageadmin.sql.in" % BASE_DIR])
+        run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f %s/conf/storageadmin.sql.in" % BASE_DIR])  # noqa E501
         logging.debug('storageadmin app database loaded')
-        run_command(['su', '-', 'postgres', '-c', "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR])
+        run_command(['su', '-', 'postgres', '-c',
+                     "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR])
         logging.debug('smartdb app database loaded')
         logging.info('Done')
         run_command(['cp', '-f', '%s/conf/postgresql.conf' % BASE_DIR,
@@ -393,7 +410,7 @@ def main():
         run_command([SYSCTL, 'restart', 'postgresql'])
         logging.info('Postgresql restarted')
         logging.info('Running app database migrations...')
-        migration_cmd = [DJANGO, 'migrate', '--noinput',]
+        migration_cmd = [DJANGO, 'migrate', '--noinput', ]
         fake_migration_cmd = migration_cmd + ['--fake']
         smartdb_opts = ['--database=smart_manager', 'smart_manager']
         run_command(fake_migration_cmd + ['storageadmin', '0001_initial'])
@@ -413,16 +430,15 @@ def main():
         logging.info('Running prepdb...')
         run_command([PREP_DB, ])
 
-
     logging.info('stopping firewalld...')
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
     logging.info('firewalld stopped and disabled')
     update_nginx(logging)
     try:
-        #downgrading python is a stopgap until it's fixed in upstream.
+        # downgrading python is a stopgap until it's fixed in upstream.
         downgrade_python(logging)
-    except Exception, e:
+    except Exception as e:
         logging.error('Exception while downgrading python: %s' % e.__str__())
         logging.exception(e)
 
@@ -436,15 +452,16 @@ def main():
             else:
                 # execute except block with message so we can try again.
                 raise Exception('default interface IP not yet configured')
-        except Exception, e:
+        except Exception as e:
             # only executed if there is an actual exception with
             # init_update_issue() or if it returns None so we can try again
             # regardless as in both instances we may succeed on another try.
             logging.debug('Exception occurred while running update_issue: %s. '
-                         'Trying again after 2 seconds.' % e.__str__())
+                          'Trying again after 2 seconds.' % e.__str__())
             if (i > 28):
                 logging.error('Failed to retrieve default interface IP address'
-                              ' necessary for remote administration. Quitting.')
+                              ' necessary for remote administration. '
+                              'Quitting.')
                 raise e
             time.sleep(2)
 

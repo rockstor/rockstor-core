@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 from system.osi import run_command
-from fs.btrfs import (mount_share, device_scan)
+from fs.btrfs import mount_share
 from storageadmin.models import Share
 
 DOCKER = '/usr/bin/docker'
@@ -30,6 +30,8 @@ def main():
     try:
         so = Share.objects.get(name=sname)
         mount_share(so, mnt_pt)
-    except Exception, e:
-        sys.exit('Failed to mount Docker root(%s). Exception: %s' % (mnt_pt, e.__str__()))
-    run_command([DOCKER, 'daemon', '--log-driver=journald', '-s', 'btrfs', '-g', mnt_pt])
+    except Exception as e:
+        sys.exit('Failed to mount Docker root(%s). Exception: %s' %
+                 (mnt_pt, e.__str__()))
+    run_command([DOCKER, 'daemon', '--log-driver=journald', '-s',
+                 'btrfs', '-g', mnt_pt])

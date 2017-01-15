@@ -20,10 +20,11 @@ import sys
 from django.db import transaction
 from storageadmin.models import OauthApp
 
+
 @transaction.atomic
 def main():
     if (len(sys.argv) < 2 or
-        (len(sys.argv) > 1 and sys.argv[1] == '-h')):
+            (len(sys.argv) > 1 and sys.argv[1] == '-h')):
         sys.exit('Usage: delete-api-key <name>')
     name = sys.argv[1]
     try:
