@@ -16,14 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-IR from systemtap
-
-First implementation:
-Have a predefined set of stap scripts (saved as script files?)
-User can turn a script on to collect data and turn off to stop
-"""
-
 from multiprocessing import (Process, Queue)
 import zmq
 import os
@@ -31,12 +23,11 @@ import time
 from datetime import datetime
 from smart_manager.models import SProbe
 from django.conf import settings
-from django.core.serializers import serialize
 from django.utils.timezone import utc
 from stap_worker import StapWorker
 import logging
 logger = logging.getLogger(__name__)
-from django.db import transaction
+
 
 class Stap(Process):
 
@@ -48,8 +39,8 @@ class Stap(Process):
 
     def _prune_workers(self, workers, sink_socket):
         for w in workers.keys():
-            #reading exitcode of properly exited child relieves it from
-            #being a zombie.
+            # reading exitcode of properly exited child relieves it from being
+            # a zombie.
             ec = workers[w].exitcode
             if (ec is not None):
                 if (ec != 0):
@@ -61,8 +52,8 @@ class Stap(Process):
 
     def _sink_put(self, sink, ro):
         ro.save()
-        #data = serialize("json", (ro,))
-        #sink.send_json(data)
+        # data = serialize("json", (ro,))
+        # sink.send_json(data)
 
     def _get_ro(self, rid, num_tries):
         for i in range(num_tries):
@@ -82,7 +73,7 @@ class Stap(Process):
             pull_socket.bind('tcp://%s:%d' % self.address)
             sink_socket = context.socket(zmq.PUSH)
             sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
-        except Exception, e:
+        except Exception as e:
             msg = ('Exception while creating initial sockets. Aborting.')
             logger.error(msg)
             logger.exception(e)
@@ -94,7 +85,7 @@ class Stap(Process):
                     logger.error(msg)
                     return -1
                 self.run_dispatcher(pull_socket, sink_socket)
-        except Exception, e:
+        except Exception as e:
             msg = ('Unhandled exception in smart probe dispatcher. Exiting.')
             logger.error(msg)
             logger.exception(e)
@@ -112,8 +103,8 @@ class Stap(Process):
             return
 
         if (task['action'] == 'start'):
-            #wait a little till the recipe instance is saved by the
-            #API. non-issue most of the time.
+            # wait a little till the recipe instance is saved by the
+            # API. non-issue most of the time.
             ro = self._get_ro(task['roid'], 20)
             if (ro is None):
                 return logger.error('Unable to retreive rid: %d. giving up.')
@@ -137,4 +128,3 @@ class Stap(Process):
             ro.state = 'stopped'
             ro.end = datetime.utcnow().replace(tzinfo=utc)
             return self._sink_put(sink_socket, ro)
-

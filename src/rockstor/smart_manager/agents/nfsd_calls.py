@@ -7,8 +7,10 @@ from smart_manager.models import (NFSDCallDistribution,
                                   SProbe, NFSDUidGidDistribution)
 from django.utils.timezone import utc
 
+
 def get_datetime(ts):
     return datetime.datetime.utcfromtimestamp(float(ts)).replace(tzinfo=utc)
+
 
 def process_nfsd_calls(output, rid, l):
 
@@ -43,6 +45,7 @@ def process_nfsd_calls(output, rid, l):
                                       sum_write=fields[8])
         no.save()
 
+
 def share_distribution(output, rid, l):
 
     ro = SProbe.objects.get(id=rid)
@@ -60,6 +63,7 @@ def share_distribution(output, rid, l):
                                    num_remove=fields[7], sum_read=fields[8],
                                    sum_write=fields[9])
         no.save()
+
 
 def share_client_distribution(output, rid, l):
 
@@ -82,6 +86,7 @@ def share_client_distribution(output, rid, l):
                                          sum_read=fields[9],
                                          sum_write=fields[10])
         no.save()
+
 
 def nfs_uid_gid_distribution(output, rid, l):
 

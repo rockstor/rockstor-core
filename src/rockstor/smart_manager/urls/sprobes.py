@@ -25,8 +25,8 @@ from smart_manager.views import (SProbeView, MemInfoView, NetStatView,
                                  SProbeMetadataView, SProbeMetadataDetailView,)
 
 
-urlpatterns = patterns('',
-
+urlpatterns = patterns(
+    '',
     # Smart probes
     url(r'^$', SProbeView.as_view(), name='probe-view'),
     url(r'^metadata$', SProbeMetadataView.as_view(), name='probe-view'),
