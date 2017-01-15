@@ -16,10 +16,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
-from system.services import systemctl
-import mock
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+
 
 class ShareAclTests(APITestMixin, APITestCase):
     fixtures = ['fix2.json']
@@ -28,21 +27,19 @@ class ShareAclTests(APITestMixin, APITestCase):
     @classmethod
     def setUpClass(cls):
         super(ShareAclTests, cls).setUpClass()
-        
-        cls.patch_mount_share = patch('storageadmin.views.share_acl.mount_share')
+
+        cls.patch_mount_share = patch('storageadmin.views.share_acl.'
+                                      'mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
-        
+
     @classmethod
     def tearDownClass(cls):
         super(ShareAclTests, cls).tearDownClass()
 
-       
     def test_post_requests(self):
-       
+
         # happy path
-        data = {'owner':'admin'}
+        data = {'owner': 'admin'}
         response = self.client.post('%s/share1/acl' % self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
-       

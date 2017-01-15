@@ -16,37 +16,31 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
-from system.services import systemctl
-import mock
-from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+
 
 class LoginTests(APITestMixin, APITestCase):
     fixtures = ['fix2.json']
     BASE_URL = '/api/login'
-    
 
     @classmethod
     def setUpClass(cls):
         super(LoginTests, cls).setUpClass()
 
-
     @classmethod
     def tearDownClass(cls):
         super(LoginTests, cls).tearDownClass()
-    
+
     def test_post_requests(self):
-       
+
         # happy path
-        data = {'username':'admin', 'password':'admin'}
+        data = {'username': 'admin', 'password': 'admin'}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-                         
+
         # Unauthorised user
-        data = {'username':'admin', 'password':'invalid'}
+        data = {'username': 'admin', 'password': 'invalid'}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_401_UNAUTHORIZED, msg=response.data)                 
-       
-                  
+                         status.HTTP_401_UNAUTHORIZED, msg=response.data)

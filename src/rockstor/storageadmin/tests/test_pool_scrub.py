@@ -18,9 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
-import mock
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+
 
 class PoolScrubTests(APITestMixin, APITestCase):
     fixtures = ['fix1.json']
@@ -31,62 +31,63 @@ class PoolScrubTests(APITestMixin, APITestCase):
         super(PoolScrubTests, cls).setUpClass()
 
         # post mocks
-        cls.patch_scrub_start = patch('storageadmin.views.pool_scrub.scrub_start')
+        cls.patch_scrub_start = patch('storageadmin.views.pool_scrub.'
+                                      'scrub_start')
         cls.mock_scrub_start = cls.patch_scrub_start.start()
         cls.mock_scrub_start.return_value = '001'
-        
-        cls.patch_scrub_status = patch('storageadmin.views.pool_scrub.scrub_status')
+
+        cls.patch_scrub_status = patch('storageadmin.views.pool_scrub.'
+                                       'scrub_status')
         cls.mock_scrub_status = cls.patch_scrub_status.start()
-        cls.mock_scrub_status.return_value = {'status': 'finished','duration':'20' }
-        
-       
+        cls.mock_scrub_status.return_value = {'status': 'finished',
+                                              'duration': '20'}
+
     @classmethod
     def tearDownClass(cls):
         super(PoolScrubTests, cls).tearDownClass()
 
     def test_get(self):
-        
+
         # get base URL
-        # 'pool1' is the pool already created and exits in fix1.json 
-        response = self.client.get('%s/pool1/scrub' %self.BASE_URL)
+        # 'pool1' is the pool already created and exits in fix1.json
+        response = self.client.get('%s/pool1/scrub' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
-        
+
     def test_post_requests(self):
-    
+
         # invalid pool
         data = {'force': 'true'}
-        response = self.client.post('%s/invalid/scrub' % self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, 
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        
+        response = self.client.post('%s/invalid/scrub' % self.BASE_URL,
+                                    data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+
         e_msg = ('Pool: invalid does not exist')
         self.assertEqual(response.data['detail'], e_msg)
-        
+
         # Invalid scrub command
         data = {'force': 'true'}
-        pool_name = 'pool1'
-        response = self.client.post('%s/pool1/scrub/invalid' % self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, 
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        
+        response = self.client.post('%s/pool1/scrub/invalid' % self.BASE_URL,
+                                    data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+
         e_msg = ('Unknown scrub command: invalid')
         self.assertEqual(response.data['detail'], e_msg)
-                         
+
         # happy path
         data = {'force': 'true'}
-        pool_name = 'pool1'
-        response = self.client.post('%s/pool1/scrub' % self.BASE_URL, data=data)
+        response = self.client.post('%s/pool1/scrub' % self.BASE_URL,
+                                    data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
-            
+
         # happy path
         data = {'force': 'true'}
-        pool_name = 'pool1'
-        response = self.client.post('%s/pool1/scrub/status' % self.BASE_URL, data=data)
+        response = self.client.post('%s/pool1/scrub/status' % self.BASE_URL,
+                                    data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-   
-   

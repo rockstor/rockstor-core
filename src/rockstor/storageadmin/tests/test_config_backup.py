@@ -16,10 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
-from system.services import systemctl
-import mock
-from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+
 
 class CongigBackupTests(APITestMixin, APITestCase):
     fixtures = ['fix2.json']
@@ -29,36 +27,32 @@ class CongigBackupTests(APITestMixin, APITestCase):
     def setUpClass(cls):
         super(CongigBackupTests, cls).setUpClass()
 
-
     @classmethod
     def tearDownClass(cls):
         super(CongigBackupTests, cls).tearDownClass()
-    
-       
-        
+
     def test_valid_requests(self):
-       
         # happy path POST
         response = self.client.post(self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
-        # Happy path POST with restore command
-        # test restore .... backup with id=1 is created when above post api call is made
-        data = {'command':'restore'}
+
+        # Happy path POST with restore command test restore .... backup with
+        # id=1 is created when above post api call is made
+        data = {'command': 'restore'}
         response = self.client.post('%s/1' % self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
+
         # Happy path DELETE
         response = self.client.delete('%s/1' % self.BASE_URL)
         self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)        
-                         
-    def test_config_upload_file(self):        
+                         status.HTTP_200_OK, msg=response.data)
+
+    def test_config_upload_file(self):
         # happy path POST
-        data = {'file-name':'file1', 'file':'file1 txt'}
-        response = self.client.post('%s/file-upload' % self.BASE_URL, data=data)
+        data = {'file-name': 'file1', 'file': 'file1 txt'}
+        response = self.client.post('%s/file-upload' % self.BASE_URL,
+                                    data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)       
-                        
+                         status.HTTP_200_OK, msg=response.data)

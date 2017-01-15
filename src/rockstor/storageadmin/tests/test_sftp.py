@@ -16,10 +16,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
-from system.services import systemctl
-import mock
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+
 
 class SFTPTests(APITestMixin, APITestCase):
     fixtures = ['fix2.json']
@@ -30,19 +29,20 @@ class SFTPTests(APITestMixin, APITestCase):
         super(SFTPTests, cls).setUpClass()
 
         # post mocks
-        
-        cls.patch_is_share_mounted = patch('storageadmin.views.sftp.is_share_mounted')
+
+        cls.patch_is_share_mounted = patch('storageadmin.views.sftp.'
+                                           'is_share_mounted')
         cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
         cls.mock_is_share_mounted.return_value = True
 
-        cls.patch_helper_mount_share = patch('storageadmin.views.sftp.helper_mount_share')
+        cls.patch_helper_mount_share = patch('storageadmin.views.sftp.'
+                                             'helper_mount_share')
         cls.mock_helper_mount_share = cls.patch_helper_mount_share.start()
         cls.mock_helper_mount_share.return_value = True
-        
+
         cls.patch_sftp_mount = patch('storageadmin.views.sftp.sftp_mount')
         cls.mock_sftp_mount = cls.patch_sftp_mount.start()
         cls.mock_sftp_mount.return_value = True
-        
 
     @classmethod
     def tearDownClass(cls):
@@ -59,8 +59,9 @@ class SFTPTests(APITestMixin, APITestCase):
 
         # get sftp with id
         response = self.client.get('%s/4' % self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
-        
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response)
+
     def test_post_requests(self):
         """
         invalid sftp operations
@@ -72,52 +73,53 @@ class SFTPTests(APITestMixin, APITestCase):
         data = {'read_only': 'true', }
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
 
         e_msg = ('Must provide share names')
         self.assertEqual(response.data['detail'], e_msg)
 
-       
         # create sftp with already existing share
-        data = {'shares':('share2',) }
+        data = {'shares': ('share2',)}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
 
         e_msg = ('Share(share2) is already exported via SFTP')
         self.assertEqual(response.data['detail'], e_msg)
-        
+
         # create sftp with share owned by root
-        data = {'shares':('share1',) }
+        data = {'shares': ('share1',)}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
 
-        e_msg = ('Share(share1) is owned by root. It cannot be exported via SFTP with root ownership')
+        e_msg = ('Share(share1) is owned by root. It cannot be exported via '
+                 'SFTP with root ownership')
         self.assertEqual(response.data['detail'], e_msg)
-                                          
-                         
+
         # happy path
-        data = {'shares':('share3',) , 'read_only': 'true',}
+        data = {'shares': ('share3',), 'read_only': 'true', }
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
-
     def test_delete_requests(self):
-
         """
         1. Delete sftp that does not exist
-        2. Delete sftp 
+        2. Delete sftp
         """
         # Delete sftp that does not exists
         sftp_id = 1
         response = self.client.delete('%s/%d' % (self.BASE_URL, sftp_id))
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
         e_msg = ('SFTP config for the id(1) does not exist')
         self.assertEqual(response.data['detail'], e_msg)
-  
+
         # happy path
         sftp_id = 4
         response = self.client.delete('%s/%d' % (self.BASE_URL, sftp_id))
