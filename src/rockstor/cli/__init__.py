@@ -1,2 +1,2 @@
 
-from api_wrapper import APIWrapper
+from api_wrapper import APIWrapper  # noqa F401

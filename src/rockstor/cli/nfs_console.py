@@ -21,6 +21,7 @@ from base_console import BaseConsole
 from share_nfs_console import ShareNFSConsole
 from rest_util import api_call
 
+
 class NFSConsole(BaseConsole):
 
     def __init__(self, prompt):
@@ -30,7 +31,7 @@ class NFSConsole(BaseConsole):
 
     def do_status(self, args):
         nfs_info = api_call(self.baseurl)
-        print nfs_info
+        print(nfs_info)
 
     def do_start(self, args):
         return self.put_wrapper(args, 'start')
@@ -41,7 +42,7 @@ class NFSConsole(BaseConsole):
     def put_wrapper(self, args, command):
         url = ('%s/%s' % (self.baseurl, command))
         nfs_info = api_call(url, calltype='post')
-        print nfs_info
+        print(nfs_info)
 
     def do_shares(self, args):
         pass
@@ -54,4 +55,3 @@ class NFSConsole(BaseConsole):
                 sn_console.onecmd(' '.join(input_share[1:]))
             else:
                 sn_console.cmdloop()
-

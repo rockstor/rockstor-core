@@ -30,12 +30,12 @@ class SMBConsole(BaseConsole):
 
     def do_status(self, args):
         smb_info = api_call(self.baseurl)
-        print smb_info
+        print(smb_info)
 
     def put_wrapper(self, args, command):
         url = ('%s/%s' % (self.baseurl, command))
         smb_info = api_call(url, calltype='post')
-        print smb_info
+        print(smb_info)
 
     def do_start(self, args):
         return self.put_wrapper(args, 'start')

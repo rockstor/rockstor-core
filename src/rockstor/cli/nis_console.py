@@ -35,15 +35,15 @@ class NISConsole(BaseConsole):
         url = ('%s/config' % self.baseurl)
         fields = args.split()
         input_data = {'config': {'domain': fields[0],
-                                 'server': fields[1],},}
+                                 'server': fields[1], }, }
         headers = {'content-type': 'application/json'}
-        nis_info = api_call(url, data=input_data, calltype='post',
-                            headers=headers)
+        api_call(url, data=input_data, calltype='post',
+                 headers=headers)
 
     def do_status(self, args):
         url = BaseConsole.url + 'sm/services/nis'
         nfs_info = api_call(url)
-        print nfs_info
+        print(nfs_info)
 
     def do_start(self, args):
         return self.put_wrapper(args, 'start')
@@ -54,4 +54,4 @@ class NISConsole(BaseConsole):
     def put_wrapper(self, args, command):
         url = ('%s/%s' % (self.baseurl, command))
         nis_info = api_call(url, calltype='post')
-        print nis_info
+        print(nis_info)

@@ -49,7 +49,7 @@ class BackupPluginConsole(BaseConsole):
         status
         """
         url = ('%s/plugin/%s' % (self.url, command))
-        print api_call(url, calltype='post')
+        print(api_call(url, calltype='post'))
 
     @api_error
     def do_add(self, args):
@@ -70,7 +70,7 @@ class BackupPluginConsole(BaseConsole):
         headers = {'content-type': 'application/json'}
         po = api_call(self.url, data=input_data, calltype='post',
                       headers=headers)
-        print po
+        print(po)
 
     @api_error
     def do_list(self, args):
@@ -80,7 +80,7 @@ class BackupPluginConsole(BaseConsole):
         list
         """
         ro = api_call(self.url)
-        print ro
+        print(ro)
 
     @api_error
     def do_delete(self, args):
@@ -91,7 +91,7 @@ class BackupPluginConsole(BaseConsole):
         """
         url = ('%s/%s' % (self.url, args))
         po = api_call(url, calltype='delete')
-        print po
+        print(po)
 
     @api_error
     def do_toggle(self, args):
@@ -108,7 +108,7 @@ class BackupPluginConsole(BaseConsole):
         headers = {'content-type': 'application/json'}
         po = api_call(url, data=input_data, calltype='put',
                       headers=headers)
-        print po
+        print(po)
 
     @api_error
     def do_trail(self, args):
@@ -119,4 +119,4 @@ class BackupPluginConsole(BaseConsole):
         """
         url = ('%s/trail/policy/%s' % (self.url, args))
         to = api_call(url)
-        print to
+        print(to)

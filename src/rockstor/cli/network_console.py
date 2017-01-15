@@ -36,7 +36,7 @@ class NetworkConsole(BaseConsole):
         scan
         """
         network_info = api_call(self.baseurl, calltype='post')
-        print network_info
+        print(network_info)
 
     @api_error
     def do_list(self, args):
@@ -47,24 +47,24 @@ class NetworkConsole(BaseConsole):
 
     @api_error
     def do_config(self, args):
-        """
-        configure a network interface. dhcp and static ipv4 configurations are
+        """configure a network interface. dhcp and static ipv4 configurations are
         supported. Note that there is a risk of losing connectivity to the
         system. So this is best done via console connection.
 
         to configure using dhcp:
         config <interface> -d
 
-        to configure static ip:
-        config <interface> -s <ip_addr> <netmask> <gateway> <dns_servers> <domain>
+        to configure static ip: config <interface> -s <ip_addr> <netmask>
+        <gateway> <dns_servers> <domain>
+
         """
         fields = args.split()
         if (len(fields) < 2):
             return self.do_help(args)
         url = ('%s/%s' % (self.baseurl, fields[0]))
         if (fields[1] == '-d'):
-            print api_call(url, data={'boot_protocol': 'dhcp', },
-                           calltype='put')
+            print(api_call(url, data={'boot_protocol': 'dhcp', },
+                           calltype='put'))
         elif (fields[1] == '-s'):
             if (len(fields) < 7):
                 return self.do_help(args[:2])
@@ -75,6 +75,6 @@ class NetworkConsole(BaseConsole):
                           'dns_servers': fields[5],
                           'domain': fields[6],
                           'itype': 'management', }
-            print api_call(url, data=input_data, calltype='put')
+            print(api_call(url, data=input_data, calltype='put'))
         else:
             return self.do_help(args)

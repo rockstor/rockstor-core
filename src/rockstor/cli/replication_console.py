@@ -17,10 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from base_console import BaseConsole
-from share_nfs_console import ShareNFSConsole
-from share_smb_console import ShareSMBConsole
-from share_iscsi_console import ShareIscsiConsole
-from snapshot_console import SnapshotConsole
 from rest_util import api_call
 
 
@@ -42,10 +38,10 @@ class ReplicationConsole(BaseConsole):
         fields = args.split()
         input_data = {'share': fields[0],
                       'appliance': fields[1],
-                      'pool' : fields[2],
-                      'frequency': fields[3],}
+                      'pool': fields[2],
+                      'frequency': fields[3], }
         ro = api_call(self.url, data=input_data, calltype='post')
-        print ro
+        print(ro)
 
     def do_list(self, args):
         """
@@ -54,7 +50,7 @@ class ReplicationConsole(BaseConsole):
         list <share_name>
         """
         ro = api_call(self.url)
-        print ro
+        print(ro)
 
     def do_enable(self, args):
         """
@@ -62,10 +58,10 @@ class ReplicationConsole(BaseConsole):
 
         enable replica_id
         """
-        input_data = {'enabled': True,}
+        input_data = {'enabled': True, }
         url = ('%s%s' % (self.url, args))
         ro = api_call(url, data=input_data, calltype='put')
-        print ro
+        print(ro)
 
     def do_disable(self, args):
         """
@@ -73,8 +69,7 @@ class ReplicationConsole(BaseConsole):
 
         disable replica_id
         """
-        input_data = {'enabled': False,}
+        input_data = {'enabled': False, }
         url = ('%s%s' % (self.url, args))
         ro = api_call(url, data=input_data, calltype='put')
-        print ro
-
+        print(ro)

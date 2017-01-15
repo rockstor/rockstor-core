@@ -21,7 +21,6 @@ import requests
 import time
 import json
 import base64
-import settings
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
 from base_console import BaseConsole
@@ -56,7 +55,7 @@ def set_token(client_id=None, client_secret=None, url=None, logger=None):
         global API_TOKEN
         API_TOKEN = content['access_token']
         return API_TOKEN
-    except Exception, e:
+    except Exception as e:
         if (logger is not None):
             logger.exception(e)
         msg = ('Exception while setting access_token for url(%s). Make sure '
@@ -69,12 +68,12 @@ def api_error(console_func):
     def arg_wrapper(a1, a2):
         try:
             return console_func(a1, a2)
-        except RockStorAPIException, e:
-            print ('Operation failed due to the following error returned '
-                   'from the server:')
-            print ('-----------------------------------------')
-            print e.detail
-            print ('-----------------------------------------')
+        except RockStorAPIException as e:
+            print('Operation failed due to the following error returned '
+                  'from the server:')
+            print('-----------------------------------------')
+            print(e.detail)
+            print('-----------------------------------------')
             return -1
     return arg_wrapper
 
@@ -114,7 +113,7 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
                         efo.write('%s\n' % line)
                     print('Error detail is saved at %s' % err_file)
             if ('detail' in error_d):
-                if (error_d['detail'] == 'Authentication credentials were not provided.'):
+                if (error_d['detail'] == 'Authentication credentials were not provided.'):  # noqa E501
                     set_token()
                     return api_call(url, data=data, calltype=calltype,
                                     headers=headers, save_error=save_error)
@@ -131,9 +130,8 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
 
 
 def print_pools_info(pools_info):
-    if (pools_info is None or
-        not isinstance(pools_info, dict) or
-        len(pools_info) == 0):
+    if (pools_info is None or not isinstance(pools_info, dict) or
+            len(pools_info) == 0):
         print('There are no pools on the appliance.')
         return
     try:
@@ -145,14 +143,15 @@ def print_pools_info(pools_info):
         print("Name\tSize\tFree\tReclaimable\tRaid")
         for p in pools_info:
             print_pool_info(p)
-    except Exception, e:
+    except Exception as e:
+        print(e)
         print('Error displaying pool info')
 
 
 def print_pool_info(p, header=False):
     try:
         if header:
-            print "%(c)sPool info%(e)s\n" % BaseConsole.c_params
+            print("%(c)sPool info%(e)s\n" % BaseConsole.c_params)
             print("Name\tSize\tFree\tReclaimable\tRaid")
         p['size'] = sizeof_fmt(p['size'])
         p['free'] = sizeof_fmt(p['free'])
@@ -160,32 +159,30 @@ def print_pool_info(p, header=False):
         print('%s%s%s\t%s\t%s\t%s\t%s' % (BaseConsole.c, p['name'],
                                           BaseConsole.e, p['size'], p['free'],
                                           p['reclaimable'], p['raid']))
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         print('Error displaying pool info')
 
 
 def print_scrub_status(pool_name, scrub_info):
     try:
-        print '%sScrub status for %s%s' % (BaseConsole.c, pool_name,
-                                           BaseConsole.e)
+        print('%sScrub status for %s%s' % (BaseConsole.c, pool_name,
+                                           BaseConsole.e))
         kb_scrubbed = None
         if ('kb_scrubbed' in scrub_info):
             kb_scrubbed = scrub_info['kb_scrubbed']
         status = scrub_info['status']
-        print '%sStatus%s:  %s' % (BaseConsole.c, BaseConsole.e, status)
+        print('%sStatus%s:  %s' % (BaseConsole.c, BaseConsole.e, status))
         if (status == 'finished'):
-            print '%sKB Scrubbed%s:  %s' % (BaseConsole.c, BaseConsole.e,
-                                            kb_scrubbed)
-    except Exception, e:
-        print e
+            print('%sKB Scrubbed%s:  %s' % (BaseConsole.c, BaseConsole.e,
+                                            kb_scrubbed))
+    except Exception as e:
+        print(e)
         print('Error displaying scrub status')
 
 
 def print_shares_info(shares):
-    if (shares is None or
-        not isinstance(shares, dict) or
-        len(shares) == 0):
+    if (shares is None or not isinstance(shares, dict) or len(shares) == 0):
         print('There are no shares in the system')
         return
     try:
@@ -197,27 +194,26 @@ def print_shares_info(shares):
         print("Name\tSize(KB)\tUsage(KB)\tPool")
         for s in shares:
             print_share_info(s)
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         print('Error displaying share info')
 
 
 def print_share_info(s, header=False):
     try:
         if header:
-            print "%(c)sShare info%(e)s\n" % BaseConsole.c_params
+            print("%(c)sShare info%(e)s\n" % BaseConsole.c_params)
             print("Name\tSize(KB)\tUsage(KB)\tPool")
         print('%s\t%s\t%s\t%s' %
               (s['name'], s['size'], s['r_usage'], s['pool']['name']))
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         print('Error displaying share info')
 
 
 def print_disks_info(disks_info):
-    if (disks_info is None or
-        not isinstance(disks_info, dict) or
-        len(disks_info) == 0):
+    if (disks_info is None or not isinstance(disks_info, dict) or
+            len(disks_info) == 0):
         print('There are no disks on the appliance.')
         return
     try:
@@ -233,27 +229,27 @@ def print_disks_info(disks_info):
         print("Name\tSize\tPool")
         for d in disks_info:
             print_disk_info(d)
-    except Exception, e:
+    except Exception as e:
+        print(e)
         print('Error displaying disk info')
 
 
 def print_disk_info(d, header=False):
     try:
         if header:
-            print "%(u)sDisk info%(e)s\n" % BaseConsole.c_params
+            print("%(u)sDisk info%(e)s\n" % BaseConsole.c_params)
             print("Name\tSize\tPool")
         d['size'] = sizeof_fmt(d['size'])
         print('%s%s%s\t%s\t%s' % (BaseConsole.c, d['name'],
                                   BaseConsole.e, d['size'], d['pool_name']))
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         print('Error displaying disk info')
 
 
 def print_export_info(export_info):
-    if (export_info is None or
-        not isinstance(export_info, dict) or
-        len(export_info) == 0):
+    if (export_info is None or not isinstance(export_info, dict) or
+            len(export_info) == 0):
         print('%(c)sThere are no exports for this share%(e)s' %
               BaseConsole.c_params)
         return
@@ -266,15 +262,15 @@ def print_export_info(export_info):
             print('%(c)sThere are no exports for this share%(e)s' %
                   BaseConsole.c_params)
         else:
-            print ("%(c)sList of exports for this share%(e)s" %
-                   BaseConsole.c_params)
+            print("%(c)sList of exports for this share%(e)s" %
+                  BaseConsole.c_params)
             print("Id\tMount\tClient\tWritable\tSyncable\tEnabled")
             for e in export_info:
                 print('%s\t%s\t%s\t%s\t%s\t%s' %
                       (e['id'], e['exports'][0]['mount'], e['host_str'],
                        e['editable'], e['syncable'], e['enabled']))
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         print('Error displaying nfs export information')
 
 

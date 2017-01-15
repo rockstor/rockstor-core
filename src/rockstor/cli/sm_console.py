@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from base_console import BaseConsole
 from rest_util import api_call
 
+
 class SMConsole(BaseConsole):
 
     def __init__(self, prompt):
@@ -32,9 +33,9 @@ class SMConsole(BaseConsole):
         if (args is not None):
             tap_fields = args.split()
             url = ('%s%s/%s/data?%s' % (self.baseurl, tap_fields[0],
-                                          tap_fields[1], tap_fields[2]))
+                                        tap_fields[1], tap_fields[2]))
             stap_info = api_call(url)
-            print stap_info
+            print(stap_info)
         else:
             return self.do_help(args)
 
@@ -42,20 +43,20 @@ class SMConsole(BaseConsole):
         if (args is not None):
             tap_fields = args.split()
             url = ('%s%s?%s' % (self.baseurl, tap_fields[0], tap_fields[1]))
-            print api_call(url)
+            print(api_call(url))
         else:
             return self.do_help(args)
 
     def do_list(self, args):
-        print api_call(self.baseurl)
+        print(api_call(self.baseurl))
 
     def do_stop(self, args):
         if (args is not None):
             tap_fields = args.split()
             url = ('%s%s/%s/stop' % (self.baseurl, tap_fields[0],
-                                      tap_fields[1]))
+                                     tap_fields[1]))
             stap_info = api_call(url, data=None, calltype='post')
-            print stap_info
+            print(stap_info)
         else:
             return self.do_help(args)
 
@@ -67,8 +68,8 @@ class SMConsole(BaseConsole):
         if (len(tap_fields) > 0):
             tname = tap_fields[0]
             url = ('%s%s' % (self.baseurl, tname))
-            stap_info = api_call(url, data={'display_name': tap_fields[1],},
+            stap_info = api_call(url, data={'display_name': tap_fields[1], },
                                  calltype='post')
-            print stap_info
+            print(stap_info)
         else:
             return self.do_help(args)

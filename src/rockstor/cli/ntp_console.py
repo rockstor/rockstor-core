@@ -34,14 +34,14 @@ class NTPConsole(BaseConsole):
         """
         url = ('%s/config' % self.baseurl)
         fields = args.split()
-        input_data = {'config': {'server': fields[0],},}
+        input_data = {'config': {'server': fields[0], }, }
         headers = {'content-type': 'application/json'}
         api_call(url, data=input_data, calltype='post',
                  headers=headers)
 
     def do_status(self, args):
         ntp_info = api_call(self.baseurl)
-        print ntp_info
+        print(ntp_info)
 
     def do_start(self, args):
         return self.put_wrapper(args, 'start')
@@ -52,4 +52,4 @@ class NTPConsole(BaseConsole):
     def put_wrapper(self, args, command):
         url = ('%s/%s' % (self.baseurl, command))
         ntp_info = api_call(url, calltype='post')
-        print ntp_info
+        print(ntp_info)
