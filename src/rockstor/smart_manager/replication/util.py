@@ -16,10 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
-import sys
 import time
-from django.utils.timezone import utc
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Appliance
 from cli import APIWrapper
@@ -43,7 +40,7 @@ class ReplicationMixin(object):
         try:
             url = ('sm/replicas/trail/%d' % rtid)
             return self.law.api_call(url, data=data, calltype='put')
-        except Exception, e:
+        except Exception as e:
             msg = ('Exception while updating replica(%s) status to %s: %s' %
                    (url, data['status'], e.__str__()))
             raise Exception(msg)
@@ -52,9 +49,10 @@ class ReplicationMixin(object):
         try:
             url = ('sm/replicas/%d' % rid)
             headers = {'content-type': 'application/json', }
-            return self.law.api_call(url, data={'enabled': False, }, calltype='put',
-                                     save_error=False, headers=headers)
-        except Exception, e:
+            return self.law.api_call(url, data={'enabled': False, },
+                                     calltype='put', save_error=False,
+                                     headers=headers)
+        except Exception as e:
             msg = ('Exception while disabling replica(%s): %s' %
                    (url, e.__str__()))
             raise Exception(msg)
@@ -72,23 +70,26 @@ class ReplicationMixin(object):
     def create_rshare(self, data):
         try:
             url = 'sm/replicas/rshare'
-            rshare = self.law.api_call(url, data=data, calltype='post', save_error=False)
+            rshare = self.law.api_call(url, data=data, calltype='post',
+                                       save_error=False)
             return rshare['id']
-        except RockStorAPIException, e:
-            if (e.detail == 'Replicashare(%s) already exists.' % data['share']):
+        except RockStorAPIException as e:
+            if (e.detail == 'Replicashare(%s) already exists.' % data['share']):  # noqa E501
                 return self.rshare_id(data['share'])
             raise e
 
     def create_receive_trail(self, rid, data):
         url = ('sm/replicas/rtrail/rshare/%d' % rid)
-        rt = self.law.api_call(url, data=data, calltype='post', save_error=False)
+        rt = self.law.api_call(url, data=data, calltype='post',
+                               save_error=False)
         return rt['id']
 
     def update_receive_trail(self, rtid, data):
         url = ('sm/replicas/rtrail/%d' % rtid)
         try:
-            return self.law.api_call(url, data=data, calltype='put', save_error=False)
-        except Exception, e:
+            return self.law.api_call(url, data=data, calltype='put',
+                                     save_error=False)
+        except Exception as e:
             msg = ('Exception while updating receive trail(%s): %s' %
                    (url, e.__str__()))
             raise Exception(msg)
@@ -96,9 +97,11 @@ class ReplicationMixin(object):
     def prune_trail(self, url, days=7):
         try:
             data = {'days': days, }
-            return self.law.api_call(url, data=data, calltype='delete', save_error=False)
-        except Exception, e:
-            msg = ('Exception while pruning trail for url(%s): %s' % (url, e.__str__()))
+            return self.law.api_call(url, data=data, calltype='delete',
+                                     save_error=False)
+        except Exception as e:
+            msg = ('Exception while pruning trail for url(%s): %s'
+                   % (url, e.__str__()))
             raise Exception(msg)
 
     def prune_receive_trail(self, ro):
@@ -112,9 +115,9 @@ class ReplicationMixin(object):
     def create_snapshot(self, sname, snap_name, snap_type='replication'):
         try:
             url = ('shares/%s/snapshots/%s' % (sname, snap_name))
-            return self.law.api_call(url, data={'snap_type': snap_type, }, calltype='post',
-                                     save_error=False)
-        except RockStorAPIException, e:
+            return self.law.api_call(url, data={'snap_type': snap_type, },
+                                     calltype='post', save_error=False)
+        except RockStorAPIException as e:
             if (e.detail == ('Snapshot(%s) already exists for the Share(%s).' %
                              (snap_name, sname))):
                 return logger.debug(e.detail)
@@ -125,7 +128,7 @@ class ReplicationMixin(object):
             url = ('shares/%s/snapshots/%s' % (sname, snap_name))
             self.law.api_call(url, calltype='delete', save_error=False)
             return True
-        except RockStorAPIException, e:
+        except RockStorAPIException as e:
             if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
                 logger.debug(e.detail)
                 return False
@@ -138,26 +141,29 @@ class ReplicationMixin(object):
                     'replica': True,
                     'sname': sname, }
             headers = {'content-type': 'application/json', }
-            return self.law.api_call(url, data=data, calltype='post', headers=headers,
-                            save_error=False)
-        except RockStorAPIException, e:
-            if (e.detail == 'Share(%s) already exists. Choose a different name' % sname):
+            return self.law.api_call(url, data=data, calltype='post',
+                                     headers=headers, save_error=False)
+        except RockStorAPIException as e:
+            if (e.detail == 'Share(%s) already exists. Choose a different name' % sname):  # noqa E501
                 return logger.debug(e.detail)
             raise e
 
     def refresh_snapshot_state(self):
         try:
             return self.law.api_call('commands/refresh-snapshot-state',
-                                    data=None, calltype='post', save_error=False)
-        except Exception, e:
-            logger.error('Exception while refreshing Snapshot state: %s' % e.__str__())
+                                     data=None, calltype='post',
+                                     save_error=False)
+        except Exception as e:
+            logger.error('Exception while refreshing Snapshot state: %s'
+                         % e.__str__())
 
     def refresh_share_state(self):
         try:
-            return self.law.api_call('commands/refresh-share-state',
-                                     data=None, calltype='post', save_error=False)
-        except Exception, e:
-            logger.error('Exception while refresh Shar state: %s' % e.__str__())
+            return self.law.api_call('commands/refresh-share-state', data=None,
+                                     calltype='post', save_error=False)
+        except Exception as e:
+            logger.error('Exception while refresh Shar state: %s'
+                         % e.__str__())
 
     def humanize_bytes(self, num, units=('Bytes', 'KB', 'MB', 'GB',)):
         if (num < 1024 or len(units) == 1):
