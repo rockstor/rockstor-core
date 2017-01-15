@@ -47,9 +47,9 @@ class GroupListView(rfc.GenericView):
                 gid = int(gid)
             admin = request.data.get('admin', True)
             if (groupname is None or
-                re.match(settings.USERNAME_REGEX, groupname) is None):
-                e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %
-                         (settings.USERNAME_REGEX))
+                    re.match(settings.USERNAME_REGEX, groupname) is None):
+                e_msg = ('Groupname is invalid. It must confirm to the '
+                         'regex: %s' % (settings.USERNAME_REGEX))
                 handle_exception(Exception(e_msg), request)
             if (len(groupname) > 30):
                 e_msg = ('Groupname cannot be more than 30 characters long')
@@ -57,8 +57,8 @@ class GroupListView(rfc.GenericView):
 
             for g in combined_groups():
                 if (g.groupname == groupname):
-                    e_msg = ('Group(%s) already exists. Choose a different one' %
-                             g.groupname)
+                    e_msg = ('Group(%s) already exists. Choose a different '
+                             'one' % g.groupname)
                     handle_exception(Exception(e_msg), request)
                 if (g.gid == gid):
                     e_msg = ('GID(%s) already exists. Choose a different one' %
@@ -121,7 +121,7 @@ class GroupDetailView(rfc.GenericView):
 
             try:
                 groupdel(groupname)
-            except Exception, e:
+            except Exception as e:
                 handle_exception(e, request)
 
             return Response()

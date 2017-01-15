@@ -46,7 +46,8 @@ class TLSCertificateView(rfc.GenericView):
             cert = request.data.get('cert')
             key = request.data.get('key')
             TLSCertificate.objects.filter().exclude(name=name).delete()
-            co, created = TLSCertificate.objects.get_or_create(name=name, defaults={'certificate': cert, 'key': key})
+            co, created = TLSCertificate.objects.get_or_create(
+                name=name, defaults={'certificate': cert, 'key': key})
             if (not created):
                 co.certificate = cert
                 co.key = key
@@ -59,7 +60,7 @@ class TLSCertificateView(rfc.GenericView):
             try:
                 o, e, rc = run_command([OPENSSL, 'rsa', '-noout', '-modulus',
                                         '-in', kpath])
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 e_msg = ('RSA key modulus could not be verified for the given '
                          'Private Key. Correct your input and try again')
@@ -67,7 +68,7 @@ class TLSCertificateView(rfc.GenericView):
             try:
                 o2, e, rc = run_command([OPENSSL, 'x509', '-noout',
                                          '-modulus', '-in', cpath])
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 e_msg = ('RSA key modulus could not be verified for the given '
                          'Certificate. Correct your input and try again')

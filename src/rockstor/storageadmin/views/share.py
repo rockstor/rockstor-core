@@ -17,14 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from datetime import datetime
-from django.utils.timezone import utc
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db import transaction
-from storageadmin.models import (Share, Disk, Pool, Snapshot,
-                                 NFSExport, SambaShare, SFTP)
-from smart_manager.models import (ShareUsage, Replica)
+from storageadmin.models import (Share, Pool, Snapshot, NFSExport, SambaShare,
+                                 SFTP)
+from smart_manager.models import Replica
 from fs.btrfs import (add_share, remove_share, update_quota, share_usage,
                       set_property, mount_share, qgroup_id, qgroup_create)
 from system.osi import is_share_mounted
@@ -41,7 +39,6 @@ logger = logging.getLogger(__name__)
 
 
 class ShareMixin(object):
-
 
     @staticmethod
     def _validate_share_size(request, pool):
@@ -101,33 +98,36 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 return sorted(Share.objects.all(),
                               key=lambda u: getattr(u, sort_col),
                               reverse=reverse)
-            #If this box is receiving replication backups, the first full-send is
-            #interpreted as a Share(because it does not have a parent subvol/snapshot)
-            #It is a transient subvolume that gets rolled into a proper Share after
-            #5 incremental-sends. Until then, keep such transient shares hidden from the UI,
-            #mostly for costmetic and UX reasons.
-            return Share.objects.exclude(name__regex=r'^\.snapshots/.*/.*_replication_').order_by('-id')
+            # If this box is receiving replication backups, the first full-send
+            # is interpreted as a Share(because it does not have a parent
+            # subvol/snapshot) It is a transient subvolume that gets rolled
+            # into a proper Share after 5 incremental-sends. Until then, keep
+            # such transient shares hidden from the UI, mostly for costmetic
+            # and UX reasons.
+            return Share.objects.exclude(
+                name__regex=r'^\.snapshots/.*/.*_replication_').order_by('-id')
 
     @transaction.atomic
     def post(self, request):
-        #qgroup notes for shares. we need to create a qgroup prior to share
-        #creation. qgroup ids 0/<subvol_id> automatically get created when a
-        #subvolume(i.e., a Share or a Snapshot) is created. So let's create a
-        #new qgroup: 2015/<some_number> whenever a Share is
-        #created. <some_number> starts from 1 and is incremented as more Shares
-        #are created. So, for the very first Share in a pool, it's qgroup will
-        #be 1/1. 2015 is arbitrarily chose.
+        # qgroup notes for shares. we need to create a qgroup prior to share
+        # creation. qgroup ids 0/<subvol_id> automatically get created when a
+        # subvolume(i.e., a Share or a Snapshot) is created. So let's create a
+        # new qgroup: 2015/<some_number> whenever a Share is
+        # created. <some_number> starts from 1 and is incremented as more
+        # Shares are created. So, for the very first Share in a pool, it's
+        # qgroup will be 1/1. 2015 is arbitrarily chose.
 
-        #Before creating a new Share, we create the qgroup for it. And during
-        #it's creation, we assign this qgroup to it. During it's creation a 0/x
-        #qgroup will automatically be created, but it will become the child of
-        #our explicitly-created qgroup(2015/x).
+        # Before creating a new Share, we create the qgroup for it. And during
+        # it's creation, we assign this qgroup to it. During it's creation a
+        # 0/x qgroup will automatically be created, but it will become the
+        # child of our explicitly-created qgroup(2015/x).
 
-        #We will set the qgroup limit on our qgroup and it will enforce the
-        #quota on every subvolume(i.e., Share and Snapshot) in that qgroup.
+        # We will set the qgroup limit on our qgroup and it will enforce the
+        # quota on every subvolume(i.e., Share and Snapshot) in that qgroup.
 
-        #When a Share is deleted, we need to destroy two qgroups. One is it's
-        #auto 0/x qgroup and the other is our explicitly-created 2015/y qgroup.
+        # When a Share is deleted, we need to destroy two qgroups. One is it's
+        # auto 0/x qgroup and the other is our explicitly-created 2015/y
+        # qgroup.
 
         with self._handle_exception(request):
             pool_name = request.data.get('pool', None)
@@ -147,19 +147,20 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (len(sname) > 254):
-                #btrfs subvolume names cannot exceed 254 characters.
+                # btrfs subvolume names cannot exceed 254 characters.
                 e_msg = ('Share name length cannot exceed 254 characters')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share(%s) already exists. Choose a different name' % sname)
+                e_msg = ('Share(%s) already exists. Choose a '
+                         'different name' % sname)
                 handle_exception(Exception(e_msg), request)
 
             if (Pool.objects.filter(name=sname).exists()):
-                e_msg = ('A Pool with this name(%s) exists. Share and Pool names '
-                         'must be distinct. Choose a different name' % sname)
+                e_msg = ('A Pool with this name(%s) exists. Share '
+                         'and Pool names must be distinct. Choose '
+                         'a different name' % sname)
                 handle_exception(Exception(e_msg), request)
-            disk = Disk.objects.filter(pool=pool)[0]
             replica = False
             if ('replica' in request.data):
                 replica = request.data['replica']
@@ -190,6 +191,7 @@ class PoolShareListView(ShareMixin, rfc.GenericView):
         pool = Pool.objects.get(name=self.kwargs.get('pname'))
         return pool.share_set.all()
 
+
 class ShareDetailView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
@@ -207,12 +209,12 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             share = self._validate_share(request, sname)
             if ('size' in request.data):
                 new_size = self._validate_share_size(request, share.pool)
-                disk = Disk.objects.filter(pool=share.pool)[0]
                 qid = qgroup_id(share.pool, share.subvol_name)
                 cur_rusage, cur_eusage = share_usage(share.pool, qid)
                 if (new_size < cur_rusage):
-                    e_msg = ('Unable to resize because requested new size(%dKB) '
-                             'is less than current usage(%dKB) of the share.' %
+                    e_msg = ('Unable to resize because requested new '
+                             'size(%dKB) is less than current usage(%dKB)'
+                             'of the share.' %
                              (new_size, cur_rusage))
                     handle_exception(Exception(e_msg), request)
                 update_quota(share.pool, share.pqgroup, new_size * 1024)
@@ -237,7 +239,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
         config = json.loads(s.config)
         if (config.get('root_share') == sname):
             if (force):
-                #turn off docker service, nullify config.
+                # turn off docker service, nullify config.
                 systemctl(s.name, 'stop')
                 systemctl(s.name, 'disable')
                 s.config = None
@@ -284,16 +286,19 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
 
             if (Replica.objects.filter(share=sname).exists()):
                 e_msg = ('Share(%s) is configured for replication. If you are '
-                         'sure, delete the replication task and try again.' % sname)
+                         'sure, delete the replication task and try again.'
+                         % sname)
                 handle_exception(Exception(e_msg), request)
 
             self._rockon_check(request, sname, force=force)
 
             try:
-                remove_share(share.pool, share.subvol_name, share.pqgroup, force=force)
-            except Exception, e:
+                remove_share(share.pool, share.subvol_name, share.pqgroup,
+                             force=force)
+            except Exception as e:
                 logger.exception(e)
-                e_msg = ('Failed to delete the Share(%s). Error from the OS: %s' % (sname, e.__str__()))
+                e_msg = ('Failed to delete the Share(%s). Error from '
+                         'the OS: %s' % (sname, e.__str__()))
                 handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()

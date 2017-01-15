@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
-from storageadmin.models import (Share, Disk, Snapshot, SFTP)
+from storageadmin.models import (Share, Snapshot, SFTP)
 from smart_manager.models import ShareUsage
 from fs.btrfs import (mount_share, mount_snap, is_share_mounted, is_mounted,
                       umount_root, shares_info, share_usage, snaps_info,
@@ -70,7 +70,6 @@ def toggle_sftp_visibility(share, snap_name, on=True):
 
 
 def import_shares(pool, request):
-    disk = Disk.objects.filter(pool=pool)[0].name
     shares = [s.name for s in Share.objects.filter(pool=pool)]
     shares_d = shares_info(pool)
     for s in shares:
@@ -106,8 +105,9 @@ def import_shares(pool, request):
                                               cshare.pool.name))
             if (s in cshares_d):
                 e_msg = ('Another pool(%s) has a Share with this same '
-                         'name(%s) as this pool(%s). This configuration is not supported.'
-                         ' You can delete one of them manually with this command: '
+                         'name(%s) as this pool(%s). This configuration '
+                         'is not supported. You can delete one of them '
+                         'manually with this command: '
                          'btrfs subvol delete %s[pool name]/%s' %
                          (cshare.pool.name, s, pool.name, settings.MNT_PT, s))
                 handle_exception(Exception(e_msg), request)
@@ -130,11 +130,10 @@ def import_shares(pool, request):
 def import_snapshots(share):
     snaps_d = snaps_info('%s%s' % (settings.MNT_PT, share.pool.name),
                          share.name)
-    disk = Disk.objects.filter(pool=share.pool)[0].name
     snaps = [s.name for s in Snapshot.objects.filter(share=share)]
     for s in snaps:
         if (s not in snaps_d):
-            Snapshot.objects.get(share=share,name=s).delete()
+            Snapshot.objects.get(share=share, name=s).delete()
     for s in snaps_d:
         if (s in snaps):
             so = Snapshot.objects.get(share=share, name=s)

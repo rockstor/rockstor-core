@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-Home view. login etc.. only for UI.
-"""
-
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.contrib.auth import (authenticate, login, logout)
@@ -28,7 +24,6 @@ from storageadmin.models import (Appliance, Setup, UpdateSubscription)
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.conf import settings
-from rest_framework.renderers import JSONRenderer
 
 
 def login_page(request):
@@ -59,7 +54,8 @@ def home(request):
     setup = Setup.objects.all()[0]
     update_channel = 'Testing'
     stable_name = 'Stable'
-    if (UpdateSubscription.objects.filter(name=stable_name, status='active').exists()):
+    if (UpdateSubscription.objects.filter(
+            name=stable_name, status='active').exists()):
         update_channel = stable_name
 
     context = {

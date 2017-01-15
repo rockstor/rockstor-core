@@ -16,10 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (User, Group, Pincard)
+from storageadmin.models import (User, Group, )
 from system.users import (get_users, get_groups)
 from system.pinmanager import (pincard_states)
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -61,18 +60,20 @@ def combined_users():
             uo.save()
             uo.pincard_allowed, uo.has_pincard = pincard_states(uo)
             users.append(uo)
-            
+
         except User.DoesNotExist:
             temp_uo = User(username=u, uid=sys_users[u][0],
-                           gid=sys_users[u][1], shell=sys_users[u][2], admin=False)
+                           gid=sys_users[u][1], shell=sys_users[u][2],
+                           admin=False)
             temp_uo.managed_user = False
-            temp_uo.pincard_allowed, temp_uo.has_pincard = pincard_states(temp_uo)
+            temp_uo.pincard_allowed, temp_uo.has_pincard = pincard_states(temp_uo)  # noqa E501
             users.append(temp_uo)
-            
+
     for u in User.objects.all():
         if (u.username not in uname_list):
             users.append(u)
-    return sorted(users, cmp=lambda x,y: cmp(x.username.lower(), y.username.lower()))
+    return sorted(users, cmp=lambda x, y: cmp(x.username.lower(),  # noqa F821
+                                              y.username.lower()))
 
 
 def combined_groups():
@@ -90,4 +91,5 @@ def combined_groups():
     for g in Group.objects.all():
         if (g.groupname not in gname_list):
             groups.append(g)
-    return sorted(groups, cmp=lambda x,y: cmp(x.groupname.lower(), y.groupname.lower()))
+    return sorted(groups, cmp=lambda x, y: cmp(x.groupname.lower(),  # noqa F821
+                                               y.groupname.lower()))

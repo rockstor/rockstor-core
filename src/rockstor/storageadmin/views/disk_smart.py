@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-Disk view, for anything at the disk level
-"""
-
 import re
 from rest_framework.response import Response
 from django.db import transaction
@@ -78,7 +74,8 @@ class DiskSMARTDetailView(rfc.GenericView):
             sa.save()
         for c in sorted(cap.keys(), reverse=True):
             t = cap[c]
-            SMARTCapability(info=si, name=c, flag=t[0], capabilities=t[1]).save()
+            SMARTCapability(info=si, name=c, flag=t[0],
+                            capabilities=t[1]).save()
         for enum in sorted(e_summary.keys(), key=int, reverse=True):
             l = e_summary[enum]
             SMARTErrorLogSummary(info=si, error_num=enum, lifetime_hours=l[0],
@@ -101,14 +98,15 @@ class DiskSMARTDetailView(rfc.GenericView):
         for l in log_lines:
             SMARTTestLogDetail(info=si, line=l).save()
 
-        SMARTIdentity(info=si, model_family=smartid[0], device_model=smartid[1],
-                      serial_number=smartid[2], world_wide_name=smartid[3],
-                      firmware_version=smartid[4], capacity=smartid[5],
-                      sector_size=smartid[6], rotation_rate=smartid[7],
-                      in_smartdb=smartid[8], ata_version=smartid[9],
-                      sata_version=smartid[10], scanned_on=smartid[11],
-                      supported=smartid[12], enabled=smartid[13],
-                      version=smartid[14], assessment=smartid[15]).save()
+        SMARTIdentity(info=si, model_family=smartid[0],
+                      device_model=smartid[1], serial_number=smartid[2],
+                      world_wide_name=smartid[3], firmware_version=smartid[4],
+                      capacity=smartid[5], sector_size=smartid[6],
+                      rotation_rate=smartid[7], in_smartdb=smartid[8],
+                      ata_version=smartid[9], sata_version=smartid[10],
+                      scanned_on=smartid[11], supported=smartid[12],
+                      enabled=smartid[13], version=smartid[14],
+                      assessment=smartid[15]).save()
         return Response(SMARTInfoSerializer(si).data)
 
     def post(self, request, dname, command):
@@ -120,9 +118,9 @@ class DiskSMARTDetailView(rfc.GenericView):
                 test_type = request.data.get('test_type')
                 if (re.search('short', test_type, re.IGNORECASE) is not None):
                     test_type = 'short'
-                elif (re.search('extended', test_type, re.IGNORECASE) is not None):
+                elif (re.search('extended', test_type, re.IGNORECASE) is not None):  # noqa E501
                     test_type = 'long'
-                elif (re.search('conveyance', test_type, re.IGNORECASE) is not None):
+                elif (re.search('conveyance', test_type, re.IGNORECASE) is not None):  # noqa E501
                     test_type = 'conveyance'
                 else:
                     raise Exception('Unsupported Self-Test: %s' % test_type)

@@ -19,16 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (NFSExport, NFSExportGroup, Disk,
-                                 AdvancedNFSExport)
+from storageadmin.models import (NFSExport, NFSExportGroup, AdvancedNFSExport)
 from storageadmin.util import handle_exception
-from storageadmin.serializers import (NFSExportGroupSerializer, AdvancedNFSExportSerializer)
+from storageadmin.serializers import (NFSExportGroupSerializer,
+                                      AdvancedNFSExportSerializer)
 from fs.btrfs import (mount_share, is_share_mounted)
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from share_helpers import validate_share
 import rest_framework_custom as rfc
 from rest_framework.exceptions import NotFound
-from share_helpers import validate_share
 import logging
 logger = logging.getLogger(__name__)
 
@@ -104,11 +103,14 @@ class NFSExportMixin(object):
             'admin_host': None,
             }
         options['host_str'] = request.data.get('host_str', options['host_str'])
-        options['editable'] = request.data.get('mod_choice', options['editable'])
-        options['syncable'] = request.data.get('sync_choice', options['syncable'])
-        options['admin_host'] = request.data.get('admin_host', options['admin_host'])
+        options['editable'] = request.data.get('mod_choice',
+                                               options['editable'])
+        options['syncable'] = request.data.get('sync_choice',
+                                               options['syncable'])
+        options['admin_host'] = request.data.get('admin_host',
+                                                 options['admin_host'])
         if (options['admin_host'] is not None and
-            len(options['admin_host'].strip()) == 0):
+                len(options['admin_host'].strip()) == 0):
             options['admin_host'] = None
         return options
 
@@ -134,9 +136,9 @@ class NFSExportMixin(object):
     def refresh_wrapper(exports, request, logger):
         try:
             refresh_nfs_exports(exports)
-        except Exception, e:
-            e_msg = ('A lower level error occured while refreshing NFS exports: '
-                     '%s' % e.__str__())
+        except Exception as e:
+            e_msg = ('A lower level error occured while refreshing '
+                     'NFS exports: %s' % e.__str__())
             handle_exception(Exception(e_msg), request)
 
 
@@ -152,7 +154,8 @@ class NFSExportGroupListView(NFSExportMixin, rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.data['shares']]
+            shares = [validate_share(s, request) for s in
+                      request.data['shares']]
             options = self.parse_options(request)
             for s in shares:
                 self.dup_export_check(s, options['host_str'], request)
@@ -190,7 +193,6 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
         except NFSExportGroup.DoesNotExist:
             raise NotFound(detail=None)
 
-
     @transaction.atomic
     def delete(self, request, export_id):
         with self._handle_exception(request):
@@ -219,7 +221,8 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.data['shares']]
+            shares = [validate_share(s, request) for s in
+                      request.data['shares']]
             eg = self.validate_export_group(export_id, request)
             options = self.parse_options(request)
             for s in shares:
@@ -291,11 +294,12 @@ class AdvancedNFSExportView(NFSExportMixin, rfc.GenericView):
                 ce = AdvancedNFSExport(export_str=e)
                 ce.save()
                 cur_entries.append(ce)
-            exports_d = self.create_adv_nfs_export_input(request.data['entries'],
-                                                         request)
+            exports_d = self.create_adv_nfs_export_input(
+                request.data['entries'], request)
             cur_exports = list(NFSExport.objects.all())
             exports = self.create_nfs_export_input(cur_exports)
             exports.update(exports_d)
             self.refresh_wrapper(exports, request, logger)
-            nfs_serializer = AdvancedNFSExportSerializer(cur_entries, many=True)
+            nfs_serializer = AdvancedNFSExportSerializer(
+                cur_entries, many=True)
             return Response(nfs_serializer.data)

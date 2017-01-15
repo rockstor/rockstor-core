@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (NetatalkShare, Disk)
+from storageadmin.models import NetatalkShare
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetatalkShareSerializer
 from storageadmin.exceptions import RockStorAPIException
@@ -85,7 +85,8 @@ class NetatalkDetailView(rfc.GenericView):
             refresh_afp_config(list(NetatalkShare.objects.all()))
             return systemctl('netatalk', 'reload-or-restart')
         except Exception as e:
-            e_msg = ('Failed to reload Netatalk server. Exception: %s' % e.__str__())
+            e_msg = ('Failed to reload Netatalk server. Exception: %s'
+                     % e.__str__())
             handle_exception(Exception(e_msg), request)
 
 

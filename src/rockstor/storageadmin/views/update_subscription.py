@@ -16,9 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import requests
-import json
-import uuid
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (UpdateSubscription, Appliance)
@@ -38,7 +35,7 @@ class UpdateSubscriptionListView(rfc.GenericView):
         return UpdateSubscription.objects.all()
 
     def _toggle_repos(self, on='stable', off='testing', password=None):
-        #toggle between testing and stabel repos
+        # toggle between testing and stabel repos
         ncd = settings.UPDATE_CHANNELS[on]
         fcd = settings.UPDATE_CHANNELS[off]
         try:
@@ -80,10 +77,11 @@ class UpdateSubscriptionListView(rfc.GenericView):
             if (command == 'activate-stable'):
                 password = request.data.get('activation_code', None)
                 if (password is None):
-                    e_msg = ('Activation code is required for Stable subscription')
+                    e_msg = ('Activation code is required for '
+                             'Stable subscription')
                     handle_exception(Exception(e_msg), request)
-                #remove any leading or trailing white spaces. happens enough times
-                #due to copy-paste.
+                # remove any leading or trailing white spaces. happens enough
+                # times due to copy-paste.
                 password = password.strip()
                 stableo = self._toggle_repos(password=password)
                 return Response(UpdateSubscriptionSerializer(stableo).data)
@@ -99,6 +97,7 @@ class UpdateSubscriptionListView(rfc.GenericView):
                     stableo.status, text = repo_status(stableo)
                     stableo.save()
                 return Response(UpdateSubscriptionSerializer(stableo).data)
+
 
 class UpdateSubscriptionDetailView(rfc.GenericView):
     serializer_class = UpdateSubscriptionSerializer

@@ -21,15 +21,13 @@ from django.db import transaction
 from django_ztask.models import Task
 from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolBalanceSerializer
-from storageadmin.models import (Pool, PoolBalance, Disk)
+from storageadmin.models import (Pool, PoolBalance)
 import rest_framework_custom as rfc
-from fs.btrfs import (start_balance, balance_status)
-from system.osi import run_command
+from fs.btrfs import balance_status
 from pool import PoolMixin
 
 import logging
 logger = logging.getLogger(__name__)
-
 
 
 class PoolBalanceView(PoolMixin, rfc.GenericView):
@@ -58,7 +56,8 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
         except:
             # return empty handed if we have no 'last entry' to update
             return Response()
-        # Check if we have a running task which matches our last pool status tid
+        # Check if we have a running task which matches our last pool status
+        # tid
         if (Task.objects.filter(uuid=ps.tid).exists()):
             to = Task.objects.get(uuid=ps.tid)
             if (to.failed is not None):
@@ -95,7 +94,6 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
         with self._handle_exception(request):
-            disk = Disk.objects.filter(pool=pool)[0]
             ps = self._balance_status(pool)
             if (command == 'status'):
                 return Response(PoolBalanceSerializer(ps).data)

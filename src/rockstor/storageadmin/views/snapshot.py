@@ -16,20 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-View for things at snapshot level
-"""
-
-from datetime import datetime
-from django.utils.timezone import utc
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
+from storageadmin.models import (Snapshot, Share, NFSExport,
                                  NFSExportGroup, AdvancedNFSExport)
-from smart_manager.models import ShareUsage
 from fs.btrfs import (add_snap, share_id, share_usage, remove_snap,
-                      umount_root, mount_snap, snaps_info, qgroup_assign)
+                      umount_root, mount_snap, qgroup_assign)
 from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
@@ -53,7 +46,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 if ('sname' not in self.kwargs):
                     return Snapshot.objects.filter().order_by('-id')
 
-                e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
+                e_msg = ('Share with name: %s does not exist'
+                         % self.kwargs['sname'])
                 handle_exception(Exception(e_msg), self.request)
 
             if ('snap_name' in self.kwargs):
@@ -99,7 +93,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                     export.delete()
                 except NFSExport.DoesNotExist:
                     pass
-                except Exception, e:
+                except Exception as e:
                     logger.exception(e)
                 finally:
                     umount_root(export_pt)
@@ -111,7 +105,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         refresh_nfs_exports(exports)
 
     @transaction.atomic
-    def _create(self, share, snap_name, request, uvisible, snap_type, writable):
+    def _create(self, share, snap_name, request, uvisible,
+                snap_type, writable):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             e_msg = ('Snapshot(%s) already exists for the Share(%s).' %
                      (snap_name, share.name))
@@ -124,7 +119,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         add_snap(share.pool, share.subvol_name, snap_name, writable)
         snap_id = share_id(share.pool, snap_name)
         qgroup_id = ('0/%s' % snap_id)
-        qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT, share.pool.name)))
+        qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT,
+                                                            share.pool.name)))
         snap_size, eusage = share_usage(share.pool, qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=snap_name,
                      size=snap_size, qgroup=qgroup_id,
@@ -154,7 +150,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 if (uvisible):
                     try:
                         self._toggle_visibility(share, ret.data['real_name'])
-                    except Exception, e:
+                    except Exception as e:
                         msg = ('Failed to make the Snapshot(%s) visible. '
                                'Exception: %s' % (snap_name, e.__str__()))
                         logger.error(msg)
@@ -162,9 +158,10 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
 
                     try:
                         toggle_sftp_visibility(share, ret.data['real_name'])
-                    except Exception, e:
+                    except Exception as e:
                         msg = ('Failed to make the Snapshot(%s) visible for '
-                               'SFTP. Exception: %s' % (snap_name, e.__str__()))
+                               'SFTP. Exception: %s' %
+                               (snap_name, e.__str__()))
                         logger.error(msg)
                         logger.exception(e)
 

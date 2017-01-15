@@ -48,7 +48,7 @@ class UserMixin(object):
         input_fields = {}
         username = request.data.get('username', None)
         if (username is None or
-            re.match(settings.USERNAME_REGEX, username) is None):
+                re.match(settings.USERNAME_REGEX, username) is None):
             e_msg = ('Username is invalid. It must confirm to the regex: %s' %
                      (settings.USERNAME_REGEX))
             handle_exception(Exception(e_msg), request)
@@ -80,8 +80,9 @@ class UserMixin(object):
         if (input_fields['uid'] is not None):
             try:
                 input_fields['uid'] = int(input_fields['uid'])
-            except ValueError, e:
-                e_msg = ('UID must be an integer, try again. Exception: %s' % e.__str__())
+            except ValueError as e:
+                e_msg = ('UID must be an integer, try again. Exception: %s'
+                         % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         input_fields['group'] = request.data.get('group', None)
@@ -114,7 +115,7 @@ class UserListView(UserMixin, rfc.GenericView):
                      ' username' % invar['username'])
             if (DjangoUser.objects.filter(
                     username=invar['username']).exists() or
-                User.objects.filter(username=invar['username']).exists()):
+                    User.objects.filter(username=invar['username']).exists()):
                 handle_exception(Exception(e_msg), request)
             users = combined_users()
             groups = combined_groups()
@@ -194,8 +195,9 @@ class UserDetailView(UserMixin, rfc.GenericView):
                 if (admin is True):
                     if (u.user is None):
                         if (new_pw is None):
-                            e_msg = ('password reset is required to enable admin '
-                                     'access. please provide a new password')
+                            e_msg = ('password reset is required to '
+                                     'enable admin access. please provide '
+                                     'a new password')
                             handle_exception(Exception(e_msg), request)
                         auser = DjangoUser.objects.create_user(username,
                                                                None, new_pw)
@@ -273,18 +275,18 @@ class UserDetailView(UserMixin, rfc.GenericView):
 
             for g in combined_groups():
                 if (g.gid == gid and g.admin and
-                    not User.objects.filter(gid=gid).exists()):
+                        not User.objects.filter(gid=gid).exists()):
                     g.delete()
 
-            #When user deleted destroy all Pincard entries
+            # When user deleted destroy all Pincard entries
             flush_pincard(username_to_uid(username))
-            
+
             try:
                 userdel(username)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
-                e_msg = ('A low level error occured while deleting the user: %s' %
-                         username)
+                e_msg = ('A low level error occured while deleting '
+                         'the user: %s' % username)
                 handle_exception(Exception(e_msg), request)
 
             return Response()

@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (SambaShare, Disk, User, SambaCustomConfig)
+from storageadmin.models import (SambaShare, User, SambaCustomConfig)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -31,6 +31,7 @@ from fs.btrfs import (mount_share, is_share_mounted)
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class SambaMixin(object):
     serializer_class = SambaShareSerializer
@@ -90,10 +91,10 @@ class SambaMixin(object):
         options['shadow_copy'] = request.data.get('shadow_copy',
                                                   def_opts['shadow_copy'])
         if (options['shadow_copy']):
-            options['snapshot_prefix'] = request.data.get('snapshot_prefix',
-                                                          def_opts['snapshot_prefix'])
+            options['snapshot_prefix'] = request.data.get(
+                'snapshot_prefix', def_opts['snapshot_prefix'])
             if (options['snapshot_prefix'] is None or
-                len(options['snapshot_prefix'].strip()) == 0):
+                    len(options['snapshot_prefix'].strip()) == 0):
                 e_msg = ('Invalid choice for snapshot_prefix. It must be a '
                          'valid non-empty string')
                 handle_exception(Exception(e_msg), request)
@@ -106,17 +107,21 @@ class SambaMixin(object):
             try:
                 auo = User.objects.get(username=au)
             except User.DoesNotExist:
-                #check if the user is a system user, then create a temp user object.
+                # check if the user is a system user, then create a temp user
+                # object.
                 try:
                     system_user = pwd.getpwnam(au)
                     auo = User(username=au, uid=system_user.pw_uid,
-                              gid=system_user.pw_gid, admin=False)
+                               gid=system_user.pw_gid, admin=False)
                     auo.save()
                 except KeyError:
-                    #raise the outer exception as it's more meaningful to the user.
-                    raise Exception('Requested admin user(%s) does not exist.' % au)
+                    # raise the outer exception as it's more meaningful to the
+                    # user.
+                    raise Exception('Requested admin user(%s) does '
+                                    'not exist.' % au)
             finally:
                 auo.smb_shares.add(smb_share)
+
 
 class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
     queryset = SambaShare.objects.all()
@@ -126,7 +131,8 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
         if ('shares' not in request.data):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
-        shares = [self._validate_share(request, s) for s in request.data['shares']]
+        shares = [self._validate_share(request, s) for s in
+                  request.data['shares']]
         options = self._validate_input(request)
         custom_config = options['custom_config']
         del(options['custom_config'])
@@ -150,7 +156,8 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                     mount_share(share, mnt_pt)
 
                 admin_users = request.data.get('admin_users', [])
-                if (admin_users is None): admin_users = []
+                if (admin_users is None):
+                    admin_users = []
                 self._set_admin_users(admin_users, smb_share)
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
@@ -195,7 +202,8 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
             del(options['custom_config'])
             smbo.__dict__.update(**options)
             admin_users = request.data.get('admin_users', [])
-            if (admin_users is None): admin_users = []
+            if (admin_users is None):
+                admin_users = []
             for uo in User.objects.filter(smb_shares=smbo):
                 if (uo.username not in admin_users):
                     uo.smb_shares.remove(smbo)
@@ -214,7 +222,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                     mnt_pt = ('%s%s' % (settings.MNT_PT, smb_o.share.name))
                     try:
                         mount_share(smb_o.share, mnt_pt)
-                    except Exception, e:
+                    except Exception as e:
                         logger.exception(e)
                         if (smb_o.id == smbo.id):
                             e_msg = ('Failed to mount share(%s) due to a low '

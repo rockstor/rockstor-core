@@ -28,7 +28,6 @@ import rest_framework_custom as rfc
 from system.osi import run_command, gethostname
 from shutil import move
 from tempfile import mkstemp
-from django.conf import settings
 from system.services import systemctl
 from system.email_util import send_test_email, test_smtp_auth
 import logging
@@ -55,10 +54,12 @@ def rockstor_postfix_config(fo, smtp_server, port, revert):
     fo.write('smtp_generic_maps = hash:/etc/postfix/generic\n')
     fo.write('%s\n' % FOOTER)
 
+
 def update_forward(email, revert=False):
     with open('/root/.forward', 'w') as fo:
         if (not revert):
             fo.write('%s, root\n' % email)
+
 
 def update_generic(sender, revert=False):
     """
@@ -76,28 +77,30 @@ def update_generic(sender, revert=False):
     with open(generic_file, 'w') as fo:
         if (not revert):
             fo.write('@%s %s\n' % (hostname, sender))
-            fo.write('@%s.localdomain %s\n' %(hostname, sender))
+            fo.write('@%s.localdomain %s\n' % (hostname, sender))
             # todo need an entry here to add @<hostname>.<domain>
-    os.chmod(generic_file, 0400)
+    os.chmod(generic_file, 400)
     run_command([POSTMAP, generic_file])
-    os.chmod('%s.db' % generic_file, 0600)
+    os.chmod('%s.db' % generic_file, 600)
+
 
 def update_sasl(smtp_server, port, username, password, revert=False):
     sasl_file = '/etc/postfix/sasl_passwd'
     with open(sasl_file, 'w') as fo:
         if (not revert):
-            fo.write('[%s]:%d %s:%s\n' % (smtp_server, port, username, password))
-    os.chmod(sasl_file, 0400)
+            fo.write('[%s]:%d %s:%s\n' %
+                     (smtp_server, port, username, password))
+    os.chmod(sasl_file, 400)
     run_command([POSTMAP, sasl_file])
-    os.chmod('%s.db' % sasl_file, 0600)
+    os.chmod('%s.db' % sasl_file, 600)
+
 
 def update_postfix(smtp_server, port, revert=False):
     fh, npath = mkstemp()
     with open(MAIN_CF) as mfo, open(npath, 'w') as tfo:
         rockstor_section = False
         for line in mfo.readlines():
-            if (re.match(HEADER, line)
-                is not None):
+            if (re.match(HEADER, line) is not None):
                 rockstor_section = True
                 rockstor_postfix_config(tfo, smtp_server, port, revert)
                 break
@@ -106,7 +109,7 @@ def update_postfix(smtp_server, port, revert=False):
         if (rockstor_section is False):
             rockstor_postfix_config(tfo, smtp_server, port, revert)
     move(npath, MAIN_CF)
-    os.chmod(MAIN_CF, 0644)
+    os.chmod(MAIN_CF, 644)
 
 
 class EmailClientView(rfc.GenericView):
@@ -125,41 +128,45 @@ class EmailClientView(rfc.GenericView):
                     e_msg = ('unknown command(%s) is not supported.' %
                              command)
                     handle_exception(Exception(e_msg), request)
-                    
+
                 if (command == 'send-test-email'):
                     if (EmailClient.objects.count() == 0):
-                        e_msg = ('E-mail account must be setup first before test '
-                                 'e-mail could be sent')
+                        e_msg = ('E-mail account must be setup first before '
+                                 'test e-mail could be sent')
                         handle_exception(Exception(e_msg), request)
 
                     eco = EmailClient.objects.all()[0]
                     subject = ('Test message from Rockstor. Appliance id: %s' %
-                               Appliance.objects.get(current_appliance=True).uuid)
+                               Appliance.objects.get(current_appliance=True).uuid)  # noqa E501
                     send_test_email(eco, subject)
                     return Response()
-                    
+
                 elif (command == 'check-smtp-auth'):
                     mail_auth = {}
                     sender = request.data.get('sender')
                     username = request.data.get('username')
-                    mail_auth['username'] = sender if not username else username 
+                    mail_auth['username'] = sender if not username else username  # noqa E501
                     mail_auth['password'] = request.data.get('password')
                     mail_auth['smtp_server'] = request.data.get('smtp_server')
                     mail_auth['port'] = int(request.data.get('port', 587))
-                    
-                    return Response(json.dumps({'smtp_auth': test_smtp_auth(mail_auth)}), content_type="application/json")
-                    
+
+                    return Response(
+                        json.dumps({'smtp_auth': test_smtp_auth(mail_auth)}),
+                        content_type="application/json")
 
             sender = request.data.get('sender')
-            username = request.data.get('username') #collect new username field
-            username = sender if not username else username #smtp auth - use username or if empty use sender
+            # collect new username field
+            username = request.data.get('username')
+            # smtp auth - use username or if empty use sender
+            username = sender if not username else username
             smtp_server = request.data.get('smtp_server')
             port = int(request.data.get('port', 587))
             name = request.data.get('name')
             password = request.data.get('password')
             receiver = request.data.get('receiver')
             eco = EmailClient(smtp_server=smtp_server, port=port, name=name,
-                              sender=sender, receiver=receiver, username=username)
+                              sender=sender, receiver=receiver,
+                              username=username)
             eco.save()
             update_sasl(smtp_server, port, username, password)
             update_forward(receiver)

@@ -33,4 +33,5 @@ class RockOnVolumeView(rfc.GenericView):
             handle_exception(Exception(e_msg), self.request)
 
         containers = DContainer.objects.filter(rockon=rockon)
-        return DVolume.objects.filter(container__in=containers).order_by('label')
+        return DVolume.objects.filter(
+            container__in=containers).order_by('label')

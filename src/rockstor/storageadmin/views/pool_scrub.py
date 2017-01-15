@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolScrubSerializer
-from storageadmin.models import (Pool, PoolScrub, Disk)
+from storageadmin.models import (Pool, PoolScrub)
 import rest_framework_custom as rfc
 from fs.btrfs import (scrub_start, scrub_status)
 from datetime import timedelta
