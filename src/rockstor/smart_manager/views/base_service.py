@@ -43,7 +43,8 @@ class ServiceMixin(object):
         ts = datetime.utcnow().replace(tzinfo=utc)
         so = None
         if (ServiceStatus.objects.filter(service=service).exists()):
-            so = ServiceStatus.objects.filter(service=service).order_by('-ts')[0]
+            so = ServiceStatus.objects.filter(
+                service=service).order_by('-ts')[0]
         else:
             so = ServiceStatus(service=service, count=0)
         so.status = self._get_status(service)
@@ -62,7 +63,7 @@ class ServiceMixin(object):
             if (rc == 0):
                 return True
             return False
-        except Exception, e:
+        except Exception as e:
             msg = ('Exception while querying status of service(%s): %s' %
                    (service.name, e.__str__()))
             logger.error(msg)
@@ -76,15 +77,15 @@ class BaseServiceView(ServiceMixin, rfc.GenericView):
     @transaction.atomic
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            limit = self.request.query_params.get('limit',
-                                                  settings.REST_FRAMEWORK['MAX_LIMIT'])
+            limit = self.request.query_params.get(
+                'limit', settings.REST_FRAMEWORK['MAX_LIMIT'])
             limit = int(limit)
             url_fields = self.request.path.strip('/').split('/')
             if (len(url_fields) < 4):
                 sos = []
                 for s in Service.objects.all():
                     sos.append(self._get_or_create_sso(s))
-                return sorted(sos, cmp=lambda x,y: cmp(x.display_name, y.display_name))
+                return sorted(sos, cmp=lambda x, y: cmp(x.display_name, y.display_name))  # noqa
 
 
 class BaseServiceDetailView(ServiceMixin, rfc.GenericView):
@@ -96,5 +97,6 @@ class BaseServiceDetailView(ServiceMixin, rfc.GenericView):
             url_fields = self.request.path.strip('/').split('/')
             s = Service.objects.get(name=url_fields[3])
             self.paginate_by = 0
-            serialized_data = ServiceStatusSerializer(self._get_or_create_sso(s))
+            serialized_data = ServiceStatusSerializer(
+                self._get_or_create_sso(s))
             return Response(serialized_data.data)

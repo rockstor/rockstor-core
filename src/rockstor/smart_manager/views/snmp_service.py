@@ -21,7 +21,6 @@ from storageadmin.util import handle_exception
 from system.services import systemctl
 from django.db import transaction
 from base_service import BaseServiceDetailView
-import os
 from system.snmp import configure_snmp
 from smart_manager.models import Service
 

@@ -52,6 +52,8 @@ class TaskLogView(rfc.GenericView):
                 max_log = settings.TASK_SCHEDULER.get('max_log')
                 for td in TaskDefinition.objects.all():
                     if (Task.objects.filter(task_def=td).count() > max_log):
-                        start_cutoff = Task.objects.filter(task_def=td).order_by('-start')[max_log].start
-                        Task.objects.filter(task_def=td, start__lte=start_cutoff).delete()
+                        start_cutoff = Task.objects.filter(
+                            task_def=td).order_by('-start')[max_log].start
+                        Task.objects.filter(task_def=td,
+                                            start__lte=start_cutoff).delete()
             return Response()

@@ -42,7 +42,7 @@ class NISServiceView(BaseServiceDetailView):
                     config = request.data['config']
                     configure_nis(config['domain'], config['server'])
                     self._save_config(service, config)
-                except Exception, e:
+                except Exception as e:
                     logger.exception(e)
                     e_msg = ('NIS could not be configured. Try again')
                     handle_exception(Exception(e_msg), request)
@@ -56,7 +56,7 @@ class NISServiceView(BaseServiceDetailView):
                         chkconfig('rpcbind', 'on')
                         init_service_op('rpcbind', command)
                     init_service_op('ypbind', command)
-                except Exception, e:
+                except Exception as e:
                     logger.exception(e)
                     e_msg = ('Failed to %s NIS service due to system error.' %
                              command)

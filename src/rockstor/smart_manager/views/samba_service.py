@@ -25,9 +25,7 @@ from system.samba import (update_global_config, restart_samba,
 from django.db import transaction
 from django.conf import settings
 from base_service import BaseServiceDetailView
-from active_directory import ActiveDirectoryServiceView
-from smart_manager.models import Service, ServiceStatus
-from storageadmin.models import SambaShare
+from smart_manager.models import Service
 from system.osi import md5sum
 from smart_manager.serializers import ServiceStatusSerializer
 
@@ -63,20 +61,24 @@ class SambaServiceView(BaseServiceDetailView):
                     gc_param = l.strip().split(' = ')
                     if (len(gc_param) == 2):
                         if '=' in gc_param[0]:
-                            raise Exception('Syntax error, one param has wrong spaces around equal signs, '
-                                            'please check syntax of \'%s\'' % ''.join(gc_param))
-                        global_config[gc_param[0].strip().lower()] = gc_param[1].strip()
-                #Default set current workgroup to one got via samba config page
+                            raise Exception(
+                                'Syntax error, one param has wrong spaces '
+                                'around equal signs, please check syntax of '
+                                '\'%s\'' % ''.join(gc_param))
+                        global_config[gc_param[0].strip().lower()] = gc_param[1].strip()  # noqa
+                # #E501 Default set current workgroup to one got via samba
+                # config page
                 global_config['workgroup'] = config['workgroup']
-                #Check Active Directory config and status
-                #if AD configured and ON set workgroup to AD retrieved workgroup
-                #else AD not running and leave workgroup to one choosen by user
+                # Check Active Directory config and status if AD configured and
+                # ON set workgroup to AD retrieved workgroup else AD not
+                # running and leave workgroup to one choosen by user
                 adso = Service.objects.get(name='active-directory')
                 adconfig = None
                 adso_status = 1
                 if (adso.config is not None):
                     adconfig = self._get_config(adso)
-                    adso_out, adso_err, adso_status = service_status('active-directory', adconfig)
+                    adso_out, adso_err, adso_status = service_status(
+                        'active-directory', adconfig)
                     if adso_status == 0:
                         global_config['workgroup'] = adconfig['workgroup']
                     else:
@@ -85,7 +87,7 @@ class SambaServiceView(BaseServiceDetailView):
                 self._save_config(service, global_config)
                 update_global_config(global_config, adconfig)
                 restart_samba(hard=True)
-            except Exception, e:
+            except Exception as e:
                 e_msg = ('Samba could not be configured. Try again. '
                          'Exception: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
@@ -106,7 +108,8 @@ class SambaServiceView(BaseServiceDetailView):
                     systemctl('nmb', 'enable')
                 systemctl('nmb', command)
                 systemctl('smb', command)
-            except Exception, e:
-                e_msg = ('Failed to %s samba due to a system error: %s' % (command, e.__str__()))
+            except Exception as e:
+                e_msg = ('Failed to %s samba due to a system error: %s'
+                         % (command, e.__str__()))
                 handle_exception(Exception(e_msg), request)
         return Response()

@@ -20,11 +20,8 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import superctl
 from django.db import transaction
-from base_service import (BaseServiceView, BaseServiceDetailView)
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-from task_scheduler import TaskSchedulerDetailView
-from django.conf import settings
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -38,11 +35,11 @@ class TaskSchedulerServiceView(BaseServiceDetailView):
         """
         service = Service.objects.get(name='task-scheduler')
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
+            # nothing to really configure atm. just save the model
             try:
                 config = request.data['config']
                 self._save_config(service, config)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 e_msg = ('Task Scheduler could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)
@@ -50,7 +47,7 @@ class TaskSchedulerServiceView(BaseServiceDetailView):
         else:
             try:
                 superctl(service.name, command)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 e_msg = ('Failed to %s Replication due to a system error.' %
                          command)

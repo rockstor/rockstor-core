@@ -1,5 +1,4 @@
 import logging
-import os
 from django.db import transaction
 from rest_framework.response import Response
 from smart_manager.models import Service
@@ -26,7 +25,7 @@ class NUTServiceView(BaseServiceDetailView):
                     config = request.data.get('config')
                     configure_nut(config)
                     self._save_config(service, config)
-                except Exception, e:
+                except Exception as e:
                     logger.exception(e)
                     e_msg = ('NUT could not be configured. Please try again')
                     handle_exception(Exception(e_msg), request)
@@ -40,11 +39,11 @@ class NUTServiceView(BaseServiceDetailView):
                 try:
                     self._switch_nut(command, self._get_config(service))
                     logger.info('NUT-UPS toggled')
-                except Exception, e:
+                except Exception as e:
                     logger.exception(e)
                     e_msg = ("Failed to %s NUT-UPS service due to a system "
-                             "error. Check the service is configured correctly "
-                             "via it's spanner icon." % command)
+                             "error. Check the service is configured "
+                             "correctly via it's spanner icon." % command)
                     handle_exception(Exception(e_msg), request)
         return Response()
 

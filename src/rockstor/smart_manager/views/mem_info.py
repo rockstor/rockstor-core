@@ -20,6 +20,7 @@ from smart_manager.models import MemInfo
 from smart_manager.serializers import MemInfoSerializer
 from generic_sprobe import GenericSProbeView
 
+
 class MemInfoView(GenericSProbeView):
 
     serializer_class = MemInfoSerializer

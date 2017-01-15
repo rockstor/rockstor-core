@@ -16,9 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-Detail views for smart manager
-"""
 
 from smart_manager.models import (ReplicaShare, ReplicaTrail, Replica,
                                   ReceiveTrail,)
@@ -30,7 +27,7 @@ from smart_manager.serializers import (ReplicaShareSerializer,
 import rest_framework_custom as rfc
 from rest_framework.response import Response
 
-# Replicas
+
 class ReplicaShareDetailView(rfc.GenericView):
     serializer_class = ReplicaShareSerializer
 
@@ -84,6 +81,3 @@ class ReceiveTrailDetailView(rfc.GenericView):
         if ('rtid' in self.kwargs):
             with self._handle_exception(request):
                 return ReceiveTrail.objects.get(id=self.kwargs['rtid'])
-
-
-# Services

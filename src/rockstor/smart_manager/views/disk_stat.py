@@ -31,6 +31,6 @@ class DiskStatView(GenericSProbeView):
     def _sorted_results(self, sort_col, reverse):
         qs = []
         for d in Disk.objects.all():
-            qs.append(self.model_obj.objects.filter(name=d.name).order_by('-ts')[0])
+            qs.append(self.model_obj.objects.filter(
+                name=d.name).order_by('-ts')[0])
         return sorted(qs, key=attrgetter(sort_col), reverse=reverse)
-

@@ -37,11 +37,11 @@ class DataCollectorServiceView(BaseServiceDetailView):
         """
         service = Service.objects.get(name='data-collector')
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
+            # nothing to really configure atm. just save the model
             try:
                 config = request.data['config']
                 self._save_config(service, config)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 e_msg = ('Data Collector could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)
@@ -49,7 +49,7 @@ class DataCollectorServiceView(BaseServiceDetailView):
         else:
             try:
                 superctl(service.name, command)
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 e_msg = ('Failed to %s Data collector due to a system error.' %
                          command)
