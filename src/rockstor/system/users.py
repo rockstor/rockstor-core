@@ -42,14 +42,15 @@ SMBPASSWD = '/usr/bin/smbpasswd'
 CHOWN = '/usr/bin/chown'
 
 
-#this is a hack for AD to get as many users as possible within 90 seconds.  If
-#there are several thousands of domain users and AD isn't that fast, winbind
-#takes a long time to enumerate the users for getent. Subsequent queries finish
-#faster because of caching. But this prevents timing out.
+# this is a hack for AD to get as many users as possible within 90 seconds.  If
+# there are several thousands of domain users and AD isn't that fast, winbind
+# takes a long time to enumerate the users for getent. Subsequent queries
+# finish faster because of caching. But this prevents timing out.
 def get_users(max_wait=90):
     t0 = time.time()
     users = {}
-    p = subprocess.Popen(['/usr/bin/getent', 'passwd'], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(['/usr/bin/getent', 'passwd'], shell=False,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
     alive = True
     user_data = ''
@@ -61,38 +62,41 @@ def get_users(max_wait=90):
         except IOError:
             if (time.time() - t0 < max_wait):
                 continue
-        except Exception, e:
+        except Exception as e:
             logger.exception(e)
             p.terminate()
         uf = user_data.split('\n')
-        #If the feed ends in \n, the last element will be '', if not, it will
-        #be a partial line to be processed next time around.
+        # If the feed ends in \n, the last element will be '', if not, it will
+        # be a partial line to be processed next time around.
         user_data = uf[-1]
         for u in uf[:-1]:
             ufields = u.split(':')
             if (len(ufields) > 3):
-                charset = chardet.detect( ufields[0] )
-                uname = ufields[0].decode( charset['encoding'] )
-                users[uname] = (int(ufields[2]), int(ufields[3]), str(ufields[6]))
+                charset = chardet.detect(ufields[0])
+                uname = ufields[0].decode(charset['encoding'])
+                users[uname] = (int(ufields[2]), int(ufields[3]),
+                                str(ufields[6]))
             if (time.time() - t0 > max_wait):
                 p.terminate()
                 break
     return users
+
 
 def get_groups(*gids):
     groups = {}
     if (len(gids) > 0):
         for g in gids:
             entry = grp.getgrgid(g)
-            charset = chardet.detect( entry.gr_name )
-            gr_name = entry.gr_name.decode( charset['encoding'] )
+            charset = chardet.detect(entry.gr_name)
+            gr_name = entry.gr_name.decode(charset['encoding'])
             groups[gr_name] = entry.gr_gid
     else:
         for g in grp.getgrall():
-            charset = chardet.detect( g.gr_name )
-            gr_name = g.gr_name.decode( charset['encoding'] )
+            charset = chardet.detect(g.gr_name)
+            gr_name = g.gr_name.decode(charset['encoding'])
             groups[gr_name] = g.gr_gid
     return groups
+
 
 def userdel(uname):
     try:
@@ -100,7 +104,7 @@ def userdel(uname):
     except KeyError:
         # user doesn't exist
         return
-    #Ensure user get deleted from samba pass db
+    # Ensure user get deleted from samba pass db
     run_command([SMBPASSWD, '-x', uname])
 
     return run_command([USERDEL, '-r', uname])
@@ -109,7 +113,7 @@ def userdel(uname):
 def groupdel(groupname):
     try:
         return run_command([GROUPDEL, groupname])
-    except CommandException, e:
+    except CommandException as e:
         if (e.rc != 6):
             raise e
 
@@ -157,14 +161,18 @@ def useradd(username, shell, uid=None, gid=None):
     except:
         pass
     if (pw_entry is not None):
-        if (uid is not None and
-            uid != pw_entry.pw_uid):
-            raise Exception('User(%s) already exists, but her uid(%d) is different from the input(%d).' % (username, pw_entry.pw_uid, uid))
-        if (gid is not None and
-            gid != pw_entry.pw_gid):
-            raise Exception('User(%s) already exists, but her gid(%d) is different from the input(%d).' % (username, pw_entry.pw_gid, gid))
+        if (uid is not None and uid != pw_entry.pw_uid):
+            raise Exception('User({0}) already exists, but her uid({1}) is '
+                            'different from the input({2}).'.format(
+                                username, pw_entry.pw_uid, uid))
+        if (gid is not None and gid != pw_entry.pw_gid):
+            raise Exception('User({0}) already exists, but her git({1}) is '
+                            'different from the input({2}).'.format(
+                                username, pw_entry.pw_gid, gid))
         if (shell != pw_entry.pw_shell):
-            raise Exception('User(%s) already exists, but her shell(%s) is different from the input(%s).' % (username, pw_entry.shell, shell))
+            raise Exception('User({0}) already exists, but her shell({1}) is '
+                            'different from the input({2}).'.format(
+                                username, pw_entry.shell, shell))
         return ([''], [''], 0)
 
     cmd = [USERADD, '-s', shell, '-m', username]
@@ -195,7 +203,7 @@ def add_ssh_key(username, key, old_key=None):
     if (not os.path.isdir(SSH_DIR)):
         os.mkdir(SSH_DIR)
     run_command([CHOWN, '-R', '%s:%s' % (username, groupname), SSH_DIR])
-    os.chmod(SSH_DIR, 0700)
+    os.chmod(SSH_DIR, 700)
     fo, npath = mkstemp()
     exists = False
     with open(AUTH_KEYS, openmode) as afo, open(npath, 'w') as tfo:
@@ -210,5 +218,5 @@ def add_ssh_key(username, key, old_key=None):
     if (exists):
         return os.remove(npath)
     move(npath, AUTH_KEYS)
-    os.chmod(AUTH_KEYS, 0600)
+    os.chmod(AUTH_KEYS, 600)
     run_command([CHOWN, '%s:%s' % (username, groupname), AUTH_KEYS])

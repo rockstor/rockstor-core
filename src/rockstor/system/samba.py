@@ -26,7 +26,6 @@ from storageadmin.models import SambaCustomConfig
 from django.conf import settings
 
 
-
 TESTPARM = '/usr/bin/testparm'
 SMB_CONFIG = '/etc/samba/smb.conf'
 SYSTEMCTL = '/usr/bin/systemctl'
@@ -38,17 +37,13 @@ RS_AD_FOOTER = '####END: Rockstor ACTIVE DIRECTORY CONFIG####'
 RS_CUSTOM_HEADER = '####BEGIN: Rockstor SAMBA GLOBAL CUSTOM####'
 RS_CUSTOM_FOOTER = '####END: Rockstor SAMBA GLOBAL CUSTOM####'
 
+
 def test_parm(config='/etc/samba/smb.conf'):
     cmd = [TESTPARM, '-s', config]
     o, e, rc = run_command(cmd, throw=False)
     if (rc != 0):
-        try:
-            os.remove(npath)
-        except:
-            pass
-        finally:
-            raise Exception('Syntax error while checking the temporary '
-                            'samba config file')
+        raise Exception('Syntax error while checking the temporary '
+                        'samba config file')
     return True
 
 
@@ -70,7 +65,7 @@ def rockstor_smb_config(fo, exports):
         if (len(admin_users) > 0):
             fo.write('    admin users = %s\n' % admin_users)
         if (e.shadow_copy):
-            fo.write('    shadow:format = .' + e.snapshot_prefix + '_%Y%m%d%H%M\n')
+            fo.write('    shadow:format = .' + e.snapshot_prefix + '_%Y%m%d%H%M\n')  # noqa E501
             fo.write('    shadow:basedir = %s\n' % e.path)
             fo.write('    shadow:snapdir = ./\n')
             fo.write('    shadow:sort = desc\n')
@@ -82,13 +77,13 @@ def rockstor_smb_config(fo, exports):
                     fo.write('    %s\n' % cco.custom_config)
     fo.write('%s\n' % RS_SHARES_FOOTER)
 
+
 def refresh_smb_config(exports):
     fh, npath = mkstemp()
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         rockstor_section = False
         for line in sfo.readlines():
-            if (re.match(RS_SHARES_HEADER, line)
-                is not None):
+            if (re.match(RS_SHARES_HEADER, line) is not None):
                 rockstor_section = True
                 rockstor_smb_config(tfo, exports)
                 break
@@ -100,33 +95,33 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-#write out new [global] section and re-write the existing rockstor section.
+# write out new [global] section and re-write the existing rockstor section.
 def update_global_config(smb_config=None, ad_config=None):
     fh, npath = mkstemp()
     if (smb_config is None):
         smb_config = {}
 
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
-        #Start building samba [global] section with base config
+        # Start building samba [global] section with base config
         tfo.write('[global]\n')
-        
-        #Write some defaults samba params
-        #only if not passed via samba custom config
+
+        # Write some defaults samba params
+        # only if not passed via samba custom config
         smb_default_options = {
-            'log file' : '/var/log/samba/log.%m',
-            'log level' : 3,
-            'load printers' : 'no',
-            'cups options' : 'raw',
-            'printcap name' : '/dev/null',
-            'map to guest' : 'Bad User'
+            'log file': '/var/log/samba/log.%m',
+            'log level': 3,
+            'load printers': 'no',
+            'cups options': 'raw',
+            'printcap name': '/dev/null',
+            'map to guest': 'Bad User'
         }
         for key, value in smb_default_options.iteritems():
             if key not in smb_config:
                 tfo.write('    %s = %s\n' % (key, value))
 
-        #Fill samba [global] section with our custom samba params
-        #before updating smb_config dict with AD data to avoid
-        #adding non samba params like AD username and password
+        # Fill samba [global] section with our custom samba params
+        # before updating smb_config dict with AD data to avoid
+        # adding non samba params like AD username and password
         if (smb_config is not None):
             tfo.write('\n%s\n' % RS_CUSTOM_HEADER)
             for k in smb_config:
@@ -136,7 +131,7 @@ def update_global_config(smb_config=None, ad_config=None):
                 tfo.write('    %s = %s\n' % (k, smb_config[k]))
             tfo.write('%s\n\n' % RS_CUSTOM_FOOTER)
 
-        #Next add AD config to smb_config and build AD section
+        # Next add AD config to smb_config and build AD section
         if (ad_config is not None):
             smb_config.update(ad_config)
 
@@ -163,15 +158,17 @@ def update_global_config(smb_config=None, ad_config=None):
                 tfo.write('    idmap config %s : backend = ad\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' %
                           (workgroup, smb_config['idmap_range']))
-                tfo.write('    idmap config %s : schema_mode = rfc2307\n' % workgroup)
+                tfo.write('    idmap config %s : schema_mode = rfc2307\n'
+                          % workgroup)
                 tfo.write('    winbind nss info = rfc2307\n')
             else:
                 tfo.write('    idmap config %s : backend = rid\n' % workgroup)
-                tfo.write('    idmap config %s : range = %s\n' % (workgroup, smb_config['idmap_range']))
+                tfo.write('    idmap config %s : range = %s\n' %
+                          (workgroup, smb_config['idmap_range']))
             tfo.write('%s\n\n' % RS_AD_FOOTER)
 
-        #After default [global], custom [global] and AD writes
-        #finally add smb shares
+        # After default [global], custom [global] and AD writes
+        # finally add smb shares
         rockstor_section = False
         for line in sfo.readlines():
             if (re.match(RS_SHARES_HEADER, line) is not None):
@@ -181,34 +178,35 @@ def update_global_config(smb_config=None, ad_config=None):
     test_parm(npath)
     shutil.move(npath, SMB_CONFIG)
 
+
 def get_global_config():
     config = {}
     with open(SMB_CONFIG) as sfo:
         global_section = False
         global_custom_section = False
         for l in sfo.readlines():
-            #Check one, entering smb.conf [global] section
+            # Check one, entering smb.conf [global] section
             if (re.match('\[global]', l) is not None):
                 global_section = True
                 continue
-            #Check two, entering Rockstor custome params section under [global] 
+            # Check two, entering Rockstor custome params section under
+            # [global]
             if (re.match(RS_CUSTOM_HEADER, l) is not None):
                 global_custom_section = True
                 continue
-            if (global_custom_section and
-                re.match(RS_CUSTOM_FOOTER, l) is not None):
+            if ((global_custom_section and
+                 re.match(RS_CUSTOM_FOOTER, l) is not None)):
                 global_custom_section = False
                 continue
-            #we ignore lines outside [global], empty lines, or
-            #commends(starting with # or ;)
-            if (not global_section or
+            # we ignore lines outside [global], empty lines, or
+            # commends(starting with # or ;)
+            if ((not global_section or
                 not global_custom_section or
                 len(l.strip()) == 0 or
                 re.match('#', l) is not None or
-                re.match(';', l) is not None):
+                 re.match(';', l) is not None)):
                 continue
-            if (global_section and
-                re.match('\[', l) is not None):
+            if (global_section and re.match('\[', l) is not None):
                 global_section = False
                 continue
             fields = l.strip().split(' = ')
@@ -227,6 +225,7 @@ def restart_samba(hard=False):
         mode = 'restart'
     run_command([SYSTEMCTL, mode, 'smb'])
     return run_command([SYSTEMCTL, mode, 'nmb'])
+
 
 def update_samba_discovery():
     avahi_smb_config = '/etc/avahi/services/smb.service'

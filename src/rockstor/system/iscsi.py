@@ -16,10 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from osi import run_command
+
 TGTADM_BIN = '/usr/sbin/tgtadm'
 DD_BIN = '/bin/dd'
-
-from osi import run_command
 
 
 def create_target_device(tid, tname):
@@ -27,10 +27,12 @@ def create_target_device(tid, tname):
            '--tid', tid, '--targetname', tname]
     return run_command(cmd)
 
+
 def add_logical_unit(tid, lun, dev_name):
     cmd = [TGTADM_BIN, '--lld', 'iscsi', '--mode', 'logicalunit', '--op',
            'new', '--tid', tid, '--lun', lun, '-b', dev_name]
     return run_command(cmd)
+
 
 def ip_restrict(tid):
     """
@@ -40,6 +42,7 @@ def ip_restrict(tid):
            '--tid', tid, '-I', 'ALL']
     return run_command(cmd)
 
+
 def create_lun_file(dev_name, size):
     """
     size in MB
@@ -48,6 +51,7 @@ def create_lun_file(dev_name, size):
     count = ('count=%d' % size)
     cmd = [DD_BIN, 'if=/dev/zero', of, 'bs=1M', count]
     return run_command(cmd)
+
 
 def export_iscsi(tid, tname, lun, dev_name, size):
     """

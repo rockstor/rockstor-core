@@ -16,15 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-#to be moved to views/email_client.py after an update or so.
+# to be moved to views/email_client.py after an update or so.
 
 import smtplib
 from email.MIMEMultipart import MIMEMultipart
-from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
-from email import Encoders
 from system.osi import gethostname
+
 
 def test_smtp_auth(eco):
     auth = None
@@ -43,6 +42,7 @@ def test_smtp_auth(eco):
         smtp.close()
         return auth
 
+
 def send_test_email(eco, subject):
     msg = MIMEMultipart()
     msg['From'] = eco.sender
@@ -54,6 +54,7 @@ def send_test_email(eco, subject):
     smtp = smtplib.SMTP('localhost')
     smtp.sendmail(eco.sender, eco.receiver, msg.as_string())
     smtp.close()
+
 
 def email_root(subject, message):
     """
@@ -75,4 +76,3 @@ def email_root(subject, message):
     smtp = smtplib.SMTP('localhost')
     smtp.sendmail(msg['From'], msg['To'], msg.as_string())
     smtp.close()
-

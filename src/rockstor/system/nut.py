@@ -199,7 +199,8 @@ def update_upssched_early_shutdown(seconds):
                     # haven't already found such a line and seconds != 0
                     if stop_timer_found or seconds == '0':
                         # we have a duplicate line or seconds = 0 so omit this
-                        # line by moving along to the next line in our template.
+                        # line by moving along to the next line in our
+                        # template.
                         continue
                     # set our flag to cope with future duplicate entries
                     stop_timer_found = True
@@ -250,13 +251,13 @@ def establish_config_defaults(config):
     if ('nutserver' in config) and (config['nutserver'] == ''):
         config['nutserver'] = 'localhost'
     # Establish a port default of auto as this works with most USB connected
-    # UPS devices which is a more common connection type going forward.
-    # Note that this setting persists but netclient mode, which doesn't use
-    # the port option, is unaffected by this setting so persistence is harmless.
+    # UPS devices which is a more common connection type going forward.  Note
+    # that this setting persists but netclient mode, which doesn't use the port
+    # option, is unaffected by this setting so persistence is harmless.
     if ('port' in config) and (config['port'] == ''):
         config['port'] = 'auto'
-    # Establish a default Shutdown Timing setting of 0 as this was the effective
-    # default behaviour prior to the timed shutdown config option
+    # Establish a default Shutdown Timing setting of 0 as this was the
+    # effective default behaviour prior to the timed shutdown config option
     if ('shutdowntimer' in config) and (config['shutdowntimer'] == ''):
         config['shutdowntimer'] = '0'
 
@@ -291,13 +292,13 @@ def configure_nut(config):
         # correct nut config file permissions from the default root rw -- --
         # without this nut services cannot access the details they require as
         # on startup nut mostly drops root privileges and runs as the nut user.
-        # nut-client installs upsmon.conf and upssched.conf
-        # ups.conf must be readable by upsdrvctl and any drivers and upsd
-        # all nut config files by default in a CentOS install are 640 but our
-        # file editing process creates a temp file and copies it over as root.
-        # The files used to be left as root.nut owner group so previously we
-        # only had to chmod but note the following comment re the chown addition
-        # after our existing chmod:-
+        # nut-client installs upsmon.conf and upssched.conf ups.conf must be
+        # readable by upsdrvctl and any drivers and upsd all nut config files
+        # by default in a CentOS install are 640 but our file editing process
+        # creates a temp file and copies it over as root.  The files used to be
+        # left as root.nut owner group so previously we only had to chmod but
+        # note the following comment re the chown addition after our existing
+        # chmod:-
         run_command([CHMOD, '640', config_file])
         # N.B. as of around Dec 2015 an os update changed the behaviour of
         # the mechanism used here such that root.root became the owner group.
