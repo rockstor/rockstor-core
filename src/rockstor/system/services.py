@@ -251,9 +251,9 @@ def update_nginx(ip, port):
                 http_server = True
             if ((not http_server and
                  re.search('listen.*default_server', lines[i]) is not None)):
-                substr = 'listen %s:%d default_server' % (ip, port)
+                substr = 'listen %d default_server' % port
                 if (ip is not None):
-                    substr = 'listen %d default_server' % port
+                    substr = 'listen %s:%d default_server' % (ip, port)
                 lines[i] = re.sub(r'listen.* default_server', substr, lines[i])
             if (not http_server):
                 tfo.write(lines[i])
