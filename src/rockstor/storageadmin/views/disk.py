@@ -16,13 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import re
-from contextlib import contextmanager
-from storageadmin.exceptions import RockStorAPIException
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool, Share)
-from fs.btrfs import enable_quota, btrfs_uuid, pool_usage, mount_root, \
-    get_pool_info, pool_raid
+from fs.btrfs import (enable_quota, btrfs_uuid, mount_root,
+                      get_pool_info, pool_raid)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from share_helpers import (import_shares, import_snapshots)
@@ -45,6 +43,7 @@ logger = logging.getLogger(__name__)
 # LUKS currently stands for full disk crypto container.
 SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'bcache',
                           'bcache-cdev', 'partitions']
+
 
 class DiskMixin(object):
     serializer_class = DiskInfoSerializer
@@ -71,11 +70,10 @@ class DiskMixin(object):
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
         # make this so in the case of empty or repeat entries by providing
-        # fake serial numbers which are in turn flagged via WebUI as unreliable.
-        # 1) scrub all device names with unique but nonsense uuid4
-        # 1) mark all offline disks as such via db flag
-        # 2) mark all offline disks smart available and enabled flags as False
-        # logger.info('update_disk_state() Called')
+        # fake serial numbers which are flagged via WebUI as unreliable.
+        # 1) Scrub all device names with unique but nonsense uuid4.
+        # 2) Mark all offline disks as such via db flag.
+        # 3) Mark all offline disks smart available and enabled flags as False.
         for do in Disk.objects.all():
             # Replace all device names with a unique placeholder on each scan
             # N.B. do not optimize by re-using uuid index as this could lead
@@ -93,7 +91,8 @@ class DiskMixin(object):
                 do.delete()  # django >=1.9 returns a dict of deleted items.
                 # Continue onto next db disk object as nothing more to process.
                 continue
-            # first encounter of this serial in the db so stash it for reference
+            # first encounter of this serial in the db so stash it for
+            # reference
             serial_numbers_seen.append(deepcopy(do.serial))
             # Look for devices (by serial number) that are in the db but not in
             # our disk scan, ie offline / missing.
@@ -103,7 +102,7 @@ class DiskMixin(object):
                 # disable S.M.A.R.T available and enabled flags.
                 do.smart_available = do.smart_enabled = False
             do.save()  # make sure all updates are flushed to db
-        # Our db now has no device name info as all dev names are place holders.
+        # Our db now has no device name info: all dev names are place holders.
         # Iterate over attached drives to update the db's knowledge of them.
         # Kernel dev names are unique so safe to overwrite our db unique name.
         for d in disks:
@@ -117,20 +116,18 @@ class DiskMixin(object):
             # to a more useful by-id type name as found in /dev/disk/by-id
             byid_disk_name, is_byid = get_dev_byid_name(d.name, True)
             # If the db has an entry with this disk's serial number then
-            # use this db entry and update the device name from our recent scan.
+            # use this db entry and update the device name from our new scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
-                #dob.name = d.name
                 dob.name = byid_disk_name
             else:
                 # We have an assumed new disk entry as no serial match in db.
-                # Build a new entry for this disk.
-                #dob = Disk(name=d.name, serial=d.serial)
-                # N.B. we may want to force a fake-serial here if is_byid False,
-                # that way we flag as unusable disk as no by-id type name found.
-                # It may already have been set though as the only by-id
-                # failures so far are virtio disks with no serial so scan_disks
-                # will have already given it a fake serial in d.serial.
+                # Build a new entry for this disk.  N.B. we may want to force a
+                # fake-serial here if is_byid False, that way we flag as
+                # unusable disk as no by-id type name found.  It may already
+                # have been set though as the only by-id failures so far are
+                # virtio disks with no serial so scan_disks will have already
+                # given it a fake serial in d.serial.
                 dob = Disk(name=byid_disk_name, serial=d.serial, role=None)
             # Update the db disk object (existing or new) with our scanned info
             dob.size = d.size
@@ -152,12 +149,13 @@ class DiskMixin(object):
             # ### BEGINNING OF ROLE FIELD UPDATE ###
             # Update the role field with scan_disks findings.
             # SCAN_DISKS_KNOWN_ROLES a list of scan_disks identifiable roles.
-            # TODO: On migrations reset the following legacy clause is redundant
             # Deal with legacy non json role field contents by erasure.
             # N.B. We have a minor legacy issue in that prior to using json
             # format for the db role field we stored one of 2 strings.
-            # If either of these 2 strings are found reset to db default of None
-            if dob.role == 'isw_raid_member' or dob.role == 'linux_raid_member':
+            # If either of these 2 strings are found reset to db default of
+            # None
+            if dob.role == 'isw_raid_member'\
+                    or dob.role == 'linux_raid_member':
                 # These are the only legacy non json formatted roles used.
                 # Erase legacy role entries as we are about to update the role
                 # anyway and new entries will then be in the new json format.
@@ -168,19 +166,20 @@ class DiskMixin(object):
             # First extract all non scan_disks assigned roles so we can add
             # them back later; all scan_disks assigned roles will be identified
             # from our recent scan_disks data so we assert the new truth.
-            logger.debug('########### STARTING NEW DISK ROLE UPDATE ##########')
+            logger.debug('########## STARTING NEW DISK ROLE UPDATE ##########')
             logger.debug('## disk name = %s ##' % dob.name)
             if dob.role is not None:  # db default null=True so None here.
                 # Get our previous roles into a dictionary
                 logger.debug('dob.role=%s' % dob.role)
                 previous_roles = json.loads(dob.role)
                 logger.debug('PREVIOUS ROLES=%s' % previous_roles)
-                # Preserve the non scan_disks identified roles for this db entry
+                # Preserve non scan_disks identified roles for this db entry
                 non_scan_disks_roles = {role: v for role, v in
                                         previous_roles.items()
                                         if role not in SCAN_DISKS_KNOWN_ROLES}
                 logger.debug('NON_SCAN_DISKS_ROLES=%s' % non_scan_disks_roles)
-            if d.fstype == 'isw_raid_member' or d.fstype == 'linux_raid_member':
+            if d.fstype == 'isw_raid_member' \
+                    or d.fstype == 'linux_raid_member':
                 # MDRAID MEMBER: scan_disks() can informs us of the truth
                 # regarding mdraid membership via d.fstype indicators.
                 # create or update an mdraid dictionary entry
@@ -250,9 +249,10 @@ class DiskMixin(object):
                 # update the disk db object's pool field accordingly.
                 dob.pool = Pool.objects.get(name=d.label)
 
-                #this is for backwards compatibility. root pools created
-                #before the pool.role migration need this. It can safely be
-                #removed a few versions after 3.8-11 or when we reset migrations.
+                # this is for backwards compatibility. root pools created
+                # before the pool.role migration need this. It can safely be
+                # removed a few versions after 3.8-11 or when we reset
+                # migrations.
                 if (d.root is True):
                     dob.pool.role = 'root'
                     dob.pool.save()
@@ -308,7 +308,7 @@ class DiskMixin(object):
                     # for non ata/sata drives
                     do.smart_available, do.smart_enabled = smart.available(
                         do.name, do.smart_options)
-                except Exception, e:
+                except Exception as e:
                     logger.exception(e)
                     do.smart_available = do.smart_enabled = False
             do.save()
@@ -343,7 +343,6 @@ class DiskDetailView(rfc.GenericView):
             e_msg = ('Disk(%s) does not exist' % dname)
             handle_exception(Exception(e_msg), request)
 
-
     @staticmethod
     def _role_filter_disk_name(disk, request):
         """
@@ -361,12 +360,12 @@ class DiskDetailView(rfc.GenericView):
                 disk_role_dict = json.loads(disk.role)
                 if 'redirect' in disk_role_dict:
                     disk_name = disk_role_dict.get('redirect', None)
-            logger.debug('disk.py role_filter_disk_name RETURNING=%s' % disk_name)
+            logger.debug('disk.py role_filter_disk_name RETURNING=%s'
+                         % disk_name)
             return disk_name
         except:
             e_msg = ('Problem with role filter of disk(%s)' % disk)
             handle_exception(Exception(e_msg), request)
-
 
     @staticmethod
     def _reverse_role_filter_name(disk_name, request):
@@ -406,7 +405,6 @@ class DiskDetailView(rfc.GenericView):
             e_msg = ('Problem reversing role filter disk name(%s)' % disk_name)
             handle_exception(Exception(e_msg), request)
 
-
     def get(self, *args, **kwargs):
         if 'dname' in self.kwargs:
             try:
@@ -431,7 +429,7 @@ class DiskDetailView(rfc.GenericView):
         try:
             disk.delete()
             return Response()
-        except Exception, e:
+        except Exception as e:
             e_msg = ('Could not remove disk(%s) due to system error' % dname)
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
@@ -459,8 +457,10 @@ class DiskDetailView(rfc.GenericView):
             if (command == 'role-drive'):
                 return self._role_disk(dname, request)
 
-        e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
-                 ' btrfs-disk-import, blink-drive, enable-smart, disable-smart,'
+        e_msg = ('Unsupported command(%s). Valid commands are wipe, '
+                 'btrfs-wipe,'
+                 ' btrfs-disk-import, blink-drive, enable-smart, '
+                 'disable-smart,'
                  ' smartcustom-drive, spindown-drive, pause' % command)
         handle_exception(Exception(e_msg), request)
 
@@ -501,7 +501,6 @@ class DiskDetailView(rfc.GenericView):
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
-
     @transaction.atomic
     def _btrfs_disk_import(self, dname, request):
         try:
@@ -514,9 +513,10 @@ class DiskDetailView(rfc.GenericView):
             # loop below.
             po.save()
             for device in p_info['disks']:
-                logger.debug('_btrfs_disk_import looking at disk name=%s' % device)
-                disk_name, isPartition = self._reverse_role_filter_name(device,
-                                                                        request)
+                logger.debug('_btrfs_disk_import looking at disk name=%s'
+                             % device)
+                disk_name, isPartition = \
+                    self._reverse_role_filter_name(device, request)
                 do = Disk.objects.get(name=disk_name)
                 do.pool = po
                 # update this disk's parted property
@@ -526,7 +526,8 @@ class DiskDetailView(rfc.GenericView):
                     # "redirect": "virtio-serial-3-part2"
                     if do.role is not None:  # db default is null / None.
                         # Get our previous roles into a dictionary
-                        logger.debug('btrfs import - existing do.role=%s' % do.role)
+                        logger.debug('btrfs import - existing do.role=%s'
+                                     % do.role)
                         roles = json.loads(do.role)
                         # update or add our "redirect" role with our part name
                         roles['redirect'] = '%s' % device
@@ -536,7 +537,8 @@ class DiskDetailView(rfc.GenericView):
                         # role=None so just add a json formatted redirect role
                         do.role = '{"redirect": "%s"}' % device.name
                 do.save()
-                logger.debug('btrfs import left disk(%s) role as %s' % (do.name, do.role))
+                logger.debug('btrfs import left disk(%s) role as %s'
+                             % (do.name, do.role))
                 mount_root(po)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
             po.size = po.usage_bound()
@@ -546,7 +548,7 @@ class DiskDetailView(rfc.GenericView):
             for share in Share.objects.filter(pool=po):
                 import_snapshots(share)
             return Response(DiskInfoSerializer(disk).data)
-        except Exception, e:
+        except Exception as e:
             e_msg = ('Failed to import any pool on this device(%s). Error: %s'
                      % (dname, e.__str__()))
             handle_exception(Exception(e_msg), request)
@@ -577,10 +579,10 @@ class DiskDetailView(rfc.GenericView):
             logger.debug('delete_tick value in disk.py=%s' % is_delete_ticked)
             logger.debug('role_disk has previous disk.role=%s' % disk.role)
             # Get our previous roles into a dictionary.
-            if disk.role != None:
+            if disk.role is not None:
                 roles = json.loads(disk.role)
             else:
-                # roles default to None so substitute empty dict for simplicity.
+                # roles default to None, substitute empty dict for simplicity.
                 roles = {}
             # If we have received a redirect role then add/update our dict
             # with it's value (the by-id partition)
@@ -600,23 +602,24 @@ class DiskDetailView(rfc.GenericView):
                         del roles['redirect']
             # Having now checked our new_redirect_role against the disks
             # prior redirect role we can perform validation tasks.
-            logger.debug('redirect_role_change=%s and is_delete_ticked=%s' % (redirect_role_change, is_delete_ticked))
+            logger.debug('redirect_role_change=%s and is_delete_ticked=%s'
+                         % (redirect_role_change, is_delete_ticked))
             if redirect_role_change:
                 if is_delete_ticked:
                     # changing redirect and wiping concurrently are blocked
-                    e_msg = ("Wiping a device while changing it's redirect role"
-                             " is not supported. Please do one at a time")
+                    e_msg = ("Wiping a device while changing it's redirect "
+                             "role is not supported. Please do one at a time")
                     raise Exception(e_msg)
                 # We have a redirect role change and no delete ticked so
                 # return our dict back to a json format and stash in disk.role
                 disk.role = json.dumps(roles)
                 disk.save()
-                logger.debug('role_disk just asserted disk.role=%s' % disk.role)
+                logger.debug('role_disk asserted disk.role=%s' % disk.role)
             else:
                 # no redirect role change so we can wipe if requested by tick
                 if is_delete_ticked:
-                    if disk.pool != None:
-                        # Disk is a member of a Rockstor pool so refuse to wipe.
+                    if disk.pool is not None:
+                        # Disk is a member of a Rockstor pool so refuse to wipe
                         e_msg = ('Wiping a Rockstor pool member is '
                                  'not supported. Please use pool resize to '
                                  'remove this disk from the pool first.')
@@ -624,7 +627,7 @@ class DiskDetailView(rfc.GenericView):
                     # Not sure if this is the correct way to call our wipe.
                     return self._wipe(dname, request)
             return Response(DiskInfoSerializer(disk).data)
-        except Exception, e:
+        except Exception as e:
             e_msg = ('Failed to configure drive role or wipe existing '
                      'filesystem on device (%s). Error: %s'
                      % (dname, e.__str__()))
@@ -635,7 +638,8 @@ class DiskDetailView(rfc.GenericView):
     def _toggle_smart(cls, dname, request, enable=False):
         disk = cls._validate_disk(dname, request)
         if (not disk.smart_available):
-            e_msg = ('S.M.A.R.T support is not available on this Disk(%s)' % dname)
+            e_msg = ('S.M.A.R.T support is not available on this Disk(%s)'
+                     % dname)
             handle_exception(Exception(e_msg), request)
         smart.toggle_smart(disk.name, disk.smart_options, enable)
         disk.smart_enabled = enable
@@ -658,7 +662,8 @@ class DiskDetailView(rfc.GenericView):
         spindown_message = str(
             request.data.get('spindown_message', 'message issue!'))
         apm_value = int(request.data.get('apm_value', 0))
-        set_disk_spindown(disk.name, spindown_time, apm_value, spindown_message)
+        set_disk_spindown(disk.name, spindown_time, apm_value,
+                          spindown_message)
         return Response()
 
     @classmethod
