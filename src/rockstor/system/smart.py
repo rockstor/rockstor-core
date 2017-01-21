@@ -54,7 +54,7 @@ def info(device, custom_options='', test_mode=TESTMODE):
                'Serial Number:|Serial number:',
                'LU WWN Device Id:|Logical Unit id:',
                'Firmware Version:|Revision', 'User Capacity:',
-               'Sector Size:|Logical block size:', 'Rotation Rate:',
+               'Sector Sizes?:|Logical block size:', 'Rotation Rate:',
                'Device is:', 'ATA Version is:',
                'SATA Version is:', 'Local Time is:',
                'SMART support is:.* Available',
