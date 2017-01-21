@@ -218,6 +218,22 @@ DisksView = RockstorLayoutView.extend({
         // where the above helper is replaced by many smaller ones like this.
         // N.B. untested. Presumably we do {{humanReadableAPM this.apm_level}}
         // in upstream disks_table.jst
+
+        asJSON = function (role) {
+            // Simple wrapper to test for not null and JSON compatibility,
+            // returns the json object if both tests pass, else returns false.
+            if (role == null) { // db default
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // @todo not sure if this is redundant?
+            try {
+                return JSON.parse(role);
+            } catch (e) {
+                return false;
+            }
+        };
+
         Handlebars.registerHelper('humanReadableAPM', function (apm) {
             var apmhtml = '';
             if (apm == 0 || apm == null) {
@@ -231,6 +247,7 @@ DisksView = RockstorLayoutView.extend({
             }
             return new Handlebars.SafeString(apmhtml);
         });
+
         // Simple helper to return true / false on powerState = null or unknown
         // Untested. Presumably we do:
         // {{#if (powerstateNullorUnknown this.power_state)}}
@@ -241,6 +258,7 @@ DisksView = RockstorLayoutView.extend({
             }
             return false;
         });
+
         // Simple helper to return true / false on powerState = active/idle
         // Untested. Presumably we do:
         // {{#if (powerStateActiveIdle this.power_state)}}
@@ -251,22 +269,14 @@ DisksView = RockstorLayoutView.extend({
             }
             return false;
         });
+
         Handlebars.registerHelper('displayInfo', function (role) {
             // check for the legacy / pre json formatted role field contents.
             if (role == 'isw_raid_member' || role == 'linux_raid_member') {
                 return true;
             }
-            // now check if our role is null = db default
-            if (role == null) {
-                return false;
-            }
-            // try json conversion and return false if it fails
-            // @todo not sure if this is redundant?
-            try {
-                var roleAsJson = JSON.parse(role);
-            } catch (e) {
-                return false;
-            }
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
             if (roleAsJson.hasOwnProperty('mdraid')) {
                 // in the case of an mdraid property we are assured it is an
@@ -284,17 +294,8 @@ DisksView = RockstorLayoutView.extend({
         // true = device hosts the / partition
         // false = root not found on this device
         Handlebars.registerHelper('isRootDevice', function (role) {
-            // check if our role is null = db default
-            if (role == null) {
-                return false;
-            }
-            // try json conversion and return false if it fails
-            // @todo not sure if this is redundant?
-            try {
-                var roleAsJson = JSON.parse(role);
-            } catch (e) {
-                return false;
-            }
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
             if (roleAsJson.hasOwnProperty('root')) {
                 // Only the system device will have a 'root' role entry, we
@@ -309,18 +310,9 @@ DisksView = RockstorLayoutView.extend({
         // Identify LUKS container by return of true / false.
         // Works by examining the Disk.role field. Based on sister handlebars
         // helper 'isRootDevice'
-               Handlebars.registerHelper('isLuksContainer', function (role) {
-            // check if our role is null = db default
-            if (role == null) {
-                return false;
-            }
-            // try json conversion and return false if it fails
-            // @todo not sure if this is redundant?
-            try {
-                var roleAsJson = JSON.parse(role);
-            } catch (e) {
-                return false;
-            }
+        Handlebars.registerHelper('isLuksContainer', function (role) {
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
             if (roleAsJson.hasOwnProperty('LUKS')) {
                 // Once a container is created it has an fstype of crypto_LUKS
@@ -335,17 +327,8 @@ DisksView = RockstorLayoutView.extend({
         // Works by examining the Disk.role field. Based on sister handlebars
         // helper 'isRootDevice'
         Handlebars.registerHelper('isOpenLuks', function (role) {
-            // check if our role is null = db default
-            if (role == null) {
-                return false;
-            }
-            // try json conversion and return false if it fails
-            // @todo not sure if this is redundant?
-            try {
-                var roleAsJson = JSON.parse(role);
-            } catch (e) {
-                return false;
-            }
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
             if (roleAsJson.hasOwnProperty('openLUKS')) {
                 // Once a LUKS container is open it has a type of crypt
@@ -360,17 +343,8 @@ DisksView = RockstorLayoutView.extend({
         // Works by examining the Disk.role field. Based on sister handlebars
         // helper 'isRootDevice'
         Handlebars.registerHelper('isBcache', function (role) {
-            // check if our role is null = db default
-            if (role == null) {
-                return false;
-            }
-            // try json conversion and return false if it fails
-            // @todo not sure if this is redundant?
-            try {
-                var roleAsJson = JSON.parse(role);
-            } catch (e) {
-                return false;
-            }
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
             if (roleAsJson.hasOwnProperty('bcache')) {
                 // We have a bcache backing device which must now be accessed
@@ -386,17 +360,8 @@ DisksView = RockstorLayoutView.extend({
         // Works by examining the Disk.role field. Based on sister handlebars
         // helper 'isBcache'
         Handlebars.registerHelper('isBcacheCdev', function (role) {
-            // check if our role is null = db default
-            if (role == null) {
-                return false;
-            }
-            // try json conversion and return false if it fails
-            // @todo not sure if this is redundant?
-            try {
-                var roleAsJson = JSON.parse(role);
-            } catch (e) {
-                return false;
-            }
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
             if (roleAsJson.hasOwnProperty('bcachecdev')) {
                 // We have a bcache caching device which we tag to avoid
@@ -412,17 +377,8 @@ DisksView = RockstorLayoutView.extend({
         // helper 'isBcache'
         // Initially only the redirect role is a User assigned role.
         Handlebars.registerHelper('hasUserRole', function (role) {
-            // check if our role is null = db default
-            if (role == null) {
-                return false;
-            }
-            // try json conversion and return false if it fails
-            // @todo not sure if this is redundant?
-            try {
-                var roleAsJson = JSON.parse(role);
-            } catch (e) {
-                return false;
-            }
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
             if (roleAsJson.hasOwnProperty('redirect')) {
                 // We have a User assigned role which we tag to avoid
