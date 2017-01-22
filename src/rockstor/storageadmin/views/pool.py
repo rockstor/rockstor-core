@@ -83,22 +83,18 @@ class PoolMixin(object):
         try:
             # Build dictionary of disks with roles
             role_disks = {d for d in disks if d.role is not None}
-            logger.debug('role_filter role only disks=%s' % role_disks)
             # Build a dictionary of redirected disk names with their
             # associated redirect role values.
             # By using only role_disks we avoid json.load(None)
             redirect_disks = {d.name: json.loads(d.role).get("redirect", None)
                               for d in role_disks if
                               'redirect' in json.loads(d.role)}
-            logger.debug('role_filter_disk_names redirect_disk=%s'
-                         % redirect_disks)
             # Replace d.name with redirect role value for redirect role disks.
             # Our role system stores the /dev/disk/by-id name (without path)
             # for redirected disks so use that value instead as our disk name:
             dnames = [
                 d.name if d.name not in redirect_disks else redirect_disks[
                     d.name] for d in disks]
-            logger.debug('role_filter_disk_names RETURNING=%s' % dnames)
             return dnames
         except:
             e_msg = ('Problem with role filter of disks' % disks)
@@ -262,8 +258,6 @@ class PoolListView(PoolMixin, rfc.GenericView):
         with self._handle_exception(request):
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks')]
-            logger.debug('pool.py POST received a DISK LIST = %s' %
-                         self._get_disk_names(disks, request))
             pname = request.data['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
                 e_msg = ('Invalid characters in Pool name. Following '
@@ -325,7 +319,6 @@ class PoolListView(PoolMixin, rfc.GenericView):
                      mnt_options=mnt_options)
             p.save()
             p.disk_set.add(*disks)
-            logger.debug('pool.py POST dnames LIST = %s' % dnames)
             # added for loop to save disks appears p.disk_set.add(*disks) was
             # not saving disks in test environment
             for d in disks:
@@ -374,7 +367,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                      request.data.get('disks', [])]
             num_new_disks = len(disks)
             dnames = self._role_filter_disk_names(disks, request)
-            logger.debug("POOL DETAIL VIEW PUT dnames=%s" % dnames)
             new_raid = request.data.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
@@ -528,6 +520,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             umount_root(pool_path)
             pool.delete()
             try:
+                # TODO: this call fails as the inheritance of disks was removed
+                # We need another method to invoke this as self no good now.
                 self._update_disk_state()
             except Exception as e:
                 logger.error('Exception while updating disk state: %s'
