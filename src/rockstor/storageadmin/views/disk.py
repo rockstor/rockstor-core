@@ -166,18 +166,13 @@ class DiskMixin(object):
             # First extract all non scan_disks assigned roles so we can add
             # them back later; all scan_disks assigned roles will be identified
             # from our recent scan_disks data so we assert the new truth.
-            logger.debug('########## STARTING NEW DISK ROLE UPDATE ##########')
-            logger.debug('## disk name = %s ##' % dob.name)
             if dob.role is not None:  # db default null=True so None here.
                 # Get our previous roles into a dictionary
-                logger.debug('dob.role=%s' % dob.role)
                 previous_roles = json.loads(dob.role)
-                logger.debug('PREVIOUS ROLES=%s' % previous_roles)
                 # Preserve non scan_disks identified roles for this db entry
                 non_scan_disks_roles = {role: v for role, v in
                                         previous_roles.items()
                                         if role not in SCAN_DISKS_KNOWN_ROLES}
-                logger.debug('NON_SCAN_DISKS_ROLES=%s' % non_scan_disks_roles)
             if d.fstype == 'isw_raid_member' \
                     or d.fstype == 'linux_raid_member':
                 # MDRAID MEMBER: scan_disks() can informs us of the truth
@@ -228,20 +223,16 @@ class DiskMixin(object):
                     get_dev_byid_name(part, True)[0]:
                         d.partitions.get(part, "") for part in d.partitions}
                 # In the above we fail over to "" on failed index for now.
-                logger.debug('byid_partitons=%s' % byid_partitions)
                 disk_roles_identified['partitions'] = byid_partitions
             # Now we join the previous non scan_disks identified roles dict
             # with those we have identified from our fresh scan_disks() data
             # and return the result to our db entry in json format.
             # Note that dict of {} isn't None
             if (non_scan_disks_roles != {}) or (disk_roles_identified != {}):
-                logger.debug('######### WRITING NEW DOB.ROLE ###############')
                 combined_roles = dict(non_scan_disks_roles,
                                       **disk_roles_identified)
-                logger.debug('and in JSON=%s' % json.dumps(combined_roles))
                 dob.role = json.dumps(combined_roles)
             else:
-                logger.debug('SETTING DEFAULT ROLE = None')
                 dob.role = None
             # END OF ROLE FIELD UPDATE
             # If our existing Pool db knows of this disk's pool via it's label:
@@ -360,8 +351,6 @@ class DiskDetailView(rfc.GenericView):
                 disk_role_dict = json.loads(disk.role)
                 if 'redirect' in disk_role_dict:
                     disk_name = disk_role_dict.get('redirect', None)
-            logger.debug('disk.py role_filter_disk_name RETURNING=%s'
-                         % disk_name)
             return disk_name
         except:
             e_msg = ('Problem with role filter of disk(%s)' % disk)
@@ -382,7 +371,6 @@ class DiskDetailView(rfc.GenericView):
         _update_disk_state() in which case the name returned is the original
         db disk base name.
         """
-        logger.debug('reverse disk filter disk_name=%s' % disk_name)
         # until we find otherwise we assume False on partition status.
         isPartition = False
         try:
@@ -390,16 +378,13 @@ class DiskDetailView(rfc.GenericView):
             # base name "ata-QEMU_DVD-ROM_QM00001"
             # partition redirect name "ata-QEMU_DVD-ROM_QM00001-part1"
             fields = disk_name.split('-')
-            logger.debug('reverse_role_filter_name fields=%s' % fields)
             # check the last field for part#
             if len(fields) > 0:
                 if re.match('part.+', fields[-1]) is not None:
                     isPartition = True
                     # strip the redirection to partition device.
-                    logger.debug('return=%s' % '-'.join(fields[:-1]))
                     return '-'.join(fields[:-1]), isPartition
             # we have found no indication of redirect role name changes.
-            logger.debug('return=%s' % disk_name)
             return disk_name, isPartition
         except:
             e_msg = ('Problem reversing role filter disk name(%s)' % disk_name)
@@ -513,8 +498,6 @@ class DiskDetailView(rfc.GenericView):
             # loop below.
             po.save()
             for device in p_info['disks']:
-                logger.debug('_btrfs_disk_import looking at disk name=%s'
-                             % device)
                 disk_name, isPartition = \
                     self._reverse_role_filter_name(device, request)
                 do = Disk.objects.get(name=disk_name)
@@ -526,8 +509,6 @@ class DiskDetailView(rfc.GenericView):
                     # "redirect": "virtio-serial-3-part2"
                     if do.role is not None:  # db default is null / None.
                         # Get our previous roles into a dictionary
-                        logger.debug('btrfs import - existing do.role=%s'
-                                     % do.role)
                         roles = json.loads(do.role)
                         # update or add our "redirect" role with our part name
                         roles['redirect'] = '%s' % device
@@ -537,8 +518,6 @@ class DiskDetailView(rfc.GenericView):
                         # role=None so just add a json formatted redirect role
                         do.role = '{"redirect": "%s"}' % device.name
                 do.save()
-                logger.debug('btrfs import left disk(%s) role as %s'
-                             % (do.name, do.role))
                 mount_root(po)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
             po.size = po.usage_bound()
@@ -576,8 +555,6 @@ class DiskDetailView(rfc.GenericView):
             # so we make sure to not wipe and redirect at the same time.
             new_redirect_role = str(request.data.get('redirect_part', ''))
             is_delete_ticked = request.data.get('delete_tick', False)
-            logger.debug('delete_tick value in disk.py=%s' % is_delete_ticked)
-            logger.debug('role_disk has previous disk.role=%s' % disk.role)
             # Get our previous roles into a dictionary.
             if disk.role is not None:
                 roles = json.loads(disk.role)
@@ -602,8 +579,6 @@ class DiskDetailView(rfc.GenericView):
                         del roles['redirect']
             # Having now checked our new_redirect_role against the disks
             # prior redirect role we can perform validation tasks.
-            logger.debug('redirect_role_change=%s and is_delete_ticked=%s'
-                         % (redirect_role_change, is_delete_ticked))
             if redirect_role_change:
                 if is_delete_ticked:
                     # changing redirect and wiping concurrently are blocked
@@ -614,7 +589,6 @@ class DiskDetailView(rfc.GenericView):
                 # return our dict back to a json format and stash in disk.role
                 disk.role = json.dumps(roles)
                 disk.save()
-                logger.debug('role_disk asserted disk.role=%s' % disk.role)
             else:
                 # no redirect role change so we can wipe if requested by tick
                 if is_delete_ticked:
