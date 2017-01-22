@@ -400,7 +400,6 @@ def scan_disks(min_size):
             # type of bcache as it has the counterpart virtual block device.
             if (dmap['FSTYPE'] == 'bcache'):
                 bcache_dev_type = get_bcache_device_type(dmap['NAME'])
-                logger.debug('bcache_dev_type=%s' % bcache_dev_type)
                 if bcache_dev_type == 'bdev':
                     bdev_uuid = dmap['UUID']
                     # We set out bdev_flag to inform the next device
@@ -454,9 +453,7 @@ def scan_disks(min_size):
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
-        # logger.debug('ADDING disks LIST ELEMENT=%s' % Disk(*dnames[d]))
-        logger.debug('disks item = %s ', Disk(*dnames[d]))
-    # logger.debug('scan_disks() returning %s' % disks)
+        # logger.debug('disks item = %s ', Disk(*dnames[d]))
     return disks
 
 
@@ -1441,7 +1438,6 @@ def get_dev_byid_name(device_name, remove_path=False):
     or without path as per remove_path). The second boolean element of the
     tuple indicates if a by-id type name was found. ie (return_name, is_byid)
     """
-    logger.debug('GET_DEV_BYID_NAME CALLED WITH DEV-NAME=%s' % device_name)
     # Until we find a by-id type name set this flag as False.
     is_byid = False
     # Until we find a by-id type name we will be returning device_name
@@ -1500,7 +1496,6 @@ def get_dev_byid_name(device_name, remove_path=False):
             # Original device_name has path delimiters in: assume it has a path
             # return return_name_fields[-1], is_byid
             return_name = return_name_fields[-1]
-    logger.debug('GET_DEV_BYID_NAME RETURN=%s %s' % (return_name, is_byid))
     return return_name, is_byid
 
 
