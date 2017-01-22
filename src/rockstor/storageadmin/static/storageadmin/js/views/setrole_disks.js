@@ -74,7 +74,6 @@ SetroleDiskView = RockstorLayoutView.extend({
             } catch (e) {
                 // as we can't convert this drives role to json we assume
                 // it's isRoleUsable status by false
-                console.log('diskRole in setrole_disks.js failed json convert')
                 role_obj = null;
             }
         // extract our partitions obj from the role_obj if there is one.
@@ -121,7 +120,7 @@ SetroleDiskView = RockstorLayoutView.extend({
                 err_msg = 'Existing btrfs partition found; if you wish to ' +
                     'use the redirect role either select this btrfs partition ' +
                     'or wipe it or the whole disk and re-assign.' +
-                    'Redirecting is only supported to a non btrfs partiton when ' +
+                    'Redirecting is only supported to a non btrfs partition when ' +
                     'no btrfs partition exists on the same device.';
                 return false;
             }
@@ -203,8 +202,6 @@ SetroleDiskView = RockstorLayoutView.extend({
     redirect_part_changed: function() {
         var part_selected = this.$('#redirect_part').val();
         var current_redirect = this.current_redirect;
-        console.log('redirect_part_changed, part_selected = ' + part_selected);
-        console.log('current_redirect=' + current_redirect);
         if (part_selected != current_redirect) {
             if (this.$('#delete_tick').prop('checked')) {
                 // un-tick to reassure user & remove the warning via tick_toggle
@@ -217,7 +214,6 @@ SetroleDiskView = RockstorLayoutView.extend({
             // as yet uninitialized / un-applied redirect.
             this.$('#delete_tick').attr('disabled', true);
         } else {
-            console.log('part_selected == current_redirect =' + current_redirect);
             // we are showing the current redirect so re-enable the delete_tick
             this.$('#delete_tick').removeAttr('disabled');
             this.delete_tick_toggle();
@@ -233,8 +229,6 @@ SetroleDiskView = RockstorLayoutView.extend({
             // Add our 'use whole disk' option which will allow for an existing
             // redirect to be removed, preparing for whole disk btrfs.
             // Also serves to indicate no redirect role in operation.
-            console.log('disk_btrfs_uuid=' + this.disk_btrfs_uuid);
-            console.log('partitions=' + this.partitions);
             if ( (this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions)) ) {
                 var uuid_message = 'btrfs'
             } else {
@@ -252,7 +246,6 @@ SetroleDiskView = RockstorLayoutView.extend({
             }
             // close the "Whole Disk" option
             html += '</option>';
-            console.log('current html=' + html);
             // loop through this devices partitions and mark one as selected
             // if it equals the current redirect role, hence defaulting to the
             // partition of the current redirect settings.
@@ -283,7 +276,6 @@ SetroleDiskView = RockstorLayoutView.extend({
                 // end this partition option
                 html += '</option>';
             }
-            console.log('final html=' + html);
             return new Handlebars.SafeString(html);
         });
     },
