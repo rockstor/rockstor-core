@@ -39,10 +39,13 @@
                     <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
                 {{/if}}
             {{else}}
-                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions and no User Assigned Role.
-                Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
-                <!-- Later we can have this click do User Assigned Role config -->
-                <!-- which can also wipe if need be, either whole or partition -->
+                {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
+                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions: one of which has an existing BTRFS filesystem on it. A User Assigned redirect role is required prior to import.
+                    Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
+                {{else}}
+                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions and no User Assigned Role.
+                    Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
+                {{/if}}
             {{/if}}
         {{else}} <!-- We are non of the above top level ifs / else ifs at this point -->
             {{#if (hasUserRole this.role)}}
