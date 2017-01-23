@@ -787,47 +787,6 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     return share_sizes
 
 
-def share_usage(pool, share_id):
-    """
-    Return the sum of the qgroup sizes of this share and any child subvolumes
-    N.B. qgroupid defaults to a unique identifier of the form 0/<subvolume id>
-    """
-    # Obtain path to share in pool
-    root_pool_mnt = mount_root(pool)
-    cmd = [BTRFS, 'subvolume', 'list', root_pool_mnt]
-    out, err, rc = run_command(cmd, log=True)
-    short_id = share_id.split('/')[1]
-    share_dir = ''
-    for line in out:
-        fields = line.split()
-        if (len(fields) > 0 and short_id in fields[1]):
-            share_dir = root_pool_mnt + '/' + fields[8]
-            break
-
-    # Obtain list of child subvolume qgroups
-    cmd = [BTRFS, 'subvolume', 'list', '-o', share_dir]
-    out, err, rc = run_command(cmd, log=True)
-    qgroups = [short_id]
-    for line in out:
-        fields = line.split()
-        if (len(fields) > 0):
-            qgroups.append(fields[1])
-
-    # Sum qgroup sizes
-    cmd = [BTRFS, 'qgroup', 'show', share_dir]
-    out, err, rc = run_command(cmd, log=True)
-    rusage = eusage = 0
-    for line in out:
-        fields = line.split()
-        qgroup = []
-        if (len(fields) > 0 and '/' in fields[0]):
-            qgroup = fields[0].split('/')
-        if (len(qgroup) > 0 and qgroup[1] in qgroups):
-            rusage += convert_to_kib(fields[1])
-            eusage += convert_to_kib(fields[2])
-    return (rusage, eusage)
-
-
 def shares_usage(pool, share_map, snap_map):
     # TODO: currently unused, is this to be deprecated
     # don't mount the pool if at least one share in the map is mounted.
