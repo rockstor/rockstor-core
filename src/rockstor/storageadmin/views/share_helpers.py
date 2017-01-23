@@ -22,7 +22,7 @@ from django.conf import settings
 from storageadmin.models import (Share, Snapshot, SFTP)
 from smart_manager.models import ShareUsage
 from fs.btrfs import (mount_share, mount_snap, is_share_mounted, is_mounted,
-                      umount_root, shares_info, share_usage, snaps_info,
+                      umount_root, shares_info, volume_usage, snaps_info,
                       qgroup_create, update_quota)
 from storageadmin.util import handle_exception
 
@@ -79,11 +79,16 @@ def import_shares(pool, request):
         if (s in shares):
             share = Share.objects.get(name=s)
             share.qgroup = shares_d[s]
-            rusage, eusage = share_usage(pool, share.qgroup)
+            rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
+                volume_usage(pool, share.qgroup, share.pqgroup)
             ts = datetime.utcnow().replace(tzinfo=utc)
-            if (rusage != share.rusage or eusage != share.eusage):
+            if (rusage != share.rusage or eusage != share.eusage or
+               pqgroup_rusage != share.pqgroup_rusage or
+               pqgroup_eusage != share.pqgroup_eusage):
                 share.rusage = rusage
                 share.eusage = eusage
+                share.pqgroup_rusage = pqgroup_rusage
+                share.pqgroup_eusage = pqgroup_eusage
                 su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
                                 ts=ts)
                 su.save()
@@ -116,7 +121,9 @@ def import_shares(pool, request):
                 cshare.qgroup = shares_d[s]
                 cshare.size = pool.size
                 cshare.subvol_name = s
-                cshare.rusage, cshare.eusage = share_usage(pool, cshare.qgroup)
+                cshare.rusage, cshare.eusage,
+                cshare.pqgroup_rusage, cshare.pqgroup_eusage = \
+                    volume_usage(pool, cshare.qgroup, cshare.pqgroup)
                 cshare.save()
         except Share.DoesNotExist:
             pqid = qgroup_create(pool)
@@ -140,7 +147,7 @@ def import_snapshots(share):
         else:
             so = Snapshot(share=share, name=s, real_name=s,
                           writable=snaps_d[s][1], qgroup=snaps_d[s][0])
-        rusage, eusage = share_usage(share.pool, snaps_d[s][0])
+        rusage, eusage = volume_usage(share.pool, snaps_d[s][0])
         ts = datetime.utcnow().replace(tzinfo=utc)
         if (rusage != so.rusage or eusage != so.eusage):
             so.rusage = rusage
