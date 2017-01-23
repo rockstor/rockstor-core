@@ -731,6 +731,59 @@ def update_quota(pool, qgroup, size_bytes):
     return run_command(cmd, log=True)
 
 
+def volume_usage(pool, volume_id, pvolume_id=None):
+
+    """
+    New function to collect volumes rusage and eusage instead of share_usage
+    plus parent rusage and eusage (2015/* qgroup)
+    """
+    # Obtain path to share in pool, this preserved because
+    # granting pool exists
+    root_pool_mnt = mount_root(pool)
+    cmd = [BTRFS, 'subvolume', 'list', root_pool_mnt]
+    out, err, rc = run_command(cmd, log=True)
+    short_id = volume_id.split('/')[1]
+    volume_dir = ''
+
+    for line in out:
+        fields = line.split()
+        if (len(fields) > 0 and short_id in fields[1]):
+            volume_dir = root_pool_mnt + '/' + fields[8]
+            break
+
+    """
+    Rockstor volume/subvolume hierarchy is not standard
+    and Snapshots actually not always under Share but on Pool,
+    so btrf sub list -o deprecated because won't always return
+    expected data; volumes (shares & snapshots) sizes got via qgroups.
+    Rockstor structure has default share qgroup 0/* becoming child of
+    2015/* new qgroup and share snapshots 0/*+1 qgroups assigned to new
+    Rockstor 2015/*.
+    Original 0/* qgroup returns current share content size,
+    2015/* qgroup returns 'real' share size considering snapshots sizes too
+    Note: 2015/* rfer and excl sizes are always equal so to compute
+    current real size we can indistinctly use one of them.
+    """
+
+    cmd = [BTRFS, 'qgroup', 'show', volume_dir]
+    out, err, rc = run_command(cmd, log=True)
+    rusage = eusage = 0
+    pqgroup_rusage = pqgroup_eusage = 0
+
+    for line in out:
+        fields = line.split()
+        if (len(fields) > 0 and '/' in fields[0]):
+            qgroup = fields[0]
+            if (qgroup == volume_id):
+                rusage = convert_to_kib(fields[1])
+                eusage = convert_to_kib(fields[2])
+            if (pvolume_id is not None and qgroup == pvolume_id):
+                pqgroup_rusage = convert_to_kib(fields[1])
+                pqgroup_eusage = convert_to_kib(fields[2])
+
+    return (rusage, eusage, pqgroup_rusage, pqgroup_eusage)
+
+
 def share_usage(pool, share_id):
     """
     Return the sum of the qgroup sizes of this share and any child subvolumes
