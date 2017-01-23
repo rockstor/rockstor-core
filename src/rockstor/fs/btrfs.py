@@ -51,7 +51,6 @@ def add_pool(pool, disks):
     :return o, err, rc from last command executed.
     """
     disks_fp = ['/dev/disk/by-id/' + d for d in disks]
-    logger.debug('disks_fp LIST=%s' % disks_fp)
     cmd = [MKFS_BTRFS, '-f', '-d', pool.raid, '-m', pool.raid, '-L',
            pool.name, ]
     cmd.extend(disks_fp)
@@ -94,7 +93,6 @@ def get_pool_info(disk):
     :return: a dictionary with keys of 'disks', 'label', and 'uuid';
     disks keys a list of devices, while label and uuid keys are for strings.
     """
-    logger.debug('GET_POOL_INFO called with disk=%s' % disk)
     cmd = [BTRFS, 'fi', 'show', '/dev/disk/by-id/%s' % disk]
     o, e, rc = run_command(cmd)
     pool_info = {'disks': [], }
@@ -116,7 +114,6 @@ def get_pool_info(disk):
             # pool field reference.
             dev_byid, is_byid = get_dev_byid_name(l.split()[-1], True)
             pool_info['disks'].append(dev_byid)
-    logger.debug('GET_POOL_INFO RETURN=%s' % pool_info)
     return pool_info
 
 
@@ -183,7 +180,6 @@ def resize_pool(pool, dev_list_byid, add=True):
         the device member/pool sanity check fails.
     """
     dev_list_byid = ['/dev/disk/by-id/' + d for d in dev_list_byid]
-    logger.debug('resize_pool called with pool name=%s, dev_list_byid=%s, add = %s' %(pool, dev_list_byid, add))
     root_mnt_pt = mount_root(pool)
     cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
