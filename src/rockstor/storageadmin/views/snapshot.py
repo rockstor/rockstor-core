@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@ from django.db import transaction
 from django.conf import settings
 from storageadmin.models import (Snapshot, Share, NFSExport,
                                  NFSExportGroup, AdvancedNFSExport)
-from fs.btrfs import (add_snap, share_id, share_usage, remove_snap,
+from fs.btrfs import (add_snap, share_id, volume_usage, remove_snap,
                       umount_root, mount_snap, qgroup_assign)
 from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
@@ -121,7 +121,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         qgroup_id = ('0/%s' % snap_id)
         qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT,
                                                             share.pool.name)))
-        snap_size, eusage = share_usage(share.pool, qgroup_id)
+        snap_size, eusage = volume_usage(share.pool, qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=snap_name,
                      size=snap_size, qgroup=qgroup_id,
                      uvisible=uvisible, snap_type=snap_type,
