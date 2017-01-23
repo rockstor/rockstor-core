@@ -23,7 +23,7 @@ from django.db import transaction
 from storageadmin.models import (Share, Pool, Snapshot, NFSExport, SambaShare,
                                  SFTP)
 from smart_manager.models import Replica
-from fs.btrfs import (add_share, remove_share, update_quota, share_usage,
+from fs.btrfs import (add_share, remove_share, update_quota, volume_usage,
                       set_property, mount_share, qgroup_id, qgroup_create)
 from system.osi import is_share_mounted
 from system.services import systemctl
@@ -210,7 +210,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             if ('size' in request.data):
                 new_size = self._validate_share_size(request, share.pool)
                 qid = qgroup_id(share.pool, share.subvol_name)
-                cur_rusage, cur_eusage = share_usage(share.pool, qid)
+                cur_rusage, cur_eusage = volume_usage(share.pool, qid)
                 if (new_size < cur_rusage):
                     e_msg = ('Unable to resize because requested new '
                              'size(%dKB) is less than current usage(%dKB)'
