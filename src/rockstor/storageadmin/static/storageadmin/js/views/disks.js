@@ -270,7 +270,7 @@ DisksView = RockstorLayoutView.extend({
             return false;
         });
 
-        Handlebars.registerHelper('displayInfo', function (role) {
+        Handlebars.registerHelper('isMdraidMember', function (role) {
             // check for the legacy / pre json formatted role field contents.
             if (role == 'isw_raid_member' || role == 'linux_raid_member') {
                 return true;
@@ -290,7 +290,7 @@ DisksView = RockstorLayoutView.extend({
 
         // Identify root device by return of true / false.
         // Works by examining the Disk.role field. Based on sister handlebars
-        // helper 'displayInfo'.
+        // helper 'isMdraidMember'.
         // true = device hosts the / partition
         // false = root not found on this device
         Handlebars.registerHelper('isRootDevice', function (role) {
