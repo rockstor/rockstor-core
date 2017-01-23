@@ -769,6 +769,7 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     out, err, rc = run_command(cmd, log=True)
     rusage = eusage = 0
     pqgroup_rusage = pqgroup_eusage = 0
+    share_sizes = []
 
     for line in out:
         fields = line.split()
@@ -777,11 +778,13 @@ def volume_usage(pool, volume_id, pvolume_id=None):
             if (qgroup == volume_id):
                 rusage = convert_to_kib(fields[1])
                 eusage = convert_to_kib(fields[2])
+                share_sizes.extend((rusage, eusage))
             if (pvolume_id is not None and qgroup == pvolume_id):
                 pqgroup_rusage = convert_to_kib(fields[1])
                 pqgroup_eusage = convert_to_kib(fields[2])
+                share_sizes.extend((pqgroup_rusage, pqgroup_eusage))
 
-    return (rusage, eusage, pqgroup_rusage, pqgroup_eusage)
+    return share_sizes
 
 
 def share_usage(pool, share_id):
