@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -111,7 +111,7 @@ SharesView = RockstorLayoutView.extend({
 				enableButton(button);
 				_this.$('#delete-share-modal').modal('hide');
 				$('.modal-backdrop').remove();
-				app_router.navigate('shares', {trigger: true})
+				app_router.navigate('shares', {trigger: true});
 			},
 			error: function(xhr, status, error) {
 				enableButton(button);
@@ -120,7 +120,7 @@ SharesView = RockstorLayoutView.extend({
 	},
 	cancel: function(event) {
 		if (event) event.preventDefault();
-		app_router.navigate('shares', {trigger: true})
+		app_router.navigate('shares', {trigger: true});
 	},
 
 	initHandlebarHelpers: function(){
@@ -133,7 +133,7 @@ SharesView = RockstorLayoutView.extend({
 			var html = '';
 			if(shareCompression && shareCompression != 'no'){
 				html += shareCompression;
-			}else{
+			} else {
 				html += 'None(defaults to pool level compression, if any)   ' +
 				'<a href="#shares/' + shareName + '/?cView=edit"><i class="glyphicon glyphicon-pencil"></i></a>';
 			}
@@ -150,5 +150,25 @@ SharesView = RockstorLayoutView.extend({
             }
             return false;
         });
-	}
+
+        Handlebars.registerHelper('checkUsage', function(size, btrfs_usage) {
+
+            // We don't have share size enforcement with btrfs qgroup limit
+            // but with this we help users to start gettting used to it.
+            // Current warning levels are btrfs usage > 70% warning
+            // btrfs usage > 80% alert
+            var html, warning = '';
+            var usage = (btrfs_usage / size).toFixed(4);
+            if (usage >= 0.8) {
+                warning = 'text-danger';
+            } else if (usage >= 0.7){
+                warning = 'text-warning';
+            }
+            if (warning !=='') {
+                html = '<i class="fa fa-warning fa-lg ' + warning;
+                html += '" title="Usage is ' + usage * 100 + '% os share size">';
+            }
+            return new Handlebars.SafeString(html);
+        });
+    }
 });

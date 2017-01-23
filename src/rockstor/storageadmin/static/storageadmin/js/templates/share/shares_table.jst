@@ -13,8 +13,9 @@
         <th>Name</th>
         <th>Size</th>
         <th>Pool</th>
-        <th>Usage</th>
-	      <th>Compression algorithm</th>
+        <th>Usage <i class="fa fa-info-circle" title="Current share content"></th>
+		<th>Usage (Btrfs) <i class="fa fa-info-circle" title="Current share content considering snapshots too"></th>
+	    <th>Compression algorithm</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -24,7 +25,8 @@
         <td><a href="#shares/{{this.name}}"><i class="glyphicon glyphicon-folder-open"></i>  {{this.name}}</a></td>
         <td>{{humanize_size this.size}}</td>
         <td>{{this.pool.name}}</td>
-        <td>{{humanize_size this.eusage}}
+        <td>{{humanize_size this.rusage}}</td>
+		<td>{{humanize_size this.pqgroup_rusage}} {{checkUsage this.size this.pqgroup_rusage}}</td>
         <td>
         {{displayCompressionAlgo this.compression_algo this.name}}
         </td>
