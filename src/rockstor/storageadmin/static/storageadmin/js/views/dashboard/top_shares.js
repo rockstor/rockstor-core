@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -95,7 +95,7 @@ TopSharesWidget = RockStorWidgetView.extend({
             var btrfs_size = (_this.data[index].get('pUsed') + _this.data[index].get('pOverUsed')).toFixed(2)
             $(this).text(btrfs_size + '%');
         });
-		var truncate = _this.maximized ? 100 : 12;
+        var truncate = _this.maximized ? 100 : 12;
         this.$('.progress-animate').not('.progress-bar-info').each(function(index) {
             $(this).find('span')
                 .text(humanize.truncatechars(_this.data[index].get('name'), truncate) +
