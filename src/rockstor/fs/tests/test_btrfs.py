@@ -287,7 +287,7 @@ class BTRFSTests(unittest.TestCase):
         pool = Pool(raid='raid0', name='test-pool')
         # run_command moc return values.
         out = ["Balance on '/mnt2/rock-pool' is running, cancel requested",
-               ('15 out of about 114 chunks balanced (16 considered),'
+               ('15 out of about 114 chunks balanced (16 considered),  '
                 '87% left'),
                '']
         err = ['']
