@@ -147,5 +147,6 @@ def main():
     aw.api_call('shares/%s' % sname, calltype='delete', save_error=False)
     print('Share(%s) deleted.' % sname)
 
+
 if __name__ == '__main__':
     main()

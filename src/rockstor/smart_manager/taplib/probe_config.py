@@ -25,6 +25,7 @@ class TapConfig(object):
         self.location = location
         self.sdetail = sdetail
 
+
 TAP_MAP = {
     'nfs-1': {'location': 'nfsd/nfsd_distrib',
               'sdetail': 'All NFS calls',

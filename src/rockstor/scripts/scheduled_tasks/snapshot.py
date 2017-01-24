@@ -129,6 +129,7 @@ def main():
         logger.debug('Cron scheduled task not executed because outside '
                      'time/day window ranges')
 
+
 if __name__ == '__main__':
     # takes two arguments. taskdef object id and crontabwindow.
     main()
