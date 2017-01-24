@@ -166,7 +166,7 @@ SharesView = RockstorLayoutView.extend({
             }
             if (warning !=='') {
                 html = '<i class="fa fa-warning fa-lg ' + warning;
-                html += '" title="Usage is ' + usage * 100 + '% os share size">';
+                html += '" title="Usage is ' + usage * 100 + '% of share size">';
                 return new Handlebars.SafeString(html);
             }
         });
