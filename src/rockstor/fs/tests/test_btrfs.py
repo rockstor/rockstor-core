@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 RockStor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -14,7 +14,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-from fs.btrfs import (pool_raid, is_subvol, share_usage, balance_status,
+from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
                       share_id)
 from mock import patch
 
@@ -185,17 +185,17 @@ class BTRFSTests(unittest.TestCase):
     #     self.assertFalse(is_subvol(mount_point),
     #                  msg='Did NOT return False for exception')
 
-    def test_share_usage(self):
+    def test_volume_usage(self):
         """
-        Moc the return value of "btrfs qgroup show pool_mount_point" to assess
-        test_share's parsing capabilities to extract rfer and excl subvol usage
-        information.
+        Moc the return value of "btrfs qgroup show share_mount_pt" to assess
+        to extract rfer and excl usage for original 0/* qgroup and Rockstor
+        ad hoc 2015/* qgroup.
         :return:
         """
-        # share_usage() CALLED WITH pool name of=test-pool and share_id=0/285
+        # volume_usage() called with pool name of=test-pool volume_id=0/261
+        # and new Rockstor qgroup pvolume_id=2015/4
         # mount_root(Pool object) returned /mnt2/test-pool
-        # share_usage cmd=['/sbin/btrfs', 'qgroup', 'show', u'/mnt2/test-pool']
-        # share_usage returning rusage=461404 and eusage=3512
+        # cmd=['/sbin/btrfs', 'qgroup', 'show', u'/mnt2/test-pool']
         #
         # Setup our calling variables and mock the root pool as mounted.
         o = ['qgroupid         rfer         excl ',
@@ -230,24 +230,33 @@ class BTRFSTests(unittest.TestCase):
              '2015/1          0.00B        0.00B ',
              '2015/2        2.04MiB      2.04MiB ',
              '2015/3        7.37GiB      7.37GiB ',
-             '2015/4       63.65MiB     63.65MiB ', '']
+             '2015/4       63.00MiB     63.00MiB ', '']
         e = ['']
         rc = 0
         # is_mounted returning True avoids mount command calls in mount_root()
-        mount_point = '/mnt2/test-mount'
+        mount_point = '/mnt2/test-pool'
         self.mock_mount_root.return_value = mount_point
         # setup the return values from our run_command wrapper
         # examples of output from /mnt2/test-pool from a real system install
         self.mock_run_command.return_value = (o, e, rc)
         # create a fake pool object
         pool = Pool(raid='raid0', name='test-pool')
-        # and fake share_id / qgroupid
-        share_id = '0/285'
-        # As share_usage uses convert_to_kib() everything is converted to KiB
+        # fake volume_id / qgroupid
+        volume_id = '0/261'
+        # and fake pvolume_id
+        pvolume_id = '2015/4'
+        # As volume_usage uses convert_to_kib() everything is converted to KiB
         # here we convert 450.59MiB and 3.43MiB to their KiB equivalent (x1024)
-        expected_results = (461404, 3512)
-        self.assertEqual(share_usage(pool, share_id), expected_results,
-                         msg='Failed to retrieve expected rfer and excl usage')
+        expected_results_share = [65177, 65177, 64512, 64512]
+        self.assertEqual(volume_usage(pool, volume_id, pvolume_id),
+                         expected_results_share,
+                         msg='Failed to retrieve share rfer and excl usage')
+        # We perform a test with snapshots volumes to, having pqgroup None
+        pvolume_id2 = None
+        expected_results_snapshot = [65177, 65177]
+        self.assertEqual(volume_usage(pool, volume_id, pvolume_id2),
+                         expected_results_snapshot,
+                         msg='Failed to retrieve snapshot rfer and excl usage')
 
 
 # TODO: add test_balance_status_finished
