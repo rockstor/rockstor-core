@@ -1,0 +1,8 @@
+test/*
+conf/*
+src/rockstor/fs/*
+src/rockstor/cli/*
+src/rockstor/templates/*
+src/rockstor/rest_framework_custom/*
+src/rockstor/system/*
+src/rockstor/scripts/*
