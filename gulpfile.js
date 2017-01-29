@@ -59,5 +59,5 @@ function lintJob() {
     return gulp.src(jsfiles)
         .pipe(eslint('./.eslintrc.js'))
         .pipe(eslint.format())
-        .pipe(eslint.failAfterError());
+        .pipe(eslint.failOnError());
 }
