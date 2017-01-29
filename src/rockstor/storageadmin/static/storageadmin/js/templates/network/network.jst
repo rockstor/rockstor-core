@@ -1,149 +1,170 @@
 <script>
-/*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
- * This file is part of RockStor.
- *
- * RockStor is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published
- * by the Free Software Foundation; either version 2 of the License,
- * or (at your option) any later version.
- *
- * RockStor is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- */
+    /*
+     * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+     * This file is part of RockStor.
+     *
+     * RockStor is free software; you can redistribute it and/or modify
+     * it under the terms of the GNU General Public License as published
+     * by the Free Software Foundation; either version 2 of the License,
+     * or (at your option) any later version.
+     *
+     * RockStor is distributed in the hope that it will be useful, but
+     * WITHOUT ANY WARRANTY; without even the implied warranty of
+     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     * General Public License for more details.
+     *
+     * You should have received a copy of the GNU General Public License
+     * along with this program. If not, see <http://www.gnu.org/licenses/>.
+     *
+     */
 </script>
 
 
 <!-- Module Body -->
 <div class="row">
-  <div class="col-md-12">
-    <div class="messages"></div>
-    <!-- Content -->
-    <h3>Network Connections</h3>
-    <table id="networks2-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of network connections">
-      <thead>
-        <tr>
-          <th scope="col" abbr="Name">Name</th>
-	  <th scope="col" abbr="UUID">UUID</th>
-	  <th scope="col" abbr="Type">Type</th>
-	  <th scope="col" abbr="State">State</th>
-	  <th scope="col" abbr="Method">Connection method</th>
-          <th scope="col" abbr="Address">IP Address</th>
-          <th scope="col" abbr="Gateway">Gateway</th>
-          <th scope="col" abbr="DNS">DNS Servers</th>
-          <th scope="col" abbr="DNS Search">DNS Search Domains</th>
-        </tr>
-      </thead>
-	<tbody>
-	  {{#each parent_connections}}
-	  <tr id="{{this.uuid}}">
-	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#connections" data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#network/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>
-        <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
-	    <td>{{this.uuid}}</td>
-	    <td>{{this.ctype}} {{#if this.team_profile}}[{{this.team_profile}}]{{/if}}{{#if this.bond_profile}}[{{this.bond_profile}}]{{/if}}</td>
-	    <td>{{this.state}}&nbsp;&nbsp;
-    	    <input type="checkbox" data-connection-id="{{this.id}}" data-name="{{this.name}}" data-size="mini" {{getState this.state}}>
-    	    <div class="command-status" data-connection-id="{{this.id}}">&nbsp;</div>
-            <div class="simple-overlay" id="{{this.id}}-err-popup"><div class="overlay-content"></div></div>
-        </td>
-	    <td>{{this.ipv4_method}}</td>
-	    <td>{{this.ipv4_addresses}}</td>
-	    <td>{{this.ipv4_gw}}</td>
-	    <td>{{this.ipv4_dns}}</td>
-	    <td>{{this.ipv4_dns_search}}</td>
-	  </tr>
-	  <tr>
-        <td colspan="5" class="hiddenRow">
-          <div class="accordion-body collapse" id="accordion-{{this.id}}">
-	    {{#hasChildren this}}
-	    {{#if this.team_profile}}
-	      <h4>Team Profile: {{this.team_profile}}</h4>
-	    {{/if}}
-	    {{#if this.bond_profile}}
-	      <h4>Bond Profile: {{this.bond_profile}}</h4>
-	    {{/if}}
-	    <p>member Connections</p>
-		<table class="table table-bordered">
-		  <tr>
-		    <th>Name</th>
-		    <th>UUID</th>
-		    <th>Type</th>
-		    <th>Status Code</th>
-		  </tr>
-		  {{#each ../child_connections}}
-		  <tr>
-		    <td>{{this.name}}</td>
-		    <td>{{this.uuid}}</td>
-		    <td>{{this.ctype}}</td>
-		    <td>{{this.state}}</td>
-		  </tr>
-		  {{/each}}
-		</table>
-	    {{/hasChildren}}
-                      <p>member Devices</p>
-                      <table class="table table-bordered">
-                        <tr>
-                          <th>Name</th>
-                          <th>Type</th>
-                          <th>MAC Address</th>
-                          <th>MTU</th>
-                          <th>Status Code</th>
-			  <th>Member of</th>
-                        </tr>
-                        {{#each ../devices}}
-                        {{#if (belongsToConnection ../this.id this.connection)}}
-                        <tr>
-                            <td>{{this.name}}</td>
-                            <td>{{this.dtype}}</td>
-                            <td>{{this.mac}}</td>
-                            <td>{{this.mtu}}</td>
-                            <td>{{this.state}}</td>
-			    <td>{{this.cname}}</td>
-                        </tr>
-                        {{/if}}
-                        {{/each}}
-                      </table>
+    <div class="col-md-12">
+        <div class="messages"></div>
+        <!-- Content -->
+        <h3>Network Connections</h3>
+        <table id="networks2-table"
+               class="table table-condensed table-bordered table-hover table-striped share-table tablesorter"
+               summary="List of network connections">
+            <thead>
+            <tr>
+                <th scope="col" abbr="Name">Name</th>
+                <th scope="col" abbr="UUID">UUID</th>
+                <th scope="col" abbr="Type">Type</th>
+                <th scope="col" abbr="State">State</th>
+                <th scope="col" abbr="Method">Connection method</th>
+                <th scope="col" abbr="Address">IP Address</th>
+                <th scope="col" abbr="Gateway">Gateway</th>
+                <th scope="col" abbr="DNS">DNS Servers</th>
+                <th scope="col" abbr="DNS Search">DNS Search Domains</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{#each parent_connections}}
+            <tr id="{{this.uuid}}">
+                <td class="accordion-toggle" data-toggle="collapse"
+                    data-parent="#connections"
+                    data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp;
+                    <a href="#network/edit/{{this.id}}"><i
+                            class="glyphicon glyphicon-pencil"></i></a>
+                    <a id="{{this.id}}" data-action="delete" rel="tooltip"
+                       title="Delete connection"><i
+                            class="glyphicon glyphicon-trash"></i></a></td>
+                <td>{{this.uuid}}</td>
+                <td>{{this.ctype}} {{#if
+                    this.team_profile}}[{{this.team_profile}}]{{/if}}{{#if
+                    this.bond_profile}}[{{this.bond_profile}}]{{/if}}
+                </td>
+                <td>{{this.state}}&nbsp;&nbsp;
+                    <input type="checkbox" data-connection-id="{{this.id}}"
+                           data-name="{{this.name}}" data-size="mini"
+                           {{getState this.state}}>
+                    <div class="command-status"
+                         data-connection-id="{{this.id}}">&nbsp;</div>
+                    <div class="simple-overlay" id="{{this.id}}-err-popup">
+                        <div class="overlay-content"></div>
                     </div>
                 </td>
-      </tr>
-	  {{/each}}
-	</tbody>
-    </table>
-    <a href="#network/add" id="add-connection" class="btn btn-primary"> Add Connection</a><br><br>
-    <h3>Network Devices</h3>
-    <table id="network-devices-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of network devices/interfaces">
-      <thead>
-	<tr>
-	  <th scope="col" abbr="Name">Name</th>
-	  <th scope="col" abbr="Type">Type</th>
-	  <th scope="col" abbr="Mac">MAC Address</th>
-	  <th scope="col" abbr="MTU">MTU</th>
-	  <th scope="col" abbr="State">Status Code</th>
-	  <th scope="col" abbr="Connection">Member of</th>
-	</tr>
-      </thead>
-      <tbody>
-	{{#each devices}}
-	<tr id="{{this.name}}">
-	  <td>{{this.name}}</td>
-	  <td>{{this.dtype}}</td>
-	  <td>{{this.mac}}</td>
-	  <td>{{this.mtu}}</td>
-	  <td>{{this.state}}</td>
-	  <td>{{this.cname}}</td>
-	</tr>
-	{{/each}}
-      </tbody>
-    </table>
-    <div>
-    {{pagination}}
-   </div>
+                <td>{{this.ipv4_method}}</td>
+                <td>{{this.ipv4_addresses}}</td>
+                <td>{{this.ipv4_gw}}</td>
+                <td>{{this.ipv4_dns}}</td>
+                <td>{{this.ipv4_dns_search}}</td>
+            </tr>
+            <tr>
+                <td colspan="5" class="hiddenRow">
+                    <div class="accordion-body collapse"
+                         id="accordion-{{this.id}}">
+                        {{#hasChildren this}}
+                        {{#if this.team_profile}}
+                        <h4>Team Profile: {{this.team_profile}}</h4>
+                        {{/if}}
+                        {{#if this.bond_profile}}
+                        <h4>Bond Profile: {{this.bond_profile}}</h4>
+                        {{/if}}
+                        <p>member Connections</p>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Name</th>
+                                <th>UUID</th>
+                                <th>Type</th>
+                                <th>Status Code</th>
+                            </tr>
+                            {{#each ../child_connections}}
+                            <tr>
+                                <td>{{this.name}}</td>
+                                <td>{{this.uuid}}</td>
+                                <td>{{this.ctype}}</td>
+                                <td>{{this.state}}</td>
+                            </tr>
+                            {{/each}}
+                        </table>
+                        {{/hasChildren}}
+                        <p>member Devices</p>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>MAC Address</th>
+                                <th>MTU</th>
+                                <th>Status Code</th>
+                                <th>Member of</th>
+                            </tr>
+                            {{#each ../devices}}
+                            {{#if (belongsToConnection ../this.id
+                            this.connection)}}
+                            <tr>
+                                <td>{{this.name}}</td>
+                                <td>{{this.dtype}}</td>
+                                <td>{{this.mac}}</td>
+                                <td>{{this.mtu}}</td>
+                                <td>{{this.state}}</td>
+                                <td>{{this.cname}}</td>
+                            </tr>
+                            {{/if}}
+                            {{/each}}
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            {{/each}}
+            </tbody>
+        </table>
+        <a href="#network/add" id="add-connection" class="btn btn-primary"> Add
+            Connection</a><br><br>
+        <h3>Network Devices</h3>
+        <table id="network-devices-table"
+               class="table table-condensed table-bordered table-hover table-striped share-table tablesorter"
+               summary="List of network devices/interfaces">
+            <thead>
+            <tr>
+                <th scope="col" abbr="Name">Name</th>
+                <th scope="col" abbr="Type">Type</th>
+                <th scope="col" abbr="Mac">MAC Address</th>
+                <th scope="col" abbr="MTU">MTU</th>
+                <th scope="col" abbr="State">Status Code</th>
+                <th scope="col" abbr="Connection">Member of</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{#each devices}}
+            <tr id="{{this.name}}">
+                <td>{{this.name}}</td>
+                <td>{{this.dtype}}</td>
+                <td>{{this.mac}}</td>
+                <td>{{this.mtu}}</td>
+                <td>{{this.state}}</td>
+                <td>{{this.cname}}</td>
+            </tr>
+            {{/each}}
+            </tbody>
+        </table>
+        <div>
+            {{pagination}}
+        </div>
 
-  </div> <!-- col-md-12 -->
+    </div> <!-- col-md-12 -->
 </div> <!-- row -->
