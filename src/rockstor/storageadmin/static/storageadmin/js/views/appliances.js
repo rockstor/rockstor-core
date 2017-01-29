@@ -46,7 +46,10 @@ AppliancesView = RockstorLayoutView.extend({
     },
 
     renderApplianceList: function() {
-        $(this.el).html(this.template({collection: this.collection, appliances: this.collection.toJSON()}));
+        $(this.el).html(this.template({
+            collection: this.collection,
+            appliances: this.collection.toJSON()
+        }));
         this.renderDataTables();
 
         /* Use X-editable js library for editing the Hostname inline. */
@@ -54,26 +57,28 @@ AppliancesView = RockstorLayoutView.extend({
         $.fn.editable.defaults.mode = 'inline';
         var dataAppId = $('#hostname').data('id');
         $('#hostname').editable({
-    	    type:'text',
-    	    title: 'Edit Hostname',
-    	    //handle an empty input
-    	    validate: function(newHostname) {
-                if($.trim(newHostname) == '') {
+            type: 'text',
+            title: 'Edit Hostname',
+            //handle an empty input
+            validate: function(newHostname) {
+                if ($.trim(newHostname) == '') {
                     return 'This field is required';
                 }
             },
-    	    success: function(response, newHostname) {
-    		    var data = {"hostname": newHostname};
-    		    $.ajax({
-    	            url: '/api/appliances/'+ dataAppId,
-    	            type: 'PUT',
-    	            dataType: 'json',
-    	            contentType: 'application/json',
-    	            data: JSON.stringify(data),
-    	            success: function() {
-    	                setApplianceName();
-    	            },
-    		    });
+            success: function(response, newHostname) {
+                var data = {
+                    'hostname': newHostname
+                };
+                $.ajax({
+                    url: '/api/appliances/' + dataAppId,
+                    type: 'PUT',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function() {
+                        setApplianceName();
+                    },
+                });
             }
         });
     },
@@ -92,7 +97,7 @@ AppliancesView = RockstorLayoutView.extend({
             ip: button.attr('id'),
             id: button.attr('data-id')
         });
-        if(confirm("Delete appliance:  " + appliance.get('ip') + " ...Are you sure?")){
+        if (confirm('Delete appliance:  ' + appliance.get('ip') + ' ...Are you sure?')) {
             disableButton(button);
             appliance.destroy({
                 success: function(model, response, options) {

@@ -341,3 +341,4 @@ AddPoolView = Backbone.View.extend({
 
 //Add pagination
 Cocktail.mixin(AddPoolView, PaginationMixin);
+

@@ -29,44 +29,44 @@ SpindownDiskView = RockstorLayoutView.extend({
         'click #cancel': 'cancel'
     },
 
-    initialize: function () {
+    initialize: function() {
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_spindown_disks;
         this.disks = new DiskCollection();
         this.diskName = this.options.diskName;
         this.dependencies.push(this.disks);
-        this.tickFormatter = function (d) {
-            var formatter = d3.format(",.0f");
+        this.tickFormatter = function(d) {
+            var formatter = d3.format(',.0f');
             if (d > 254.4) {
-                return formatter(d) + " off";
+                return formatter(d) + ' off';
             }
             if (d < 0.5) {
-                return "none"
+                return 'none';
             }
             return formatter(d);
-        }
-        this.tickFormatterText = function (d) {
-            var formatter = d3.format(",.0f");
+        };
+        this.tickFormatterText = function(d) {
+            var formatter = d3.format(',.0f');
             return formatter(d);
-        }
+        };
         this.slider = null;
         // update the text box apm_value when ever the slider is moved.
-        this.sliderCallback = function (slider) {
+        this.sliderCallback = function(slider) {
             var value = slider.value();
             _this.$('#apm_value').val(_this.tickFormatterText(value));
-        }
+        };
         this.initHandlebarHelpers();
     },
 
-    render: function () {
+    render: function() {
         this.fetch(this.renderDisksForm, this);
         return this;
     },
 
-    renderDisksForm: function () {
+    renderDisksForm: function() {
         if (this.$('[rel=tooltip]')) {
-            this.$("[rel=tooltip]").tooltip('hide');
+            this.$('[rel=tooltip]').tooltip('hide');
         }
         var _this = this;
         var disk_name = this.diskName;
@@ -86,15 +86,15 @@ SpindownDiskView = RockstorLayoutView.extend({
         };
         _this.spindownTimes = spindownTimes;
         // retrieve local copy of disk serial number
-        var serialNumber = this.disks.find(function (d) {
+        var serialNumber = this.disks.find(function(d) {
             return (d.get('name') == disk_name);
         }).get('serial');
         // retrieve local copy of current hdparm settings
-        var hdparmSetting = this.disks.find(function (d) {
+        var hdparmSetting = this.disks.find(function(d) {
             return (d.get('name') == disk_name);
         }).get('hdparm_setting');
         // retrieve local copy of current apm level
-        var apmLevel = this.disks.find(function (d) {
+        var apmLevel = this.disks.find(function(d) {
             return (d.get('name') == disk_name);
         }).get('apm_level');
 
@@ -112,13 +112,13 @@ SpindownDiskView = RockstorLayoutView.extend({
         });
 
         var err_msg = '';
-        var spindown_err_msg = function () {
+        var spindown_err_msg = function() {
             return err_msg;
         };
 
-        $.validator.addMethod('validateApmValue', function (value) {
+        $.validator.addMethod('validateApmValue', function(value) {
             var apm_value = $('#apm_value').val();
-            if (apm_value == "") {
+            if (apm_value == '') {
                 err_msg = 'Please enter an APM value (1-255), or 0 to not apply an APM settings.';
                 return false;
             }
@@ -133,7 +133,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             return true;
         }, spindown_err_msg);
 
-        this.$('#enable_apm').click(function () {
+        this.$('#enable_apm').click(function() {
             // $('#apm_value').prop('disable', !this.checked); // disable apm text
             //$('#slide_lower_half').prop('disable', !this.checked);
             //$('#slide_upper_half').prop('disable', !this.checked);
@@ -171,7 +171,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             // apm_value = the text box and it's entered value
             // update the slider when the apm_value text box is changed
             //_this.$('#apm_value').focusout(function () {
-            _this.$('#apm_value').change(function () {
+            _this.$('#apm_value').change(function() {
                 var our_value = this.value;
                 // avoid passing NaN value to slider, leaving them to be
                 // validated by our forms validateApmValue
@@ -198,7 +198,7 @@ SpindownDiskView = RockstorLayoutView.extend({
                 //},
             },
 
-            submitHandler: function () {
+            submitHandler: function() {
                 var button = $('#spindown-disk');
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
@@ -206,7 +206,7 @@ SpindownDiskView = RockstorLayoutView.extend({
                 var posturl = '/api/disks/' + disk_name + '/spindown-drive';
                 var data = _this.$('#add-spindown-disk-form').getJSON();
                 var selected_time = data.spindown_time;
-                var spindown_text = "no message";
+                var spindown_text = 'no message';
                 // look through spindownTimes to find the selected value
                 for (var time_string in _this.spindownTimes) {
                     if (_this.spindownTimes[time_string] == selected_time) {
@@ -227,13 +227,15 @@ SpindownDiskView = RockstorLayoutView.extend({
                     dataType: 'json',
                     contentType: 'application/json',
                     data: JSON.stringify(data),
-                    success: function () {
+                    success: function() {
                         enableButton(button);
                         _this.$('#add-spindown-disk-form :input').tooltip('hide');
-                        app_router.navigate('disks', {trigger: true});
+                        app_router.navigate('disks', {
+                            trigger: true
+                        });
                     },
 
-                    error: function (xhr, status, error) {
+                    error: function(xhr, status, error) {
                         enableButton(button);
                     }
                 });
@@ -243,13 +245,13 @@ SpindownDiskView = RockstorLayoutView.extend({
         });
     },
 
-    initHandlebarHelpers: function () {
+    initHandlebarHelpers: function() {
         // helper to fill dropdown with drive spindown values
         // eg by generating dynamicaly lines of the following
         // <option value="240">20 minutes</option>
-        Handlebars.registerHelper('display_spindown_time', function () {
+        Handlebars.registerHelper('display_spindown_time', function() {
             var html = '';
-            if (this.hdparmSetting == null){
+            if (this.hdparmSetting == null) {
                 // if there is no previous setting then default to 20 minutes
                 this.hdparmSetting = '20 minutes';
             }
@@ -268,17 +270,19 @@ SpindownDiskView = RockstorLayoutView.extend({
         });
     },
 
-    renderSlider: function () {
+    renderSlider: function() {
         // Callback used to broadcast our changing value.
         this.$('#slider').empty();
         this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(0).reclaimable(127).used(0.5).callback(this.sliderCallback);
         d3.select('#slider').call(this.slider);
     },
 
-    cancel: function (event) {
+    cancel: function(event) {
         event.preventDefault();
         this.$('#add-spindown-disk-form :input').tooltip('hide');
-        app_router.navigate('disks', {trigger: true});
+        app_router.navigate('disks', {
+            trigger: true
+        });
     }
 
 });

@@ -26,11 +26,11 @@
 
 PoolRemoveDisks = RockstorWizardPage.extend({
     events: {
-        "click #checkAll": "selectAllCheckboxes",
+        'click #checkAll': 'selectAllCheckboxes',
         'click [class="diskname"]': 'clickCheckbox',
     },
 
-    initialize: function () {
+    initialize: function() {
         this.disks = new DiskCollection();
         this.disks.setPageSize(100);
         this.template = window.JST.pool_resize_remove_disks;
@@ -40,52 +40,54 @@ PoolRemoveDisks = RockstorWizardPage.extend({
         this.initHandlebarHelpers();
     },
 
-    render: function () {
+    render: function() {
         RockstorWizardPage.prototype.render.apply(this, arguments);
         this.disks.fetch();
         return this;
     },
 
-    renderDisks: function () {
-        var disks = this.disks.filter(function (disk) {
+    renderDisks: function() {
+        var disks = this.disks.filter(function(disk) {
             return disk.get('pool_name') == this.model.get('pool').get('name');
         }, this);
         //convert the array elements which are backbone models/collections to JSON object
         for (var i = 0; i < disks.length; i++) {
             disks[i] = disks[i].toJSON();
         }
-        this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
+        this.$('#ph-disks-table').html(this.disks_template({
+            disks: disks
+        }));
     },
 
-    selectAllCheckboxes: function (event) {
-        $("#checkAll").change(function () {
-            $("input:checkbox").prop('checked', $(this).prop("checked"));
-            $("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
+    selectAllCheckboxes: function(event) {
+        $('#checkAll').change(function() {
+            $('input:checkbox').prop('checked', $(this).prop('checked'));
+            $('input:checkbox').closest('tr').toggleClass('row-highlight', this.checked);
         });
     },
 
-    clickCheckbox: function (event) {
-        $("input:checkbox").change(function () {
-            $(this).closest("tr").toggleClass("row-highlight", this.checked);
+    clickCheckbox: function(event) {
+        $('input:checkbox').change(function() {
+            $(this).closest('tr').toggleClass('row-highlight', this.checked);
         });
     },
 
-    save: function () {
+    save: function() {
         var _this = this;
-        var checked = this.$(".diskname:checked").length;
+        var checked = this.$('.diskname:checked').length;
         var diskNames = [];
-        this.$(".diskname:checked").each(function (i) {
+        this.$('.diskname:checked').each(function(i) {
             diskNames.push($(this).val());
         });
         this.model.set('diskNames', diskNames);
         return $.Deferred().resolve();
     },
 
-    initHandlebarHelpers: function () {
-        Handlebars.registerHelper('mathHelper', function (value, options) {
+    initHandlebarHelpers: function() {
+        Handlebars.registerHelper('mathHelper', function(value, options) {
             return parseInt(value) + 1;
         });
-        Handlebars.registerHelper('humanReadableSize', function(diskSize){
+        Handlebars.registerHelper('humanReadableSize', function(diskSize) {
             return humanize.filesize(diskSize * 1024);
         });
     }

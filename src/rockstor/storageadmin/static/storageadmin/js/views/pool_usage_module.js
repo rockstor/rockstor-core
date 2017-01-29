@@ -25,44 +25,41 @@
  */
 
 PoolUsageModule = RockstorModuleView.extend({
-   initialize: function() {
-    this.template = window.JST.pool_pool_usage_module;
-     this.module_name = 'pool-usage';
-  },
+    initialize: function() {
+        this.template = window.JST.pool_pool_usage_module;
+        this.module_name = 'pool-usage';
+    },
 
-  render: function() {
-    $(this.el).html(this.template({ 
-      module_name: this.module_name,
-      model: this.model,
-      collection: this.collection
-    }));
-    this.renderGraph();
-    return this;
-  },
-    
-  renderGraph: function() {
-    // Pie chart
-    var w = 350; //width
-    var h = 130; //height
-    var outerRadius = 50;
-    var innerRadius = 0;
-    
-    total = parseInt(this.model.get('size')*1024);
-    used = parseInt((this.model.get('size') - this.model.get('reclaimable') - this.model.get('free'))*1024);
-    free = this.model.get('free')*1024;
+    render: function() {
+        $(this.el).html(this.template({
+            module_name: this.module_name,
+            model: this.model,
+            collection: this.collection
+        }));
+        this.renderGraph();
+        return this;
+    },
 
-    var dataset = [free, used]
-    var dataLabels = ['free', 'used']
+    renderGraph: function() {
+        // Pie chart
+        var w = 350; //width
+        var h = 130; //height
+        var outerRadius = 50;
+        var innerRadius = 0;
 
-    var svg = d3.select(this.el).select("#chart")
-    .append("svg")
-    .attr("width", w)
-    .attr("height", h);
-    
-    displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, dataLabels);
+        total = parseInt(this.model.get('size') * 1024);
+        used = parseInt((this.model.get('size') - this.model.get('reclaimable') - this.model.get('free')) * 1024);
+        free = this.model.get('free') * 1024;
 
-  }
+        var dataset = [free, used];
+        var dataLabels = ['free', 'used'];
+
+        var svg = d3.select(this.el).select('#chart')
+            .append('svg')
+            .attr('width', w)
+            .attr('height', h);
+
+        displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, dataLabels);
+
+    }
 });
-
-
-

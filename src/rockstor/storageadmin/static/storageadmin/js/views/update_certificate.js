@@ -25,104 +25,115 @@
  */
 
 UpdateCertificateView = RockstorLayoutView.extend({
-  events: {
-	  "click #update-certificate" : "renderCertificateForm",
-	  "click #cancel": "cancel"
-  },
+    events: {
+        'click #update-certificate': 'renderCertificateForm',
+        'click #cancel': 'cancel'
+    },
 
-  initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.updatetemplate = window.JST.setup_update_certificate;
-    this.template = window.JST.setup_certificate_desc;
-    this.certificate = new Certificate();
-    this.certificates = new Certificate();
-    this.dependencies.push(this.certificates);
-    this.initHandlebarHelpers();
-  },
+    initialize: function() {
+        // call initialize of base
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.updatetemplate = window.JST.setup_update_certificate;
+        this.template = window.JST.setup_certificate_desc;
+        this.certificate = new Certificate();
+        this.certificates = new Certificate();
+        this.dependencies.push(this.certificates);
+        this.initHandlebarHelpers();
+    },
 
-  render: function() {
-      var _this = this;
-      this.fetch(this.renderCertificate, this);
-      return this;
-  },
+    render: function() {
+        var _this = this;
+        this.fetch(this.renderCertificate, this);
+        return this;
+    },
 
-  renderCertificate: function() {
-	  var cert = _.first(this.certificates.get("results"));
-	  this.certificate.set(cert);
-	  this.renderCertificateDescription();
-  },
+    renderCertificate: function() {
+        var cert = _.first(this.certificates.get('results'));
+        this.certificate.set(cert);
+        this.renderCertificateDescription();
+    },
 
-  renderCertificateDescription: function() {
-	  var cname = this.certificate.get("name");
-	  $(this.el).html(this.template({"name": cname}));
-  },
+    renderCertificateDescription: function() {
+        var cname = this.certificate.get('name');
+        $(this.el).html(this.template({
+            'name': cname
+        }));
+    },
 
-  cancel: function(event) {
-	  $(this.el).empty();
-	  var cname = this.certificate.get("name");
-	  $(this.el).html(this.template({"name": cname}));
-  },
+    cancel: function(event) {
+        $(this.el).empty();
+        var cname = this.certificate.get('name');
+        $(this.el).html(this.template({
+            'name': cname
+        }));
+    },
 
-  renderCertificateForm: function() {
-    var _this = this;
-    $(this.el).html(this.updatetemplate());
-    this.$('#update-certificate-form :input').tooltip({placement: 'right'});
-    this.$('#group').chosen();
+    renderCertificateForm: function() {
+        var _this = this;
+        $(this.el).html(this.updatetemplate());
+        this.$('#update-certificate-form :input').tooltip({
+            placement: 'right'
+        });
+        this.$('#group').chosen();
 
-    this.validator = this.$("#update-certificate-form").validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-    	certificatename: 'required',
-    	certificate: 'required',
-    	privatekey: 'required'
-      },
-      submitHandler: function() {
-    	  var button = $('#save-certificate');
-          if (buttonDisabled(button)) return false;
-          disableButton(button);
-    	  var certificateName = $('#certificatename').val();
-    	  var certificate = $('#certificate').val();
-    	  var privatekey = $('#privatekey').val();
-    	  var certData = JSON.stringify({"name": certificateName,
-			    "cert": certificate, "key": privatekey});
-          $.ajax({
-              url: '/api/certificate',
-              type: 'POST',
-              dataType: 'json',
-	          contentType: 'application/json',
-              data: certData,
-              success: function() {
-                  enableButton(button);
-                  _this.$('#update-certificate-form :input').tooltip('hide');
-                  _this.certificate.set({"name": certificateName});
-		  alert('Certificate update successfully. It will take effect now.');
-		  location.reload();
-                  _this.renderCertificateDescription();
-              },
-              error: function(xhr, status, error) {
-                  enableButton(button);
-                  _this.$('#update-certificate-form :input').tooltip('hide');
-                  var msg = parseXhrError(xhr.responseText);
-                  _this.$(".messages").html(msg);
-              },
-          });
-      }
-    });
-    return this;
-  },
+        this.validator = this.$('#update-certificate-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+                certificatename: 'required',
+                certificate: 'required',
+                privatekey: 'required'
+            },
+            submitHandler: function() {
+                var button = $('#save-certificate');
+                if (buttonDisabled(button)) return false;
+                disableButton(button);
+                var certificateName = $('#certificatename').val();
+                var certificate = $('#certificate').val();
+                var privatekey = $('#privatekey').val();
+                var certData = JSON.stringify({
+                    'name': certificateName,
+                    'cert': certificate,
+                    'key': privatekey
+                });
+                $.ajax({
+                    url: '/api/certificate',
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: certData,
+                    success: function() {
+                        enableButton(button);
+                        _this.$('#update-certificate-form :input').tooltip('hide');
+                        _this.certificate.set({
+                            'name': certificateName
+                        });
+                        alert('Certificate update successfully. It will take effect now.');
+                        location.reload();
+                        _this.renderCertificateDescription();
+                    },
+                    error: function(xhr, status, error) {
+                        enableButton(button);
+                        _this.$('#update-certificate-form :input').tooltip('hide');
+                        var msg = parseXhrError(xhr.responseText);
+                        _this.$('.messages').html(msg);
+                    },
+                });
+            }
+        });
+        return this;
+    },
 
-  initHandlebarHelpers: function(){
-    Handlebars.registerHelper('display_message', function(){
-      var html = '';
-      if (_.isEmpty(name)) {
-      html += 'A self signed Certificate created during installation is in use by default.';
-      } else {
-      html += 'Admin provided Certificate<strong>(' + name + ')</strong> is currently in use.';
-      }
-      return new Handlebars.SafeString(html);
-    });
-  }
+    initHandlebarHelpers: function() {
+        Handlebars.registerHelper('display_message', function() {
+            var html = '';
+            if (_.isEmpty(name)) {
+                html += 'A self signed Certificate created during installation is in use by default.';
+            } else {
+                html += 'Admin provided Certificate<strong>(' + name + ')</strong> is currently in use.';
+            }
+            return new Handlebars.SafeString(html);
+        });
+    }
 
 });

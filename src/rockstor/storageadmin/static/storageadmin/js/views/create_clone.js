@@ -25,75 +25,81 @@
  */
 
 CreateCloneView = RockstorLayoutView.extend({
-  events: {
-    "click #js-cancel": "cancel"
-  },
-  
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.share_create_clone;
-    this.sourceType = this.options.sourceType;
-    this.shareName = this.options.shareName;
-    this.snapName = this.options.snapName;
-  },
+    events: {
+        'click #js-cancel': 'cancel'
+    },
 
-  render: function() {
-    var _this = this,
-    sourceTypeIsShare = false;
-    if(this.sourceType == 'share'){
-    	sourceTypeIsShare = true;
-    }
-    $(this.el).html(this.template({
-      sourceType: this.sourceType,
-      shareName: this.shareName,
-      snapName: this.snapName,
-      sourceTypeIsShare: sourceTypeIsShare,
-    }));
-    this.$('#create-clone-form :input').tooltip();
-    this.$('#create-clone-form').validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-        name: 'required',  
-      },
-      submitHandler: function() {
-        var button = _this.$('#create-clone');
-        if (buttonDisabled(button)) return false;
-        disableButton(button);
-        if (_this.sourceType == 'share') {
-          var url = '/api/shares/' + _this.shareName + '/clone';
-        } else if (_this.sourceType == 'snapshot') {
-          var url = '/api/shares/' + _this.shareName + '/snapshots/'
-          + _this.snapName + '/clone';
+    initialize: function() {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.template = window.JST.share_create_clone;
+        this.sourceType = this.options.sourceType;
+        this.shareName = this.options.shareName;
+        this.snapName = this.options.snapName;
+    },
+
+    render: function() {
+        var _this = this,
+            sourceTypeIsShare = false;
+        if (this.sourceType == 'share') {
+            sourceTypeIsShare = true;
         }
-        $.ajax({
-          url: url,
-          type: 'POST',
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(_this.$('#create-clone-form').getJSON()),
-          success: function() {
-            enableButton(button);
-            app_router.navigate('shares', {trigger: true});
-          },
-          error: function(xhr, status, error) {
-            enableButton(button);
-          }
+        $(this.el).html(this.template({
+            sourceType: this.sourceType,
+            shareName: this.shareName,
+            snapName: this.snapName,
+            sourceTypeIsShare: sourceTypeIsShare,
+        }));
+        this.$('#create-clone-form :input').tooltip();
+        this.$('#create-clone-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+                name: 'required',
+            },
+            submitHandler: function() {
+                var button = _this.$('#create-clone');
+                if (buttonDisabled(button)) return false;
+                disableButton(button);
+                var url;
+                if (_this.sourceType == 'share') {
+                    url = '/api/shares/' + _this.shareName + '/clone';
+                } else if (_this.sourceType == 'snapshot') {
+                    url = '/api/shares/' + _this.shareName + '/snapshots/' +
+                        _this.snapName + '/clone';
+                }
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify(_this.$('#create-clone-form').getJSON()),
+                    success: function() {
+                        enableButton(button);
+                        app_router.navigate('shares', {
+                            trigger: true
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        enableButton(button);
+                    }
+                });
+                return false;
+            }
         });
-        return false;
-      }
-    });
-    return this;
-  },
-  
-  cancel: function(event) {
-    event.preventDefault();
-    if (this.sourceType == 'share') {
-      app_router.navigate('#shares/'+this.shareName, {trigger: true});
-    } else if (this.sourceType == 'snapshot') {
-      app_router.navigate('#shares/'+this.shareName, {trigger: true});
+        return this;
+    },
+
+    cancel: function(event) {
+        event.preventDefault();
+        if (this.sourceType == 'share') {
+            app_router.navigate('#shares/' + this.shareName, {
+                trigger: true
+            });
+        } else if (this.sourceType == 'snapshot') {
+            app_router.navigate('#shares/' + this.shareName, {
+                trigger: true
+            });
+        }
     }
-  }
 
 });
-

@@ -25,77 +25,83 @@
  */
 
 NFSAdvancedEditView = RockstorLayoutView.extend({
-  events: {
-    "click #cancel": "cancel"
-  },
+    events: {
+        'click #cancel': 'cancel'
+    },
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.nfs_advanced_edit;
-    this.collection = new AdvancedNFSExportCollection();
-    this.dependencies.push(this.collection);
-  },
+    initialize: function() {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.template = window.JST.nfs_advanced_edit;
+        this.collection = new AdvancedNFSExportCollection();
+        this.dependencies.push(this.collection);
+    },
 
-  render: function() {
-    this.fetch(this.renderAdvancedEdit, this);
-    return this;
-  },
+    render: function() {
+        this.fetch(this.renderAdvancedEdit, this);
+        return this;
+    },
 
-  renderAdvancedEdit: function() {
-    var _this = this;
-    var ro_str = '';
-    var rw_str = '';
+    renderAdvancedEdit: function() {
+        var _this = this;
+        var ro_str = '';
+        var rw_str = '';
 
-    this.collection.each(function(nfsExport) {
-      var prefix = "Normally added -- ";
-      var n = prefix.length;
-      var s = nfsExport.get('export_str');
-      if (s.indexOf(prefix) == 0) {
-        ro_str = ro_str + s.substring(n, s.length) + '\n';
-      } else {
-        rw_str = rw_str + s + '\n';
-      }
-    });
-    $(this.el).html(this.template({
-      shares: this.shares,
-      collection: this.collection,
-      ro_str: ro_str,
-      rw_str: rw_str
-    }));
-    $('#advanced-edit-form').validate({
-      onfocusout: false,
-      onkeyup: false,
-
-      submitHandler: function() {
-        var button = $('#submit-advanced-edit');
-        var nfsText = _this.$('#nfs-text').val();
-        var entries = [];
-        if (!_.isNull(nfsText) && nfsText.trim() != '') entries = nfsText.trim().split('\n');
-        if (buttonDisabled(button)) return false;
-        disableButton(button);
-        $.ajax({
-          url: '/api/adv-nfs-exports',
-          type: 'POST',
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify({ entries: entries }),
-          success: function() {
-            enableButton(button);
-            app_router.navigate('nfs-exports', {trigger: true});
-          },
-          error: function(xhr, status, error) {
-            enableButton(button);
-          }
+        this.collection.each(function(nfsExport) {
+            var prefix = 'Normally added -- ';
+            var n = prefix.length;
+            var s = nfsExport.get('export_str');
+            if (s.indexOf(prefix) == 0) {
+                ro_str = ro_str + s.substring(n, s.length) + '\n';
+            } else {
+                rw_str = rw_str + s + '\n';
+            }
         });
+        $(this.el).html(this.template({
+            shares: this.shares,
+            collection: this.collection,
+            ro_str: ro_str,
+            rw_str: rw_str
+        }));
+        $('#advanced-edit-form').validate({
+            onfocusout: false,
+            onkeyup: false,
 
-        return false;
-      }
-    });
-  },
+            submitHandler: function() {
+                var button = $('#submit-advanced-edit');
+                var nfsText = _this.$('#nfs-text').val();
+                var entries = [];
+                if (!_.isNull(nfsText) && nfsText.trim() != '') entries = nfsText.trim().split('\n');
+                if (buttonDisabled(button)) return false;
+                disableButton(button);
+                $.ajax({
+                    url: '/api/adv-nfs-exports',
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        entries: entries
+                    }),
+                    success: function() {
+                        enableButton(button);
+                        app_router.navigate('nfs-exports', {
+                            trigger: true
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        enableButton(button);
+                    }
+                });
 
-  cancel: function(event) {
-    event.preventDefault();
-    app_router.navigate('nfs-exports', {trigger: true});
-  }
+                return false;
+            }
+        });
+    },
+
+    cancel: function(event) {
+        event.preventDefault();
+        app_router.navigate('nfs-exports', {
+            trigger: true
+        });
+    }
 
 });

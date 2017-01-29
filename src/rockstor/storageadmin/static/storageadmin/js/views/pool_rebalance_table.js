@@ -24,114 +24,112 @@
  *
  */
 
-PoolRebalanceTableModule  = RockstorModuleView.extend({
-	events: {
-		"click #js-poolrebalance-start": "start",
-		"click #js-poolrebalance-cancel": "cancel"
-	},
+PoolRebalanceTableModule = RockstorModuleView.extend({
+    events: {
+        'click #js-poolrebalance-start': 'start',
+        'click #js-poolrebalance-cancel': 'cancel'
+    },
 
-	initialize: function() {
-		this.template = window.JST.pool_poolrebalance_table_template;
-		this.startRebalanceTemplate = window.JST.pool_poolrebalance_start_template;
-		this.module_name = 'poolrebalances';
-		this.pool = this.options.pool;
-		this.poolrebalances = this.options.poolrebalances;
-		this.collection = this.options.poolrebalances;
-		this.collection.on("reset", this.render, this);
-		this.parentView = this.options.parentView;
-		this.initHandlebarHelpers();
-	},
+    initialize: function() {
+        this.template = window.JST.pool_poolrebalance_table_template;
+        this.startRebalanceTemplate = window.JST.pool_poolrebalance_start_template;
+        this.module_name = 'poolrebalances';
+        this.pool = this.options.pool;
+        this.poolrebalances = this.options.poolrebalances;
+        this.collection = this.options.poolrebalances;
+        this.collection.on('reset', this.render, this);
+        this.parentView = this.options.parentView;
+        this.initHandlebarHelpers();
+    },
 
-	render: function() {
-		var _this = this;
-		$(this.el).empty();
-		$(this.el).append(this.template({
-			collection: this.collection,
-			collectionNotEmpty: !this.collection.isEmpty(),
-			pool: this.pool,
-		}));
-		this.$('[rel=tooltip]').tooltip({
-			placement: 'bottom'
-		});
-		return this;
-	},
+    render: function() {
+        var _this = this;
+        $(this.el).empty();
+        $(this.el).append(this.template({
+            collection: this.collection,
+            collectionNotEmpty: !this.collection.isEmpty(),
+            pool: this.pool,
+        }));
+        this.$('[rel=tooltip]').tooltip({
+            placement: 'bottom'
+        });
+        return this;
+    },
 
-	setPoolName: function(poolName) {
-		this.collection.setUrl(poolName);
-	},
+    setPoolName: function(poolName) {
+        this.collection.setUrl(poolName);
+    },
 
-	start: function(event) {
-		var _this = this;
-		event.preventDefault();
-		$(this.el).html(this.startRebalanceTemplate({
-			pool: this.pool,
-		}));
+    start: function(event) {
+        var _this = this;
+        event.preventDefault();
+        $(this.el).html(this.startRebalanceTemplate({
+            pool: this.pool,
+        }));
 
-		this.validator = this.$('#pool-rebalance-form').validate({
-			onfocusout: false,
-			onkeyup: false,
-			rules: {
-			},
-			submitHandler: function() {
-				var button = _this.$('#start_rebalance');
-				if (buttonDisabled(button)) return false;
-				disableButton(button);
-				var n = _this.$("#forcebalance:checked").val();
-				var postdata = '';
-				if(n == 'on') {
-					postdata = '{"force": "true"}';
-				}
-				$.ajax({
-					url: '/api/pools/'+_this.pool.get('name')+'/balance',
-					type: 'POST',
-					data: postdata,
-					success: function() {
-						_this.$('#pool-rebalance-form :input').tooltip('hide');
-						enableButton(button);
-						_this.collection.fetch({
-							success: function(collection, response, options) {
-							}                
-						});
-					},
-					error: function(jqXHR) {
-						_this.$('#pool-rebalance-form :input').tooltip('hide');
-						enableButton(button);
-					}
-				});
-				return false;
-			}
-		});
-	},
+        this.validator = this.$('#pool-rebalance-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {},
+            submitHandler: function() {
+                var button = _this.$('#start_rebalance');
+                if (buttonDisabled(button)) return false;
+                disableButton(button);
+                var n = _this.$('#forcebalance:checked').val();
+                var postdata = '';
+                if (n == 'on') {
+                    postdata = '{"force": "true"}';
+                }
+                $.ajax({
+                    url: '/api/pools/' + _this.pool.get('name') + '/balance',
+                    type: 'POST',
+                    data: postdata,
+                    success: function() {
+                        _this.$('#pool-rebalance-form :input').tooltip('hide');
+                        enableButton(button);
+                        _this.collection.fetch({
+                            success: function(collection, response, options) {}
+                        });
+                    },
+                    error: function(jqXHR) {
+                        _this.$('#pool-rebalance-form :input').tooltip('hide');
+                        enableButton(button);
+                    }
+                });
+                return false;
+            }
+        });
+    },
 
-	cancel: function(event) {
-		event.preventDefault();
-		this.render();
-	},
+    cancel: function(event) {
+        event.preventDefault();
+        this.render();
+    },
 
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_poolRebalance_table', function(){
-			var html = '';
-			this.collection.each(function(poolrebalance, index) {
-				html += '<tr>';
-				html += '<td>' + poolrebalance.get('id') + '</td>';
-				html += '<td>' + poolrebalance.get('status') + '</td>';
-				html += '<td>';
-				if (poolrebalance.get('start_time')) {
-					html += moment(poolrebalance.get('start_time')).format(RS_DATE_FORMAT);
-				} 
-				html += '</td>';
-				html += '<td>' + poolrebalance.get('percent_done') + '</td>';
-				html += '<td>'
-					if(poolrebalance.get('message') != null){
-						html += poolrebalance.get('message');
-					}
-				html += '</td>'
-					html += '</tr>';
-			}); 
-			return new Handlebars.SafeString(html);
-		});
+    initHandlebarHelpers: function() {
+        Handlebars.registerHelper('display_poolRebalance_table', function() {
+            var html = '';
+            this.collection.each(function(poolrebalance, index) {
+                html += '<tr>';
+                html += '<td>' + poolrebalance.get('id') + '</td>';
+                html += '<td>' + poolrebalance.get('status') + '</td>';
+                html += '<td>';
+                if (poolrebalance.get('start_time')) {
+                    html += moment(poolrebalance.get('start_time')).format(RS_DATE_FORMAT);
+                }
+                html += '</td>';
+                html += '<td>' + poolrebalance.get('percent_done') + '</td>';
+                html += '<td>';
+                if (poolrebalance.get('message') != null) {
+                    html += poolrebalance.get('message');
+                }
+                html += '</td>';
+                html += '</tr>';
+            });
+            return new Handlebars.SafeString(html);
+        });
 
-	}
+    }
 
 });
 

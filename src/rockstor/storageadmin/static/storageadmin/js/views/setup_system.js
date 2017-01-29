@@ -25,33 +25,34 @@
  */
 
 SetupSystemView = Backbone.View.extend({
-  tagName: 'div',
-  
-  initialize: function() {
-    this.template = window.JST.setup_system;
-    this.sysinfo = this.options.sysinfo;
-  },
+    tagName: 'div',
 
-  render: function() {
-    this.renderSystemSetup();
-    return this;
-  },
+    initialize: function() {
+        this.template = window.JST.setup_system;
+        this.sysinfo = this.options.sysinfo;
+    },
 
-  renderSystemSetup: function() {
-    var _this = this;
-    $(this.el).html(this.template({sysinfo: this.sysinfo}));
-    this.$('#set-hostname-form').validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-        hostname: 'required'
-      },
-      submitHandler: function() {
-        RockStorGlobals.hostname = _this.$('#hostname').val();
-        return false;
-      }
-    });
-  }
+    render: function() {
+        this.renderSystemSetup();
+        return this;
+    },
+
+    renderSystemSetup: function() {
+        var _this = this;
+        $(this.el).html(this.template({
+            sysinfo: this.sysinfo
+        }));
+        this.$('#set-hostname-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+                hostname: 'required'
+            },
+            submitHandler: function() {
+                RockStorGlobals.hostname = _this.$('#hostname').val();
+                return false;
+            }
+        });
+    }
 
 });
-

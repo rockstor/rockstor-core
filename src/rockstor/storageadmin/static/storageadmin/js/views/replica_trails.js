@@ -1,4 +1,3 @@
-
 /*
  *
  * @licstart  The following is the entire license notice for the
@@ -26,87 +25,90 @@
  */
 
 ReplicaTrailsView = RockstorLayoutView.extend({
-	events: {
-	},
+    events: {},
 
-	initialize: function() {
-		// call initialize of base
-		this.constructor.__super__.initialize.apply(this, arguments);
-		// set template
-		this.template = window.JST.replication_replica_trails;
-		// add dependencies
-		this.replicaId = this.options.replicaId;
-		this.replica = new Replica({id: this.replicaId});
-		this.dependencies.push(this.replica);
-		this.collection = new ReplicaTrailCollection(null, {
-			replicaId: this.replicaId
-		});
-		this.collection.pageSize = 10;
-		this.dependencies.push(this.collection);
-		this.collection.on("reset", this.renderReplicaTrails, this);
-		// has the replica been fetched? prevents renderReplicaTrails executing
-		// (because of collection reset) before replica has been fetched
-		this.replicaFetched = false;
-		this.initHandlebarHelpers();
-	},
+    initialize: function() {
+        // call initialize of base
+        this.constructor.__super__.initialize.apply(this, arguments);
+        // set template
+        this.template = window.JST.replication_replica_trails;
+        // add dependencies
+        this.replicaId = this.options.replicaId;
+        this.replica = new Replica({
+            id: this.replicaId
+        });
+        this.dependencies.push(this.replica);
+        this.collection = new ReplicaTrailCollection(null, {
+            replicaId: this.replicaId
+        });
+        this.collection.pageSize = 10;
+        this.dependencies.push(this.collection);
+        this.collection.on('reset', this.renderReplicaTrails, this);
+        // has the replica been fetched? prevents renderReplicaTrails executing
+        // (because of collection reset) before replica has been fetched
+        this.replicaFetched = false;
+        this.initHandlebarHelpers();
+    },
 
-	render: function() {
-		this.fetch(this.firstFetch, this);
-		return this;
-	},
+    render: function() {
+        this.fetch(this.firstFetch, this);
+        return this;
+    },
 
-	firstFetch: function() {
-		this.replicaFetched = true;
-		this.renderReplicaTrails();
-	},
+    firstFetch: function() {
+        this.replicaFetched = true;
+        this.renderReplicaTrails();
+    },
 
-	renderReplicaTrails: function() {
-		if (!this.replicaFetched) return false;
-		var _this = this;
-		$(this.el).html(this.template({
-			replica: _this.replica.toJSON(),
-			replicaColl: _this.collection.toJSON(),
-			collection: _this.collection,
-			collectionNotEmpty: !this.collection.isEmpty()
-		}));
-		// remove existing tooltips
-		if (this.$('[rel=tooltip]')) {
-			this.$('[rel=tooltip]').tooltip('hide');
-		}
-		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-	},
+    renderReplicaTrails: function() {
+        if (!this.replicaFetched) return false;
+        var _this = this;
+        $(this.el).html(this.template({
+            replica: _this.replica.toJSON(),
+            replicaColl: _this.collection.toJSON(),
+            collection: _this.collection,
+            collectionNotEmpty: !this.collection.isEmpty()
+        }));
+        // remove existing tooltips
+        if (this.$('[rel=tooltip]')) {
+            this.$('[rel=tooltip]').tooltip('hide');
+        }
+        this.$('[rel=tooltip]').tooltip({
+            placement: 'bottom'
+        });
+    },
 
-	initHandlebarHelpers: function(){
-		
-		Handlebars.registerHelper('getDateFormat', function(date){
-			return moment(date).format(RS_DATE_FORMAT);
-		});
+    initHandlebarHelpers: function() {
 
-		Handlebars.registerHelper('ifStatusSuccess', function(status, opts){
-			if (status != 'failed'){
-				return opts.fn(this);
-			}
-			return opts.inverse(this);
-		});
+        Handlebars.registerHelper('getDateFormat', function(date) {
+            return moment(date).format(RS_DATE_FORMAT);
+        });
 
-		Handlebars.registerHelper('getDuration', function(endTime, startTime){
-			return moment(endTime).from(moment(startTime));
-		});
-		
-		Handlebars.registerHelper('humanReadableSize', function(size){
-			return humanize.filesize(size * 1024);
-		});
+        Handlebars.registerHelper('ifStatusSuccess', function(status, opts) {
+            if (status != 'failed') {
+                return opts.fn(this);
+            }
+            return opts.inverse(this);
+        });
 
-		Handlebars.registerHelper('getRate', function(endTime, startTime, kbSent){
-			var d;
-			if (kbSent){
-				d = moment(endTime).diff(moment(startTime))/1000;
-			} else {
-				d = moment().diff(moment(startTime))/1000;
-			}
-			return humanize.filesize((kbSent / d).toFixed(2) * 1024);
-		});
-	}
+        Handlebars.registerHelper('getDuration', function(endTime, startTime) {
+            return moment(endTime).from(moment(startTime));
+        });
+
+        Handlebars.registerHelper('humanReadableSize', function(size) {
+            return humanize.filesize(size * 1024);
+        });
+
+        Handlebars.registerHelper('getRate', function(endTime, startTime, kbSent) {
+            var d;
+            if (kbSent) {
+                d = moment(endTime).diff(moment(startTime)) / 1000;
+            } else {
+                d = moment().diff(moment(startTime)) / 1000;
+            }
+            return humanize.filesize((kbSent / d).toFixed(2) * 1024);
+        });
+    }
 
 
 });

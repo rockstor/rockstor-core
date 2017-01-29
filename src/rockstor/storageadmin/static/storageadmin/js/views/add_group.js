@@ -26,86 +26,95 @@
 
 AddGroupView = RockstorLayoutView.extend({
     events: {
-	"click #cancel": "cancel"
+        'click #cancel': 'cancel'
     },
 
     initialize: function() {
-	// call initialize of base
-	this.constructor.__super__.initialize.apply(this, arguments);
-	// set template
-	this.template = window.JST.users_add_group;
-	this.groupname = this.options.groupname;
-	this.group = new Group({groupname: this.groupname});
-	this.dependencies.push(this.group);
+        // call initialize of base
+        this.constructor.__super__.initialize.apply(this, arguments);
+        // set template
+        this.template = window.JST.users_add_group;
+        this.groupname = this.options.groupname;
+        this.group = new Group({
+            groupname: this.groupname
+        });
+        this.dependencies.push(this.group);
     },
 
     render: function() {
-	this.fetch(this.renderExportForm, this);
-	return this;
+        this.fetch(this.renderExportForm, this);
+        return this;
     },
 
     renderExportForm: function() { //#start renderExportForm
-	var _this = this;
-	$(this.el).html(this.template({
+        var _this = this;
+        $(this.el).html(this.template({
             groupname: this.groupname,
             group: this.group.toJSON()
 
-	}));
+        }));
 
-	this.$('#group-create-form :input').tooltip({placement: 'right'});
+        this.$('#group-create-form :input').tooltip({
+            placement: 'right'
+        });
 
-	this.validator = this.$("#group-create-form").validate({
-	    onfocusout: false,
-	    onkeyup: false,
-	    rules: {
-		groupname: "required",
-		gid: {
-		    number: true
+        this.validator = this.$('#group-create-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+                groupname: 'required',
+                gid: {
+                    number: true
 
-		}
+                }
             },
 
-	    submitHandler: function() {
-		var groupname = _this.$("#groupname").val();
-		var gid = _this.$("#gid").val() || null;
-		if(_this.groupname != null && _this.group != null) {
-		    var group = new Group({groupname: _this.groupname});
-		    group.save(null, {
-			success: function(model, response, options) {
-			    app_router.navigate("groups", {trigger: true});
-			},
-			error: function(model, xhr, options) {
-			}
-		    });
-		} else {
-		    var tmpGroupModel = Backbone.Model.extend({
-			urlRoot: "/api/groups"
-		    });
-		    var group = new tmpGroupModel();
-		    group.save(
-			{
-			    groupname: groupname,
-			    gid: gid
-			},
-			{
-			    success: function(model, response, options) {
-				_this.$('#group-create-form :input').tooltip('hide');
-				app_router.navigate("groups", {trigger: true});
-			    },
-			    error: function(model, xhr, options) {
-				_this.$('#group-create-form :input').tooltip('hide');
-			    }
-			}
-		    );
-		}
-		return false;
-	    },
-	});
-	return this;
+            submitHandler: function() {
+                var groupname = _this.$('#groupname').val();
+                var gid = _this.$('#gid').val() || null;
+                var group;
+                if (_this.groupname != null && _this.group != null) {
+                    group = new Group({
+                        groupname: _this.groupname
+                    });
+                    group.save(null, {
+                        success: function(model, response, options) {
+                            app_router.navigate('groups', {
+                                trigger: true
+                            });
+                        },
+                        error: function(model, xhr, options) {}
+                    });
+                } else {
+                    var tmpGroupModel = Backbone.Model.extend({
+                        urlRoot: '/api/groups'
+                    });
+                    group = new tmpGroupModel();
+                    group.save({
+                        groupname: groupname,
+                        gid: gid
+                    }, {
+                        success: function(model, response, options) {
+                            _this.$('#group-create-form :input').tooltip('hide');
+                            app_router.navigate('groups', {
+                                trigger: true
+                            });
+                        },
+                        error: function(model, xhr, options) {
+                            _this.$('#group-create-form :input').tooltip('hide');
+                        }
+                    });
+                }
+                return false;
+            },
+        });
+        return this;
     },
 
     cancel: function() {
-	app_router.navigate("groups", {trigger: true});
+        app_router.navigate('groups', {
+            trigger: true
+        });
     }
 
 });

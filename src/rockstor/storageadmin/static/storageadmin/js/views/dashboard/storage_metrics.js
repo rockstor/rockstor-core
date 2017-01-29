@@ -259,7 +259,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
         var dataset = _this.StorageMetricsChartData.datasets;
         _.each(_this.colors, function(color, index) {
             _.each(_.keys(color), function(key, i) {
-                var legend = ''
+                var legend = '';
                 legend += '<span style="background-color: ' + dataset[index].backgroundColor[i] + '; ';
                 legend += 'border-style: solid; border-color: ' + dataset[index].borderColor[i] + '; ';
                 legend += 'border-width: 1px; display: inline; width: 10px; height: 10px; float: left; margin: 2px;"></span> ';
