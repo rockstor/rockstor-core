@@ -29,13 +29,10 @@ LOG_LEVELS = ['debug', 'info', 'warning', 'error'];
 
 logger = function() {
     var obj = {};
-    /*
+    
     obj.log = function(msg, log_level) {
-        if (_.indexOf(LOG_LEVELS[log_level]) >= _.indexOf(LOG_LEVELS[ROCKSTOR_LOG_LEVEL])) {
-            console.log(ROCKSTOR_LOG_LEVEL);
-        }
     };
-    */
+    
     _.each(LOG_LEVELS, function(level) {
         obj[level] = function(msg) {
             this.log(msg, level);
