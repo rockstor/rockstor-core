@@ -203,7 +203,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
         with self._handle_exception(request):
             command = request.data.get('command', 'restore')
             if (command == 'restore'):
-                cbo = self._validate_input(backup_id)
+                cbo = self._validate_input(backup_id, request)
                 # models that need to be restored.
                 # 1. User, Group, Accesskeys?
                 # 2. SambaShare
