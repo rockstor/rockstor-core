@@ -159,15 +159,6 @@ def restore_config(cbid):
     # restore_rockons(ml)
 
 
-class ConfigBackupMixin(object):
-    serializer_class = ConfigBackupSerializer
-    cb_dir = os.path.join(settings.MEDIA_ROOT, 'config-backups')
-
-    @staticmethod
-    def _md5sum(fp):
-        return run_command(['/usr/bin/md5sum', fp])[0][0].split()[0]
-
-
 class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
@@ -187,7 +178,7 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
     def post(self, request):
         logger.debug('backing up config...')
         with self._handle_exception(request):
-            return Response(backup_config(self.cb_dir, self._md5sum))
+            return Response(backup_config())
 
 
 class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
