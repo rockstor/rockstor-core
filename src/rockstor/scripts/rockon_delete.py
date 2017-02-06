@@ -51,5 +51,6 @@ def delete_rockon():
     ro.delete()
     print('Rock-On(%s) metadata in the db is deleted' % name)
 
+
 if __name__ == '__main__':
     delete_rockon()
