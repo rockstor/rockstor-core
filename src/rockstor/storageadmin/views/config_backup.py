@@ -26,7 +26,7 @@ from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from django.core.management import call_command
 from system.osi import (run_command, md5sum)
-from system.config_backup import backup_config, ConfigBackupMixin
+from system.config_backup import backup_config
 from datetime import datetime
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from django_ztask.decorators import task
@@ -159,6 +159,10 @@ def restore_config(cbid):
     # restore_rockons(ml)
 
 
+class ConfigBackupMixin(object):
+    serializer_class = ConfigBackupSerializer
+
+
 class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
@@ -178,7 +182,8 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
     def post(self, request):
         logger.debug('backing up config...')
         with self._handle_exception(request):
-            return Response(backup_config())
+            cbo = backup_config()
+            return Response(ConfigBackupSerializer(cbo).data)
 
 
 class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
@@ -226,7 +231,7 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         for cbo in ConfigBackup.objects.all():
-            fp = os.path.join(self.cb_dir, cbo.filename)
+            fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
             if (not os.path.isfile(fp)):
                 cbo.delete()
             fp_md5sum = md5sum(fp)
@@ -248,9 +253,10 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
             cbo = ConfigBackup.objects.create(
                 filename=filename, config_backup=file_obj
             )
-            if (not os.path.isdir(self.cb_dir)):
-                os.mkdir(self.cb_dir)
-            fp = os.path.join(self.cb_dir, filename)
+            cb_dir = ConfigBackup.cb_dir()
+            if (not os.path.isdir()):
+                os.mkdir(cb_dir)
+            fp = os.path.join(cb_dir, filename)
 
             cbo.md5sum = md5sum(fp)
             cbo.size = os.stat(fp).st_size

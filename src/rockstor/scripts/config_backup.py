@@ -21,8 +21,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from system.config_backup import backup_config
 
 def main():
-    result = backup_config()
-    print('config exported to: "%s"' % result['filename'])
+    cbo = backup_config()
+    print('config exported to: "%s"' % cbo.filename)
 
 
 if __name__ == '__main__':

@@ -22,7 +22,6 @@ from datetime import datetime
 from django.conf import settings
 from django.core.management import call_command
 from storageadmin.models import ConfigBackup
-from storageadmin.serializers import ConfigBackupSerializer
 from system.osi import (run_command, md5sum)
 
 logger = logging.getLogger(__name__)
@@ -40,7 +39,7 @@ def backup_config():
     logger.debug('model list = %s' % model_list)
 
     filename = ('backup-%s.json' % datetime.now().strftime('%Y-%m-%d-%H%M%S'))
-    cb_dir = ConfigBackupMixin().cb_dir
+    cb_dir = ConfigBackup.cb_dir()
 
     if (not os.path.isdir(cb_dir)):
         os.mkdir(cb_dir)
@@ -55,9 +54,5 @@ def backup_config():
     size = os.stat(fp).st_size
     cbo = ConfigBackup(filename=gz_name, md5sum=md5sum(fp), size=size)
     cbo.save()
-    return ConfigBackupSerializer(cbo).data
+    return cbo
 
-
-class ConfigBackupMixin(object):
-    serializer_class = ConfigBackupSerializer
-    cb_dir = os.path.join(settings.MEDIA_ROOT, 'config-backups')
