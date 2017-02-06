@@ -16,7 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 from django.db import models
+
+DEFAULT_CB_DIR = os.path.join(settings.MEDIA_ROOT, 'config-backups')
 
 
 class ConfigBackup(models.Model):
@@ -30,3 +33,8 @@ class ConfigBackup(models.Model):
 
     class Meta:
         app_label = 'storageadmin'
+
+    @staticmethod
+    def cb_dir():
+        DEFAULT_CB_DIR
+

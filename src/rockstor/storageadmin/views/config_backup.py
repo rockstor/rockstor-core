@@ -25,7 +25,7 @@ from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from django.core.management import call_command
-from system.osi import run_command
+from system.osi import (run_command, md5sum)
 from system.config_backup import backup_config, ConfigBackupMixin
 from datetime import datetime
 from rest_framework.parsers import FileUploadParser, MultiPartParser
@@ -163,14 +163,14 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         for cbo in ConfigBackup.objects.all():
-            fp = os.path.join(self.cb_dir, cbo.filename)
+            fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
             if (not os.path.isfile(fp)):
                 cbo.delete()
-            md5sum = self._md5sum(fp)
-            if (md5sum != cbo.md5sum):
+            fp_md5sum = md5sum(fp)
+            if (fp_md5sum != cbo.md5sum):
                 logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
                              'Deleting dbo' %
-                             (cbo.filename, cbo.md5sum, md5sum))
+                             (cbo.filename, cbo.md5sum, fp_md5sum))
                 cbo.delete()
         return ConfigBackup.objects.filter().order_by('-id')
 
@@ -187,7 +187,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
     def delete(self, request, backup_id):
         with self._handle_exception(request):
             cbo = self._validate_input(backup_id, request)
-            fp = os.path.join(self.cb_dir, cbo.filename)
+            fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
             if (os.path.isfile(fp)):
                 os.remove(fp)
             cbo.delete()
@@ -229,11 +229,11 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
             fp = os.path.join(self.cb_dir, cbo.filename)
             if (not os.path.isfile(fp)):
                 cbo.delete()
-            md5sum = self._md5sum(fp)
-            if (md5sum != cbo.md5sum):
+            fp_md5sum = md5sum(fp)
+            if (fp_md5sum != cbo.md5sum):
                 logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
                              'Deleting dbo' %
-                             (cbo.filename, cbo.md5sum, md5sum))
+                             (cbo.filename, cbo.md5sum, fp_md5sum))
                 cbo.delete()
         return ConfigBackup.objects.filter().order_by('-id')
 
@@ -252,7 +252,7 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
                 os.mkdir(self.cb_dir)
             fp = os.path.join(self.cb_dir, filename)
 
-            cbo.md5sum = self._md5sum(fp)
+            cbo.md5sum = md5sum(fp)
             cbo.size = os.stat(fp).st_size
             cbo.save()
             return Response(ConfigBackupSerializer(cbo).data)

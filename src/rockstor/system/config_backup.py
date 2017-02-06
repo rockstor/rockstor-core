@@ -23,7 +23,7 @@ from django.conf import settings
 from django.core.management import call_command
 from storageadmin.models import ConfigBackup
 from storageadmin.serializers import ConfigBackupSerializer
-from system.osi import run_command
+from system.osi import (run_command, md5sum)
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,8 @@ def backup_config():
     run_command(['/usr/bin/gzip', fp])
     gz_name = ('%s.gz' % filename)
     fp = os.path.join(cb_dir, gz_name)
-    md5sum = ConfigBackupMixin()._md5sum(fp)
     size = os.stat(fp).st_size
-    cbo = ConfigBackup(filename=gz_name, md5sum=md5sum, size=size)
+    cbo = ConfigBackup(filename=gz_name, md5sum=md5sum(fp), size=size)
     cbo.save()
     return ConfigBackupSerializer(cbo).data
 
@@ -62,7 +61,3 @@ def backup_config():
 class ConfigBackupMixin(object):
     serializer_class = ConfigBackupSerializer
     cb_dir = os.path.join(settings.MEDIA_ROOT, 'config-backups')
-
-    @staticmethod
-    def _md5sum(fp):
-        return run_command(['/usr/bin/md5sum', fp])[0][0].split()[0]
