@@ -101,7 +101,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 			var config = this.sShares.get('custom_config'),
 			smbShareName = this.sShares.get('share'),
 			smbShadowCopy = this.sShares.get("shadow_copy"),
-			smbComments = this.sShares.get("comments"),
+			smbComment = this.sShares.get("comment"),
 			smbSnapPrefix = this.sShares.get("snapshot_prefix");
 
 			for(i=0; i<config.length; i++){
@@ -119,7 +119,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 			smbShare: this.sShares,
 			smbShareName: smbShareName,
 			smbShareShadowCopy: smbShadowCopy,
-			smbShareComments: smbComments,
+			smbShareComment: smbComment,
 			smbShareSnapPrefix: smbSnapPrefix,
 			smbSnapshotPrefixRule: smbSnapshotPrefixBool,
 			users: this.users,
