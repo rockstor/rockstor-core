@@ -95,7 +95,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 		var configList = '',
 		smbShareName,
 		smbShadowCopy,
-		smbComments,
+		smbComment,
 		smbSnapPrefix = '';
 		if (this.sShares != null) {
 			var config = this.sShares.get('custom_config'),
