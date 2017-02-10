@@ -50,7 +50,22 @@
                 {{this.mnt_options}}</a></strong>
                 {{/unless}}
             </td>
-            <td>{{getDisks this.disks}}</td>
+            <td>
+                {{#if (isRoot this.role)}}
+                    {{#each this.disks}}"{{this.name}}"&nbsp;{{/each}}
+                {{else}}
+                    {{#each this.disks}}
+                    "{{this.name}}
+                    {{#if this.parted}}
+                        <a href="#disks/role/{{this.name}}" class="user_role_part"
+                            data-disk-name="{{this.name}}"
+                            title="Partition (Redirect Role), click to review."
+                            rel="tooltip"><i class="glyphicon glyphicon-tags"></i></a>
+                    {{/if}}
+                    "&nbsp;
+                    {{/each}}
+                {{/if}}
+            </td>
             <td>{{#if (isRoot this.role)}}
                     N/A
                 {{else}}
@@ -74,8 +89,8 @@
            <div class="modal-footer">
             <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
             <button id="js-confirm-pool-delete" data-name="{{this.name}}" class="btn btn-primary">Confirm</button>
-           </div
-          </div
+           </div>
+          </div>
          </div>
         </div>
     {{/each}}

@@ -95,11 +95,14 @@ AddPoolView = Backbone.View.extend({
         $(this.el).empty();
         var _this = this;
         this.filteredCollection = _.reject(this.collection.models, function (disk) {
-            return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid')) && isSerialUsable(disk.get('serial'));
+            return _.isNull(disk.get('pool')) &&
+                !disk.get('offline') && _.isNull(disk.get('btrfs_uuid')) &&
+                isSerialUsable(disk.get('serial')) &&
+                isRoleUsable(disk.get('role'));
         });
 
-        // N.B. the isSerialUsable() code below is now duplicated in the
-        // Backbone Disk model as the property isSerialUsable()
+        // N.B. isSerialUsable() and isRoleUsable() are duplicated in the
+        // Backbone Disk model as the property isSerialUsable() isRoleUsable()
         // storageadmin/static/storageadmin/js/models/models.js
         // It would be better not to have this duplication if possible.
         function isSerialUsable(diskSerialNumber) {
@@ -116,6 +119,50 @@ AddPoolView = Backbone.View.extend({
                 return false;
             }
             return true;
+        }
+
+        // Using the disk.role system we can filter drives on their usability.
+        // Roles for inclusion: openLUKS containers
+        // Roles to dismiss: LUKS containers, mdraid members, the 'root' role,
+        // and partitions (if not accompanied by a redirect role).
+        // Defaults to reject (return false)
+        function isRoleUsable(role) {
+            // check if our role is null = db default
+            // A drive with no role shouldn't present a problem for use.
+            if (role == null) {
+                return true;
+            }
+            // try json conversion and return false if it fails
+            // @todo not sure if this is redundant?
+            try {
+                var roleAsJson = JSON.parse(role);
+            } catch (e) {
+                // as we can't read this drives role we play save and exclude
+                // it's isRoleUsable status by false
+                return false;
+            }
+            // We have a json object, look for acceptable roles in the keys
+            //
+            // Accept use of 'openLUKS' device
+            if (roleAsJson.hasOwnProperty('openLUKS')) {
+                return true;
+            }
+            // Accept use of 'partitions' device but only if it is accompanied
+            // by a 'redirect' role, ie so there is info to 'redirect' to the
+            // by-id name held as the value to the 'redirect' role key.
+            if (roleAsJson.hasOwnProperty('partitions') && roleAsJson.hasOwnProperty('redirect')) {
+                // then we need to confirm if the fstype of the redirected
+                // partition is "" else we can't use it
+                if (roleAsJson.partitions.hasOwnProperty(roleAsJson.redirect)) {
+                    if (roleAsJson.partitions[roleAsJson.redirect] == "") {
+                        return true;
+                    }
+                }
+            }
+            // In all other cases return false, ie:
+            // reject roles of for example root, mdraid, LUKS,
+            // partitioned (when not accompanied by a valid redirect role) etc
+            return false;
         }
 
         this.collection.remove(this.filteredCollection);

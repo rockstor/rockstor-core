@@ -23,17 +23,55 @@
         {{#if this.offline}}
             <a href="#" class="delete" data-disk-name="{{this.name}}" title="Disk is unusable because it is detached.
             Click to delete it from the system if it is not to be reattached." rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
-        {{else if (displayInfo this.role)}}
-            <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Disk is a mdraid member." rel="tooltip">
+        {{else if (isMdraidMember this.role)}}
+            <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Mdraid member (UI pending)." rel="tooltip">
               <i class="glyphicon glyphicon-info-sign"></i></a>
+        {{else if (isRootDevice this.role)}}
+              <i class="glyphicon glyphicon-registration-mark" title="Rockstor System Drive." rel="tooltip"></i>
         {{else if this.parted}}
-            <a href="#" class="wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has a non btrfs filesystem on it.
-            Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
-
-        {{else if (displayBtrfs this.btrfs_uuid this.pool_name)}}
-            <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has a BTRFS filesystem on it.
-            Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically." rel="tooltip">
-            <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+            {{#if (hasUserRole this.role)}}
+                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="User Assigned Role found on partitioned disk, click to edit." rel="tooltip">
+                <i class="glyphicon glyphicon-tags"></i></a>
+                {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
+                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Partition is unusable because it has an existing BTRFS filesystem on it.
+                    Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this partition automatically (Note: whole disk btrfs is recommended)." rel="tooltip">
+                    <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+                {{/if}}
+            {{else}}
+                {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
+                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions: one of which has an existing BTRFS filesystem on it. A User Assigned redirect role is required prior to import.
+                    Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
+                {{else}}
+                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions and no User Assigned Role.
+                    Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
+                {{/if}}
+            {{/if}}
+        {{else}} <!-- We are non of the above top level ifs / else ifs at this point -->
+            {{#if (hasUserRole this.role)}}
+                <a href="#" class="user_role_drive" data-disk-name="{{this.name}}" title="Whole Disk User Assigned Role found, click to edit." rel="tooltip">
+                <i class="glyphicon glyphicon-tag"></i></a>
+            {{/if}}
+            {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
+                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
+                Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically. Multi-device support included." rel="tooltip">
+                <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+            {{/if}}
+        {{/if}}
+        {{#if (isLuksContainer this.role)}}
+            <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (UI pending)." rel="tooltip">
+            <i class="glyphicon glyphicon-lock"></i></a>
+        {{/if}}
+        {{#if (isOpenLuks this.role)}}
+            <a href="#" class="open_luks_drive" data-disk-name="{{this.name}}" title="Open LUKS Container (UI pending)." rel="tooltip">
+            <i class="glyphicon glyphicon-eye-open"></i></a>
+        {{/if}}
+        {{#if (isBcache this.role)}}
+            <a href="#" class="bcache_backing_drive" data-disk-name="{{this.name}}" title="Bcache Backing Drive (UI pending)." rel="tooltip">
+            <i class="glyphicon glyphicon-link"></i></a>
+        {{/if}}
+        {{#if (isBcacheCdev this.role)}}
+            <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive (UI pending)." rel="tooltip">
+            <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
         {{/if}}
       </td>
       <td>
@@ -42,7 +80,7 @@
           Please ensure that disks are provided with unique serial numbers before proceeding further.</div>
         {{else if this.serial}}
         {{this.serial}}
-        &nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/{{this.name}}" title="A tool to physically identify the hard drive with this serial number" rel="tooltip">
+        &nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/{{this.name}}" title="A tool to physically identify the hard drive with this serial number." rel="tooltip">
           <i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp;
         {{/checkSerialStatus}}
       </td>

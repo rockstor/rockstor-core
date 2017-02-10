@@ -59,7 +59,8 @@ WIPEFS = '/usr/sbin/wipefs'
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
-                              'hctl type fstype label btrfs_uuid parted root')
+                              'hctl type fstype label uuid parted root '
+                              'partitions')
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -131,6 +132,8 @@ def scan_disks(min_size):
     serials_seen = []  # List tally of serials seen during this scan.
     # Stash variables to pass base info on root_disk to root device proper.
     root_serial = root_model = root_transport = root_vendor = root_hctl = None
+    # flag to indicate bcache backing device found.
+    bdev_flag = False
     # To use udevadm to retrieve serial number rather than lsblk, make this
     # True N.B. when lsblk returns no serial for a device then udev is used
     # anyway.
@@ -191,6 +194,22 @@ def scan_disks(min_size):
         # N.B. this also facilitates a simpler mechanism of classification.
         if (dmap['FSTYPE'] == 'swap'):
             continue
+        # convert size into KB
+        size_str = dmap['SIZE']
+        if (size_str[-1] == 'G'):
+            dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024)
+        elif (size_str[-1] == 'T'):
+            dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
+        else:
+            # Move to next line if we don't understand the size as GB or TB
+            # Note that this may cause an entry to be ignored if formatting
+            # changes.
+            # Previous to the explicit ignore swap clause this often caught
+            # swap but if swap was in GB and above min_size then it could
+            # show up when not in a partition (the previous caveat clause).
+            continue
+        if (dmap['SIZE'] < min_size):
+            continue
         # ----- Now we are done with easy exclusions we begin classification.
         # ------------ Start more complex classification -------------
         if (dmap['NAME'] == base_root_disk):  # as returned by root_disk()
@@ -226,7 +245,12 @@ def scan_disks(min_size):
         if (dmap['FSTYPE'] == 'btrfs'):
             is_btrfs = True
         # End readability variables assignment
+
         if is_partition:
+            dmap['parted'] = True
+            # We don't account for partitions within partitions, but making
+            # an empty dict here simplifies conditionals as always a dict then.
+            dmap['partitions'] = {}
             # Search our working dictionary of already scanned devices by name
             # We are assuming base devices are listed first and if of interest
             # we have recorded it and can now back port it's partitioned
@@ -245,7 +269,7 @@ def scan_disks(min_size):
                     # partitioned.
                     dnames[dname][11] = True
                     # Also take this opportunity to back port software raid
-                    # info from partitions to the base device if the base
+                    # infi from partitions to the base device if the base
                     # device doesn't already have an fstype identifying it's
                     # raid member status. For Example:- bios raid base dev
                     # gives lsblk FSTYPE="isw_raid_member"; we already catch
@@ -266,21 +290,59 @@ def scan_disks(min_size):
                         # mdraid member to classify the entire device (the base
                         # device) as a raid member, at least in part.
                         dnames[dname][8] = dmap['FSTYPE']
+                    # Akin to back porting a partitions FSTYPE to it's base
+                    # device, as with 'linux_raid_member' above, we can do the
+                    # same for btrfs if found in a partition.
+                    # This is intended to facilitate the user redirection role
+                    # so that the base disk can be labeled with it's partitions
+                    # fstype, label (for pool updates) uuid, and size.
+                    # N.B. The base device info will end up pertaining to the
+                    # highest partition numbers details. Design limitation.
+                    if is_btrfs and dnames[dname][8] is None:
+                        # We are a btrfs partition where the base device has no
+                        # fstype entry: backport: fstype, label, uuid & size.
+                        # fstype backport
+                        dnames[dname][8] = dmap['FSTYPE']
+                        # label backport is at index 9
+                        dnames[dname][9] = dmap['LABEL']
+                        # and uuid backport
+                        dnames[dname][10] = dmap['UUID']
+                        # and size backport
+                        dnames[dname][3] = dmap['SIZE']
+                    # Build a dictionary of the partitions we find.
+                    # Back port our current name as a partition entry in our
+                    # base devices 'partitions' dictionary 14th item (index 13)
+                    dnames[dname][13][dmap['NAME']] = dmap['FSTYPE']
+                    # This dict is intended for use later in roles such as
+                    # import / export devices or external backup drives so
+                    # that the role config mechanism can offer up the known
+                    # partitions found so that the eventual configured role
+                    # will know which partition on the role based device to
+                    # work with and it current filesystem type.
+                    # Has one role per device limit but helps to keep usability
+                    # and underlying disk management simpler.
+        else:
+            # We are not a partition so record this.
+            dmap['parted'] = False
+            # As we are not a partition it is assumed that we might hold a
+            # partition so start an empty partition dictionary for this.
+            # N.B. This assumes base devices are listed before their partitions
+            dmap['partitions'] = {}
+            # This dict will be populated when we find our partitions and back
+            # port their names and fstype (as values).
         if ((not is_root_disk and not is_partition) or
                 (is_btrfs)):
             # We have a non system disk that is not a partition
             # or
             # We have a device that is btrfs formatted
-            # In the case of a btrfs partition we override the parted flag.
             # Or we may just be a non system disk without partitions.
-            dmap['parted'] = False  # could be corrected later
             dmap['root'] = False  # until we establish otherwise as we might be
             if is_btrfs:
                 # a btrfs file system
                 if (re.match(base_root_disk, dmap['NAME']) is not None):
                     # We are assuming that a partition with a btrfs fs on is
                     # our root if it's name begins with our base system disk
-                    # name.  Now add the properties we stashed when looking at
+                    # name. Now add the properties we stashed when looking at
                     # the base root disk rather than the root partition we see
                     # here.
                     dmap['SERIAL'] = root_serial
@@ -294,7 +356,7 @@ def scan_disks(min_size):
                     # dev is listed before it's partitions The 13th item in
                     # dnames entries is root so index = 12.  Only update our
                     # base_root_disk if it exists in our scanned disks as this
-                    # may be the first time we are seeing it.  Search to see if
+                    # may be the first time we are seeing it. Search to see if
                     # we already have an entry for the the base_root_disk which
                     # may be us or our base dev if we are a partition
                     for dname in dnames.keys():
@@ -304,6 +366,8 @@ def scan_disks(min_size):
                     # Note we may be looking at the base_root_disk or one of
                     # it's partitions there after.
                     dmap['root'] = True
+                    # TODO: The following clause on using model to hold member
+                    # device into can be useful beyond the system disk.
                     # If we are an md device then use get_md_members string
                     # to populate our MODEL since it is otherwise unused.
                     if (re.match('md', dmap['NAME']) is not None):
@@ -319,22 +383,6 @@ def scan_disks(min_size):
                     # then ignore / skip this btrfs device if it's a partition
                     if is_partition:
                         continue
-            # convert size into KB
-            size_str = dmap['SIZE']
-            if (size_str[-1] == 'G'):
-                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024)
-            elif (size_str[-1] == 'T'):
-                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
-            else:
-                # Move to next line if we don't understand the size as GB or TB
-                # Note that this may cause an entry to be ignored if formatting
-                # changes.
-                # Previous to the explicit ignore swap clause this often caught
-                # swap but if swap was in GB and above min_size then it could
-                # show up when not in a partition (the previous caveat clause).
-                continue
-            if (dmap['SIZE'] < min_size):
-                continue
             # No more continues so the device we have is to be passed to our db
             # entry system views/disk.py ie _update_disk_state()
             # Do final tidy of data in dmap and ready for entry in dnames dict.
@@ -343,9 +391,46 @@ def scan_disks(min_size):
             if (dmap['SERIAL'] == '' or always_use_udev_serial):
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices and md devices so try specialized function.
-                dmap['SERIAL'] = get_disk_serial(dmap['NAME'])
+                dmap['SERIAL'] = get_disk_serial(dmap['NAME'], dmap['TYPE'])
+            # Now try specialized serial propogation methods:
+            # Bcache virtual block devices get their backing devices uuid
+            # We propagate the uuid for a bcache backing device to it's virtual
+            # counterpart device for use as a serial number.
+            # Note however that we are only interested in the 'backing device'
+            # type of bcache as it has the counterpart virtual block device.
+            if (dmap['FSTYPE'] == 'bcache'):
+                bcache_dev_type = get_bcache_device_type(dmap['NAME'])
+                if bcache_dev_type == 'bdev':
+                    bdev_uuid = dmap['UUID']
+                    # We set out bdev_flag to inform the next device
+                    # interpretation.
+                    bdev_flag = True
+                elif bcache_dev_type == 'cdev':
+                    # We have a bcache caching device, not a backing device.
+                    # Change fstype as an indicator to _update_disk_state()
+                    # role system. N.B. fstype bcache-cdev is fictitious.
+                    dmap['FSTYPE'] = 'bcache-cdev'
+            else:
+                # we are a non bcache bdev but we might be the virtual device
+                # if we are listed directly after a bcache bdev.
+                if bdev_flag:
+                    # Assumption is there is only one virtual device for each
+                    # bdev and that it is listed directly after it's associated
+                    # bdev. We are listed directly after a bcache bdev but
+                    # could still be any device. As no cheap distinguishing
+                    # properties we for now rely on device name:
+                    if re.match('bcache', dmap['NAME']) is not None:
+                        # We avoid overwriting any serial just in case, normal
+                        # bcache virtual devices have no serial reported by
+                        # lsblk but future lsblk versions may change this.
+                        if dmap['SERIAL'] == '':
+                            # transfer our stashed bdev uuid as a serial.
+                            dmap['SERIAL'] = 'bcache-%s' % bdev_uuid
+                # reset the bdev_flag as we are only interested in devices
+                # listed directly after a bdev anyway.
+                bdev_flag = False
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials_seen)):
-                # No serial number still or its a repeat.  Overwrite drive
+                # No serial number still or its a repeat. Overwrite drive
                 # serial entry in dmap with fake-serial- + uuid4 See
                 # disk/disks_table.jst for a use of this flag mechanism.
                 # Previously we did dmap['SERIAL'] = dmap['NAME'] which is less
@@ -364,10 +449,11 @@ def scan_disks(min_size):
                                     dmap['HCTL'], dmap['TYPE'],
                                     dmap['FSTYPE'], dmap['LABEL'],
                                     dmap['UUID'], dmap['parted'],
-                                    dmap['root'], ]
+                                    dmap['root'], dmap['partitions'], ]
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+        # logger.debug('disks item = %s ', Disk(*dnames[d]))
     return disks
 
 
@@ -561,8 +647,8 @@ def net_config_helper(name):
                 elif (re.match('DHCP4.OPTION.*:domain_name_servers = .+', l) is
                       not None):
                     config['dns_servers'] = l.split('= ')[1]
-                elif (re.match('DHCP4.OPTION.*:subnet_mask = .+', l) is not
-                      None):
+                elif (re.match('DHCP4.OPTION.*:subnet_mask = .+', l) is
+                      not None):
                     config['netmask'] = l.split('= ')[1]
                 elif (re.match('IP4.GATEWAY:.+', l) is not None):
                     config['gateway'] = l.split(':')[1]
@@ -620,8 +706,8 @@ def get_net_config(all=False, name=None):
         config = {}
         for i in range(len(o)):
             if (re.match('GENERAL.DEVICE:', o[i]) is not None and
-                re.match('GENERAL.TYPE:', o[i+1]) is not None and
-                    o[i+1].strip().split(':')[1] == 'ethernet'):
+                re.match('GENERAL.TYPE:', o[i + 1]) is not None and
+                    o[i + 1].strip().split(':')[1] == 'ethernet'):
                 dname = o[i].strip().split(':')[1]
                 mac = o[i+2].strip().split('GENERAL.HWADDR:')[1]
                 name = o[i+5].strip().split('GENERAL.CONNECTION:')[1]
@@ -718,12 +804,9 @@ def convert_to_kib(size):
     returned.
     Upon no string match is found in the above process for 'size' unit then an
     exception is raised to this effect.
-
     :param size: String parameter to process
-
     :return: post processed size parameter expressed in equivalent integer
     KiB's or zero if units in size are found to 'B'
-
     """
     suffix_map = {
         'KiB': 1,
@@ -845,6 +928,9 @@ def get_md_members(device_name, test=None):
                 members_string += '[' + line_fields[2] + '] '
             else:
                 if re.match('/dev', line_fields[2]) is not None:
+                    # TODO: get_disk_serial can benefit from a device type
+                    # TODO: consider calling lsblk -n -o 'TYPE' device_name
+                    # TODO: may then allow for /dev/mapper raid members.
                     # We have a dev name so put it's serial in our string.
                     members_string += get_disk_serial(line_fields[2])
                 else:
@@ -854,7 +940,7 @@ def get_md_members(device_name, test=None):
     return members_string
 
 
-def get_disk_serial(device_name, test=None):
+def get_disk_serial(device_name, device_type=None, test=None):
     """Returns the serial number of device_name using udevadm to match that
     returned by lsblk. N.B. udevadm has been observed to return the following:-
     ID_SCSI_SERIAL  rarely seen
@@ -866,16 +952,36 @@ def get_disk_serial(device_name, test=None):
     When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is
     closer to lsblk and physical label. When they are both present the
     ID_SERIAL appears to be a combination of the model and the ID_SERIAL_SHORT
-
     --------- Additional personality added for md devices ie md0p1 or md126,
     these devices have no serial so we search for their MD_UUID and use that
-    instead.  :param device_name: eg sda :param test: :return:
-    12345678901234567890
-
+    instead.
+    :param device_name: eg sda as per lsblk output used in scan_disks()
+    :param device_type: the lsblk TYPE for the given device eg: disk, crypt.
+    The equivalent to the output of lsblk -n -o TYPE device_name. Defaults to
+    None as an indication that the caller cannot provide this info.
+    :param test: When not None this parameter's contents is substituted for the
+    return of the udevadm info --name=device_name command output
+    :return: 12345678901234567890 or empty string if no serial was retrieved.
     """
     serial_num = ''
-    md_device = False
+    uuid_search_string = ''
     line_fields = []
+    # udevadm requires the full path for Device Mapped (DM) disks so if our
+    # type indicates this then add the '/dev/mapper' path to device_name
+    # Set search string / flag for dm personality if need be.
+    if device_type == 'crypt':
+        device_name = '/dev/mapper/%s' % device_name
+        # Assuming device mapped (DM) so without it's own serial.
+        uuid_search_string = 'DM_UUID'
+        # Note that we can't use "cryptsetup luksUUID <device>" as this is for
+        # use with the container, not the consequent mapped virtual device of
+        # the open container. Default udev rules include the virtual device
+        # name so this precludes name changes of the vdev as it would also
+        # change that devices serial which in turn makes it appear as a
+        # different device to Rockstor.
+    # Set search string / flag for md personality if need be.
+    if re.match('md', device_name) is not None:
+        uuid_search_string = 'MD_UUID'
     if test is None:
         out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
                                    throw=False)
@@ -885,9 +991,6 @@ def get_disk_serial(device_name, test=None):
         rc = 0
     if rc != 0:  # if return code is an error return empty string
         return ''
-    # set flag for md personality if need be
-    if re.match('md', device_name) is not None:
-        md_device = True
     for line in out:
         if line == '':
             continue
@@ -898,14 +1001,17 @@ def get_disk_serial(device_name, test=None):
         # less than 3 fields are of no use so just in case:-
         if len(line_fields) < 3:
             continue
-        # if we have an md device then just look for it's MD_UUID as the serial
-        if md_device:
-            # md device so search for MD_UUID
-            if line_fields[1] == 'MD_UUID':
+        # For md & dm devices, look for MD_UUID or DM_UUID respectively and use
+        # as substitute for no hw serial.
+        if uuid_search_string != '':
+            # md or dm device so search for the appropriate uuid string
+            if line_fields[1] == uuid_search_string:
+                # TODO: in the case of DM_UUID consider extracting only the
+                # TODO: UUID to cope with open container name changes
                 serial_num = line_fields[2]
-                # we have found our md serial equivalent so break to return
+                # we have found our hw serial equivalent so break to return
                 break
-            else:  # we are md_device but haven't found our MD_UUID line
+            else:  # we are md / dm device but haven't found our UUID line
                 # move to next line of output and skip serial cascade search
                 continue
         if line_fields[1] == 'ID_SCSI_SERIAL':
@@ -980,33 +1086,39 @@ def md5sum(fpath):
 def get_base_device_byid(dev_byid, test_mode=False):
     """A by-id type name parser which simply removes any trailing partition
     indicators in a given dev_byid name. The remaining name will represent the
-    base device ie:- dev_byid = ata-QEMU_HARDDISK_QM00005-part3 base_dev_byid =
-    ata-QEMU_HARDDISK_QM00005 Given the structure of by-id type names this
-    should always follow.  At time of last update this function is used
-    exclusively to derive the base name of a device for SMART interrogation
-    purposes, ie currently called only by smart.py/dev_options which is an
-    portal for pre-processing smart commands which have been found to be more
-    reliable when acting on the base device ie not called on a partition but on
-    the base device. Hence this functions part in dev_options pre-processing.
+    base device ie:-
+    dev_byid = ata-QEMU_HARDDISK_QM00005-part3
+    base_dev_byid = ata-QEMU_HARDDISK_QM00005
+    Given the structure of by-id type names this should always follow.
+    At time of last update this function is used exclusively to derive the base
+    name of a device for SMART interrogation purposes, ie currently called only
+    by smart.py/dev_options which is a portal for pre-processing smart commands
+    which have been found to be more reliable when acting on the base device ie
+    not called on a partition but on the base device. Hence this functions part
+    in dev_options pre-processing.
     Previously this was a by-id type compatibility wrapper for get_base_device
-    which worked with sda type names.  Since the move to by-id format Disk.name
-    db entries the above simpler surface syntax method can be used to derive
-    the base device. Previously a list order artifact in lsblk's output was
-    relied upon to establish the base device.  N.B. a caveat of this method is
-    that it only works for by-id type names however given the fact that it's
-    return is simply the passed dev_byid contents then if given any string with
-    no '-part3' type ending then that same device name will be returned
-    unaltered, only in the format expected by smart.py/dev_options.  Also given
-    we disable smart functions for all devices attributed with a fake-serial
-    number by scan_disks which are also the only encountered devcies which fail
-    to get a by-id type name we should never actaully be called using a non
-    by-id type name anyway.  :param dev_byid: device name as per db entry, ie
-    by-id type without path although all path elements should be ignored
-    anyway.  :param test_mode: currently unused internal self test flag defined
-    in system/smart.py :return: the original dev_byid string with any '-part#'
-    type ending removed if found.  N.B. No path is added to the device in
-    either return case and irrespective of path status of passed dev_byid.
-
+    which worked with sda type names.
+    Since the move to by-id format Disk.name db entries the above simpler
+    surface syntax method can be used to derive the base device. Previously a
+    list order artifact in lsblk's output was relied upon to establish the base
+    device.
+    N.B. a caveat of this method is that it only works for by-id type names
+    however given the fact that it's return is simply the passed dev_byid
+    contents then if given any string with no '-part3' type ending then that
+    same device name will be returned unaltered, only in the format expected by
+    smart.py/dev_options.
+    Also given we disable smart functions for all devices attributed with a
+    fake-serial number by scan_disks which are also the only encountered
+    devices which fail to get a by-id type name we should never actually be
+    called using a non by-id type name anyway.
+    :param dev_byid: device name as per db entry, ie by-id type without path
+    although all path elements should be ignored anyway.
+    :param test_mode: currently unused internal self test flag defined in
+    system/smart.py
+    :return: the original dev_byid string with any '-part#' type ending removed
+    if found.
+    N.B. No path is added to the device in either return case and irrespective
+    of path status of passed dev_byid.
     """
     # split by by-id section delimiter '-'
     name_fields = dev_byid.split('-')
@@ -1023,6 +1135,29 @@ def get_base_device_byid(dev_byid, test_mode=False):
     return base_dev_byid
 
 
+def get_bcache_device_type(device):
+    """
+    Helper function for scan_disks() to identify specific bcache device types:
+    We can either parse output of bcache-super-show for the following lines:
+    sb.version....1 [backing device]
+    sb.version....3 [cache device]
+    or we can look for signature file entries within /sys/block/sdX/bcache :
+    Backing devices have an "label" entry
+    Cache devices have a "cache_replacement_policy"
+    The passed device will have already been identified as having:
+    lsblk FSTYPE=bcache
+    :param device: as presented by lsblk output ie sdX type with no path
+    :return: "bdev" for "backing device" or "cdev" for "cache device" or
+    None ie neither indicator is found.
+    """
+    sys_path = ('/sys/block/%s/bcache/' % device)
+    if os.path.isfile(sys_path + 'label'):
+        return "bdev"
+    if os.path.isfile(sys_path + 'cache_replacement_policy'):
+        return "cdev"
+    return None
+
+
 def get_base_device(device, test_mode=False):
     """
     Redundant as of move to by-id type names in db Disk.name field, keeping for
@@ -1037,7 +1172,7 @@ def get_base_device(device, test_mode=False):
     the first start of line match to our supplied device name with the pattern
     as the first element in lsblk's output and the match target as our device.
     :param device: device name as per db entry, ie as returned from scan_disks
-    :param test_mode: False causes cat from file rather than smartctl command
+    :param test_mode: True causes cat from file rather than smartctl command
     :return: base_dev: single item list containing the root device's full path
     ie device = sda3 the base_dev = /dev/sda or [''] if no lsblk entry was
     found to match.
@@ -1063,20 +1198,20 @@ def get_base_device(device, test_mode=False):
 
 
 def is_rotational(device_name, test=None):
-    """When given a device_name a udevadmin lookup takes place to look for either:
+    """
+    When given a device_name a udevadmin lookup takes place to look for either:
     E: ID_ATA_ROTATION_RATE_RPM non zero or
     ID_ATA_FEATURE_SET_AAM_CURRENT_VALUE AAM = Automatic Acoustic Mamanement -
-    ie head speed / noise trade off.  If neither is found then the device is
+    ie head speed / noise trade off. If neither is found then the device is
     assumed to be non rotational. This method appears more reliable than "cat
     /sys/block/sda/queue/rotational" and "lsblk -d -o name,rota" which will
     both often report usb sticks as 1 = rotational.  N.B. we use
     --query=property and so have only 2 fields rather than 3 and no spaces,
-    only '=' this simplifies the parsing required.  :param device: string
-    containing device name eg sda or /dev/sda, ie any legal udevadm --name
-    parameter. N.B. in the case of by-id type names they must contain a full
-    path, by-id alone does not work.  :return: True if rotational, false if
-    error or unknown.
-
+    only '=' this simplifies the parsing required.
+    :param device: string containing device name eg sda or /dev/sda, ie any
+    legal udevadm --name parameter. N.B. in the case of by-id type names they
+    must contain a full path, by-id alone does not work.
+    :return: True if rotational, false if error or unknown.
     """
     # Possible improvement: We could change
     # ID_ATA_FEATURE_SET_AAM_CURRENT_VALUE non zero value check to
@@ -1121,21 +1256,22 @@ def is_rotational(device_name, test=None):
 
 
 def get_disk_power_status(dev_byid):
-    """When given a disk name such as that stored in the db ie /dev/disk/by-id
+    """
+    When given a disk name such as that stored in the db ie /dev/disk/by-id
     type we return it's current power state via hdparm -C
-    /dev/disk/by-id/<dev_byid> Possible states are: unknown - command not
-    supported by disk active/idle - normal operation standby - low power mode,
-    ie drive motor not active ie -y will do this sleeping - lowest power mode,
-    completely shut down ie -Y will do this N.B. -C shouldn't spin up a drive
-    in standby but has been reported to wake a drive from sleeping but we
-    aren't going to invoke sleeping as pretty much any request will wake a
-    fully sleeping drive.  Drives in 'sleeping' mode typically require a hard
-    or soft reset before becoming available for use, the kernel does this
-    automatically however.  :param dev_byid: disk name as stored in db / Disk
-    model ie without path :return: single word sting of state as indicated by
-    hdparm -C /dev/<disk> and if we encounter an error line in the output we
-    return unknown.
-
+    /dev/disk/by-id/<dev_byid> Possible states are:
+    unknown - command not supported by disk
+    active/idle - normal operation
+    standby - low power mode, ie drive motor not active ie -y will do this
+    sleeping - lowest power mode, completely shut down ie -Y will do this
+    N.B. -C shouldn't spin up a drive in standby but has been reported to wake
+    a drive from sleeping but we aren't going to invoke sleeping as pretty much
+    any request will wake a fully sleeping drive.
+    Drives in 'sleeping' mode typically require a hard or soft reset before
+    becoming available for use, the kernel does this automatically however.
+    :param dev_byid: disk name as stored in db / Disk model ie without path
+    :return: single word sting of state as indicated by hdparm -C /dev/<disk>
+    and if we encounter an error line in the output we return unknown.
     """
     # TODO: candidate for move to system/hdparm
     # if we use the -C -q switches then we have only one line of output:
@@ -1195,21 +1331,23 @@ def get_disk_APM_level(dev_byid):
 
 def set_disk_spindown(dev_byid, spindown_time, apm_value,
                       spindown_message='no comment'):
-    """Takes a value to be used with hdparm -S to set disk spindown time for the
-    device specified.  Executes hdparm -S spindown_time and ensures the systemd
-    script to do the same on boot is also updated. Note we do not restart the
-    systemd service to enact these changes in order to keep our drive
-    intervention to a minimum.  :param dev_byid: The name of a disk device as
-    used in the db ie by-id type without a path.  :param spindown_time: Integer
-    received from settings form ie 240 :param apm_value: value to be used with
-    hdparm's -B parameter to set the drives APM level. Should be between 1-255
-    and will be ignored if not. When ignored there will be no hdparm -B
-    executed and no -B switch added to the relevant systemd line.  :param
-    spindown_message: message received from drop down as human presented
+    """
+    Takes a value to be used with hdparm -S to set disk spindown time for the
+    device specified.
+    Executes hdparm -S spindown_time and ensures the systemd script to do the
+    same on boot is also updated. Note we do not restart the systemd service
+    to enact these changes in order to keep drive intervention to a minimum.
+    :param dev_byid: The name of a disk device as used in the db ie by-id type
+    without a path.
+    :param spindown_time: Integer received from settings form ie 240
+    :param apm_value: value to be used with hdparm's -B parameter to set the
+    drives APM level. Should be between 1-255 and will be ignored if not. When
+    ignored there will be no hdparm -B executed and no -B switch added to the
+    relevant systemd line.
+    :param spindown_message: message received from drop down as human presented
     selection, used later in systemd script to retrieve previous setting.
     :return: False if an hdparm command was not possible ie inappropriate dev,
     or an error was return by the command, True otherwise.
-
     """
     # TODO: candidate for move to system/hdparm
     # Deal elegantly with null dev_byid
@@ -1228,8 +1366,9 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
         return False
     # Execute the -B hdparm command first as if it fails we can then not
     # include it in the final command in systemd as it will trip the whole
-    # command then.  TODO: Check if only rc != 0 throws systemd execution ie do
-    # error returns TODO: also trip the script execution.
+    # command then.
+    # TODO: Check if only rc != 0 throws systemd execution ie do error returns
+    # TODO: also trip the script execution.
     switch_list = []
     # Do nothing with testing -B options if the value supplied is out of range.
     # Also skip if we have received the remove entry flag of spindown_time = -1
@@ -1270,31 +1409,34 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
 
 
 def get_dev_byid_name(device_name, remove_path=False):
-    """When given a standard dev name eg sda will return the /dev/disk/by-id name,
-    or the original device_name and False as the second member of the returned
-    tuple if an error occurred or no by-id type name was available.  N.B. This
-    latter condition is found with virtio devices that have no serial.  Can
-    optionally drop the path via the removePath parameter flag.  Works by
-    querying udev via udevadm info --query=property --name device_name The
-    first line of which is matched to 'DEVLINKS' and parsed for the longest
+    """When given a standard dev name eg sda will return the /dev/disk/by-id
+    name, or the original device_name and False as the second member of the
+    returned tuple if an error occurred or no by-id type name was available.
+    N.B. This latter condition is found with virtio devices that have no
+    serial.
+    Can optionally drop the path via the removePath parameter flag.
+    Works by querying udev via udevadm info --query=property --name device_name
+    The first line of which is matched to 'DEVLINKS' and parsed for the longest
     entry of the by-id type ie /dev/disk/by-id which is in turn a symlink to
-    our device_name eg: DEVLINKS=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00005
-    /dev/disk/by-path/pci-0000:00:05.0-ata-1.0 In the above example we have the
-    by-id name made from type, model, & serial and a second by-path entry which
-    is not used here.  N.B. As the subsystem of the device is embedded in the
-    by-id name a drive's by-id path will change if for example it is plugged in
-    via usb rather than ata subsystem.  :param device_name: eg sda but can also
-    be /dev/sda or even the by-id name but only if the full path is specified
-    with the by-id type name.  :param remove_path: flag request to strip the
-    path from the returned device name, if an error occurred or no by-id type
-    name was found then the path strip flag will still be honoured but applied
-    instead to the original 'device_name'.  :return: tuple of device_name and a
-    boolean: where the device name is either the by-id name (with or without
-    path as per remove_path) or in the case of an error or no by-id name found
-    then the original device_name (with or without path as per
-    remove_path). The second boolean element of the tuple indicates if a by-id
-    type name was found. ie (return_name, is_byid)
-
+    our device_name eg:
+    DEVLINKS=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00005
+    /dev/disk/by-path/pci-0000:00:05.0-ata-1.0
+    In the above example we have the by-id name made from type, model, & serial
+    and a second by-path entry which is not used here.
+    N.B. As the subsystem of the device is embedded in the by-id name a drive's
+    by-id path will change if for example it is plugged in via usb rather than
+    ata subsystem.
+    :param device_name: eg sda but can also be /dev/sda or even the by-id name
+    but only if the full path is specified with the by-id type name.
+    :param remove_path: flag request to strip the path from the returned device
+    name, if an error occurred or no by-id type name was found then the path
+    strip flag will still be honoured but applied instead to the original
+    'device_name'.
+    :return: tuple of device_name and a boolean: where the device name is
+    either the by-id name (with or without path as per remove_path) or in the
+    case of an error or no by-id name found then the original device_name (with
+    or without path as per remove_path). The second boolean element of the
+    tuple indicates if a by-id type name was found. ie (return_name, is_byid)
     """
     # Until we find a by-id type name set this flag as False.
     is_byid = False
@@ -1302,6 +1444,12 @@ def get_dev_byid_name(device_name, remove_path=False):
     return_name = device_name
     byid_name = ''  # Should never be returned prior to reassignment.
     longest_byid_name_length = 0
+    # caveats for mapped devices that require paths for udevadm to work
+    # ie openLUKS containers are named eg luks-<uuid> but are not found by
+    # udevadmin via --name unless a /dev/mapper path is provided.
+    if re.match('luks-', str(device_name)) is not None:
+        device_name = '/dev/mapper/%s' % device_name
+    # other special device name considerations can go here.
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
         throw=False)
@@ -1317,6 +1465,15 @@ def get_dev_byid_name(device_name, remove_path=False):
                     # check if device name is by-id type
                     if re.match('/dev/disk/by-id', fields[index]) is not None:
                         is_byid = True
+                        # for openLUKS dm mapper device use dm-name-<dev-name>
+                        # as we can most easily use this format for working
+                        # form lsblk device name to by-id name via dm-name-
+                        # patch on the front.
+                        if re.match('/dev/disk/by-id/dm-name-',
+                                    fields[index]) is not None:
+                            # we have our dm-name match so assign it
+                            byid_name = fields[index]
+                            break
                         dev_name_length = len(fields[index])
                         # check if longer than any found previously
                         if dev_name_length > longest_byid_name_length:
@@ -1327,37 +1484,36 @@ def get_dev_byid_name(device_name, remove_path=False):
         # Return the longest by-id name found in the DEVLINKS line
         # or the first if multiple by-id names were of equal length.
         return_name = byid_name
-    # Honour our path strip request in all cases if we can.
+    # Honour our path strip request in all cases if we can, or if
+    # no remove_path request by parameter flag or no path delimiter chars found
+    # in return_name then leave as is.
     if remove_path:
         # Strip the path from the beginning of our return_name.
         # For use in Disk.name db field for example.
         # Split return_name by path delimiter char '/' into it's fields.
         return_name_fields = return_name.split('/')
         if len(return_name_fields) > 1:
-            # Original device_name has path delimiters in: assume it has a
-            # path.
-            return return_name_fields[-1], is_byid
-    # No remove_path request by parameter flag or no path delimiter chars found
-    # in return_name so leave as is and returning.
+            # Original device_name has path delimiters in: assume it has a path
+            # return return_name_fields[-1], is_byid
+            return_name = return_name_fields[-1]
     return return_name, is_byid
 
 
 def get_byid_name_map():
     """Simple wrapper around 'ls -l /dev/disk/by-id' which returns a current
-    mapping of all attached by-id device names to their sdX counterparts.  When
+    mapping of all attached by-id device names to their sdX counterparts. When
     multiple by-id names are found for the same sdX device then the longest is
-    preferred, or when equal in length then the first listed is used.  Intended
+    preferred, or when equal in length then the first listed is used. Intended
     as a light weight helper for the Dashboard disk activity widget or other
     non critical components. For critical components use only:
     get_dev_byid_name() and get_devname() as they contain sanity checks and
     validation mechanisms and are intended to have more repeatable behaviour
     but only work on a single device at a time.  A single call to this method
     can provide all current by-id device names mapped to their sdX counterparts
-    with the latter being the index.  :return: dictionary indexed (keyed) by
-    sdX type names with associated by-id type names as the values, or an empty
-    dictionary if a non zero return code was encountered by run_command or no
-    by-id type names were encountered.
-
+    with the latter being the index.
+    :return: dictionary indexed (keyed) by sdX type names with associated by-id
+    type names as the values, or an empty dictionary if a non zero return code
+    was encountered by run_command or no by-id type names were encountered.
     """
     byid_name_map = {}
     out, err, rc = run_command([LS, '-l', '/dev/disk/by-id'],
@@ -1368,7 +1524,7 @@ def get_byid_name_map():
             line_fields = each_line.replace('/', ' ').split()
             # Grab every sda type name from the last field in the line and add
             # it as a dictionary key with it's value as the by-id type name so
-            # we can index by sda type name and retrieve the by-id.  As there
+            # we can index by sda type name and retrieve the by-id. As there
             # are often multiple by-id type names for a given sda type name we
             # gain consistency in mapped by-id value by always preferring the
             # longest by-id for a given sda type name key.
@@ -1417,18 +1573,19 @@ def get_dev_temp_name(dev_byid):
 
 
 def get_devname_old(device_name):
-    """Depricated / prior version of get_devname() Returns the value of DEVNAME as
-    reported by udevadm when supplied with a legal device name ie a full path
-    by-id or full path by-path ie any DEVLINKS.  Also works when supplied with
-    eg "sda" Primarily intended to retrieve the full path device name from a
-    full path by-id name or an abbreviated DEVNAME eg sda.  N.B. this is a
-    partner function to get_dev_byid_name(device_name) Works by sampling the
-    second line of udevadm and confirming it begins with DEVNAME, then
-    returning the value found after the '=' char.  example line:
-    DEVNAME=/dev/sda :param device_name: sda, /dev/sda, full path by-id or
-    by-path :return: Full path of device name eg /dev/sda or None if error or
-    no DEVNAME found
-
+    """Depricated / prior version of get_devname() Returns the value of DEVNAME
+    as reported by udevadm when supplied with a legal device name ie a full
+    path by-id or full path by-path ie any DEVLINKS. Also works when supplied
+    with eg "sda". Primarily intended to retrieve the full path device name
+    from a full path by-id name or an abbreviated DEVNAME eg sda.
+    N.B. this is a partner function to get_dev_byid_name(device_name)
+    Works by sampling the second line of udevadm and confirming it begins with
+    DEVNAME, then returning the value found after the '=' char.
+    example line:
+    DEVNAME=/dev/sda
+    :param device_name: sda, /dev/sda, full path by-id or by-path
+    :return: Full path of device name eg /dev/sda or None if error or no
+    DEVNAME found
     """
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
@@ -1448,16 +1605,18 @@ def get_devname_old(device_name):
 
 def get_devname(device_name, addPath=False):
     """Intended as a light and quicker way to retrieve a device name with or
-    without path (default) from any legal udevadm --name parameter Simple
-    wrapper around a call to: udevadm info --query=name device_name Works with
-    device_name of eg sda /dev/sda /dev/disk/by-id/ and /dev/disk/ If a device
-    doesn't exist then udevadm returns multi word advise so if more than one
-    word assume failure and return None.  N.B. if given /dev/sdc3 or equivalent
-    DEVLINKS this method will return sdc3 if no path is requested.  :param
-    device_name: legal device name to --name in udevadmin :return: short device
-    name ie sda (no path) or with path /dev/sda if addPath is True or None if
-    multi word response from udevadm ie "Unknown device, .."
-
+    without path (default) from any legal udevadm --name parameter
+    Simple wrapper around a call to:
+    udevadm info --query=name device_name
+    Works with device_name of eg sda /dev/sda /dev/disk/by-id/ and /dev/disk/
+    If a device doesn't exist then udevadm returns multi word advise so if more
+    than one word assume failure and return None.
+    N.B. if given /dev/sdc3 or equivalent DEVLINKS this method will return sdc3
+    if no path is requested.
+    :param device_name: legal device name to --name in udevadmin
+    :return: short device name ie sda (no path) or with path /dev/sda if
+    addPath is True or None if multi word response from udevadm ie
+    "Unknown device, .."
     """
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=name', '--name', str(device_name)],
@@ -1476,15 +1635,15 @@ def get_devname(device_name, addPath=False):
 
 
 def update_hdparm_service(hdparm_command_list, comment):
-    """Updates or creates the /etc/systemd/system/rockstor-hdparm.service file for
+    """
+    Updates or creates the /etc/systemd/system/rockstor-hdparm.service file for
     the device_name given. The creation of this file is based on the template
-    file in conf named rockstor-hdparm.service.  :param hdparm_command_list:
-    list containing the hdparm command elements :param comment: test message to
-    follow hdparm command on next line :return: None or the result of enabling
-    the service via run_command which is only done when the service is freshly
-    installed, ie when no existing /etc/systemd/system/rockstor-hdparm.service
-    file exists in the first place.
-
+    file in conf named rockstor-hdparm.service.
+    :param hdparm_command_list: list containing the hdparm command elements
+    :param comment: test message to follow hdparm command on next line
+    :return: None or the result of enabling the service via run_command which
+    is only done when the service is freshly installed, ie when no existing
+    /etc/systemd/system/rockstor-hdparm.service file exists in the first place.
     """
     # TODO: candidate for move to system/hdparm
     edit_done = False
@@ -1548,9 +1707,9 @@ def update_hdparm_service(hdparm_command_list, comment):
                 do_edit = True
             if do_edit and not edit_done:
                 # We are due to either add or overwrite our 2 line entry but
-                # only if we are not in remove_entry mode.  When remove_entry =
-                # True our writes are skipped which equates to an removal or in
-                # the case of a new addition, nothing added.
+                # only if we are not in remove_entry mode.
+                # When remove_entry = True our writes are skipped which equates
+                # to an removal or in the case of a new addition, nothing added
                 if not remove_entry:
                     outo.write(
                         'ExecStart=' + ' '.join(hdparm_command_list) + '\n')
@@ -1586,8 +1745,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         # True.
         if update:  # update was set true if file exists so we check first.
             logger.info('Removing the rockstor-hdparm systemd file.')
-            # TODO: do we need try clause around this, we know it exists
-            # already?
+            # TODO: Is try clause needed as we know it exists already?
             os.remove('/etc/systemd/system/rockstor-hdparm.service')
     else:
         # Since we know our proposed systemd file has more than template
@@ -1657,10 +1815,9 @@ def enter_standby(dev_byid):
     """Simple wrapper to execute hdparm -y /dev/disk/by-id/device_name which
     requests that the named device enter 'standby' mode which usually means it
     will spin down.  Should only be available if he power status of the device
-    can be successfully read without errors (ui inforced) :param dev_byid:
-    device name as stored in db ie /dev/disk/by-id type :return: None or out,
-    err, rc of command
-
+    can be successfully read without errors (ui inforced)
+    :param dev_byid: device name as stored in db ie /dev/disk/by-id type
+    :return: None or out, err, rc of command
     """
     # TODO: candidate for move to system/hdparm
     hdparm_command = [HDPARM, '-q', '-y', '/dev/disk/by-id/%s' % dev_byid]
@@ -1693,10 +1850,9 @@ def hostid():
 
 def trigger_udev_update():
     """In some instances udev info can be out of date after some btrfs
-    opperations.  To cause a system wide update of all udev info, and the
-    output of lsblk, we can execute: udevadm trigger This function is a simple
-    wrapper to call the above command via run_command :return: o, e, rc as
-    returned by run_command
-
+    operations.  To cause a system wide update of all udev info, and the
+    output of lsblk, we can execute: udevadm trigger
+    This function is a simple wrapper to call the above command via run_command
+    :return: o, e, rc as returned by run_command
     """
     return run_command([UDEVADM, 'trigger'])
