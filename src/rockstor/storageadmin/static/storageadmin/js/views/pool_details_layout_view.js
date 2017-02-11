@@ -70,14 +70,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     renderSubViews: function() {
-        var poolNameIsRockstor = false;
+        var poolRoleIsRoot = false;
         if (this.pool.get('role') == 'root') {
-            poolNameIsRockstor = true;
+            poolRoleIsRoot = true;
         }
         $(this.el).html(this.template({
             share: this.poolShares.models[0].attributes.results,
             poolName: this.pool.get('name'),
-            isPoolNameRockstor: poolNameIsRockstor,
+            isPoolRoleRoot: poolRoleIsRoot,
         }));
 
         this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool.toJSON() });
@@ -320,6 +320,13 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
         Handlebars.registerHelper('humanReadableSize', function(size){
             return humanize.filesize(size * 1024);
+        });
+
+        Handlebars.registerHelper('isRoot', function(role){
+            if (role == 'root') {
+                return true;
+            }
+            return false;
         });
     }
 });

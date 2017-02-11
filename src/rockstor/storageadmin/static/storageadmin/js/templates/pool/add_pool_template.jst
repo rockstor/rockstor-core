@@ -79,7 +79,12 @@
                                 {{#each disks}}
                                     <tr>
                                         <td>{{mathHelper @index}}</td>
-                                        <td>{{this.name}}</td>
+                                        <td>{{this.name}}
+                                            {{#if this.parted}}
+                                                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Partition (Redirect Role), click to edit. Capacity is for whole disk." rel="tooltip">
+                                                    <i class="glyphicon glyphicon-tags"></i></a>
+                                            {{/if}}
+                                        </td>
                                         <td>{{humanReadableSize this.size}}</td>
                                         <td>
                                             <input type="checkbox" class="disk" name="{{this.name}}" id="{{this.id}}" value="{{this.name}}" />

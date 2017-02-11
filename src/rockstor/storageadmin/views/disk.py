@@ -36,6 +36,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# A list of scan_disks() assigned roles: ie those that can be identified from
+# the output of lsblk with the following switches:
+# -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
+# and the post processing present in scan_disks()
+# LUKS currently stands for full disk crypto container.
+SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'bcache',
+                          'bcache-cdev', 'partitions']
+
 
 class DiskMixin(object):
     serializer_class = DiskInfoSerializer
@@ -61,12 +69,11 @@ class DiskMixin(object):
         serial_numbers_seen = []
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
-        # make this so in the case of empty or repeat entries by providing fake
-        # serial numbers which are in turn flagged via WebUI as unreliable.  1)
-        # scrub all device names with unique but nonsense uuid4 1) mark all
-        # offline disks as such via db flag 2) mark all offline disks smart
-        # available and enabled flags as False logger.info('update_disk_state()
-        # Called')
+        # make this so in the case of empty or repeat entries by providing
+        # fake serial numbers which are flagged via WebUI as unreliable.
+        # 1) Scrub all device names with unique but nonsense uuid4.
+        # 2) Mark all offline disks as such via db flag.
+        # 3) Mark all offline disks smart available and enabled flags as False.
         for do in Disk.objects.all():
             # Replace all device names with a unique placeholder on each scan
             # N.B. do not optimize by re-using uuid index as this could lead
@@ -95,19 +102,21 @@ class DiskMixin(object):
                 # disable S.M.A.R.T available and enabled flags.
                 do.smart_available = do.smart_enabled = False
             do.save()  # make sure all updates are flushed to db
-
-        # Our db now has no device name info as all dev names are place
-        # holders.  Iterate over attached drives to update the db's knowledge
-        # of them.  Kernel dev names are unique so safe to overwrite our db
-        # unique name.
+        # Our db now has no device name info: all dev names are place holders.
+        # Iterate over attached drives to update the db's knowledge of them.
+        # Kernel dev names are unique so safe to overwrite our db unique name.
         for d in disks:
             # start with an empty disk object
             dob = None
+            # an empty dictionary of non scan_disk() roles
+            non_scan_disks_roles = {}
+            # and an empty dictionary of discovered roles
+            disk_roles_identified = {}
             # Convert our transient but just scanned so current sda type name
             # to a more useful by-id type name as found in /dev/disk/by-id
             byid_disk_name, is_byid = get_dev_byid_name(d.name, True)
-            # If the db has an entry with this disk's serial number then use
-            # this db entry and update the device name from our recent scan.
+            # If the db has an entry with this disk's serial number then
+            # use this db entry and update the device name from our new scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
                 dob.name = byid_disk_name
@@ -119,7 +128,7 @@ class DiskMixin(object):
                 # have been set though as the only by-id failures so far are
                 # virtio disks with no serial so scan_disks will have already
                 # given it a fake serial in d.serial.
-                dob = Disk(name=byid_disk_name, serial=d.serial)
+                dob = Disk(name=byid_disk_name, serial=d.serial, role=None)
             # Update the db disk object (existing or new) with our scanned info
             dob.size = d.size
             dob.parted = d.parted
@@ -127,68 +136,105 @@ class DiskMixin(object):
             dob.model = d.model
             dob.transport = d.transport
             dob.vendor = d.vendor
-            dob.btrfs_uuid = d.btrfs_uuid
+            # N.B. The Disk.btrfs_uuid is in some senses becoming misleading
+            # as we begin to deal with Disk.role managed drives such as mdraid
+            # members and full disk LUKS drives where we can make use of the
+            # non btrfs uuids to track filesystems or LUKS containers.
+            # Leaving as is for now to avoid db changes.
+            dob.btrfs_uuid = d.uuid
             # If attached disk has an fs and it isn't btrfs
             if (d.fstype is not None and d.fstype != 'btrfs'):
+                # blank any btrfs_uuid it may have had previously.
                 dob.btrfs_uuid = None
-                dob.parted = True  # overload use of parted as non btrfs flag.
-                # N.B. this overload use may become redundant with the addition
-                # of the Disk.role field.
-            # Update the role field with scan_disks findings, currently only
-            # mdraid membership type based on fstype info. In the case of
-            # these raid member indicators from scan_disks() we have the
-            # current truth provided so update the db role status accordingly.
-            # N.B. this if else could be expanded to accommodate other
-            # roles based on the fs found
-            if d.fstype == 'isw_raid_member' or d.fstype == 'linux_raid_member':  # noqa
-                # E501 We have an indicator of mdraid membership so update
-                # existing role info if any.  N.B. We have a minor legacy issue
-                # in that prior to using json format for the db role field we
-                # stored one of 2 strings.  if these 2 strings are found then
-                # ignore them as we then overwrite with our current finding and
-                # in the new json format.  I.e. non None could also be a legacy
-                # entry so follow overwrite path when legacy entry found by
-                # treating as a None entry.  TODO: When we reset migrations the
-                # following need only check TODO: "dob.role is not None"
-                if dob.role is not None and dob.role != 'isw_raid_member' \
-                        and dob.role != 'linux_raid_member':
-                    # get our known roles into a dictionary
-                    known_roles = json.loads(dob.role)
-                    # create or update an mdraid dictionary entry
-                    known_roles['mdraid'] = str(d.fstype)
-                    # return updated dict to json format and store in db object
-                    dob.role = json.dumps(known_roles)
-                else:  # We have a dob.role = None so just insert our new role.
-                    # Also applies to legacy pre json role entries.
-                    dob.role = '{"mdraid": "' + d.fstype + '"}'  # json string
-            else:  # We know this disk is not an mdraid raid member.
-                # No identified role from scan_disks() fstype value (mdraid
-                # only for now )so we preserve any prior known roles not
-                # exposed by scan_disks but remove the mdraid role if found.
-                # TODO: When we reset migrations the following need only check
-                # TODO: "dob.role is not None"
-                if dob.role is not None and dob.role != 'isw_raid_member' \
-                        and dob.role != 'linux_raid_member':
-                    # remove mdraid role if found but preserve prior roles
-                    # which should now only be in json format
-                    known_roles = json.loads(dob.role)
-                    if 'mdraid' in known_roles:
-                        if len(known_roles) > 1:
-                            # mdraid is not the only entry so we have to pull
-                            # out only mdraid from dict and convert back to
-                            # json
-                            del known_roles['mdraid']
-                            dob.role = json.dumps(known_roles)
-                        else:
-                            # mdraid was the only entry so we need not bother
-                            # with dict edit and json conversion only to end up
-                            # with an empty json {} so revert to default
-                            # 'None'.
-                            dob.role = None
-                else:  # Empty or legacy role entry.  We have either None or a
-                    # legacy mdraid role when this disk is no longer an mdraid
-                    # member. We can now assert None.
-                    dob.role = None
+            # ### BEGINNING OF ROLE FIELD UPDATE ###
+            # Update the role field with scan_disks findings.
+            # SCAN_DISKS_KNOWN_ROLES a list of scan_disks identifiable roles.
+            # Deal with legacy non json role field contents by erasure.
+            # N.B. We have a minor legacy issue in that prior to using json
+            # format for the db role field we stored one of 2 strings.
+            # If either of these 2 strings are found reset to db default of
+            # None
+            if dob.role == 'isw_raid_member'\
+                    or dob.role == 'linux_raid_member':
+                # These are the only legacy non json formatted roles used.
+                # Erase legacy role entries as we are about to update the role
+                # anyway and new entries will then be in the new json format.
+                # This helps to keeps the following role logic cleaner and
+                # existing mdraid members will be re-assigned if appropriate
+                # using the new json format.
+                dob.role = None
+            # First extract all non scan_disks assigned roles so we can add
+            # them back later; all scan_disks assigned roles will be identified
+            # from our recent scan_disks data so we assert the new truth.
+            if dob.role is not None:  # db default null=True so None here.
+                # Get our previous roles into a dictionary
+                previous_roles = json.loads(dob.role)
+                # Preserve non scan_disks identified roles for this db entry
+                non_scan_disks_roles = {role: v for role, v in
+                                        previous_roles.items()
+                                        if role not in SCAN_DISKS_KNOWN_ROLES}
+            if d.fstype == 'isw_raid_member' \
+                    or d.fstype == 'linux_raid_member':
+                # MDRAID MEMBER: scan_disks() can informs us of the truth
+                # regarding mdraid membership via d.fstype indicators.
+                # create or update an mdraid dictionary entry
+                disk_roles_identified['mdraid'] = str(d.fstype)
+            if d.fstype == 'crypto_LUKS':
+                # LUKS FULL DISK: scan_disks() can inform us of the truth
+                # regarding full disk LUKS containers which on creation have a
+                # unique uuid. Stash this uuid so we might later work out our
+                # container mapping.
+                disk_roles_identified['LUKS'] = str(d.uuid)
+            if d.type == 'crypt':
+                # OPEN LUKS DISK: scan_disks() can inform us of the truth
+                # regarding an opened LUKS container which appears as a mapped
+                # device. Assign the /dev/disk/by-id name as a value.
+                disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
+            if d.fstype == 'bcache':
+                # BCACHE: scan_disks() can inform us of the truth regarding
+                # bcache "backing devices" so we assign a role to avoid these
+                # devices being seen as unused and accidentally deleted. Once
+                # formatted with make-bcache -B they are accessed via a virtual
+                # device which should end up with a serial of bcache-(d.uuid)
+                # here we tag our backing device with it's virtual counterparts
+                # serial number.
+                disk_roles_identified['bcache'] = 'bcache-%s' % d.uuid
+            if d.fstype == 'bcache-cdev':
+                # BCACHE: continued; here we use the scan_disks() added info
+                # of this bcache device being a cache device not a backing
+                # device, so it will have no virtual block device counterpart
+                # but likewise must be specifically attributed (ie to fast
+                # ssd type drives) so we flag in the role system differently.
+                disk_roles_identified['bcachecdev'] = 'bcache-%s' % d.uuid
+            if d.root is True:
+                # ROOT DISK: scan_disks() has already identified the current
+                # truth regarding the device hosting our root '/' fs so update
+                # our role accordingly.
+                # N.B. value of d.fstype here is essentially a place holder as
+                # the presence or otherwise of the 'root' key is all we need.
+                disk_roles_identified['root'] = str(d.fstype)
+            if d.partitions != {}:
+                # PARTITIONS: scan_disks() has built an updated partitions dict
+                # so create a partitions role containing this dictionary.
+                # Convert scan_disks() transient (but just scanned so current)
+                # sda type names to a more useful by-id type name as found
+                # in /dev/disk/by-id for each partition name.
+                byid_partitions = {
+                    get_dev_byid_name(part, True)[0]:
+                        d.partitions.get(part, "") for part in d.partitions}
+                # In the above we fail over to "" on failed index for now.
+                disk_roles_identified['partitions'] = byid_partitions
+            # Now we join the previous non scan_disks identified roles dict
+            # with those we have identified from our fresh scan_disks() data
+            # and return the result to our db entry in json format.
+            # Note that dict of {} isn't None
+            if (non_scan_disks_roles != {}) or (disk_roles_identified != {}):
+                combined_roles = dict(non_scan_disks_roles,
+                                      **disk_roles_identified)
+                dob.role = json.dumps(combined_roles)
+            else:
+                dob.role = None
+            # END OF ROLE FIELD UPDATE
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.
@@ -236,7 +282,9 @@ class DiskMixin(object):
                 # Also note that with no serial number some device types will
                 # not have a by-id type name expected by the smart subsystem.
                 # This has only been observed in no serial virtio devices.
-                if (re.match('fake-serial-', do.serial) is not None) or (re.match('virtio-|md-|mmc-|nvme-', do.name) is not None):  # noqa E501
+                if (re.match('fake-serial-', do.serial) is not None) or (
+                    re.match('virtio-|md-|mmc-|nvme-|dm-name-luks-|bcache',
+                             do.name) is not None):
                     # Virtio disks (named virtio-*), md devices (named md-*),
                     # and an sdcard reader that provides devs named mmc-* have
                     # no smart capability so avoid cluttering logs with
@@ -284,6 +332,62 @@ class DiskDetailView(rfc.GenericView):
             return Disk.objects.get(name=dname)
         except:
             e_msg = ('Disk(%s) does not exist' % dname)
+            handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    def _role_filter_disk_name(disk, request):
+        """
+        Takes a disk object and filters it based on it's roles.
+        If disk has a redirect role the redirect role value is substituted
+        for that disk's name. This effects a device name re-direction:
+        ie base dev to partition on base dev for example.
+        :param disk:  disk object
+        :param request:
+        :return: by-id disk name (without path) post role filter processing
+        """
+        try:
+            disk_name = disk.name
+            if disk.role is not None:
+                disk_role_dict = json.loads(disk.role)
+                if 'redirect' in disk_role_dict:
+                    disk_name = disk_role_dict.get('redirect', None)
+            return disk_name
+        except:
+            e_msg = ('Problem with role filter of disk(%s)' % disk)
+            handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    def _reverse_role_filter_name(disk_name, request):
+        """
+        Simple syntactic reversal of what _update_disk_state does to assign
+        disk role name values.
+        Here we reverse the special role assigned names and return the original
+        db disks base name.
+        Initially only aware of partition redirection from base dev name.
+        :param disk_name: role based disk name
+        :param request:
+        :return: tuple of disk_name and isPartition: Disk_name is as passed
+        unless the name matches a known syntactic pattern assigned in
+        _update_disk_state() in which case the name returned is the original
+        db disk base name.
+        """
+        # until we find otherwise we assume False on partition status.
+        isPartition = False
+        try:
+            # test for role redirect type re-naming, ie a partition name:
+            # base name "ata-QEMU_DVD-ROM_QM00001"
+            # partition redirect name "ata-QEMU_DVD-ROM_QM00001-part1"
+            fields = disk_name.split('-')
+            # check the last field for part#
+            if len(fields) > 0:
+                if re.match('part.+', fields[-1]) is not None:
+                    isPartition = True
+                    # strip the redirection to partition device.
+                    return '-'.join(fields[:-1]), isPartition
+            # we have found no indication of redirect role name changes.
+            return disk_name, isPartition
+        except:
+            e_msg = ('Problem reversing role filter disk name(%s)' % disk_name)
             handle_exception(Exception(e_msg), request)
 
     def get(self, *args, **kwargs):
@@ -335,6 +439,8 @@ class DiskDetailView(rfc.GenericView):
                 return self._spindown_drive(dname, request)
             if (command == 'pause'):
                 return self._pause(dname, request)
+            if (command == 'role-drive'):
+                return self._role_disk(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, '
                  'btrfs-wipe,'
@@ -346,8 +452,25 @@ class DiskDetailView(rfc.GenericView):
     @transaction.atomic
     def _wipe(self, dname, request):
         disk = self._validate_disk(dname, request)
-        wipe_disk(disk.name)
-        disk.parted = False
+        disk_name = self._role_filter_disk_name(disk, request)
+        # Double check sanity of role_filter_disk_name by reversing back to
+        # whole disk name (db name). Also we get isPartition in the process.
+        reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
+                                                                   request)
+        if reverse_name != disk.name:
+            e_msg = ('Wipe operation on whole or partition of device (%s) was '
+                     'aborted as there was a discrepancy in device name '
+                     'resolution. Wipe was called with device name (%s) which '
+                     'redirected to (%s) but a check on this redirection '
+                     'returned device name (%s), which is not equal to the '
+                     'caller name as was expected. A Disks page Rescan may '
+                     'help.'
+                     % (dname, dname, disk_name, reverse_name))
+            raise Exception(e_msg)
+        wipe_disk(disk_name)
+        disk.parted = isPartition
+        # The following value may well be updated with a more informed truth
+        # from the next scan_disks() run via _update_disk_state()
         disk.btrfs_uuid = None
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
@@ -367,16 +490,33 @@ class DiskDetailView(rfc.GenericView):
     def _btrfs_disk_import(self, dname, request):
         try:
             disk = self._validate_disk(dname, request)
-            p_info = get_pool_info(dname)
+            disk_name = self._role_filter_disk_name(disk, request)
+            p_info = get_pool_info(disk_name)
             # get some options from saved config?
             po = Pool(name=p_info['label'], raid="unknown")
             # need to save it so disk objects get updated properly in the for
             # loop below.
             po.save()
-            for d in p_info['disks']:
-                do = Disk.objects.get(name=d)
+            for device in p_info['disks']:
+                disk_name, isPartition = \
+                    self._reverse_role_filter_name(device, request)
+                do = Disk.objects.get(name=disk_name)
                 do.pool = po
-                do.parted = False
+                # update this disk's parted property
+                do.parted = isPartition
+                if isPartition:
+                    # ensure a redirect role to reach this partition; ie:
+                    # "redirect": "virtio-serial-3-part2"
+                    if do.role is not None:  # db default is null / None.
+                        # Get our previous roles into a dictionary
+                        roles = json.loads(do.role)
+                        # update or add our "redirect" role with our part name
+                        roles['redirect'] = '%s' % device
+                        # convert back to json and store in disk object
+                        do.role = json.dumps(roles)
+                    else:
+                        # role=None so just add a json formatted redirect role
+                        do.role = '{"redirect": "%s"}' % device.name
                 do.save()
                 mount_root(po)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
@@ -389,6 +529,81 @@ class DiskDetailView(rfc.GenericView):
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
             e_msg = ('Failed to import any pool on this device(%s). Error: %s'
+                     % (dname, e.__str__()))
+            handle_exception(Exception(e_msg), request)
+
+    @transaction.atomic
+    def _role_disk(self, dname, request):
+        """
+        Resets device role db entries and wraps _wipe() but will only call
+        _wipe() if no redirect role changes are also requested. If we fail
+        to associate these 2 tasks then there is a risk of the redirect not
+        coming into play prior to the wipe.
+        :param dname: disk name
+        :param request:
+        :return:
+        """
+        # Until we find otherwise:
+        prior_redirect = ''
+        redirect_role_change = False
+        try:
+            disk = self._validate_disk(dname, request)
+            # We can use this disk name directly as it is our db reference
+            # no need to user _role_filter_disk_name as we only want to change
+            # the db fields anyway.
+            # And when we call _wipe() it honours any existing redirect role
+            # so we make sure to not wipe and redirect at the same time.
+            new_redirect_role = str(request.data.get('redirect_part', ''))
+            is_delete_ticked = request.data.get('delete_tick', False)
+            # Get our previous roles into a dictionary.
+            if disk.role is not None:
+                roles = json.loads(disk.role)
+            else:
+                # roles default to None, substitute empty dict for simplicity.
+                roles = {}
+            # If we have received a redirect role then add/update our dict
+            # with it's value (the by-id partition)
+            # First establish our prior_redirect if it exists.
+            # A redirect removal is indicated by '', so our prior_redirect
+            # default is the same to aid comparison.
+            if 'redirect' in roles:
+                prior_redirect = roles['redirect']
+            if new_redirect_role != prior_redirect:
+                redirect_role_change = True
+                if new_redirect_role != '':
+                    # add or update our new redirect role
+                    roles['redirect'] = new_redirect_role
+                else:
+                    # no redirect role requested (''), so remove if present
+                    if 'redirect' in roles:
+                        del roles['redirect']
+            # Having now checked our new_redirect_role against the disks
+            # prior redirect role we can perform validation tasks.
+            if redirect_role_change:
+                if is_delete_ticked:
+                    # changing redirect and wiping concurrently are blocked
+                    e_msg = ("Wiping a device while changing it's redirect "
+                             "role is not supported. Please do one at a time")
+                    raise Exception(e_msg)
+                # We have a redirect role change and no delete ticked so
+                # return our dict back to a json format and stash in disk.role
+                disk.role = json.dumps(roles)
+                disk.save()
+            else:
+                # no redirect role change so we can wipe if requested by tick
+                if is_delete_ticked:
+                    if disk.pool is not None:
+                        # Disk is a member of a Rockstor pool so refuse to wipe
+                        e_msg = ('Wiping a Rockstor pool member is '
+                                 'not supported. Please use pool resize to '
+                                 'remove this disk from the pool first.')
+                        raise Exception(e_msg)
+                    # Not sure if this is the correct way to call our wipe.
+                    return self._wipe(dname, request)
+            return Response(DiskInfoSerializer(disk).data)
+        except Exception as e:
+            e_msg = ('Failed to configure drive role or wipe existing '
+                     'filesystem on device (%s). Error: %s'
                      % (dname, e.__str__()))
             handle_exception(Exception(e_msg), request)
 

@@ -15,6 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+import json
 
 
 from rest_framework.views import APIView
@@ -60,8 +61,16 @@ class CommandView(NFSExportMixin, APIView):
                 continue
             try:
                 mount_root(p)
-                fd = p.disk_set.first()
-                pool_info = get_pool_info(fd.name)
+                first_dev = p.disk_set.first()
+                first_dev_name = first_dev.name
+                # if we are looking at a device with a redirect role then
+                # redirect accordingly.
+                if first_dev.role is not None:
+                    disk_role_dict = json.loads(first_dev.role)
+                    if 'redirect' in disk_role_dict:
+                        # consider replacing None with first_dev.name
+                        first_dev_name = disk_role_dict.get('redirect', None)
+                pool_info = get_pool_info(first_dev_name)
                 p.name = pool_info['label']
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = p.usage_bound()

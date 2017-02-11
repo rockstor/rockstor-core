@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+
 import re
 import pickle
 import time
@@ -33,6 +34,7 @@ from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
 from django_ztask.models import Task
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -48,6 +50,36 @@ class PoolMixin(object):
             return Disk.objects.get(name=d)
         except:
             e_msg = ('Disk(%s) does not exist' % d)
+            handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    def _role_filter_disk_names(disks, request):
+        """
+        Takes a series of disk objects and filters them based on their roles.
+        For disk with a redirect role the role's value is substituted for that
+        disks name. This effects a name re-direction for redirect disks.
+        :param disks:  list of disks object
+        :param request:
+        :return: list of disk names post role filter processing
+        """
+        try:
+            # Build dictionary of disks with roles
+            role_disks = {d for d in disks if d.role is not None}
+            # Build a dictionary of redirected disk names with their
+            # associated redirect role values.
+            # By using only role_disks we avoid json.load(None)
+            redirect_disks = {d.name: json.loads(d.role).get("redirect", None)
+                              for d in role_disks if
+                              'redirect' in json.loads(d.role)}
+            # Replace d.name with redirect role value for redirect role disks.
+            # Our role system stores the /dev/disk/by-id name (without path)
+            # for redirected disks so use that value instead as our disk name:
+            dnames = [
+                d.name if d.name not in redirect_disks else redirect_disks[
+                    d.name] for d in disks]
+            return dnames
+        except:
+            e_msg = ('Problem with role filter of disks' % disks)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -264,7 +296,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             compression = self._validate_compression(request)
             mnt_options = self._validate_mnt_options(request)
-            dnames = [d.name for d in disks]
+            dnames = self._role_filter_disk_names(disks, request)
             p = Pool(name=pname, raid=raid_level, compression=compression,
                      mnt_options=mnt_options)
             p.save()
@@ -316,7 +348,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks', [])]
             num_new_disks = len(disks)
-            dnames = [d.name for d in disks]
+            dnames = self._role_filter_disk_names(disks, request)
             new_raid = request.data.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
@@ -470,6 +502,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             umount_root(pool_path)
             pool.delete()
             try:
+                # TODO: this call fails as the inheritance of disks was removed
+                # We need another method to invoke this as self no good now.
                 self._update_disk_state()
             except Exception as e:
                 logger.error('Exception while updating disk state: %s'
