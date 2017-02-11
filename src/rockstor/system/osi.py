@@ -269,7 +269,7 @@ def scan_disks(min_size):
                     # partitioned.
                     dnames[dname][11] = True
                     # Also take this opportunity to back port software raid
-                    # infi from partitions to the base device if the base
+                    # info from partitions to the base device if the base
                     # device doesn't already have an fstype identifying it's
                     # raid member status. For Example:- bios raid base dev
                     # gives lsblk FSTYPE="isw_raid_member"; we already catch

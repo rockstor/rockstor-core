@@ -53,24 +53,6 @@ class PoolMixin(object):
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
-    def _get_disk_names(disks, request):
-        """
-        simply logger abstraction to display the disks names withing a disks
-        object.
-        :param disks: list of disks object
-        :param request:
-        :return: list of disk names in passed disk object list
-        """
-        disk_names = []
-        try:
-            for d in disks:
-                disk_names.append(d.name)
-            return disk_names
-        except:
-            e_msg = ('Problem with display_disk_names logger' % disks)
-            handle_exception(Exception(e_msg), request)
-
-    @staticmethod
     def _role_filter_disk_names(disks, request):
         """
         Takes a series of disk objects and filters them based on their roles.
