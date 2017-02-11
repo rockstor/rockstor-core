@@ -85,7 +85,7 @@ var Disk = Backbone.Model.extend({
             // then we need to confirm if the fstype of the redirected
             // partition is "" else we can't use it
             if (roleAsJson.partitions.hasOwnProperty(roleAsJson.redirect)) {
-                if (roleAsJson.partitions[roleAsJson.redirect] == "") {
+                if (roleAsJson.partitions[roleAsJson.redirect] == '') {
                     return true;
                 }
             }
