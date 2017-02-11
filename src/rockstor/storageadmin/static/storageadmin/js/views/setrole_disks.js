@@ -241,7 +241,7 @@ SetroleDiskView = RockstorLayoutView.extend({
             if (this.current_redirect == '') {
                 selected = ' selected="selected"';
             }
-            html += '<option value="' + selected + '"> Whole Disk (' + uuid_message + ')';
+            html += '<option value=""' + selected + '> Whole Disk (' + uuid_message + ')';
             // if no current redirect role then select whole disk entry and
             // give indication of this " - active"
             if (selected != '') {
