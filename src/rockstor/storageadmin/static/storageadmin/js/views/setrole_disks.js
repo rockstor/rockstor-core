@@ -71,11 +71,11 @@ SetroleDiskView = RockstorLayoutView.extend({
         // parse the diskRole json to a local object
         try {
             var role_obj = JSON.parse(diskRole);
-            } catch (e) {
+        } catch (e) {
                 // as we can't convert this drives role to json we assume
                 // it's isRoleUsable status by false
-                role_obj = null;
-            }
+            role_obj = null;
+        }
         // extract our partitions obj from the role_obj if there is one.
         var partitions;
         if (role_obj != null && role_obj.hasOwnProperty('partitions')) {
@@ -144,10 +144,10 @@ SetroleDiskView = RockstorLayoutView.extend({
                     // disk_pool = null;
                     if (disk_pool != null) {
                         // device is part of Rockstor pool, reject wipe request
-                        err_msg = "Selected device is part of a Rockstor " +
-                            "managed pool. Use Pool resize to remove it from " +
-                            "the relevant pool which in turn will wipe it's " +
-                            "filesystem.";
+                        err_msg = 'Selected device is part of a Rockstor ' +
+                            'managed pool. Use Pool resize to remove it from ' +
+                            'the relevant pool which in turn will wipe it\'s ' +
+                            'filesystem.';
                         return false;
                     }
                 }
@@ -233,7 +233,7 @@ SetroleDiskView = RockstorLayoutView.extend({
             // Also serves to indicate no redirect role in operation.
             var uuid_message;
             if ( (this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions)) ) {
-                uuid_message = 'btrfs'
+                uuid_message = 'btrfs';
             } else {
                 uuid_message = 'None';
             }
@@ -274,7 +274,7 @@ SetroleDiskView = RockstorLayoutView.extend({
                 html += short_part_name + ' (' + partition_fstype + ')';
                 // if this is our active setting then indicate in text
                 if (active_redirect) {
-                    html += ' - active'
+                    html += ' - active';
                 }
                 // end this partition option
                 html += '</option>';
