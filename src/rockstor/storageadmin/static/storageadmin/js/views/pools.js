@@ -31,7 +31,7 @@
 PoolsView = RockstorLayoutView.extend({
 
     events: {
-        "click a[data-action=delete]": "deletePool",
+        'click a[data-action=delete]': 'deletePool',
         'click #js-cancel': 'cancel',
         'click #js-confirm-pool-delete': 'confirmPoolDelete'
     },
@@ -45,7 +45,7 @@ PoolsView = RockstorLayoutView.extend({
         this.disks.pageSize = RockStorGlobals.maxPageSize;
         this.dependencies.push(this.disks);
         this.dependencies.push(this.collection);
-        this.collection.on("reset", this.renderPools, this);
+        this.collection.on('reset', this.renderPools, this);
         this.initHandlebarHelpers();
 
     },
@@ -89,21 +89,21 @@ PoolsView = RockstorLayoutView.extend({
                      {value: 'no', text: 'no'},
                      {value: 'zlib', text: 'zlib'},
                      {value: 'lzo', text: 'lzo'}
-                     ],
-                     success: function(response, newCompr){
+            ],
+            success: function(response, newCompr){
                          //use $(this) to dynamically get pool name from select dropdown.
-                         var poolName = $(this).data('pname');
-                         var mntOptn = $(this).data('mntoptn');
-                         $.ajax({
-                             url: "/api/pools/" + poolName + '/remount',
-                             type: "PUT",
-                             dataType: "json",
-                             data: {
-                                 "compression": newCompr,
-                                 "mnt_options": mntOptn
-                             },
-                         });
-                     }
+                var poolName = $(this).data('pname');
+                var mntOptn = $(this).data('mntoptn');
+                $.ajax({
+                    url: '/api/pools/' + poolName + '/remount',
+                    type: 'PUT',
+                    dataType: 'json',
+                    data: {
+                        'compression': newCompr,
+                        'mnt_options': mntOptn
+                    },
+                });
+            }
         });
 
         $('.mntOptns').editable({
@@ -113,12 +113,12 @@ PoolsView = RockstorLayoutView.extend({
                 var poolName = $(this).data('pname');
                 var compr = $(this).data('comp');
                 $.ajax({
-                    url: "/api/pools/" + poolName + '/remount',
-                    type: "PUT",
-                    dataType: "json",
+                    url: '/api/pools/' + poolName + '/remount',
+                    type: 'PUT',
+                    dataType: 'json',
                     data: {
-                        "compression": compr,
-                        "mnt_options": newMntOptns
+                        'compression': compr,
+                        'mnt_options': newMntOptns
                     },
                 });
             }
@@ -138,9 +138,9 @@ PoolsView = RockstorLayoutView.extend({
     deletePool: function(event) {
         var _this = this;
         var button = $(event.currentTarget);
-        var $poolShares = $("#pool-shares");
+        var $poolShares = $('#pool-shares');
         // Remove share names upon reopening
-        $poolShares.html("");
+        $poolShares.html('');
         if (buttonDisabled(button)) return false;
         var poolName = button.attr('data-name');
         var poolShares = new PoolShareCollection([], {poolName: poolName});
@@ -150,7 +150,7 @@ PoolsView = RockstorLayoutView.extend({
                 // Only display shares if they exist
                 if (!_.isUndefined(shares)) {
                     _.each(shares, function(share) {
-                        $poolShares.append("<li>" + share.name +  " (" + share.size_gb + " GB)</li>");
+                        $poolShares.append('<li>' + share.name +  ' (' + share.size_gb + ' GB)</li>');
                     });
                     _this.displayPoolInformation(poolName);
                 }
@@ -168,11 +168,11 @@ PoolsView = RockstorLayoutView.extend({
         if (buttonDisabled(button)) return false;
         disableButton(button);
         var poolName = button.attr('data-name');
-        var url = "/api/pools/" + poolName + "/force";
+        var url = '/api/pools/' + poolName + '/force';
         $.ajax({
             url: url,
-            type: "DELETE",
-            dataType: "json",
+            type: 'DELETE',
+            dataType: 'json',
             success: function() {
                 enableButton(button);
                 _this.$('#delete-pool-modal-' + poolName).modal('hide');
@@ -187,17 +187,17 @@ PoolsView = RockstorLayoutView.extend({
 
     cancel: function(event) {
         if (event) event.preventDefault();
-        app_router.navigate('pools', {trigger: true})
+        app_router.navigate('pools', {trigger: true});
     },
 
     initHandlebarHelpers: function(){
         Handlebars.registerHelper('humanReadableSize', function(type, size, poolReclaim, poolFree) {
             var html = '';
-            if(type == "size"){
+            if(type == 'size'){
                 html += humanize.filesize(size * 1024);
-            }else if(type == "usage"){
+            }else if(type == 'usage'){
                 html += humanize.filesize((size - poolReclaim - poolFree) * 1024);
-            }else if (type == "usagePercent"){
+            }else if (type == 'usagePercent'){
                 html += (((size - poolReclaim - poolFree) / size) * 100).toFixed(2);
             }
             return new Handlebars.SafeString(html);
