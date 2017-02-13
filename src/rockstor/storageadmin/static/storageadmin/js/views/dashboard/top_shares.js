@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -62,11 +62,14 @@ TopSharesWidget = RockStorWidgetView.extend({
 
         var _this = this;
         _this.data = this.shares.sortBy(function(s) {
-            return ((s.get('rusage') / s.get('size')) * 100);
+            return ((s.get('pqgroup_rusage') / s.get('size')) * 100);
         }).reverse().slice(0, this.numTop);
         _this.data.map(function(d) {
             d.set({
                 'pUsed': ((d.get('rusage') / d.get('size')) * 100)
+            });
+            d.set({
+                'pOverUsed': (((d.get('pqgroup_rusage') - d.get('rusage')) / d.get('size')) * 100)
             });
         });
     },
@@ -89,20 +92,25 @@ TopSharesWidget = RockStorWidgetView.extend({
         });
 
         this.$('.pused').each(function(index) {
-            $(this).text(_this.data[index].get('pUsed').toFixed(2) + '%');
+            var btrfs_size = (_this.data[index].get('pUsed') + _this.data[index].get('pOverUsed')).toFixed(2)
+            $(this).text(btrfs_size + '%');
         });
-		var truncate = _this.maximized ? 100 : 12;
-        this.$('.progress-animate').each(function(index) {
+        var truncate = _this.maximized ? 100 : 12;
+        this.$('.progress-animate').not('.progress-bar-info').each(function(index) {
             $(this).find('span')
                 .text(humanize.truncatechars(_this.data[index].get('name'), truncate) +
-                    '(' + humanize.filesize(_this.data[index].get('rusage') * 1024) +
+                    '(' + humanize.filesize(_this.data[index].get('pqgroup_rusage') * 1024) +
                     '/' + humanize.filesize(_this.data[index].get('size') * 1024) +
                     ')');
             $(this).animate({
                 width: _this.data[index].get('pUsed').toFixed(2) + '%'
             }, 1000);
         });
-
+        this.$('.progress-bar-info').each(function(index) {
+            $(this).animate({
+                width: _this.data[index].get('pOverUsed').toFixed(2) + '%'
+            }, 1000);
+        });
     },
 
     buildTitle: function() {
@@ -134,8 +142,11 @@ TopSharesWidget = RockStorWidgetView.extend({
         var html = '<div style="display: table;"><div class="' + percent_div['class'] + '" style="' + percent_div['style'] + '"></div>';
         html += '<div class="' + progressbar_container['class'] + '" style="' + progressbar_container['style'] + '">';
         html += '<div class="' + progressbars_defaults['class'] + '" style="' + progressbars_defaults['style'] + '" ';
-        html += 'role="' + progressbars_defaults['role'] + '">';
-        html += '<span style="' + progressbar_span['style'] + '"></span></div></div></div>';
+        html += 'role="' + progressbars_defaults['role'] + '">'
+        html += '<span style="' + progressbar_span['style'] + '"></span></div>';
+        html += '<div class="' + progressbars_defaults['class'] + ' progress-bar-info" style="' + progressbars_defaults['style'] + '" ';
+        html += 'role="' + progressbars_defaults['role'] + '"></div>';
+        html += '</div></div>';
 
         return html;
     },

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -42,8 +42,15 @@ class Share(models.Model):
     subvol_name = models.CharField(max_length=4096)
     replica = models.BooleanField(default=False)
     compression_algo = models.CharField(max_length=1024, null=True)
+    # rusage and eusage reports original 0/x qgroup size
+    # and this has only current share content without snapshots
     rusage = models.BigIntegerField(default=0)
     eusage = models.BigIntegerField(default=0)
+    # Having Rockstor vol/subvols overriding btrfs standards
+    # with snapshots(subvols) not under their vols, we use qgroup sizes
+    # to report correct real vol sizes
+    pqgroup_rusage = models.BigIntegerField(default=0)
+    pqgroup_eusage = models.BigIntegerField(default=0)
 
     @property
     def size_gb(self):
