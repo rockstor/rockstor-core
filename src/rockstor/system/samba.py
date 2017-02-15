@@ -57,7 +57,7 @@ def rockstor_smb_config(fo, exports):
         fo.write('[%s]\n' % e.share.name)
         fo.write('    root preexec = "%s %s"\n' % (mnt_helper, e.share.name))
         fo.write('    root preexec close = yes\n')
-        fo.write('    comment = %s\n' % e.comment)
+        fo.write('    comment = %s\n' % e.comment.encode('utf-8'))
         fo.write('    path = %s\n' % e.path)
         fo.write('    browseable = %s\n' % e.browsable)
         fo.write('    read only = %s\n' % e.read_only)
