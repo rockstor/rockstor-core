@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -61,75 +61,74 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         return this;
     },
 
-    renderNewScheduledTask: function() {
-        if (this.taskDef) {
-            var taskObj = {
-                name: this.taskDef.get('name'),
-                type: this.taskDef.get('task_type'),
-                share: this.taskDef.share(),
-                prefix: this.taskDef.prefix(),
-                pool: this.taskDef.pool(),
-                maxCount: this.taskDef.max_count(),
-                visible: this.taskDef.visible(),
-                writable: this.taskDef.writable(),
-                enabled: this.taskDef.get('enabled'),
-            };
-            var isSnapshot = false;
-            if (taskObj.type == 'snapshot') {
-                isSnapshot = true;
-            }
-        }
-        var _this = this;
-        $(this.el).html(this.template({
-            shares: this.shares,
-            pools: this.pools,
-            taskTypes: ['snapshot', 'scrub'],
-            taskDef: this.taskDef,
-            taskObj: taskObj,
-            taskDefId: this.taskDefId,
-            taskDefIdNull: this.taskDefIdNull,
-            isSnapshot: isSnapshot,
-        }));
-        if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
-            var crontab = this.taskDef.get('crontab');
-            $('#cron').cron('value', crontab);
-            var crontabwindow = _.isNull(this.taskDef.get('crontabwindow')) ? '*-*-*-*-*-*' : this.taskDef.get('crontabwindow'); // render execution window, on null set to *-*-*-*-*-*
-            $('#cron-window').cron_window('value', crontabwindow);
-        }
-        this.renderOptionalFields();
-        this.$('#start_date').datepicker();
-        this.validator = $('#scheduled-task-create-form').validate({
-            onfocusout: false,
-            onkeyup: false,
-            rules: {
-                name: 'required',
-                start_date: 'required',
-                frequency: {
-                    required: true,
-                    number: true,
-                    min: 1
-                },
-                share: {
-                    required: {
-                        depends: function(element) {
-                            return (_this.$('#task_type').val() == 'snapshot');
-                        }
-                    }
-                },
-                'meta.prefix': {
-                    required: {
-                        depends: function(element) {
-                            return (_this.$('#task_type').val() == 'snapshot');
-                        }
-                    }
-                },
-                'meta.max_count': {
-                    number: true,
-                    min: 1,
-                    required: {
-                        depends: function(element) {
-                            return (_this.$('#task_type').val() == 'snapshot');
-                        },
+	renderNewScheduledTask: function() {
+		if(this.taskDef){
+		var taskObj = {name: this.taskDef.get('name'),
+				type: this.taskDef.get('task_type'),
+				share: this.taskDef.share(),
+				prefix: this.taskDef.prefix(),
+				pool: this.taskDef.pool(),
+				maxCount: this.taskDef.max_count(),
+				visible: this.taskDef.visible(),
+				writable: this.taskDef.writable(),
+				enabled: this.taskDef.get('enabled'),
+		};
+		var isSnapshot = false;
+		if(taskObj.type == 'snapshot'){
+			isSnapshot = true;
+		}
+	}
+		var _this = this;
+		$(this.el).html(this.template({
+			shares: this.shares,
+			pools: this.pools,
+			taskTypes: ['snapshot', 'scrub', 'reboot'],
+			taskDef: this.taskDef,
+			taskObj: taskObj,
+			taskDefId: this.taskDefId,
+			taskDefIdNull: this.taskDefIdNull,
+			isSnapshot: isSnapshot,
+		}));
+		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
+			var crontab = this.taskDef.get('crontab');
+			$('#cron').cron("value", crontab);
+			var crontabwindow = _.isNull(this.taskDef.get('crontabwindow')) ? "*-*-*-*-*-*" : this.taskDef.get('crontabwindow'); // render execution window, on null set to *-*-*-*-*-*
+			$('#cron-window').cron_window("value", crontabwindow);
+		}
+		this.renderOptionalFields();
+		this.$('#start_date').datepicker();
+		this.validator = $('#scheduled-task-create-form').validate({
+			onfocusout: false,
+			onkeyup: false,
+			rules: {
+				name: 'required',
+				start_date: 'required',
+				frequency: {
+					required: true,
+					number: true,
+					min: 1
+				},
+				share: {
+					required: {
+						depends: function(element) {
+							return (_this.$('#task_type').val() == 'snapshot');
+						}
+					}
+				},
+				'meta.prefix': {
+					required: {
+						depends: function(element) {
+							return (_this.$('#task_type').val() == 'snapshot');
+						}
+					}
+				},
+				'meta.max_count': {
+					number: true,
+					min: 1,
+					required: {
+						depends: function(element) {
+							return (_this.$('#task_type').val() == 'snapshot');
+						},
 
                     }
                 },
@@ -177,34 +176,36 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         });
     },
 
-    renderOptionalFields: function() {
-        var taskType = null;
-        if (this.taskDefId == null) {
-            taskType = this.$('#task_type').val();
-        } else {
-            taskType = this.taskDef.get('task_type');
+	renderOptionalFields: function() {
+		var taskType = null;
+		if (this.taskDefId == null) {
+			taskType = this.$('#task_type').val();
+		} else {
+			taskType = this.taskDef.get('task_type');
+		}
+		if (taskType == 'snapshot') {
+			this.$('#optional-fields').html(this.snapshotFieldsTemplate({
+				shares: this.shares.toJSON(),
+				taskDef: this.taskDef,
+				taskDefId: this.taskDefId,
+				taskDefIdNull: this.taskDefIdNull,
+				taskMaxCount: this.taskMaxCount,
+			}));
+		} else if (taskType == 'scrub') {
+			this.$('#optional-fields').html(this.scrubFieldsTemplate({
+				pools: this.pools.toJSON(),
+				taskDef: this.taskDef,
+				taskDefId: this.taskDefId,
+				taskDefIdNull: this.taskDefIdNull,
+			}));
+		} else {
+            this.$('#optional-fields').empty();
         }
-        if (taskType == 'snapshot') {
-            this.$('#optional-fields').html(this.snapshotFieldsTemplate({
-                shares: this.shares.toJSON(),
-                taskDef: this.taskDef,
-                taskDefId: this.taskDefId,
-                taskDefIdNull: this.taskDefIdNull,
-                taskMaxCount: this.taskMaxCount,
-            }));
-        } else {
-            this.$('#optional-fields').html(this.scrubFieldsTemplate({
-                pools: this.pools.toJSON(),
-                taskDef: this.taskDef,
-                taskDefId: this.taskDefId,
-                taskDefIdNull: this.taskDefIdNull,
-            }));
-        }
-        // Reattach tooltips
-        this.$('#scheduled-task-create-form :input').tooltip({
-            placement: 'right'
-        });
-    },
+		// Reattach tooltips
+		this.$('#scheduled-task-create-form :input').tooltip({
+			placement: 'right'
+		});
+	},
 
     cancel: function(event) {
         event.preventDefault();
