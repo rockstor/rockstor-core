@@ -82,7 +82,12 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		$(this.el).html(this.template({
 			shares: this.shares,
 			pools: this.pools,
-			taskTypes: ['snapshot', 'scrub', 'reboot'],
+			taskTypes: ['snapshot',
+                                    'scrub',
+                                    'reboot',
+                                    'shutdown',
+                                    'custom'
+                                   ],
 			taskDef: this.taskDef,
 			taskObj: taskObj,
 			taskDefId: this.taskDefId,
