@@ -1064,12 +1064,16 @@ def get_virtio_disk_serial(device_name):
     return out[0]
 
 
-def system_shutdown():
-    return run_command([SHUTDOWN, '-h', 'now'])
+def system_shutdown(delta='now'):
+    # new delta param default to now used to pass a 2 min delay
+    # for scheduled tasks reboot/shutdown
+    return run_command([SHUTDOWN, '-h', delta])
 
 
-def system_reboot():
-    return run_command([SHUTDOWN, '-r', 'now'])
+def system_reboot(delta='now'):
+    # new delta param default to now used to pass a 2 min delay
+    # for scheduled tasks reboot/shutdown
+    return run_command([SHUTDOWN, '-r', delta])
 
 
 def md5sum(fpath):
