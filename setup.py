@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -55,6 +55,7 @@ setup(
             'send-replica = scripts.scheduled_tasks.send_replica:main',
             'st-pool-scrub = scripts.scheduled_tasks.pool_scrub:main',
             'st-snapshot = scripts.scheduled_tasks.snapshot:main',
+            'st-system-power = scripts.scheduled_tasks.reboot_shutdown:main',
         ],
     },
 
