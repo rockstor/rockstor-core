@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -82,7 +82,7 @@ class CommandView(NFSExportMixin, APIView):
                 logger.exception(e)
 
     @transaction.atomic
-    def post(self, request, command):
+    def post(self, request, command, delay='now'):
         if (command == 'bootstrap'):
 
             self._refresh_pool_state()
@@ -212,7 +212,7 @@ class CommandView(NFSExportMixin, APIView):
             msg = ('The system will now be shutdown')
             try:
                 request.session.flush()
-                system_shutdown()
+                system_shutdown(delay)
             except Exception as e:
                 msg = ('Failed to shutdown the system due to a low level '
                        'error: %s' % e.__str__())
@@ -224,7 +224,7 @@ class CommandView(NFSExportMixin, APIView):
             msg = ('The system will now reboot')
             try:
                 request.session.flush()
-                system_reboot()
+                system_reboot(delay)
             except Exception as e:
                 msg = ('Failed to reboot the system due to a low level error: '
                        '%s' % e.__str__())
