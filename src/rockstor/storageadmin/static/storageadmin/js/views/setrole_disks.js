@@ -114,14 +114,29 @@ SetroleDiskView = RockstorLayoutView.extend({
 
         $.validator.addMethod('validateRedirect', function (value) {
             var redirect_role = $('#redirect_part').val();
+            var redirect_changed = false;
+            if (redirect_role != current_redirect) {
+                redirect_changed = true;
+            }
+            var redirect_support_msg = 'Redirection is only supported to ' +
+                'a non btrfs partition when no btrfs partition exists on ' +
+                'the same device.';
             // check to see if we are attempting to change an existing btrfs
             // redirect, if so refuse the action and explain why.
-            if ((partitions[current_redirect] == 'btrfs') && (redirect_role != current_redirect)) {
+            if ((partitions[current_redirect] == 'btrfs') && redirect_changed) {
+                err_msg = 'Active btrfs partition redirect found; if you ' +
+                    'wish to change this redirect role first wipe the ' +
+                    'partition and then re-assign. ' + redirect_support_msg;
+                return false;
+            }
+            // check to see if an exiting btrfs partition exists and is not
+            // the selected option after a change. As we default to whole disk
+            // the 'after a change' clause allows for whole disk wipe.
+            if ((disk_btrfs_uuid != null) && (partitions[redirect_role] != 'btrfs') && redirect_changed) {
                 err_msg = 'Existing btrfs partition found; if you wish to ' +
                     'use the redirect role either select this btrfs partition ' +
-                    'or wipe it or the whole disk and re-assign.' +
-                    'Redirecting is only supported to a non btrfs partition when ' +
-                    'no btrfs partition exists on the same device.';
+                    'and import/use it, or wipe it (or the whole disk) and ' +
+                    'then re-assign. ' + redirect_support_msg;
                 return false;
             }
             return true;
