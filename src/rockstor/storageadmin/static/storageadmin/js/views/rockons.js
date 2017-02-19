@@ -322,7 +322,9 @@ RockonsView = RockstorLayoutView.extend({
 		    }
 		    html += '<div class="row">';
 		    html += '<div class="col-md-6">';
-		    html += '<a href="' + rockon.get('website') + '" target="_blank"><h3><u>' + rockon.get('name') + '</u></h3></a>';
+		    html += '<a href="' + rockon.get('website') + '" target="_blank">';
+            html += '<h3 style="display:inline"><u>' + rockon.get('name') + '</u></h3></a>';
+            html += ' (Rock-on file version: ' + rockon.get('version') + ')';
 		    html += '<p>' + rockon.get('description') + '</p>';
 		    html += '<h4>Current status: ' + rockon.get('status') + '</h4>';
 		    html += '</div>';
@@ -377,7 +379,9 @@ RockonsView = RockstorLayoutView.extend({
 		    html += '<div class="tab-section">';
 		    html += '<div class="row">';
 		    html += '<div class="col-md-12">';
-		    html += '<a href="' + rockon.get('website') + '" target="_blank"><h3>' + rockon.get('name') + '</h3></a>';
+		    html += '<a href="' + rockon.get('website') + '" target="_blank">';
+            html += '<h3 style="display:inline">' + rockon.get('name') + '</h3></a>';
+            html += ' (Rock-on file version: ' + rockon.get('version') + ')';
 		    html +=  '<p>' + rockon.get('description') + '</p>';
 		    if (rockon.get('state') == 'install_failed')  {
 			html += '<strong>Failed to install in the previous attempt.</strong> Here\'s how you can proceed.';
