@@ -26,11 +26,11 @@
 
 EmailView = RockstorLayoutView.extend({
     events: {
-        "click #Add-email-address": "renderEmailForm",
-        "click #cancel": "cancel",
-        "click .email-delete": "deleteEmail",
-        "click .send-test-message": "sendTestEmail",
-        "click #test-smtp": "checkSmtpAuth"
+        'click #Add-email-address': 'renderEmailForm',
+        'click #cancel': 'cancel',
+        'click .email-delete': 'deleteEmail',
+        'click .send-test-message': 'sendTestEmail',
+        'click #test-smtp': 'checkSmtpAuth'
     },
 
     initialize: function() {
@@ -39,7 +39,7 @@ EmailView = RockstorLayoutView.extend({
         this.updatetemplate = window.JST.email_email;
         this.emails = new EmailAccountCollection();
         this.dependencies.push(this.emails);
-        this.emails.on("reset", this.renderEmail, this);
+        this.emails.on('reset', this.renderEmail, this);
         this.initHandlebarHelpers();
     },
 
@@ -102,7 +102,7 @@ EmailView = RockstorLayoutView.extend({
                 },
                 receiver: 'required',
                 username: {
-                    required: "#enable_username:checked" //username field required only if username checkbox checked else empty
+                    required: '#enable_username:checked' //username field required only if username checkbox checked else empty
                 },
                 port: {
                     number: true
@@ -147,7 +147,7 @@ EmailView = RockstorLayoutView.extend({
         var check_auth = true;
         $('.auth-results').hide();
         $('.check-smtp-auth').each(function() {
-            if ($(this).is(":visible")) {
+            if ($(this).is(':visible')) {
                 check_auth = check_auth && ($.trim(this.value).length > 0);
             }
         });
@@ -172,11 +172,11 @@ EmailView = RockstorLayoutView.extend({
     deleteEmail: function(event) {
         event.preventDefault();
         var _this = this;
-        if (confirm("Are you sure about deleting this Email Account?")) {
+        if (confirm('Are you sure about deleting this Email Account?')) {
             $.ajax({
-                url: "/api/email",
-                type: "DELETE",
-                dataType: "json",
+                url: '/api/email',
+                type: 'DELETE',
+                dataType: 'json',
                 success: function() {
                     _this.emails.fetch({
                         reset: true
@@ -192,9 +192,9 @@ EmailView = RockstorLayoutView.extend({
     sendTestEmail: function(event) {
         event.preventDefault();
         $.ajax({
-            url: "/api/email/send-test-email",
-            type: "POST",
-            dataType: "json",
+            url: '/api/email/send-test-email',
+            type: 'POST',
+            dataType: 'json',
             success: function() {
                 $('#test-message-confirm').modal({
                     keyboard: false,
@@ -213,25 +213,25 @@ EmailView = RockstorLayoutView.extend({
     initHandlebarHelpers: function() {
         Handlebars.registerHelper('add_email', function(inputName) {
             var html = '';
-            if (inputName == "name") {
+            if (inputName == 'name') {
                 if ('name' in this.email) {
                     html += 'value="' + this.email.name + '"';
                 }
                 html += 'title="Name associated with the email, eg: firstname lastname."';
             }
-            if (inputName == "email") {
+            if (inputName == 'email') {
                 if ('sender' in this.email) {
                     html += 'value="' + this.email.sender + '"';
                 }
                 html += 'title="Rockstor will send email notifications from this address / account. For better security we highly recommend using a separate dedicated email account for this purpose."';
             }
-            if (inputName == "username") { //username value to use for smtp auth
+            if (inputName == 'username') { //username value to use for smtp auth
                 if ('username' in this.email) {
                     html += 'value="' + this.email.username + '"';
                 }
                 html += 'title="Enter username required for smtp authentication"';
             }
-            if (inputName == "smtp") {
+            if (inputName == 'smtp') {
                 if ('smtp_server' in this.email) {
                     html += 'value="' + this.email.smtp_server + '"';
                 }
@@ -244,7 +244,7 @@ EmailView = RockstorLayoutView.extend({
                 }
                 html += 'value=587 title="port number for the smtp server. Defaults to 587"';
             }
-            if (inputName == "recipient") {
+            if (inputName == 'recipient') {
                 if ('receiver' in this.email) {
                     html += 'value="' + this.email.receiver + '"';
                 }

@@ -25,12 +25,10 @@
  */
 
 PoolInfoModule = RockstorModuleView.extend({
-  
-  initialize: function() {
-    this.template = window.JST.pool_pool_info_module;
-    this.module_name = 'pool-info';
-  },
+
+    initialize: function() {
+        this.template = window.JST.pool_pool_info_module;
+        this.module_name = 'pool-info';
+    },
 
 });
-
-

@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -25,19 +25,19 @@
  */
 
 ROCKSTOR_LOG_LEVEL = 'debug';
-LOG_LEVELS = ['debug','info','warning','error'];
+LOG_LEVELS = ['debug', 'info', 'warning', 'error'];
 
 logger = function() {
-  var obj = {};
-  obj.log = function(msg, log_level) {
-    if (_.indexOf(LOG_LEVELS[log_level]) >= _.indexOf(LOG_LEVELS[ROCKSTOR_LOG_LEVEL])) {
-    }
-  }
-  _.each(LOG_LEVELS, function(level) {
-    obj[level] = function(msg) {
-      this.log(msg, level);
-    }
-  });
-  return obj;
+    var obj = {};
+    
+    obj.log = function(msg, log_level) {
+    };
+    
+    _.each(LOG_LEVELS, function(level) {
+        obj[level] = function(msg) {
+            this.log(msg, level);
+        };
+    });
+    return obj;
 
 }();

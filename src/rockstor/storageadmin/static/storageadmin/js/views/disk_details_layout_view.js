@@ -26,13 +26,17 @@
 
 DiskDetailsLayoutView = RockstorLayoutView.extend({
 
-    initialize: function () {
+    initialize: function() {
         // call initialize of base
         this.constructor.__super__.initialize.apply(this, arguments);
         this.diskName = this.options.diskName;
         this.template = window.JST.disk_disk_details_layout;
-        this.disk = new Disk({diskName: this.diskName});
-        this.smartinfo = new SmartInfo({diskName: this.diskName});
+        this.disk = new Disk({
+            diskName: this.diskName
+        });
+        this.smartinfo = new SmartInfo({
+            diskName: this.diskName
+        });
         this.dependencies.push(this.disk);
         this.dependencies.push(this.smartinfo);
         this.active_tab = 0;
@@ -44,24 +48,24 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
         'click #test-start': 'startTest'
     },
 
-    render: function () {
+    render: function() {
         this.fetch(this.renderSubViews, this);
         return this;
     },
 
-    renderSubViews: function () {
+    renderSubViews: function() {
         var capabilities = this.smartinfo.get('capabilities') || [];
         var test_capabilities = {};
         var running_test = null;
-        capabilities.forEach(function (c) {
+        capabilities.forEach(function(c) {
             if ((c.name == 'Short self-test routine recommended polling time') ||
                 (c.name == 'Extended self-test routine recommended polling time') ||
                 (c.name == 'Conveyance self-test routine recommended polling time')) {
-                var p = c.name.indexOf("routine");
+                var p = c.name.indexOf('routine');
                 var short_name = c.name.substring(0, p);
                 test_capabilities[short_name] = c.capabilities;
-            } else if (c.name == 'Self-test execution status'
-                && c.flag > 240 && c.flag < 250) {
+            } else if (c.name == 'Self-test execution status' &&
+                c.flag > 240 && c.flag < 250) {
                 running_test = c.capabilities;
             }
         });
@@ -120,16 +124,16 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
             identity: identity
         }));
         this.$('input.smart-status').simpleSlider({
-            "theme": "volume",
+            'theme': 'volume',
             allowedValues: [0, 1],
             snap: true
         });
-        this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
-        this.$("ul.nav.nav-tabs").data("tabs").click(this.active_tab);
+        this.$('ul.nav.nav-tabs').tabs('div.css-panes > div');
+        this.$('ul.nav.nav-tabs').data('tabs').click(this.active_tab);
         this.active_tab = 0;
     },
 
-    refreshInfo: function (event) {
+    refreshInfo: function(event) {
         var _this = this;
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
@@ -137,16 +141,16 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
         $.ajax({
             url: '/api/disks/smart/info/' + _this.diskName,
             type: 'POST',
-            success: function (data, status, xhr) {
+            success: function(data, status, xhr) {
                 _this.render();
             },
-            error: function (xhr, status, error) {
+            error: function(xhr, status, error) {
                 enableButton(button);
             }
         });
     },
 
-    startTest: function (event) {
+    startTest: function(event) {
         var _this = this;
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
@@ -156,23 +160,25 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
             url: '/api/disks/smart/test/' + _this.diskName,
             type: 'POST',
             dataType: 'json',
-            data: {'test_type': test_type},
-            success: function (data, status, xhr) {
+            data: {
+                'test_type': test_type
+            },
+            success: function(data, status, xhr) {
                 _this.render();
                 _this.active_tab = 5;
             },
-            error: function (xhr, status, error) {
+            error: function(xhr, status, error) {
                 enableButton(button);
             }
         });
     },
 
-    initHandlebarHelpers: function () {
-        Handlebars.registerHelper('isAboveMinLength', function (minValue, target, options) {
+    initHandlebarHelpers: function() {
+        Handlebars.registerHelper('isAboveMinLength', function(minValue, target, options) {
             // check we have all the arguments we expect
             if (arguments.length != 3) {
-                throw new Error("Handlerbars Helper " +
-                    "'isAboveMinLength' expects exactly 2 parameter.");
+                throw new Error('Handlerbars Helper ' +
+                    '\'isAboveMinLength\' expects exactly 2 parameter.');
             }
             // do our logic and return options functions appropriately.
             if (target.length > minValue) {

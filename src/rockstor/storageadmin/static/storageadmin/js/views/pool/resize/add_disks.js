@@ -28,7 +28,7 @@
 PoolAddDisks = RockstorWizardPage.extend({
 
     events: {
-        "click #checkAll": "selectAllCheckboxes",
+        'click #checkAll': 'selectAllCheckboxes',
         'click [class="diskname"]': 'clickCheckbox',
     },
 
@@ -74,15 +74,15 @@ PoolAddDisks = RockstorWizardPage.extend({
     },
 
     selectAllCheckboxes: function (event) {
-        $("#checkAll").change(function () {
-            $("input:checkbox").prop('checked', $(this).prop("checked"));
-            $("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
+        $('#checkAll').change(function () {
+            $('input:checkbox').prop('checked', $(this).prop('checked'));
+            $('input:checkbox').closest('tr').toggleClass('row-highlight', this.checked);
         });
     },
 
     clickCheckbox: function (event) {
-        $("input:checkbox").change(function () {
-            $(this).closest("tr").toggleClass("row-highlight", this.checked);
+        $('input:checkbox').change(function () {
+            $(this).closest('tr').toggleClass('row-highlight', this.checked);
         });
     },
 
@@ -95,9 +95,9 @@ PoolAddDisks = RockstorWizardPage.extend({
             return $.Deferred().reject();
         }
         var _this = this;
-        var checked = this.$(".diskname:checked").length;
+        var checked = this.$('.diskname:checked').length;
         var diskNames = [];
-        this.$(".diskname:checked").each(function (i) {
+        this.$('.diskname:checked').each(function (i) {
             diskNames.push($(this).val());
         });
         this.model.set('diskNames', diskNames);
@@ -120,7 +120,7 @@ PoolAddDisks = RockstorWizardPage.extend({
             return new Handlebars.SafeString(html);
         });
         
-        Handlebars.registerHelper("mathHelper", function (value, options) {
+        Handlebars.registerHelper('mathHelper', function (value, options) {
             return parseInt(value) + 1;
         });
 
@@ -129,3 +129,4 @@ PoolAddDisks = RockstorWizardPage.extend({
         });
     }
 });
+

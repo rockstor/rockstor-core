@@ -69,23 +69,23 @@ DisksView = RockstorLayoutView.extend({
             container: '#disks-table'
         });        
         //initialize bootstrap switch
-        this.$("[type='checkbox']").bootstrapSwitch();
-        this.$("[type='checkbox']").bootstrapSwitch('onColor', 'success'); //left side text color
-        this.$("[type='checkbox']").bootstrapSwitch('offColor', 'danger'); //right side text color
+        this.$('[type=\'checkbox\']').bootstrapSwitch();
+        this.$('[type=\'checkbox\']').bootstrapSwitch('onColor', 'success'); //left side text color
+        this.$('[type=\'checkbox\']').bootstrapSwitch('offColor', 'danger'); //right side text color
         
         
       //added ext func to sort over SMART input checkboxes
         $.fn.dataTable.ext.order['dom-checkbox'] = function ( settings, col ) {
             return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
                 return $('input', td).prop('checked') ? '1' : '0';
-                });
-        }
+            });
+        };
         //Added columns definition for sorting purpose
         $('table.data-table').DataTable({
             'iDisplayLength': 15,
             'aLengthMenu': [[15, 30, 45, -1], [15, 30, 45, 'All']],
             'columns': [
-            null,null,null,null,null,null,null,null,null,
+                null,null,null,null,null,null,null,null,null,
             { 'orderDataType': 'dom-checkbox' }
             ]
         });
@@ -210,7 +210,7 @@ DisksView = RockstorLayoutView.extend({
     },
 
     cleanup: function () {
-        this.$("[rel='tooltip']").tooltip('hide');
+        this.$('[rel=\'tooltip\']').tooltip('hide');
     },
 
     initHandlebarHelpers: function () {
@@ -445,3 +445,4 @@ DisksView = RockstorLayoutView.extend({
         });
     }
 });
+

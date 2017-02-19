@@ -25,304 +25,316 @@
  */
 SnapshotsView = SnapshotsCommonView.extend({
     events: {
-	"click #js-snapshot-add": "add",
-	"click #js-snapshot-cancel": "cancel",
-	"click .js-snapshot-delete": "deleteSnapshot",
-	"click .js-snapshot-clone": "cloneSnapshot",
-	"click .js-snapshot-select": "selectSnapshot",
-	"click .js-snapshot-select-all": "selectAllSnapshots",
-	"click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
+        'click #js-snapshot-add': 'add',
+        'click #js-snapshot-cancel': 'cancel',
+        'click .js-snapshot-delete': 'deleteSnapshot',
+        'click .js-snapshot-clone': 'cloneSnapshot',
+        'click .js-snapshot-select': 'selectSnapshot',
+        'click .js-snapshot-select-all': 'selectAllSnapshots',
+        'click #js-snapshot-delete-multiple': 'deleteMultipleSnapshots'
     },
 
     initialize: function() {
-	this.constructor.__super__.initialize.apply(this, arguments);
-	this.template = window.JST.share_snapshots;
-	this.addTemplate = window.JST.share_snapshot_add_template;
-	this.module_name = 'snapshots';
-	this.snapshots = this.options.snapshots;
-	this.collection = new SnapshotsCollection();
-	this.shares = new ShareCollection();
-	this.dependencies.push(this.shares);
-	this.dependencies.push(this.collection);
-	this.selectedSnapshots = [];
-	this.replicaShareMap = {};
-	this.snapShares = [];
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.template = window.JST.share_snapshots;
+        this.addTemplate = window.JST.share_snapshot_add_template;
+        this.module_name = 'snapshots';
+        this.snapshots = this.options.snapshots;
+        this.collection = new SnapshotsCollection();
+        this.shares = new ShareCollection();
+        this.dependencies.push(this.shares);
+        this.dependencies.push(this.collection);
+        this.selectedSnapshots = [];
+        this.replicaShareMap = {};
+        this.snapShares = [];
 
-	this.modify_choices = [
-	    {name: 'yes', value: 'yes'},
-	    {name: 'no', value: 'no'},
-	];
-	this.parentView = this.options.parentView;
-	this.collection.on("reset", this.renderSnapshots, this);
-	this.initHandlebarHelpers();
+        this.modify_choices = [{
+            name: 'yes',
+            value: 'yes'
+        },
+        {
+            name: 'no',
+            value: 'no'
+        },
+        ];
+        this.parentView = this.options.parentView;
+        this.collection.on('reset', this.renderSnapshots, this);
+        this.initHandlebarHelpers();
     },
 
     render: function() {
-	this.fetch(this.renderSnapshots, this);
-	return this;
+        this.fetch(this.renderSnapshots, this);
+        return this;
     },
 
 
     renderSnapshots: function() {
-	var _this = this;
-	$(this.el).empty();
+        var _this = this;
+        $(this.el).empty();
 
-	var snapshots = _this.collection.toJSON();
-	for(var i = 0; i < snapshots.length; i++){
-	    var shareMatch = _this.shares.find(function(share){
-		return share.get('id') == snapshots[i].share;
-	    });
-	    snapshots[i].share = shareMatch.get('name');
-	}
-	$(this.el).append(_this.template({
-	    snapshots: snapshots,
-	    snapshotsNotEmpty: !_this.collection.isEmpty(),
-	    collection: _this.collection,
-	}));
+        var snapshots = _this.collection.toJSON();
+        for (var i = 0; i < snapshots.length; i++) {
+            var shareMatch = _this.shares.find(function(share) {
+                return share.get('id') == snapshots[i].share;
+            });
+            snapshots[i].share = shareMatch.get('name');
+        }
+        $(this.el).append(_this.template({
+            snapshots: snapshots,
+            snapshotsNotEmpty: !_this.collection.isEmpty(),
+            collection: _this.collection,
+        }));
 
-	this.$('[rel=tooltip]').tooltip({
-	    placement: 'bottom'
-	});
+        this.$('[rel=tooltip]').tooltip({
+            placement: 'bottom'
+        });
 
-	this.renderDataTables();
+        this.renderDataTables();
 
-	return this;
+        return this;
     },
 
     setShareName: function(shareName) {
-	this.collection.setUrl(shareName);
+        this.collection.setUrl(shareName);
     },
 
     add: function(event) {
-	var _this = this;
-	event.preventDefault();
-	$(this.el).html(this.addTemplate({
-	    snapshots: this.collection,
-	}));
-	this.$('#shares').chosen();
-	var err_msg = '';
-	var name_err_msg = function() {
-	    return err_msg;
-	}
+        var _this = this;
+        event.preventDefault();
+        $(this.el).html(this.addTemplate({
+            snapshots: this.collection,
+        }));
+        this.$('#shares').chosen();
+        var err_msg = '';
+        var name_err_msg = function() {
+            return err_msg;
+        };
 
-	$.validator.addMethod('validateSnapshotName', function(value) {
-	    var snapshot_name = $('#snapshot_name').val();
-	    if (/^[A-Za-z0-9_.-]+$/.test(snapshot_name) == false) {
-		err_msg = 'Please enter a valid snapshot name.';
-		return false;
-	    }
-	    return true;
-	}, name_err_msg);
+        $.validator.addMethod('validateSnapshotName', function(value) {
+            var snapshot_name = $('#snapshot_name').val();
+            if (/^[A-Za-z0-9_.-]+$/.test(snapshot_name) == false) {
+                err_msg = 'Please enter a valid snapshot name.';
+                return false;
+            }
+            return true;
+        }, name_err_msg);
 
-	this.$('#add-snapshot-form :input').tooltip({placement: 'right'});
-	this.validator = this.$('#add-snapshot-form').validate({
-	    onfocusout: false,
-	    onkeyup: false,
-	    rules: {
-		snapshot_name: 'validateSnapshotName',
-		shares: 'required'
-	    },
-	    submitHandler: function() {
-		var button = _this.$('#js-snapshot-save');
-		var shareName = $("#shares").val();
-		if (buttonDisabled(button)) return false;
-		disableButton(button);
-		$.ajax({
-		    url: "/api/shares/" + shareName+ "/snapshots/" + _this.$('#snapshot_name').val(),
-		    type: "POST",
-		    dataType: "json",
-		    contentType: 'application/json',
-		    data: JSON.stringify(_this.$('#add-snapshot-form').getJSON()),
-		    success: function() {
-			_this.$('#add-snapshot-form :input').tooltip('hide');
-			enableButton(button);
-			_this.collection.fetch({
-			    success: function(collection, response, options) {
-			    }
-			});
-		    },
-		    error: function(xhr, status, error) {
-			_this.$('#add-snapshot-form :input').tooltip('hide');
-			enableButton(button);
-		    }
-		});
+        this.$('#add-snapshot-form :input').tooltip({
+            placement: 'right'
+        });
+        this.validator = this.$('#add-snapshot-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+                snapshot_name: 'validateSnapshotName',
+                shares: 'required'
+            },
+            submitHandler: function() {
+                var button = _this.$('#js-snapshot-save');
+                var shareName = $('#shares').val();
+                if (buttonDisabled(button)) return false;
+                disableButton(button);
+                $.ajax({
+                    url: '/api/shares/' + shareName + '/snapshots/' + _this.$('#snapshot_name').val(),
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify(_this.$('#add-snapshot-form').getJSON()),
+                    success: function() {
+                        _this.$('#add-snapshot-form :input').tooltip('hide');
+                        enableButton(button);
+                        _this.collection.fetch({
+                            success: function(collection, response, options) {}
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        _this.$('#add-snapshot-form :input').tooltip('hide');
+                        enableButton(button);
+                    }
+                });
 
-		return false;
-	    }
-	});
+                return false;
+            }
+        });
     },
 
     deleteSnapshot: function(event) {
-	event.preventDefault();
-	var _this = this;
-	var name = $(event.currentTarget).attr('data-name');
-	var shareName = $(event.currentTarget).attr('data-share-name');
-	var esize = $(event.currentTarget).attr('data-size');
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	if(confirm("Deleting snapshot("+ name +") deletes "+ esize +" of data permanently. Do you really want to delete it?")){
-	    disableButton(button);
-	    $.ajax({
-		url: "/api/shares/" + shareName + "/snapshots/" + name,
-		type: "DELETE",
-		success: function() {
-		    enableButton(button)
-		    _this.$('[rel=tooltip]').tooltip('hide');
-		    _this.selectedSnapshots = [];
-		    _this.collection.fetch({reset: true});
+        event.preventDefault();
+        var _this = this;
+        var name = $(event.currentTarget).attr('data-name');
+        var shareName = $(event.currentTarget).attr('data-share-name');
+        var esize = $(event.currentTarget).attr('data-size');
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        if (confirm('Deleting snapshot(' + name + ') deletes ' + esize + ' of data permanently. Do you really want to delete it?')) {
+            disableButton(button);
+            $.ajax({
+                url: '/api/shares/' + shareName + '/snapshots/' + name,
+                type: 'DELETE',
+                success: function() {
+                    enableButton(button);
+                    _this.$('[rel=tooltip]').tooltip('hide');
+                    _this.selectedSnapshots = [];
+                    _this.collection.fetch({
+                        reset: true
+                    });
 
-		},
-		error: function(xhr, status, error) {
-		    enableButton(button);
-		    _this.$('[rel=tooltip]').tooltip('hide');
-		}
-	    });
-	}
+                },
+                error: function(xhr, status, error) {
+                    enableButton(button);
+                    _this.$('[rel=tooltip]').tooltip('hide');
+                }
+            });
+        }
     },
 
     cloneSnapshot: function(event) {
-	if (event) event.preventDefault();
-	// Remove current tooltips to prevent them hanging around
-	// even after new page has loaded.
-	this.$('[rel=tooltip]').tooltip('hide');
-	var name = $(event.currentTarget).attr('data-name');
-	var shareName = $(event.currentTarget).attr('data-share-name');
-	var url = 'shares/' + shareName + '/snapshots/' +
-	    name + '/create-clone';
-	app_router.navigate(url, {trigger: true});
+        if (event) event.preventDefault();
+        // Remove current tooltips to prevent them hanging around
+        // even after new page has loaded.
+        this.$('[rel=tooltip]').tooltip('hide');
+        var name = $(event.currentTarget).attr('data-name');
+        var shareName = $(event.currentTarget).attr('data-share-name');
+        var url = 'shares/' + shareName + '/snapshots/' +
+            name + '/create-clone';
+        app_router.navigate(url, {
+            trigger: true
+        });
 
     },
 
     deleteMultipleSnapshots: function(event) {
-	var _this = this;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	if (this.selectedSnapshots.length == 0) {
-	    alert('Select at least one snapshot to delete');
-	} else {
-	    var confirmMsg = null;
-	    if (this.selectedSnapshots.length == 1) {
-		confirmMsg = 'Deleting snapshot ';
-	    } else {
-		confirmMsg = 'Deleting snapshots ';
-	    }
-	    var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
-		return str + snap.get('name') + ',';
-	    }, '', this);
-	    snapNames = snapNames.slice(0, snapNames.length-1);
+        var _this = this;
+        event.preventDefault();
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        if (this.selectedSnapshots.length == 0) {
+            alert('Select at least one snapshot to delete');
+        } else {
+            var confirmMsg = null;
+            if (this.selectedSnapshots.length == 1) {
+                confirmMsg = 'Deleting snapshot ';
+            } else {
+                confirmMsg = 'Deleting snapshots ';
+            }
+            var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
+                return str + snap.get('name') + ',';
+            }, '', this);
+            snapNames = snapNames.slice(0, snapNames.length - 1);
 
-	    var snapIds = _.reduce(this.selectedSnapshots, function(str, snap) {
-		return str + snap.id + ',';
-	    }, '', this);
-	    snapIds = snapIds.slice(0, snapIds.length-1);
+            var snapIds = _.reduce(this.selectedSnapshots, function(str, snap) {
+                return str + snap.id + ',';
+            }, '', this);
+            snapIds = snapIds.slice(0, snapIds.length - 1);
 
-	    var totalSize = _.reduce(this.selectedSnapshots, function(sum, snap) {
-		return sum + snap.get('eusage');
-	    }, 0, this);
+            var totalSize = _.reduce(this.selectedSnapshots, function(sum, snap) {
+                return sum + snap.get('eusage');
+            }, 0, this);
 
-	    var totalSizeStr = humanize.filesize(totalSize*1024);
+            var totalSizeStr = humanize.filesize(totalSize * 1024);
 
-	    if (confirm(confirmMsg + snapNames + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
-		disableButton(button);
+            if (confirm(confirmMsg + snapNames + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
+                disableButton(button);
 
-		_.each(this.selectedSnapshots, function(s) {
-		    var name = s.get('name');
+                _.each(this.selectedSnapshots, function(s) {
+                    var name = s.get('name');
 
-		    _this.shares.each(function(share, index) {
-			if(s.get('share')== share.get('id')){
-			    var shareName = share.get('name');
-			    $.ajax({
-				url: "/api/shares/" + shareName + "/snapshots/" + name,
-				type: "DELETE",
-				success: function() {
-				    enableButton(button)
-				    _this.$('[rel=tooltip]').tooltip('hide');
-				    _this.selectedSnapshots = [];
-				    _this.collection.fetch({reset: true});
+                    _this.shares.each(function(share, index) {
+                        if (s.get('share') == share.get('id')) {
+                            var shareName = share.get('name');
+                            $.ajax({
+                                url: '/api/shares/' + shareName + '/snapshots/' + name,
+                                type: 'DELETE',
+                                success: function() {
+                                    enableButton(button);
+                                    _this.$('[rel=tooltip]').tooltip('hide');
+                                    _this.selectedSnapshots = [];
+                                    _this.collection.fetch({
+                                        reset: true
+                                    });
 
-				},
-				error: function(xhr, status, error) {
-				    enableButton(button)
-				    _this.$('[rel=tooltip]').tooltip('hide');
-				}
-			    });
+                                },
+                                error: function(xhr, status, error) {
+                                    enableButton(button);
+                                    _this.$('[rel=tooltip]').tooltip('hide');
+                                }
+                            });
 
-			}
-		    });
-		});
-	    }
+                        }
+                    });
+                });
+            }
 
-	}
+        }
     },
 
     selectedContains: function(name) {
-	return _.find(this.selectedSnapshots, function(snap) {
-	    return snap.get('name') == name;
-	});
+        return _.find(this.selectedSnapshots, function(snap) {
+            return snap.get('name') == name;
+        });
     },
 
     addToSelected: function(name) {
-	this.selectedSnapshots.push(this.collection.find(function(snap) {
-	    return snap.get('name') == name;
-	}));
+        this.selectedSnapshots.push(this.collection.find(function(snap) {
+            return snap.get('name') == name;
+        }));
     },
 
     removeFromSelected: function(name) {
-	var i = _.indexOf(_.map(this.selectedSnapshots, function(snap) {
-	    return snap.get('name');
-	}), name);
-	this.selectedSnapshots.splice(i,1);
+        var i = _.indexOf(_.map(this.selectedSnapshots, function(snap) {
+            return snap.get('name');
+        }), name);
+        this.selectedSnapshots.splice(i, 1);
     },
 
     cancel: function(event) {
-	event.preventDefault();
-	this.render();
+        event.preventDefault();
+        this.render();
     },
 
-    initHandlebarHelpers: function(){
-	var _this = this;
-	Handlebars.registerHelper('checkboxValue', function(snapName){
-	    var html = '';
-	    if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) {
-		html += 'checked="checked"';
-	    } else {
-		html += '';
-	    }
-	    return new Handlebars.SafeString(html);
-	});
+    initHandlebarHelpers: function() {
+        var _this = this;
+        Handlebars.registerHelper('checkboxValue', function(snapName) {
+            var html = '';
+            if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) {
+                html += 'checked="checked"';
+            } else {
+                html += '';
+            }
+            return new Handlebars.SafeString(html);
+        });
 
-	Handlebars.registerHelper('getToc', function(toc){
-	    return moment(toc).format(RS_DATE_FORMAT);
-	});
+        Handlebars.registerHelper('getToc', function(toc) {
+            return moment(toc).format(RS_DATE_FORMAT);
+        });
 
-	Handlebars.registerHelper('getSize', function(size){
-	    return humanize.filesize(size * 1024);
-	});
+        Handlebars.registerHelper('getSize', function(size) {
+            return humanize.filesize(size * 1024);
+        });
 
-	//Create Snapshot Template Helpers
-	Handlebars.registerHelper('show_shares_dropdown', function() {
-	    var html = '';
-	    _this.shares.each( function(share, index) {
-		var shareName = share.get('name');
-		html += '<option value="' + shareName + '">' + shareName + '</option>';
-	    });
-	    return new Handlebars.SafeString(html);
-	});
+        //Create Snapshot Template Helpers
+        Handlebars.registerHelper('show_shares_dropdown', function() {
+            var html = '';
+            _this.shares.each(function(share, index) {
+                var shareName = share.get('name');
+                html += '<option value="' + shareName + '">' + shareName + '</option>';
+            });
+            return new Handlebars.SafeString(html);
+        });
 
-	Handlebars.registerHelper('display_writeable_options', function() {
-	    var html = '';
-	    _.each(_this.modify_choices, function(c) {
-		html += '<label class="radio-inline">';
-		if(c.value == 'yes'){
-		    html += '<input type="radio" name="writable" value="rw" checked>' + c.name;
-		}else{
-		    html += '<input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" >' + c.name;
-		}
-		html += '</label>';
-	    });
-	    return new Handlebars.SafeString(html);
-	});
+        Handlebars.registerHelper('display_writeable_options', function() {
+            var html = '';
+            _.each(_this.modify_choices, function(c) {
+                html += '<label class="radio-inline">';
+                if (c.value == 'yes') {
+                    html += '<input type="radio" name="writable" value="rw" checked>' + c.name;
+                } else {
+                    html += '<input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" >' + c.name;
+                }
+                html += '</label>';
+            });
+            return new Handlebars.SafeString(html);
+        });
 
     }
 });

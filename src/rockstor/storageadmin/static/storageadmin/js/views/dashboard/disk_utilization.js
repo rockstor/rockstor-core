@@ -53,8 +53,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         this.dataLength = 300;
         this.Disksfields = ['ms_ios', 'sectors_written', 'writes_completed', 'ms_writing', 'ms_reading', 'reads_completed', 'sectors_read'];
         this.Diskslabels = ['ms on I/Os', 'kB written', 'Writes', 'ms writing', 'ms reading', 'Reads', 'kB read'];
-        this.TopDiskscolors = ['242, 0, 0', '36, 229, 84', '41, 108, 232', '232, 200, 41', '146, 41, 232']
-        this.SingleDiskcolors = ['7, 233, 7', '21, 124, 217', '255, 184, 7', '255, 25, 7']
+        this.TopDiskscolors = ['242, 0, 0', '36, 229, 84', '41, 108, 232', '232, 200, 41', '146, 41, 232'];
+        this.SingleDiskcolors = ['7, 233, 7', '21, 124, 217', '255, 184, 7', '255, 25, 7'];
 
         // disks data is a map of diskname to array of values of length
         // dataLength
@@ -170,7 +170,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 borderColor: 'rgba(' + this.SingleDiskcolors[3] + ', 1)',
                 data: []
             }]
-        }
+        };
 
         this.TopDisksChart = null;
         this.TopDisksChartOptions = {
@@ -258,7 +258,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 _this.selectedDisk = _this.$('#disk-select').val();
             });
         } else {
-            this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
+            this.$('#disk-details-ph').html('<a href="#" class="resize-widget">Expand</a> for details');
         }
 
     },
@@ -308,7 +308,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                     pointHoverBorderColor: 'rgba(' + _this.TopDiskscolors[disk_index] + ', 1)',
                     data: [0, 0, 0, 0, 0, 0, 0]
                 };
-                _this.TopDisksChartData.datasets.push(dataset);                
+                _this.TopDisksChartData.datasets.push(dataset);
             }
         } else {
             _this.TopDisksChartData.datasets = _this.TopDisksChartData.datasets.slice(0, num_disks);
@@ -425,12 +425,18 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                 }
                 singledisklabels.push(label);
             }
-            var msios = _.reduce(singlediskdata.ms_ios, function(s, n){ return s + n; }, 0)/singlediskdata.ms_ios.length;
-            var msw = _.reduce(singlediskdata.ms_writing, function(s, n){ return s + n; }, 0)/singlediskdata.ms_writing.length;
-            var msr = _.reduce(singlediskdata.ms_reading, function(s, n){ return s + n; }, 0)/singlediskdata.ms_reading.length;
+            var msios = _.reduce(singlediskdata.ms_ios, function(s, n) {
+                return s + n;
+            }, 0) / singlediskdata.ms_ios.length;
+            var msw = _.reduce(singlediskdata.ms_writing, function(s, n) {
+                return s + n;
+            }, 0) / singlediskdata.ms_writing.length;
+            var msr = _.reduce(singlediskdata.ms_reading, function(s, n) {
+                return s + n;
+            }, 0) / singlediskdata.ms_reading.length;
             var title = ': Avg I/Os: ' + msios.toFixed(2) + 'ms - ';
-            title +='Avg writing: ' + msw.toFixed(2) + 'ms - ';
-            title +='Avg reading: ' + msr.toFixed(2) + 'ms :';
+            title += 'Avg writing: ' + msw.toFixed(2) + 'ms - ';
+            title += 'Avg reading: ' + msr.toFixed(2) + 'ms :';
             delete singlediskdata.ms_ios;
             delete singlediskdata.ms_writing;
             delete singlediskdata.ms_reading;
@@ -475,7 +481,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
                     }
                 });
             }
-            var local_topdisks = []
+            var local_topdisks = [];
             _.each(selected_top, function(disk) {
                 _.each(tmp, function(d) {
                     if (d.name == disk) local_topdisks.push(d);
@@ -501,18 +507,18 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     genEmptyDiskData: function() {
         // empty disk data
         return {
-            "reads_completed": 0,
-            "reads_merged": 0,
-            "sectors_read": 0,
-            "ms_reading": 0,
-            "writes_completed": 0,
-            "writes_merged": 0,
-            "sectors_written": 0,
-            "ms_writing": 0,
-            "ios_progress": 0,
-            "ms_ios": 0,
-            "weighted_ios": 0,
-            "ts": ''
+            'reads_completed': 0,
+            'reads_merged': 0,
+            'sectors_read': 0,
+            'ms_reading': 0,
+            'writes_completed': 0,
+            'writes_merged': 0,
+            'sectors_written': 0,
+            'ms_writing': 0,
+            'ios_progress': 0,
+            'ms_ios': 0,
+            'weighted_ios': 0,
+            'ts': ''
         };
     },
 
@@ -535,12 +541,12 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
             this.$('#top-disks-container').css('width', '60%');
             this.$('#single-disk-chart').css('width', '100%');
             this.$('#single-disk-chart').css('height', '100%');
-            this.$('#single-disk-chart').width =  this.$('#single-disk-chart').offsetWidth;
-            this.$('#single-disk-chart').height =  this.$('#single-disk-chart').offsetHeight;
+            this.$('#single-disk-chart').width = this.$('#single-disk-chart').offsetWidth;
+            this.$('#single-disk-chart').height = this.$('#single-disk-chart').offsetHeight;
         } else {
             this.$('#top-disks-container').css('width', '70%');
             _this.SingleDiskgraphRendered = false;
-            this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
+            this.$('#disk-details-ph').html('<a href="#" class="resize-widget">Expand</a> for details');
         }
         _this.resizeTopDisksData();
         _this.TopDisksChart.resize();

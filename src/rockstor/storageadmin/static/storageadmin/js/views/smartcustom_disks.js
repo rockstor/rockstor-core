@@ -29,7 +29,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         'click #cancel': 'cancel'
     },
 
-    initialize: function () {
+    initialize: function() {
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_smartcustom_disks;
         this.disks = new DiskCollection();
@@ -37,21 +37,21 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         this.dependencies.push(this.disks);
     },
 
-    render: function () {
+    render: function() {
         this.fetch(this.renderDisksForm, this);
         return this;
     },
 
-    renderDisksForm: function () {
+    renderDisksForm: function() {
         if (this.$('[rel=tooltip]')) {
-            this.$("[rel=tooltip]").tooltip('hide');
+            this.$('[rel=tooltip]').tooltip('hide');
         }
         var _this = this;
         var disk_name = this.diskName;
-        var serialNumber = this.disks.find(function (d) {
+        var serialNumber = this.disks.find(function(d) {
             return (d.get('name') == disk_name);
         }).get('serial');
-        var currentSmartCustom = this.disks.find(function (d) {
+        var currentSmartCustom = this.disks.find(function(d) {
             return (d.get('name') == disk_name);
         }).get('smart_options');
 
@@ -67,15 +67,15 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         });
 
         var err_msg = '';
-        var smartcustom_err_msg = function () {
+        var smartcustom_err_msg = function() {
             return err_msg;
         };
 
-        $.validator.addMethod('validateSmartCustom', function (value) {
+        $.validator.addMethod('validateSmartCustom', function(value) {
             var smartcustom_options = $('#smartcustom_options').val().trim();
-            var devOptions = ["auto", "test", "ata", "scsi", "sat", "sat,12", "sat,16", "sat,auto", "usbprolific", "usbjmicron", "usbjmicron,0", "usbjmicron,p", "usbjmicron,x", "usbjmicron,x,1", "usbcypress", "usbsunplus"];
-            var devOptionsRaid = ["3ware", "areca", "hpt", "cciss", "megaraid", "aacraid"];
-            var toleranceOptions = ["normal", "conservative", "permissive", "verypermissive"];
+            var devOptions = ['auto', 'test', 'ata', 'scsi', 'sat', 'sat,12', 'sat,16', 'sat,auto', 'usbprolific', 'usbjmicron', 'usbjmicron,0', 'usbjmicron,p', 'usbjmicron,x', 'usbjmicron,x,1', 'usbcypress', 'usbsunplus'];
+            var devOptionsRaid = ['3ware', 'areca', 'hpt', 'cciss', 'megaraid', 'aacraid'];
+            var toleranceOptions = ['normal', 'conservative', 'permissive', 'verypermissive'];
             // RegExp patters for the following RAID target devices:
             // 3ware /dev/twe, /dev/twa, /dev/twl followed by 0-15
             // Areca sata /dev/sg[2-9] but for hpahcisr and hpsa drivers /dev/sg[0-9]* (lsscsi -g to help)
@@ -91,7 +91,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                 err_msg = 'Invalid character found, expecting only letters, numbers, and \'-\',\'/\' and \'space.\'';
                 return false;
             }
-            if ((!smartcustom_options.includes("-d ")) && (!smartcustom_options.includes("-T "))) {
+            if ((!smartcustom_options.includes('-d ')) && (!smartcustom_options.includes('-T '))) {
                 err_msg = 'Must contain either -d or -T options or both.';
                 return false;
             }
@@ -104,27 +104,27 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             // Move to repeat and semantic checks
             //
             // Check for only one instance of "-d ".
-            var first_d_option = smartcustom_options.indexOf("-d ");
-            if (first_d_option != -1 && smartcustom_options.lastIndexOf("-d") != first_d_option) {
+            var first_d_option = smartcustom_options.indexOf('-d ');
+            if (first_d_option != -1 && smartcustom_options.lastIndexOf('-d') != first_d_option) {
                 err_msg = 'Only one occurrence of the -d switch is permitted.';
                 return false;
             }
             // Note that multiple instances of -T are valid.
             // Validate each option.
             // Find elements of given options via split by space.
-            var option_array = smartcustom_options.split(" ");
-            if ((option_array[0] != "-d") && (option_array[0] != "-T")) {
+            var option_array = smartcustom_options.split(' ');
+            if ((option_array[0] != '-d') && (option_array[0] != '-T')) {
                 err_msg = 'Please begin with either \'-d \' or \'-T \'';
                 return false;
             }
             // true if option is Device switch "-d"
             function isDevSwitch(option) {
-                return (option == "-d");
+                return (option == '-d');
             }
 
             // true if option is Tolerance switch ie "-T"
             function isToleranceSwitch(option) {
-                return (option == "-T");
+                return (option == '-T');
             }
 
             // true if not recognized as a dev option (non Raid)
@@ -141,7 +141,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             // Consider improving to use string.match(regexp) to match whole option.
             // Currently only validates pre ',' in for example 3ware,5
             function isNotRaidOption(option) {
-                var without_values = option.substring(0, option.indexOf(","));
+                var without_values = option.substring(0, option.indexOf(','));
                 return (devOptionsRaid.indexOf(without_values) == -1);
             }
 
@@ -163,7 +163,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
 
             // rogue spaces are empty array elements after split so test for them
             function isRogueSpace(option) {
-                return (option.toString() == "");
+                return (option.toString() == '');
             }
 
             // test for any rogue spaces
@@ -179,23 +179,23 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             var unknown_switches_found = [];
             var dev_switch_found = false;
             var tol_switch_found = false;
-            option_array.forEach(function (option) {
+            option_array.forEach(function(option) {
                 // filter our various options before assessing them as valid.
-                if (option.charAt(0) == "-") { // option is a switch
+                if (option.charAt(0) == '-') { // option is a switch
                     if (isDevSwitch(option)) {
-                        option_type = "dev";
+                        option_type = 'dev';
                         dev_switch_found = true;
                     } else if (isToleranceSwitch(option)) {
-                        option_type = "tol";
+                        option_type = 'tol';
                         tol_switch_found = true;
                     } else { // unknown switch
-                        option_type = "unknown";
+                        option_type = 'unknown';
                         unknown_switches_found.push(option);
                     }
-                } else if (option_type == "dev") {
+                } else if (option_type == 'dev') {
                     // collect all options proceeded by a -d option
                     dev_options_found.push(option);
-                } else if (option_type == "tol") {
+                } else if (option_type == 'tol') {
                     // collect all options proceeded by a -T option
                     tol_options_found.push(option);
                 } else {
@@ -204,7 +204,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                 }
             });
             // Report any unknown switches.
-            if (unknown_switches_found != "") {
+            if (unknown_switches_found != '') {
                 err_msg = 'One or more unknown switches found: \'' + unknown_switches_found.toString() + '\', supported switches are \'-d\' and \'-T\'';
                 return false;
             }
@@ -212,7 +212,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             // Note this should never trigger as the last unknown_switches_found
             // should trigger first. We have a later one to catch unknown options
             // after known triggers.
-            if (unknown_options_found != "") {
+            if (unknown_options_found != '') {
                 err_msg = 'The following options of an unknown type were entered:' +
                     ' \'' + unknown_options_found.toString() + '\', supported ' +
                     'options are ' + devOptions.toString() + '\n' +
@@ -223,14 +223,14 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             // Filter our dev options first by absolute known / allowed options
             // filter the resulting array by the less strict known raid options
             var unknown_dev_options_found = dev_options_found.filter(isNotDevOption).filter(isNotRaidOption).filter(isNotRaidTarget);
-            if (unknown_dev_options_found != "") {
+            if (unknown_dev_options_found != '') {
                 err_msg = 'The following unknown \'-d\' options were found \'' +
                     unknown_dev_options_found.toString() + '\'';
                 return false;
             }
             // Filter out unknown Tolerance options
             var unknown_tol_options_found = tol_options_found.filter(isNotToleranceOption);
-            if (unknown_tol_options_found != "") {
+            if (unknown_tol_options_found != '') {
                 err_msg = 'The following unknown \'-T\' options were found \'' +
                     unknown_tol_options_found.toString() + '\'. Available options' +
                     ' are ' + toleranceOptions.toString();
@@ -248,7 +248,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                 if (dev_options_found.length == 2) {
                     if ((!isNotRaidOption(dev_options_found[0])) && (!isNotRaidTarget(dev_options_found[1]))) {
                         // we have a raid option followed by a raid target dev
-                        return true
+                        return true;
                     }
                 }
                 err_msg = 'Only one \'-d\' option is supported';
@@ -265,7 +265,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                 smartcustom_options: 'validateSmartCustom',
             },
 
-            submitHandler: function () {
+            submitHandler: function() {
                 var button = $('#smartcustom-disk');
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
@@ -277,13 +277,15 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                     dataType: 'json',
                     contentType: 'application/json',
                     data: JSON.stringify(_this.$('#add-smartcustom-disk-form').getJSON()),
-                    success: function () {
+                    success: function() {
                         enableButton(button);
                         _this.$('#add-smartcustom-disk-form :input').tooltip('hide');
-                        app_router.navigate('disks', {trigger: true});
+                        app_router.navigate('disks', {
+                            trigger: true
+                        });
                     },
 
-                    error: function (xhr, status, error) {
+                    error: function(xhr, status, error) {
                         enableButton(button);
                     }
                 });
@@ -293,10 +295,12 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         });
     },
 
-    cancel: function (event) {
+    cancel: function(event) {
         event.preventDefault();
         this.$('#add-smartcustom-disk-form :input').tooltip('hide');
-        app_router.navigate('disks', {trigger: true});
+        app_router.navigate('disks', {
+            trigger: true
+        });
     }
 
 });

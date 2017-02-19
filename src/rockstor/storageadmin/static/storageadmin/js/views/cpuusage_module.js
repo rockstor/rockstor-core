@@ -25,55 +25,54 @@
  */
 
 CpuUsageModule = RockstorModuleView.extend({
-  
-  initialize: function() {
-    this.template = window.JST.home_cpuusage;
-    this.module_name = 'cpuusage';
-  },
-  render: function() {
-    var _this = this;
-    $(this.el).html(this.template({ 
-      module_name: this.module_name 
-    }));
-   
-    // display cpu graph 
-    var w = 300; // width
-    var h = 200; // height
-    var padding = 30;
-    var id = "#cpuusage";
-    /*
-    var graph = d3.select(this.el).select(id).append("svg:svg")
-    .attr("width", w)
-    .attr("height", h);
-    */
-    var elem = this.$(id)[0];
-    var max_y = 100;
-    var padding = 30;
-    var xscale = d3.scale.linear().domain([0, 120]).range([padding, w]); 
-    var yscale = d3.scale.linear().domain([0, 100]).range([0, h-padding]);
-    var xdiff = xscale(1) - xscale(0);
 
-    var initial = true; 
-    var cpu_data = null; 
-    displayGraph(elem, w, h, padding, cpu_data, xscale, yscale, 1000, 1000);
+    initialize: function() {
+        this.template = window.JST.home_cpuusage;
+        this.module_name = 'cpuusage';
+    },
+    render: function() {
+        var _this = this;
+        $(this.el).html(this.template({
+            module_name: this.module_name
+        }));
 
-    /*
-    RockStorSocket.addListener(function(cpu_data) {
-      if (!_.isNull(cpu_data)) {
-        if (initial) {
-          displayGraph(elem, w, h, padding, cpu_data, 
-          xscale, yscale, 1000, 1000);
-          initial = false;
+        // display cpu graph 
+        var w = 300; // width
+        var h = 200; // height
+        var padding = 30;
+        var id = '#cpuusage';
+        /*
+        var graph = d3.select(this.el).select(id).append("svg:svg")
+        .attr("width", w)
+        .attr("height", h);
+        */
+        var elem = this.$(id)[0];
+        var max_y = 100;
+        var xscale = d3.scale.linear().domain([0, 120]).range([padding, w]);
+        var yscale = d3.scale.linear().domain([0, 100]).range([0, h - padding]);
+        var xdiff = xscale(1) - xscale(0);
 
-        } else {
-          redrawWithAnimation(elem, 
-          cpu_data, w, h, padding, xscale, yscale, xdiff);
+        var initial = true;
+        var cpu_data = null;
+        displayGraph(elem, w, h, padding, cpu_data, xscale, yscale, 1000, 1000);
 
-        }
-      }
-    }, this, 'cpu_util');
-    */
-    return this;
-  }
+        /*
+        RockStorSocket.addListener(function(cpu_data) {
+          if (!_.isNull(cpu_data)) {
+            if (initial) {
+              displayGraph(elem, w, h, padding, cpu_data, 
+              xscale, yscale, 1000, 1000);
+              initial = false;
+
+            } else {
+              redrawWithAnimation(elem, 
+              cpu_data, w, h, padding, xscale, yscale, xdiff);
+
+            }
+          }
+        }, this, 'cpu_util');
+        */
+        return this;
+    }
 
 });

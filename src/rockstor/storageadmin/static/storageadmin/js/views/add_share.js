@@ -30,7 +30,7 @@
 
 AddShareView = Backbone.View.extend({
     events: {
-        "click #js-cancel": "cancel"
+        'click #js-cancel': 'cancel'
     },
 
     initialize: function() {
@@ -39,18 +39,18 @@ AddShareView = Backbone.View.extend({
         this.pools.pageSize = RockStorGlobals.maxPageSize;
         this.preSelectedPoolName = this.options.poolName || null;
         this.tickFormatter = function(d) {
-            var formatter = d3.format(",.1f");
+            var formatter = d3.format(',.1f');
             if (d > 1024) {
-                return formatter(d / (1024)) + " TB";
+                return formatter(d / (1024)) + ' TB';
             } else {
-                return formatter(d) + " GB";
+                return formatter(d) + ' GB';
             }
-        }
+        };
         this.slider = null;
         this.sliderCallback = function(slider) {
             var value = slider.value();
             _this.$('#share_size').val(_this.tickFormatter(value));
-        }
+        };
         this.initHandlebarHelpers();
     },
 
@@ -68,7 +68,7 @@ AddShareView = Backbone.View.extend({
                 var err_msg = '';
                 var name_err_msg = function() {
                     return err_msg;
-                }
+                };
 
                 $.validator.addMethod('validateShareName', function(value) {
                     var share_name = $('#share_name').val();
@@ -87,11 +87,11 @@ AddShareView = Backbone.View.extend({
 
 
                 _this.$('#share_size').val(_this.tickFormatter(1));
-                _this.$("#share_size").change(function() {
+                _this.$('#share_size').change(function() {
                     var size = this.value;
                     var size_value = size;
 
-                    var sizeFormat = size.replace(/[^a-z]/gi, "");
+                    var sizeFormat = size.replace(/[^a-z]/gi, '');
                     if (sizeFormat != '') {
                         var size_array = size.split(sizeFormat);
                         size_value = size_array[0];
@@ -116,14 +116,14 @@ AddShareView = Backbone.View.extend({
                 _this.$('#compression').tooltip({
                     html: true,
                     placement: 'right',
-                    title: "Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is applied.<br> If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular Share's compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio lower than zlib"
+                    title: 'Choose a compression algorithm for this Share. By default, parent pool\'s compression algorithm is applied.<br> If you like to set pool wide compression, don\'t choose anything here. If you want finer control of this particular Share\'s compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio lower than zlib'
                 });
 
                 $('#add-share-form').validate({
                     onfocusout: false,
                     onkeyup: false,
                     rules: {
-                        share_name: "validateShareName",
+                        share_name: 'validateShareName',
                         share_size: {
                             required: true
                         },
@@ -140,11 +140,11 @@ AddShareView = Backbone.View.extend({
                             compression = null;
                         }
                         var size = $('#share_size').val();
-                        var sizeFormat = size.replace(/[^a-z]/gi, "");
+                        var sizeFormat = size.replace(/[^a-z]/gi, '');
                         var size_array = size.split(sizeFormat);
-						//New size_value replace commas granting avoid NaN
-						//and use *1 to number conversion instead of Math.Round
-						//to preserve user defined decimals
+                        //New size_value replace commas granting avoid NaN
+                        //and use *1 to number conversion instead of Math.Round
+                        //to preserve user defined decimals
                         var size_value = size_array[0].replace(/,/, '') * 1;
 
                         if (sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
@@ -155,26 +155,26 @@ AddShareView = Backbone.View.extend({
                             size_value = size_value * 1024 * 1024;
                         }
                         $.ajax({
-                            url: "/api/shares",
-                            type: "POST",
-                            dataType: "json",
+                            url: '/api/shares',
+                            type: 'POST',
+                            dataType: 'json',
                             contentType: 'application/json',
                             data: JSON.stringify({
                                 sname: share_name,
-                                "pool": pool_name,
-                                "size": size_value,
-                                "compression": compression,
+                                'pool': pool_name,
+                                'size': size_value,
+                                'compression': compression,
                             }),
                             success: function() {
                                 enableButton(button);
                                 _this.$('#add-share-form :input').tooltip('hide');
                                 app_router.navigate('shares', {
                                     trigger: true
-                                })
+                                });
                             },
                             error: function(xhr, status, error) {
                                 enableButton(button);
-								console.log(error);
+                                console.log(error);
                             },
                         });
                     }
@@ -214,7 +214,7 @@ AddShareView = Backbone.View.extend({
         this.$('#add-share-form :input').tooltip('hide');
         app_router.navigate('shares', {
             trigger: true
-        })
+        });
     },
 
     initHandlebarHelpers: function() {

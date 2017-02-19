@@ -1,4 +1,3 @@
-
 /*
  *
  * @licstart  The following is the entire license notice for the 
@@ -26,74 +25,75 @@
  */
 
 TasksView = RockstorLayoutView.extend({
-	events: {
-	},
+    events: {},
 
-	initialize: function() {
-		// call initialize of base
-		this.constructor.__super__.initialize.apply(this, arguments);
-		// set template
-		this.template = window.JST.scheduled_tasks_tasks;
-		// add dependencies
-		this.taskDefId = this.options.taskDefId;
-		this.taskDef = new TaskDef({id: this.taskDefId});
-		this.dependencies.push(this.taskDef);
-		this.collection = new TaskCollection(null, {
-			taskDefId: this.taskDefId
-		});
-		this.collection.pageSize = 10;
-		this.dependencies.push(this.collection);
-		this.collection.on("reset", this.renderTasks, this);
-		// has the replica been fetched? prevents renderReplicaTrails executing
-		// (because of collection reset) before replica has been fetched
-		this.taskDefFetched = false;  
-		this.initHandlebarHelpers();
-	},
+    initialize: function() {
+        // call initialize of base
+        this.constructor.__super__.initialize.apply(this, arguments);
+        // set template
+        this.template = window.JST.scheduled_tasks_tasks;
+        // add dependencies
+        this.taskDefId = this.options.taskDefId;
+        this.taskDef = new TaskDef({
+            id: this.taskDefId
+        });
+        this.dependencies.push(this.taskDef);
+        this.collection = new TaskCollection(null, {
+            taskDefId: this.taskDefId
+        });
+        this.collection.pageSize = 10;
+        this.dependencies.push(this.collection);
+        this.collection.on('reset', this.renderTasks, this);
+        // has the replica been fetched? prevents renderReplicaTrails executing
+        // (because of collection reset) before replica has been fetched
+        this.taskDefFetched = false;
+        this.initHandlebarHelpers();
+    },
 
-	render: function() {
-		this.fetch(this.firstFetch, this);
-		return this;
-	},
+    render: function() {
+        this.fetch(this.firstFetch, this);
+        return this;
+    },
 
-	firstFetch: function() {
-		this.taskDefFetched = true;
-		this.renderTasks();
-	},
+    firstFetch: function() {
+        this.taskDefFetched = true;
+        this.renderTasks();
+    },
 
-	renderTasks: function() {
-		if (!this.taskDefFetched) return false;
-		var _this = this;
-		$(this.el).html(this.template({
-			taskDef: this.taskDef,
-			taskName: this.taskDef.get('name'),
-			taskColl: this.collection.toJSON(),
-			collection: this.collection,
-			collectionNotEmpty: !this.collection.isEmpty(),
-		}));
-		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-		
-		this.renderDataTables();
-	},
+    renderTasks: function() {
+        if (!this.taskDefFetched) return false;
+        var _this = this;
+        $(this.el).html(this.template({
+            taskDef: this.taskDef,
+            taskName: this.taskDef.get('name'),
+            taskColl: this.collection.toJSON(),
+            collection: this.collection,
+            collectionNotEmpty: !this.collection.isEmpty(),
+        }));
+        this.$('[rel=tooltip]').tooltip({
+            placement: 'bottom'
+        });
 
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_snapshot_scrub', function(){
-			var html = '';
-			if (this.taskDef.get('task_type') == 'snapshot') { 
-				html += 'Snapshot of Share[' + JSON.parse(this.taskDef.get('json_meta')).share + ']';
-			} else { 
-				html += 'Scrub of Pool[' + JSON.parse(this.taskDef.get('json_meta')).pool + ']';
-			} 
-			return new Handlebars.SafeString(html);
-		}); 
+        this.renderDataTables();
+    },
 
-		Handlebars.registerHelper('dateFormat', function(taskTime){
-			return moment(taskTime).format(RS_DATE_FORMAT);
-		});
-	}
+    initHandlebarHelpers: function() {
+        Handlebars.registerHelper('display_snapshot_scrub', function() {
+            var html = '';
+            if (this.taskDef.get('task_type') == 'snapshot') {
+                html += 'Snapshot of Share[' + JSON.parse(this.taskDef.get('json_meta')).share + ']';
+            } else {
+                html += 'Scrub of Pool[' + JSON.parse(this.taskDef.get('json_meta')).pool + ']';
+            }
+            return new Handlebars.SafeString(html);
+        });
+
+        Handlebars.registerHelper('dateFormat', function(taskTime) {
+            return moment(taskTime).format(RS_DATE_FORMAT);
+        });
+    }
 
 });
 
 //Add pagination
 Cocktail.mixin(TasksView, PaginationMixin);
-
-

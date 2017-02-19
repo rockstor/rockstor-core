@@ -92,7 +92,7 @@ TopSharesWidget = RockStorWidgetView.extend({
         });
 
         this.$('.pused').each(function(index) {
-            var btrfs_size = (_this.data[index].get('pUsed') + _this.data[index].get('pOverUsed')).toFixed(2)
+            var btrfs_size = (_this.data[index].get('pUsed') + _this.data[index].get('pOverUsed')).toFixed(2);
             $(this).text(btrfs_size + '%');
         });
         var truncate = _this.maximized ? 100 : 12;
@@ -142,7 +142,7 @@ TopSharesWidget = RockStorWidgetView.extend({
         var html = '<div style="display: table;"><div class="' + percent_div['class'] + '" style="' + percent_div['style'] + '"></div>';
         html += '<div class="' + progressbar_container['class'] + '" style="' + progressbar_container['style'] + '">';
         html += '<div class="' + progressbars_defaults['class'] + '" style="' + progressbars_defaults['style'] + '" ';
-        html += 'role="' + progressbars_defaults['role'] + '">'
+        html += 'role="' + progressbars_defaults['role'] + '">';
         html += '<span style="' + progressbar_span['style'] + '"></span></div>';
         html += '<div class="' + progressbars_defaults['class'] + ' progress-bar-info" style="' + progressbars_defaults['style'] + '" ';
         html += 'role="' + progressbars_defaults['role'] + '"></div>';

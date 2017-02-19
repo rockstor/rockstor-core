@@ -26,65 +26,65 @@
 
 PoolRaidChange = RockstorWizardPage.extend({
 
-	initialize: function() {
-		this.disks = new DiskCollection();
-		this.disks.setPageSize(100);
-		this.template = window.JST.pool_resize_raid_change;
-		this.disks_template = window.JST.common_disks_table;
-		RockstorWizardPage.prototype.initialize.apply(this, arguments);
-		this.disks.on('reset', this.renderDisks, this);
-		this.initHandlebarHelpers();
-	},
+    initialize: function() {
+        this.disks = new DiskCollection();
+        this.disks.setPageSize(100);
+        this.template = window.JST.pool_resize_raid_change;
+        this.disks_template = window.JST.common_disks_table;
+        RockstorWizardPage.prototype.initialize.apply(this, arguments);
+        this.disks.on('reset', this.renderDisks, this);
+        this.initHandlebarHelpers();
+    },
 
-	render: function() {
-		$(this.el).html(this.template({
-			model: this.model,
-			raidLevel: this.model.get('pool').get('raid'),
-		}));
-		this.disks.fetch();
-		return this;
-	},
+    render: function() {
+        $(this.el).html(this.template({
+            model: this.model,
+            raidLevel: this.model.get('pool').get('raid'),
+        }));
+        this.disks.fetch();
+        return this;
+    },
 
-	renderDisks: function() {
-		var _this = this;
-		var disks = this.disks.filter(function(disk) {
-			return disk.available();
-		}, this);
-		this.$('#raid-change-form').validate({
-			rules: {
-				'raid-level': {
-					required: true
-				}
-			},
-			messages: {
-				'raid-level': 'Please select a RAID level'
-			}
-		});
-	},
+    renderDisks: function() {
+        var _this = this;
+        var disks = this.disks.filter(function(disk) {
+            return disk.available();
+        }, this);
+        this.$('#raid-change-form').validate({
+            rules: {
+                'raid-level': {
+                    required: true
+                }
+            },
+            messages: {
+                'raid-level': 'Please select a RAID level'
+            }
+        });
+    },
 
-	save: function() {
-		var valid = $('#raid-change-form').valid();
-		if (valid) {
-			var raidLevel = this.$('#raid-level').val();
-			this.model.set('raidLevel', raidLevel);
-			return $.Deferred().resolve();
-		}
-		return $.Deferred().reject();
-	},
+    save: function() {
+        var valid = $('#raid-change-form').valid();
+        if (valid) {
+            var raidLevel = this.$('#raid-level').val();
+            this.model.set('raidLevel', raidLevel);
+            return $.Deferred().resolve();
+        }
+        return $.Deferred().reject();
+    },
 
 
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_raid_levels', function(){
-			var html = '';
-			var _this = this;
-			var levels = ['raid0', 'raid1', 'raid10', 'raid5', 'raid6']; 
-			_.each(levels, function(level) { 
-				if (_this.raidLevel != level) {
-					html += '<option value="' + level + '">' + level + '</option>';
-				}
-			});
-			return new Handlebars.SafeString(html);
-		});
-	}
+    initHandlebarHelpers: function() {
+        Handlebars.registerHelper('display_raid_levels', function() {
+            var html = '';
+            var _this = this;
+            var levels = ['raid0', 'raid1', 'raid10', 'raid5', 'raid6'];
+            _.each(levels, function(level) {
+                if (_this.raidLevel != level) {
+                    html += '<option value="' + level + '">' + level + '</option>';
+                }
+            });
+            return new Handlebars.SafeString(html);
+        });
+    }
 
 });

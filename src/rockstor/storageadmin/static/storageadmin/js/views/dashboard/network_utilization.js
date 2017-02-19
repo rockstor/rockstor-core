@@ -223,7 +223,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
             _this.InterfacesBuffers[d.device].push(d);
         });
 
-        var interfaceBuffer = _this.InterfacesBuffers[_this.selectedInterface]
+        var interfaceBuffer = _this.InterfacesBuffers[_this.selectedInterface];
         _this.updateNetworkChart(interfaceBuffer);
 
     },

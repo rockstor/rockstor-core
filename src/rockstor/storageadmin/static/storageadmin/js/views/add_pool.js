@@ -66,7 +66,7 @@ AddPoolView = Backbone.View.extend({
         }, raid_err_msg);
 
         $.validator.addMethod('validateRaid', function (raid_level) {
-            var n = $("input:checked.disk").length;
+            var n = $('input:checked.disk').length;
             var min = 1;
             if (raid_level == 'single') {
                 err_msg = 'At least one disk is required.';
@@ -154,7 +154,7 @@ AddPoolView = Backbone.View.extend({
                 // then we need to confirm if the fstype of the redirected
                 // partition is "" else we can't use it
                 if (roleAsJson.partitions.hasOwnProperty(roleAsJson.redirect)) {
-                    if (roleAsJson.partitions[roleAsJson.redirect] == "") {
+                    if (roleAsJson.partitions[roleAsJson.redirect] == '') {
                         return true;
                     }
                 }
@@ -171,7 +171,7 @@ AddPoolView = Backbone.View.extend({
         }));
         this.renderSummary();
 
-        this.$("#disks-table").tablesorter({
+        this.$('#disks-table').tablesorter({
             headers: {
                 // assign the first column (we start counting zero)
                 0: {
@@ -191,21 +191,21 @@ AddPoolView = Backbone.View.extend({
         this.$('#raid_level').tooltip({
             html: true,
             placement: 'right',
-            title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong>, and <strong>Raid6</strong> are similar to conventional raid levels. See documentation for more information.<br><strong>WARNING: Raid5 and Raid6 are not production-ready</strong>"
+            title: 'Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong>, and <strong>Raid6</strong> are similar to conventional raid levels. See documentation for more information.<br><strong>WARNING: Raid5 and Raid6 are not production-ready</strong>'
         });
 
         this.$('#compression').tooltip({
             html: true,
             placement: 'right',
-            title: "Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
+            title: 'Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don\'t enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary.'
         });
 
         $('#add-pool-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-                pool_name: "validatePoolName",
-                raid_level: "validateRaid"
+                pool_name: 'validatePoolName',
+                raid_level: 'validateRaid'
             },
             submitHandler: this.submit
         });
@@ -270,7 +270,7 @@ AddPoolView = Backbone.View.extend({
             $(this).closest('tr').toggleClass('row-highlight', this.checked);
         });
         var diskIds = checkboxes.filter(':checked').map(function() {
-                return this.id;
+            return this.id;
         }).get();
         var disks = _.map(diskIds, function(id) {
             return this.collection.get(id);
@@ -310,7 +310,7 @@ AddPoolView = Backbone.View.extend({
         .done(function() {
             enableButton(button);
             $('#add-pool-form input').tooltip('hide');
-            app_router.navigate('pools', {trigger: true})
+            app_router.navigate('pools', {trigger: true});
         })
         .fail(function() {
             enableButton(button);
@@ -341,3 +341,4 @@ AddPoolView = Backbone.View.extend({
 
 //Add pagination
 Cocktail.mixin(AddPoolView, PaginationMixin);
+

@@ -26,54 +26,61 @@
 
 
 AddAccessKeyView = RockstorLayoutView.extend({
-  events: {
-    'click #js-cancel': 'cancel'
-  },
+    events: {
+        'click #js-cancel': 'cancel'
+    },
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.access_keys_add_access_key;
-  },
+    initialize: function() {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.template = window.JST.access_keys_add_access_key;
+    },
 
-  render: function() {
-    var _this = this;
-    $(this.el).html(this.template());
-    this.$('#add-access-key-form :input').tooltip({placement: 'right'});
-    this.$('#add-access-key-form').validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-        access_key_name: 'required',
-      },
-      submitHandler: function() {
-        var button = _this.$('#create-access-key');
-        if (buttonDisabled(button)) return false;
-        var name = _this.$('#name').val();
-        disableButton(button);
-        $.ajax({
-          url: "/api/oauth_app",
-          type: "POST",
-          dataType: "json",
-          data: {name: name},
-          success: function() {
-            enableButton(button);
-            _this.$('#add-access-key-form :input').tooltip('hide');
-            app_router.navigate('access-keys', {trigger: true})
-          },
-          error: function(xhr, status, error) {
-            enableButton(button);
-          },
+    render: function() {
+        var _this = this;
+        $(this.el).html(this.template());
+        this.$('#add-access-key-form :input').tooltip({
+            placement: 'right'
         });
-      }
-    });
-    return this;
-  },
-  
-  cancel: function(event) {
-    event.preventDefault();
-    this.$('#add-access-key-form :input').tooltip('hide');
-    app_router.navigate('access-keys', {trigger: true});
-  }
+        this.$('#add-access-key-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+                access_key_name: 'required',
+            },
+            submitHandler: function() {
+                var button = _this.$('#create-access-key');
+                if (buttonDisabled(button)) return false;
+                var name = _this.$('#name').val();
+                disableButton(button);
+                $.ajax({
+                    url: '/api/oauth_app',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        name: name
+                    },
+                    success: function() {
+                        enableButton(button);
+                        _this.$('#add-access-key-form :input').tooltip('hide');
+                        app_router.navigate('access-keys', {
+                            trigger: true
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        enableButton(button);
+                    },
+                });
+            }
+        });
+        return this;
+    },
+
+    cancel: function(event) {
+        event.preventDefault();
+        this.$('#add-access-key-form :input').tooltip('hide');
+        app_router.navigate('access-keys', {
+            trigger: true
+        });
+    }
 
 });
-

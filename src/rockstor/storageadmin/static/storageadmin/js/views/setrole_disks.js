@@ -48,7 +48,7 @@ SetroleDiskView = RockstorLayoutView.extend({
 
     renderDisksForm: function () {
         if (this.$('[rel=tooltip]')) {
-            this.$("[rel=tooltip]").tooltip('hide');
+            this.$('[rel=tooltip]').tooltip('hide');
         }
         var _this = this;
         var disk_name = this.diskName;
@@ -71,24 +71,26 @@ SetroleDiskView = RockstorLayoutView.extend({
         // parse the diskRole json to a local object
         try {
             var role_obj = JSON.parse(diskRole);
-            } catch (e) {
+        } catch (e) {
                 // as we can't convert this drives role to json we assume
                 // it's isRoleUsable status by false
-                role_obj = null;
-            }
+            role_obj = null;
+        }
         // extract our partitions obj from the role_obj if there is one.
+        var partitions;
         if (role_obj != null && role_obj.hasOwnProperty('partitions')) {
-            var partitions = role_obj.partitions;
+            partitions = role_obj.partitions;
         } else {
             // else we set our partitions to be an empty object
-            var partitions = {};
+            partitions = {};
         }
         // extract any existing redirect role value.
+        var current_redirect;
         if (role_obj != null && role_obj.hasOwnProperty('redirect')) {
             // if there is a redirect role then set our current role to it
-            var current_redirect = role_obj['redirect'];
+            current_redirect = role_obj['redirect'];
         } else {
-            var current_redirect = '';
+            current_redirect = '';
         }
         this.current_redirect = current_redirect;
 
@@ -157,10 +159,10 @@ SetroleDiskView = RockstorLayoutView.extend({
                     // disk_pool = null;
                     if (disk_pool != null) {
                         // device is part of Rockstor pool, reject wipe request
-                        err_msg = "Selected device is part of a Rockstor " +
-                            "managed pool. Use Pool resize to remove it from " +
-                            "the relevant pool which in turn will wipe it's " +
-                            "filesystem.";
+                        err_msg = 'Selected device is part of a Rockstor ' +
+                            'managed pool. Use Pool resize to remove it from ' +
+                            'the relevant pool which in turn will wipe it\'s ' +
+                            'filesystem.';
                         return false;
                     }
                 }
@@ -244,14 +246,15 @@ SetroleDiskView = RockstorLayoutView.extend({
             // Add our 'use whole disk' option which will allow for an existing
             // redirect to be removed, preparing for whole disk btrfs.
             // Also serves to indicate no redirect role in operation.
+            var uuid_message;
             if ( (this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions)) ) {
-                var uuid_message = 'btrfs'
+                uuid_message = 'btrfs';
             } else {
-                var uuid_message = 'None';
+                uuid_message = 'None';
             }
             var selected = '';
             if (this.current_redirect == '') {
-                var selected = ' selected="selected"';
+                selected = ' selected="selected"';
             }
             html += '<option value=""' + selected + '> Whole Disk (' + uuid_message + ')';
             // if no current redirect role then select whole disk entry and
@@ -286,7 +289,7 @@ SetroleDiskView = RockstorLayoutView.extend({
                 html += short_part_name + ' (' + partition_fstype + ')';
                 // if this is our active setting then indicate in text
                 if (active_redirect) {
-                    html += ' - active'
+                    html += ' - active';
                 }
                 // end this partition option
                 html += '</option>';
