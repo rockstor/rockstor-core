@@ -26,6 +26,7 @@ class TaskDefinition(models.Model):
         ('snapshot',) * 2,
         ('reboot',) * 2,
         ('shutdown',) * 2,
+        ('suspend',) * 2,
         ('custom',) * 2
         ]
     task_type = models.CharField(max_length=100, choices=TASK_TYPES)

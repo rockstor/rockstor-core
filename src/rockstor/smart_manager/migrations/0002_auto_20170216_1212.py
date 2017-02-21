@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='taskdefinition',
             name='task_type',
-            field=models.CharField(max_length=100, choices=[(b'scrub', b'scrub'), (b'snapshot', b'snapshot'), (b'reboot', b'reboot'), (b'shutdown', b'shutdown'), (b'custom', b'custom')]),
+            field=models.CharField(max_length=100, choices=[(b'scrub', b'scrub'), (b'snapshot', b'snapshot'), (b'reboot', b'reboot'), (b'shutdown', b'shutdown'), (b'suspend', b'suspend'), (b'custom', b'custom')]),
         ),
     ]

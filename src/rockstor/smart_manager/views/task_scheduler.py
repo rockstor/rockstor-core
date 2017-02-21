@@ -31,7 +31,8 @@ logger = logging.getLogger(__name__)
 
 
 class TaskSchedulerMixin(object):
-    valid_tasks = ('snapshot', 'scrub', 'reboot', 'shutdown', 'custom')
+    valid_tasks = ('snapshot', 'scrub', 'reboot',
+                   'shutdown', 'suspend', 'custom')
 
     @staticmethod
     def _validate_input(request):
@@ -84,7 +85,7 @@ class TaskSchedulerMixin(object):
                     elif (td.task_type == 'scrub'):
                         tab = ('%s %s/bin/st-pool-scrub %d' %
                                (tab, settings.ROOT_DIR, td.id))
-                    elif (td.task_type in ['reboot', 'shutdown']):
+                    elif (td.task_type in ['reboot', 'shutdown', 'suspend']):
                         tab = ('%s %s/bin/st-system-power %d' %
                                (tab, settings.ROOT_DIR, td.id)) 
                     else:
