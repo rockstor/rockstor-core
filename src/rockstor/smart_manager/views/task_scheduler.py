@@ -40,6 +40,9 @@ class TaskSchedulerMixin(object):
         crontab = request.data.get('crontab')
         crontabwindow = request.data.get('crontabwindow')
         meta = request.data.get('meta', {})
+        if 'rtc_hour' in meta:
+            meta['rtc_hour'] = int(meta['rtc_hour'])
+            meta['rtc_minute'] = int(meta['rtc_minute'])
         if (type(meta) != dict):
             e_msg = ('meta must be a dictionary, not %s' % type(meta))
             handle_exception(Exception(e_msg), request)
