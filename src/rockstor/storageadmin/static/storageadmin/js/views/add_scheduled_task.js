@@ -50,6 +50,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
             {name: 'snapshot', description: 'Btrfs Snapshot'},
             {name: 'reboot', description: 'System Reboot'},
             {name: 'shutdown', description: 'System Shutdown'},
+            {name: 'suspend', description: 'System Suspend'}
             //{name: 'custom', description: 'User Custom Task'}
         ];
 		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
@@ -206,7 +207,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 				taskDefId: this.taskDefId,
 				taskDefIdNull: this.taskDefIdNull,
 			}));
-		} else if (taskType == 'shutdown') {
+		} else if (taskType == 'shutdown' || taskType == 'suspend') {
 			this.$('#optional-fields').html(this.shutdownFieldsTemplate({
 				taskDef: this.taskDef,
 				taskDefId: this.taskDefId,
@@ -214,6 +215,10 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 			}));
             this.rendergentleSelect('rtc_hour');
             this.rendergentleSelect('rtc_minute');
+            if (taskType == 'suspend') {
+                this.$('#wakeup').click()
+                                 .prop('disabled', true);
+            }
 		} else {
             this.$('#optional-fields').empty();
         }

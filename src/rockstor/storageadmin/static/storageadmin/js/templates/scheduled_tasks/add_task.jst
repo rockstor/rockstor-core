@@ -56,7 +56,7 @@ $(document).ready(function() {
 	  <div class="col-sm-4">
             <select class="form-control" id="task_type" name="task_type">
               {{#each taskTypes}}
-                <option value="{{this}}">{{this}}</option>
+                <option value="{{this.name}}">{{this.description}}</option>
               {{/each}}
             </select>
 	  </div>
