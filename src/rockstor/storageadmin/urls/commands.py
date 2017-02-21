@@ -28,6 +28,6 @@ urlpatterns = patterns(
     '',
     url(r'(?P<command>%s)$' % valid_commands, CommandView.as_view(),
         name='user-view'),
-    url(r'(?P<command>reboot|shutdown)/(?P<delay>now|2)$',
+    url(r'(?P<command>shutdown|suspend)/(?P<rtcepoch>\d+)$',
         CommandView.as_view(), name='user-view'),
 )

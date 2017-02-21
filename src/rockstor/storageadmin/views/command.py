@@ -29,7 +29,8 @@ from fs.btrfs import (mount_share, mount_root, qgroup_create, get_pool_info,
                       pool_raid, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl
-from system.osi import (is_share_mounted, system_shutdown, system_reboot)
+from system.osi import (is_share_mounted, system_shutdown, system_reboot,
+                        system_suspend, set_system_rtc_wake)
 from storageadmin.models import (Share, NFSExport, SFTP, Pool, Snapshot,
                                  UpdateSubscription, AdvancedNFSExport)
 from storageadmin.util import handle_exception
@@ -82,7 +83,7 @@ class CommandView(NFSExportMixin, APIView):
                 logger.exception(e)
 
     @transaction.atomic
-    def post(self, request, command, delay='now'):
+    def post(self, request, command, rtcepoch=None):
         if (command == 'bootstrap'):
 
             self._refresh_pool_state()
@@ -208,9 +209,24 @@ class CommandView(NFSExportMixin, APIView):
                          'exception: ' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
+        # default has shutdown and reboot with delay set to now
+        # having normal sytem power off with now = 1 min
+        # reboot and shutdown requests from WebUI don't have request.auth
+        # while same requests over rest api (ex. scheduled tasks) have
+        # an auth token, so if we detect a token we delay with 3 mins
+        # to grant connected WebUI user to close it or cancel shutdown/reboot
+        delay = 'now'
+        if request.auth is not None:
+            delay = 3
+
         if (command == 'shutdown'):
             msg = ('The system will now be shutdown')
             try:
+                # if shutdown request coming from a scheduled task
+                # with rtc wake up time on we set it before
+                # system shutdown starting
+                if rtcepoch is not None:
+                    set_system_rtc_wake(rtcepoch)
                 request.session.flush()
                 system_shutdown(delay)
             except Exception as e:
@@ -228,6 +244,19 @@ class CommandView(NFSExportMixin, APIView):
             except Exception as e:
                 msg = ('Failed to reboot the system due to a low level error: '
                        '%s' % e.__str__())
+                handle_exception(Exception(msg), request)
+            finally:
+                return Response(msg)
+
+        if (command == 'suspend'):
+            msg = ('The system will now be suspended to RAM')
+            try:
+                request.session.flush()
+                set_system_rtc_wake(rtcepoch)
+                system_suspend()
+            except Exception as e:
+                msg = ('Failed to suspend the system due to a low level '
+                       'error: %s' % e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
