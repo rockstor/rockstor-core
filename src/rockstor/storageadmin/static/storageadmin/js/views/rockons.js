@@ -586,12 +586,12 @@ RockonShareChoice = RockstorWizardPage.extend({
 
         var share_map = {};
         var volumes = this.volumes.filter(function(volume) {
-            share_map[volume.get('dest_dir')] = this.$('#' + volume.id).val();
+            share_map[this.$('#' + volume.id).val()] = volume.get('dest_dir');
             return volume;
         }, this);
         this.model.set('share_map', share_map);
         return $.Deferred().resolve();
-    },
+    }
 });
 
 RockonPortChoice = RockstorWizardPage.extend({

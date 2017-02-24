@@ -27,7 +27,8 @@ class CommandException(Exception):
 
     def __str__(self):
         return ('Error running a command. cmd = %s. rc = %d. stdout = %s. '
-                'stderr = %s' % (self.cmd, self.rc, self.out, self.err))
+                'stderr = %s' % (' '.join(self.cmd), self.rc, self.out,
+                                 self.err))
 
 
 class NonBTRFSRootException(Exception):

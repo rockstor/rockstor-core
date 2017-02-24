@@ -94,16 +94,16 @@ class RockOnIdView(rfc.GenericView):
                 env_map = request.data.get('environment', {})
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
-                    for s in share_map.keys():
-                        sname = share_map[s]
+                    for sname in share_map.keys():
+                        dest_dir = share_map[sname]
                         if (not Share.objects.filter(name=sname).exists()):
                             e_msg = ('Invalid Share(%s).' % sname)
                             handle_exception(Exception(e_msg), request)
                         if (DVolume.objects.filter(
-                                container=co, dest_dir=s).exists()):
+                                container=co, dest_dir=dest_dir).exists()):
                             so = Share.objects.get(name=sname)
                             vo = DVolume.objects.get(container=co,
-                                                     dest_dir=s)
+                                                     dest_dir=dest_dir)
                             vo.share = so
                             vo.save()
                     # {'host_port' : 'container_port', ... }
