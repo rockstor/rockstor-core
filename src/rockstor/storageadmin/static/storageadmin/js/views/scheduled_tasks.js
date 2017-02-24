@@ -147,29 +147,29 @@ ScheduledTasksView = RockstorLayoutView.extend({
                     tId = t.id,
                     taskMapId = _this.taskMap[tId];
 
-                html += '<tr>';
-                html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
-                html += '<td>' + taskType + '&nbsp;';
-                if (taskType == 'snapshot') {
-                    html += '(' + JSON.parse(jsonMeta).share + ')';
-                } else {
-                    html += '(' + JSON.parse(jsonMeta).pool + ')';
-                }
-                html += '</td>';
-                html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
-                html += '<td>' + render_cronwindow(t.get('crontabwindow')) + '</td>';
-                html += '<td>';
-                if (t.get('enabled')) {
-                    html += '<input type="checkbox" disabled="true" checked="true"></input>';
-                } else {
-                    html += '<input type="checkbox" disabled="true"></input>';
-                }
-                html += '</td>';
-                html += '<td>';
-                if (taskMapId) {
-                    if (taskMapId.length > 0) {
-                        var task = taskMapId[0],
-                            taskState = task.get('state');
+				html += '<tr>';
+				html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
+				html += '<td>' + taskType + '&nbsp;';
+				if (taskType == 'snapshot') {
+					html += '(' + JSON.parse(jsonMeta).share + ')';
+				} else if (taskType == 'scrub') {
+					html += '(' + JSON.parse(jsonMeta).pool + ')';
+				}
+				html += '</td>';
+				html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
+				html += '<td>' + render_cronwindow(t.get('crontabwindow')) + '</td>';
+				html += '<td>';
+				if (t.get('enabled')) {
+					html += '<input type="checkbox" disabled="true" checked="true"></input>';
+				} else {
+					html += '<input type="checkbox" disabled="true"></input>';
+				}
+				html += '</td>';
+				html += '<td>';
+				if (taskMapId) {
+					if (taskMapId.length > 0) {
+						var task = taskMapId[0],
+						taskState = task.get('state');
 
                         if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') {
                             html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> ' + taskState + '</a>';
