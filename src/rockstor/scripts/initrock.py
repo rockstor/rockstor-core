@@ -299,20 +299,6 @@ def cleanup_rclocal(logging):
     logging.info('%s looks correct. Not updating.' % rc_dest)
 
 
-def downgrade_python(logging):
-    # With the release of CentOS 7.2, the new python package(2.7.5-34)
-    # backported some questionable changes that break gevent. So we downgrade
-    # to previous version: 2.7.5-18. I've moved these packages to rockrepo for
-    # now. Once the frankenversion resolves itself, we'll remove this
-    # workaround.
-    o, e, rc = run_command([YUM, 'info', 'python'])
-    for l in o:
-        if (re.match('Release.*34.el7$', l) is not None):
-            logging.info('Downgrading python and python-libs')
-            return downgrade_pkgs('python-2.7.5-18.el7_1.1',
-                                  'python-libs-2.7.5-18.el7_1.1')
-
-
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
@@ -435,12 +421,6 @@ def main():
     run_command([SYSCTL, 'disable', 'firewalld'])
     logging.info('firewalld stopped and disabled')
     update_nginx(logging)
-    try:
-        # downgrading python is a stopgap until it's fixed in upstream.
-        downgrade_python(logging)
-    except Exception as e:
-        logging.error('Exception while downgrading python: %s' % e.__str__())
-        logging.exception(e)
 
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
