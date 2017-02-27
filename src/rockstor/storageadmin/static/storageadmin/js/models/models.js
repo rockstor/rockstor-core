@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -552,6 +552,24 @@ var TaskDef = Backbone.Model.extend({
             return JSON.parse(this.get('json_meta')).writable;
         }
         return false;
+    },
+    wakeup: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).wakeup;
+        }
+        return false;        
+    },
+    rtc_hour: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).rtc_hour;
+        }
+        return 0;        
+    },
+    rtc_minute: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).rtc_minute;
+        }
+        return 0;        
     }
 
 });
