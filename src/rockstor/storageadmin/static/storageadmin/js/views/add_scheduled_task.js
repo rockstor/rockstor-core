@@ -81,11 +81,42 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 				visible: this.taskDef.visible(),
 				writable: this.taskDef.writable(),
 				enabled: this.taskDef.get('enabled'),
+                wakeup: this.taskDef.wakeup(),
+                rtcHour: this.taskDef.rtc_hour(),
+                rtcMinute: this.taskDef.rtc_minute()
 		};
-		var isSnapshot = false;
-		if(taskObj.type == 'snapshot'){
-			isSnapshot = true;
-		}
+        // Hacking Handlebars registerPartial normal usage
+        // Handlebars has registerPartial to help with nested templates
+        // inside another template (ex. Person template having sub-templates
+        // Job, Hobbies, etc). Handlebars.registerPartial(partial, value) with
+        // typeOf(value) == string, while we use value for strings and bools.
+        // Previous version of task page had a "master" part plus
+        // optional-fields div filled only for new tasks, relaying on a messy
+        // general part (if new task -> normal, else render optional-fields)
+        // Now we go with full optional-fields use, serving both when adding
+        // new tasks and when editing existing tasks
+
+        // Define taskObj fields having booleans (html checked checkboxes)
+        // requiring conversion to string value checked
+        var bool_fields = ['visible', 'writable', 'enabled', 'wakeup'];
+
+        // Loop over taskObj and build Partials like taskObj.key so
+        // we just have to move fro {{taskObj.field_name}} to
+        // {{> taskObj.field_name}} <- check Handlebars ref for
+        // furgher infos. While on loop if we found a bool we fix it,
+        // else we have key val to string or empty string, because
+        // registerPartial does not accept undefined vals
+        _.each(taskObj, function(val, key) {
+            var partial_name = 'taskObj.' + key;
+            var partial_value;
+            if (_.contains(bool_fields, key)) {
+                partial_value = val ? 'checked' : '';
+            } else {
+                partial_value = val != null ? val.toString() : '';
+            }
+            Handlebars.registerPartial(partial_name, partial_value);
+        });
+        
 	}
 		var _this = this;
 		$(this.el).html(this.template({
@@ -93,10 +124,8 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 			pools: this.pools,
 			taskTypes: this.taskTypes,
 			taskDef: this.taskDef,
-			taskObj: taskObj,
 			taskDefId: this.taskDefId,
-			taskDefIdNull: this.taskDefIdNull,
-			isSnapshot: isSnapshot,
+			taskDefIdNull: this.taskDefIdNull
 		}));
 		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
 			var crontab = this.taskDef.get('crontab');
@@ -215,9 +244,14 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 			}));
             this.rendergentleSelect('rtc_hour');
             this.rendergentleSelect('rtc_minute');
-            if (taskType == 'suspend') {
+            if (this.taskDefId == null && taskType == 'suspend') {
                 this.$('#wakeup').click()
                                  .prop('disabled', true);
+            }
+            if (this.taskDefId != null && this.taskDef.wakeup()) {
+                this.$('#rtc_hour').val(this.taskDef.rtc_hour()).gentleSelect('update');
+                this.$('#rtc_minute').val(this.taskDef.rtc_minute()).gentleSelect('update');
+                this.$('#wakeup').click();
             }
 		} else {
             this.$('#optional-fields').empty();
