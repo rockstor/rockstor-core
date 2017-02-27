@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -20,189 +20,125 @@
 </script>
 
 <script>
-$(document).ready(function() {
-  $('#cron').cron({
-  initial: "42 3 * * 5",
-  customValues: {
-    "5 minutes" : "*/5 * * * *",
-    "10 minutes": "*/10 * * * *",
-    "15 minutes": "*/15 * * * *",
-    "20 minutes" : "*/20 * * * *",
-    "30 minutes" : "*/30 * * * *",
-  },
-    useGentleSelect: true
-});
-  $('#cron-window').cron_window(); //added cron-window init call
-});
+    $(document).ready(function() {
+        $('#cron').cron({
+            initial: "42 3 * * 5",
+            customValues: {
+                "5 minutes": "*/5 * * * *",
+                "10 minutes": "*/10 * * * *",
+                "15 minutes": "*/15 * * * *",
+                "20 minutes": "*/20 * * * *",
+                "30 minutes": "*/30 * * * *",
+            },
+            useGentleSelect: true
+        });
+        $('#cron-window').cron_window(); //added cron-window init call
+    });
 </script>
 
-{{#if taskDefIdNull}}
 <div class="row">
-<div class="col-md-8">
-  <div class="panel panel-default">
-<div class="panel-heading">Schedule a new task</div>
-<div class="panel-body">
-    <form id="scheduled-task-create-form" name="aform">
-      <div class="messages"></div>
-      <div class="form-group">
-	<div class="row">
-        <label class="control-label col-md-4" for="task_name">Task name<span class="required"> *</span></label>
-        <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
-	</div>
-	<div class="row">
-	  <div class="col-sm-4">
-            <input class="form-control col-md-4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
-	  </div>
-	  <div class="col-sm-4">
-            <select class="form-control" id="task_type" name="task_type">
-              {{#each taskTypes}}
-                <option value="{{this.name}}">{{this.description}}</option>
-              {{/each}}
-            </select>
-	  </div>
-	</div>
-      </div>
-      <div id="optional-fields"></div>
-      <div class="checkbox" style="clear: both">
-        <label>
-          <input type="checkbox" checked="true" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
-        </label>
-      </div>
-
-      <div class="form-group">
-         <label for="cron">Frequency of task</label>
-         <div class="row">
-           <div class="col-sm-12">
-             <div id="cron"></div>
-           </div>
-         </div>
-      </div>
-      <div class="form-group">
-         <label for="cron-window">Task execution time windows<i class="fa fa-info-circle" title="Execution time windows apply for minutes/hours tasks only.
-                    All limits indicated are inclusive, so a task running for example from Friday to Sunday
-                    will be executed on Friday and Sunday too."></i></label>
-         <div class="row">
-           <div class="col-sm-12">
-             <div id="cron-window"></div>
-           </div>
-         </div>
-      </div>
-
-
-      <div class="form-group">
-	<a id="js-cancel" class="btn btn-default">Cancel</a>
-	<input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
-
-      </div>
-    </form>
-
-  </div> <!-- panel-body -->
-</div><!-- panel-default-->
-</div>
-  <!-- col-md-8 -->
-{{else}}
-  <div class="row">
     <div class="col-md-8">
-<div class="panel panel-default">
-<div class="panel-heading">Edit a scheduled task</div>
-<div class="panel-body">
-        <form id="scheduled-task-create-form" class="form-horizontal" name="aform" >
-          <div class="form-group">
-            <label class="control-label col-sm-4" for="share">Task name: </label>
-            <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskObj.name}}" disabled />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-sm-4" for="share">Task type: </label>
-            <div class="col-sm-6">
-              <input type="text" class="form-control" id="task_type" name="task_type" value="{{taskObj.type}}" disabled />
-            </div>
-          </div>
-          <!-- Type dependent fields -->
-          {{#if isSnapshot}}
-          <div class="form-group">
-            <label class="control-label col-sm-4" for="share">Share: </label>
-            <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskObj.share}}" disabled />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-sm-4" for="share">Snapshot prefix: </label>
-            <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskObj.prefix}}" disabled />
-            </div>
-          </div>
-          {{else}}
-          <div class="form-group">
-            <label class="control-label col-sm-4" for="share">Pool: </label>
-            <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskObj.pool}}" disabled />
-            </div>
-          </div>
-          {{/if}}
-
-           {{#if isSnapshot}}
-          <div class="form-group">
-            <label class="control-label col-sm-4" for="max_count">Maximum count<span class="required"> *</span></label>
-	    <div class="col-sm-6">
-              <input class="form-control" type="text" id="max_count" name="meta.max_count" value="{{taskObj.maxCount}}" title="Older snapshots beyond this number and created by this task will be deleted">
-	    </div>
-          </div>
-
-	  <div class="form-group">
-	    <div class="col-sm-offset-4 col-sm-6">
-	      <div class="checkbox">
-			<label>
-			  <input class="checkbox" type="checkbox" id="writable" name="meta.writable" {{#if taskObj.writable}} checked="true" {{/if}} title="Make snapshots writable"> Make snapshots writable?
-			</label>
-	      </div>
-	    </div>
-	  </div>
-
-	  <div class="form-group">
-	    <div class="col-sm-offset-4 col-sm-6">
-	      <div class="checkbox">
-			<label>
-			  <input class="checkbox" type="checkbox" id="visible" name="meta.visible" {{#if taskObj.visible}} checked="true" {{/if}} title="Make snapshots visible to the end user"> Make snapshots visible?
-			</label>
-	      </div>
-	    </div>
-	  </div>
-          {{/if}}
-          <div class="form-group">
-	    <div class="col-sm-offset-4 col-sm-6">
-	      <div class="checkbox">
-		<label>
-              <input class="checkbox" type="checkbox" id="enabled" name="enabled" {{#if taskObj.enabled}} checked="true" {{/if}} title="Disabled tasks will be created but not run till they are enabled">Enable task?
-	      </label>
-	      </div>
-            </div>
-          </div>
-	  <div class="form-group">
-            <label class="control-label col-sm-4" for="cron">Task frequency</label>
-            <div class="col-sm-6">
-	      <div id="cron"></div>
-            </div>
-	  </div>
-          <div class="form-group">
-            <label class="control-label col-sm-4" for="cron">Task execution time ranges<i class="fa fa-info-circle" title="Execution time windows apply for minutes/hours tasks only.
-                    All limits indicated are inclusive, so a task running for example from Friday to Sunday
-                    will be executed on Friday and Sunday too."></i></label>
-            <div class="col-sm-6">
-              <div id="cron-window"></div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <div class="controls col-sm-offset-4 col-sm-6">
-              <a id="js-cancel" class="btn btn-default">Cancel</a>
-	      <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
-            </div>
-          </div>
-        </form>
-      </div><!--panel-body-->
-  </div><!--panel-->
-    </div>
-  </div>
-{{/if}}
+        <div class="panel panel-default">
+            <div class="panel-heading">{{#if taskDefIdNull}}Schedule a new task{{else}}Edit a scheduled task{{/if}}</div>
+            <div class="panel-body">
+                {{#if taskDefIdNull}}
+                <form id="scheduled-task-create-form" name="aform">
+                    <div class="messages"></div>
+                    <div class="form-group">
+                        <div class="row">
+                            <label class="control-label col-md-4" for="task_name">Task name<span class="required"> *</span></label>
+                            <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <input class="form-control col-md-4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
+                            </div>
+                            <div class="col-sm-4">
+                                <select class="form-control" id="task_type" name="task_type">
+                                {{#each taskTypes}}
+                                    <option value="{{this.name}}">{{this.description}}</option>
+                                {{/each}}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <form id="scheduled-task-create-form" class="form-horizontal" name="aform" >
+                    <div class="form-group">
+                        <label class="control-label col-sm-4" for="share">Task name: </label>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" value="{{> taskObj.name}}" disabled />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-4" for="share">Task type: </label>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" id="task_type" name="task_type" value="{{> taskObj.type}}" disabled />
+                        </div>
+                    </div>
+                    {{/if}}
+                    <div id="optional-fields"></div>
+                    {{#if taskDefIdNull}}
+                    <div class="checkbox" style="clear: both">
+                        <label>
+                            <input type="checkbox" checked id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
+                        </label>
+                    </div>
+                    <div class="form-group">
+                    <label for="cron">Frequency of task</label>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div id="cron"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="cron-window">Task execution time windows<i class="fa fa-info-circle" title="Execution time windows apply for minutes/hours tasks only.
+                            All limits indicated are inclusive, so a task running for example from Friday to Sunday
+                            will be executed on Friday and Sunday too."></i></label>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div id="cron-window"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <a id="js-cancel" class="btn btn-default">Cancel</a>
+                        <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
+                    </div>
+                    {{else}}
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-6">
+                            <div class="checkbox">
+                                <label>
+                                    <input class="checkbox" type="checkbox" id="enabled" name="enabled" {{> taskObj.enabled}} title="Disabled tasks will be created but not run till they are enabled">Enable task?
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-4" for="cron">Task frequency</label>
+                        <div class="col-sm-6">
+                            <div id="cron"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-4" for="cron">Task execution time ranges<i class="fa fa-info-circle" title="Execution time windows apply for minutes/hours tasks only.
+                            All limits indicated are inclusive, so a task running for example from Friday to Sunday
+                            will be executed on Friday and Sunday too."></i></label>
+                        <div class="col-sm-6">
+                            <div id="cron-window"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="controls col-sm-offset-4 col-sm-6">
+                            <a id="js-cancel" class="btn btn-default">Cancel</a>
+                            <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
+                        </div>
+                    </div>
+                    {{/if}}
+                </form>
+            </div> <!-- panel-body -->
+        </div><!-- panel-default -->
+    </div><!-- col -->
+</div><!-- row -->
