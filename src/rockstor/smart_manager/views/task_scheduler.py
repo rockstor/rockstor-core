@@ -90,7 +90,7 @@ class TaskSchedulerMixin(object):
                                (tab, settings.ROOT_DIR, td.id))
                     elif (td.task_type in ['reboot', 'shutdown', 'suspend']):
                         tab = ('%s %s/bin/st-system-power %d' %
-                               (tab, settings.ROOT_DIR, td.id)) 
+                               (tab, settings.ROOT_DIR, td.id))
                     else:
                         logger.error('ignoring unknown task_type: %s'
                                      % td.task_type)

@@ -1076,17 +1076,20 @@ def system_reboot(delta='now'):
     # for scheduled tasks reboot/shutdown
     return run_command([SHUTDOWN, '-r', delta])
 
+
 def system_suspend():
     # This function perform system suspend to RAM via systemctl
     # while reboot and shutdown, both via shutdown command, can be delayed
     # systemctl suspend miss this option
     return run_command([SYSTEMCTL_BIN, 'suspend'])
 
+
 def clean_system_rtc_wake():
     # Every time we write to rtc alarm file this get locked and
     # we have to clean it with a 0 before writing another epoch
     with open(RTC_WAKE_FILE, 'w') as rtc:
         rtc.write('%d' % 0)
+
 
 def set_system_rtc_wake(wakeup_epoch):
     # This new function receive desired current and wake up time

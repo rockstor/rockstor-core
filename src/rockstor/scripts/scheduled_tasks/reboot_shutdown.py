@@ -19,12 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import sys
 import json
 from datetime import (datetime, timedelta)
-import time
 import crontabwindow  # load crontabwindow module
 from smart_manager.models import (Task, TaskDefinition)
 from cli.api_wrapper import APIWrapper
 from django.utils.timezone import utc
-from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
 
@@ -51,9 +49,9 @@ def main():
         validate_shutdown_meta(meta)
 
         now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
-        schedule = now + timedelta(minutes = 3)
+        schedule = now + timedelta(minutes=3)
         t = Task(task_def=tdo, state='scheduled', start=now, end=schedule)
-            
+
         try:
             # set default command url before checking if it's a shutdown
             # and if we have an rtc wake up
@@ -65,7 +63,8 @@ def main():
             # command url adding wake up epoch time
             if (tdo.task_type in ['shutdown', 'suspend'] and meta['wakeup']):
                 crontab_fields = tdo.crontab.split()
-                crontab_time = int(crontab_fields[1]) * 60 + int(crontab_fields[0])
+                crontab_time = (int(crontab_fields[1]) * 60 +
+                                int(crontab_fields[0]))
                 wakeup_time = meta['rtc_hour'] * 60 + meta['rtc_minute']
                 # rtc wake up requires UTC epoch, but users on WebUI set time
                 # thinking to localtime, so first we set wake up time,
@@ -73,10 +72,10 @@ def main():
                 # and get its epoch
                 epoch = datetime.now().replace(hour=int(meta['rtc_hour']),
                                                minute=int(meta['rtc_minute']),
-                                               second = 0, microsecond = 0)
+                                               second=0, microsecond=0)
                 # if wake up < crontab time wake up will run next day
                 if (crontab_time > wakeup_time):
-                    epoch += timedelta(days = 1)
+                    epoch += timedelta(days=1)
 
                 epoch = epoch.strftime('%s')
                 url = ('%s/%s' % (url, epoch))
@@ -97,6 +96,7 @@ def main():
     else:
         logger.debug('Cron scheduled task not executed because outside '
                      'time/day window ranges')
+
 
 if __name__ == '__main__':
     # takes two arguments. taskdef object id and crontabwindow.
