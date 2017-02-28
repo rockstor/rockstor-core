@@ -26,25 +26,25 @@
 
 
 AddScheduledTaskView = RockstorLayoutView.extend({
-	events: {
-		"click #js-cancel": "cancel",
-		"change #task_type": "renderOptionalFields",
-        "click #wakeup": "switchRtcFields"
-	},
+    events: {
+        'click #js-cancel': 'cancel',
+        'change #task_type': 'renderOptionalFields',
+        'click #wakeup': 'switchRtcFields'
+    },
 
-	initialize: function() {
-		this.constructor.__super__.initialize.apply(this, arguments);
-		this.template = window.JST.scheduled_tasks_add_task;
-		this.snapshotFieldsTemplate = window.JST.scheduled_tasks_snapshot_fields;
-		this.scrubFieldsTemplate = window.JST.scheduled_tasks_scrub_fields;
+    initialize: function() {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        this.template = window.JST.scheduled_tasks_add_task;
+        this.snapshotFieldsTemplate = window.JST.scheduled_tasks_snapshot_fields;
+        this.scrubFieldsTemplate = window.JST.scheduled_tasks_scrub_fields;
         this.shutdownFieldsTemplate = window.JST.scheduled_tasks_shutdown_fields;
-		this.shares = new ShareCollection();
-		this.pools = new PoolCollection();
-		this.shares.pageSize = RockStorGlobals.maxPageSize;
-		this.pools.pageSize = RockStorGlobals.maxPageSize;
-		this.dependencies.push(this.shares);
-		this.dependencies.push(this.pools);
-		this.taskDefId = this.options.taskDefId;
+        this.shares = new ShareCollection();
+        this.pools = new PoolCollection();
+        this.shares.pageSize = RockStorGlobals.maxPageSize;
+        this.pools.pageSize = RockStorGlobals.maxPageSize;
+        this.dependencies.push(this.shares);
+        this.dependencies.push(this.pools);
+        this.taskDefId = this.options.taskDefId;
         this.taskTypes = [
             {name: 'scrub', description: 'Btrfs Scrub'},
             {name: 'snapshot', description: 'Btrfs Snapshot'},
@@ -53,38 +53,38 @@ AddScheduledTaskView = RockstorLayoutView.extend({
             {name: 'suspend', description: 'System Suspend'}
             //{name: 'custom', description: 'User Custom Task'}
         ];
-		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
-			this.taskDef = new TaskDef({id: this.taskDefId});
-			this.dependencies.push(this.taskDef);
-		}
-		if(this.taskDefId == null){
-			this.taskDefIdNull = true;
-		}else{
-			this.taskDefIdNull = false;
-		}
+        if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
+            this.taskDef = new TaskDef({id: this.taskDefId});
+            this.dependencies.push(this.taskDef);
+        }
+        if(this.taskDefId == null){
+            this.taskDefIdNull = true;
+        }else{
+            this.taskDefIdNull = false;
+        }
         this.initHandlebarHelpers();
-	},
+    },
 
     render: function() {
         this.fetch(this.renderNewScheduledTask, this);
         return this;
     },
 
-	renderNewScheduledTask: function() {
-		if(this.taskDef){
-		var taskObj = {name: this.taskDef.get('name'),
-				type: this.taskDef.get('task_type'),
-				share: this.taskDef.share(),
-				prefix: this.taskDef.prefix(),
-				pool: this.taskDef.pool(),
-				maxCount: this.taskDef.max_count(),
-				visible: this.taskDef.visible(),
-				writable: this.taskDef.writable(),
-				enabled: this.taskDef.get('enabled'),
+    renderNewScheduledTask: function() {
+        if(this.taskDef){
+            var taskObj = {name: this.taskDef.get('name'),
+                type: this.taskDef.get('task_type'),
+                share: this.taskDef.share(),
+                prefix: this.taskDef.prefix(),
+                pool: this.taskDef.pool(),
+                maxCount: this.taskDef.max_count(),
+                visible: this.taskDef.visible(),
+                writable: this.taskDef.writable(),
+                enabled: this.taskDef.get('enabled'),
                 wakeup: this.taskDef.wakeup(),
                 rtcHour: this.taskDef.rtc_hour(),
                 rtcMinute: this.taskDef.rtc_minute()
-		};
+            };
         // Hacking Handlebars registerPartial normal usage
         // Handlebars has registerPartial to help with nested templates
         // inside another template (ex. Person template having sub-templates
@@ -98,7 +98,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 
         // Define taskObj fields having booleans (html checked checkboxes)
         // requiring conversion to string value checked
-        var bool_fields = ['visible', 'writable', 'enabled', 'wakeup'];
+            var bool_fields = ['visible', 'writable', 'enabled', 'wakeup'];
 
         // Loop over taskObj and build Partials like taskObj.key so
         // we just have to move fro {{taskObj.field_name}} to
@@ -106,67 +106,67 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         // furgher infos. While on loop if we found a bool we fix it,
         // else we have key val to string or empty string, because
         // registerPartial does not accept undefined vals
-        _.each(taskObj, function(val, key) {
-            var partial_name = 'taskObj.' + key;
-            var partial_value;
-            if (_.contains(bool_fields, key)) {
-                partial_value = val ? 'checked' : '';
-            } else {
-                partial_value = val != null ? val.toString() : '';
-            }
-            Handlebars.registerPartial(partial_name, partial_value);
-        });
+            _.each(taskObj, function(val, key) {
+                var partial_name = 'taskObj.' + key;
+                var partial_value;
+                if (_.contains(bool_fields, key)) {
+                    partial_value = val ? 'checked' : '';
+                } else {
+                    partial_value = val != null ? val.toString() : '';
+                }
+                Handlebars.registerPartial(partial_name, partial_value);
+            });
         
-	}
-		var _this = this;
-		$(this.el).html(this.template({
-			shares: this.shares,
-			pools: this.pools,
-			taskTypes: this.taskTypes,
-			taskDef: this.taskDef,
-			taskDefId: this.taskDefId,
-			taskDefIdNull: this.taskDefIdNull
-		}));
-		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
-			var crontab = this.taskDef.get('crontab');
-			$('#cron').cron("value", crontab);
-			var crontabwindow = _.isNull(this.taskDef.get('crontabwindow')) ? "*-*-*-*-*-*" : this.taskDef.get('crontabwindow'); // render execution window, on null set to *-*-*-*-*-*
-			$('#cron-window').cron_window("value", crontabwindow);
-		}
-		this.renderOptionalFields();
-		this.$('#start_date').datepicker();
-		this.validator = $('#scheduled-task-create-form').validate({
-			onfocusout: false,
-			onkeyup: false,
-			rules: {
-				name: 'required',
-				start_date: 'required',
-				frequency: {
-					required: true,
-					number: true,
-					min: 1
-				},
-				share: {
-					required: {
-						depends: function(element) {
-							return (_this.$('#task_type').val() == 'snapshot');
-						}
-					}
-				},
-				'meta.prefix': {
-					required: {
-						depends: function(element) {
-							return (_this.$('#task_type').val() == 'snapshot');
-						}
-					}
-				},
-				'meta.max_count': {
-					number: true,
-					min: 1,
-					required: {
-						depends: function(element) {
-							return (_this.$('#task_type').val() == 'snapshot');
-						},
+        }
+        var _this = this;
+        $(this.el).html(this.template({
+            shares: this.shares,
+            pools: this.pools,
+            taskTypes: this.taskTypes,
+            taskDef: this.taskDef,
+            taskDefId: this.taskDefId,
+            taskDefIdNull: this.taskDefIdNull
+        }));
+        if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
+            var crontab = this.taskDef.get('crontab');
+            $('#cron').cron('value', crontab);
+            var crontabwindow = _.isNull(this.taskDef.get('crontabwindow')) ? '*-*-*-*-*-*' : this.taskDef.get('crontabwindow'); // render execution window, on null set to *-*-*-*-*-*
+            $('#cron-window').cron_window('value', crontabwindow);
+        }
+        this.renderOptionalFields();
+        this.$('#start_date').datepicker();
+        this.validator = $('#scheduled-task-create-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+                name: 'required',
+                start_date: 'required',
+                frequency: {
+                    required: true,
+                    number: true,
+                    min: 1
+                },
+                share: {
+                    required: {
+                        depends: function(element) {
+                            return (_this.$('#task_type').val() == 'snapshot');
+                        }
+                    }
+                },
+                'meta.prefix': {
+                    required: {
+                        depends: function(element) {
+                            return (_this.$('#task_type').val() == 'snapshot');
+                        }
+                    }
+                },
+                'meta.max_count': {
+                    number: true,
+                    min: 1,
+                    required: {
+                        depends: function(element) {
+                            return (_this.$('#task_type').val() == 'snapshot');
+                        },
 
                     }
                 },
@@ -201,9 +201,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                     data: JSON.stringify(data),
                     success: function() {
                         enableButton(button);
-                        app_router.navigate('scheduled-tasks', {
-                            trigger: true
-                        });
+                        app_router.navigate('scheduled-tasks', {trigger: true});
                     },
                     error: function(xhr, status, error) {
                         enableButton(button);
@@ -214,34 +212,34 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         });
     },
 
-	renderOptionalFields: function() {
-		var taskType = null;
-		if (this.taskDefId == null) {
-			taskType = this.$('#task_type').val();
-		} else {
-			taskType = this.taskDef.get('task_type');
-		}
-		if (taskType == 'snapshot') {
-			this.$('#optional-fields').html(this.snapshotFieldsTemplate({
-				shares: this.shares.toJSON(),
-				taskDef: this.taskDef,
-				taskDefId: this.taskDefId,
-				taskDefIdNull: this.taskDefIdNull,
-				taskMaxCount: this.taskMaxCount,
-			}));
-		} else if (taskType == 'scrub') {
-			this.$('#optional-fields').html(this.scrubFieldsTemplate({
-				pools: this.pools.toJSON(),
-				taskDef: this.taskDef,
-				taskDefId: this.taskDefId,
-				taskDefIdNull: this.taskDefIdNull,
-			}));
-		} else if (taskType == 'shutdown' || taskType == 'suspend') {
-			this.$('#optional-fields').html(this.shutdownFieldsTemplate({
-				taskDef: this.taskDef,
-				taskDefId: this.taskDefId,
-				taskDefIdNull: this.taskDefIdNull,
-			}));
+    renderOptionalFields: function() {
+        var taskType = null;
+        if (this.taskDefId == null) {
+            taskType = this.$('#task_type').val();
+        } else {
+            taskType = this.taskDef.get('task_type');
+        }
+        if (taskType == 'snapshot') {
+            this.$('#optional-fields').html(this.snapshotFieldsTemplate({
+                shares: this.shares.toJSON(),
+                taskDef: this.taskDef,
+                taskDefId: this.taskDefId,
+                taskDefIdNull: this.taskDefIdNull,
+                taskMaxCount: this.taskMaxCount,
+            }));
+        } else if (taskType == 'scrub') {
+            this.$('#optional-fields').html(this.scrubFieldsTemplate({
+                pools: this.pools.toJSON(),
+                taskDef: this.taskDef,
+                taskDefId: this.taskDefId,
+                taskDefIdNull: this.taskDefIdNull,
+            }));
+        } else if (taskType == 'shutdown' || taskType == 'suspend') {
+            this.$('#optional-fields').html(this.shutdownFieldsTemplate({
+                taskDef: this.taskDef,
+                taskDefId: this.taskDefId,
+                taskDefIdNull: this.taskDefIdNull,
+            }));
             this.rendergentleSelect('rtc_hour');
             this.rendergentleSelect('rtc_minute');
             if (this.taskDefId == null && taskType == 'suspend') {
@@ -253,14 +251,14 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                 this.$('#rtc_minute').val(this.taskDef.rtc_minute()).gentleSelect('update');
                 this.$('#wakeup').click();
             }
-		} else {
+        } else {
             this.$('#optional-fields').empty();
         }
 		// Reattach tooltips
-		this.$('#scheduled-task-create-form :input').tooltip({
-			placement: 'right'
-		});
-	},
+        this.$('#scheduled-task-create-form :input').tooltip({
+            placement: 'right'
+        });
+    },
 
     // Render rtc wake clock selects adding gentleSelect beautifier
     rendergentleSelect: function(field_name) {
@@ -271,7 +269,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         } else {
             itemwidth = 30;
             columns = 4;
-            title = 'Wake up Time: Minute'
+            title = 'Wake up Time: Minute';
         }
         this.$('#' + field_name).gentleSelect({
             itemWidth: itemwidth,
@@ -306,8 +304,8 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         });
     },
 
-	cancel: function(event) {
-		event.preventDefault();
-		app_router.navigate('scheduled-tasks', {trigger: true});
-	},
+    cancel: function(event) {
+        event.preventDefault();
+        app_router.navigate('scheduled-tasks', {trigger: true});
+    },
 });
