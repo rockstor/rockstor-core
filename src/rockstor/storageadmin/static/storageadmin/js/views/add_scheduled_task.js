@@ -57,9 +57,9 @@ AddScheduledTaskView = RockstorLayoutView.extend({
             this.taskDef = new TaskDef({id: this.taskDefId});
             this.dependencies.push(this.taskDef);
         }
-        if(this.taskDefId == null){
+        if (this.taskDefId == null) {
             this.taskDefIdNull = true;
-        }else{
+        } else {
             this.taskDefIdNull = false;
         }
         this.initHandlebarHelpers();
@@ -71,8 +71,9 @@ AddScheduledTaskView = RockstorLayoutView.extend({
     },
 
     renderNewScheduledTask: function() {
-        if(this.taskDef){
-            var taskObj = {name: this.taskDef.get('name'),
+        if (this.taskDef) {
+            var taskObj = {
+                name: this.taskDef.get('name'),
                 type: this.taskDef.get('task_type'),
                 share: this.taskDef.share(),
                 prefix: this.taskDef.prefix(),
