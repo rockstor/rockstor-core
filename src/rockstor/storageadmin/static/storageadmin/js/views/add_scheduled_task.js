@@ -255,6 +255,15 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         } else {
             this.$('#optional-fields').empty();
         }
+        // Render warning about rtc wakeup to be checked
+        if (taskType == 'shutdown' || taskType == 'suspend') {
+            var html = '';
+            html += '<div class="alert alert-warning">';
+            html += 'Please check and test your system RTC WAKEUP capabilities before setting a suspend/shutdown task</div>';
+            this.$('.messages').html(html);
+        } else {
+            this.$('.messages').empty();
+        }
 		// Reattach tooltips
         this.$('#scheduled-task-create-form :input').tooltip({
             placement: 'right'
