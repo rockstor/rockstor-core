@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the 
  * JavaScript code in this page.
  * 
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  * 
  * RockStor is free software; you can redistribute it and/or modify
@@ -82,8 +82,10 @@ TasksView = RockstorLayoutView.extend({
             var html = '';
             if (this.taskDef.get('task_type') == 'snapshot') {
                 html += 'Snapshot of Share[' + JSON.parse(this.taskDef.get('json_meta')).share + ']';
-            } else {
+            } else if (this.taskDef.get('task_type') == 'scrub'){
                 html += 'Scrub of Pool[' + JSON.parse(this.taskDef.get('json_meta')).pool + ']';
+            } else {
+                html += this.taskDef.get('task_type');
             }
             return new Handlebars.SafeString(html);
         });
