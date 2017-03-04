@@ -49,7 +49,7 @@ def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
                           'nslcd', 'netatalk', 'snmpd', 'docker', 'smartd',
                           'shellinaboxd', 'nut-server', 'rockstor-bootstrap',
-                          'rockstor')
+                          'rockstor', 'systemd-shutdownd')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
