@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -1004,6 +1004,22 @@ $(document).ready(function() {
 
     };
 
+    var displayShutdownStatus = function (data) {
+        var html = '';
+        if (data.status == 0) {
+            html += '<i class="fa fa-warning fa-inverse" style="color: red;"></i> Shutdown scheduled';
+            $('#shutdown-status').fadeOut(1500, function(){
+                $('#shutdown-status').attr('title', data.message);
+                $('#shutdown-status').html(html).fadeIn(1500);
+            });
+        } else {
+            $('#shutdown-status').fadeOut(1500, function() {
+                $('#shutdown-status').attr('title', '');
+                $('#shutdown-status').empty();
+            });
+        }
+    };
+
     var displayLoadAvg = function(data) {
         var n = parseInt(data);
         var mins = Math.floor(n / 60) % 60;
@@ -1057,6 +1073,7 @@ $(document).ready(function() {
     RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software_update');
+    RockStorSocket.addListener(displayShutdownStatus, this, 'sysinfo:shutdown_status');
 
     //insert pagination partial helper functions here
     Handlebars.registerHelper('pagination', function() {
