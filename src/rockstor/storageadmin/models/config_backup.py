@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from django.db import models
+from django.conf import settings
 
 DEFAULT_CB_DIR = os.path.join(settings.MEDIA_ROOT, 'config-backups')
 
