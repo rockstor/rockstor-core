@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -27,7 +27,6 @@ import time
 import json
 from tempfile import mkstemp
 from django.conf import settings
-from system.pkg_mgmt import downgrade_pkgs
 
 
 logger = logging.getLogger(__name__)
