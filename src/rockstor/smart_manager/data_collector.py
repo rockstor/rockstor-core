@@ -47,7 +47,7 @@ from storageadmin.models import Disk  # noqa E402
 from smart_manager.models import Service  # noqa E402
 from system.services import service_status  # noqa E402
 from cli.api_wrapper import APIWrapper  # noqa E402
-from system.pkg_mgmt import update_check  # noqa E402
+from system.pkg_mgmt import (update_check, yum_check)  # noqa E402
 import logging  # noqa E402
 logger = logging.getLogger(__name__)
 
@@ -933,6 +933,19 @@ class SysinfoNamespace(RockstorIO):
                       'key': 'sysinfo:software_update',
                       'data': uinfo
                   })
+
+    def yum_updates(self):
+
+        while self.start:
+            rc = yum_check()
+            data = {}
+            data['yum_updates'] = True if rc == 100 else False
+            self.emit('yum_updates',
+                      {
+                          'key': 'sysinfo:yum_updates',
+                          'data': data
+                      })
+            gevent.sleep(20)
 
     def prune_logs(self):
 

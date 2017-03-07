@@ -210,3 +210,11 @@ def update_run(subscription=None):
     time.sleep(120)
 
     return out, err, rc
+
+def yum_check():
+    # Query yum for updates and grab return code
+    # yum check-update retun code is 0 with no updates
+    # and 100 if at least 1 update available
+    out, err, rc = run_command([YUM, 'check-update'], throw=False)
+
+    return rc
