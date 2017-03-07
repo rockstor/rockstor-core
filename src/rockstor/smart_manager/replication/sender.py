@@ -61,8 +61,7 @@ class Sender(ReplicationMixin, Process):
         self.total_bytes_sent = 0
         self.ppid = os.getpid()
         self.max_snap_retain = settings.REPLICATION.get('max_snap_retain')
-        for alias, info in db.connections.databases.items():
-            db.close_connection()
+        db.close_old_connections()
         super(Sender, self).__init__()
 
     @contextmanager

@@ -248,21 +248,21 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-	    'system': {
-		    'handlers': ['file'],
-		    'level': 'DEBUG',
+        'system': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
             'propagate': True,
-	    },
-	    'scripts': {
-		    'handlers': ['file'],
-		    'level': 'DEBUG',
+        },
+        'scripts': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
             'propagate': True,
-	    },
-	    'fs': {
-	        'handlers': ['file'],
-	        'level': 'DEBUG',
+        },
+        'fs': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
             'propagate': True,
-	    },
+        },
     }
 }
 
