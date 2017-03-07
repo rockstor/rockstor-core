@@ -64,8 +64,7 @@ class Receiver(ReplicationMixin, Process):
         self.ack = False
         self.total_bytes_received = 0
         # close all db connections prior to fork.
-        for alias, info in db.connections.databases.items():
-            db.close_connection()
+        db.close_old_connections()
         super(Receiver, self).__init__()
 
     def _sys_exit(self, code):
