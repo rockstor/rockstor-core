@@ -845,6 +845,7 @@ class SysinfoNamespace(RockstorIO):
         self.start = True
         self.spawn(self.update_storage_state, sid)
         self.spawn(self.update_check, sid)
+        self.spawn(self.yum_updates, sid)
         self.spawn(self.update_rockons, sid)
         self.spawn(self.send_kernel_info, sid)
         self.spawn(self.prune_logs, sid)

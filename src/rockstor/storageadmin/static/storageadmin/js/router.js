@@ -1058,6 +1058,20 @@ $(document).ready(function() {
         }
     };
 
+    var displayYumUpdates = function(data) {
+        if (data.yum_updates) {
+            $('#yum-msg').fadeOut(1000, function() {
+                $('#yum-msg').html('<a href="#test"><i class="fa fa-dashboard"></i></a>')
+                    .fadeIn(1000)
+                    .fadeOut(1000)
+                    .fadeIn(1000);
+            });
+        } else {
+            $('#yum-msg').fadeOut(1000, function() {
+                $('#yum-msg').html('');
+            });
+        }
+    };
 
     var kernelError = function(data) {
         // If 'kernel' does not show up in the string, we're ok
@@ -1071,6 +1085,7 @@ $(document).ready(function() {
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
     RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
+    RockStorSocket.addListener(displayYumUpdates, this, 'sysinfo:yum_updates');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software_update');
     RockStorSocket.addListener(displayShutdownStatus, this, 'sysinfo:shutdown_status');
