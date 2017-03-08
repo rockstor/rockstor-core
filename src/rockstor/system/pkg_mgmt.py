@@ -211,10 +211,51 @@ def update_run(subscription=None):
 
     return out, err, rc
 
+def pkg_changelog(package):
+    # Retrieve yum packages changelog, no update_check func
+    # update_check is "Rockstor specific" and with standard CentOS packages
+    # we can't work with rpm -qi Build Date field: some packages have
+    # Build Date > new package version changelog
+    # pkg_changelog behaviour is output beautify too, returning pkg name,
+    # changelog for installed package and available new package update
+    out, err, rc = run_command([YUM, 'changelog', '1', package], throw=False)
+    package_info = {'name': package.split('.')[0]}
+    package_info['installed'] = []
+    package_info['available'] = []
+    installed = False
+    available = False
+    for l in out:
+        l = l.strip()
+        if (re.search('Available Packages', l) is not None):
+            installed = False
+            available = True
+            continue
+        if (re.search('Installed Packages', l) is not None):
+            installed = True
+            continue
+        if (re.search('changelog stats', l) is not None):
+            installed = False
+            available = False
+            break
+        if (installed and len(l) != 0):
+            package_info['installed'].append(l)
+        if (available and len(l) != 0):
+            package_info['available'].append(l)
+
+    package_info['installed'] = ''.join(package_info['installed'])
+    package_info['available'] = ''.join(package_info['available'])
+
+    return package_info
+
 def yum_check():
     # Query yum for updates and grab return code
     # yum check-update retun code is 0 with no updates
     # and 100 if at least 1 update available
-    out, err, rc = run_command([YUM, 'check-update'], throw=False)
+    out, err, rc = run_command([YUM, 'check-update', '-q'], throw=False)
+    packages = []
+    # Read check-update output skipping first and last empty line
+    # on every round we apply some beautify with pkg_changelog
+    for line in out[1:-1]:
+        packages.append(pkg_changelog(line.split()[0].strip()))
 
-    return rc
+    return rc, packages
