@@ -1060,18 +1060,14 @@ $(document).ready(function() {
 
     var displayYumUpdates = function(data) {
         if (data.yum_updates) {
-            $('#yum-msg').fadeOut(1000, function() {
-                $('#yum-msg').html('<a href="#test"><i class="fa fa-dashboard"></i></a>')
-                    .fadeIn(1000)
-                    .fadeOut(1000)
-                    .fadeIn(1000);
-            });
+            $('#yum-msg a').html('<i class="fa fa-rss"></i>');
         } else {
             $('#yum-msg').fadeOut(1000, function() {
-                $('#yum-msg').html('');
+                $('#yum-msg a').html('');
             });
         }
     };
+
 
     var kernelError = function(data) {
         // If 'kernel' does not show up in the string, we're ok

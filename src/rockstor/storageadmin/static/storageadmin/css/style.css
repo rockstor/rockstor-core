@@ -847,11 +847,22 @@ label.error { font-size: 12px; color: #b94a48; }
 #yum-msg {
   float:right;
   padding-right: 5px;
+  animation: yumpulse 2s infinite;
 }
 
-
 #yum-msg > a {
-	color: #ffffff;
+    color: #ffffff;
+}
+
+@keyframes yumpulse {
+  0% {
+    opacity: 1;
+    transform: scale3d(1,1,1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale3d(1.5,1.5,1.5);
+  }
 }
 
 hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
