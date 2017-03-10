@@ -938,9 +938,10 @@ class SysinfoNamespace(RockstorIO):
     def yum_updates(self):
 
         while self.start:
-            rc = yum_check()
+            rc, packages = yum_check()
             data = {}
             data['yum_updates'] = True if rc == 100 else False
+            data['packages'] = packages
             self.emit('yum_updates',
                       {
                           'key': 'sysinfo:yum_updates',
