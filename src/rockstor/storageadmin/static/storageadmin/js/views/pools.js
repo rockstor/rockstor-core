@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -80,7 +80,14 @@ PoolsView = RockstorLayoutView.extend({
 
         this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
 
-        this.renderDataTables();
+        var customs = {
+            columnDefs: [
+                { type: 'file-size', targets: 1 },
+                { type: 'file-size', targets: 2 }
+            ]
+        };
+
+        this.renderDataTables(customs);
 
         //X-editable Inline Edit.
         $.fn.editable.defaults.mode = 'inline';
