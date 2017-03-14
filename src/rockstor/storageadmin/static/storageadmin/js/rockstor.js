@@ -65,14 +65,18 @@ RockstorLayoutView = Backbone.View.extend({
         });
     },
 
-    renderDataTables: function() {
-        $('table.data-table').DataTable({
+    renderDataTables: function(customs) {
+        var DataTable_obj = {
             'iDisplayLength': 15,
             'aLengthMenu': [
                 [15, 30, 45, -1],
                 [15, 30, 45, 'All']
-            ],
-        });
+            ],            
+        };
+        if (typeof customs == 'object'){
+            _.extend(DataTable_obj, customs);
+        }
+        $('table.data-table').DataTable(DataTable_obj);
     },
 
 });
