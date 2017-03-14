@@ -75,7 +75,15 @@ SharesView = RockstorLayoutView.extend({
 
         this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
 
-        this.renderDataTables();
+        var customs = {
+            columnDefs: [
+                { type: 'file-size', targets: 1 },
+                { type: 'file-size', targets: 3 },
+                { type: 'file-size', targets: 4 }
+            ]
+        };
+
+        this.renderDataTables(customs);
     },
 
 //	delete button handler
