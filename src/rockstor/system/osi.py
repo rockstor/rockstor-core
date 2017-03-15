@@ -281,6 +281,8 @@ def scan_disks(min_size):
                     # FSTYPE="" but a partition on this pure software mdraid
                     # that is a member of eg md125 has
                     # FSTYPE="linux_raid_member"
+                    # Add the same treatment for partitions hosting LUKS
+                    # containers.
                     if dmap['FSTYPE'] == 'linux_raid_member' \
                             and (dnames[dname][8] is None):
                         # N.B. 9th item (index 8) in dname = FSTYPE We are a
@@ -293,6 +295,23 @@ def scan_disks(min_size):
                         # only need to have one partition identified as an
                         # mdraid member to classify the entire device (the base
                         # device) as a raid member, at least in part.
+                        dnames[dname][8] = dmap['FSTYPE']
+                    if dmap['FSTYPE'] == 'crypto_LUKS' \
+                            and (dnames[dname][8] is None):
+                        # N.B. although this if clause has identical treatment
+                        # to the mdraid partition treatment it is intentionally
+                        # kept independent to aid in clarity and maintenance
+                        # as it may be that the treatments diverge.
+                        # As per mdraid we we backport to the base device LUKS
+                        # containers that live in partitions as the base device
+                        # will have an FSTYPE="" and as per mdraid we classify
+                        # the entire device as a LUKS container member even if
+                        # it is only a in part (ie this partition). But we only
+                        # backport this information if there currently exists
+                        # no FSTYPE on the base device, there by protecting
+                        # against fstype information loss on the base device.
+                        # Please see mdraid partition treatment for additional
+                        # comments on index number used.
                         dnames[dname][8] = dmap['FSTYPE']
                     # Akin to back porting a partitions FSTYPE to it's base
                     # device, as with 'linux_raid_member' above, we can do the
