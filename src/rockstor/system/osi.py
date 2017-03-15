@@ -860,6 +860,17 @@ def root_disk():
         for line in fo.readlines():
             fields = line.split()
             if (fields[1] == '/' and fields[2] == 'btrfs'):
+                # We have found our '/' and it's of fs type btrfs
+                if (re.match('/dev/mapper/luks-', fields[0]) is not None):
+                    # Our root is on a mapped open LUKS container so we need
+                    # not resolve the symlink, ie /dev/dm-0, as we loose info
+                    # and lsblk's name output also uses the luks-<uuid> name.
+                    # So we return the name minus it's /dev/mapper/ component
+                    # as there are no partitions within these devices so it is
+                    # it's own base device. N.B. we do not resolve to the
+                    # parent device hosting the LUKS container itself.
+                    return fields[0][12:]
+                # resolve symbolic links to their targets.
                 disk = os.path.realpath(fields[0])
                 if (re.match('/dev/md', disk) is not None):
                     # We have an Multi Device naming scheme which is a little
