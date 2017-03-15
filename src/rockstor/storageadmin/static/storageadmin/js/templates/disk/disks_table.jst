@@ -28,6 +28,13 @@
               <i class="glyphicon glyphicon-info-sign"></i></a>
         {{else if (isRootDevice this.role)}}
               <i class="glyphicon glyphicon-registration-mark" title="Rockstor System Drive." rel="tooltip"></i>
+        {{else if (isLuksContainer this.role)}}
+            {{#if this.parted}}
+                <i class="glyphicon glyphicon-lock" title="Disk contains at least one partition hosting a LUKS Container. LUKS in partition is only supported for the Rockstor system drive." rel="tooltip"></i>
+            {{else}}
+                <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (UI pending)." rel="tooltip">
+                <i class="glyphicon glyphicon-lock"></i></a>
+            {{/if}}
         {{else if this.parted}}
             {{#if (hasUserRole this.role)}}
                 <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="User Assigned Role found on partitioned disk, click to edit." rel="tooltip">
@@ -48,8 +55,11 @@
             {{/if}}
         {{else}} <!-- We are non of the above top level ifs / else ifs at this point -->
             {{#if (hasUserRole this.role)}}
-                <a href="#" class="user_role_drive" data-disk-name="{{this.name}}" title="Whole Disk User Assigned Role found, click to edit." rel="tooltip">
+                <a href="#" class="user_role_whole" data-disk-name="{{this.name}}" title="Whole Disk User Assigned Role found, click to edit." rel="tooltip">
                 <i class="glyphicon glyphicon-tag"></i></a>
+            {{else}}
+                <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assigned a Whole Disk Role (ie LUKS), click to edit." rel="tooltip">
+                <i class="glyphicon glyphicon-question-sign"></i></a>
             {{/if}}
             {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
                 <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
@@ -57,19 +67,14 @@
                 <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
             {{/if}}
         {{/if}}
-        {{#if (isLuksContainer this.role)}}
-            <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (UI pending)." rel="tooltip">
-            <i class="glyphicon glyphicon-lock"></i></a>
-        {{/if}}
+        <!-- All of the following are mutually exclusive so can live in the same if else without issue -->
         {{#if (isOpenLuks this.role)}}
             <a href="#" class="open_luks_drive" data-disk-name="{{this.name}}" title="Open LUKS Container (UI pending)." rel="tooltip">
             <i class="glyphicon glyphicon-eye-open"></i></a>
-        {{/if}}
-        {{#if (isBcache this.role)}}
+        {{else if (isBcache this.role)}}
             <a href="#" class="bcache_backing_drive" data-disk-name="{{this.name}}" title="Bcache Backing Drive (UI pending)." rel="tooltip">
             <i class="glyphicon glyphicon-link"></i></a>
-        {{/if}}
-        {{#if (isBcacheCdev this.role)}}
+        {{else if (isBcacheCdev this.role)}}
             <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive (UI pending)." rel="tooltip">
             <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
         {{/if}}
