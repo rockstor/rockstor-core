@@ -385,14 +385,28 @@ DisksView = RockstorLayoutView.extend({
         // Identify User assigned role disks by return of true / false.
         // Works by examining the Disk.role field. Based on sister handlebars
         // helper 'isBcache'
-        // Initially only the redirect role is a User assigned role.
+        // Initially only the redirect role was considered a User assigned
+        // role but this was expanded to include LUKS container and bcache
+        // backing and caching devices.
         Handlebars.registerHelper('hasUserRole', function (role) {
             var roleAsJson = asJSON(role);
             if (roleAsJson == false) return false;
             // We have a json string ie non legacy role info so we can examine:
+            // Test for each type of User role, essential a user requested
+            // purpose, ie use this partition, or make this a LUKS container.
+            // If found we can tag via this helper to avoid it's accidental
+            // re-use / deletion.
+            // Test for redirection (partition selection) role:
             if (roleAsJson.hasOwnProperty('redirect')) {
-                // We have a User assigned role which we tag to avoid
-                // it's accidental re-use / delete.
+                return true;
+            }
+            // Test for LUKS container role:
+            if (roleAsJson.hasOwnProperty('LUKS')) {
+                return true;
+            }
+            // Test for bcache backing or caching roles:
+            if (roleAsJson.hasOwnProperty('bcache') ||
+                roleAsJson.hasOwnProperty('bcachecdev')) {
                 return true;
             }
             // In all other cases return false.
