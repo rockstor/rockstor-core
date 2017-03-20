@@ -23,9 +23,6 @@
         {{#if this.offline}}
             <a href="#" class="delete" data-disk-name="{{this.name}}" title="Disk is unusable because it is detached.
             Click to delete it from the system if it is not to be reattached." rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
-        {{else if (isMdraidMember this.role)}}
-            <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Mdraid member (UI pending)." rel="tooltip">
-              <i class="glyphicon glyphicon-info-sign"></i></a>
         {{else if (isRootDevice this.role)}}
               <i class="glyphicon glyphicon-registration-mark" title="Rockstor System Drive." rel="tooltip"></i>
         {{else if (isLuksContainer this.role)}}
@@ -35,6 +32,15 @@
                 <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (UI pending)." rel="tooltip">
                 <i class="glyphicon glyphicon-lock"></i></a>
             {{/if}}
+        {{else if (isMdraidMember this.role)}}
+            <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Mdraid member (UI pending)." rel="tooltip">
+              <i class="glyphicon glyphicon-info-sign"></i></a>
+        {{else if (isBcache this.role)}}
+            <a href="#" class="bcache_backing_drive" data-disk-name="{{this.name}}" title="Bcache Backing Drive (UI pending)." rel="tooltip">
+            <i class="glyphicon glyphicon-link"></i></a>
+        {{else if (isBcacheCdev this.role)}}
+            <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive (UI pending)." rel="tooltip">
+            <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
         {{else if this.parted}}
             {{#if (hasUserRole this.role)}}
                 <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="User Assigned Role found on partitioned disk, click to edit." rel="tooltip">
@@ -43,6 +49,8 @@
                     <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Partition is unusable because it has an existing BTRFS filesystem on it.
                     Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this partition automatically (Note: whole disk btrfs is recommended)." rel="tooltip">
                     <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+                {{else if this.pool_name}}
+                    <i class="glyphicon glyphicon-map-marker" title="Drive partition (via Redirect Role) is mapped to a Pool" rel="tooltip"></i>
                 {{/if}}
             {{else}}
                 {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
@@ -54,30 +62,32 @@
                 {{/if}}
             {{/if}}
         {{else}} <!-- We are non of the above top level ifs / else ifs at this point -->
-            {{#if (hasUserRole this.role)}}
-                <a href="#" class="user_role_whole" data-disk-name="{{this.name}}" title="Whole Disk User Assigned Role found, click to edit." rel="tooltip">
-                <i class="glyphicon glyphicon-tag"></i></a>
-            {{else}}
-                <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assigned a Whole Disk Role (ie LUKS), click to edit." rel="tooltip">
-                <i class="glyphicon glyphicon-question-sign"></i></a>
-            {{/if}}
             {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
                 <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
                 Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically. Multi-device support included." rel="tooltip">
                 <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+            {{else}}
+                {{#if (hasUserRole this.role)}}
+                    <a href="#disks/role/{{this.name}}" class="user_role_whole" data-disk-name="{{this.name}}" title="Whole Disk Role found, click to inspect/edit." rel="tooltip">
+                    <i class="glyphicon glyphicon-tag"></i></a>
+                {{else}}
+                    {{#if this.pool_name}}
+                        <i class="glyphicon glyphicon-map-marker" title="Whole drive is mapped to a Pool" rel="tooltip"></i>
+                    {{else}}
+                        <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assign an optional Whole Disk Role (ie LUKS/bcache etc), click to edit." rel="tooltip">
+                        <i class="glyphicon glyphicon-question-sign"></i></a>
+                    {{/if}}
+                {{/if}}
             {{/if}}
         {{/if}}
-        <!-- All of the following are mutually exclusive so can live in the same if else without issue -->
-        {{#if (isOpenLuks this.role)}}
-            <a href="#" class="open_luks_drive" data-disk-name="{{this.name}}" title="Open LUKS Container (UI pending)." rel="tooltip">
-            <i class="glyphicon glyphicon-eye-open"></i></a>
-        {{else if (isBcache this.role)}}
-            <a href="#" class="bcache_backing_drive" data-disk-name="{{this.name}}" title="Bcache Backing Drive (UI pending)." rel="tooltip">
-            <i class="glyphicon glyphicon-link"></i></a>
-        {{else if (isBcacheCdev this.role)}}
-            <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive (UI pending)." rel="tooltip">
-            <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
-        {{/if}}
+          <!-- All of the following are additive role identification flags,
+          they are found independently and in addition to other roles.
+          Ie the root fs (flagged above) on an open LUKS container. -->
+          {{#if (isOpenLuks this.role)}}
+          <a href="#" class="open_luks_drive" data-disk-name="{{this.name}}"
+             title="Open LUKS Container (UI pending)." rel="tooltip">
+              <i class="glyphicon glyphicon-eye-open"></i></a>
+          {{/if}}
       </td>
       <td>
         {{#checkSerialStatus this.serial this.name}}
