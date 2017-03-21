@@ -106,13 +106,16 @@
           </div>
         </div>
 
-        <div class="checkbox">
-          <label class="col-sm-4 control-label" for="delete_tick"></label>
-          <div class="col-sm-4">
-            <input type="checkbox" name="delete_tick" id="delete_tick">
-            <i class="fa fa-eraser"></i>
-            Tick to wipe the contents of the above 'active' device (including
-            it's filesystem). Note 'Whole Disk' removes all partitions as well.
+        <div class="form-group">
+          <div class="checkbox">
+            <label class="col-sm-4 control-label" for="delete_tick"></label>
+            <div class="col-sm-4">
+              <input type="checkbox" name="delete_tick" id="delete_tick">
+              <i class="fa fa-eraser"></i>
+              Tick to wipe the contents of the above 'active' device (including
+              it's filesystem). Note 'Whole Disk' removes all partitions as
+              well.
+            </div>
           </div>
         </div>
 
@@ -120,6 +123,50 @@
           <div class="col-sm-offset-4 col-sm-8">
             <h4><strong><p style="color:red">WARNING: THIS WILL DELETE ALL DATA ON THE ABOVE DEVICE.</p></strong></h4>
             If unsure please click Cancel.
+          </div>
+        </div>
+
+        <!-- LUKS options, ie Tick Box and pass entries -->
+        <div class="form-group" id="luks_options">
+          <!-- LUKS Enable Tick Box -->
+          <div class="form-group" id="luks_tick_group">
+            <div class="checkbox">
+              <label class="col-sm-4 control-label" for="luks_tick"></label>
+              <div class="col-sm-4">
+                <input type="checkbox" name="luks_tick" id="luks_tick">
+                <i class="fa fa-eye"></i>
+                Tick to enable Whole Disk LUKS on the above device. Once
+                enabled
+                the password entered below will be required every time Rockstor
+                is powered up or restarted. This requires a local console and
+                monitor but ensures that Rockstor box theft does not compromise
+                your data.
+              </div>
+            </div>
+          </div>
+
+          <!-- LUKS Master Passwords Group -->
+          <div class="form-group" id="luks_passwords">
+            <!--  LUKS Master Password one  -->
+            <div class="form-group" id="luks_pass_one_group">
+              <label class="col-sm-4 control-label" for="luks_pass_one">LUKS
+                Master Password<span class="required"> *</span></label>
+              <div class="col-sm-4">
+                <input class="form-control shorten-input" type="text"
+                       name="luks_pass_one" id="luks_pass_one"
+                       title="The Master Password to enable Full Disk LUKS encryption. This password is not recorded by Rockstor.">
+              </div>
+            </div>
+            <!--  LUKS Master Password Two  -->
+            <div class="form-goup" id="luks_pass_two_group">
+              <label class="col-sm-4 control-label" for="luks_pass_two">
+                Please Retype to Verify<span class="required"> *</span></label>
+              <div class="col-sm-4">
+                <input class="form-control shorten-input" type="text"
+                       name="luks_pass_two" id="luks_pass_two"
+                       title="The Master Password to enable Full Disk LUKS encryption. This password is not recorded by Rockstor.">
+              </div>
+            </div>
           </div>
         </div>
 

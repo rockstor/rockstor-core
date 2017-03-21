@@ -28,7 +28,8 @@ SetroleDiskView = RockstorLayoutView.extend({
     events: {
         'click #cancel': 'cancel',
         'click #redirect_part': 'redirect_part_changed',
-        'click #delete_tick': 'delete_tick_toggle'
+        'click #delete_tick': 'delete_tick_toggle',
+        'click #luks_tick': 'luks_tick_toggle'
     },
 
     initialize: function () {
@@ -93,6 +94,7 @@ SetroleDiskView = RockstorLayoutView.extend({
             current_redirect = '';
         }
         this.current_redirect = current_redirect;
+        this.partitions = partitions;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -205,14 +207,16 @@ SetroleDiskView = RockstorLayoutView.extend({
         });
         this.delete_tick_toggle();
         this.redirect_part_changed();
+        this.luks_tick_toggle();
+        this.luks_options_show_hide();
     },
 
     delete_tick_toggle: function () {
         var delete_tick = this.$('#delete_tick');
         if (delete_tick.prop('checked')) {
-            this.$('#delete_tick_warning').css('visibility', 'visible');
+            this.$('#delete_tick_warning').show();
         } else {
-            this.$('#delete_tick_warning').css('visibility', 'hidden');
+            this.$('#delete_tick_warning').hide();
         }
     },
 
@@ -234,6 +238,28 @@ SetroleDiskView = RockstorLayoutView.extend({
             // we are showing the current redirect so re-enable the delete_tick
             this.$('#delete_tick').removeAttr('disabled');
             this.delete_tick_toggle();
+        }
+    },
+
+    luks_tick_toggle: function () {
+        var luks_tick = this.$('#luks_tick');
+        if (luks_tick.prop('checked')) {
+            this.$('#luks_passwords').show();
+        } else {
+            this.$('#luks_passwords').hide();
+        }
+    },
+
+    luks_options_show_hide: function () {
+        var luks_tick = this.$('#luks_tick');
+        var partitions = this.partitions;
+        console.log('partitons4=' + partitions)
+        if (_.isEmpty(partitions)) {
+            luks_tick.removeAttr('disabled');
+            this.$('#luks_options').show();
+        } else {
+            luks_tick.attr('disabled', true);
+            this.$('#luks_options').hide();
         }
     },
 
