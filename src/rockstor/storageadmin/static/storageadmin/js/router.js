@@ -1068,6 +1068,12 @@ $(document).ready(function() {
         }
     };
 
+    $('#yumupdates').click(function(event) {
+        if (event) {
+            event.preventDefault();
+        }
+        $('#yum_modal').modal('show');
+    });
 
     var kernelError = function(data) {
         // If 'kernel' does not show up in the string, we're ok
