@@ -95,6 +95,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         }
         this.current_redirect = current_redirect;
         this.partitions = partitions;
+        this.disk_btrfs_uuid = disk_btrfs_uuid;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -252,9 +253,11 @@ SetroleDiskView = RockstorLayoutView.extend({
 
     luks_options_show_hide: function () {
         var luks_tick = this.$('#luks_tick');
-        var partitions = this.partitions;
-        console.log('partitons4=' + partitions)
-        if (_.isEmpty(partitions)) {
+        // Only enable and show the LUKS formatting options if there are no
+        // partitions and we have no existing btrfs, imported or otherwise.
+        // The latter clause is to covers whole disk btrfs but doesn't cover
+        // non btrfs whole disk filesystems (these are unusual).
+        if (_.isEmpty(this.partitions) && this.disk_btrfs_uuid == null) {
             luks_tick.removeAttr('disabled');
             this.$('#luks_options').show();
         } else {
