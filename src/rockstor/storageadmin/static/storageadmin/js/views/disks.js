@@ -81,15 +81,25 @@ DisksView = RockstorLayoutView.extend({
             });
         };
         //Added columns definition for sorting purpose
-        $('table.data-table').DataTable({
-            'iDisplayLength': 15,
-            'aLengthMenu': [[15, 30, 45, -1], [15, 30, 45, 'All']],
-            'columns': [
-                null,null,null,null,null,null,null,null,null,
-            { 'orderDataType': 'dom-checkbox' }
-            ]
-        });
-        
+        var customs = {
+            columnDefs: [
+                { type: 'file-size', targets: 2 }
+            ],
+            columns: [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                { 'orderDataType': 'dom-checkbox' }
+            ]            
+        };
+
+        this.renderDataTables(customs);        
     },
 
     setupDisks: function () {
