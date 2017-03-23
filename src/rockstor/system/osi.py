@@ -56,6 +56,7 @@ SYSTEMCTL_BIN = '/usr/bin/systemctl'
 UDEVADM = '/usr/sbin/udevadm'
 UMOUNT = '/bin/umount'
 WIPEFS = '/usr/sbin/wipefs'
+RTC_WAKE_FILE = '/sys/class/rtc/rtc0/wakealarm'
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
@@ -1064,12 +1065,40 @@ def get_virtio_disk_serial(device_name):
     return out[0]
 
 
-def system_shutdown():
-    return run_command([SHUTDOWN, '-h', 'now'])
+def system_shutdown(delta='now'):
+    # New delta param default to now used to pass a 2 min delay
+    # for scheduled tasks reboot/shutdown
+    return run_command([SHUTDOWN, '-h', delta])
 
 
-def system_reboot():
-    return run_command([SHUTDOWN, '-r', 'now'])
+def system_reboot(delta='now'):
+    # New delta param default to now used to pass a 2 min delay
+    # for scheduled tasks reboot/shutdown
+    return run_command([SHUTDOWN, '-r', delta])
+
+
+def system_suspend():
+    # This function perform system suspend to RAM via systemctl
+    # while reboot and shutdown, both via shutdown command, can be delayed
+    # systemctl suspend miss this option
+    return run_command([SYSTEMCTL_BIN, 'suspend'])
+
+
+def clean_system_rtc_wake():
+    # Every time we write to rtc alarm file this get locked and
+    # we have to clean it with a 0 before writing another epoch
+    with open(RTC_WAKE_FILE, 'w') as rtc:
+        rtc.write('%d' % 0)
+
+
+def set_system_rtc_wake(wakeup_epoch):
+    # This new function receive desired current and wake up time
+    # and set right epoch time to rtc alarm file.
+    # Epoch wake up time evaluated on every shutdown scheduled task
+    clean_system_rtc_wake()
+    with open(RTC_WAKE_FILE, 'w') as rtc:
+        rtc.write('%d' % int(wakeup_epoch))
+    return None
 
 
 def md5sum(fpath):

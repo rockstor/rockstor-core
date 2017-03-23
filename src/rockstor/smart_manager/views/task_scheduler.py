@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -31,7 +31,8 @@ logger = logging.getLogger(__name__)
 
 
 class TaskSchedulerMixin(object):
-    valid_tasks = ('snapshot', 'scrub',)
+    valid_tasks = ('snapshot', 'scrub', 'reboot',
+                   'shutdown', 'suspend', 'custom')
 
     @staticmethod
     def _validate_input(request):
@@ -39,6 +40,9 @@ class TaskSchedulerMixin(object):
         crontab = request.data.get('crontab')
         crontabwindow = request.data.get('crontabwindow')
         meta = request.data.get('meta', {})
+        if 'rtc_hour' in meta:
+            meta['rtc_hour'] = int(meta['rtc_hour'])
+            meta['rtc_minute'] = int(meta['rtc_minute'])
         if (type(meta) != dict):
             e_msg = ('meta must be a dictionary, not %s' % type(meta))
             handle_exception(Exception(e_msg), request)
@@ -83,6 +87,9 @@ class TaskSchedulerMixin(object):
                                (tab, settings.ROOT_DIR, td.id))
                     elif (td.task_type == 'scrub'):
                         tab = ('%s %s/bin/st-pool-scrub %d' %
+                               (tab, settings.ROOT_DIR, td.id))
+                    elif (td.task_type in ['reboot', 'shutdown', 'suspend']):
+                        tab = ('%s %s/bin/st-system-power %d' %
                                (tab, settings.ROOT_DIR, td.id))
                     else:
                         logger.error('ignoring unknown task_type: %s'

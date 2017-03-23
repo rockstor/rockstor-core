@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -850,6 +850,7 @@ class SysinfoNamespace(RockstorIO):
         self.spawn(self.prune_logs, sid)
         self.spawn(self.send_localtime, sid)
         self.spawn(self.send_uptime, sid)
+        self.spawn(self.shutdown_status, sid)
 
     # Run on every disconnect
     def on_disconnect(self, sid):
@@ -939,6 +940,25 @@ class SysinfoNamespace(RockstorIO):
             self.aw.api_call('sm/tasks/log/prune', data=None, calltype='post',
                              save_error=False)
             gevent.sleep(3600)
+
+    def shutdown_status(self):
+
+        while self.start:
+            data = {}
+            output, error, return_code = service_status('systemd-shutdownd')
+            data['status'] = return_code
+            if (return_code == 0):
+                for row in output:
+                    if (re.search('Status', row) is not None):
+                        data['message'] = row.split(':', 1)[1]
+
+            self.emit('shutdown_status',
+                      {
+                          'key': 'sysinfo:shutdown_status',
+                          'data': data
+                      })
+
+            gevent.sleep(30)
 
 
 def main():

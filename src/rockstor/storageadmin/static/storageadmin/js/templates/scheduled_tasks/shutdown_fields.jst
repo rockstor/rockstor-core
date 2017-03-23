@@ -1,0 +1,30 @@
+{{#if taskDefIdNull}}
+<div class="form-inline">
+    <div class="checkbox-inline" style="clear: both">
+        <label>
+            <input type="checkbox" id="wakeup" name="meta.wakeup" title="Enable RTC wake up to schedule system power on after shutdown"> Enable System RTC wake up?
+        </label>
+    </div>
+{{else}}
+<div class="form-group">
+	<div class="col-sm-offset-4 col-sm-8">
+		<div class="checkbox-inline" style="clear: both">
+			<label>
+				<input class="checkbox" type="checkbox" id="wakeup" name="meta.wakeup" title="Enable RTC wake up to schedule system power on after shutdown"> Enable System RTC wake up? 
+			</label>
+		</div>
+{{/if}}
+    <span id="rtc_container" style="display: none;">
+        <select class="form-control" id="rtc_hour" name="meta.rtc_hour" >
+            {{ time_select 'rtc_hour'}}
+        </select> : 
+        <select class="form-control" id="rtc_minute" name="meta.rtc_minute">
+            {{ time_select 'rtc_minute'}}
+        </select>
+    </span>
+{{#if taskDefIdNull}}
+</div>
+{{else}}
+	</div>
+</div>
+{{/if}}

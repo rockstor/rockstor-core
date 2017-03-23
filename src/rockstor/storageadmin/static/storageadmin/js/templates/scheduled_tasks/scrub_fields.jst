@@ -1,18 +1,25 @@
 {{#if taskDefIdNull}}
 <div class="row">
-  <div class="form-group">
-    <label class="control-label col-md-4" for="pool">Pool to scrub<span class="required"> *</span></label>
-</div>
+    <div class="form-group">
+        <label class="control-label col-md-4" for="pool">Pool to scrub<span class="required"> *</span></label>
+    </div>
 </div>
 <div class="row">
-<div class="form-group">
-    <div class="col-md-4">
-      <select class="form-control" id="pool" name="meta.pool">
-        {{#each pools}}
-            <option value="{{this.name}}">{{this.name}}</option>
-        {{/each}}
-      </select>
-    </div><!--col-md-4-->
-  </div><!--form-group-->
+    <div class="form-group">
+        <div class="col-md-4">
+            <select class="form-control" id="pool" name="meta.pool">
+            {{#each pools}}
+                <option value="{{this.name}}">{{this.name}}</option>
+            {{/each}}
+            </select>
+        </div><!--col-md-4-->
+    </div><!--form-group-->
 </div><!--row -->
+{{else}}
+<div class="form-group">
+    <label class="control-label col-sm-4" for="share">Pool: </label>
+    <div class="col-sm-6">
+        <input type="text" class="form-control" value="{{> taskObj.pool}}" disabled />
+    </div>    
+</div>
 {{/if}}

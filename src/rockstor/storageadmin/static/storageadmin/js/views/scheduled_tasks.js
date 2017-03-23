@@ -57,7 +57,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 return moment(task.get('start')).valueOf();
             }).reverse();
         });
-        // remove existing tooltips
+		// remove existing tooltips
         if (this.$('[rel=tooltip]')) {
             this.$('[rel=tooltip]').tooltip('hide');
         }
@@ -66,32 +66,26 @@ ScheduledTasksView = RockstorLayoutView.extend({
             collectionNotEmpty: !this.collection.isEmpty(),
             taskMap: this.taskMap
         }));
-        this.$('[rel=tooltip]').tooltip({
-            placement: 'bottom'
-        });
+        this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
 
         this.renderDataTables();
     },
 
     toggleEnabled: function(event) {
         var _this = this;
-        if (event) {
-            event.preventDefault();
-        }
+        if (event) { event.preventDefault(); }
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
         var taskId = $(event.currentTarget).attr('data-task-id');
-        var enabled = $(event.currentTarget).attr('data-action') == 'enable' ?
-            true : false;
+        var enabled = $(event.currentTarget).attr('data-action') == 'enable'
+			? true : false;
         $.ajax({
             url: '/api/sm/tasks/' + taskId,
             type: 'PUT',
             dataType: 'json',
             contentType: 'application/json',
-            data: JSON.stringify({
-                enabled: enabled
-            }),
+            data: JSON.stringify({enabled: enabled}),
             success: function() {
                 enableButton(button);
                 _this.collection.fetch({
@@ -108,14 +102,12 @@ ScheduledTasksView = RockstorLayoutView.extend({
 
     deleteTask: function(event) {
         var _this = this;
-        if (event) {
-            event.preventDefault();
-        }
+        if (event) { event.preventDefault(); }
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         var taskId = $(event.currentTarget).attr('data-task-id');
         var taskName = $(event.currentTarget).attr('data-task-name');
-        if (confirm('Delete task:  ' + taskName + '. Are you sure?')) {
+        if(confirm('Delete task:  ' + taskName + '. Are you sure?')){
             $.ajax({
                 url: '/api/sm/tasks/' + taskId,
                 type: 'DELETE',
@@ -135,8 +127,8 @@ ScheduledTasksView = RockstorLayoutView.extend({
         }
     },
 
-    initHandlebarHelpers: function() {
-        Handlebars.registerHelper('display_scheduledTasks_table', function(adminBool) {
+    initHandlebarHelpers: function(){
+        Handlebars.registerHelper('display_scheduledTasks_table', function(adminBool){
             var html = '',
                 _this = this;
             this.collection.each(function(t) {
@@ -152,7 +144,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 html += '<td>' + taskType + '&nbsp;';
                 if (taskType == 'snapshot') {
                     html += '(' + JSON.parse(jsonMeta).share + ')';
-                } else {
+                } else if (taskType == 'scrub') {
                     html += '(' + JSON.parse(jsonMeta).pool + ')';
                 }
                 html += '</td>';
@@ -205,9 +197,7 @@ function render_cronwindow(cwindow) {
     } else {
         cwindow = cwindow.split('-');
         for (var i = 0; i < 4; i++) {
-            if (cwindow[i] != '*' && cwindow[i].length == 1) {
-                cwindow[i] = '0' + cwindow[i];
-            }
+            if (cwindow[i] != '*' && cwindow[i].length == 1) { cwindow[i] = '0' + cwindow[i]; }
         }
         rendercwindow = '<i class="fa fa-clock-o"/>&nbsp;';
         if (cwindow[0] != '*') { //if hour start isn't always value the same do min start and hour min stop
@@ -218,7 +208,7 @@ function render_cronwindow(cwindow) {
         }
         rendercwindow += '&nbsp;-&nbsp;<i class="fa fa-calendar"/>&nbsp;';
         if (cwindow[4] != '*') { //as for hour start, if day start isn't star then day stop too
-            var dayname = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            var dayname = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
             rendercwindow += dayname[cwindow[4]] + ' to ' + dayname[cwindow[5]];
         } else {
             rendercwindow += ' on every day';
