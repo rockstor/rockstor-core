@@ -546,6 +546,7 @@ class DiskDetailView(rfc.GenericView):
         # Until we find otherwise:
         prior_redirect = ''
         redirect_role_change = False
+        luks_passwords_match = False
         try:
             disk = self._validate_disk(dname, request)
             # We can use this disk name directly as it is our db reference
@@ -555,6 +556,9 @@ class DiskDetailView(rfc.GenericView):
             # so we make sure to not wipe and redirect at the same time.
             new_redirect_role = str(request.data.get('redirect_part', ''))
             is_delete_ticked = request.data.get('delete_tick', False)
+            is_luks_format_ticked = request.data.get('luks_tick', False)
+            luks_pass_one = str(request.data.get('luks_pass_one', ''))
+            luks_pass_two = str(request.data.get('luks_pass_two', ''))
             # Get our previous roles into a dictionary.
             if disk.role is not None:
                 roles = json.loads(disk.role)
@@ -585,7 +589,13 @@ class DiskDetailView(rfc.GenericView):
                     e_msg = ("Wiping a device while changing it's redirect "
                              "role is not supported. Please do one at a time")
                     raise Exception(e_msg)
-                # We have a redirect role change and no delete ticked so
+                if is_luks_format_ticked:
+                    # changing redirect and requesting LUKS format are blocked
+                    e_msg = ("LUKS formating a device while changing it's "
+                             "redirect role is not supported. Please do one "
+                             "at a time")
+                    raise Exception(e_msg)
+                # We have a redirect role change and no delete or LUKS ticks so
                 # return our dict back to a json format and stash in disk.role
                 disk.role = json.dumps(roles)
                 disk.save()
