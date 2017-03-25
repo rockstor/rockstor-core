@@ -559,6 +559,8 @@ class DiskDetailView(rfc.GenericView):
             is_luks_format_ticked = request.data.get('luks_tick', False)
             luks_pass_one = str(request.data.get('luks_pass_one', ''))
             luks_pass_two = str(request.data.get('luks_pass_two', ''))
+            if luks_pass_one == luks_pass_two:
+                luks_passwords_match = True
             # Get our previous roles into a dictionary.
             if disk.role is not None:
                 roles = json.loads(disk.role)
@@ -618,14 +620,21 @@ class DiskDetailView(rfc.GenericView):
                         # I.e one thing at a time, especially if serious.
                         e_msg = ('Wiping a device while also requesting a '
                                  'LUKS format for the same device is not '
-                                 'supported. Please to one at a time.')
+                                 'supported. Please do one at a time.')
                         raise Exception(e_msg)
                     # Not sure if this is the correct way to call our wipe.
                     return self._wipe(dname, request)
+                if is_luks_format_ticked:
+                    if not luks_passwords_match:
+                        # Simple password mismatch, should be caught by front
+                        # end but we check as well
+                        e_msg = ('LUKS format requested but passwords do not '
+                                 'match. Aborting. Please try again.')
+                        raise Exception(e_msg)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
-            e_msg = ('Failed to configure drive role or wipe existing '
-                     'filesystem on device (%s). Error: %s'
+            e_msg = ('Failed to configure drive role, or wipe existing '
+                     'filesystem, or do LUKS format on device (%s). Error: %s'
                      % (dname, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
