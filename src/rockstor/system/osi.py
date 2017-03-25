@@ -16,22 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
-import os
-# TODO: consider drop in replacement of subprocess32 module
-import subprocess
-import signal
-import collections
-import shutil
-from tempfile import mkstemp
-import time
 from socket import inet_ntoa
 from struct import pack
-from exceptions import CommandException, NonBTRFSRootException
+from tempfile import mkstemp
+import collections
 import hashlib
 import logging
+import os
+import re
+import shutil
+import signal
+import stat
+import subprocess  # TODO: consider drop in replacement of subprocess32 module
+import time
 import uuid
+
 from django.conf import settings
+
+from exceptions import CommandException, NonBTRFSRootException
+
 
 logger = logging.getLogger(__name__)
 
@@ -1680,12 +1683,14 @@ def update_hdparm_service(hdparm_command_list, comment):
     clear_line_count = 0
     remove_entry = False
     # Establish our systemd_template, needed when no previous config exists.
-    systemd_template = ('%s/rockstor-hdparm.service' % settings.CONFROOT)
+    service = 'rockstor-hdparm.service'
+    systemd_template = ('%s/%s' % (settings.CONFROOT, service))
+    systemd_target = ('/etc/systemd/system/%s' % service)
     # Check for the existence of this systemd template file.
     if not os.path.isfile(systemd_template):
         # We have no template file so log the error and return False.
-        logger.error('Skipping hdparm settings: no rockstor-hdparm.service '
-                     'template file found.')
+        logger.error('Skipping hdparm settings: no %s '
+                     'template file found.' % systemd_template)
         return False
     # Get the line count of our systemd_template, for use in recognizing when
     # we have removed all existing config entries.
@@ -1701,8 +1706,8 @@ def update_hdparm_service(hdparm_command_list, comment):
     tfo, npath = mkstemp()
     # If there is already a rockstor-hdparm.service file then we use that
     # as our source file, otherwise use conf's empty template.
-    if os.path.isfile('/etc/systemd/system/rockstor-hdparm.service'):
-        infile = '/etc/systemd/system/rockstor-hdparm.service'
+    if os.path.isfile(systemd_target):
+        infile = systemd_target
         update = True
     else:
         # We have already checked for the existence of our template file.
@@ -1764,32 +1769,29 @@ def update_hdparm_service(hdparm_command_list, comment):
         # our proposed systemd file is the same length as our template and so
         # contains no ExecStart lines so we disable the rockstor-hdparm
         # service.
-        logger.info('Disabling the rockstor-hdparm systemd service.')
-        out, err, rc = run_command(
-            [SYSTEMCTL_BIN, 'disable', 'rockstor-hdparm'])
+        out, err, rc = run_command([SYSTEMCTL_BIN, 'disable', service])
         if rc != 0:
             return False
         # and remove our rockstor-hdparm.service file as it's absence indicates
         # a future need to restart this service via the update flag as not
         # True.
         if update:  # update was set true if file exists so we check first.
-            logger.info('Removing the rockstor-hdparm systemd file.')
             # TODO: Is try clause needed as we know it exists already?
-            os.remove('/etc/systemd/system/rockstor-hdparm.service')
+            os.remove(systemd_target)
     else:
         # Since we know our proposed systemd file has more than template
         # entries it's worth copying over to our destination as we are done
         # updating it.  There is an assumption here that !=
         # systemd_template_linecount = greater than. Should be so.
-        shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
+        shutil.move(npath, systemd_target)
+        os.chmod(systemd_target, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
+                 stat.S_IROTH)
     if update is not True and tempfile_length > systemd_template_line_count:
         # This is a fresh systemd instance so enable it but only if our line
         # count (ie entries) is greater than the template file's line count.
         # N.B. can't use systemctrl wrapper as then circular dependency ie:-
         # return systemctl('rockstor-hdparm', 'enable')
-        logger.info('Enabling the rockstor-hdparm systemd service.')
-        out, err, rc = run_command([SYSTEMCTL_BIN, 'enable',
-                                    'rockstor-hdparm'])
+        out, err, rc = run_command([SYSTEMCTL_BIN, 'enable', service])
         if rc != 0:
             return False
     return True
