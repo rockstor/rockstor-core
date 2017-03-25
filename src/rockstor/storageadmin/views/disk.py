@@ -600,13 +600,25 @@ class DiskDetailView(rfc.GenericView):
                 disk.role = json.dumps(roles)
                 disk.save()
             else:
-                # no redirect role change so we can wipe if requested by tick
+                # No redirect role change so we can wipe if requested by tick
+                # but only if disk is not a pool member and no LUKS request.
                 if is_delete_ticked:
                     if disk.pool is not None:
                         # Disk is a member of a Rockstor pool so refuse to wipe
                         e_msg = ('Wiping a Rockstor pool member is '
                                  'not supported. Please use pool resize to '
                                  'remove this disk from the pool first.')
+                        raise Exception(e_msg)
+                    if is_luks_format_ticked:
+                        # Simultaneous request to LUKS format and wipe.
+                        # Best if we avoid combining wiping and LUKS format as
+                        # although they are mostly equivalent this helps to
+                        # keep these activities separated, which should help
+                        # with future development and cleaner error reporting.
+                        # I.e one thing at a time, especially if serious.
+                        e_msg = ('Wiping a device while also requesting a '
+                                 'LUKS format for the same device is not '
+                                 'supported. Please to one at a time.')
                         raise Exception(e_msg)
                     # Not sure if this is the correct way to call our wipe.
                     return self._wipe(dname, request)
