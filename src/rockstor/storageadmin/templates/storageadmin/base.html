@@ -1,6 +1,6 @@
 {% load staticfiles %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <!--
     /**
@@ -116,7 +116,23 @@
     <script src="/static/js/lib/additional-methods.min.js"></script>
     <script src="/static/js/lib/bootstrap-editable.min.js"></script>
     <script src="/static/js/lib/Chart.min.js"></script>
+    <script src="/static/js/lib/jquery.i18n/CLDRPluralRuleParser.js"></script>
+    <script src="/static/js/lib/jquery.i18n/jquery.i18n.js"></script>
+    <script src="/static/js/lib/jquery.i18n/jquery.i18n.messagestore.js"></script>
+    <script src="/static/js/lib/jquery.i18n/jquery.i18n.fallbacks.js"></script>
+    <script src="/static/js/lib/jquery.i18n/jquery.i18n.parser.js"></script>
+    <script src="/static/js/lib/jquery.i18n/jquery.i18n.emitter.js"></script>
+    <script src="/static/js/lib/jquery.i18n/jquery.i18n.language.js"></script>
     <script src="/static/storageadmin/js/storageadmin.js"></script>
+    <script>
+        var langs_folder = '/static/js/lib/jquery.i18n/langs/';
+        $.i18n().load({
+            de: langs_folder + 'de.json',
+            es: langs_folder + 'es.json',
+            fr: langs_folder + 'fr.json',
+            it: langs_folder + 'it.json'
+        });
+    </script>
   </head>
 
   <body>
