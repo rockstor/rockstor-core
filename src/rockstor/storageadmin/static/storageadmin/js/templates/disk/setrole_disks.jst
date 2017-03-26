@@ -36,12 +36,11 @@
     require the user to manually set the desired partition, including the
     initial btrfs import device; only additional devices within the imported
     pool will automatically have a redirect role set if required.
-    <p>
-      N.B.Rockstor only supports the use of one partition (redirect role) per
+    <i>Note: Rockstor only supports the use of one partition (redirect role) per
       device. Although other partitions may exist they will be ignored.
-    </p>
+    </i>
     <p class="text-warning">
-      Please note that a drive's <i>Redirect</i> role will affect the action
+      A drive's <i>Redirect</i> role will affect the action
       taken when it is wiped from within the Rockstor interface. If a valid
       redirect to an existing partition exists then the contents of that
       partition will be deleted. But if there is no redirect role then the
@@ -67,7 +66,6 @@
     The <i>External Import</i> role can be combined with the <i>Redirect</i> role.
     <br>
     <i>N.B. Not currently implemented</i>
-    <p></p>
     <p class="text-warning">
       Please note: With the <i>External Import</i> role the external drive is
       considered to be the master source of truth. If a file is changed on the
@@ -76,6 +74,27 @@
       Not the other way around.
     </p>
   </li>
+</ul>
+<h4>LUKS Full Disk Encryption:</h4>
+Empty or freshly wiped devices can be LUKS encrypted. Rockstor does
+not remember or record the associated passphrase.<br>
+<i> A pool is only encrypted if all it's members are LUKS formatted.</i>
+<br>
+Passphrase Notes:
+<ul>
+    <li>
+        Must be entered on every power up using a locally connected keyboard
+        and monitor (unless a keyfile is created).
+    </li>
+    <li>
+        Commonly shared across a systems drives: a single power on
+        entry then unlocks all drives.
+    </li>
+    <li>
+        <p class="text-warning">
+The LUKS equivalent of the system root password: initially the only way to unlock the disks contents.
+        </p>
+    </li>
 </ul>
 
 <div class="row">
@@ -135,11 +154,7 @@
               <div class="col-sm-4">
                 <input type="checkbox" name="luks_tick" id="luks_tick">
                 <i class="fa fa-eye"></i>
-                Tick to enable Whole Disk LUKS on the above device. Once
-                enabled the passphrase entered below will be required every
-                time Rockstor is powered up or restarted. This requires a
-                local console and monitor but ensures that Rockstor box theft
-                does not compromise your data.
+                    Tick to enable Whole Disk LUKS. Please see LUKS notes above.
               </div>
             </div>
           </div>
