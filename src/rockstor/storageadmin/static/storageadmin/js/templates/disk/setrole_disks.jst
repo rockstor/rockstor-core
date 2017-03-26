@@ -136,35 +136,34 @@
                 <input type="checkbox" name="luks_tick" id="luks_tick">
                 <i class="fa fa-eye"></i>
                 Tick to enable Whole Disk LUKS on the above device. Once
-                enabled
-                the password entered below will be required every time Rockstor
-                is powered up or restarted. This requires a local console and
-                monitor but ensures that Rockstor box theft does not compromise
-                your data.
+                enabled the passphrase entered below will be required every
+                time Rockstor is powered up or restarted. This requires a
+                local console and monitor but ensures that Rockstor box theft
+                does not compromise your data.
               </div>
             </div>
           </div>
 
-          <!-- LUKS Master Passwords Group -->
+          <!-- LUKS Master Passphrase Group -->
           <div class="form-group" id="luks_passwords">
-            <!--  LUKS Master Password one  -->
+            <!--  LUKS Master Passphrase one  -->
             <div class="form-group" id="luks_pass_one_group">
               <label class="col-sm-4 control-label" for="luks_pass_one">LUKS
-                Master Password<span class="required"> *</span></label>
+                Master Passphrase<span class="required"> *</span></label>
               <div class="col-sm-4">
                 <input class="form-control shorten-input" type="text"
                        name="luks_pass_one" id="luks_pass_one"
-                       title="The Master Password to enable Full Disk LUKS encryption. This password is not recorded by Rockstor.">
+                       title="The Master Passphrase to enable Full Disk LUKS encryption. This passphrase is not recorded by Rockstor.">
               </div>
             </div>
-            <!--  LUKS Master Password Two  -->
+            <!--  LUKS Master Passphrase Two  -->
             <div class="form-goup" id="luks_pass_two_group">
               <label class="col-sm-4 control-label" for="luks_pass_two">
                 Please Retype to Verify<span class="required"> *</span></label>
               <div class="col-sm-4">
                 <input class="form-control shorten-input" type="text"
                        name="luks_pass_two" id="luks_pass_two"
-                       title="The Master Password to enable Full Disk LUKS encryption. This password is not recorded by Rockstor.">
+                       title="The Master Passphrase to enable Full Disk LUKS encryption. This passphrase is not recorded by Rockstor.">
               </div>
             </div>
           </div>
