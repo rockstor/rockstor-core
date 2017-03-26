@@ -173,13 +173,36 @@ SetroleDiskView = RockstorLayoutView.extend({
             return true;
         }, role_err_msg);
 
+        $.validator.addMethod('validateLuksPassphrases', function (value) {
+            var luks_tick = $('#luks_tick');
+            var luks_pass_one = $('#luks_pass_one').val();
+            var luks_pass_two = $('#luks_pass_two').val();
+            if (luks_tick.prop('checked')) {
+                if (luks_pass_one == '') {
+                    err_msg = 'An empty LUKS passphrase is not supported';
+                    return false;
+                }
+                if (luks_pass_one.length < 14) {
+                    err_msg = 'LUKS passphrase should be at least 14 ' +
+                        'characters long.';
+                    return false;
+                }
+                if (luks_pass_one != luks_pass_two) {
+                    err_msg = 'LUKS passphrases do not match, please try ' +
+                        'again.';
+                    return false;
+                }
+            }
+            return true;
+        }, role_err_msg);
+
         this.$('#add-role-disk-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-                // redirect_part: 'required',
                 redirect_part: 'validateRedirect',
-                delete_tick: 'validateDeleteTick'
+                delete_tick: 'validateDeleteTick',
+                luks_pass_one: 'validateLuksPassphrases'
             },
 
             submitHandler: function () {
