@@ -37,5 +37,5 @@ class ConfigBackup(models.Model):
 
     @staticmethod
     def cb_dir():
-        DEFAULT_CB_DIR
+        return DEFAULT_CB_DIR
 
