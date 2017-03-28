@@ -1,13 +1,12 @@
 <h3>Configure drive Role or Wipe an existing Filesystem.</h3>
-  Drive Roles inform Rockstor of how to treat a specific drive. They can
-  drastically alter a devices options within Rockstor. Below is a list of
-  disk roles and their intended use. Not all roles can be combined. Please see:
+  Drive Roles inform Rockstor of specific drive treatment and can drastically
+  alter a devices available options: not all roles are compatible. Please see:
 <a href="http://rockstor.com/docs/disks.html#disk-role-configuration"
-   target="_blank">Disk Role Configuration</a> in our official online docs.
+   target="_blank">Disk Role Configuration</a> in our online docs.
 <p></p>
 <p class="text-warning">
   Changing a disk role can result in loss of data, please take care when
-  making any changes on this page.
+  making changes on this page.
 </p>
 <p class="bg-info">
   <strong>Note: </strong> No drive role is required for general purpose use.
@@ -29,42 +28,42 @@
     including on the initial import device. <strong>Only one Redirect role
     (partition) per device is supported.</strong>
     <p class="text-warning">
-      A drive's <i>Redirect</i> role defines the <i>wipe</i> action. An
-      active redirect + wipe erases a partitions data and filesystem.
-      No redirect role + wipe erases the entire drive and all it's partitions.
+      A drive's <a href="http://rockstor.com/docs/disks.html#the-disk-redirect-role"
+      target="_blank">Redirect role</a> defines the
+      <a href="http://rockstor.com/docs/disks.html#wiping-a-partition-or-whole-disk" target="_blank">Wipe</a>
+      action. A Redirect + Wipe erases a partitions data and filesystem.
+      No Redirect + Wipe erases the entire drive and all it's partitions.
       The wipe command used is "wipefs -a devname".
     </p>
   </li>
   <li>
-    The <strong>Archive</strong> role is intended to be used by a single
-    external drive (eg USB).
+    The <strong>Archive</strong> role: intended for single external drive use
+    (eg USB).
     <br>
-    The <i>Archive</i> role can be combined with the <i>Redirect</i> role.
+    Compatible with the <i>Redirect</i> role.
     <br>
     <i>N.B. Not currently implemented</i>
     <p></p>
   </li>
   <li>
-    The <strong>External Import</strong> role is, like the <i>Archive</i> role
-    above, intended to be used by a single external drive (eg USB) and is
-    primarily aimed at sync type use where you wish for an external drives data
-    to be imported onto a specifically designated internal Rockstor share.
+    The <strong>External Import</strong> role: intended for single external
+    drive use (eg USB). A data synchronization role where an external drive's
+    data is to be imported onto a designated internal share.
     <br>
-    The <i>External Import</i> role can be combined with the <i>Redirect</i> role.
+    Compatible with the <i>Redirect</i> role.
     <br>
     <i>N.B. Not currently implemented</i>
     <p class="text-warning">
-      Please note: With the <i>External Import</i> role the external drive is
-      considered to be the master source of truth. If a file is changed on the
-      external drive and the drive is then re-attached to Rockstor then the
-      next sync operation will update Rockstor's version of that file.
-      Not the other way around.
+      Note: The external drive is the master source of truth. If a file is
+      changed on the external drive and the drive is then re-attached, the
+      next sync operation will update the designated share's version. Not
+      the other way around.
     </p>
   </li>
 </ul>
 <h4>LUKS Full Disk Encryption:</h4>
-Empty or freshly wiped devices can be LUKS encrypted. Rockstor does
-not remember or record the associated passphrase.<br>
+Blank or freshly wiped devices can be LUKS encrypted. <strong>Rockstor does
+not remember or record the associated passphrase.</strong><br>
 <i> A pool is only encrypted if all it's members are LUKS formatted.</i>
 <br>
 Passphrase Notes:
@@ -141,7 +140,7 @@ LUKS equivalent of system root password: initially the only way to unlock the di
               <div class="col-sm-4">
                 <input type="checkbox" name="luks_tick" id="luks_tick">
                 <i class="fa fa-eye"></i>
-                    Tick to enable Whole Disk LUKS. Please see LUKS notes above.
+                    Tick to enable Whole Disk Encryption (LUKS Format). Please see LUKS notes above.
               </div>
             </div>
           </div>
@@ -153,9 +152,9 @@ LUKS equivalent of system root password: initially the only way to unlock the di
               <label class="col-sm-4 control-label" for="luks_pass_one">LUKS
                 Master Passphrase<span class="required"> *</span></label>
               <div class="col-sm-4">
-                <input class="form-control shorten-input" type="text"
+                <input class="form-control shorten-input" type="password"
                        name="luks_pass_one" id="luks_pass_one"
-                       title="The Master Passphrase to enable Full Disk LUKS encryption. This passphrase is not recorded by Rockstor.">
+                       title="Suggested character length = 14-18 if random, 108-140 if english words.">
               </div>
             </div>
             <!--  LUKS Master Passphrase Two  -->
@@ -163,9 +162,9 @@ LUKS equivalent of system root password: initially the only way to unlock the di
               <label class="col-sm-4 control-label" for="luks_pass_two">
                 Please Retype to Verify<span class="required"> *</span></label>
               <div class="col-sm-4">
-                <input class="form-control shorten-input" type="text"
+                <input class="form-control shorten-input" type="password"
                        name="luks_pass_two" id="luks_pass_two"
-                       title="The Master Passphrase to enable Full Disk LUKS encryption. This passphrase is not recorded by Rockstor.">
+                       title="Suggested character length = 14-18 if random, 108-140 if english words.">
               </div>
             </div>
           </div>
