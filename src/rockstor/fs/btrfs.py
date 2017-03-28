@@ -51,8 +51,10 @@ def add_pool(pool, disks):
     :return o, err, rc from last command executed.
     """
     disks_fp = ['/dev/disk/by-id/' + d for d in disks]
-    cmd = [MKFS_BTRFS, '-f', '-d', pool.raid, '-m', pool.raid, '-L',
-           pool.name, ]
+    draid = mraid = pool.raid
+    if pool.raid == 'single':
+        mraid = 'dup'
+    cmd = [MKFS_BTRFS, '-f', '-d', draid, '-m', mraid, '-L', pool.name]
     cmd.extend(disks_fp)
     # Run the create pool command, any exceptions are logged and raised by
     # run_command as a CommandException.
