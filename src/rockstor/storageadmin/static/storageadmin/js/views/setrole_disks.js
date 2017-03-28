@@ -238,9 +238,18 @@ SetroleDiskView = RockstorLayoutView.extend({
     delete_tick_toggle: function () {
         var delete_tick = this.$('#delete_tick');
         if (delete_tick.prop('checked')) {
+            // show delete warning
             this.$('#delete_tick_warning').show();
+            // un-tick and hide LUKS tick and passwords
+            this.$('#luks_tick').removeAttr('checked');
+            this.$('#luks_passwords').hide();
+            this.$('#luks_options').hide();
         } else {
+            // hide delete warning
             this.$('#delete_tick_warning').hide();
+            // show LUKS options if appropriate
+            // this.$('#luks_options').show();
+            this.luks_options_show_hide()
         }
     },
 
@@ -268,9 +277,18 @@ SetroleDiskView = RockstorLayoutView.extend({
     luks_tick_toggle: function () {
         var luks_tick = this.$('#luks_tick');
         if (luks_tick.prop('checked')) {
+            // un-tick delete and hide it
+            this.$('#delete_tick').removeAttr('checked');
+            this.$('#delete_tick_group').hide();
+            // show password entry and delete warning
             this.$('#luks_passwords').show();
+            this.$('#delete_tick_warning').show();
         } else {
+            // show delete tick
+            this.$('#delete_tick_group').show();
+            // hide password entry and delete warning
             this.$('#luks_passwords').hide();
+            this.$('#delete_tick_warning').hide();
         }
     },
 
