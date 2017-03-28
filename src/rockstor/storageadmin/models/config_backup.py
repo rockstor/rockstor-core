@@ -20,9 +20,6 @@ import os
 from django.db import models
 from django.conf import settings
 
-DEFAULT_CB_DIR = os.path.join(settings.MEDIA_ROOT, 'config-backups')
-
-
 class ConfigBackup(models.Model):
     filename = models.CharField(max_length=64)
     md5sum = models.CharField(max_length=32, null=True)
@@ -37,5 +34,5 @@ class ConfigBackup(models.Model):
 
     @staticmethod
     def cb_dir():
-        return DEFAULT_CB_DIR
+        return settings.DEFAULT_CB_DIR
 
