@@ -95,14 +95,20 @@ def get_pool_info(disk):
     :return: a dictionary with keys of 'disks', 'label', and 'uuid';
     disks keys a list of devices, while label and uuid keys are for strings.
     """
-    cmd = [BTRFS, 'fi', 'show', '/dev/disk/by-id/%s' % disk]
+    dpath = '/dev/disk/by-id/%s' % disk
+    cmd = [BTRFS, 'fi', 'show', dpath]
     o, e, rc = run_command(cmd)
     pool_info = {'disks': [], }
     for l in o:
         if (re.match('Label', l) is not None):
             fields = l.split()
-            pool_info['label'] = fields[1].strip("'")
             pool_info['uuid'] = fields[3]
+            label = fields[1].strip("'")
+            if label == 'none':
+                # fs has no label, set label = uuid.
+                label = pool_info['uuid']
+                run_command([BTRFS, 'fi', 'label', dpath, label])
+            pool_info['label'] = label
         elif (re.match('\tdevid', l) is not None):
             # We have a line starting wth <tab>devid, extract the dev name.
             # Previously this would have been sda and used as is but we need
