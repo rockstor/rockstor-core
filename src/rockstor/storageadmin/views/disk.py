@@ -27,6 +27,7 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
+from system.luks import luks_format_disk
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
     wipe_disk, blink_disk, scan_disks
 from copy import deepcopy
@@ -189,6 +190,8 @@ class DiskMixin(object):
                 # OPEN LUKS DISK: scan_disks() can inform us of the truth
                 # regarding an opened LUKS container which appears as a mapped
                 # device. Assign the /dev/disk/by-id name as a value.
+                # TODO: Consider stashing cryptsetup status info in this role
+                # TODO: as a dict/json.
                 disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
             if d.fstype == 'bcache':
                 # BCACHE: scan_disks() can inform us of the truth regarding
@@ -425,6 +428,8 @@ class DiskDetailView(rfc.GenericView):
                 return self._wipe(dname, request)
             if (command == 'btrfs-wipe'):
                 return self._wipe(dname, request)
+            if (command == 'luks-format'):
+                return self._luks_format(dname, request, passphrase='')
             if (command == 'btrfs-disk-import'):
                 return self._btrfs_disk_import(dname, request)
             if (command == 'blink-drive'):
@@ -443,10 +448,9 @@ class DiskDetailView(rfc.GenericView):
                 return self._role_disk(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, '
-                 'btrfs-wipe,'
-                 ' btrfs-disk-import, blink-drive, enable-smart, '
-                 'disable-smart,'
-                 ' smartcustom-drive, spindown-drive, pause' % command)
+                 'btrfs-wipe, luks-format, btrfs-disk-import, blink-drive, '
+                 'enable-smart, disable-smart, smartcustom-drive, '
+                 'spindown-drive, pause, role-drive' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -459,7 +463,7 @@ class DiskDetailView(rfc.GenericView):
                                                                    request)
         if reverse_name != disk.name:
             e_msg = ('Wipe operation on whole or partition of device (%s) was '
-                     'aborted as there was a discrepancy in device name '
+                     'rejected as there was a discrepancy in device name '
                      'resolution. Wipe was called with device name (%s) which '
                      'redirected to (%s) but a check on this redirection '
                      'returned device name (%s), which is not equal to the '
@@ -473,6 +477,38 @@ class DiskDetailView(rfc.GenericView):
         # from the next scan_disks() run via _update_disk_state()
         disk.btrfs_uuid = None
         disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
+    @transaction.atomic
+    def _luks_format(self, dname, request, passphrase):
+        disk = self._validate_disk(dname, request)
+        disk_name = self._role_filter_disk_name(disk, request)
+        # Double check sanity of role_filter_disk_name by reversing back to
+        # whole disk name (db name). Also we get isPartition in the process.
+        reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
+                                                                   request)
+        if reverse_name != disk.name:
+            e_msg = ('LUKS operation on whole or partition of device (%s) was '
+                     'rejected as there was a discrepancy in device name '
+                     'resolution. _make_luks was called with device name (%s) '
+                     'which redirected to (%s) but a check on this redirect '
+                     'returned device name (%s), which is not equal to the '
+                     'caller name as was expected. A Disks page Rescan may '
+                     'help.'
+                     % (dname, dname, disk_name, reverse_name))
+            raise Exception(e_msg)
+        # Check if we are a partition as we don't support LUKS in partition.
+        # Front end should filter this out as an presented option but be
+        # should block at this level as well.
+        if isPartition:
+            e_msg = ('A LUKS format was requested on device name (%s) which '
+                     'was identifyed as a partiton. Rockstor does not '
+                     'support LUKS in partition, only whole disk.'
+                     % dname)
+            raise Exception(e_msg)
+        luks_format_disk(disk_name, passphrase)
+        # The next scan_disks call via _update_disk_state should auto label
+        # this device via the role system.
         return Response(DiskInfoSerializer(disk).data)
 
     @transaction.atomic
@@ -631,6 +667,15 @@ class DiskDetailView(rfc.GenericView):
                         e_msg = ('LUKS format requested but passwords do not '
                                  'match. Aborting. Please try again.')
                         raise Exception(e_msg)
+                    if luks_pass_one == '':
+                        # Check of password = '', front end should
+                        # filter this out but check anyway.
+                        e_msg = ('LUKS passphase empty. Aborting. Please try '
+                                 'again')
+                        raise Exception(e_msg)
+                    # TODO: Consider checking on min length also ie akin to
+                    # TODO: front end validation of < 14 chars.
+                    return self._luks_format(dname, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
             e_msg = ('Failed to configure drive role, or wipe existing '
