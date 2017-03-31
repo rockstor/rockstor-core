@@ -93,6 +93,15 @@ SetroleDiskView = RockstorLayoutView.extend({
         } else {
             current_redirect = '';
         }
+        // set local convenience flag if device is a LUKS container.
+        var is_luks;
+        if (role_obj != null && role_obj.hasOwnProperty('LUKS')) {
+            is_luks = true;
+        } else {
+            is_luks = false;
+        }
+
+
         this.current_redirect = current_redirect;
         this.partitions = partitions;
         this.disk_btrfs_uuid = disk_btrfs_uuid;
@@ -104,7 +113,8 @@ SetroleDiskView = RockstorLayoutView.extend({
             role_obj: role_obj,
             partitions: partitions,
             current_redirect: current_redirect,
-            disk_btrfs_uuid: disk_btrfs_uuid
+            disk_btrfs_uuid: disk_btrfs_uuid,
+            is_luks: is_luks
         }));
 
         this.$('#add-role-disk-form :input').tooltip({
@@ -309,24 +319,26 @@ SetroleDiskView = RockstorLayoutView.extend({
 
     initHandlebarHelpers: function () {
         // helper to fill dropdown with drive partitions and their fstype
-        // eg by generating dynamicaly lines of the following
+        // eg by generating dynamically lines of the following format:
         // <option value="virtio-serial-6-part-2">part2 (ntfs)</option>
         Handlebars.registerHelper('display_disk_partitions', function () {
             var html = '';
             // Add our 'use whole disk' option which will allow for an existing
             // redirect to be removed, preparing for whole disk btrfs.
             // Also serves to indicate no redirect role in operation.
-            var uuid_message;
-            if ( (this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions)) ) {
-                uuid_message = 'btrfs';
+            var whole_disk_fstype;
+            if ((this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions))) {
+                whole_disk_fstype = 'btrfs';
+            } else if (this.is_luks) {
+                whole_disk_fstype = 'LUKS';
             } else {
-                uuid_message = 'None';
+                whole_disk_fstype = 'None';
             }
             var selected = '';
             if (this.current_redirect == '') {
                 selected = ' selected="selected"';
             }
-            html += '<option value=""' + selected + '> Whole Disk (' + uuid_message + ')';
+            html += '<option value=""' + selected + '> Whole Disk (' + whole_disk_fstype + ')';
             // if no current redirect role then select whole disk entry and
             // give indication of this " - active"
             if (selected != '') {
