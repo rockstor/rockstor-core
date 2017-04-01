@@ -673,8 +673,10 @@ class DiskDetailView(rfc.GenericView):
                         e_msg = ('LUKS passphase empty. Aborting. Please try '
                                  'again')
                         raise Exception(e_msg)
-                    # TODO: Consider checking on min length also ie akin to
-                    # TODO: front end validation of < 14 chars.
+                    if len(luks_pass_one) < 14:
+                        e_msg = ('LUKS passphrase of less then 14 characters'
+                                 'is not supported. Please re-enter.')
+                        raise Exception(e_msg)
                     return self._luks_format(dname, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
