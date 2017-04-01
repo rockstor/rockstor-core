@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -222,6 +222,7 @@ def pkg_changelog(package):
     package_info = {'name': package.split('.')[0]}
     package_info['installed'] = []
     package_info['available'] = []
+    package_info['description'] = ''
     installed = False
     available = False
     for l in out:
@@ -244,8 +245,25 @@ def pkg_changelog(package):
 
     package_info['installed'] = ''.join(package_info['installed'])
     package_info['available'] = ''.join(package_info['available'])
+    package_info['description'] = pkg_infos(package_info['name'], 'DESCRIPTION')
 
     return package_info
+
+def pkg_infos(package, tag="DESCRIPTION"):
+    # Retrieve a package description and other infos  with some 'magic spells'
+    # We query rpm dbs passing a queryformat, with default to DESCRIPTION
+    # To @schakrava: this probably can help avoiding some reading loops used
+    # to grab packages infos like on Rockstor updates check
+    # Full ref for avail tags here: http://rpm.org/user_doc/query_format.html
+    # and avail tags list with rpm --querytags
+    tag = '%%{%s}' % tag
+    out, err, rc = run_command([RPM, '-q', '--queryformat', tag, package],
+                               throw=False)
+    if (rc != 0):
+        return ''
+        
+    return ' '.join(out)
+
 
 def yum_check():
     # Query yum for updates and grab return code
