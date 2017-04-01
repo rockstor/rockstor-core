@@ -66,7 +66,7 @@ Blank or freshly wiped devices can be LUKS encrypted. <strong>Rockstor does
 not remember or record the associated passphrase.</strong><br>
 <i> A pool is only encrypted if all it's members are LUKS formatted.</i>
 <br>
-Passphrase Notes:
+<strong>Passphrase Notes</strong> (Only use 7-bit ASCII(32-126) characters <strong>!"#$%&'()*+,-./0-9:;<=>?@A-Z[\]^_`a-z{|}~</strong> )
 <ul>
     <li>
         Must be entered on every power up using a locally connected keyboard
@@ -153,17 +153,17 @@ LUKS equivalent of system root password: initially the only way to unlock the di
               <div class="col-sm-4">
                 <input class="form-control shorten-input" type="password"
                        name="luks_pass_one" id="luks_pass_one"
-                       title="Suggested character length = 14-18 if random, 108-140 if english words.">
+                       title="Suggested character length = 14(min)-18 if random, 108-140 if english words.">
               </div>
             </div>
             <!--  LUKS Master Passphrase Two  -->
             <div class="form-goup" id="luks_pass_two_group">
               <label class="col-sm-4 control-label" for="luks_pass_two">
-                Please Retype to Verify<span class="required"> *</span></label>
+                Retype to Verify<span class="required"> *</span></label>
               <div class="col-sm-4">
                 <input class="form-control shorten-input" type="password"
                        name="luks_pass_two" id="luks_pass_two"
-                       title="Suggested character length = 14-18 if random, 108-140 if english words.">
+                       title="Suggested character length = 14(min)-18 if random, 108-140 if english words.">
               </div>
             </div>
           </div>

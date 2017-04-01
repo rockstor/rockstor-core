@@ -202,6 +202,14 @@ SetroleDiskView = RockstorLayoutView.extend({
                         'again.';
                     return false;
                 }
+                // Reject non ASCII 7-bit & control characters ie only accept:
+                // !"#$%&'()*+,-./0-9:;<=>?@A-Z[\]^_`a-z{|}~ plus space.
+                // Equates to Decimal (32-126) or Hex (0x20-0x7E)
+                // to include DEL (delete) char increase range to 7F.
+                if (/^[\x20-\x7E]+$/.test(luks_pass_one) == false) {
+                    err_msg = 'Invalid non ASCII(32-126) 7-bit character entered';
+                    return false
+                }
             }
             return true;
         }, role_err_msg);

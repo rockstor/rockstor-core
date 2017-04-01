@@ -677,6 +677,12 @@ class DiskDetailView(rfc.GenericView):
                         e_msg = ('LUKS passphrase of less then 14 characters'
                                  'is not supported. Please re-enter.')
                         raise Exception(e_msg)
+                    if re.search('[^\x20-\x7E]', luks_pass_one) is not None:
+                        e_msg = ('A LUKS passphrase containing non 7-bit '
+                                 'ASCII(32-126) characters is not supported '
+                                 'as boot entry character codes may differ. '
+                                 'Please re-enter.')
+                        raise Exception(e_msg)
                     return self._luks_format(dname, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
