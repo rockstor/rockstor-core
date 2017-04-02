@@ -211,6 +211,7 @@ def update_run(subscription=None):
 
     return out, err, rc
 
+
 def pkg_changelog(package):
     # Retrieve yum packages changelog, no update_check func
     # update_check is "Rockstor specific" and with standard CentOS packages
@@ -243,11 +244,13 @@ def pkg_changelog(package):
         if (available and len(l) != 0):
             package_info['available'].append(l)
 
-    package_info['installed'] = ''.join(package_info['installed'])
-    package_info['available'] = ''.join(package_info['available'])
-    package_info['description'] = pkg_infos(package_info['name'], 'DESCRIPTION')
+    package_info['installed'] = '[line]'.join(package_info['installed'])
+    package_info['available'] = '[line]'.join(package_info['available'])
+    package_info['description'] = pkg_infos(package_info['name'],
+                                            'DESCRIPTION')
 
     return package_info
+
 
 def pkg_infos(package, tag="DESCRIPTION"):
     # Retrieve a package description and other infos  with some 'magic spells'
@@ -261,7 +264,7 @@ def pkg_infos(package, tag="DESCRIPTION"):
                                throw=False)
     if (rc != 0):
         return ''
-        
+
     return ' '.join(out)
 
 

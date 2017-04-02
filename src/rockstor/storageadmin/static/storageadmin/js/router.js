@@ -1061,6 +1061,25 @@ $(document).ready(function() {
     var displayYumUpdates = function(data) {
         if (data.yum_updates) {
             $('#yum-msg a').html('<i class="fa fa-rss"></i>');
+            if ($('#yum_panels').is(':empty')) {
+                _.each(data.packages, function(pkg) {
+                    var html = '';
+                    html += '<div class="panel panel-default">';
+                    html += '<div class="panel-heading panel-title">';
+                    html += '<a data-toggle="collapse" data-parent="#yum_panels" href="#' + pkg['name'] + '">';
+                    html += 'Package: <i>' + pkg['name'] + '</i></a></div>'; // closing panel-heading
+                    html += '<div id="' + pkg['name'] + '" class="panel-collapse collapse">'; // accordion bodies
+                    html += '<div class="panel-body">';
+                    html += '<p class="text-center">==================== Available Package ====================</p>'; // new package
+                    html += _.escape(pkg['available']).replace(/\[line\]/g, '<br/>') + '<br/><br/>';
+                    html += '<p class="text-center">==================== Installed Package ====================</p>'; // current package
+                    html += _.escape(pkg['installed']).replace(/\[line\]/g, '<br/>');
+                    html += '</div>'; // closing panel body
+                    html += '<div class="panel-footer text-justify">' + _.escape(pkg['description']) + '</div>';
+                    html += '</div></div>'; // closing accordion and panel
+                    $('#yum_panels').append(html);
+                });
+            }
         } else {
             $('#yum-msg').fadeOut(1000, function() {
                 $('#yum-msg a').html('');
