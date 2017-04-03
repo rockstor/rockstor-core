@@ -281,7 +281,7 @@ def yum_check():
     # and 100 if at least 1 update available
     # Using -x rockstor* to avoid having Rockstor updated here
     # instead of Rockstor "ad hoc" updater
-    out, err, rc = run_command([YUM, 'check-update', '-q', '-x', 'rockstor*'],
+    out, err, rc = run_command([YUM, 'check-update', '-q', '-x', 'rock*'],
                                throw=False)
     packages = []
     # Read check-update output skipping first and last empty line
