@@ -956,7 +956,7 @@ class SysinfoNamespace(RockstorIO):
             try:
                 data = {'yum_updating': False,
                         'yum_updates': False
-                       }
+                        }
                 self.aw.api_call('commands/update', data=None,
                                  calltype='post', save_error=False)
                 self.emit('yum_updates',
