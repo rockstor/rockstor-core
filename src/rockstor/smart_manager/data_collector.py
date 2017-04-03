@@ -362,9 +362,9 @@ class LogManagerNamespace(RockstorIO):
             # reading/downloading Build a rotated log list to be sent to client
             # for frontend updates
             for current_rotated in rotated_logs:
-                rotated_logfile = path.basename(current_rotated),
+                rotated_logfile = path.basename(current_rotated)
                 rotated_logdir = ('%s/' % path.dirname(current_rotated))
-                rotated_key = rotated_logfile.replace(
+                rotated_key = rotated_logfile.replace( 
                     self.logs[log_key]['logfile'], log_key)
                 self.logs.update({rotated_key: {'logfile': rotated_logfile,
                                                 'logdir': rotated_logdir}})
@@ -948,6 +948,18 @@ class SysinfoNamespace(RockstorIO):
                           'data': data
                       })
             gevent.sleep(20)
+
+    def on_runyum(self, sid):
+
+        def launch_yum():
+
+            try:
+                self.aw.api_call('commands/update', data=None, calltype='post',
+                                     save_error=False)
+            except Exception as e:
+                logger.error('%s. exception: %s'
+                                     % (r['error'], e.__str__()))
+        self.spawn(launch_yum, sid)
 
     def prune_logs(self):
 
