@@ -26,10 +26,11 @@ logger = logging.getLogger(__name__)
 CRYPTSETUP = '/usr/sbin/cryptsetup'
 
 
-def get_luks_container_dev(mapped_device_name, test=None):
+def get_open_luks_container_dev(mapped_device_name, test=None):
     """
     Returns the parent device of an open LUKS container, ie if passed:
-    /dev/mapper/luks-b8f89d97-f135-450f-9620-80a9fb421403
+    luks-b8f89d97-f135-450f-9620-80a9fb421403
+    (with or without a leading /dev/mapper/)
     it would return the following example device name string:
     /dev/sda3
     So /dev/sda3 is the LUKS container that once opened is mapped as our
@@ -38,14 +39,11 @@ def get_luks_container_dev(mapped_device_name, test=None):
     ie starting with "/dev/mapper/"
     :param test: if not None then it's contents is considered as substitute
     for the output of the cryptsetup command that is otherwise executed.
-    :return: Empty string on any error or a device with path
+    :return: Empty string on any error or a device with path type /dev/vdd
     """
-    # if non luks device then return empty string
-    if re.match('/dev/mapper/luks-', mapped_device_name) is None:
-        return ''
     container_dev = ''
     if test is None:
-        out, err, rc = run_command([CRYPTSETUP, 'status' + mapped_device_name],
+        out, err, rc = run_command([CRYPTSETUP, 'status', mapped_device_name],
                                    throw=False)
     else:
         # test mode so process test instead of cryptsetup output
@@ -65,7 +63,6 @@ def get_luks_container_dev(mapped_device_name, test=None):
             continue
         if re.match('device:', line_fields[0]) is not None:
             # we have our line match so return it's second member
-            logger.debug('get_luks_container_dev return = %s' % line_fields[1])
             return line_fields[1]
     return container_dev
 
