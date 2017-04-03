@@ -1058,9 +1058,16 @@ $(document).ready(function() {
         }
     };
 
+    var yum_updating = false; //global var to check if yum is updating
     var displayYumUpdates = function(data) {
-        if (data.yum_updates) {
-            $('#yum-msg a').html('<i class="fa fa-rss"></i>');
+        if (typeof data.yum_updating != 'undefined' && !data.yum_updating) {
+            console.log('closing');
+            yum_updating = false;
+            $('#yum-msg a').html('');
+        }
+        if (data.yum_updates && !yum_updating) {
+            $('#yum-msg').fadeIn(0);
+            $('#yum-msg a').html('<i class="fa fa-rss" title="Available Yum Updates"></i>');
             if ($('#yum_panels').is(':empty')) {
                 _.each(data.packages, function(pkg) {
                     var html = '';
@@ -1083,15 +1090,32 @@ $(document).ready(function() {
         } else {
             $('#yum-msg').fadeOut(1000, function() {
                 $('#yum-msg a').html('');
+                $('#yum_panels').empty();
             });
         }
     };
+
+    $('#yum-run').click(function(event) {
+        var run_update = confirm('Do you want to procede with yum updates?');
+        if (run_update) {
+            RockStorSocket.sysinfo.emit('runyum');
+            $('#yum_modal').modal('hide');
+            yum_updating = true;
+            $('#yum_panels').empty();
+            $('#yum-msg a').html('<i class="fa fa-rss" title="Yum is updating all packages"></i>');
+        }
+    });
 
     $('#yumupdates').click(function(event) {
         if (event) {
             event.preventDefault();
         }
-        $('#yum_modal').modal('show');
+        if (!yum_updating) {
+            $('#yum_modal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+        }
     });
 
     var kernelError = function(data) {

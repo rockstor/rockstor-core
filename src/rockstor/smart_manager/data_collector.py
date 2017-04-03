@@ -364,7 +364,7 @@ class LogManagerNamespace(RockstorIO):
             for current_rotated in rotated_logs:
                 rotated_logfile = path.basename(current_rotated)
                 rotated_logdir = ('%s/' % path.dirname(current_rotated))
-                rotated_key = rotated_logfile.replace( 
+                rotated_key = rotated_logfile.replace(
                     self.logs[log_key]['logfile'], log_key)
                 self.logs.update({rotated_key: {'logfile': rotated_logfile,
                                                 'logdir': rotated_logdir}})
@@ -947,18 +947,26 @@ class SysinfoNamespace(RockstorIO):
                           'key': 'sysinfo:yum_updates',
                           'data': data
                       })
-            gevent.sleep(20)
+            gevent.sleep(1800)
 
     def on_runyum(self, sid):
 
         def launch_yum():
 
             try:
-                self.aw.api_call('commands/update', data=None, calltype='post',
-                                     save_error=False)
+                data = {'yum_updating': False,
+                        'yum_updates': False
+                       }
+                self.aw.api_call('commands/update', data=None,
+                                 calltype='post', save_error=False)
+                self.emit('yum_updates',
+                          {
+                              'key': 'sysinfo:yum_updates',
+                              'data': data
+                          })
             except Exception as e:
-                logger.error('%s. exception: %s'
-                                     % (r['error'], e.__str__()))
+                logger.error('Unable to perform Yum Updates: %s'
+                             % e.__str__())
         self.spawn(launch_yum, sid)
 
     def prune_logs(self):
