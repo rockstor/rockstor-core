@@ -18,12 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 from tempfile import mkstemp
-from system.osi import run_command
+from system.osi import run_command, get_uuid_name_map
 import logging
 
 logger = logging.getLogger(__name__)
 
 CRYPTSETUP = '/usr/sbin/cryptsetup'
+DMSETUP = '/usr/sbin/dmsetup'
 
 
 def get_open_luks_container_dev(mapped_device_name, test=None):
@@ -103,3 +104,57 @@ def luks_format_disk(disk_byid, passphrase):
                        (npath, e.__str__()))
                 raise Exception(msg)
     return out, err, rc
+
+
+def get_open_luks_containers_uuids():
+    """
+    Returns a list of LUKS container uuids backing open LUKS volumes. 
+    The method used is to first run:
+    'dmsetup info --columns --noheadings -o name --target crypt' eg output:
+    luks-82fd9db1-e1c1-488d-9b42-536d0a82caeb
+    luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e
+    luks-a47f4950-3296-4504-b9a4-2dc75681a6ad
+    to get a list of open LUKS containers (--target crypt). If the usual naming 
+    convention is followed we have a name format of luks-<uuid> with len = 41
+    and we can extract the uuid of the LUKS container from it syntactically.
+    If this naming convention is not matched then we fail over to calling:
+    get_open_luks_container_dev() and then looking up that devices uuid via
+    our uuid_name_map dictionary.
+    :return: list containing the uuids of LUKS containers that have currently
+    open volumes, or empty list if none open or an error occurred. 
+    """
+    open_luks_container_uuids = []
+    # flag to minimise calls to get_uuid_name_map()
+    uuid_name_map_retrieved = False
+    uuid_name_map = {}
+    out, err, rc = run_command([DMSETUP, 'info', '--columns', '--noheadings',
+                                '--options', 'name', '--target', 'crypt'])
+    if len(out) > 0 and rc == 0:
+        # The output has at least one line and our dmsetup executed OK.
+        for each_line in out:
+            if each_line == '':
+                continue
+            backing_container_uuid = None
+            if len(each_line) == 41 and re.match('luks-', each_line):
+                # good chance on "luks-a47f4950-3296-4504-b9a4-2dc75681a6ad"
+                # naming convention so strip uuid from this (cheap and quick)
+                backing_container_uuid = each_line[5:]
+            else:
+                # More expensive two step process to retrieve uuid of LUKS
+                # container backing this open LUKS volume.
+                # Initial call to gain backing device name for our container
+                container_dev = get_open_luks_container_dev(each_line)
+                # strip leading /dev/ from device name if any returned.
+                if container_dev is not '':
+                    container_dev = container_dev.split('/')[-1]
+                    # should now have name without path ie 'vdd' ready to
+                    # index our uuid_name_map.
+                    if not uuid_name_map_retrieved:
+                        uuid_name_map = get_uuid_name_map()
+                        uuid_name_map_retrieved = True
+                    # second stage where we look up this devices uuid
+                    backing_container_uuid = uuid_name_map[container_dev]
+            # if a backing container uuid was found add it to our list
+            if backing_container_uuid is not None:
+                open_luks_container_uuids.append(backing_container_uuid)
+    return open_luks_container_uuids

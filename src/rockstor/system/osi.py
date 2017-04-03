@@ -1607,6 +1607,37 @@ def get_byid_name_map():
     return byid_name_map
 
 
+def get_uuid_name_map():
+    """
+    Simple wrapper around 'ls -l /dev/disk/by-uuid' which returns a current
+    mapping of all attached by-uuid device names to their sdX counterparts.
+    Modeled on the existing get_byid_name_map() but simpler as no duplicate
+    device by different names are expected. Ie one uuid name per device.
+    :return: dictionary indexed (keyed) by sdX type names with associated 
+    by-uuid type names as the values, or an empty dictionary if a non zero 
+    return code was encountered by run_command or no by-uuid type names were 
+    found (unlikely).
+    """
+    uuid_name_map = {}
+    out, err, rc = run_command([LS, '-l', '/dev/disk/by-uuid'],
+                               throw=True)
+    if rc == 0:
+        for each_line in out:
+            # Split the line by spaces and '/' chars
+            line_fields = each_line.replace('/', ' ').split()
+            # Grab every sda type name from the last field in the line and add
+            # it as a dictionary key with it's value as the by-uuid name so
+            # we can index by sda type name and retrieve the uuid.
+            if len(line_fields) >= 5:
+                # Ensure we have at least 5 elements to avoid index out of
+                # range and to skip lines such as "total 0"
+                if line_fields[-1] not in uuid_name_map.keys():
+                    # We don't yet have a record of this device so take one.
+                    uuid_name_map[line_fields[-1]] = line_fields[-5]
+                    # ie {'vdd': '82fd9db1-e1c1-488d-9b42-536d0a82caeb'}
+    return uuid_name_map
+
+
 def get_dev_temp_name(dev_byid):
     """
     Returns the current canonical device name (of type 'sda') for a supplied
