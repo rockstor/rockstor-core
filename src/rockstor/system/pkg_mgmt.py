@@ -193,18 +193,25 @@ def update_check(subscription=None):
     return (version, new_version, updates)
 
 
-def update_run(subscription=None):
+def update_run(subscription=None, yum_update=False):
+    # update_run modified to handle yum updates too
+    # and avoid an ad hoc yum update function
+    # If we have a yum update we don't stop/start Rockstor and
+    # don't delete *.pyc files
     if (subscription is not None):
         switch_repo(subscription)
 
     run_command([SYSTEMCTL, 'start', 'atd'])
     fh, npath = mkstemp()
     with open(npath, 'w') as atfo:
-        atfo.write('%s stop rockstor\n' % SYSTEMCTL)
-        atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n'
-                   % settings.ROOT_DIR)
-        atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
-        atfo.write('%s start rockstor\n' % SYSTEMCTL)
+        if not yum_update:
+            atfo.write('%s stop rockstor\n' % SYSTEMCTL)
+            atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n'
+                       % settings.ROOT_DIR)
+            atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
+            atfo.write('%s start rockstor\n' % SYSTEMCTL)
+        else:
+            atfo.write('%s --setopt=timeout=600 -y -x rock* update\n' % YUM)
         atfo.write('/bin/rm -f %s\n' % npath)
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
@@ -272,7 +279,10 @@ def yum_check():
     # Query yum for updates and grab return code
     # yum check-update retun code is 0 with no updates
     # and 100 if at least 1 update available
-    out, err, rc = run_command([YUM, 'check-update', '-q'], throw=False)
+    # Using -x rockstor* to avoid having Rockstor updated here
+    # instead of Rockstor "ad hoc" updater
+    out, err, rc = run_command([YUM, 'check-update', '-q', '-x', 'rockstor*'],
+                               throw=False)
     packages = []
     # Read check-update output skipping first and last empty line
     # on every round we apply some beautify with pkg_changelog

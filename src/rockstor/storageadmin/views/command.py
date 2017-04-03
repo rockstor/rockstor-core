@@ -194,7 +194,15 @@ class CommandView(NFSExportMixin, APIView):
 
         if (command == 'update'):
             try:
-                update_run()
+                # Once again, like on system shutdown/reboot, we filter
+                # incoming requests with request.auth: every update from
+                # WebUI misses request.auth, while yum update requests from
+                # data_collector APIWrapper have it, so we can avoid
+                # an additional command for yum updates
+                if request.auth is None:
+                    update_run()
+                else:
+                    update_run(yum_update=True)
                 return Response('Done')
             except Exception as e:
                 e_msg = ('Update failed due to this exception: %s'
