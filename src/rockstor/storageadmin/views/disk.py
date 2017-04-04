@@ -27,7 +27,7 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
-from system.luks import luks_format_disk
+from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
     wipe_disk, blink_disk, scan_disks
 from copy import deepcopy
@@ -67,6 +67,12 @@ class DiskMixin(object):
         """
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
+        # Acquire a list of uuid's for currently unlocked LUKS containers.
+        # Although we could tally these as we go by noting fstype crypt_LUKS
+        # and then loop through our db Disks again updating all matching
+        # base device entries, this approach helps to abstract this component
+        # and to localise role based db manipulations to our second loop.
+        unlocked_luks_containers_uuids = get_unlocked_luks_containers_uuids()
         serial_numbers_seen = []
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
@@ -184,8 +190,12 @@ class DiskMixin(object):
                 # LUKS FULL DISK: scan_disks() can inform us of the truth
                 # regarding full disk LUKS containers which on creation have a
                 # unique uuid. Stash this uuid so we might later work out our
-                # container mapping.
-                disk_roles_identified['LUKS'] = str(d.uuid)
+                # container mapping. Currently required as only btrfs uuids
+                # are stored in the Disk model field. Also flag if we are the
+                # container for a currently open LUKS volume.
+                is_unlocked = d.uuid in unlocked_luks_containers_uuids
+                disk_roles_identified['LUKS'] = {'uuid': str(d.uuid),
+                                                 'unlocked': is_unlocked}
             if d.type == 'crypt':
                 # OPEN LUKS DISK: scan_disks() can inform us of the truth
                 # regarding an opened LUKS container which appears as a mapped

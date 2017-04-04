@@ -333,6 +333,25 @@ DisksView = RockstorLayoutView.extend({
             return false;
         });
 
+        // Works by examining the Disk.role field and if a LUKS role is found
+        // we examine the roles value to see if it reports having an open
+        // counterpart ie is this container mapped to an OpenLuks volume
+        // which is expressed as unlocked having a true value.
+        Handlebars.registerHelper('isLuksContainerUnlocked', function (role) {
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('LUKS')) {
+                // here we deviate from isLuksContainer by unpacking
+                // our LUKS role's value:
+                if (roleAsJson['LUKS'].hasOwnProperty('unlocked') == true) {
+                    return roleAsJson['LUKS']['unlocked'];
+                }
+            }
+            // In all other cases return false.
+            return false;
+        });
+
         // Identify Open LUKS container by return of true / false.
         // Works by examining the Disk.role field. Based on sister handlebars
         // helper 'isRootDevice'

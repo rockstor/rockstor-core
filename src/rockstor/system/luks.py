@@ -106,7 +106,7 @@ def luks_format_disk(disk_byid, passphrase):
     return out, err, rc
 
 
-def get_open_luks_containers_uuids():
+def get_unlocked_luks_containers_uuids():
     """
     Returns a list of LUKS container uuids backing open LUKS volumes. 
     The method used is to first run:

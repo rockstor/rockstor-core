@@ -29,8 +29,13 @@
             {{#if this.parted}}
                 <i class="glyphicon glyphicon-lock" title="Disk contains at least one partition hosting a LUKS Container. LUKS in partition is only supported for the Rockstor system drive." rel="tooltip"></i>
             {{else}}
-                <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (UI pending)." rel="tooltip">
-                <i class="glyphicon glyphicon-lock"></i></a>
+                {{#if (isLuksContainerUnlocked this.role)}}
+                    <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (unlocked) (UI pending)." rel="tooltip">
+                    <i class="fa fa-unlock"></i></a>
+                {{else}}
+                    <a href="#" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (locked) (UI pending)." rel="tooltip">
+                    <i class="fa fa-lock"></i></a>
+                {{/if}}
             {{/if}}
         {{else if (isMdraidMember this.role)}}
             <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Mdraid member (UI pending)." rel="tooltip">
