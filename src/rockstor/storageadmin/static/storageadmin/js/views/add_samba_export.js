@@ -105,7 +105,8 @@ AddSambaExportView = RockstorLayoutView.extend({
             smbSnapPrefix = this.sShares.get('snapshot_prefix');
 
             for(i=0; i<config.length; i++){
-                configList = configList + config[i].custom_config + '\n';
+                configList = configList + config[i].custom_config;
+                configList += i<config.length - 1 ? '\n' : '';
             }
         }
 

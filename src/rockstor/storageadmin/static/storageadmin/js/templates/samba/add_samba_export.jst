@@ -99,11 +99,9 @@
         <div class="form-group">
           <label class="col-sm-4 control-label" for="custom_config">Custom configuration </label>
           <div class="col-sm-8">
-            <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf">
-                {{# if sambaShareIdNotNull}}
-                    {{configList}}
-                {{/if}}
-            </textarea>
+            <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" 
+			title="You can provide custom parameters here. These lines will be added to 
+			the section of each Share selected above in smb.conf">{{# if sambaShareIdNotNull}}{{configList}}{{/if}}</textarea>
         </div>
 
       </div>
