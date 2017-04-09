@@ -394,26 +394,38 @@ def main():
         logging.debug('pg_hba.conf copied')
         run_command([SYSCTL, 'restart', 'postgresql'])
         logging.info('Postgresql restarted')
-        logging.info('Running app database migrations...')
-        migration_cmd = [DJANGO, 'migrate', '--noinput', ]
-        fake_migration_cmd = migration_cmd + ['--fake']
-        smartdb_opts = ['--database=smart_manager', 'smart_manager']
-        run_command(fake_migration_cmd + ['storageadmin', '0001_initial'])
-        run_command(fake_migration_cmd + smartdb_opts + ['0001_initial'])
-        run_command(migration_cmd + ['storageadmin'])
-        run_command(migration_cmd + smartdb_opts)
-        run_command(migration_cmd + ['auth'])
-        run_command(migration_cmd + ['django_ztask'])
-        logging.info('Done')
-        logging.info('Running prepdb...')
-        run_command([PREP_DB, ])
-        logging.info('Done')
         run_command(['touch', STAMP])
         require_postgres(logging)
         logging.info('Done')
-    else:
-        logging.info('Running prepdb...')
-        run_command([PREP_DB, ])
+
+    logging.info('Running app database migrations...')
+    migration_cmd = [DJANGO, 'migrate', '--noinput', ]
+    fake_migration_cmd = migration_cmd + ['--fake']
+    smartdb_opts = ['--database=smart_manager', 'smart_manager']
+
+    for app in ('storageadmin', 'smart_manager'):
+        db = 'default'
+        if app == 'smart_manager':
+            db = app
+        o, e, rc = run_command([DJANGO, 'migrate', '--list',
+                                '--database=%s' % db, app])
+        initial_faked = False
+        for l in o:
+            if l.strip() == '[X] 0001_initial':
+                initial_faked = True
+                break
+        if not initial_faked:
+            db_arg = '--database=%s' % db
+            run_command(fake_migration_cmd + [db_arg, app, '0001_initial'])
+
+    run_command(migration_cmd + ['storageadmin'])
+    run_command(migration_cmd + smartdb_opts)
+    run_command(migration_cmd + ['auth'])
+    run_command(migration_cmd + ['django_ztask'])
+    logging.info('Done')
+    logging.info('Running prepdb...')
+    run_command([PREP_DB, ])
+    logging.info('Done')
 
     logging.info('stopping firewalld...')
     run_command([SYSCTL, 'stop', 'firewalld'])
