@@ -1,0 +1,38 @@
+<h3>LUKS Container or Open LUKS Volume.</h3>
+LUKS Containers are encrypted block devices. Once a LUKS container is unlocked
+it's otherwise encrypted and invisible filesystem (if any) is made available
+via a second virtual block device. This unlocked counterpart is knows as an
+Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
+<p></p>
+<p class="text-warning">
+ Closing an Open LUKS Volume is the equivalent of unplugging or detaching that
+ virtual device. It will remain detached until it's parent LUKS container is
+ unlocked again.
+</p>
+
+<div class="row">
+ <div class="col-md-8">
+  <label class="control-label"></label>
+  <div class="form-box">
+   <form class="form-horizontal" id="luks-disk-form" name="luksform">
+    <div class="messages"></div>
+
+    <!-- Form Header Info -->
+    <div class="form-group">
+     <div class="col-sm-offset-4 col-sm-8">
+      <h4>Drive name:&nbsp;&nbsp;<strong>{{diskName}}</strong></h4>
+      <h4>Serial number:&nbsp;&nbsp;<strong>{{serialNumber}}</strong></h4>
+     </div>
+    </div>
+    <div class="form-group">
+     <div class="col-sm-offset-4 col-sm-8">
+      <a id="cancel" class="btn btn-default">Cancel</a>
+      <input type="Submit" id="luks-disk" class="btn btn-primary"
+             value="Submit"></input>
+     </div>
+    </div>
+
+   </form>
+  </div>
+ </div>
+</div>
