@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -193,20 +193,100 @@ def update_check(subscription=None):
     return (version, new_version, updates)
 
 
-def update_run(subscription=None):
+def update_run(subscription=None, yum_update=False):
+    # update_run modified to handle yum updates too
+    # and avoid an ad hoc yum update function
+    # If we have a yum update we don't stop/start Rockstor and
+    # don't delete *.pyc files
     if (subscription is not None):
         switch_repo(subscription)
 
     run_command([SYSTEMCTL, 'start', 'atd'])
     fh, npath = mkstemp()
     with open(npath, 'w') as atfo:
-        atfo.write('%s stop rockstor\n' % SYSTEMCTL)
-        atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n'
-                   % settings.ROOT_DIR)
-        atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
-        atfo.write('%s start rockstor\n' % SYSTEMCTL)
+        if not yum_update:
+            atfo.write('%s stop rockstor\n' % SYSTEMCTL)
+            atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n'
+                       % settings.ROOT_DIR)
+            atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
+            atfo.write('%s start rockstor\n' % SYSTEMCTL)
+        else:
+            atfo.write('%s --setopt=timeout=600 -y -x rock* update\n' % YUM)
         atfo.write('/bin/rm -f %s\n' % npath)
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
 
     return out, err, rc
+
+
+def pkg_changelog(package):
+    # Retrieve yum packages changelog, no update_check func
+    # update_check is "Rockstor specific" and with standard CentOS packages
+    # we can't work with rpm -qi Build Date field: some packages have
+    # Build Date > new package version changelog
+    # pkg_changelog behaviour is output beautify too, returning pkg name,
+    # changelog for installed package and available new package update
+    out, err, rc = run_command([YUM, 'changelog', '1', package], throw=False)
+    package_info = {'name': package.split('.')[0]}
+    package_info['installed'] = []
+    package_info['available'] = []
+    package_info['description'] = ''
+    installed = False
+    available = False
+    for l in out:
+        l = l.strip()
+        if (re.search('Available Packages', l) is not None):
+            installed = False
+            available = True
+            continue
+        if (re.search('Installed Packages', l) is not None):
+            installed = True
+            continue
+        if (re.search('changelog stats', l) is not None):
+            installed = False
+            available = False
+            break
+        if (installed and len(l) != 0):
+            package_info['installed'].append(l)
+        if (available and len(l) != 0):
+            package_info['available'].append(l)
+
+    package_info['installed'] = '[line]'.join(package_info['installed'])
+    package_info['available'] = '[line]'.join(package_info['available'])
+    package_info['description'] = pkg_infos(package_info['name'],
+                                            'DESCRIPTION')
+
+    return package_info
+
+
+def pkg_infos(package, tag="DESCRIPTION"):
+    # Retrieve a package description and other infos  with some 'magic spells'
+    # We query rpm dbs passing a queryformat, with default to DESCRIPTION
+    # To @schakrava: this probably can help avoiding some reading loops used
+    # to grab packages infos like on Rockstor updates check
+    # Full ref for avail tags here: http://rpm.org/user_doc/query_format.html
+    # and avail tags list with rpm --querytags
+    tag = '%%{%s}' % tag
+    out, err, rc = run_command([RPM, '-q', '--queryformat', tag, package],
+                               throw=False)
+    if (rc != 0):
+        return ''
+
+    return ' '.join(out)
+
+
+def yum_check():
+    # Query yum for updates and grab return code
+    # yum check-update retun code is 0 with no updates
+    # and 100 if at least 1 update available
+    # Using -x rockstor* to avoid having Rockstor updated here
+    # instead of Rockstor "ad hoc" updater
+    out, err, rc = run_command([YUM, 'check-update', '-q', '-x', 'rock*'],
+                               throw=False)
+    packages = []
+    # Read check-update output skipping first and last empty line
+    # on every round we apply some beautify with pkg_changelog
+    for line in out[1:-1]:
+        packages.append(pkg_changelog(line.split()[0].strip()))
+
+    return rc, packages

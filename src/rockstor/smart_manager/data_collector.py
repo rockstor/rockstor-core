@@ -47,7 +47,7 @@ from storageadmin.models import Disk  # noqa E402
 from smart_manager.models import Service  # noqa E402
 from system.services import service_status  # noqa E402
 from cli.api_wrapper import APIWrapper  # noqa E402
-from system.pkg_mgmt import update_check  # noqa E402
+from system.pkg_mgmt import (update_check, yum_check)  # noqa E402
 import logging  # noqa E402
 logger = logging.getLogger(__name__)
 
@@ -362,7 +362,7 @@ class LogManagerNamespace(RockstorIO):
             # reading/downloading Build a rotated log list to be sent to client
             # for frontend updates
             for current_rotated in rotated_logs:
-                rotated_logfile = path.basename(current_rotated),
+                rotated_logfile = path.basename(current_rotated)
                 rotated_logdir = ('%s/' % path.dirname(current_rotated))
                 rotated_key = rotated_logfile.replace(
                     self.logs[log_key]['logfile'], log_key)
@@ -845,6 +845,7 @@ class SysinfoNamespace(RockstorIO):
         self.start = True
         self.spawn(self.update_storage_state, sid)
         self.spawn(self.update_check, sid)
+        self.spawn(self.yum_updates, sid)
         self.spawn(self.update_rockons, sid)
         self.spawn(self.send_kernel_info, sid)
         self.spawn(self.prune_logs, sid)
@@ -933,6 +934,40 @@ class SysinfoNamespace(RockstorIO):
                       'key': 'sysinfo:software_update',
                       'data': uinfo
                   })
+
+    def yum_updates(self):
+
+        while self.start:
+            rc, packages = yum_check()
+            data = {}
+            data['yum_updates'] = True if rc == 100 else False
+            data['packages'] = packages
+            self.emit('yum_updates',
+                      {
+                          'key': 'sysinfo:yum_updates',
+                          'data': data
+                      })
+            gevent.sleep(1800)
+
+    def on_runyum(self, sid):
+
+        def launch_yum():
+
+            try:
+                data = {'yum_updating': False,
+                        'yum_updates': False
+                        }
+                self.aw.api_call('commands/update', data=None,
+                                 calltype='post', save_error=False)
+                self.emit('yum_updates',
+                          {
+                              'key': 'sysinfo:yum_updates',
+                              'data': data
+                          })
+            except Exception as e:
+                logger.error('Unable to perform Yum Updates: %s'
+                             % e.__str__())
+        self.spawn(launch_yum, sid)
 
     def prune_logs(self):
 

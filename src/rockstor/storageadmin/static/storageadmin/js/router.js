@@ -1058,6 +1058,65 @@ $(document).ready(function() {
         }
     };
 
+    var yum_updating = false; //global var to check if yum is updating
+    var displayYumUpdates = function(data) {
+        if (typeof data.yum_updating != 'undefined' && !data.yum_updating) {
+            console.log('closing');
+            yum_updating = false;
+            $('#yum-msg a').html('');
+        }
+        if (data.yum_updates && !yum_updating) {
+            $('#yum-msg').fadeIn(0);
+            $('#yum-msg a').html('<i class="fa fa-rss" title="Available Yum Updates"></i>');
+            if ($('#yum_panels').is(':empty')) {
+                _.each(data.packages, function(pkg) {
+                    var html = '';
+                    html += '<div class="panel panel-default">';
+                    html += '<div class="panel-heading panel-title">';
+                    html += '<a data-toggle="collapse" data-parent="#yum_panels" href="#' + pkg['name'] + '">';
+                    html += 'Package: <i>' + pkg['name'] + '</i></a></div>'; // closing panel-heading
+                    html += '<div id="' + pkg['name'] + '" class="panel-collapse collapse">'; // accordion bodies
+                    html += '<div class="panel-body">';
+                    html += '<p class="text-center">==================== Available Package ====================</p>'; // new package
+                    html += _.escape(pkg['available']).replace(/\[line\]/g, '<br/>') + '<br/><br/>';
+                    html += '<p class="text-center">==================== Installed Package ====================</p>'; // current package
+                    html += _.escape(pkg['installed']).replace(/\[line\]/g, '<br/>');
+                    html += '</div>'; // closing panel body
+                    html += '<div class="panel-footer text-justify">' + _.escape(pkg['description']) + '</div>';
+                    html += '</div></div>'; // closing accordion and panel
+                    $('#yum_panels').append(html);
+                });
+            }
+        } else {
+            $('#yum-msg').fadeOut(1000, function() {
+                $('#yum-msg a').html('');
+                $('#yum_panels').empty();
+            });
+        }
+    };
+
+    $('#yum-run').click(function(event) {
+        var run_update = confirm('Do you want to procede with yum updates?');
+        if (run_update) {
+            RockStorSocket.sysinfo.emit('runyum');
+            $('#yum_modal').modal('hide');
+            yum_updating = true;
+            $('#yum_panels').empty();
+            $('#yum-msg a').html('<i class="fa fa-rss" title="Yum is updating all packages"></i>');
+        }
+    });
+
+    $('#yumupdates').click(function(event) {
+        if (event) {
+            event.preventDefault();
+        }
+        if (!yum_updating) {
+            $('#yum_modal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+        }
+    });
 
     var kernelError = function(data) {
         // If 'kernel' does not show up in the string, we're ok
@@ -1071,6 +1130,7 @@ $(document).ready(function() {
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
     RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
+    RockStorSocket.addListener(displayYumUpdates, this, 'sysinfo:yum_updates');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software_update');
     RockStorSocket.addListener(displayShutdownStatus, this, 'sysinfo:shutdown_status');

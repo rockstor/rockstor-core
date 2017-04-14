@@ -167,6 +167,7 @@
       <div id="shutdown-status"></div>
       <div id="uptime"></div>
       <div id="appliance-loadavg"></div>
+      <div id="yum-msg"><a id="yumupdates"></a></div>
   </div>
 
   <div id="wrapper1">
@@ -192,6 +193,23 @@
                     </div>
                 </div>
             </div>
+
+			<div id="yum_modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+			    <div class="modal-dialog">
+					<div class="modal-content">
+					    <div class="modal-header">
+                            <h3>Yum available updates</h3>
+						</div>
+						<div class="modal-body" id="yumContent" style="overflow: auto; height: 350px;">
+                            <div class="panel-group" id="yum_panels"></div>
+                        </div>
+						<div class="modal-footer">
+							<input type="button" data-dismiss="modal" class="btn btn-default" value="Close">
+                            <input type="button" id="yum-run" class="btn btn-primary" value="Update Packages">
+					    </div>
+				    </div>
+				</div>
+			</div>
 
               <div id="maincontent">
                   <!--Body content-->
