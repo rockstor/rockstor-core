@@ -35,6 +35,7 @@ setup(
             'backup-plugin = backup.scheduler:main',
             'bootstrap = scripts.bootstrap:main',
             'data-collector = smart_manager.data_collector:main',
+            'debug-mode = scripts.debugmode:main',
             'delete-api-key = scripts.delete_api_key:main',
             'delete-rockon = scripts.rockon_delete:delete_rockon',
             'docker-wrapper = scripts.docker_wrapper:main',
