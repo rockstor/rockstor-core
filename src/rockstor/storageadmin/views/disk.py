@@ -27,7 +27,8 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
-from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids
+from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
+    get_crypttab_entries
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
     wipe_disk, blink_disk, scan_disks
 from copy import deepcopy
@@ -74,6 +75,8 @@ class DiskMixin(object):
         # and to localise role based db manipulations to our second loop.
         unlocked_luks_containers_uuids = get_unlocked_luks_containers_uuids()
         serial_numbers_seen = []
+        # Acquire a dictionary of crypttab entries, dev uuid as indexed.
+        dev_uuids_in_crypttab = get_crypttab_entries()
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
         # make this so in the case of empty or repeat entries by providing
@@ -196,6 +199,16 @@ class DiskMixin(object):
                 is_unlocked = d.uuid in unlocked_luks_containers_uuids
                 disk_roles_identified['LUKS'] = {'uuid': str(d.uuid),
                                                  'unlocked': is_unlocked}
+                # we can also inform this role of the current crypttab status
+                # of this device, ie:
+                # device listed in crypttab = dict key entry of crypttab.
+                # If crypttab key entry then it's value is 3rd column ie:
+                # 'none' = password on boot
+                # '/root/keyfile-<uuid>' = full path to keyfile
+                if d.uuid in dev_uuids_in_crypttab.keys():
+                    # our device has a UUID= match in crypttab
+                    disk_roles_identified['LUKS']['crypttab'] \
+                        = dev_uuids_in_crypttab[d.uuid]
             if d.type == 'crypt':
                 # OPEN LUKS DISK: scan_disks() can inform us of the truth
                 # regarding an opened LUKS container which appears as a mapped

@@ -158,3 +158,43 @@ def get_unlocked_luks_containers_uuids():
             if backing_container_uuid is not None:
                 open_luks_container_uuids.append(backing_container_uuid)
     return open_luks_container_uuids
+
+
+def get_crypttab_entries():
+    """
+    Scans /etc/crypttab and parses into mapper name (/dev/mapper/) and uuid
+    of device being mapped. The expected format of the file is:
+    <mapper name(target dev)> UUID=<uuid>(source dev) none(or keyfile)
+    There are other formats but this is modeled on the common format and that
+    used by the anaconda installer when the "encrypt my data" tick is selected.
+    A typical entry is as follows:
+    luks-<uuid> UUID=<uuid> none
+    N.B. a fourth column can be used to specify additional options ie "luks"
+    but this column is redundant in the case of luks.  
+    :return: dictionary indexed by the uuids of LUKS containers that have a 
+    current crypttab entry where the value represents column 3, ie none for 
+    password on boot, or the full path of a keyfile.
+    """
+    crypttab = "/etc/crypttab"
+    in_crypttab = {}
+    if os.path.isfile(crypttab):
+        with open(crypttab, "r") as ino:
+            for line in ino.readlines():  # readlines reads whole file in one.
+                if line == '\n' or re.match(line, '#'):
+                    # empty line (a newline char) or begins with # so skip
+                    continue
+                line_fields = line.split()
+                if len(line_fields) < 3:
+                    # we expect at least 3 entries, ignore otherwise
+                    continue
+                if re.match('UUID=', line_fields[1]) is not None:
+                    # we have a UUID= entry, perform basic validation
+                    uuid_entry_fields = line_fields[1].split('=')
+                    if len(uuid_entry_fields) == 2:
+                        # we have at least 2 components: 'UUID', '<uuid>'
+                        # split via '='
+                        if len(uuid_entry_fields[1]) == 36:
+                            # We have a 36 char long string, assuming uuid4
+                            # stash the 3rd column entry in crypttab
+                            in_crypttab[uuid_entry_fields[1]] = line_fields[2]
+    return in_crypttab
