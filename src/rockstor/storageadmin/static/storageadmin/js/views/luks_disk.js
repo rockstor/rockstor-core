@@ -92,16 +92,41 @@ LuksDiskView = RockstorLayoutView.extend({
             current_redirect = '';
         }
         // set local convenience flag if device is a LUKS container.
+        // and grab the luks_container_uuid if available
         var is_luks;
+        // Establish a unique initial LUKS container uuid placeholder first,
+        // just in case we end up some how without a LUKS role uuid key entry.
+        // Important as we use this value to name keyfiles so must be clearly
+        // identifiable and unique. UUID of actual container obviously better.
+        var luks_container_uuid = disk_name;
         if (role_obj != null && role_obj.hasOwnProperty('LUKS')) {
             is_luks = true;
+            if (role_obj['LUKS'].hasOwnProperty('uuid')) {
+                luks_container_uuid = role_obj['LUKS']['uuid'];
+            }
         } else {
             is_luks = false;
+        }
+        // Populate our crypttab_selection text object along with values.
+        // A value of false is used to indicate no crypttab entry exists.
+        // see display_crypttab_entry handlebar helper below.
+        var crypttab_options = {
+            'No auto unlock': false,
+            'Manual passphrase via local console': 'none',
+            'Auto unlock via keyfile': '/root/keyfile-' + luks_container_uuid
+        };
+        // additional convenience flag if device is an open LUKS volume.
+        var is_open_luks;
+        if (role_obj != null && role_obj.hasOwnProperty('openLUKS')) {
+            is_open_luks = true;
+        } else {
+            is_open_luks = false;
         }
 
         this.current_redirect = current_redirect;
         this.partitions = partitions;
         this.disk_btrfs_uuid = disk_btrfs_uuid;
+        this.is_luks = is_luks;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -111,7 +136,9 @@ LuksDiskView = RockstorLayoutView.extend({
             partitions: partitions,
             current_redirect: current_redirect,
             disk_btrfs_uuid: disk_btrfs_uuid,
-            is_luks: is_luks
+            is_luks: is_luks,
+            is_open_luks: is_open_luks,
+            crypttab_options: crypttab_options
         }));
 
         this.$('#luks-disk-form :input').tooltip({
@@ -155,11 +182,61 @@ LuksDiskView = RockstorLayoutView.extend({
                 return false;
             }
         });
+        this.container_or_volume_mode();
+    },
+
+    container_or_volume_mode: function () {
+        if (this.is_luks) {
+            // LUKS Container mode so show crypttab selection
+            this.$('#crypttab_selection_group').show();
+        } else {
+            // Open LUKS volume mode assumed.
+            this.$('#crypttab_selection_group').hide();
+        }
     },
 
     initHandlebarHelpers: function () {
         Handlebars.registerHelper('display_luks_container_or_volume', function () {
             var html = '';
+            if (this.is_luks) {
+                html += 'LUKS container configuration.'
+            } else if (this.is_open_luks) {
+                html += 'Open LUKS Volume information page.'
+            } else {
+                html += 'Warning: Non LUKS Device, please report bug on forum.'
+            }
+            return new Handlebars.SafeString(html);
+        });
+        Handlebars.registerHelper('display_crypttab_entry', function () {
+            // Helper to fill dropdown with crypttab relevant entries,
+            // generating dynamically lines of the following format:
+            // <option value="false">No auto unlock (No crypttab entry)
+            // </option>
+            var html = '';
+            var luks_role_value = {};
+            // a value of false is used to indicate no crypttab entry exists
+            var current_crypttab_status = false;
+            if (this.is_luks) {
+                // we have a LUKS role so retrieve it's value
+                luks_role_value = this.role_obj['LUKS']
+                // if we have a crypttab entry, extract it.
+                if (luks_role_value.hasOwnProperty('crypttab')) {
+                    current_crypttab_status = luks_role_value['crypttab']
+                }
+            }
+            for (var entry in this.crypttab_options) {
+                // cycle through the available known entries and construct our
+                // drop down html; using 'selected' to indicate current value.
+                if (this.crypttab_options[entry] == current_crypttab_status){
+                    // we have found our current setting so indicate this by
+                    // pre-selecting it
+                    html += '<option value="' + this.crypttab_options[entry] + '" selected="selected">';
+                    html += entry + ' - active</option>';
+                } else {
+                    // construct non current entry
+                    html += '<option value="' + this.crypttab_options[entry] + '">' + entry + '</option>';
+                }
+            }
             return new Handlebars.SafeString(html);
         });
     },

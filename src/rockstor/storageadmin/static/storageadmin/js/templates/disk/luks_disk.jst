@@ -1,4 +1,4 @@
-<h3>LUKS Container or Open LUKS Volume.</h3>
+<h3>{{display_luks_container_or_volume}}</h3>
 LUKS Containers are encrypted block devices. Once a LUKS container is unlocked
 it's otherwise encrypted and invisible filesystem (if any) is made available
 via a second virtual block device. This unlocked counterpart is knows as an
@@ -24,6 +24,19 @@ Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
       <h4>Serial number:&nbsp;&nbsp;<strong>{{serialNumber}}</strong></h4>
      </div>
     </div>
+
+    <!-- /etc/crypttab entry selection -->
+    <div class="form-group" id="crypttab_selection_group">
+     <label class="col-sm-4 control-label" for="crypttab_selection">Boot up
+      configuration<span class="required"> *</span></label>
+     <div class="col-sm-4">
+      <select class="form-control" id="crypttab_selection"
+              name="crypttab_selection">
+       {{display_crypttab_entry}}
+      </select>
+     </div>
+    </div>
+
     <div class="form-group">
      <div class="col-sm-offset-4 col-sm-8">
       <a id="cancel" class="btn btn-default">Cancel</a>
