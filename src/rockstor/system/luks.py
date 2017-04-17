@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 from tempfile import mkstemp
+import shutil
 from system.osi import run_command, get_uuid_name_map
 import logging
 
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 CRYPTSETUP = '/usr/sbin/cryptsetup'
 DMSETUP = '/usr/sbin/dmsetup'
+CRYPTTABFILE = '/etc/crypttab'
 
 
 def get_open_luks_container_dev(mapped_device_name, test=None):
@@ -175,10 +177,9 @@ def get_crypttab_entries():
     current crypttab entry where the value represents column 3, ie none for 
     password on boot, or the full path of a keyfile.
     """
-    crypttab = "/etc/crypttab"
     in_crypttab = {}
-    if os.path.isfile(crypttab):
-        with open(crypttab, "r") as ino:
+    if os.path.isfile(CRYPTTABFILE):
+        with open(CRYPTTABFILE, "r") as ino:
             for line in ino.readlines():  # readlines reads whole file in one.
                 if line == '\n' or re.match(line, '#'):
                     # empty line (a newline char) or begins with # so skip
@@ -198,3 +199,163 @@ def get_crypttab_entries():
                             # stash the 3rd column entry in crypttab
                             in_crypttab[uuid_entry_fields[1]] = line_fields[2]
     return in_crypttab
+
+
+def update_crypttab(uuid, keyfile_entry):
+    """
+    :param uuid: 
+    :param keyfile_entry: 
+    :return: False if crypttab edit failed or no uuid passed, True otherwise.
+    otherwise.
+    """
+    # Deal elegantly with null or '' uuid
+    if (uuid is None) or uuid == '':
+        return False
+    uuid_name_map_retrieved = False
+    # Simpler paths for when no /etc/crypttab file exists.
+    if not os.path.isfile(CRYPTTABFILE):
+        if keyfile_entry == 'false':
+            # The string 'false' is used to denote the removal of an existing
+            # entry so we are essentially done as by whatever means there are
+            # no entries in a non-existent crypttab.
+            return True
+        # We have no existing cryptab but a pending non 'false' entry.
+        # Call specialized single entry crypttab creation method.
+        return new_crypttab_single_entry(uuid, keyfile_entry)
+    # By now we have an existing /etc/crypttab so we open it in readonly and
+    # 'on the fly' edit line by line into a secure temp file.
+    tfo, npath = mkstemp()
+    # Pythons _candidate_tempdir_list() should ensure our npath temp file is
+    # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
+    # we have "Creates a temporary file in the most secure manner possible."
+    with open(CRYPTTABFILE, 'r') as ct_original, open(npath, 'w') as temp_file:
+        # examine original crypttab line by line.
+        new_entry = None # temp var that doubles as flag for entry made.
+        for line in ct_original.readlines():  # readlines (whole file in one).
+            update_line = False
+            if line == '\n' or re.match(line, '#') is not None:
+                # blank line (return) or remark line, strip for simplicity.
+                continue
+            line_fields = line.split()
+            # sanitize remaining lines, bare minimum count of entries eg:
+            # mapper-name source-dev
+            # however 3 is a more modern minimum so drop < 3 column entries.
+            if len(line_fields) < 3:
+                continue
+            # We have a viable line of at least 3 columns so entertain it.
+            # Interpret the source device entry in second column (index 1)
+            if re.match('UUID=', line_fields[1]) is not None:
+                # we have our native UUID reference so split and compare
+                source_dev_fields = line_fields[1].split('=')
+                if len(source_dev_fields) is not 2:
+                    # ie "UUID=" with no value which is non legit so skip
+                    continue
+                # we should have a UUID=<something> entry so examine it
+                if source_dev_fields[1] == uuid:
+                    # Matching source device uuid entry so set flag
+                    update_line = True
+                else:
+                    # no UUID= type entry found so check for dev name
+                    # eg instead of 'UUID=<uuid>' we have eg: '/dev/sdd'
+                    if re.match('/dev', source_dev_fields[1]) is not None:
+                        # We have a dev entry so strip the path.
+                        dev_no_path = source_dev_fields[1].split('/')[-1]
+                        # index our uuid_name_map for dev name comparison
+                        if not uuid_name_map_retrieved:
+                            uuid_name_map = get_uuid_name_map()
+                            uuid_name_map_retrieved = True
+                        uuid_of_source = uuid_name_map[dev_no_path]
+                        if uuid_of_source == uuid:
+                            # we have a non native /dev type entry but
+                            # the uuid's match so replace with quicker
+                            # native form of luks-<uuid> UUID=<uuid> etc
+                            update_line = True
+            if update_line:
+                # We have a device match by uuid with an existing line.
+                if keyfile_entry == 'false':
+                    # The string 'false' is used to denote no crypttab entry,
+                    # this we can do by simply skipping this line.
+                    continue
+                # Update the line with our native format but try and
+                # preserve custom options in column 4 if they exist:
+                # Use new mapper name (potentially controversial).
+                if len(line_fields) > 3:
+                    new_entry = ('luks-%s UUID=%s %s %s\n' %
+                                 (uuid, uuid, keyfile_entry,
+                                  ' '.join(line_fields[3:])))
+                else:
+                    # we must have a 3 column entry (>= 3 and then > 3)
+                    # N.B. later 'man crypttab' suggests 4 columns as
+                    # mandatory but that was not observed. We add 'luks'
+                    # as fourth column entry just in case.
+                    new_entry = ('luks-%s UUID=%s %s luks\n' % (uuid, uuid,
+                                                                keyfile_entry))
+                temp_file.write(new_entry)
+            else:
+                # No update flag and no original line skip so we
+                # simply copy over what ever line we found. Most likely a non
+                # matching device.
+                temp_file.write(line)
+        if keyfile_entry != 'false' and new_entry is None:
+            # We have scanned the existing crypttab and not yet made our edit.
+            # The string 'false' is used to denote no crypttab entry and if
+            # new_entry is still None we have made no edit.
+            new_entry = ('luks-%s UUID=%s %s luks\n' % (uuid, uuid,
+                                                        keyfile_entry))
+            temp_file.write(new_entry)
+    # secure temp file now holds our proposed (post edit) crypttab.
+    # Copy contents over existing crypttab and ensure tempfile is removed.
+    try:
+        # shutil.copy2 is equivalent to cp -p (preserver attributes).
+        # This preserves the secure defaults of the temp file without having
+        # to chmod there after. Result is the desired:
+        # -rw------- 1 root root
+        # ie rw to root only or 0600
+        # and avoiding a window prior to a separate chmod command.
+        shutil.copy2(npath, CRYPTTABFILE)
+    except Exception as e:
+        msg = ('Exception while creating fresh %s: %s' % (CRYPTTABFILE,
+                                                          e.__str__()))
+        raise Exception(msg)
+    finally:
+        if os.path.exists(npath):
+            try:
+                os.remove(npath)
+            except Exception as e:
+                msg = ('Exception while removing temp file %s' %
+                       (npath, e.__str__()))
+                raise Exception(msg)
+    return True
+
+
+def new_crypttab_single_entry(uuid, keyfile_entry):
+    # Create a temp file to construct our /etc/crypttab in prior to copying
+    # with preserved attributes.
+    tfo, npath = mkstemp()
+    # Pythons _candidate_tempdir_list() should ensure our npath temp file is
+    # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
+    # we have "Creates a temporary file in the most secure manner possible."
+    crypttab_line = ('luks-%s UUID=%s %s luks\n' % (uuid, uuid, keyfile_entry))
+    try:
+        with open(npath, "w") as tempfo:
+            tempfo.write(crypttab_line)
+        # shutil.copy2 is equivalent to cp -p (preserver attributes).
+        # This preserves the secure defaults of the temp file without having
+        # to chmod there after. Result is the desired:
+        # -rw------- 1 root root
+        # ie rw to root only or 0600
+        # and avoiding a window prior to a separate chmod command.
+        shutil.copy2(npath, CRYPTTABFILE)
+    except Exception as e:
+        msg = ('Exception while creating fresh %s: %s' % (CRYPTTABFILE,
+                                                          e.__str__()))
+        raise Exception(msg)
+    finally:
+        if os.path.exists(npath):
+            try:
+                os.remove(npath)
+            except Exception as e:
+                msg = ('Exception while removing temp file %s' %
+                       (npath, e.__str__()))
+                raise Exception(msg)
+    return True
