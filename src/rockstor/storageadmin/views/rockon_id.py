@@ -94,6 +94,7 @@ class RockOnIdView(rfc.GenericView):
                 env_map = request.data.get('environment', {})
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
+                    co_id = str(co.id)
                     for sname in share_map.keys():
                         dest_dir = share_map[sname]
                         if (not Share.objects.filter(name=sname).exists()):
@@ -144,11 +145,14 @@ class RockOnIdView(rfc.GenericView):
                         cco = DCustomConfig.objects.get(rockon=rockon, key=c)
                         cco.val = cc_map[c]
                         cco.save()
-                    for e in env_map.keys():
-                        if (DContainerEnv.objects.filter(
-                                container=co, key=e).exists()):
+                    if (co_id in env_map):
+                        for e in env_map[co_id].keys():
+                            if (not DContainerEnv.objects.filter(
+                                    container=co, key=e).exists()):
+                                e_msg = ('Invalid environment variable(%s)' % e)
+                                handle_exception(Exception(e_msg), request)
                             ceo = DContainerEnv.objects.get(container=co, key=e)
-                            ceo.val = env_map[e]
+                            ceo.val = env_map[co_id][e]
                             ceo.save()
                 install.async(rockon.id)
                 rockon.state = 'pending_install'
