@@ -28,7 +28,7 @@ from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
 from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
-    get_crypttab_entries
+    get_crypttab_entries, update_crypttab
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
     wipe_disk, blink_disk, scan_disks
 from copy import deepcopy
@@ -469,11 +469,13 @@ class DiskDetailView(rfc.GenericView):
                 return self._pause(dname, request)
             if (command == 'role-drive'):
                 return self._role_disk(dname, request)
+            if (command == 'luks-drive'):
+                return self._luks_disk(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, '
                  'btrfs-wipe, luks-format, btrfs-disk-import, blink-drive, '
                  'enable-smart, disable-smart, smartcustom-drive, '
-                 'spindown-drive, pause, role-drive' % command)
+                 'spindown-drive, pause, role-drive, luks-drive' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -713,6 +715,38 @@ class DiskDetailView(rfc.GenericView):
                      'filesystem, or do LUKS format on device (%s). Error: %s'
                      % (dname, e.__str__()))
             handle_exception(Exception(e_msg), request)
+
+    @classmethod
+    def _luks_disk(cls, dname, request):
+        disk = cls._validate_disk(dname, request)
+        crypttab_selection = str(
+            request.data.get('crypttab_selection', 'false'))
+        logger.debug('_luks_disk has crypttab_selection=%s for disk=%s' %
+                     (crypttab_selection, disk.name))
+        # Constrain crypttab_selection to known sane entries
+        # TODO: regex to catch legit dev names and sanitze via list match
+        # known_crypttab_selection = ['false', 'none', '/dev/*']
+        # Check that we are in fact a LUKS container.
+        roles = {}
+        # Get our roles, if any, into a dictionary.
+        if disk.role is not None:
+                roles = json.loads(disk.role)
+        if 'LUKS' not in roles:
+            e_msg = ('LUKS operation not support on this Disk(%s) as it is '
+                     'not recognized as a LUKS container (ie no "LUKS" role '
+                     'found.)'
+                     % dname)
+            handle_exception(Exception(e_msg), request)
+        # Retrieve the uuid of our LUKS container.
+        # Disk model currently only stores btrfs_uuid.
+        luks_role = roles['LUKS']
+        if 'uuid' not in luks_role:
+            e_msg = ('Cannot complete LUKS configuration request as no uuid '
+                     'key was found in Disk(%s) LUKS role value. ' % dname)
+            handle_exception(Exception(e_msg), request)
+        disk_uuid = luks_role['uuid']
+        update_crypttab(disk_uuid, crypttab_selection)
+        return Response()
 
     @classmethod
     @transaction.atomic
