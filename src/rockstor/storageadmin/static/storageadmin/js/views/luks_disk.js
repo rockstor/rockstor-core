@@ -26,7 +26,9 @@
 
 LuksDiskView = RockstorLayoutView.extend({
     events: {
-        'click #cancel': 'cancel'
+        'click #cancel': 'cancel',
+        'click #crypttab_selection': 'crypttab_selection_changed'
+
     },
 
         initialize: function () {
@@ -99,10 +101,22 @@ LuksDiskView = RockstorLayoutView.extend({
         // Important as we use this value to name keyfiles so must be clearly
         // identifiable and unique. UUID of actual container obviously better.
         var luks_container_uuid = disk_name;
+        // While we are inside the LUKS role we can update current_crypttab
+        // Assume we have no crypttab entry until we find otherwise.
+        var current_crypttab_status = false;
+        // Likewise we can also retrieve keyfile existence
+        var keyfile_exists = false;
         if (role_obj != null && role_obj.hasOwnProperty('LUKS')) {
             is_luks = true;
             if (role_obj['LUKS'].hasOwnProperty('uuid')) {
                 luks_container_uuid = role_obj['LUKS']['uuid'];
+            }
+            // if we have a crypttab entry, extract it.
+            if (role_obj['LUKS'].hasOwnProperty('crypttab')) {
+                current_crypttab_status = role_obj['LUKS']['crypttab'];
+            }
+            if (role_obj['LUKS'].hasOwnProperty('keyfileExists')) {
+                keyfile_exists = role_obj['LUKS']['keyfileExists'];
             }
         } else {
             is_luks = false;
@@ -127,6 +141,7 @@ LuksDiskView = RockstorLayoutView.extend({
         this.partitions = partitions;
         this.disk_btrfs_uuid = disk_btrfs_uuid;
         this.is_luks = is_luks;
+        this.keyfile_exists = keyfile_exists;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -138,7 +153,9 @@ LuksDiskView = RockstorLayoutView.extend({
             disk_btrfs_uuid: disk_btrfs_uuid,
             is_luks: is_luks,
             is_open_luks: is_open_luks,
-            crypttab_options: crypttab_options
+            crypttab_options: crypttab_options,
+            current_crypttab_status: current_crypttab_status,
+            keyfile_exists: keyfile_exists
         }));
 
         this.$('#luks-disk-form :input').tooltip({
@@ -183,6 +200,7 @@ LuksDiskView = RockstorLayoutView.extend({
             }
         });
         this.container_or_volume_mode();
+        this.crypttab_selection_changed();
     },
 
     container_or_volume_mode: function () {
@@ -192,6 +210,29 @@ LuksDiskView = RockstorLayoutView.extend({
         } else {
             // Open LUKS volume mode assumed.
             this.$('#crypttab_selection_group').hide();
+        }
+    },
+
+    crypttab_selection_changed: function () {
+        var crypttab_selected = this.$('#crypttab_selection').val();
+        var current_crypttab_status = this.current_crypttab_status;
+        if (crypttab_selected !== 'false' && crypttab_selected !== 'none') {
+            // Assuming not false and not none is keyfile entry.
+            this.show_keyfile_options(true);
+        } else {
+            this.show_keyfile_options(false);
+        }
+    },
+
+    show_keyfile_options: function(show) {
+        if (show){
+            this.$('#current_keyfile_group').show();
+            if (!this.keyfile_exists) {
+                // this.$('#no_keyfile_group').show();
+            }
+        } else {
+            this.$('#current_keyfile_group').hide();
+            //this.$('#no_keyfile_group').hidden();
         }
     },
 
@@ -213,17 +254,7 @@ LuksDiskView = RockstorLayoutView.extend({
             // <option value="false">No auto unlock (No crypttab entry)
             // </option>
             var html = '';
-            var luks_role_value = {};
-            // a value of false is used to indicate no crypttab entry exists
-            var current_crypttab_status = false;
-            if (this.is_luks) {
-                // we have a LUKS role so retrieve it's value
-                luks_role_value = this.role_obj['LUKS']
-                // if we have a crypttab entry, extract it.
-                if (luks_role_value.hasOwnProperty('crypttab')) {
-                    current_crypttab_status = luks_role_value['crypttab']
-                }
-            }
+            var current_crypttab_status = this.current_crypttab_status;
             for (var entry in this.crypttab_options) {
                 // cycle through the available known entries and construct our
                 // drop down html; using 'selected' to indicate current value.
@@ -235,6 +266,26 @@ LuksDiskView = RockstorLayoutView.extend({
                 } else {
                     // construct non current entry
                     html += '<option value="' + this.crypttab_options[entry] + '">' + entry + '</option>';
+                }
+            }
+            return new Handlebars.SafeString(html);
+        });
+        Handlebars.registerHelper('display_keyfile_path', function () {
+            var html = '';
+            var keyfile = this.current_crypttab_status;
+            // first check if we have a keyfile ie non false
+            // we shouldn't be called if there isn't one but just in case:
+            if (keyfile !== false && keyfile !== 'none') {
+                html += 'Keyfile:&nbsp;&nbsp;'
+                if (this.keyfile_exists) {
+                    // green to denote existing keyfile
+                    html += '<span style="color:darkgreen">'
+                        + keyfile + '</span>';
+                } else {
+                    // red to denote missing keyfile
+                    html += '<span style="color:darkred">'
+                        + keyfile;
+                    html += '<p><strong>WARNING: THE CONFIGURED KEY FILE DOES NOT EXIST</strong></span></p>';
                 }
             }
             return new Handlebars.SafeString(html);
