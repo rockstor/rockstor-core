@@ -15,6 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+import os
 import re
 from rest_framework.response import Response
 from django.db import transaction
@@ -206,9 +207,19 @@ class DiskMixin(object):
                 # 'none' = password on boot
                 # '/root/keyfile-<uuid>' = full path to keyfile
                 if d.uuid in dev_uuids_in_crypttab.keys():
-                    # our device has a UUID= match in crypttab
+                    # Our device has a UUID= match in crypttab so save as
+                    # value the current cryptfile 3rd column entry.
                     disk_roles_identified['LUKS']['crypttab'] \
                         = dev_uuids_in_crypttab[d.uuid]
+                    # if crypttab 3rd column indicates keyfile: does that
+                    # keyfile exist. N.B. non 'none' entry assumed to be
+                    # keyfile. Allows for existing user created keyfiles.
+                    # TODO: could be problematic during crypttab rewrite where
+                    # keyfile is auto named but we should self correct on our
+                    # next run, ie new file entry is checked there after.
+                    if dev_uuids_in_crypttab[d.uuid] != 'none':
+                        disk_roles_identified['LUKS']['keyfileExists'] \
+                            = os.path.isfile(dev_uuids_in_crypttab[d.uuid])
             if d.type == 'crypt':
                 # OPEN LUKS DISK: scan_disks() can inform us of the truth
                 # regarding an opened LUKS container which appears as a mapped
