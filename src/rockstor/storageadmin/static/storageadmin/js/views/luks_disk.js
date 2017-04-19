@@ -124,6 +124,8 @@ LuksDiskView = RockstorLayoutView.extend({
         // Populate our crypttab_selection text object along with values.
         // A value of false is used to indicate no crypttab entry exists.
         // see display_crypttab_entry handlebar helper below.
+        // @todo In the future these options could be extended with a custom
+        // @todo keyfile option to allow users to specify a keyfile with path.
         var crypttab_options = {
             'No auto unlock': false,
             'Manual passphrase via local console': 'none',
@@ -258,14 +260,28 @@ LuksDiskView = RockstorLayoutView.extend({
             for (var entry in this.crypttab_options) {
                 // cycle through the available known entries and construct our
                 // drop down html; using 'selected' to indicate current value.
-                if (this.crypttab_options[entry] == current_crypttab_status){
+                html += '<option value="' + this.crypttab_options[entry];
+                if (current_crypttab_status == this.crypttab_options[entry]) {
                     // we have found our current setting so indicate this by
-                    // pre-selecting it
-                    html += '<option value="' + this.crypttab_options[entry] + '" selected="selected">';
+                    // pre-selecting it. N.B. exact matches only ie keyfile
+                    // match in this case uses native naming ie:
+                    // /root/keyfile-<uuid>.
+                    html += '" selected="selected">';
                     html += entry + ' - active</option>';
+                } else if ((current_crypttab_status !== false) &&
+                    (current_crypttab_status.substring(0, 1) == '/') &&
+                    (entry == 'Auto unlock via keyfile')) {
+                    // @todo - the above clause is clumsy and could later be
+                    // @todo - replaced with a custom cryptab file entry
+                    // @todo - option in crypttab_options.
+                    // We have a path entry (ie keyfile type) but not one
+                    // using the native naming ie a non /root/keyfile-<uuid>.
+                    // Indicate the selection type and "custom" nature.
+                    html += '" selected="selected">';
+                    html += entry + ' (custom) - active</option>';
                 } else {
                     // construct non current entry
-                    html += '<option value="' + this.crypttab_options[entry] + '">' + entry + '</option>';
+                    html += '">' + entry + '</option>';
                 }
             }
             return new Handlebars.SafeString(html);
