@@ -29,7 +29,7 @@ from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
 from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
-    get_crypttab_entries, update_crypttab
+    get_crypttab_entries, update_crypttab, native_keyfile_exists
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
     wipe_disk, blink_disk, scan_disks
 from copy import deepcopy
@@ -200,12 +200,18 @@ class DiskMixin(object):
                 is_unlocked = d.uuid in unlocked_luks_containers_uuids
                 disk_roles_identified['LUKS'] = {'uuid': str(d.uuid),
                                                  'unlocked': is_unlocked}
-                # we can also inform this role of the current crypttab status
-                # of this device, ie:
-                # device listed in crypttab = dict key entry of crypttab.
+                # We also inform this role of the current crypttab status
+                # of this device, ie: no entry = no "crypttab" key.
+                # Device listed in crypttab = dict key entry of "crypttab".
                 # If crypttab key entry then it's value is 3rd column ie:
                 # 'none' = password on boot
                 # '/root/keyfile-<uuid>' = full path to keyfile
+                # Note that we also set a boolean in the LUKS disk role of
+                # 'keyfileExists' true if a crypttab entry exists or if our
+                # default /root/keyfile-<uuid> exists, false otherwise.
+                # So the current keyfile takes priority when setting this flag.
+                # This may have to be split out later to discern the two states
+                # separately.
                 if d.uuid in dev_uuids_in_crypttab.keys():
                     # Our device has a UUID= match in crypttab so save as
                     # value the current cryptfile 3rd column entry.
@@ -220,6 +226,13 @@ class DiskMixin(object):
                     if dev_uuids_in_crypttab[d.uuid] != 'none':
                         disk_roles_identified['LUKS']['keyfileExists'] \
                             = os.path.isfile(dev_uuids_in_crypttab[d.uuid])
+                if 'keyfileExists' not in disk_roles_identified['LUKS']:
+                    # We haven't yet set our keyfileExists flag: ie no entry,
+                    # custom or otherwise, in crypttab to check or the entry
+                    # was "none". Revert to defining this flag against the
+                    # existence or otherwise of our native keyfile:
+                    disk_roles_identified['LUKS']['keyfileExists'] \
+                        = native_keyfile_exists(d.uuid)
             if d.type == 'crypt':
                 # OPEN LUKS DISK: scan_disks() can inform us of the truth
                 # regarding an opened LUKS container which appears as a mapped
@@ -732,8 +745,6 @@ class DiskDetailView(rfc.GenericView):
         disk = cls._validate_disk(dname, request)
         crypttab_selection = str(
             request.data.get('crypttab_selection', 'false'))
-        logger.debug('_luks_disk has crypttab_selection=%s for disk=%s' %
-                     (crypttab_selection, disk.name))
         # Constrain crypttab_selection to known sane entries
         # TODO: regex to catch legit dev names and sanitze via list match
         # known_crypttab_selection = ['false', 'none', '/dev/*']
