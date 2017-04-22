@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 CRYPTSETUP = '/usr/sbin/cryptsetup'
 DMSETUP = '/usr/sbin/dmsetup'
 CRYPTTABFILE = '/etc/crypttab'
+DD = '/usr/bin/dd'
 
 
 def get_open_luks_container_dev(mapped_device_name, test=None):
@@ -102,7 +103,7 @@ def luks_format_disk(disk_byid, passphrase):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s' %
+                msg = ('Exception while removing temp file %s: %s' %
                        (npath, e.__str__()))
                 raise Exception(msg)
     return out, err, rc
@@ -322,7 +323,7 @@ def update_crypttab(uuid, keyfile_entry):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s' %
+                msg = ('Exception while removing temp file %s: %s' %
                        (npath, e.__str__()))
                 raise Exception(msg)
     return True
@@ -355,7 +356,106 @@ def new_crypttab_single_entry(uuid, keyfile_entry):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s' %
+                msg = ('Exception while removing temp file %s: %s' %
                        (npath, e.__str__()))
                 raise Exception(msg)
     return True
+
+
+def add_keyfile(dev_byid, keyfile_withpath, passphrase):
+    # First we establish if our keyfile exists, and if not we create it.
+    if not os.path.isfile(keyfile_withpath):
+        # attempt to create our keyfile:
+        if not create_keyfile(keyfile_withpath):
+            msg = ('Failed to establish new or existing keyfile: %s: %s' %
+                   (keyfile_withpath, e.__str__()))
+            raise Exception(msg)
+    # We are by now assured of an existing keyfile so register this with our
+    # LUKS container:
+    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    tfo, npath = mkstemp()
+    # # Pythons _candidate_tempdir_list() should ensure our npath temp file is
+    # # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
+    # # we have "Creates a temporary file in the most secure manner possible."
+    # # Populate this file with our passphrase and use as cryptsetup keyfile.
+    try:
+        with open(npath, 'w') as passphrase_file_object:
+            passphrase_file_object.write(passphrase)
+        cmd = [CRYPTSETUP, 'luksAddKey', dev_byid_withpath, keyfile_withpath,
+               npath]
+        out, err, rc = run_command(cmd)
+    except Exception as e:
+        msg = ('Exception while running command(%s): %s' % (cmd, e.__str__()))
+        raise Exception(msg)
+    finally:
+        passphrase_file_object.close()
+        if os.path.exists(npath):
+            try:
+                os.remove(npath)
+            except Exception as e:
+                msg = ('Exception while removing temp file %s: %s' %
+                       (npath, e.__str__()))
+            raise Exception(msg)
+    return True
+
+
+def create_keyfile(keyfile_withpath):
+    """
+    Function to create a random keyfile appropriate for LUKS use. Works by 
+    initially creating a temp file with the appropriate context and then
+    copying the contents over. This minimises lock time on our target keyfile. 
+    Currently hardwired to make 2048 byte /dev/urandom sourced keyfiles.
+    This is equivalent to a 2^14bit keyfile.
+    :param keyfile_withpath: 
+    :return: True on success, or if the keyfile_with_path exists, False
+    otherwise.  
+    """
+    # If our target file exists we are done and return True (no overwriting).
+    if os.path.isfile(keyfile_withpath):
+        return True
+    # Otherwise we generate the keyfile.
+    tfo, npath = mkstemp()
+    # Pythons _candidate_tempdir_list() should ensure our npath temp file is
+    # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
+    # we have "Creates a temporary file in the most secure manner possible."
+    try:
+        with open(npath, 'w') as temp_keyfile:
+            cmd = [DD, 'bs=512', 'count=4', 'if=/dev/urandom', 'of=%s' % npath]
+            out, err, rc = run_command(cmd)
+        if rc != 0:
+            logger.debug('create_keyfile failed cmd=%s' % cmd)
+            return False
+        # shutil.copy2 is equivalent to cp -p (preserver attributes).
+        # This preserves the secure defaults of the temp file without having
+        # to chmod there after. Result is the desired:
+        # -rw------- 1 root root
+        # ie rw to root only or 0600
+        # and avoiding a window prior to a separate chmod command.
+        shutil.copy2(npath, keyfile_withpath)
+    except Exception as e:
+        msg = ('Exception while creating keyfile %s: %s' % (keyfile_withpath,
+                                                            e.__str__()))
+        raise Exception(msg)
+    finally:
+        # make sure we remove our temp file (just in case it became a keyfile)
+        temp_keyfile.close()
+        if os.path.isfile(npath):
+            try:
+                os.remove(npath)
+            except Exception as e:
+                msg = ('Exception while removing temp file %s: %s' %
+                       (npath, e.__str__()))
+                raise Exception(msg)
+    return True
+
+
+def native_keyfile_exists(uuid):
+    """
+    Simple wrapper around os.path.isfile(/root/keyfile-<uuid>) to establish if
+    a Rockstor native keyfile exists. 
+    :return: True if /root/keyfile-<uuid> exists, False otherwise.
+    """
+    try:
+        return os.path.isfile('/root/keyfile-%s' % uuid)
+    except:
+        return False
