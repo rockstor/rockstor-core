@@ -27,8 +27,8 @@
 LuksDiskView = RockstorLayoutView.extend({
     events: {
         'click #cancel': 'cancel',
-        'click #crypttab_selection': 'crypttab_selection_changed'
-
+        'click #crypttab_selection': 'crypttab_selection_changed',
+        'click #create_keyfile_tick': 'create_keyfile_tick_toggle'
     },
 
         initialize: function () {
@@ -157,7 +157,8 @@ LuksDiskView = RockstorLayoutView.extend({
             is_open_luks: is_open_luks,
             crypttab_options: crypttab_options,
             current_crypttab_status: current_crypttab_status,
-            keyfile_exists: keyfile_exists
+            keyfile_exists: keyfile_exists,
+            luks_container_uuid: luks_container_uuid
         }));
 
         this.$('#luks-disk-form :input').tooltip({
@@ -170,11 +171,50 @@ LuksDiskView = RockstorLayoutView.extend({
             return err_msg;
         };
 
+        $.validator.addMethod('validateCrypttab_selection', function (value) {
+            var crypttab_selection = $('#crypttab_selection').val();
+            var crypttab_selection_changed = false;
+            var create_keyfile_tick = $('#create_keyfile_tick');
+            if (crypttab_selection != current_crypttab_status) {
+                crypttab_selection_changed = true;
+            }
+            // Check to see if we are attempting to configure an auto unlock
+            // via a non existent keyfile and not also requesting the creation
+            // of that keyfile: ie ticked "create_keyfile_tick"
+            if (!this.keyfile_exists) {
+                if (crypttab_selection != 'false' && crypttab_selection != 'none') {
+                    // auto unlock via keyfile selected
+                    if (!create_keyfile_tick.prop('checked')) {
+                        err_msg = 'Auto unlock via keyfile selected when ' +
+                            'the indicated keyfile does not exist. ' +
+                            'Tick "Create the above keyfile" below.';
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }, luks_err_msg);
+
+        $.validator.addMethod('validateLuks_passphrase', function (value) {
+            var create_keyfile_tick = $('#create_keyfile_tick');
+            var luks_passphrase = $('#luks_passphrase').val();
+            if (create_keyfile_tick.prop('checked')) {
+                if (luks_passphrase == '') {
+                    err_msg = 'Keyfile creation requested but no passphrase ' +
+                        'entered';
+                    return false;
+                }
+            }
+            return true;
+        }, luks_err_msg);
+
+
         this.$('#luks-disk-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-
+                crypttab_selection: 'validateCrypttab_selection',
+                luks_passphrase: 'validateLuks_passphrase'
             },
 
             submitHandler: function () {
@@ -202,6 +242,7 @@ LuksDiskView = RockstorLayoutView.extend({
             }
         });
         this.container_or_volume_mode();
+        this.show_keyfile_options();
         this.crypttab_selection_changed();
     },
 
@@ -227,14 +268,31 @@ LuksDiskView = RockstorLayoutView.extend({
     },
 
     show_keyfile_options: function(show) {
-        if (show){
+        var keyfile_exists = this.keyfile_exists;
+        if (show) {
             this.$('#current_keyfile_group').show();
-            if (!this.keyfile_exists) {
-                // this.$('#no_keyfile_group').show();
+            // this.$('#create_keyfile_group').show();
+            if (keyfile_exists == false) {
+                this.$('#create_keyfile_group').show();
             }
         } else {
             this.$('#current_keyfile_group').hide();
-            //this.$('#no_keyfile_group').hidden();
+            this.$('#create_keyfile_group').hide();
+        }
+        this.create_keyfile_tick_toggle();
+    },
+
+    create_keyfile_tick_toggle: function () {
+        // show or hide our associated UI authentication components according
+        // to our own state. Currently authentication is limited to passphrase
+        // entry. This could later be extended to keyfile selection, although
+        // currently if the native keyfile exists we should not be displayed
+        // due to redundancy, ie keyfile exists already.
+        var create_keyfile_tick = this.$('#create_keyfile_tick');
+        if (create_keyfile_tick.prop('checked')) {
+            this.$('#luks_passphrase_group').show();
+        } else {
+            this.$('#luks_passphrase_group').hide();
         }
     },
 
@@ -288,21 +346,29 @@ LuksDiskView = RockstorLayoutView.extend({
         });
         Handlebars.registerHelper('display_keyfile_path', function () {
             var html = '';
-            var keyfile = this.current_crypttab_status;
-            // first check if we have a keyfile ie non false
+            var keyfile_entry = this.current_crypttab_status;
+            // first check if we have a keyfile_entry ie non false
             // we shouldn't be called if there isn't one but just in case:
-            if (keyfile !== false && keyfile !== 'none') {
-                html += 'Keyfile:&nbsp;&nbsp;'
-                if (this.keyfile_exists) {
-                    // green to denote existing keyfile
-                    html += '<span style="color:darkgreen">'
-                        + keyfile + '</span>';
-                } else {
-                    // red to denote missing keyfile
-                    html += '<span style="color:darkred">'
-                        + keyfile;
-                    html += '<p><strong>WARNING: THE CONFIGURED KEY FILE DOES NOT EXIST</strong></span></p>';
-                }
+            if (keyfile_entry !== false && keyfile_entry !== 'none') {
+                html += 'Configured Keyfile:&nbsp;&nbsp;';
+            } else {
+                html += 'Proposed Keyfile:&nbsp;&nbsp;';
+            }
+            // Redefine local keyfile_entry value to represent the native
+            // keyfile if false (no cyrpttab entry) or 'none' manual. Slightly
+            // unclean but we are done with it otherwise.
+            if (keyfile_entry == false || keyfile_entry == 'none') {
+                keyfile_entry = '/root/keyfile-' + this.luks_container_uuid;
+            }
+            if (this.keyfile_exists) {
+                // green to denote existing keyfile_entry
+                html += '<span style="color:darkgreen">'
+                    + keyfile_entry + '</span>';
+            } else {
+                // red to denote missing keyfile_entry
+                html += '<span style="color:darkred">'
+                    + keyfile_entry;
+                html += '<p><strong>WARNING: THE ABOVE KEY FILE DOES NOT EXIST</strong></span></p>';
             }
             return new Handlebars.SafeString(html);
         });
