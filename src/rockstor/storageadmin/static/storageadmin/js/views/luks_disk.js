@@ -183,9 +183,9 @@ LuksDiskView = RockstorLayoutView.extend({
                 if (crypttab_selection !== 'false' && crypttab_selection !== 'none') {
                     // auto unlock via keyfile selected
                     if (!create_keyfile_tick.prop('checked')) {
-                        err_msg = 'Auto unlock via keyfile selected when ' +
+                        err_msg = '"Auto unlock via keyfile" selected when ' +
                             'the indicated keyfile does not exist. ' +
-                            'Tick "Create the above keyfile" below.';
+                            'Tick "Create keyfile" below.';
                         return false;
                     }
                 }
@@ -301,6 +301,23 @@ LuksDiskView = RockstorLayoutView.extend({
                 html += 'Open LUKS Volume information page.'
             } else {
                 html += 'Warning: Non LUKS Device, please report bug on forum.'
+            }
+            return new Handlebars.SafeString(html);
+        });
+        Handlebars.registerHelper('display_create_keyfile_text', function () {
+            // Customize our "create_keyfile_tick" user facing text.
+            // Ie "Create the above keyfile if we don't have a custom keyfile
+            // If we have a custom keyfile config that doesn't exist then we
+            // must be clear that we create our native /root/keyfile-<uuid>
+            // and alter the crypttab to match.
+            // This is in lue of a fully configurable custom config option.
+            var current_crypttab_status = this.current_crypttab_status;
+            var html = '';
+            var native_keyfile = '/root/keyfile-' + this.luks_container_uuid;
+            if (current_crypttab_status !== native_keyfile) {
+                html += 'Create keyfile (native)'
+            } else {
+                html += 'Create keyfile (as above)';
             }
             return new Handlebars.SafeString(html);
         });
