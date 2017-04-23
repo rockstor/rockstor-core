@@ -745,8 +745,11 @@ class DiskDetailView(rfc.GenericView):
         disk = cls._validate_disk(dname, request)
         crypttab_selection = str(
             request.data.get('crypttab_selection', 'false'))
+        is_create_keyfile_ticked = request.data.get('create_keyfile_tick',
+                                                    False)
+        luks_passphrase = str(request.data.get('luks_passphrase', ''))
         # Constrain crypttab_selection to known sane entries
-        # TODO: regex to catch legit dev names and sanitze via list match
+        # TODO: regex to catch legit dev names and sanitize via list match
         # known_crypttab_selection = ['false', 'none', '/dev/*']
         # Check that we are in fact a LUKS container.
         roles = {}
@@ -767,6 +770,18 @@ class DiskDetailView(rfc.GenericView):
                      'key was found in Disk(%s) LUKS role value. ' % dname)
             handle_exception(Exception(e_msg), request)
         disk_uuid = luks_role['uuid']
+        if crypttab_selection == 'none' or crypttab_selection == 'false':
+            if is_create_keyfile_ticked:
+                e_msg = ('Inconsistent LUKS configuration request for '
+                         'Disk(%s). Keyfile creation requested without '
+                         'compatible "Boot up configuratin" option'
+                         % dname)
+                handle_exception(Exception(e_msg), request)
+        if is_create_keyfile_ticked and luks_passphrase == '':
+            e_msg = ('Cannot create LUKS keyfile without authorization via '
+                     'passphrase. Empty passphrase received for Disk(%s).'
+                     % dname)
+            handle_exception(Exception(e_msg), request)
         update_crypttab(disk_uuid, crypttab_selection)
         return Response()
 
