@@ -29,7 +29,7 @@ from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
 from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
-    get_crypttab_entries, update_crypttab, native_keyfile_exists
+    get_crypttab_entries, update_crypttab, native_keyfile_exists, add_keyfile
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
     wipe_disk, blink_disk, scan_disks
 from copy import deepcopy
@@ -782,7 +782,28 @@ class DiskDetailView(rfc.GenericView):
                      'passphrase. Empty passphrase received for Disk(%s).'
                      % dname)
             handle_exception(Exception(e_msg), request)
-        update_crypttab(disk_uuid, crypttab_selection)
+        # Having performed the basic parameter validation above, we are ready
+        # to try and apply the requested config. This is a multipart process.
+        # With a keyfile config we have to first ensure the existence of our
+        # keyfile and create it if need be, then register this keyfile (via
+        # an existing passphrase) with our LUKS container.
+        # In all cases there after we must also update /etc/crypttab.
+        # Fist call our keyfile creation + register wrapper if needed:
+        if crypttab_selection != 'none' and crypttab_selection != 'false':
+            # None 'none' and None 'false' is assumed to be keyfile config.
+            # We ensure / create our keyfile and register it using
+            # cryptsetup luksAddKeyfile via the following wrapper function:
+            if not add_keyfile(disk.name, crypttab_selection, luks_passphrase):
+                e_msg = ('There was an unknown problem with add_key when '
+                         'called by _luks_disk() for Disk(%s). Keyfile '
+                         'registration may have failed.' % dname)
+                handle_exception(Exception(e_msg), request)
+        # In all cases we try to ensure /etc/crypttab is updated:
+        if not update_crypttab(disk_uuid, crypttab_selection):
+            e_msg = ('There was an unknown problem with update_crypttab when '
+                     'called by _luks_disk() for Disk(%s). No /etc/crypttab '
+                     'changes were made.' % dname)
+            handle_exception(Exception(e_msg), request)
         return Response()
 
     @classmethod
