@@ -19,6 +19,7 @@ import os
 import re
 from tempfile import mkstemp
 import shutil
+from system.exceptions import CommandException
 from system.osi import run_command, get_uuid_name_map
 import logging
 
@@ -363,13 +364,26 @@ def new_crypttab_single_entry(uuid, keyfile_entry):
 
 
 def add_keyfile(dev_byid, keyfile_withpath, passphrase):
+    """
+    Ensures that the given keyfile_withpath exists and calls create_keyfile()
+    if it doesn't. Then attempts to register the established keyfile with the
+    dev_byid device via "cryptsetup luksAddKey dev keyfile passphrase.
+    N.B. The passphrase is passed to the command via a secure temporary file.
+    Care is taken to remove this file irrespective of outcome.
+    :param dev_byid: by-id type name without path as found in db Disks.name.
+    :param keyfile_withpath: the intended keyfile with full path.
+    :param passphrase: LUKS passphrase: any current key slot passphrase.
+    :return: True if keyfile successfully registered. False or an Exception 
+    is raised in all other instances.
+    """
     # First we establish if our keyfile exists, and if not we create it.
     if not os.path.isfile(keyfile_withpath):
         # attempt to create our keyfile:
         if not create_keyfile(keyfile_withpath):
-            msg = ('Failed to establish new or existing keyfile: %s: %s' %
-                   (keyfile_withpath, e.__str__()))
-            raise Exception(msg)
+            # msg = ('Failed to establish new or existing keyfile: %s: %s' %
+            #        (keyfile_withpath, e.__str__()))
+            # raise Exception(msg)
+            return False
     # We are by now assured of an existing keyfile so register this with our
     # LUKS container:
     dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
@@ -378,14 +392,29 @@ def add_keyfile(dev_byid, keyfile_withpath, passphrase):
     # # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
     # # we have "Creates a temporary file in the most secure manner possible."
     # # Populate this file with our passphrase and use as cryptsetup keyfile.
+    rc = 0
     try:
         with open(npath, 'w') as passphrase_file_object:
             passphrase_file_object.write(passphrase)
         cmd = [CRYPTSETUP, 'luksAddKey', dev_byid_withpath, keyfile_withpath,
-               npath]
-        out, err, rc = run_command(cmd)
+               '--key-file', npath]
+        out, err, rc = run_command(cmd, throw=False)
+        if rc != 0:
+            raise CommandException(('%s' % cmd), out, err, rc)
     except Exception as e:
-        msg = ('Exception while running command(%s): %s' % (cmd, e.__str__()))
+        if rc == 1:
+            msg = 'Wrong Parameters exception'
+        elif rc == 2:
+            msg = 'No Permission (Bad Passphrase) exception'
+        elif rc == 3:
+            msg = 'Out of Memory exception'
+        elif rc == 4:
+            msg = 'Wrong Device Specified'
+        elif rc == 5:
+            msg = "Device already exists or device is busy"
+        else:
+            msg = 'Exception'
+        msg += ' while running command(%s): %s' % (cmd, e.__str__())
         raise Exception(msg)
     finally:
         passphrase_file_object.close()
@@ -395,7 +424,7 @@ def add_keyfile(dev_byid, keyfile_withpath, passphrase):
             except Exception as e:
                 msg = ('Exception while removing temp file %s: %s' %
                        (npath, e.__str__()))
-            raise Exception(msg)
+                raise Exception(msg)
     return True
 
 
@@ -421,7 +450,7 @@ def create_keyfile(keyfile_withpath):
     try:
         with open(npath, 'w') as temp_keyfile:
             cmd = [DD, 'bs=512', 'count=4', 'if=/dev/urandom', 'of=%s' % npath]
-            out, err, rc = run_command(cmd)
+            out, err, rc = run_command(cmd, throw=False)
         if rc != 0:
             logger.debug('create_keyfile failed cmd=%s' % cmd)
             return False
