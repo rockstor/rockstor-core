@@ -31,7 +31,7 @@ LuksDiskView = RockstorLayoutView.extend({
         'click #create_keyfile_tick': 'create_keyfile_tick_toggle'
     },
 
-        initialize: function () {
+    initialize: function () {
         var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_luks_disk;
@@ -296,11 +296,11 @@ LuksDiskView = RockstorLayoutView.extend({
         Handlebars.registerHelper('display_luks_container_or_volume', function () {
             var html = '';
             if (this.is_luks) {
-                html += 'LUKS container configuration.'
+                html += 'LUKS container configuration.';
             } else if (this.is_open_luks) {
-                html += 'Open LUKS Volume information page.'
+                html += 'Open LUKS Volume information page.';
             } else {
-                html += 'Warning: Non LUKS Device, please report bug on forum.'
+                html += 'Warning: Non LUKS Device, please report bug on forum.';
             }
             return new Handlebars.SafeString(html);
         });
@@ -315,7 +315,7 @@ LuksDiskView = RockstorLayoutView.extend({
             var html = '';
             var native_keyfile = '/root/keyfile-' + this.luks_container_uuid;
             if (current_crypttab_status !== native_keyfile) {
-                html += 'Create keyfile (native)'
+                html += 'Create keyfile (native)';
             } else {
                 html += 'Create keyfile (as above)';
             }

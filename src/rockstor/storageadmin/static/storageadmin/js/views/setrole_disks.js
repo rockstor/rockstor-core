@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -208,7 +208,7 @@ SetroleDiskView = RockstorLayoutView.extend({
                 // to include DEL (delete) char increase range to 7F.
                 if (/^[\x20-\x7E]+$/.test(luks_pass_one) == false) {
                     err_msg = 'Invalid non ASCII(32-126) 7-bit character entered';
-                    return false
+                    return false;
                 }
             }
             return true;
@@ -267,7 +267,7 @@ SetroleDiskView = RockstorLayoutView.extend({
             this.$('#delete_tick_warning').hide();
             // show LUKS options if appropriate
             // this.$('#luks_options').show();
-            this.luks_options_show_hide()
+            this.luks_options_show_hide();
         }
     },
 
@@ -390,7 +390,7 @@ SetroleDiskView = RockstorLayoutView.extend({
 
     cancel: function (event) {
         event.preventDefault();
-        this.$('#add-spindown-disk-form :input').tooltip('hide');
+        this.$('#add-role-disk-form :input').tooltip('hide');
         app_router.navigate('disks', {trigger: true});
     }
 
