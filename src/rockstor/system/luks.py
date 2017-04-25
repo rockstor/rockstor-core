@@ -387,19 +387,24 @@ def new_crypttab_single_entry(uuid, keyfile_entry):
     return True
 
 
-def add_keyfile(dev_byid, keyfile_withpath, passphrase):
+def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
     """
     Ensures that the given keyfile_withpath exists and calls create_keyfile()
     if it doesn't. Then attempts to register the established keyfile with the
-    dev_byid device via "cryptsetup luksAddKey dev keyfile passphrase.
+    dev_byid device via "cryptsetup luksAddKey dev keyfile passphrase". But
+    only if the passphrase is found to not equal '', flag for skip luksAddKey.
     N.B. The passphrase is passed to the command via a secure temporary file.
     Care is taken to remove this file irrespective of outcome.
+    An existing keyfile will not be altered or deleted but a freshly created
+    keyfile will be removed if our 'cryptsetup luksAddKey' returns non zero.
     :param dev_byid: by-id type name without path as found in db Disks.name.
     :param keyfile_withpath: the intended keyfile with full path.
-    :param passphrase: LUKS passphrase: any current key slot passphrase.
+    :param passphrase: LUKS passphrase: any current key slot passphrase. If
+    an empty passphrase is passed then 'cryptsetup luksAddKey' is skipped.
     :return: True if keyfile successfully registered. False or an Exception 
     is raised in all other instances.
     """
+    fresh_keyfile = False  # Until we find otherwise.
     # First we establish if our keyfile exists, and if not we create it.
     if not os.path.isfile(keyfile_withpath):
         # attempt to create our keyfile:
@@ -408,8 +413,16 @@ def add_keyfile(dev_byid, keyfile_withpath, passphrase):
             #        (keyfile_withpath, e.__str__()))
             # raise Exception(msg)
             return False
-    # We are by now assured of an existing keyfile so register this with our
-    # LUKS container:
+        fresh_keyfile = True
+    # We are by now assured of an existing keyfile_withpath.
+    # Only register this keyfile with our LUKS container if needed:
+    if passphrase == '':
+        # If an empty passphrase was passed then we interpret this as a flag
+        # to indicate no requirement to 'cryptsetup luksAddKey' so we are now
+        # done. Use case is the return to "auto unlock via keyfile" when that
+        # keyfile has already been registered. UI will not ask for passphrase
+        # as it is assumed that an existing keyfile is already registered.
+        return True
     dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
     tfo, npath = mkstemp()
     # Pythons _candidate_tempdir_list() should ensure our npath temp file is
@@ -418,13 +431,17 @@ def add_keyfile(dev_byid, keyfile_withpath, passphrase):
     # Populate this file with our passphrase and use as cryptsetup keyfile.
     # We set rc in case our try fails earlier than our run_command.
     rc = 0
+    cmd = [CRYPTSETUP, 'luksAddKey', dev_byid_withpath, keyfile_withpath,
+               '--key-file', npath]
     try:
         with open(npath, 'w') as passphrase_file_object:
             passphrase_file_object.write(passphrase)
-        cmd = [CRYPTSETUP, 'luksAddKey', dev_byid_withpath, keyfile_withpath,
-               '--key-file', npath]
         out, err, rc = run_command(cmd, throw=False)
-        if rc != 0:
+        if rc != 0:  # our luksAddKey command failed.
+            if fresh_keyfile:
+                # a freshly created keyfile without successful luksAddKey is
+                # meaningless so remove it.
+                os.remove(keyfile_withpath)
             raise CommandException(('%s' % cmd), out, err, rc)
     except Exception as e:
         if rc == 1:
