@@ -205,10 +205,20 @@ def get_crypttab_entries():
 
 def update_crypttab(uuid, keyfile_entry):
     """
-    :param uuid: 
-    :param keyfile_entry: 
-    :return: False if crypttab edit failed or no uuid passed, True otherwise.
-    otherwise.
+    If no existing /etc/crypttab we call a simplified function specific to new 
+    single entry crypttab creation: new_crypttab_single_entry(), otherwise we 
+    read the existing crypttab file and replace, wipe, or create a relevant 
+    entry for our passed device by uuid info. All commented entries are 
+    removed, as are entries deemed non valid. New entries are of a single
+    format:
+    luks-<uuid> UUID=<uuid> /root/keyfile-<uuid> luks
+    N.B. Care is taken to ensure our secure temporary file containing our
+    crypttab line details is removed irrespective of outcome.
+    :param uuid: uuid of the associated LUKS container such as is returned by:
+    cryptsetup luksUUID <LUKS-container-dev>
+    :param keyfile_entry: the literal intended contents of the 3rd column.
+    :return: False or exception raised if crypttab edit failed or no uuid 
+    passed, True otherwise.
     """
     # Deal elegantly with null or '' uuid
     if (uuid is None) or uuid == '':
@@ -331,6 +341,20 @@ def update_crypttab(uuid, keyfile_entry):
 
 
 def new_crypttab_single_entry(uuid, keyfile_entry):
+    """
+    Creates a new /etc/crypttab file and inserts a single entry with the
+    following format:
+    luks-<uuid> UUID=<uuid> /root/keyfile-<uuid> luks
+    Intended as a helper for update_crypttab() specifically for use when their
+    is no existing /etc/crypttab and so no requirement for edit functions.
+    N.B. Care is taken to ensure our secure temporary file containing our
+    crypttab line details is removed irrespective of outcome.
+    :param uuid: uuid of the associated LUKS container such as is returned by:
+    cryptsetup luksUUID <LUKS-container-dev>
+    :param keyfile_entry:  the literal intended contents of the 3rd column.
+    :return: True if /etc/crypttab creation and edit is successful, exception
+    raised otherwise.
+    """
     # Create a temp file to construct our /etc/crypttab in prior to copying
     # with preserved attributes.
     tfo, npath = mkstemp()
@@ -388,10 +412,11 @@ def add_keyfile(dev_byid, keyfile_withpath, passphrase):
     # LUKS container:
     dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
     tfo, npath = mkstemp()
-    # # Pythons _candidate_tempdir_list() should ensure our npath temp file is
-    # # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
-    # # we have "Creates a temporary file in the most secure manner possible."
-    # # Populate this file with our passphrase and use as cryptsetup keyfile.
+    # Pythons _candidate_tempdir_list() should ensure our npath temp file is
+    # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
+    # we have "Creates a temporary file in the most secure manner possible."
+    # Populate this file with our passphrase and use as cryptsetup keyfile.
+    # We set rc in case our try fails earlier than our run_command.
     rc = 0
     try:
         with open(npath, 'w') as passphrase_file_object:
@@ -409,9 +434,9 @@ def add_keyfile(dev_byid, keyfile_withpath, passphrase):
         elif rc == 3:
             msg = 'Out of Memory exception'
         elif rc == 4:
-            msg = 'Wrong Device Specified'
+            msg = 'Wrong Device Specified exception'
         elif rc == 5:
-            msg = "Device already exists or device is busy"
+            msg = "Device already exists or device is busy exception"
         else:
             msg = 'Exception'
         msg += ' while running command(%s): %s' % (cmd, e.__str__())
@@ -431,11 +456,11 @@ def add_keyfile(dev_byid, keyfile_withpath, passphrase):
 def create_keyfile(keyfile_withpath):
     """
     Function to create a random keyfile appropriate for LUKS use. Works by 
-    initially creating a temp file with the appropriate context and then
-    copying the contents over. This minimises lock time on our target keyfile. 
+    initially creating a temp file with the appropriate contents and then
+    copying the file over. This minimises lock time on our target keyfile. 
     Currently hardwired to make 2048 byte /dev/urandom sourced keyfiles.
     This is equivalent to a 2^14bit keyfile.
-    :param keyfile_withpath: 
+    :param keyfile_withpath: full path and name of the intended keyfile.
     :return: True on success, or if the keyfile_with_path exists, False
     otherwise.  
     """
