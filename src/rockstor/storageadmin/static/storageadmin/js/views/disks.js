@@ -224,10 +224,6 @@ DisksView = RockstorLayoutView.extend({
     },
 
     initHandlebarHelpers: function () {
-        // Helper to display APM value after merger with upstream changes
-        // where the above helper is replaced by many smaller ones like this.
-        // N.B. untested. Presumably we do {{humanReadableAPM this.apm_level}}
-        // in upstream disks_table.jst
 
         asJSON = function (role) {
             // Simple wrapper to test for not null and JSON compatibility,
@@ -244,6 +240,7 @@ DisksView = RockstorLayoutView.extend({
             }
         };
 
+        // Helper to display APM value
         Handlebars.registerHelper('humanReadableAPM', function (apm) {
             var apmhtml = '';
             if (apm == 0 || apm == null) {
