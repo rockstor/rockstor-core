@@ -23,7 +23,6 @@ from system import services
 import logging
 import sys
 import re
-import time
 import json
 from tempfile import mkstemp
 from django.conf import settings
@@ -76,41 +75,54 @@ def delete_old_kernels(logging, num_retain=5):
             logging.info('Deleted old Kernel: %s' % ml_kernels[i])
 
 
-def init_update_issue():
+def inet_addrs(interface=None):
+    cmd = [IP, 'addr', 'show']
+    if interface is not None:
+        cmd.append(interface)
+    o, _, _ = run_command(cmd)
+    ipaddr_list = []
+    for l in o:
+        if (re.match('inet ', l.strip()) is not None):
+            inet_fields = l.split()
+            if len(inet_fields) > 1:
+                ip_fields = inet_fields[1].split('/')
+                if len(ip_fields) == 2:
+                    ipaddr_list.append(ip_fields[0])
+    return ipaddr_list
+
+
+def current_rockstor_mgmt_ip(logger):
+    # importing here because, APIWrapper needs postgres to be setup, so
+    # importing at the top results in failure the first time.
     from smart_manager.models import Service
-    from storageadmin.models import NetworkConnection
+
     ipaddr = None
+    port = 443
     so = Service.objects.get(name='rockstor')
-    if (so.config is not None):
+
+    if so.config is not None:
         config = json.loads(so.config)
+        port = config['listener_port']
         try:
-            ipaddr = NetworkConnection.objects.get(
-                name=config['network_interface']).ipaddr
-        except NetworkConnection.DoesNotExist:
-            pass
-    if (ipaddr is None):
-        default_if = None
-        o, e, c = run_command([IP, 'route'])
-        for i in o:
-            if (re.match('default via', i) is not None):
-                rfields = i.split()
-                if len(rfields) > 4:
-                    default_if = rfields[4]
-                    print('default_if = {0}'.format(default_if))
-        if (default_if is not None):
-            o2, e, c = run_command([IP, 'address', 'show', default_if])
-            for i2 in o2:
-                if (re.match('inet ', i2.strip()) is not None):
-                    inet_fields = i2.split()
-                    if len(inet_fields) > 1:
-                        ip_fields = inet_fields[1].split('/')
-                        if len(ip_fields) == 2:
-                            ipaddr = ip_fields[0]
-                            print('ipaddr = {0}'.format(ipaddr))
-                    break
+            ipaddr_list = inet_addrs(config['network_interface'])
+            if len(ipaddr_list) > 0:
+                ipaddr = ipaddr_list[0]
+        except Exception as e:
+            # interface vanished.
+            logger.exception('Exception while gathering current management '
+                             'ip: {e}'.format(e=e))
+
+    return ipaddr, port
+
+
+def init_update_issue(logger):
+    ipaddr, port = current_rockstor_mgmt_ip(logger)
+
+    if ipaddr is None:
+        ipaddr_list = inet_addrs()
 
     with open('/etc/issue', 'w') as ifo:
-        if (ipaddr is None):
+        if (ipaddr is None and len(ipaddr_list) == 0):
             ifo.write('The system does not yet have an ip address.\n')
             ifo.write('Rockstor cannot be configured using the web interface '
                       'without this.\n\n')
@@ -119,35 +131,25 @@ def init_update_issue():
                       'configure your network using nmtui, then reboot.\n')
         else:
             ifo.write('\nRockstor is successfully installed.\n\n')
-            ifo.write('You can access the web-ui by pointing your browser to '
-                      'https://%s\n\n' % ipaddr)
+            if ipaddr is not None:
+                port_str = ''
+                if port != 443:
+                    port_str = ':{0}'.format(port)
+                ifo.write('web-ui is accessible with this link: '
+                          'https://{0}{1}\n\n'.format(ipaddr, port_str))
+            else:
+                ifo.write('web-ui is accessible with the following links:\n')
+                for i in ipaddr_list:
+                    ifo.write('https://{0}\n'.format(i))
     return ipaddr
 
 
 def update_nginx(logger):
     try:
-        # importing here because, APIWrapper needs postgres to be setup, so
-        # importing at the top results in failure the first time.
-        from smart_manager.models import Service
-        from storageadmin.models import NetworkConnection
-        ip = None
-        port = 443
-        so = Service.objects.get(name='rockstor')
-        if (so.config is not None):
-            config = json.loads(so.config)
-            port = config['listener_port']
-            try:
-                ip = NetworkConnection.objects.get(
-                    name=config['network_interface']).ipaddr
-            except NetworkConnection.DoesNotExist:
-                logger.error('Network interface(%s) configured for rockstor '
-                             'service does not exist' %
-                             config['network_interface'])
-                return
+        ip, port = current_rockstor_mgmt_ip(logger)
         services.update_nginx(ip, port)
     except Exception as e:
-        logger.error('Exception occured while trying to update nginx')
-        logger.exception(e)
+        logger.exception('Exception while updating nginx: {e}'.format(e=e))
 
 
 def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
@@ -434,27 +436,7 @@ def main():
     update_nginx(logging)
 
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
-    for i in range(30):
-        try:
-            if (init_update_issue() is not None):
-                # init_update_issue() didn't cause an exception and did return
-                # an ip so we break out of the multi try loop as we are done.
-                break
-            else:
-                # execute except block with message so we can try again.
-                raise Exception('default interface IP not yet configured')
-        except Exception as e:
-            # only executed if there is an actual exception with
-            # init_update_issue() or if it returns None so we can try again
-            # regardless as in both instances we may succeed on another try.
-            logging.debug('Exception occurred while running update_issue: %s. '
-                          'Trying again after 2 seconds.' % e.__str__())
-            if (i > 28):
-                logging.error('Failed to retrieve default interface IP address'
-                              ' necessary for remote administration. '
-                              'Quitting.')
-                raise e
-            time.sleep(2)
+    init_update_issue(logging)
 
     enable_rockstor_service(logging)
     enable_bootstrap_service(logging)
