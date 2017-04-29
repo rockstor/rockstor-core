@@ -100,11 +100,18 @@ SetroleDiskView = RockstorLayoutView.extend({
         } else {
             is_luks = false;
         }
-
+        // additional convenience flag if device is an open LUKS volume.
+        var is_open_luks;
+        if (role_obj !== null && role_obj.hasOwnProperty('openLUKS')) {
+            is_open_luks = true;
+        } else {
+            is_open_luks = false;
+        }
 
         this.current_redirect = current_redirect;
         this.partitions = partitions;
         this.disk_btrfs_uuid = disk_btrfs_uuid;
+        this.is_open_luks = is_open_luks;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -114,7 +121,8 @@ SetroleDiskView = RockstorLayoutView.extend({
             partitions: partitions,
             current_redirect: current_redirect,
             disk_btrfs_uuid: disk_btrfs_uuid,
-            is_luks: is_luks
+            is_luks: is_luks,
+            is_open_luks: is_open_luks
         }));
 
         this.$('#add-role-disk-form :input').tooltip({
@@ -316,7 +324,12 @@ SetroleDiskView = RockstorLayoutView.extend({
         // partitions and we have no existing btrfs, imported or otherwise.
         // The latter clause is to covers whole disk btrfs but doesn't cover
         // non btrfs whole disk filesystems (these are unusual).
-        if (_.isEmpty(this.partitions) && this.disk_btrfs_uuid == null) {
+        // Also guard against creating a LUKS container within an open LUKS
+        // volume as this is both redundant and not supported as we would then
+        // have a device that was both a LUKS volume and a LUKS container.
+        // Confusing and unnecessary.
+        if (_.isEmpty(this.partitions) && this.disk_btrfs_uuid == null
+            && this.is_open_luks !== true) {
             luks_tick.removeAttr('disabled');
             this.$('#luks_options').show();
         } else {

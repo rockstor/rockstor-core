@@ -733,6 +733,11 @@ class DiskDetailView(rfc.GenericView):
                                  'as boot entry character codes may differ. '
                                  'Please re-enter.')
                         raise Exception(e_msg)
+                    if 'openLUKS' in roles:
+                        e_msg = ('LUKS format requested but device is '
+                                 'identified as an Open LUKS volume. This '
+                                 'configuration is not supported.')
+                        raise Exception(e_msg)
                     return self._luks_format(dname, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:

@@ -83,8 +83,13 @@
                     {{#if this.pool_name}}
                         <i class="glyphicon glyphicon-map-marker" title="Whole drive is mapped to a Pool" rel="tooltip"></i>
                     {{else}}
-                        <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assign an optional Whole Disk Role (ie LUKS/bcache etc), click to edit." rel="tooltip">
-                        <i class="glyphicon glyphicon-question-sign"></i></a>
+                        {{#if (isOpenLuks this.role)}}
+                            <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assign an optional Whole Disk Role (Excluding LUKS container or bcache), click to edit." rel="tooltip">
+                            <i class="glyphicon glyphicon-question-sign"></i></a>
+                        {{else}}
+                            <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assign an optional Whole Disk Role (ie LUKS/bcache etc), click to edit." rel="tooltip">
+                            <i class="glyphicon glyphicon-question-sign"></i></a>
+                        {{/if}}
                     {{/if}}
                 {{/if}}
             {{/if}}
