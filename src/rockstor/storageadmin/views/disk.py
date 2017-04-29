@@ -738,6 +738,13 @@ class DiskDetailView(rfc.GenericView):
                                  'identified as an Open LUKS volume. This '
                                  'configuration is not supported.')
                         raise Exception(e_msg)
+                    if 'LUKS' in roles:
+                        e_msg = ('LUKS format requested but device is '
+                                 'already LUKS formatted. If you wish to '
+                                 're-deploy as a different LUKS container '
+                                 'please select wipe first then return and '
+                                 're-select LUKS format.')
+                        raise Exception(e_msg)
                     return self._luks_format(dname, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:

@@ -112,6 +112,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         this.partitions = partitions;
         this.disk_btrfs_uuid = disk_btrfs_uuid;
         this.is_open_luks = is_open_luks;
+        this.is_luks = is_luks;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -327,9 +328,12 @@ SetroleDiskView = RockstorLayoutView.extend({
         // Also guard against creating a LUKS container within an open LUKS
         // volume as this is both redundant and not supported as we would then
         // have a device that was both a LUKS volume and a LUKS container.
-        // Confusing and unnecessary.
+        // Confusing and unnecessary. Likewise we only show LUKS format
+        // options is we are not already a LUKS container (is_luks). This
+        // helps to avoid some potential confusion when re-formatting a LUKS
+        // container as it forces a traditional wipe first.
         if (_.isEmpty(this.partitions) && this.disk_btrfs_uuid == null
-            && this.is_open_luks !== true) {
+            && this.is_open_luks !== true && this.is_luks !== true) {
             luks_tick.removeAttr('disabled');
             this.$('#luks_options').show();
         } else {
