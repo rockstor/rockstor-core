@@ -298,21 +298,19 @@ def scan_disks(min_size):
                         dnames[dname][8] = dmap['FSTYPE']
                     if dmap['FSTYPE'] == 'crypto_LUKS' \
                             and (dnames[dname][8] is None):
-                        # N.B. although this if clause has identical treatment
-                        # to the mdraid partition treatment it is intentionally
-                        # kept independent to aid in clarity and maintenance
-                        # as it may be that the treatments diverge.
-                        # As per mdraid we we backport to the base device LUKS
+                        # As per mdraid we backport to the base device LUKS
                         # containers that live in partitions as the base device
                         # will have an FSTYPE="" and as per mdraid we classify
                         # the entire device as a LUKS container member even if
-                        # it is only a in part (ie this partition). But we only
+                        # it is only in part (ie this partition). But we only
                         # backport this information if there currently exists
                         # no FSTYPE on the base device, there by protecting
                         # against fstype information loss on the base device.
                         # Please see mdraid partition treatment for additional
                         # comments on index number used.
                         dnames[dname][8] = dmap['FSTYPE']
+                        # and uuid backport
+                        dnames[dname][10] = dmap['UUID']
                     # Akin to back porting a partitions FSTYPE to it's base
                     # device, as with 'linux_raid_member' above, we can do the
                     # same for btrfs if found in a partition.
