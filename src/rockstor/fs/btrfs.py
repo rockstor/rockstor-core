@@ -21,7 +21,7 @@ import time
 import os
 import shutil
 from system.osi import run_command, create_tmp_dir, is_share_mounted, \
-    is_mounted, get_dev_byid_name, convert_to_kib, toggle_path_rw
+    is_mounted, get_dev_byid_name, convert_to_kib, toggle_path_rw, get_device_path
 from system.exceptions import (CommandException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
@@ -50,7 +50,9 @@ def add_pool(pool, disks):
     :param disks: list of by-id disk names without paths to make the pool from.
     :return o, err, rc from last command executed.
     """
-    disks_fp = ['/dev/disk/by-id/' + d for d in disks]
+    disks_fp = []
+    for d in disks:
+        disks_fp.append(get_device_path(d))
     draid = mraid = pool.raid
     if pool.raid == 'single':
         mraid = 'dup'
@@ -95,7 +97,7 @@ def get_pool_info(disk):
     :return: a dictionary with keys of 'disks', 'label', and 'uuid';
     disks keys a list of devices, while label and uuid keys are for strings.
     """
-    dpath = '/dev/disk/by-id/%s' % disk
+    dpath = get_device_path(disk)
     cmd = [BTRFS, 'fi', 'show', dpath]
     o, e, rc = run_command(cmd)
     pool_info = {'disks': [], }
@@ -187,7 +189,7 @@ def resize_pool(pool, dev_list_byid, add=True):
     :return: Tuple of results from run_command(generated command) or None if
         the device member/pool sanity check fails.
     """
-    dev_list_byid = ['/dev/disk/by-id/' + d for d in dev_list_byid]
+    dev_list_byid = [get_device_path(d) for d in dev_list_byid]
     root_mnt_pt = mount_root(pool)
     cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
@@ -253,7 +255,7 @@ def mount_root(pool):
                         % pool.name)
     last_device = pool.disk_set.last()
     for device in pool.disk_set.all():
-        mnt_device = ('/dev/disk/by-id/%s' % device.name)
+        mnt_device = (get_device_path(device.name))
         if (os.path.exists(mnt_device)):
             mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
             if (len(mnt_options) > 0):
@@ -341,7 +343,7 @@ def mount_share(share, mnt_pt):
     if (is_mounted(mnt_pt)):
         return
     mount_root(share.pool)
-    pool_device = ('/dev/disk/by-id/%s' % share.pool.disk_set.first().name)
+    pool_device = (get_device_path(share.pool.disk_set.first().name))
     subvol_str = 'subvol=%s' % share.subvol_name
     create_tmp_dir(mnt_pt)
     toggle_path_rw(mnt_pt, rw=False)
@@ -350,7 +352,7 @@ def mount_share(share, mnt_pt):
 
 
 def mount_snap(share, snap_name, snap_mnt=None):
-    pool_device = ('/dev/disk/by-id/%s' % share.pool.disk_set.first().name)
+    pool_device = (get_device_path(share.pool.disk_set.first().name))
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
     rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
@@ -636,7 +638,7 @@ def rollback_snap(snap_name, sname, subvol_name, pool):
     shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
     create_tmp_dir(mnt_pt)
     subvol_str = 'subvol=%s' % sname
-    dpath = '/dev/disk/by-id/%s' % pool.disk_set.first().name
+    dpath = get_device_path(pool.disk_set.first().name)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, dpath, mnt_pt]
     run_command(mnt_cmd)
 
@@ -1005,7 +1007,7 @@ def device_scan():
 def btrfs_uuid(disk):
     """return uuid of a btrfs filesystem"""
     o, e, rc = run_command(
-        [BTRFS, 'filesystem', 'show', '/dev/disk/by-id/%s' % disk])
+        [BTRFS, 'filesystem', 'show', get_device_path(disk)])
     return o[0].split()[3]
 
 
