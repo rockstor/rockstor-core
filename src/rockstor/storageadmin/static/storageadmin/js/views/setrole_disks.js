@@ -93,10 +93,26 @@ SetroleDiskView = RockstorLayoutView.extend({
         } else {
             current_redirect = '';
         }
-        // set local convenience flag if device is a LUKS container.
+        // set local convenience flag if device is a LUKS container and note
+        // if it's unlocked or not.
         var is_luks;
+        // Default to appearing as if we are unlocked if we fail for
+        // some reason to retrieve the obligatory unlocked flag. This
+        // way we fail safe as unlocked containers can't be deleted.
+        var is_unlocked = true;
+        // While we are inside the LUKS role we can update current_crypttab
+        // Assume we have no crypttab entry until we find otherwise.
+        var current_crypttab_status = false;
         if (role_obj != null && role_obj.hasOwnProperty('LUKS')) {
             is_luks = true;
+            // if we have an unlocked entry, extract it.
+            if (role_obj['LUKS'].hasOwnProperty('unlocked')) {
+                is_unlocked = role_obj['LUKS']['unlocked'];
+            }
+            // if we have a crypttab entry, extract it.
+            if (role_obj['LUKS'].hasOwnProperty('crypttab')) {
+                current_crypttab_status = role_obj['LUKS']['crypttab'];
+            }
         } else {
             is_luks = false;
         }
@@ -113,6 +129,8 @@ SetroleDiskView = RockstorLayoutView.extend({
         this.disk_btrfs_uuid = disk_btrfs_uuid;
         this.is_open_luks = is_open_luks;
         this.is_luks = is_luks;
+        this.is_unlocked = is_unlocked;
+        this.current_crypttab_status = current_crypttab_status;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -123,7 +141,9 @@ SetroleDiskView = RockstorLayoutView.extend({
             current_redirect: current_redirect,
             disk_btrfs_uuid: disk_btrfs_uuid,
             is_luks: is_luks,
-            is_open_luks: is_open_luks
+            is_open_luks: is_open_luks,
+            is_unlocked: is_unlocked,
+            current_crypttab_status: current_crypttab_status
         }));
 
         this.$('#add-role-disk-form :input').tooltip({
@@ -185,6 +205,29 @@ SetroleDiskView = RockstorLayoutView.extend({
                             'managed pool. Use Pool resize to remove it from ' +
                             'the relevant pool which in turn will wipe it\'s ' +
                             'filesystem.';
+                        return false;
+                    }
+                    if (is_unlocked) {
+                        // We block attempts to wipe unlocked LUKS containers
+                        // as a safe guard, we have no direct way to know if
+                        // they are backing any pool members but they are
+                        // never-the-less active if open and a wipe would /
+                        // should fail if we attempted it so just block and
+                        // advise within the front end.
+                        err_msg = 'Wiping an unlocked LUKS container is not ' +
+                            'supported. First close the containers Open ' +
+                            'LUKS Volume counterpart and ensure "No auto ' +
+                            'unlock" is the active "Boot up configuration"';
+                        return false;
+                    }
+                    // We shouldn't need this check but just in case our hide
+                    // of the wipe link on the LUKS config page that lead the
+                    // user hear has been circumvented.
+                    if (current_crypttab_status !== false) {
+                        err_msg = 'Wiping a LUKS container with an ' +
+                            'existing crypttab entry is not supported. ' +
+                            'First ensure "No auto unlock" is the active ' +
+                            'selection on the LUKS configuration page.';
                         return false;
                     }
                 }

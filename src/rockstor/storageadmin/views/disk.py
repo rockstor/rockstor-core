@@ -689,7 +689,9 @@ class DiskDetailView(rfc.GenericView):
                 disk.save()
             else:
                 # No redirect role change so we can wipe if requested by tick
-                # but only if disk is not a pool member and no LUKS request.
+                # but only if disk is not a pool member and no LUKS request
+                # and we arn't trying to wipe an unlocked LUKS container or
+                # one with an existing crypttab entry.
                 if is_delete_ticked:
                     if disk.pool is not None:
                         # Disk is a member of a Rockstor pool so refuse to wipe
@@ -708,6 +710,21 @@ class DiskDetailView(rfc.GenericView):
                                  'LUKS format for the same device is not '
                                  'supported. Please do one at a time.')
                         raise Exception(e_msg)
+                    if 'LUKS' in roles:
+                        if 'unlocked' in roles['LUKS'] and \
+                                roles['LUKS']['unlocked']:
+                            e_msg = ('Wiping an unlocked LUKS container is '
+                                     'not supported. Only locked LUKS '
+                                     'containers can be wiped.')
+                            raise Exception(e_msg)
+                        if 'crypttab' in roles['LUKS']:
+                            # The crypttab key itself is indication of an
+                            # existing cryptab configuration
+                            e_msg = ('Wiping a LUKS container with an '
+                                     'existing /etc/crypttab entry is not '
+                                     'supported. First ensure "Boot up '
+                                     'configuration" of "No auto unlock."')
+                            raise Exception(e_msg)
                     # Not sure if this is the correct way to call our wipe.
                     return self._wipe(dname, request)
                 if is_luks_format_ticked:
