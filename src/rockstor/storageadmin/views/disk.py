@@ -283,7 +283,7 @@ class DiskMixin(object):
                 # not have a by-id type name expected by the smart subsystem.
                 # This has only been observed in no serial virtio devices.
                 if (re.match('fake-serial-', do.serial) is not None) or (
-                    re.match('virtio-|md-|mmc-|nvme-|dm-name-luks-|bcache',
+                    re.match('virtio-|md-|mmc-|nvme-|dm-name-luks-|bcache|nbd',
                              do.name) is not None):
                     # Virtio disks (named virtio-*), md devices (named md-*),
                     # and an sdcard reader that provides devs named mmc-* have
