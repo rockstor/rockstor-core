@@ -98,6 +98,10 @@ LuksDiskView = RockstorLayoutView.extend({
         // set local convenience flag if device is a LUKS container.
         // and grab the luks_container_uuid if available
         var is_luks;
+        // Default to appearing as if we are unlocked if we fail for
+        // some reason to retrieve the obligatory unlocked flag. This
+        // way we fail safe as unlocked containers can't be deleted.
+        var is_unlocked = true;
         // Establish a unique initial LUKS container uuid placeholder first,
         // just in case we end up some how without a LUKS role uuid key entry.
         // Important as we use this value to name keyfiles so must be clearly
@@ -112,6 +116,10 @@ LuksDiskView = RockstorLayoutView.extend({
             is_luks = true;
             if (role_obj['LUKS'].hasOwnProperty('uuid')) {
                 luks_container_uuid = role_obj['LUKS']['uuid'];
+            }
+            // if we have an unlocked entry, extract it.
+            if (role_obj['LUKS'].hasOwnProperty('unlocked')) {
+                is_unlocked = role_obj['LUKS']['unlocked'];
             }
             // if we have a crypttab entry, extract it.
             if (role_obj['LUKS'].hasOwnProperty('crypttab')) {
@@ -145,6 +153,7 @@ LuksDiskView = RockstorLayoutView.extend({
         this.partitions = partitions;
         this.disk_btrfs_uuid = disk_btrfs_uuid;
         this.is_luks = is_luks;
+        this.is_unlocked = is_unlocked;
         this.keyfile_exists = keyfile_exists;
 
         $(this.el).html(this.template({
@@ -157,6 +166,7 @@ LuksDiskView = RockstorLayoutView.extend({
             disk_btrfs_uuid: disk_btrfs_uuid,
             is_luks: is_luks,
             is_open_luks: is_open_luks,
+            is_unlocked: is_unlocked,
             crypttab_options: crypttab_options,
             current_crypttab_status: current_crypttab_status,
             keyfile_exists: keyfile_exists,
@@ -303,6 +313,23 @@ LuksDiskView = RockstorLayoutView.extend({
                 html += 'Open LUKS Volume information page.';
             } else {
                 html += 'Warning: Non LUKS Device, please report bug on forum.';
+            }
+            return new Handlebars.SafeString(html);
+        });
+        Handlebars.registerHelper('display_luks_container_wipe_link', function () {
+            // Check to see if we are a locked LUKS container and if so
+            // construct an appropriate html link to this devices role/wipe
+            // page, ie disks/role/by-id-name
+            var html = '';
+            if (this.is_luks && this.is_unlocked !== true) {
+                // We have an locked LUKS container
+                if (this.current_crypttab_status == false){
+                    // no current crypttab entry
+                    html += '<a href="#disks/role/' + this.diskName;
+                    html += '" class="luks_drive" data-disk-name="' + this.diskName;
+                    html += '" title="Wipe locked LUKS Container" rel="tooltip">';
+                    html += 'Wipe locked LUKS container<i class="fa fa-eraser"></i></a>';
+                }
             }
             return new Handlebars.SafeString(html);
         });
