@@ -32,7 +32,7 @@ from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
     get_crypttab_entries, update_crypttab, native_keyfile_exists, \
     establish_keyfile
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
-    wipe_disk, blink_disk, scan_disks
+    wipe_disk, blink_disk, scan_disks, get_whole_dev_uuid
 from copy import deepcopy
 import uuid
 import json
@@ -557,8 +557,29 @@ class DiskDetailView(rfc.GenericView):
                      % dname)
             raise Exception(e_msg)
         luks_format_disk(disk_name, passphrase)
-        # The next scan_disks call via _update_disk_state should auto label
-        # this device via the role system.
+        disk.parted = isPartition  # should be False by now.
+        # The following value may well be updated with a more informed truth
+        # from the next scan_disks() run via _update_disk_state()
+        disk.btrfs_uuid = None
+        # Rather than await the next _update_disk_state() we populate our
+        # LUKS container role.
+        roles = {}
+        # Get our roles, if any, into a dictionary.
+        if disk.role is not None:
+            roles = json.loads(disk.role)
+        # Now we assert what we know given our above LUKS format operation.
+        # Not unlocked and no keyfile (as we have a fresh uuid from format)
+        # TODO: Might be better to use cryptset luksUUID <dev-name>
+        dev_uuid = get_whole_dev_uuid(disk.name)
+        # update or create a basic LUKS role entry.
+        # Although we could use native_keyfile_exists(dev_uuid) we can be
+        # pretty sure there is no keyfile with our new uuid.
+        roles['LUKS'] = {'uuid': str(dev_uuid),
+                         'unlocked': False,
+                         'keyfileExists': False}
+        # now we return our updated roles
+        disk.role = json.dumps(roles)
+        disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
     @transaction.atomic

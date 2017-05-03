@@ -1605,6 +1605,37 @@ def get_byid_name_map():
     return byid_name_map
 
 
+def get_whole_dev_uuid(dev_byid):
+    """
+    Simple wrapper around "lsblk -n -o uuid <dev_name>" to retrieve a device's
+    whole disk uuid. Where there are partitions multiple lines are output but
+    the first is for the whole disk uuid if it exists eg (with headers):
+    lsblk -o uuid,name /dev/disk/by-id/virtio-serial-1
+    UUID                                 NAME
+                                         vdc
+    44a753bd-2805-452b-bc89-f6d4adbe1395 vdc2
+    315A-5CBA                            vdc1
+    Or a freshly formatted whole disk LUKS container:
+    lsblk -o uuid,name /dev/disk/by-id/virtio-serial-3
+    UUID                                 NAME
+    6ca7a3eb-7c40-4f9e-925c-b109d68040dd vdf
+    which is quicker and more versatile than 
+    """
+    dev_uuid = ''
+    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    out, err, rc = run_command([LSBLK, '-n', '-o', 'uuid', dev_byid_withpath],
+                               throw=False)
+    if rc != 0:
+        return dev_uuid
+    if len(out) > 0:
+        # we have at least a single line of output and rc = 0
+        # rapid rudimentary check on uuid formatting:
+        if len(out[0].split('-')) > 1:
+            # we have at least a vfat uuid format ie 315A-5CBA so use it:
+            dev_uuid = out[0]
+    return dev_uuid
+
+
 def get_uuid_name_map():
     """
     Simple wrapper around 'ls -l /dev/disk/by-uuid' which returns a current
