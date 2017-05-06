@@ -95,7 +95,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         }
         // set local convenience flag if device is a LUKS container and note
         // if it's unlocked or not.
-        var is_luks;
+        var is_luks = false;
         // Default to appearing as if we are unlocked if we fail for
         // some reason to retrieve the obligatory unlocked flag. This
         // way we fail safe as unlocked containers can't be deleted.
@@ -113,8 +113,6 @@ SetroleDiskView = RockstorLayoutView.extend({
             if (role_obj['LUKS'].hasOwnProperty('crypttab')) {
                 current_crypttab_status = role_obj['LUKS']['crypttab'];
             }
-        } else {
-            is_luks = false;
         }
         // additional convenience flag if device is an open LUKS volume.
         var is_open_luks;
@@ -207,7 +205,7 @@ SetroleDiskView = RockstorLayoutView.extend({
                             'filesystem.';
                         return false;
                     }
-                    if (is_unlocked) {
+                    if (is_luks && is_unlocked) {
                         // We block attempts to wipe unlocked LUKS containers
                         // as a safe guard, we have no direct way to know if
                         // they are backing any pool members but they are
