@@ -523,6 +523,28 @@ class DiskDetailView(rfc.GenericView):
             raise Exception(e_msg)
         wipe_disk(disk_name)
         disk.parted = isPartition
+        # Rather than await the next _update_disk_state() we update our role.
+        roles = {}
+        # Get our roles, if any, into a dictionary.
+        if disk.role is not None:
+            roles = json.loads(disk.role)
+        if isPartition:
+            # Special considerations for partitioned devices.
+            # Be sure to clear our fstype from the partition role dictionary.
+            if 'partitions' in roles:  # just in case
+                if disk_name in roles['partitions']:
+                    roles['partitions'][disk_name] = ''
+        else:  # whole disk so remove any partition role if it exists
+            # because wiping a whole disk will also remove any partitions
+            if 'partitions' in roles:
+                del roles['partitions']
+        # now we return our potentially updated roles
+        if roles == {}:
+            # if we have an empty role dict then we avoid json conversion and
+            # go with re-asserting db default.
+            disk.role = None
+        else:
+            disk.role = json.dumps(roles)
         # The following value may well be updated with a more informed truth
         # from the next scan_disks() run via _update_disk_state()
         disk.btrfs_uuid = None
