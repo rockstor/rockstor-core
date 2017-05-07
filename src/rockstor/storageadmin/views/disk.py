@@ -47,6 +47,7 @@ logger = logging.getLogger(__name__)
 # LUKS currently stands for full disk crypto container.
 SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'bcache',
                           'bcache-cdev', 'partitions']
+WHOLE_DISK_FORMAT_ROLES = ['LUKS', 'bcache', 'bcachecdev']
 
 
 class DiskMixin(object):
@@ -534,8 +535,13 @@ class DiskDetailView(rfc.GenericView):
             if 'partitions' in roles:  # just in case
                 if disk_name in roles['partitions']:
                     roles['partitions'][disk_name] = ''
-        else:  # whole disk so remove any partition role if it exists
-            # because wiping a whole disk will also remove any partitions
+        else:  # whole disk so remove any pertinent role if it exists
+            # Wiping a whole disk will remove all whole disk formats: ie LUKS
+            # containers and bcache backing and caching device formats.
+            for whole_role in WHOLE_DISK_FORMAT_ROLES:
+                if whole_role in roles:
+                    del roles[whole_role]
+            # Wiping a whole disk will also remove all partitions:
             if 'partitions' in roles:
                 del roles['partitions']
         # now we return our potentially updated roles
@@ -546,7 +552,11 @@ class DiskDetailView(rfc.GenericView):
         else:
             disk.role = json.dumps(roles)
         # The following value may well be updated with a more informed truth
-        # from the next scan_disks() run via _update_disk_state()
+        # from the next scan_disks() run via _update_disk_state(). Since we
+        # only allow redirect to a btrfs partition, if one exist, then we can
+        # be assured that any redirect role would be to an existing btrfs. So
+        # either way (partitioned or not) we have just wiped any btrfs so we
+        # universally remove the btrfs_uuid.
         disk.btrfs_uuid = None
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
