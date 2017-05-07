@@ -429,8 +429,8 @@ def scan_disks(min_size):
                 elif bcache_dev_type == 'cdev':
                     # We have a bcache caching device, not a backing device.
                     # Change fstype as an indicator to _update_disk_state()
-                    # role system. N.B. fstype bcache-cdev is fictitious.
-                    dmap['FSTYPE'] = 'bcache-cdev'
+                    # role system. N.B. fstype bcachecdev is fictitious.
+                    dmap['FSTYPE'] = 'bcachecdev'
             else:
                 # we are a non bcache bdev but we might be the virtual device
                 # if we are listed directly after a bcache bdev.

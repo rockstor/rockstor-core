@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 # and the post processing present in scan_disks()
 # LUKS currently stands for full disk crypto container.
 SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'bcache',
-                          'bcache-cdev', 'partitions']
+                          'bcachecdev', 'partitions']
 WHOLE_DISK_FORMAT_ROLES = ['LUKS', 'bcache', 'bcachecdev']
 
 
@@ -251,7 +251,7 @@ class DiskMixin(object):
                 # here we tag our backing device with it's virtual counterparts
                 # serial number.
                 disk_roles_identified['bcache'] = 'bcache-%s' % d.uuid
-            if d.fstype == 'bcache-cdev':
+            if d.fstype == 'bcachecdev':
                 # BCACHE: continued; here we use the scan_disks() added info
                 # of this bcache device being a cache device not a backing
                 # device, so it will have no virtual block device counterpart
