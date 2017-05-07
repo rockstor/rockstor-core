@@ -494,7 +494,6 @@ def create_keyfile(keyfile_withpath):
             cmd = [DD, 'bs=512', 'count=4', 'if=/dev/urandom', 'of=%s' % npath]
             out, err, rc = run_command(cmd, throw=False)
         if rc != 0:
-            logger.debug('create_keyfile failed cmd=%s' % cmd)
             return False
         # shutil.copy2 is equivalent to cp -p (preserver attributes).
         # This preserves the secure defaults of the temp file without having
