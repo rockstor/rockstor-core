@@ -9,7 +9,41 @@ Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
  virtual device. It will remain detached until it's parent LUKS container is
  unlocked again.
 </p>
-
+<h4>Boot up Configuration:</h4>
+<ul>
+ <li>
+  <strong>No auto unlock</strong> The container will remain locked during and
+  after boot. Any filesystem or data on the device will be inaccessible until
+  it is manually unlocked via the command line.
+  <p class="text-warning">
+   As Rockstor currently mounts all pools during boot this configuration is
+   for advanced users. Only single device pools are recommended.
+  </p>
+   </li>
+ <li>
+   <strong>Manual passphrase via local console</strong> Every time Rockstor is
+  booted or restarted it will wait indefinitely for the passphrase to be
+  entered (at the local console) before unlocking the container and
+  continuing on with a normal boot.
+  <p class="text-warning">
+   The system will not be functional until the passphrase has been entered.
+  </p>
+ </li>
+ <li>
+  <strong>Auto unlock via keyfile</strong> Unlock on every boot by using
+  a keyfile on the system drive. Unless Rockstor was installed using the
+  "Encrypt my data" option the system drive will not be encrypted and so
+  all keyfiles will also not be encrypted. This still cater for protecting
+  data if a drive has to be returned to a supplier or for when the drive
+  reaches end-of-life so long as it is not accompanied by the System Drive.
+  <p class="text-warning">
+   Rockstor generated keyfile example:
+   "/root/keyfile-fd168e30-5386-43b2-9f15-353b9ecff803". The characters
+   after '-' are the uuid of the LUKS container and the key is 2048 bytes
+   sourced from /dev/urandom (2^14 bit equivalent).
+  </p>
+ </li>
+</ul>
 <div class="row">
  <div class="col-md-8">
   <label class="control-label"></label>
