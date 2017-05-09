@@ -258,10 +258,12 @@ LuksDiskView = RockstorLayoutView.extend({
         if (this.is_luks) {
             // LUKS Container mode so show crypttab selection and buttons.
             this.$('#crypttab_selection_group').show();
+            this.$('#crypttab_text').show();
             this.$('#cancel_submit_buttons_group').show();
         } else {
             // Open LUKS volume mode assumed so hide crypttab and buttons.
             this.$('#crypttab_selection_group').hide();
+            this.$('#crypttab_text').hide();
             this.$('#cancel_submit_buttons_group').hide();
         }
     },
