@@ -824,6 +824,7 @@ class DiskDetailView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
     @classmethod
+    @transaction.atomic
     def _luks_disk(cls, dname, request):
         disk = cls._validate_disk(dname, request)
         crypttab_selection = str(
@@ -838,7 +839,7 @@ class DiskDetailView(rfc.GenericView):
         roles = {}
         # Get our roles, if any, into a dictionary.
         if disk.role is not None:
-                roles = json.loads(disk.role)
+            roles = json.loads(disk.role)
         if 'LUKS' not in roles:
             e_msg = ('LUKS operation not support on this Disk(%s) as it is '
                      'not recognized as a LUKS container (ie no "LUKS" role '
@@ -846,13 +847,18 @@ class DiskDetailView(rfc.GenericView):
                      % dname)
             handle_exception(Exception(e_msg), request)
         # Retrieve the uuid of our LUKS container.
-        # Disk model currently only stores btrfs_uuid.
-        luks_role = roles['LUKS']
-        if 'uuid' not in luks_role:
+        if 'uuid' not in roles['LUKS']:
             e_msg = ('Cannot complete LUKS configuration request as no uuid '
                      'key was found in Disk(%s) LUKS role value. ' % dname)
             handle_exception(Exception(e_msg), request)
-        disk_uuid = luks_role['uuid']
+        disk_uuid = roles['LUKS']['uuid']
+        # catch create keyfile without pass request (shouldn't happen)
+        if is_create_keyfile_ticked and luks_passphrase == '':
+            e_msg = ('Cannot create LUKS keyfile without authorization via '
+                     'passphrase. Empty passphrase received for Disk(%s).'
+                     % dname)
+            handle_exception(Exception(e_msg), request)
+        # catch keyfile request without compatible "Boot up config" selection.
         if crypttab_selection == 'none' or crypttab_selection == 'false':
             if is_create_keyfile_ticked:
                 e_msg = ('Inconsistent LUKS configuration request for '
@@ -860,34 +866,84 @@ class DiskDetailView(rfc.GenericView):
                          'compatible "Boot up configuratin" option'
                          % dname)
                 handle_exception(Exception(e_msg), request)
-        if is_create_keyfile_ticked and luks_passphrase == '':
-            e_msg = ('Cannot create LUKS keyfile without authorization via '
-                     'passphrase. Empty passphrase received for Disk(%s).'
-                     % dname)
-            handle_exception(Exception(e_msg), request)
         # Having performed the basic parameter validation above, we are ready
         # to try and apply the requested config. This is a multipart process.
         # With a keyfile config we have to first ensure the existence of our
         # keyfile and create it if need be, then register this keyfile (via
-        # an existing passphrase) with our LUKS container.
-        # In all cases there after we must also update /etc/crypttab.
-        # Fist call our keyfile creation + register wrapper if needed:
+        # an existing passphrase) with our LUKS container if the keyfile is
+        # newly created (handled by establish_keyfile().
+        # In almost all cases there after we must also update /etc/crypttab.
+        # Setup helper flags
+        # The source of true re current state is our roles['LUKS'] value
+        # having been updated via _update_disk_state() so we can see if a
+        # custom keyfile config exists to inform our actions here.
+        custom_keyfile = False
+        if 'crypttab' in roles['LUKS']:
+            role_crypttab = roles['LUKS']['crypttab']
+            if role_crypttab != 'none' \
+                    and role_crypttab != '/root/keyfile-%s' % disk_uuid:
+                custom_keyfile = True
         if crypttab_selection != 'none' and crypttab_selection != 'false':
             # None 'none' and None 'false' is assumed to be keyfile config.
             # We ensure / create our keyfile and register it using
-            # cryptsetup luksAddKeyfile via the following wrapper function:
-            if not establish_keyfile(disk.name, crypttab_selection,
-                                     luks_passphrase):
+            # cryptsetup luksAddKeyfile:
+            # With the following exception. Our current UI layer has no
+            # custom keyfile option, although it does recognize this state and
+            # indicates it to the user. But it still sends the native keyfile
+            # crypttab_selection value. So here we guard against overwriting
+            # a custom keyfile config if one is found, which in turn allows
+            # a user to "Submit" harmlessly an existing custom config whilst
+            # also requiring a definite re-configuration to remove an existing
+            # custom config. I.e. the selection of 'none' or 'false' first.
+            # Fist call our keyfile creation + register wrapper if needed:
+            if not custom_keyfile and not establish_keyfile(disk.name,
+                                                            crypttab_selection,
+                                                            luks_passphrase):
                 e_msg = ('There was an unknown problem with establish_keyfile '
                          'when called by _luks_disk() for Disk(%s). Keyfile '
                          'may not have been established.' % dname)
                 handle_exception(Exception(e_msg), request)
-        # In all cases we try to ensure /etc/crypttab is updated:
-        if not update_crypttab(disk_uuid, crypttab_selection):
-            e_msg = ('There was an unknown problem with update_crypttab when '
-                     'called by _luks_disk() for Disk(%s). No /etc/crypttab '
-                     'changes were made.' % dname)
-            handle_exception(Exception(e_msg), request)
+            # Having established our keyfile we update our LUKS role but only
+            # for non custom keyfile config. As we don't change custom keyfile
+            # configs we need not update our keyfileExists LUKS role value.
+            if not custom_keyfile:
+                roles['LUKS']['keyfileExists'] = True
+            # Note there is no current keyfile delete mechanism. If this
+            # was established we should make sure to remove this key and it's
+            # value appropriately.
+            # Update /etc/crypttab except when an existing custom ctypttab
+            # entry exists ie if not custom_keyfile in role then update.
+            if not custom_keyfile and not update_crypttab(disk_uuid,
+                                                          crypttab_selection):
+                e_msg = ('There was an unknown problem with update_crypttab '
+                         'when called by _luks_disk() for Disk(%s). No custom '
+                         'keyfile config found. No /etc/crypttab changes were '
+                         'made.' % dname)
+                handle_exception(Exception(e_msg), request)
+        else:
+            # crypttab_selection = 'none' or 'false' so update crypttab
+            # irrespective of existing custom keyfile config.
+            if not update_crypttab(disk_uuid, crypttab_selection):
+                e_msg = ('There was an unknown problem with update_crypttab '
+                         'when called by _luks_disk() for Disk(%s). No '
+                         '/etc/crypttab changes were made.' % dname)
+                handle_exception(Exception(e_msg), request)
+        # Reflect the crypttab changes in our LUKS role.
+        if crypttab_selection == 'false':
+            # A 'false' value is a flag to indicate no crypttab entry
+            if 'crypttab' in roles['LUKS']:
+                # no crypttab entry is indicated by no 'crypttab' key:
+                del roles['LUKS']['crypttab']
+        else:  # crypttab_selection = 'none' or keyfile path.
+            if crypttab_selection == 'none':
+                roles['LUKS']['crypttab'] = crypttab_selection
+            else:  # we have a keyfile crypttab_selection
+                if not custom_keyfile:
+                    # Only change non custom keyfile roles.
+                    roles['LUKS']['crypttab'] = crypttab_selection
+        # Now we save our updated roles as json in the database.
+        disk.role = json.dumps(roles)
+        disk.save()
         return Response()
 
     @classmethod
