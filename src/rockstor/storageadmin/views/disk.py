@@ -30,9 +30,9 @@ import rest_framework_custom as rfc
 from system import smart
 from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
     get_crypttab_entries, update_crypttab, native_keyfile_exists, \
-    establish_keyfile
+    establish_keyfile, get_open_luks_volume_status
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
-    wipe_disk, blink_disk, scan_disks, get_whole_dev_uuid
+    wipe_disk, blink_disk, scan_disks, get_whole_dev_uuid, get_byid_name_map
 from copy import deepcopy
 import uuid
 import json
@@ -80,6 +80,8 @@ class DiskMixin(object):
         serial_numbers_seen = []
         # Acquire a dictionary of crypttab entries, dev uuid as indexed.
         dev_uuids_in_crypttab = get_crypttab_entries()
+        # Acquire a dictionary of lsblk /dev names to /dev/disk/by-id names
+        byid_name_map = get_byid_name_map()
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
         # make this so in the case of empty or repeat entries by providing
@@ -238,10 +240,11 @@ class DiskMixin(object):
             if d.type == 'crypt':
                 # OPEN LUKS DISK: scan_disks() can inform us of the truth
                 # regarding an opened LUKS container which appears as a mapped
-                # device. Assign the /dev/disk/by-id name as a value.
-                # TODO: Consider stashing cryptsetup status info in this role
-                # TODO: as a dict/json.
-                disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
+                # device.
+                # disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
+                luks_volume_status = \
+                    get_open_luks_volume_status(d.name, byid_name_map)
+                disk_roles_identified['openLUKS'] = luks_volume_status
             if d.fstype == 'bcache':
                 # BCACHE: scan_disks() can inform us of the truth regarding
                 # bcache "backing devices" so we assign a role to avoid these

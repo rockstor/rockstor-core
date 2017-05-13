@@ -31,6 +31,66 @@ CRYPTTABFILE = '/etc/crypttab'
 DD = '/usr/bin/dd'
 
 
+def get_open_luks_volume_status(mapped_device_name, byid_name_map):
+    """
+    Wrapper around 'cryptsetup status mapped_device_name' that returns a
+    dictionary of this commands output, with the device value substituted for
+    it's by-id equivalent.
+    Example command output:
+    /dev/disk/by-id/dm-name-
+    luks-a47f4950-3296-4504-b9a4-2dc75681a6ad is active.
+    type:    LUKS1
+    cipher:  aes-xts-plain64
+    keysize: 256 bits
+    device:  /dev/bcache0
+    offset:  4096 sectors
+    size:    4190192 sectors
+    mode:    read/write
+    or for a non existent device we get:
+    cryptsetup status /dev/disk/by-id/non-existent
+    /dev/disk/by-id/non-existent is inactive.
+    or for an active an in use volume we might get a first line of:
+    /dev/disk/by-id/dm-name-
+    luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e is active and is in use.
+    :param mapped_device_name:  any mapped device name accepted by cryptsetup,
+    ie starting with "/dev/mapper/"
+    :return: dictionary of the stated commands output or {} upon a non zero
+    return code from command execution.
+    """
+    status = {}
+    status_found = False
+    device_found = False
+    out, err, rc = run_command([CRYPTSETUP, 'status', mapped_device_name],
+                               throw=False)
+    if rc != 0 and rc != 4:  # if return code is an error != 4 the empty dict.
+        # rc = 4 is the result of querying a non existent volume ie detached
+        # or closed.
+        return status  # currently an empty dictionary
+    for line in out:
+        if line == '':
+            continue
+        # get line fields
+        line_fields = line.split()
+        if len(line_fields) < 1:
+            continue
+        if not status_found and re.match('/dev', line_fields[0]) is not None:
+            status_found = True
+            # catch the line beginning /dev (1st line) and record it as status
+            status['status'] = ' '.join(line_fields[2:])
+        elif not device_found and line_fields[0] == 'device:':
+            device_found = True
+            dev_no_path = line_fields[1].split('/')[-1]
+            # use by-id device name from provided map as value for device key.
+            if dev_no_path in byid_name_map:
+                status['device'] = byid_name_map[dev_no_path]
+            else:
+                # better we have originally listed device than nothing
+                status['device'] = dev_no_path
+        else:
+            status[line_fields[0].replace(':', '')] = ' '.join(line_fields[1:])
+    return status
+
+
 def get_open_luks_container_dev(mapped_device_name, test=None):
     """
     Returns the parent device of an open LUKS container, ie if passed:
