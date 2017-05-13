@@ -62,6 +62,24 @@ Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
      </div>
     </div>
 
+    <!-- Table displaying info for Open LUKS Volume -->
+    <div class="form-group" id="open_vol_status_table_group">
+     <label class="col-sm-4 control-label">Last Known Attributes:</label>
+     <div class="col-sm-6">
+      <div class="openLuksVolTable">
+       <table id="open_luks_vol_table" class="table table-condensed table-bordered share-table tablesorter" summary="Open LUKS Volume Status">
+        <thead>
+        <tr>
+         <th>Attribute</th>
+         <th>Value</th>
+        </tr>
+        </thead>
+         {{display_luks_volume_status_table}}
+        </table>
+      </div>
+     </div>
+    </div><!--open_vol_status_table_group-->
+
     <!-- /etc/crypttab entry selection -->
     <div class="form-group" id="crypttab_selection_group">
      <label class="col-sm-4 control-label" for="crypttab_selection">Boot up

@@ -259,11 +259,13 @@ LuksDiskView = RockstorLayoutView.extend({
             // LUKS Container mode so show crypttab selection and buttons.
             this.$('#crypttab_selection_group').show();
             this.$('#crypttab_text').show();
+            this.$('#open_vol_status_table_group').hide();
             this.$('#cancel_submit_buttons_group').show();
         } else {
             // Open LUKS volume mode assumed so hide crypttab and buttons.
             this.$('#crypttab_selection_group').hide();
             this.$('#crypttab_text').hide();
+            this.$('#open_vol_status_table_group').show();
             this.$('#cancel_submit_buttons_group').hide();
         }
     },
@@ -385,6 +387,30 @@ LuksDiskView = RockstorLayoutView.extend({
                     // construct non current entry
                     html += '">' + entry + '</option>';
                 }
+            }
+            return new Handlebars.SafeString(html);
+        });
+        Handlebars.registerHelper('display_luks_volume_status_table', function () {
+            // Build a table body <tbody> containing the openLUKS role
+            // dict value entries.
+            var rows = ['status','type', 'cipher', 'keysize', 'device', 'offset', 'sizemode'];
+            var html = '';
+            var _this = this;
+            if (this.is_open_luks) {
+                //so we are assured of an 'openLUKS' role.
+                html += '<tbody>';
+                rows.forEach(function(item) {
+                    if (_this.role_obj['openLUKS'].hasOwnProperty(item)) {
+                        html += '<tr>';
+                        // fill out index column
+                        html += '<td>' + item + '</td>';
+                        // fill out value column
+                        html += '<td>' + _this.role_obj['openLUKS'][item] + '</td>';
+                        html += '</tr>';
+                    }
+                });
+                html += '</tr>';
+                html += '</tbody>';
             }
             return new Handlebars.SafeString(html);
         });
