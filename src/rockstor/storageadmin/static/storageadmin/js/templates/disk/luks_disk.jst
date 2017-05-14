@@ -1,7 +1,7 @@
 <h3>{{display_luks_container_or_volume}}</h3>
 LUKS Containers are encrypted block devices. Once a LUKS container is unlocked
 it's otherwise encrypted and invisible filesystem (if any) is made available
-via a second virtual block device. This unlocked counterpart is knows as an
+via a second virtual block device. This unlocked counterpart is known as an
 Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
 <p></p>
 <p class="text-warning">
@@ -9,8 +9,17 @@ Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
  virtual device. It will remain detached until it's parent LUKS container is
  unlocked again.
 </p>
+<p class="bg-info">
+ <strong>Note:</strong> Custom LUKS Volume names are not supported; only
+ canonical names of the form <i>luks-uuid</i>; resulting in auto generated
+ by-id names: <i>dm-name-luks-uuid</i> (uuid from hosting container format).
+</p>
 <div id="crypttab_text">
 <h4>Boot up Configuration:</h4>
+ <p class="bg-info">
+  <strong>WARNING:</strong> Custom LUKS Volume names will be overridden by
+  any <i>Boot up Configuration</i> submission.
+ </p>
 <ul>
  <li>
   <strong>No auto unlock</strong> The container will remain locked during and
@@ -34,14 +43,20 @@ Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
   <strong>Auto unlock via keyfile</strong> Unlock on every boot by using
   a keyfile on the system drive. Unless Rockstor was installed using the
   "Encrypt my data" option the system drive will not be encrypted and so
-  all keyfiles will also not be encrypted. This still cater for protecting
-  data if a drive has to be returned to a supplier or for when the drive
-  reaches end-of-life so long as it is not accompanied by the System Drive.
+  all keyfiles will also not be encrypted. This still protects against data
+  exposure if a drive has to be returned to a supplier or for when the drive
+  reaches end-of-life; so long as it is not accompanied by the System Drive.
   <p class="text-warning">
    Rockstor generated keyfile example:
    "/root/keyfile-fd168e30-5386-43b2-9f15-353b9ecff803". The characters
    after '-' are the uuid of the LUKS container and the key is 2048 bytes
    sourced from /dev/urandom (2^14 bit equivalent).
+  </p>
+  <p class="bg-info">
+   Non native or manually configured keyfiles are reported as "(custom)" and
+   left 'as is'. But once a non keyfile config option is submitted a return
+   to keyfile config will yield a default Rockstor native keyfile generation
+   and registration. <i>No keyfile is currently deleted: custom or native.</i>
   </p>
  </li>
 </ul>
@@ -64,7 +79,7 @@ Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
 
     <!-- Table displaying info for Open LUKS Volume -->
     <div class="form-group" id="open_vol_status_table_group">
-     <label class="col-sm-4 control-label">Last Known Attributes:</label>
+     <label class="col-sm-4 control-label">Last Known Attached Attributes:</label>
      <div class="col-sm-6">
       <div class="openLuksVolTable">
        <table id="open_luks_vol_table" class="table table-condensed table-bordered share-table tablesorter" summary="Open LUKS Volume Status">
