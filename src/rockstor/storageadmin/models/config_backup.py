@@ -29,6 +29,9 @@ class ConfigBackup(models.Model):
     def __unicode__(self):
         return "{0}".format(self.filename)
 
+    def full_path(self):
+        return os.path.join(self.cb_dir(), self.filename)
+
     class Meta:
         app_label = 'storageadmin'
 

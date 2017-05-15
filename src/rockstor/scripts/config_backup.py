@@ -22,7 +22,7 @@ from system.config_backup import backup_config
 
 def main():
     cbo = backup_config()
-    print('config exported to: "%s"' % cbo.filename)
+    print('config exported to: "%s"' % cbo.full_path())
 
 
 if __name__ == '__main__':
