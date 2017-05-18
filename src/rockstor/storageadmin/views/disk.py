@@ -32,7 +32,8 @@ from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
     get_crypttab_entries, update_crypttab, native_keyfile_exists, \
     establish_keyfile, get_open_luks_volume_status
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
-    wipe_disk, blink_disk, scan_disks, get_whole_dev_uuid, get_byid_name_map
+    wipe_disk, blink_disk, scan_disks, get_whole_dev_uuid, get_byid_name_map, \
+    trigger_systemd_update
 from copy import deepcopy
 import uuid
 import json
@@ -947,6 +948,12 @@ class DiskDetailView(rfc.GenericView):
         # Now we save our updated roles as json in the database.
         disk.role = json.dumps(roles)
         disk.save()
+        # Ensure systemd generated files are updated re /etc/crypttab changes:
+        out, err, rc = trigger_systemd_update()
+        if rc != 0:
+            e_msg = ('There was an unknown problem with systemd update when '
+                     'called by _luks_disk() for Disk(%s).' % dname)
+            handle_exception(Exception(e_msg), request)
         return Response()
 
     @classmethod

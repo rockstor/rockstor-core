@@ -1977,3 +1977,21 @@ def trigger_udev_update():
     :return: o, e, rc as returned by run_command
     """
     return run_command([UDEVADM, 'trigger'])
+
+
+def trigger_systemd_update():
+    """Reruns all systemd generators (see man systemd.generator 7).
+    In some instances systemd managed resources can be out of date with 
+    associated configuration file changes which can lead to a confusion via
+    prior configurations being still current. An example of this is when
+    /etc/crypttab is changed and it's systemd generated service files no
+    longer reflect the 'source of truth' that /etc/crypttab represents.
+    The systemd-cryptsetup-generator scans the contents of /etc/crypttab
+    and establishes service files for each (eg LUKS) mapped device. An 
+    example of one of these generated files is:
+    /var/run/systemd/generator/systemd-cryptsetup@<mapped-name>.service
+    Running 'systemctl daemon-reload' requests that all such resources be
+    updated to freshly represent the new state of the associated config files.
+    :return: o, e, rc as returned by run_command
+    """
+    return run_command([SYSTEMCTL_BIN, 'daemon-reload'])
