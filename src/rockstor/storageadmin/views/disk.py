@@ -33,7 +33,8 @@ from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
     establish_keyfile, get_open_luks_volume_status
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
     wipe_disk, blink_disk, scan_disks, get_whole_dev_uuid, get_byid_name_map, \
-    trigger_systemd_update
+    trigger_systemd_update, systemd_name_escape
+from system.services import systemctl
 from copy import deepcopy
 import uuid
 import json
@@ -539,9 +540,43 @@ class DiskDetailView(rfc.GenericView):
             if 'partitions' in roles:  # just in case
                 if disk_name in roles['partitions']:
                     roles['partitions'][disk_name] = ''
-        else:  # whole disk so remove any pertinent role if it exists
+        else:  # Whole disk wipe considerations:
+            # In the case of Open LUKS Volumes, whenever a whole disk file
+            # system is wiped as we have just done. The associated systemd
+            # service /var/run/systemd/generator/systemd-cryptsetup@
+            # <mapper-name>.service runs systemd-cryptsetup detach mapper-name.
+            # Where mapper-name = first column in /etc/crypttab = by-id name
+            # without the additional "dm-name-".
+            # This results in the removal of the associated block devices.
+            # So we need to start the associated service which in turn will
+            # attach the relevant block mappings. This action requires
+            # re-authentication via existing keyfile or via local console.
+            if 'openLUKS' in roles:
+                if re.match('dm-name', disk_name) is not None:
+                    mapper_name = disk_name[8:]
+                    service_name = \
+                        systemd_name_escape(mapper_name,
+                                            'systemd-cryptsetup@.service')
+                    service_path = "/var/run/systemd/generator/"
+                    if service_name != '' and \
+                            os.path.isfile(service_path + service_name):
+                        # Start our devs cryptsetup service to re-establish
+                        # it's now removed (by systemd) /dev nodes.
+                        # This action is only possible with an existing
+                        # crypttab entry, ie none or keyfile; but only
+                        # a keyfile config will allow non interactive
+                        # re-activation.
+                        out, err, rc = systemctl(service_name, 'start')
+                        if rc != 0:
+                            e_msg = ('Systemd cryptsetup start after a '
+                                     'wipefs -a for Open LUKS Volume device '
+                                     '(%s) encountered an error: out=%s, '
+                                     'err=%s, rc=%s' %
+                                     (disk_name, out, err, rc))
+                            raise Exception(e_msg)
             # Wiping a whole disk will remove all whole disk formats: ie LUKS
             # containers and bcache backing and caching device formats.
+            # So remove any pertinent role if it exists
             for whole_role in WHOLE_DISK_FORMAT_ROLES:
                 if whole_role in roles:
                     del roles[whole_role]
