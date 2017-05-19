@@ -2006,17 +2006,35 @@ def systemd_name_escape(original_sting, template=''):
     'luks\x2d5037b320\x2d95d6\x2d4c74\x2d94e7'
     With optional template='systemd-cryptsetup@.service' the output would be:
     systemd-cryptsetup@luks\x2d5037b320\x2d95d6\x2d4c74\x2d94e7.service
+    # N.B. there is currently an issue with the --template option:
+    https://bugs.centos.org/view.php?id=13262
     :param template: if supplied passed as parameter to --template
     :param original_sting: pre-escaped  string for systemd service name use.
     :return: post-escaped string ie '\x2d' instead of '-' etc or '' if a non
     zero return code was encountered.
     """
-    if template == '':
-        out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
-    else:
-        out, err, rc = run_command(
-            [SYSTEMD_ESCAPE, '--template=%s' % template, original_sting])
+    # future version when upstream --template bug fixed:
+    # if template == '':
+    #     out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
+    # else:
+    #     out, err, rc = run_command(
+    #         [SYSTEMD_ESCAPE, '--template=%s' % template, original_sting])
+    # if rc == 0 and len(out) > 0:
+    #     return out[0]
+    # else:
+    #     return ''
+    # future version end
+    # temp --template bug workaround version:
+    out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
     if rc == 0 and len(out) > 0:
-        return out[0]
+        if template == '':
+            return out[0]
+        else:
+            dot_index = template.find('.')
+            if dot_index == -1:
+                return ''
+            # Put our command output into our template at position dot_index.
+            out = template[:dot_index] + out[0] + template[dot_index:]
+            return out
     else:
         return ''
