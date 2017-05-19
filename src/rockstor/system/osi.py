@@ -56,6 +56,7 @@ NMCLI = '/usr/bin/nmcli'
 RMDIR = '/bin/rmdir'
 SHUTDOWN = '/usr/sbin/shutdown'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
+SYSTEMD_ESCAPE = '/usr/bin/systemd-escape'
 UDEVADM = '/usr/sbin/udevadm'
 UMOUNT = '/bin/umount'
 WIPEFS = '/usr/sbin/wipefs'
@@ -1995,3 +1996,27 @@ def trigger_systemd_update():
     :return: o, e, rc as returned by run_command
     """
     return run_command([SYSTEMCTL_BIN, 'daemon-reload'])
+
+
+def systemd_name_escape(original_sting, template=''):
+    """Wrapper around systemd-escape unit name pre-processor. Used to escape
+    stings ready for use as systemd unit or service names. Eg (shortened):
+    passed sting = 'luks-5037b320-95d6-4c74-94e7'
+    output:
+    'luks\x2d5037b320\x2d95d6\x2d4c74\x2d94e7'
+    With optional template='systemd-cryptsetup@.service' the output would be:
+    systemd-cryptsetup@luks\x2d5037b320\x2d95d6\x2d4c74\x2d94e7.service
+    :param template: if supplied passed as parameter to --template
+    :param original_sting: pre-escaped  string for systemd service name use.
+    :return: post-escaped string ie '\x2d' instead of '-' etc or '' if a non
+    zero return code was encountered.
+    """
+    if template == '':
+        out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
+    else:
+        out, err, rc = run_command(
+            [SYSTEMD_ESCAPE, '--template=%s' % template, original_sting])
+    if rc == 0 and len(out) > 0:
+        return out[0]
+    else:
+        return ''
