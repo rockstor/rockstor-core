@@ -34,18 +34,21 @@ Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
    <strong>Manual passphrase via local console</strong> Every time Rockstor is
   booted or restarted it will wait indefinitely for the passphrase to be
   entered (at the local console) before unlocking the container and
-  continuing on with a normal boot.
+  continuing on with a normal boot. A passphrase must also be entered (via:
+  <i>systemd-tty-ask-password-agent</i> as root) after wiping a LUKS Volume.
   <p class="text-warning">
    The system will not be functional until the passphrase has been entered.
+   Failure to enter the passphrase after a LUKS Volume wipe will result in a
+   locked container and detached volume.
   </p>
  </li>
  <li>
-  <strong>Auto unlock via keyfile</strong> Unlock on every boot by using
-  a keyfile on the system drive. Unless Rockstor was installed using the
-  "Encrypt my data" option the system drive will not be encrypted and so
+  <strong>Auto unlock via keyfile (Recommended)</strong> Unlock on every boot
+  by using a keyfile on the system drive. Unless Rockstor was installed using
+  the "Encrypt my data" option the system drive will not be encrypted and so
   all keyfiles will also not be encrypted. This still protects against data
-  exposure if a drive has to be returned to a supplier or for when the drive
-  reaches end-of-life; so long as it is not accompanied by the System Drive.
+  exposure if a drive is returned to a supplier, or for end-of-life scenarios;
+  so long as it is not accompanied by the system drive.
   <p class="text-warning">
    Rockstor generated keyfile example:
    "/root/keyfile-fd168e30-5386-43b2-9f15-353b9ecff803". The characters
