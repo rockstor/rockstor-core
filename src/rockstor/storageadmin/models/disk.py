@@ -56,7 +56,7 @@ class Disk(models.Model):
     {"mdraid": "linux_raid_member"}.
     role can be Null if no flags are in use.
     """
-    role = models.CharField(max_length=256, null=True)
+    role = models.CharField(max_length=1024, null=True)
 
     @property
     def pool_name(self, *args, **kwargs):
