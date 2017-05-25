@@ -252,8 +252,10 @@ def mount_root(pool):
         raise Exception('Cannot mount Pool(%s) as it has no disks in it.'
                         % pool.name)
     last_device = pool.disk_set.last()
+    logger.info('Mount by label failed.')
     for device in pool.disk_set.all():
         mnt_device = ('/dev/disk/by-id/%s' % device.name)
+        logger.info('Attempting mount by device (%s).' % mnt_device)
         if (os.path.exists(mnt_device)):
             mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
             if (len(mnt_options) > 0):
@@ -265,11 +267,13 @@ def mount_root(pool):
                 if (device.name == last_device.name):
                     # exhausted mounting using all devices in the pool
                     raise e
-                logger.error('Error mouting: %s. '
+                logger.error('Error mounting: %s. '
                              'Will try using another device.' % mnt_cmd)
                 logger.exception(e)
-    raise Exception('Failed to mount Pool(%s) due to an unknown reason.'
-                    % pool.name)
+        else:
+            logger.error('Device (%s) was not found' % mnt_device)
+    raise Exception('Failed to mount Pool(%s) due to an unknown reason. '
+                    'Command used %s' % (pool.name, mnt_cmd))
 
 
 def umount_root(root_pool_mnt):

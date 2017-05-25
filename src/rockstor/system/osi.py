@@ -56,6 +56,7 @@ NMCLI = '/usr/bin/nmcli'
 RMDIR = '/bin/rmdir'
 SHUTDOWN = '/usr/sbin/shutdown'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
+SYSTEMD_ESCAPE = '/usr/bin/systemd-escape'
 UDEVADM = '/usr/sbin/udevadm'
 UMOUNT = '/bin/umount'
 WIPEFS = '/usr/sbin/wipefs'
@@ -281,6 +282,8 @@ def scan_disks(min_size):
                     # FSTYPE="" but a partition on this pure software mdraid
                     # that is a member of eg md125 has
                     # FSTYPE="linux_raid_member"
+                    # Add the same treatment for partitions hosting LUKS
+                    # containers.
                     if dmap['FSTYPE'] == 'linux_raid_member' \
                             and (dnames[dname][8] is None):
                         # N.B. 9th item (index 8) in dname = FSTYPE We are a
@@ -294,6 +297,21 @@ def scan_disks(min_size):
                         # mdraid member to classify the entire device (the base
                         # device) as a raid member, at least in part.
                         dnames[dname][8] = dmap['FSTYPE']
+                    if dmap['FSTYPE'] == 'crypto_LUKS' \
+                            and (dnames[dname][8] is None):
+                        # As per mdraid we backport to the base device LUKS
+                        # containers that live in partitions as the base device
+                        # will have an FSTYPE="" and as per mdraid we classify
+                        # the entire device as a LUKS container member even if
+                        # it is only in part (ie this partition). But we only
+                        # backport this information if there currently exists
+                        # no FSTYPE on the base device, there by protecting
+                        # against fstype information loss on the base device.
+                        # Please see mdraid partition treatment for additional
+                        # comments on index number used.
+                        dnames[dname][8] = dmap['FSTYPE']
+                        # and uuid backport
+                        dnames[dname][10] = dmap['UUID']
                     # Akin to back porting a partitions FSTYPE to it's base
                     # device, as with 'linux_raid_member' above, we can do the
                     # same for btrfs if found in a partition.
@@ -412,8 +430,8 @@ def scan_disks(min_size):
                 elif bcache_dev_type == 'cdev':
                     # We have a bcache caching device, not a backing device.
                     # Change fstype as an indicator to _update_disk_state()
-                    # role system. N.B. fstype bcache-cdev is fictitious.
-                    dmap['FSTYPE'] = 'bcache-cdev'
+                    # role system. N.B. fstype bcachecdev is fictitious.
+                    dmap['FSTYPE'] = 'bcachecdev'
             else:
                 # we are a non bcache bdev but we might be the virtual device
                 # if we are listed directly after a bcache bdev.
@@ -841,6 +859,17 @@ def root_disk():
         for line in fo.readlines():
             fields = line.split()
             if (fields[1] == '/' and fields[2] == 'btrfs'):
+                # We have found our '/' and it's of fs type btrfs
+                if (re.match('/dev/mapper/luks-', fields[0]) is not None):
+                    # Our root is on a mapped open LUKS container so we need
+                    # not resolve the symlink, ie /dev/dm-0, as we loose info
+                    # and lsblk's name output also uses the luks-<uuid> name.
+                    # So we return the name minus it's /dev/mapper/ component
+                    # as there are no partitions within these devices so it is
+                    # it's own base device. N.B. we do not resolve to the
+                    # parent device hosting the LUKS container itself.
+                    return fields[0][12:]
+                # resolve symbolic links to their targets.
                 disk = os.path.realpath(fields[0])
                 if (re.match('/dev/md', disk) is not None):
                     # We have an Multi Device naming scheme which is a little
@@ -1577,6 +1606,68 @@ def get_byid_name_map():
     return byid_name_map
 
 
+def get_whole_dev_uuid(dev_byid):
+    """
+    Simple wrapper around "lsblk -n -o uuid <dev_name>" to retrieve a device's
+    whole disk uuid. Where there are partitions multiple lines are output but
+    the first is for the whole disk uuid if it exists eg (with headers):
+    lsblk -o uuid,name /dev/disk/by-id/virtio-serial-1
+    UUID                                 NAME
+                                         vdc
+    44a753bd-2805-452b-bc89-f6d4adbe1395 vdc2
+    315A-5CBA                            vdc1
+    Or a freshly formatted whole disk LUKS container:
+    lsblk -o uuid,name /dev/disk/by-id/virtio-serial-3
+    UUID                                 NAME
+    6ca7a3eb-7c40-4f9e-925c-b109d68040dd vdf
+    which is quicker and more versatile than 
+    """
+    dev_uuid = ''
+    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    out, err, rc = run_command([LSBLK, '-n', '-o', 'uuid', dev_byid_withpath],
+                               throw=False)
+    if rc != 0:
+        return dev_uuid
+    if len(out) > 0:
+        # we have at least a single line of output and rc = 0
+        # rapid rudimentary check on uuid formatting:
+        if len(out[0].split('-')) > 1:
+            # we have at least a vfat uuid format ie 315A-5CBA so use it:
+            dev_uuid = out[0]
+    return dev_uuid
+
+
+def get_uuid_name_map():
+    """
+    Simple wrapper around 'ls -l /dev/disk/by-uuid' which returns a current
+    mapping of all attached by-uuid device names to their sdX counterparts.
+    Modeled on the existing get_byid_name_map() but simpler as no duplicate
+    device by different names are expected. Ie one uuid name per device.
+    :return: dictionary indexed (keyed) by sdX type names with associated 
+    by-uuid type names as the values, or an empty dictionary if a non zero 
+    return code was encountered by run_command or no by-uuid type names were 
+    found (unlikely).
+    """
+    uuid_name_map = {}
+    out, err, rc = run_command([LS, '-l', '/dev/disk/by-uuid'],
+                               throw=True)
+    if rc == 0:
+        for each_line in out:
+            # Split the line by spaces and '/' chars
+            line_fields = each_line.replace('/', ' ').split()
+            # Grab every sda type name from the last field in the line and add
+            # it as a dictionary key with it's value as the by-uuid name so
+            # we can index by sda type name and retrieve the uuid.
+            if len(line_fields) >= 5:
+                # Ensure we have at least 5 elements to avoid index out of
+                # range and to skip lines such as "total 0"
+                if line_fields[-1] not in uuid_name_map.keys():
+                    # We don't yet have a record of this device so take one.
+                    uuid_name_map[line_fields[-1]] = line_fields[-5]
+                    # ie {'vdd': '82fd9db1-e1c1-488d-9b42-536d0a82caeb'}
+    return uuid_name_map
+
+
 def get_dev_temp_name(dev_byid):
     """
     Returns the current canonical device name (of type 'sda') for a supplied
@@ -1887,3 +1978,63 @@ def trigger_udev_update():
     :return: o, e, rc as returned by run_command
     """
     return run_command([UDEVADM, 'trigger'])
+
+
+def trigger_systemd_update():
+    """Reruns all systemd generators (see man systemd.generator 7).
+    In some instances systemd managed resources can be out of date with 
+    associated configuration file changes which can lead to a confusion via
+    prior configurations being still current. An example of this is when
+    /etc/crypttab is changed and it's systemd generated service files no
+    longer reflect the 'source of truth' that /etc/crypttab represents.
+    The systemd-cryptsetup-generator scans the contents of /etc/crypttab
+    and establishes service files for each (eg LUKS) mapped device. An 
+    example of one of these generated files is:
+    /var/run/systemd/generator/systemd-cryptsetup@<mapped-name>.service
+    Running 'systemctl daemon-reload' requests that all such resources be
+    updated to freshly represent the new state of the associated config files.
+    :return: o, e, rc as returned by run_command
+    """
+    return run_command([SYSTEMCTL_BIN, 'daemon-reload'])
+
+
+def systemd_name_escape(original_sting, template=''):
+    """Wrapper around systemd-escape unit name pre-processor. Used to escape
+    stings ready for use as systemd unit or service names. Eg (shortened):
+    passed sting = 'luks-5037b320-95d6-4c74-94e7'
+    output:
+    'luks\x2d5037b320\x2d95d6\x2d4c74\x2d94e7'
+    With optional template='systemd-cryptsetup@.service' the output would be:
+    systemd-cryptsetup@luks\x2d5037b320\x2d95d6\x2d4c74\x2d94e7.service
+    # N.B. there is currently an issue with the --template option:
+    https://bugs.centos.org/view.php?id=13262
+    :param template: if supplied passed as parameter to --template
+    :param original_sting: pre-escaped  string for systemd service name use.
+    :return: post-escaped string ie '\x2d' instead of '-' etc or '' if a non
+    zero return code was encountered.
+    """
+    # future version when upstream --template bug fixed:
+    # if template == '':
+    #     out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
+    # else:
+    #     out, err, rc = run_command(
+    #         [SYSTEMD_ESCAPE, '--template=%s' % template, original_sting])
+    # if rc == 0 and len(out) > 0:
+    #     return out[0]
+    # else:
+    #     return ''
+    # future version end
+    # temp --template bug workaround version:
+    out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
+    if rc == 0 and len(out) > 0:
+        if template == '':
+            return out[0]
+        else:
+            dot_index = template.find('.')
+            if dot_index == -1:
+                return ''
+            # Put our command output into our template at position dot_index.
+            out = template[:dot_index] + out[0] + template[dot_index:]
+            return out
+    else:
+        return ''

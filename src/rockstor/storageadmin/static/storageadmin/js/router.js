@@ -39,6 +39,7 @@ var AppRouter = Backbone.Router.extend({
         'disks/smartcustom/:diskName': 'smartcustomDrive',
         'disks/spindown/:diskName': 'spindownDrive',
         'disks/role/:diskName': 'roleDrive',
+        'disks/luks/:diskName': 'luksDrive',
         'disks/:diskName': 'showDisk',
         'pools': 'showPools',
         'pools/:poolName': 'showPool',
@@ -207,6 +208,14 @@ var AppRouter = Backbone.Router.extend({
         this.renderSidebar('storage', 'disks');
         this.cleanup();
         this.currentLayout = new SetroleDiskView({diskName: diskName});
+        $('#maincontent').empty();
+        $('#maincontent').append(this.currentLayout.render().el);
+    },
+
+    luksDrive: function(diskName) {
+        this.renderSidebar('storage', 'disks');
+        this.cleanup();
+        this.currentLayout = new LuksDiskView({diskName: diskName});
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },

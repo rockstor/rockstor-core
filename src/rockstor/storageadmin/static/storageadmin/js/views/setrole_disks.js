@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -28,7 +28,8 @@ SetroleDiskView = RockstorLayoutView.extend({
     events: {
         'click #cancel': 'cancel',
         'click #redirect_part': 'redirect_part_changed',
-        'click #delete_tick': 'delete_tick_toggle'
+        'click #delete_tick': 'delete_tick_toggle',
+        'click #luks_tick': 'luks_tick_toggle'
     },
 
     initialize: function () {
@@ -92,7 +93,42 @@ SetroleDiskView = RockstorLayoutView.extend({
         } else {
             current_redirect = '';
         }
+        // set local convenience flag if device is a LUKS container and note
+        // if it's unlocked or not.
+        var is_luks = false;
+        // Default to appearing as if we are unlocked if we fail for
+        // some reason to retrieve the obligatory unlocked flag. This
+        // way we fail safe as unlocked containers can't be deleted.
+        var is_unlocked = true;
+        // While we are inside the LUKS role we can update current_crypttab
+        // Assume we have no crypttab entry until we find otherwise.
+        var current_crypttab_status = false;
+        if (role_obj != null && role_obj.hasOwnProperty('LUKS')) {
+            is_luks = true;
+            // if we have an unlocked entry, extract it.
+            if (role_obj['LUKS'].hasOwnProperty('unlocked')) {
+                is_unlocked = role_obj['LUKS']['unlocked'];
+            }
+            // if we have a crypttab entry, extract it.
+            if (role_obj['LUKS'].hasOwnProperty('crypttab')) {
+                current_crypttab_status = role_obj['LUKS']['crypttab'];
+            }
+        }
+        // additional convenience flag if device is an open LUKS volume.
+        var is_open_luks;
+        if (role_obj !== null && role_obj.hasOwnProperty('openLUKS')) {
+            is_open_luks = true;
+        } else {
+            is_open_luks = false;
+        }
+
         this.current_redirect = current_redirect;
+        this.partitions = partitions;
+        this.disk_btrfs_uuid = disk_btrfs_uuid;
+        this.is_open_luks = is_open_luks;
+        this.is_luks = is_luks;
+        this.is_unlocked = is_unlocked;
+        this.current_crypttab_status = current_crypttab_status;
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -101,7 +137,11 @@ SetroleDiskView = RockstorLayoutView.extend({
             role_obj: role_obj,
             partitions: partitions,
             current_redirect: current_redirect,
-            disk_btrfs_uuid: disk_btrfs_uuid
+            disk_btrfs_uuid: disk_btrfs_uuid,
+            is_luks: is_luks,
+            is_open_luks: is_open_luks,
+            is_unlocked: is_unlocked,
+            current_crypttab_status: current_crypttab_status
         }));
 
         this.$('#add-role-disk-form :input').tooltip({
@@ -165,6 +205,60 @@ SetroleDiskView = RockstorLayoutView.extend({
                             'filesystem.';
                         return false;
                     }
+                    if (is_luks && is_unlocked) {
+                        // We block attempts to wipe unlocked LUKS containers
+                        // as a safe guard, we have no direct way to know if
+                        // they are backing any pool members but they are
+                        // never-the-less active if open and a wipe would /
+                        // should fail if we attempted it so just block and
+                        // advise within the front end.
+                        err_msg = 'Wiping an unlocked LUKS container is not ' +
+                            'supported. First close the containers Open ' +
+                            'LUKS Volume counterpart and ensure "No auto ' +
+                            'unlock" is the active "Boot up configuration"';
+                        return false;
+                    }
+                    // We shouldn't need this check but just in case our hide
+                    // of the wipe link on the LUKS config page that lead the
+                    // user hear has been circumvented.
+                    if (current_crypttab_status !== false) {
+                        err_msg = 'Wiping a LUKS container with an ' +
+                            'existing crypttab entry is not supported. ' +
+                            'First ensure "No auto unlock" is the active ' +
+                            'selection on the LUKS configuration page.';
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }, role_err_msg);
+
+        $.validator.addMethod('validateLuksPassphrases', function (value) {
+            var luks_tick = $('#luks_tick');
+            var luks_pass_one = $('#luks_pass_one').val();
+            var luks_pass_two = $('#luks_pass_two').val();
+            if (luks_tick.prop('checked')) {
+                if (luks_pass_one == '') {
+                    err_msg = 'An empty LUKS passphrase is not supported';
+                    return false;
+                }
+                if (luks_pass_one.length < 14) {
+                    err_msg = 'LUKS passphrase should be at least 14 ' +
+                        'characters long.';
+                    return false;
+                }
+                if (luks_pass_one != luks_pass_two) {
+                    err_msg = 'LUKS passphrases do not match, please try ' +
+                        'again.';
+                    return false;
+                }
+                // Reject non ASCII 7-bit & control characters ie only accept:
+                // !"#$%&'()*+,-./0-9:;<=>?@A-Z[\]^_`a-z{|}~ plus space.
+                // Equates to Decimal (32-126) or Hex (0x20-0x7E)
+                // to include DEL (delete) char increase range to 7F.
+                if (/^[\x20-\x7E]+$/.test(luks_pass_one) == false) {
+                    err_msg = 'Invalid non ASCII(32-126) 7-bit character entered';
+                    return false;
                 }
             }
             return true;
@@ -174,9 +268,9 @@ SetroleDiskView = RockstorLayoutView.extend({
             onfocusout: false,
             onkeyup: false,
             rules: {
-                // redirect_part: 'required',
                 redirect_part: 'validateRedirect',
-                delete_tick: 'validateDeleteTick'
+                delete_tick: 'validateDeleteTick',
+                luks_pass_one: 'validateLuksPassphrases'
             },
 
             submitHandler: function () {
@@ -205,14 +299,25 @@ SetroleDiskView = RockstorLayoutView.extend({
         });
         this.delete_tick_toggle();
         this.redirect_part_changed();
+        this.luks_tick_toggle();
+        this.luks_options_show_hide();
     },
 
     delete_tick_toggle: function () {
         var delete_tick = this.$('#delete_tick');
         if (delete_tick.prop('checked')) {
-            this.$('#delete_tick_warning').css('visibility', 'visible');
+            // show delete warning
+            this.$('#delete_tick_warning').show();
+            // un-tick and hide LUKS tick and passwords
+            this.$('#luks_tick').removeAttr('checked');
+            this.$('#luks_passwords').hide();
+            this.$('#luks_options').hide();
         } else {
-            this.$('#delete_tick_warning').css('visibility', 'hidden');
+            // hide delete warning
+            this.$('#delete_tick_warning').hide();
+            // show LUKS options if appropriate
+            // this.$('#luks_options').show();
+            this.luks_options_show_hide();
         }
     },
 
@@ -237,26 +342,69 @@ SetroleDiskView = RockstorLayoutView.extend({
         }
     },
 
+    luks_tick_toggle: function () {
+        var luks_tick = this.$('#luks_tick');
+        if (luks_tick.prop('checked')) {
+            // un-tick delete and hide it
+            this.$('#delete_tick').removeAttr('checked');
+            this.$('#delete_tick_group').hide();
+            // show password entry and delete warning
+            this.$('#luks_passwords').show();
+            this.$('#delete_tick_warning').show();
+        } else {
+            // show delete tick
+            this.$('#delete_tick_group').show();
+            // hide password entry and delete warning
+            this.$('#luks_passwords').hide();
+            this.$('#delete_tick_warning').hide();
+        }
+    },
+
+    luks_options_show_hide: function () {
+        var luks_tick = this.$('#luks_tick');
+        // Only enable and show the LUKS formatting options if there are no
+        // partitions and we have no existing btrfs, imported or otherwise.
+        // The latter clause is to covers whole disk btrfs but doesn't cover
+        // non btrfs whole disk filesystems (these are unusual).
+        // Also guard against creating a LUKS container within an open LUKS
+        // volume as this is both redundant and not supported as we would then
+        // have a device that was both a LUKS volume and a LUKS container.
+        // Confusing and unnecessary. Likewise we only show LUKS format
+        // options is we are not already a LUKS container (is_luks). This
+        // helps to avoid some potential confusion when re-formatting a LUKS
+        // container as it forces a traditional wipe first.
+        if (_.isEmpty(this.partitions) && this.disk_btrfs_uuid == null
+            && this.is_open_luks !== true && this.is_luks !== true) {
+            luks_tick.removeAttr('disabled');
+            this.$('#luks_options').show();
+        } else {
+            luks_tick.attr('disabled', true);
+            this.$('#luks_options').hide();
+        }
+    },
+
     initHandlebarHelpers: function () {
         // helper to fill dropdown with drive partitions and their fstype
-        // eg by generating dynamicaly lines of the following
+        // eg by generating dynamically lines of the following format:
         // <option value="virtio-serial-6-part-2">part2 (ntfs)</option>
         Handlebars.registerHelper('display_disk_partitions', function () {
             var html = '';
             // Add our 'use whole disk' option which will allow for an existing
             // redirect to be removed, preparing for whole disk btrfs.
             // Also serves to indicate no redirect role in operation.
-            var uuid_message;
-            if ( (this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions)) ) {
-                uuid_message = 'btrfs';
+            var whole_disk_fstype;
+            if ((this.disk_btrfs_uuid != null) && (_.isEmpty(this.partitions))) {
+                whole_disk_fstype = 'btrfs';
+            } else if (this.is_luks) {
+                whole_disk_fstype = 'LUKS';
             } else {
-                uuid_message = 'None';
+                whole_disk_fstype = 'None';
             }
             var selected = '';
             if (this.current_redirect == '') {
                 selected = ' selected="selected"';
             }
-            html += '<option value=""' + selected + '> Whole Disk (' + uuid_message + ')';
+            html += '<option value=""' + selected + '> Whole Disk (' + whole_disk_fstype + ')';
             // if no current redirect role then select whole disk entry and
             // give indication of this " - active"
             if (selected != '') {
@@ -300,7 +448,7 @@ SetroleDiskView = RockstorLayoutView.extend({
 
     cancel: function (event) {
         event.preventDefault();
-        this.$('#add-spindown-disk-form :input').tooltip('hide');
+        this.$('#add-role-disk-form :input').tooltip('hide');
         app_router.navigate('disks', {trigger: true});
     }
 

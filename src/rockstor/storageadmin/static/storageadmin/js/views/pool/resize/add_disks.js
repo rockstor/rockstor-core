@@ -108,6 +108,38 @@ PoolAddDisks = RockstorWizardPage.extend({
     },
 
     initHandlebarHelpers: function () {
+
+        asJSON = function (role) {
+            // Simple wrapper to test for not null and JSON compatibility,
+            // returns the json object if both tests pass, else returns false.
+            if (role == null) { // db default
+                return false;
+            }
+            // try json conversion and return false if it fails
+            // @todo not sure if this is redundant?
+            try {
+                return JSON.parse(role);
+            } catch (e) {
+                return false;
+            }
+        };
+
+        // Identify Open LUKS container by return of true / false.
+        // Works by examining the Disk.role field. Based on sister handlebars
+        // helper 'isRootDevice'
+        Handlebars.registerHelper('isOpenLuks', function (role) {
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('openLUKS')) {
+                // Once a LUKS container is open it has a type of crypt
+                // and we attribute it the role of 'openLUKS' as a result.
+                return true;
+            }
+            // In all other cases return false.
+            return false;
+        });
+
         Handlebars.registerHelper('display_raid_levels', function(){
             var html = '';
             var _this = this;

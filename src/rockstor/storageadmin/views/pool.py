@@ -310,6 +310,9 @@ class PoolListView(PoolMixin, rfc.GenericView):
             p.size = p.usage_bound()
             p.uuid = btrfs_uuid(dnames[0])
             p.save()
+            # Now we ensure udev info is updated via system wide trigger
+            # as per pool resize add, only here it is for a new pool.
+            trigger_udev_update()
             return Response(PoolInfoSerializer(p).data)
 
 

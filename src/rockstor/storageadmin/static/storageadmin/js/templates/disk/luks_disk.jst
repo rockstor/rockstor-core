@@ -1,0 +1,153 @@
+<h3>{{display_luks_container_or_volume}}</h3>
+LUKS Containers are encrypted block devices. Once a LUKS container is unlocked
+it's otherwise encrypted and invisible filesystem (if any) is made available
+via a second virtual block device. This unlocked counterpart is known as an
+Open LUKS Volume and only exists whilst the LUKS Container remains unlocked.
+<p></p>
+<p class="text-warning">
+ Closing an Open LUKS Volume is the equivalent of unplugging or detaching that
+ virtual device. It will remain detached until it's parent LUKS container is
+ unlocked again.
+</p>
+<p class="bg-info">
+ <strong>Note:</strong> Custom LUKS Volume names are not supported; only
+ canonical names of the form <i>luks-uuid</i>; resulting in auto generated
+ by-id names: <i>dm-name-luks-uuid</i> (uuid from hosting container format).
+</p>
+<div id="crypttab_text">
+<h4>Boot up Configuration:</h4>
+ <p class="bg-info">
+  <strong>WARNING:</strong> Custom LUKS Volume names will be overridden by
+  any <i>Boot up Configuration</i> submission.
+ </p>
+<ul>
+ <li>
+  <strong>No auto unlock</strong> The container will remain locked during and
+  after boot. Any filesystem or data on the device will be inaccessible until
+  it is manually unlocked via the command line.
+  <p class="text-warning">
+   As Rockstor currently mounts all pools during boot this configuration is
+   for advanced users. Only single device pools are recommended.
+  </p>
+   </li>
+ <li>
+   <strong>Manual passphrase via local console</strong> Every time Rockstor is
+  booted or restarted it will wait indefinitely for the passphrase to be
+  entered (at the local console) before unlocking the container and
+  continuing on with a normal boot. A passphrase must also be entered (via:
+  <i>systemd-tty-ask-password-agent</i> as root) after wiping a LUKS Volume.
+  <p class="text-warning">
+   The system will not be functional until the passphrase has been entered.
+   Failure to enter the passphrase after a LUKS Volume wipe will result in a
+   locked container and detached volume.
+  </p>
+ </li>
+ <li>
+  <strong>Auto unlock via keyfile (Recommended)</strong> Unlock on every boot
+  by using a keyfile on the system drive. Unless Rockstor was installed using
+  the "Encrypt my data" option the system drive will not be encrypted and so
+  all keyfiles will also not be encrypted. This still protects against data
+  exposure if a drive is returned to a supplier, or for end-of-life scenarios;
+  so long as it is not accompanied by the system drive.
+  <p class="text-warning">
+   Rockstor generated keyfile example:
+   "/root/keyfile-fd168e30-5386-43b2-9f15-353b9ecff803". The characters
+   after '-' are the uuid of the LUKS container and the key is 2048 bytes
+   sourced from /dev/urandom (2^14 bit equivalent).
+  </p>
+  <p class="bg-info">
+   Non native or manually configured keyfiles are reported as "(custom)" and
+   left 'as is'. But once a non keyfile config option is submitted a return
+   to keyfile config will yield a default Rockstor native keyfile generation
+   and registration. <i>No keyfile is currently deleted: custom or native.</i>
+  </p>
+ </li>
+</ul>
+</div>
+<div class="row">
+ <div class="col-md-8">
+  <label class="control-label"></label>
+  <div class="form-box">
+   <form class="form-horizontal" id="luks-disk-form" name="luksform">
+    <div class="messages"></div>
+
+    <!-- Form Header Info -->
+    <div class="form-group">
+     <div class="col-sm-offset-4 col-sm-8">
+      <h4>Drive name:&nbsp;&nbsp;<strong>{{diskName}}</strong></h4>
+      <h4>Serial number:&nbsp;&nbsp;<strong>{{serialNumber}}</strong></h4>
+      {{display_luks_container_wipe_link}}
+     </div>
+    </div>
+
+    <!-- Table displaying info for Open LUKS Volume -->
+    <div class="form-group" id="open_vol_status_table_group">
+     <label class="col-sm-4 control-label">Last Known Attached Attributes:</label>
+     <div class="col-sm-6">
+      <div class="openLuksVolTable">
+       <table id="open_luks_vol_table" class="table table-condensed table-bordered share-table tablesorter" summary="Open LUKS Volume Status">
+        <thead>
+        <tr>
+         <th>Attribute</th>
+         <th>Value</th>
+        </tr>
+        </thead>
+         {{display_luks_volume_status_table}}
+        </table>
+      </div>
+     </div>
+    </div><!--open_vol_status_table_group-->
+
+    <!-- /etc/crypttab entry selection -->
+    <div class="form-group" id="crypttab_selection_group">
+     <label class="col-sm-4 control-label" for="crypttab_selection">Boot up
+      configuration<span class="required"> *</span></label>
+     <div class="col-sm-4">
+      <select class="form-control" id="crypttab_selection"
+              name="crypttab_selection">
+       {{display_crypttab_entry}}
+      </select>
+     </div>
+    </div>
+
+    <!-- Display current keyfile -->
+    <div class="form-group" id="current_keyfile_group">
+     <div class="col-sm-offset-4 col-sm-8">
+      <h5>{{display_keyfile_path}}</h5>
+     </div>
+    </div>
+
+    <!-- Display Create Keyfile -->
+    <div class="form-group" id="create_keyfile_group">
+     <div class="checkbox">
+      <label class="col-sm-4 control-label" for="create_keyfile_tick"></label>
+      <div class="col-sm-4">
+       <input type="checkbox" name="create_keyfile_tick"
+              id="create_keyfile_tick">
+       <i class="fa fa-key"></i><i class="fa fa-file-o"></i>
+       {{display_create_keyfile_text}}
+      </div>
+     </div>
+     <div class="form-group" id="luks_passphrase_group">
+      <label class="col-sm-4 control-label" for="luks_passphrase">LUKS
+       Passphrase<span class="required"> *</span></label>
+      <div class="col-sm-4">
+       <input class="form-control shorten-input" type="password"
+              name="luks_passphrase" id="luks_passphrase"
+              title="Enter any Key Slot passphrase for this device to authorize the above action.">
+      </div>
+     </div>
+    </div>
+
+    <div class="form-group" id="cancel_submit_buttons_group">
+     <div class="col-sm-offset-4 col-sm-8">
+      <a id="cancel" class="btn btn-default">Cancel</a>
+      <input type="Submit" id="luks-disk" class="btn btn-primary"
+             value="Submit"></input>
+     </div>
+    </div>
+
+   </form>
+  </div>
+ </div>
+</div>

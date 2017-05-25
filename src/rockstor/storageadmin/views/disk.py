@@ -15,6 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+import os
 import re
 from rest_framework.response import Response
 from django.db import transaction
@@ -27,8 +28,13 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
+from system.luks import luks_format_disk, get_unlocked_luks_containers_uuids, \
+    get_crypttab_entries, update_crypttab, native_keyfile_exists, \
+    establish_keyfile, get_open_luks_volume_status
 from system.osi import set_disk_spindown, enter_standby, get_dev_byid_name, \
-    wipe_disk, blink_disk, scan_disks
+    wipe_disk, blink_disk, scan_disks, get_whole_dev_uuid, get_byid_name_map, \
+    trigger_systemd_update, systemd_name_escape
+from system.services import systemctl
 from copy import deepcopy
 import uuid
 import json
@@ -42,7 +48,8 @@ logger = logging.getLogger(__name__)
 # and the post processing present in scan_disks()
 # LUKS currently stands for full disk crypto container.
 SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'bcache',
-                          'bcache-cdev', 'partitions']
+                          'bcachecdev', 'partitions']
+WHOLE_DISK_FORMAT_ROLES = ['LUKS', 'bcache', 'bcachecdev']
 
 
 class DiskMixin(object):
@@ -66,7 +73,17 @@ class DiskMixin(object):
         """
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
+        # Acquire a list of uuid's for currently unlocked LUKS containers.
+        # Although we could tally these as we go by noting fstype crypt_LUKS
+        # and then loop through our db Disks again updating all matching
+        # base device entries, this approach helps to abstract this component
+        # and to localise role based db manipulations to our second loop.
+        unlocked_luks_containers_uuids = get_unlocked_luks_containers_uuids()
         serial_numbers_seen = []
+        # Acquire a dictionary of crypttab entries, dev uuid as indexed.
+        dev_uuids_in_crypttab = get_crypttab_entries()
+        # Acquire a dictionary of lsblk /dev names to /dev/disk/by-id names
+        byid_name_map = get_byid_name_map()
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
         # make this so in the case of empty or repeat entries by providing
@@ -183,13 +200,53 @@ class DiskMixin(object):
                 # LUKS FULL DISK: scan_disks() can inform us of the truth
                 # regarding full disk LUKS containers which on creation have a
                 # unique uuid. Stash this uuid so we might later work out our
-                # container mapping.
-                disk_roles_identified['LUKS'] = str(d.uuid)
+                # container mapping. Currently required as only btrfs uuids
+                # are stored in the Disk model field. Also flag if we are the
+                # container for a currently open LUKS volume.
+                is_unlocked = d.uuid in unlocked_luks_containers_uuids
+                disk_roles_identified['LUKS'] = {'uuid': str(d.uuid),
+                                                 'unlocked': is_unlocked}
+                # We also inform this role of the current crypttab status
+                # of this device, ie: no entry = no "crypttab" key.
+                # Device listed in crypttab = dict key entry of "crypttab".
+                # If crypttab key entry then it's value is 3rd column ie:
+                # 'none' = password on boot
+                # '/root/keyfile-<uuid>' = full path to keyfile
+                # Note that we also set a boolean in the LUKS disk role of
+                # 'keyfileExists' true if a crypttab entry exists or if our
+                # default /root/keyfile-<uuid> exists, false otherwise.
+                # So the current keyfile takes priority when setting this flag.
+                # This may have to be split out later to discern the two states
+                # separately.
+                if d.uuid in dev_uuids_in_crypttab.keys():
+                    # Our device has a UUID= match in crypttab so save as
+                    # value the current cryptfile 3rd column entry.
+                    disk_roles_identified['LUKS']['crypttab'] \
+                        = dev_uuids_in_crypttab[d.uuid]
+                    # if crypttab 3rd column indicates keyfile: does that
+                    # keyfile exist. N.B. non 'none' entry assumed to be
+                    # keyfile. Allows for existing user created keyfiles.
+                    # TODO: could be problematic during crypttab rewrite where
+                    # keyfile is auto named but we should self correct on our
+                    # next run, ie new file entry is checked there after.
+                    if dev_uuids_in_crypttab[d.uuid] != 'none':
+                        disk_roles_identified['LUKS']['keyfileExists'] \
+                            = os.path.isfile(dev_uuids_in_crypttab[d.uuid])
+                if 'keyfileExists' not in disk_roles_identified['LUKS']:
+                    # We haven't yet set our keyfileExists flag: ie no entry,
+                    # custom or otherwise, in crypttab to check or the entry
+                    # was "none". Revert to defining this flag against the
+                    # existence or otherwise of our native keyfile:
+                    disk_roles_identified['LUKS']['keyfileExists'] \
+                        = native_keyfile_exists(d.uuid)
             if d.type == 'crypt':
                 # OPEN LUKS DISK: scan_disks() can inform us of the truth
                 # regarding an opened LUKS container which appears as a mapped
-                # device. Assign the /dev/disk/by-id name as a value.
-                disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
+                # device.
+                # disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
+                luks_volume_status = \
+                    get_open_luks_volume_status(d.name, byid_name_map)
+                disk_roles_identified['openLUKS'] = luks_volume_status
             if d.fstype == 'bcache':
                 # BCACHE: scan_disks() can inform us of the truth regarding
                 # bcache "backing devices" so we assign a role to avoid these
@@ -199,7 +256,7 @@ class DiskMixin(object):
                 # here we tag our backing device with it's virtual counterparts
                 # serial number.
                 disk_roles_identified['bcache'] = 'bcache-%s' % d.uuid
-            if d.fstype == 'bcache-cdev':
+            if d.fstype == 'bcachecdev':
                 # BCACHE: continued; here we use the scan_disks() added info
                 # of this bcache device being a cache device not a backing
                 # device, so it will have no virtual block device counterpart
@@ -425,6 +482,8 @@ class DiskDetailView(rfc.GenericView):
                 return self._wipe(dname, request)
             if (command == 'btrfs-wipe'):
                 return self._wipe(dname, request)
+            if (command == 'luks-format'):
+                return self._luks_format(dname, request, passphrase='')
             if (command == 'btrfs-disk-import'):
                 return self._btrfs_disk_import(dname, request)
             if (command == 'blink-drive'):
@@ -441,12 +500,13 @@ class DiskDetailView(rfc.GenericView):
                 return self._pause(dname, request)
             if (command == 'role-drive'):
                 return self._role_disk(dname, request)
+            if (command == 'luks-drive'):
+                return self._luks_disk(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, '
-                 'btrfs-wipe,'
-                 ' btrfs-disk-import, blink-drive, enable-smart, '
-                 'disable-smart,'
-                 ' smartcustom-drive, spindown-drive, pause' % command)
+                 'btrfs-wipe, luks-format, btrfs-disk-import, blink-drive, '
+                 'enable-smart, disable-smart, smartcustom-drive, '
+                 'spindown-drive, pause, role-drive, luks-drive' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -459,7 +519,7 @@ class DiskDetailView(rfc.GenericView):
                                                                    request)
         if reverse_name != disk.name:
             e_msg = ('Wipe operation on whole or partition of device (%s) was '
-                     'aborted as there was a discrepancy in device name '
+                     'rejected as there was a discrepancy in device name '
                      'resolution. Wipe was called with device name (%s) which '
                      'redirected to (%s) but a check on this redirection '
                      'returned device name (%s), which is not equal to the '
@@ -469,9 +529,127 @@ class DiskDetailView(rfc.GenericView):
             raise Exception(e_msg)
         wipe_disk(disk_name)
         disk.parted = isPartition
+        # Rather than await the next _update_disk_state() we update our role.
+        roles = {}
+        # Get our roles, if any, into a dictionary.
+        if disk.role is not None:
+            roles = json.loads(disk.role)
+        if isPartition:
+            # Special considerations for partitioned devices.
+            # Be sure to clear our fstype from the partition role dictionary.
+            if 'partitions' in roles:  # just in case
+                if disk_name in roles['partitions']:
+                    roles['partitions'][disk_name] = ''
+        else:  # Whole disk wipe considerations:
+            # In the case of Open LUKS Volumes, whenever a whole disk file
+            # system is wiped as we have just done. The associated systemd
+            # service /var/run/systemd/generator/systemd-cryptsetup@
+            # <mapper-name>.service runs systemd-cryptsetup detach mapper-name.
+            # Where mapper-name = first column in /etc/crypttab = by-id name
+            # without the additional "dm-name-".
+            # This results in the removal of the associated block devices.
+            # So we need to start the associated service which in turn will
+            # attach the relevant block mappings. This action requires
+            # re-authentication via existing keyfile or via local console.
+            if 'openLUKS' in roles:
+                if re.match('dm-name', disk_name) is not None:
+                    mapper_name = disk_name[8:]
+                    service_name = \
+                        systemd_name_escape(mapper_name,
+                                            'systemd-cryptsetup@.service')
+                    service_path = "/var/run/systemd/generator/"
+                    if service_name != '' and \
+                            os.path.isfile(service_path + service_name):
+                        # Start our devs cryptsetup service to re-establish
+                        # it's now removed (by systemd) /dev nodes.
+                        # This action is only possible with an existing
+                        # crypttab entry, ie none or keyfile; but only
+                        # a keyfile config will allow non interactive
+                        # re-activation.
+                        out, err, rc = systemctl(service_name, 'start')
+                        if rc != 0:
+                            e_msg = ('Systemd cryptsetup start after a '
+                                     'wipefs -a for Open LUKS Volume device '
+                                     '(%s) encountered an error: out=%s, '
+                                     'err=%s, rc=%s' %
+                                     (disk_name, out, err, rc))
+                            raise Exception(e_msg)
+            # Wiping a whole disk will remove all whole disk formats: ie LUKS
+            # containers and bcache backing and caching device formats.
+            # So remove any pertinent role if it exists
+            for whole_role in WHOLE_DISK_FORMAT_ROLES:
+                if whole_role in roles:
+                    del roles[whole_role]
+            # Wiping a whole disk will also remove all partitions:
+            if 'partitions' in roles:
+                del roles['partitions']
+        # now we return our potentially updated roles
+        if roles == {}:
+            # if we have an empty role dict then we avoid json conversion and
+            # go with re-asserting db default.
+            disk.role = None
+        else:
+            disk.role = json.dumps(roles)
+        # The following value may well be updated with a more informed truth
+        # from the next scan_disks() run via _update_disk_state(). Since we
+        # only allow redirect to a btrfs partition, if one exist, then we can
+        # be assured that any redirect role would be to an existing btrfs. So
+        # either way (partitioned or not) we have just wiped any btrfs so we
+        # universally remove the btrfs_uuid.
+        disk.btrfs_uuid = None
+        disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
+    @transaction.atomic
+    def _luks_format(self, dname, request, passphrase):
+        disk = self._validate_disk(dname, request)
+        disk_name = self._role_filter_disk_name(disk, request)
+        # Double check sanity of role_filter_disk_name by reversing back to
+        # whole disk name (db name). Also we get isPartition in the process.
+        reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
+                                                                   request)
+        if reverse_name != disk.name:
+            e_msg = ('LUKS operation on whole or partition of device (%s) was '
+                     'rejected as there was a discrepancy in device name '
+                     'resolution. _make_luks was called with device name (%s) '
+                     'which redirected to (%s) but a check on this redirect '
+                     'returned device name (%s), which is not equal to the '
+                     'caller name as was expected. A Disks page Rescan may '
+                     'help.'
+                     % (dname, dname, disk_name, reverse_name))
+            raise Exception(e_msg)
+        # Check if we are a partition as we don't support LUKS in partition.
+        # Front end should filter this out as an presented option but be
+        # should block at this level as well.
+        if isPartition:
+            e_msg = ('A LUKS format was requested on device name (%s) which '
+                     'was identifyed as a partiton. Rockstor does not '
+                     'support LUKS in partition, only whole disk.'
+                     % dname)
+            raise Exception(e_msg)
+        luks_format_disk(disk_name, passphrase)
+        disk.parted = isPartition  # should be False by now.
         # The following value may well be updated with a more informed truth
         # from the next scan_disks() run via _update_disk_state()
         disk.btrfs_uuid = None
+        # Rather than await the next _update_disk_state() we populate our
+        # LUKS container role.
+        roles = {}
+        # Get our roles, if any, into a dictionary.
+        if disk.role is not None:
+            roles = json.loads(disk.role)
+        # Now we assert what we know given our above LUKS format operation.
+        # Not unlocked and no keyfile (as we have a fresh uuid from format)
+        # TODO: Might be better to use cryptset luksUUID <dev-name>
+        dev_uuid = get_whole_dev_uuid(disk.name)
+        # update or create a basic LUKS role entry.
+        # Although we could use native_keyfile_exists(dev_uuid) we can be
+        # pretty sure there is no keyfile with our new uuid.
+        roles['LUKS'] = {'uuid': str(dev_uuid),
+                         'unlocked': False,
+                         'keyfileExists': False}
+        # now we return our updated roles
+        disk.role = json.dumps(roles)
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
@@ -546,6 +724,7 @@ class DiskDetailView(rfc.GenericView):
         # Until we find otherwise:
         prior_redirect = ''
         redirect_role_change = False
+        luks_passwords_match = False
         try:
             disk = self._validate_disk(dname, request)
             # We can use this disk name directly as it is our db reference
@@ -555,6 +734,11 @@ class DiskDetailView(rfc.GenericView):
             # so we make sure to not wipe and redirect at the same time.
             new_redirect_role = str(request.data.get('redirect_part', ''))
             is_delete_ticked = request.data.get('delete_tick', False)
+            is_luks_format_ticked = request.data.get('luks_tick', False)
+            luks_pass_one = str(request.data.get('luks_pass_one', ''))
+            luks_pass_two = str(request.data.get('luks_pass_two', ''))
+            if luks_pass_one == luks_pass_two:
+                luks_passwords_match = True
             # Get our previous roles into a dictionary.
             if disk.role is not None:
                 roles = json.loads(disk.role)
@@ -585,12 +769,21 @@ class DiskDetailView(rfc.GenericView):
                     e_msg = ("Wiping a device while changing it's redirect "
                              "role is not supported. Please do one at a time")
                     raise Exception(e_msg)
-                # We have a redirect role change and no delete ticked so
+                if is_luks_format_ticked:
+                    # changing redirect and requesting LUKS format are blocked
+                    e_msg = ("LUKS formating a device while changing it's "
+                             "redirect role is not supported. Please do one "
+                             "at a time")
+                    raise Exception(e_msg)
+                # We have a redirect role change and no delete or LUKS ticks so
                 # return our dict back to a json format and stash in disk.role
                 disk.role = json.dumps(roles)
                 disk.save()
             else:
-                # no redirect role change so we can wipe if requested by tick
+                # No redirect role change so we can wipe if requested by tick
+                # but only if disk is not a pool member and no LUKS request
+                # and we arn't trying to wipe an unlocked LUKS container or
+                # one with an existing crypttab entry.
                 if is_delete_ticked:
                     if disk.pool is not None:
                         # Disk is a member of a Rockstor pool so refuse to wipe
@@ -598,14 +791,205 @@ class DiskDetailView(rfc.GenericView):
                                  'not supported. Please use pool resize to '
                                  'remove this disk from the pool first.')
                         raise Exception(e_msg)
+                    if is_luks_format_ticked:
+                        # Simultaneous request to LUKS format and wipe.
+                        # Best if we avoid combining wiping and LUKS format as
+                        # although they are mostly equivalent this helps to
+                        # keep these activities separated, which should help
+                        # with future development and cleaner error reporting.
+                        # I.e one thing at a time, especially if serious.
+                        e_msg = ('Wiping a device while also requesting a '
+                                 'LUKS format for the same device is not '
+                                 'supported. Please do one at a time.')
+                        raise Exception(e_msg)
+                    if 'LUKS' in roles:
+                        if 'unlocked' in roles['LUKS'] and \
+                                roles['LUKS']['unlocked']:
+                            e_msg = ('Wiping an unlocked LUKS container is '
+                                     'not supported. Only locked LUKS '
+                                     'containers can be wiped.')
+                            raise Exception(e_msg)
+                        if 'crypttab' in roles['LUKS']:
+                            # The crypttab key itself is indication of an
+                            # existing cryptab configuration
+                            e_msg = ('Wiping a LUKS container with an '
+                                     'existing /etc/crypttab entry is not '
+                                     'supported. First ensure "Boot up '
+                                     'configuration" of "No auto unlock."')
+                            raise Exception(e_msg)
                     # Not sure if this is the correct way to call our wipe.
                     return self._wipe(dname, request)
+                if is_luks_format_ticked:
+                    if not luks_passwords_match:
+                        # Simple password mismatch, should be caught by front
+                        # end but we check as well
+                        e_msg = ('LUKS format requested but passwords do not '
+                                 'match. Aborting. Please try again.')
+                        raise Exception(e_msg)
+                    if luks_pass_one == '':
+                        # Check of password = '', front end should
+                        # filter this out but check anyway.
+                        e_msg = ('LUKS passphase empty. Aborting. Please try '
+                                 'again')
+                        raise Exception(e_msg)
+                    if len(luks_pass_one) < 14:
+                        e_msg = ('LUKS passphrase of less then 14 characters'
+                                 'is not supported. Please re-enter.')
+                        raise Exception(e_msg)
+                    if re.search('[^\x20-\x7E]', luks_pass_one) is not None:
+                        e_msg = ('A LUKS passphrase containing non 7-bit '
+                                 'ASCII(32-126) characters is not supported '
+                                 'as boot entry character codes may differ. '
+                                 'Please re-enter.')
+                        raise Exception(e_msg)
+                    if 'openLUKS' in roles:
+                        e_msg = ('LUKS format requested but device is '
+                                 'identified as an Open LUKS volume. This '
+                                 'configuration is not supported.')
+                        raise Exception(e_msg)
+                    if 'LUKS' in roles:
+                        e_msg = ('LUKS format requested but device is '
+                                 'already LUKS formatted. If you wish to '
+                                 're-deploy as a different LUKS container '
+                                 'please select wipe first then return and '
+                                 're-select LUKS format.')
+                        raise Exception(e_msg)
+                    return self._luks_format(dname, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
-            e_msg = ('Failed to configure drive role or wipe existing '
-                     'filesystem on device (%s). Error: %s'
+            e_msg = ('Failed to configure drive role, or wipe existing '
+                     'filesystem, or do LUKS format on device (%s). Error: %s'
                      % (dname, e.__str__()))
             handle_exception(Exception(e_msg), request)
+
+    @classmethod
+    @transaction.atomic
+    def _luks_disk(cls, dname, request):
+        disk = cls._validate_disk(dname, request)
+        crypttab_selection = str(
+            request.data.get('crypttab_selection', 'false'))
+        is_create_keyfile_ticked = request.data.get('create_keyfile_tick',
+                                                    False)
+        luks_passphrase = str(request.data.get('luks_passphrase', ''))
+        # Constrain crypttab_selection to known sane entries
+        # TODO: regex to catch legit dev names and sanitize via list match
+        # known_crypttab_selection = ['false', 'none', '/dev/*']
+        # Check that we are in fact a LUKS container.
+        roles = {}
+        # Get our roles, if any, into a dictionary.
+        if disk.role is not None:
+            roles = json.loads(disk.role)
+        if 'LUKS' not in roles:
+            e_msg = ('LUKS operation not support on this Disk(%s) as it is '
+                     'not recognized as a LUKS container (ie no "LUKS" role '
+                     'found.)'
+                     % dname)
+            handle_exception(Exception(e_msg), request)
+        # Retrieve the uuid of our LUKS container.
+        if 'uuid' not in roles['LUKS']:
+            e_msg = ('Cannot complete LUKS configuration request as no uuid '
+                     'key was found in Disk(%s) LUKS role value. ' % dname)
+            handle_exception(Exception(e_msg), request)
+        disk_uuid = roles['LUKS']['uuid']
+        # catch create keyfile without pass request (shouldn't happen)
+        if is_create_keyfile_ticked and luks_passphrase == '':
+            e_msg = ('Cannot create LUKS keyfile without authorization via '
+                     'passphrase. Empty passphrase received for Disk(%s).'
+                     % dname)
+            handle_exception(Exception(e_msg), request)
+        # catch keyfile request without compatible "Boot up config" selection.
+        if crypttab_selection == 'none' or crypttab_selection == 'false':
+            if is_create_keyfile_ticked:
+                e_msg = ('Inconsistent LUKS configuration request for '
+                         'Disk(%s). Keyfile creation requested without '
+                         'compatible "Boot up configuratin" option'
+                         % dname)
+                handle_exception(Exception(e_msg), request)
+        # Having performed the basic parameter validation above, we are ready
+        # to try and apply the requested config. This is a multipart process.
+        # With a keyfile config we have to first ensure the existence of our
+        # keyfile and create it if need be, then register this keyfile (via
+        # an existing passphrase) with our LUKS container if the keyfile is
+        # newly created (handled by establish_keyfile().
+        # In almost all cases there after we must also update /etc/crypttab.
+        # Setup helper flags
+        # The source of true re current state is our roles['LUKS'] value
+        # having been updated via _update_disk_state() so we can see if a
+        # custom keyfile config exists to inform our actions here.
+        custom_keyfile = False
+        if 'crypttab' in roles['LUKS']:
+            role_crypttab = roles['LUKS']['crypttab']
+            if role_crypttab != 'none' \
+                    and role_crypttab != '/root/keyfile-%s' % disk_uuid:
+                custom_keyfile = True
+        if crypttab_selection != 'none' and crypttab_selection != 'false':
+            # None 'none' and None 'false' is assumed to be keyfile config.
+            # We ensure / create our keyfile and register it using
+            # cryptsetup luksAddKeyfile:
+            # With the following exception. Our current UI layer has no
+            # custom keyfile option, although it does recognize this state and
+            # indicates it to the user. But it still sends the native keyfile
+            # crypttab_selection value. So here we guard against overwriting
+            # a custom keyfile config if one is found, which in turn allows
+            # a user to "Submit" harmlessly an existing custom config whilst
+            # also requiring a definite re-configuration to remove an existing
+            # custom config. I.e. the selection of 'none' or 'false' first.
+            # Fist call our keyfile creation + register wrapper if needed:
+            if not custom_keyfile and not establish_keyfile(disk.name,
+                                                            crypttab_selection,
+                                                            luks_passphrase):
+                e_msg = ('There was an unknown problem with establish_keyfile '
+                         'when called by _luks_disk() for Disk(%s). Keyfile '
+                         'may not have been established.' % dname)
+                handle_exception(Exception(e_msg), request)
+            # Having established our keyfile we update our LUKS role but only
+            # for non custom keyfile config. As we don't change custom keyfile
+            # configs we need not update our keyfileExists LUKS role value.
+            if not custom_keyfile:
+                roles['LUKS']['keyfileExists'] = True
+            # Note there is no current keyfile delete mechanism. If this
+            # was established we should make sure to remove this key and it's
+            # value appropriately.
+            # Update /etc/crypttab except when an existing custom ctypttab
+            # entry exists ie if not custom_keyfile in role then update.
+            if not custom_keyfile and not update_crypttab(disk_uuid,
+                                                          crypttab_selection):
+                e_msg = ('There was an unknown problem with update_crypttab '
+                         'when called by _luks_disk() for Disk(%s). No custom '
+                         'keyfile config found. No /etc/crypttab changes were '
+                         'made.' % dname)
+                handle_exception(Exception(e_msg), request)
+        else:
+            # crypttab_selection = 'none' or 'false' so update crypttab
+            # irrespective of existing custom keyfile config.
+            if not update_crypttab(disk_uuid, crypttab_selection):
+                e_msg = ('There was an unknown problem with update_crypttab '
+                         'when called by _luks_disk() for Disk(%s). No '
+                         '/etc/crypttab changes were made.' % dname)
+                handle_exception(Exception(e_msg), request)
+        # Reflect the crypttab changes in our LUKS role.
+        if crypttab_selection == 'false':
+            # A 'false' value is a flag to indicate no crypttab entry
+            if 'crypttab' in roles['LUKS']:
+                # no crypttab entry is indicated by no 'crypttab' key:
+                del roles['LUKS']['crypttab']
+        else:  # crypttab_selection = 'none' or keyfile path.
+            if crypttab_selection == 'none':
+                roles['LUKS']['crypttab'] = crypttab_selection
+            else:  # we have a keyfile crypttab_selection
+                if not custom_keyfile:
+                    # Only change non custom keyfile roles.
+                    roles['LUKS']['crypttab'] = crypttab_selection
+        # Now we save our updated roles as json in the database.
+        disk.role = json.dumps(roles)
+        disk.save()
+        # Ensure systemd generated files are updated re /etc/crypttab changes:
+        out, err, rc = trigger_systemd_update()
+        if rc != 0:
+            e_msg = ('There was an unknown problem with systemd update when '
+                     'called by _luks_disk() for Disk(%s).' % dname)
+            handle_exception(Exception(e_msg), request)
+        return Response()
 
     @classmethod
     @transaction.atomic
