@@ -126,7 +126,6 @@ def update_global_config(smb_config=None, ad_config=None):
             tfo.write('\n%s\n' % RS_CUSTOM_HEADER)
             for k in smb_config:
                 if (ad_config is not None and k == 'workgroup'):
-                    tfo.write('    %s = %s\n' % (k, ad_config[k]))
                     continue
                 tfo.write('    %s = %s\n' % (k, smb_config[k]))
             tfo.write('%s\n\n' % RS_CUSTOM_FOOTER)
