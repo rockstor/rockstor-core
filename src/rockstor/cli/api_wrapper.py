@@ -23,6 +23,7 @@ import base64
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import OauthApp
 from django.conf import settings
+from oauth2_provider.models import AccessToken
 
 
 class APIWrapper(object):
