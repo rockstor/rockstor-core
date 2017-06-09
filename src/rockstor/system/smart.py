@@ -108,6 +108,10 @@ def extended_info(device, custom_options='', test_mode=TESTMODE):
                         fields = o[j].strip().split()
                         if (len(fields) > 10):
                             fields[9] = ' '.join(fields[9:])
+                        # Some drives return "---" as a Threshold value, in
+                        # this case substitute 999 as an integer equivalent.
+                        if fields[5] == '---':
+                            fields[5] = '999'
                         attributes[fields[1]] = fields[0:10]
     return attributes
 
