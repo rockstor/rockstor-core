@@ -302,11 +302,13 @@ class PoolTests(APITestMixin, APITestCase):
                 'mnt_options': 'alloc_star'}
         e_msg = ("mount option(alloc_star) not allowed. Make sure there "
                  "are no whitespaces in the input. Allowed options: "
-                 "['fatal_errors', '', 'thread_pool', 'max_inline', "
-                 "'ssd_spread', 'clear_cache', 'inode_cache', 'nodatacow', "
-                 "'noatime', 'nodatasum', 'alloc_start',"
-                 " 'noacl', 'compress-force', 'space_cache', 'ssd', 'discard',"
-                 " 'commit', 'autodefrag', 'metadata_ratio', 'nospace_cache']")
+                 "['alloc_start', 'autodefrag', 'clear_cache', 'commit', "
+                 "'compress-force', 'degraded', 'discard', 'fatal_errors', "
+                 "'inode_cache', 'max_inline', 'metadata_ratio', 'noacl', "
+                 "'noatime', 'nodatacow', 'nodatasum', 'nospace_cache', "
+                 "'nossd', 'ro', 'rw', 'skip_balance', 'space_cache', "
+                 "'ssd', 'ssd_spread', 'thread_pool', "
+                 "'']")
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -336,11 +338,12 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response3.data['mnt_options'], 'fatal_errors')
         self.assertEqual(response3.data['compression'], 'zlib')
 
-        valid_mnt_options = ('fatal_errors,thread_pool=1,max_inline=2,ssd_'
-                             'spread,clear_cache,inode_cache,nodatacow,'
-                             'noatime,nodatasum,alloc_start=3,noacl,space_'
-                             'cache,ssd,discard,commit=4,autodefrag,'
-                             'metadata_ratio=5,nospace_cache')
+        valid_mnt_options = ('alloc_start=3,autodefrag,clear_cache,commit=4,'
+                             'degraded,discard,fatal_errors,inode_cache,'
+                             'max_inline=2,metadata_ratio=5,noacl,noatime,'
+                             'nodatacow,nodatasum,nospace_cache,nossd,ro,'
+                             'rw,skip_balance,space_cache,ssd,ssd_spread,'
+                             'thread_pool=1')
 
         data2 = {'mnt_options': valid_mnt_options}
         response3 = self.client.put('%s/singleton/remount' % self.BASE_URL,
