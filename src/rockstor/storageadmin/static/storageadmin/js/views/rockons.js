@@ -906,10 +906,10 @@ RockonSettingsWizardView = WizardView.extend({
                 }
             }
         } else if (this.currentPageNum == (this.pages.length - 2)) {
-            this.$('#prev-page').html('Add Storage');
+            this.$('#prev-page').show();
             this.$('#next-page').html('Next');
         } else if (this.currentPageNum == (this.pages.length - 1)) {
-            this.$('#prev-page').hide();
+            this.$('#prev-page').show();
             this.$('#next-page').html('Submit');
         } else {
             this.$('#prev-page').show();
