@@ -69,6 +69,16 @@ class NetworkConnection(models.Model):
         return self.ipv4_addresses.split(',')[0].split('/')[0]
 
     @property
+    def mtu(self):
+        if self.ethernetconnection_set.count() > 0:
+            eco = self.ethernetconnection_set.first()
+            try:
+                return int(eco.mtu)
+            except ValueError:
+                pass
+        return 1500
+
+    @property
     def ctype(self):
         if (self.ethernetconnection_set.count() > 0):
             return 'ethernet'

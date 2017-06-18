@@ -169,6 +169,7 @@ class NetworkDeviceSerializer(serializers.ModelSerializer):
 
 class NetworkConnectionSerializer(serializers.ModelSerializer):
     ctype = serializers.CharField()
+    mtu = serializers.IntegerField()
     team_profile = serializers.CharField()
     bond_profile = serializers.CharField()
 

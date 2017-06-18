@@ -94,13 +94,19 @@
             </div>
             </div>
         </div><!--close multiDevice -->
-          <div class="form-group">
+        <div class="form-group">
           <label class="col-sm-4 control-label" for="method">Config Method<span class="required"> *</span></label>
           <div class="col-sm-4">
             <select class="form-control" id="method" name="method">
               <option value="auto" {{#if connection}}{{#isAuto connection}}selected="selected"{{/isAuto}}{{/if}}>Auto (DHCP)</option>
               <option value="manual" {{#if connection}}{{#isAuto connection}}{{else}}selected="selected"{{/isAuto}}{{/if}}>Manual</option>
             </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label">MTU</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="mtu" name="mtu" {{#if connection}}value="{{connection.mtu}}"{{/if}} placeholder="1500">
           </div>
         </div>
         <div id="methodOptionalFields" {{#if connection}}{{#isAuto connection}}style="display:none;"{{/isAuto}}{{else}}style="display:none;"{{/if}}>

@@ -179,6 +179,11 @@ NetworkConnectionView = RockstorLayoutView.extend({
             placement: 'right',
             title: 'A comma separated list of DNS search domains.'
         });
+        this.$('#mtu').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Enter a value in [1500-9000] range. Defaults to 1500.'
+        });
     },
 
     // hide fields when selected method is auto
