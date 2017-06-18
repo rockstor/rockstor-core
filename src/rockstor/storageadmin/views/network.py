@@ -33,6 +33,10 @@ import rest_framework_custom as rfc
 import logging
 logger = logging.getLogger(__name__)
 
+MIN_MTU = 1500
+MAX_MTU = 9000
+DEFAULT_MTU = MIN_MTU
+
 
 class NetworkMixin(object):
     # Runners for teams. @todo: support basic defaults + custom configuration.
@@ -297,6 +301,15 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
         with self._handle_exception(request):
             nco = self._nco(request, id)
             method = request.data.get('method')
+            mtu = DEFAULT_MTU
+            try:
+                e_msg = ('mtu must be an integer in {} - {} range'.format(
+                    MIN_MTU, MAX_MTU))
+                mtu = int(request.data.get('mtu', DEFAULT_MTU))
+                if mtu < MIN_MTU or mtu > MAX_MTU:
+                    handle_exception(Exception(e_msg), request)
+            except ValueError:
+                handle_exception(Exception(e_msg), request)
             ipaddr = gateway = dns_servers = search_domains = None
             if (method == 'manual'):
                 ipaddr = request.data.get('ipaddr', None)
@@ -309,7 +322,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                 self._delete_connection(nco)
                 network.new_ethernet_connection(nco.name, device, ipaddr,
                                                 gateway, dns_servers,
-                                                search_domains)
+                                                search_domains, mtu)
             elif (nco.ctype == 'team'):
                 team_profile = nco.team_profile
                 devices = []
@@ -319,7 +332,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                 self._delete_connection(nco)
                 network.new_team_connection(
                     nco.name, self.runners[team_profile], devices, ipaddr,
-                    gateway, dns_servers, search_domains)
+                    gateway, dns_servers, search_domains, mtu)
 
             return Response(NetworkConnectionSerializer(nco).data)
 

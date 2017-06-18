@@ -22,6 +22,7 @@ from osi import run_command
 
 
 NMCLI = '/usr/bin/nmcli'
+DEFAULT_MTU = 1500
 
 
 def val(s):
@@ -184,7 +185,8 @@ def reload_connection(uuid):
     return run_command([NMCLI, 'c', 'reload', uuid])
 
 
-def new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains):
+def new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains,
+                          mtu=DEFAULT_MTU):
     manual = False
     if (ipaddr is not None and len(ipaddr.strip()) > 0):
         manual = True
@@ -199,13 +201,18 @@ def new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains):
     if (search_domains is not None and len(search_domains.strip()) > 0):
         run_command([NMCLI, 'c', 'mod', name, 'ipv4.dns-search',
                      search_domains])
+    if (mtu != DEFAULT_MTU):
+        # no need to set it if it's default value
+        run_command([NMCLI, 'c', 'mod', name, '802-3-ethernet.mtu', mtu])
 
 
 def new_ethernet_connection(name, ifname, ipaddr=None, gateway=None,
-                            dns_servers=None, search_domains=None):
+                            dns_servers=None, search_domains=None,
+                            mtu=DEFAULT_MTU):
     run_command([NMCLI, 'c', 'add', 'type', 'ethernet', 'con-name', name,
                  'ifname', ifname])
-    new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains)
+    new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains,
+                          mtu=mtu)
     # @todo: probably better to get the uuid and reload with it instead of
     # name.
     reload_connection(name)
@@ -225,10 +232,12 @@ def new_member_helper(name, members, mtype):
 # are very similar. We should consolidate after we are able to support all
 # common config parameters in both modes.
 def new_team_connection(name, config, members, ipaddr=None, gateway=None,
-                        dns_servers=None, search_domains=None):
+                        dns_servers=None, search_domains=None,
+                        mtu=DEFAULT_MTU):
     run_command([NMCLI, 'c', 'add', 'type', 'team', 'con-name', name, 'ifname',
                  name, 'config', config])
-    new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains)
+    new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains,
+                          mtu)
     new_member_helper(name, members, 'team-slave')
     reload_connection(name)
 
