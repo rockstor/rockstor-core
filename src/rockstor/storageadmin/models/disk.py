@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import json
 from django.db import models
 from storageadmin.models import Pool
 from system.osi import get_disk_power_status, read_hdparm_setting, \
@@ -92,6 +93,25 @@ class Disk(models.Model):
             return get_dev_temp_name(str(self.name))
         except:
             return None
+
+    @property
+    def target_name(self, *args, **kwargs):
+        """
+        Helper method to enable easier retrieval of a (re)direct role
+        name, if any. Allows for Disk.target_name which substitutes a
+        redirect role enforced name (eg to a partition) or fails over
+        to disk.name if no redirect role is in play or an exception is
+        encountered.
+        :return: role redirected name if any, otherwise return name.
+        """
+        try:
+            if self.role is not None:
+                disk_role_dict = json.loads(self.role)
+                if 'redirect' in disk_role_dict:
+                    return disk_role_dict.get('redirect', self.name)
+            return self.name
+        except:
+            return self.name
 
     class Meta:
         app_label = 'storageadmin'
