@@ -240,21 +240,27 @@ def mount_root(pool):
     if (pool.compression is not None):
         if (re.search('compress', mnt_options) is None):
             mnt_options = ('%s,compress=%s' % (mnt_options, pool.compression))
+    # Prior to a mount by label attempt we call btrfs device scan on all
+    # members of our pool. This call ensures btrfs has up-to-date info on
+    # the relevant devices and avoids the potential overkill of a system wide
+    # call such as is performed in the rockstor-bootstrap service on boot.
+    # Disk.target_name ensures we observe any redirect roles.
+    device_scan([dev.target_name for dev in pool.disk_set.all()])
     if (os.path.exists(mnt_device)):
         if (len(mnt_options) > 0):
             mnt_cmd.extend(['-o', mnt_options])
         run_command(mnt_cmd)
         return root_pool_mnt
-
     # If we cannot mount by-label, let's try mounting by device; one by one
-    # until we get our first success.
+    # until we get our first success. All devices known to our pool object
+    # have already been scanned prior to our mount by label attempt above.
     if (pool.disk_set.count() < 1):
         raise Exception('Cannot mount Pool(%s) as it has no disks in it.'
                         % pool.name)
     last_device = pool.disk_set.last()
     logger.info('Mount by label failed.')
     for device in pool.disk_set.all():
-        mnt_device = ('/dev/disk/by-id/%s' % device.name)
+        mnt_device = ('/dev/disk/by-id/%s' % device.target_name)
         logger.info('Attempting mount by device (%s).' % mnt_device)
         if (os.path.exists(mnt_device)):
             mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
@@ -1002,8 +1008,39 @@ def balance_status(pool):
     return stats
 
 
-def device_scan():
-    return run_command([BTRFS, 'device', 'scan'])
+def device_scan(dev_byid_list=['all']):
+    """
+    When called with no parameters a 'btrfs device scan' is executed, ie a
+    system wide scan of all /dev block devices to update their btrfs status.
+    Otherwise the list of devices is iterated and a 'btrfs device scan dev'
+    is executed for each item in the passed list. Detached device names and
+    path names that don't exist are ignored.
+    :param dev_byid_list: list of byid device names (without paths) to perform
+    a 'btrfs device scan' on. If not supplied then a single element list
+    ['all'] is substituted and this flags a system wide scan request.
+    :return: (out, err, rc) of the first rc !=0 run or the last rc = 0 run.
+    """
+    out = err = ['']
+    # default to successful return code unless we find otherwise.
+    rc = 0
+    if len(dev_byid_list) > 0:
+        if dev_byid_list[0] == 'all':
+            return run_command([BTRFS, 'device', 'scan'])
+        for dev_byid in dev_byid_list:
+            if re.match('detached-', dev_byid) is not None:
+                # Skip detached devices as we know they don't exist.
+                # Potential log point for early detached device discovery.
+                continue
+            dev_byid_withpath = ('/dev/disk/by-id/%s' % dev_byid)
+            if os.path.exists(dev_byid_withpath):  # only scan existing devices
+                out, err, rc = run_command(
+                    [BTRFS, 'device', 'scan', dev_byid_withpath])
+                if rc != 0:
+                    # Return on first non zero return code.
+                    # Note that a drive specific device scan on a non btrfs
+                    # device returns 'Invalid argument'!! and rc=1.
+                    return out, err, rc
+    return out, err, rc
 
 
 def btrfs_uuid(disk):
