@@ -351,7 +351,8 @@ def mount_share(share, mnt_pt):
     if (is_mounted(mnt_pt)):
         return
     mount_root(share.pool)
-    pool_device = ('/dev/disk/by-id/%s' % share.pool.disk_set.first().name)
+    pool_device = ('/dev/disk/by-id/%s' %
+                   share.pool.disk_set.first().target_name)
     subvol_str = 'subvol=%s' % share.subvol_name
     create_tmp_dir(mnt_pt)
     toggle_path_rw(mnt_pt, rw=False)
@@ -360,7 +361,8 @@ def mount_share(share, mnt_pt):
 
 
 def mount_snap(share, snap_name, snap_mnt=None):
-    pool_device = ('/dev/disk/by-id/%s' % share.pool.disk_set.first().name)
+    pool_device = ('/dev/disk/by-id/%s' %
+                   share.pool.disk_set.first().target_name)
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
     rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
