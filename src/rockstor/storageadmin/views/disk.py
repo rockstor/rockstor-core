@@ -398,10 +398,12 @@ class DiskDetailView(rfc.GenericView):
         If disk has a redirect role the redirect role value is substituted
         for that disk's name. This effects a device name re-direction:
         ie base dev to partition on base dev for example.
+        N.B. Disk model now has sister code under Disk.target_name property.
         :param disk:  disk object
         :param request:
         :return: by-id disk name (without path) post role filter processing
         """
+        # TODO: Consider revising to use new Disk.target_name property.
         try:
             disk_name = disk.name
             if disk.role is not None:
