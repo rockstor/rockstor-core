@@ -209,7 +209,7 @@ def toggle_auth_service(service, command, config=None):
 def rockstor_afp_config(fo, afpl):
     fo.write(';####BEGIN: Rockstor AFP CONFIG####\n')
     for c in afpl:
-        vol_size = int(c.vol_size() / 1024)
+        vol_size = int(c.vol_size / 1024)
         fo.write('[%s]\n' % c.description)
         fo.write('  path = %s\n' % c.path)
         fo.write('  time machine = %s\n' % c.time_machine)
