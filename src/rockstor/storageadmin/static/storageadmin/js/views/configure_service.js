@@ -354,6 +354,9 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
                 jqxhr.done(function() {
                     enableButton(button);
                     $('#services_modal').modal('hide');
+                    app_router.navigate('/services', {
+                        trigger: true
+                    });
                 });
 
                 jqxhr.fail(function(xhr, status, error) {
