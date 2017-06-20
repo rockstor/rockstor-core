@@ -16,9 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.db import models
 from django.conf import settings
+from django.db import models
+from django.db.models.signals import (post_save, post_delete)
+from django.dispatch import receiver
+
 from storageadmin.models import Pool
+from .netatalk_share import NetatalkShare
+from system.services import (systemctl, refresh_afp_config)
 
 
 class Share(models.Model):
@@ -58,3 +63,26 @@ class Share(models.Model):
 
     class Meta:
         app_label = 'storageadmin'
+
+
+def refresh_afp():
+    refresh_afp_config(list(NetatalkShare.objects.all()))
+    systemctl('netatalk', 'reload-or-restart')
+
+
+@receiver(post_save, sender=Share, dispatch_uid='update_afp')
+def update_afp(sender, instance, **kwargs):
+    try:
+        # throws exception and short circuits if netatalkshare doesn't exist.
+        instance.netatalkshare
+        refresh_afp()
+    except Exception:
+        pass
+
+
+@receiver(post_delete, sender=Share, dispatch_uid='clean_afp')
+def clean_afp(sender, instance, **kwargs):
+    try:
+        refresh_afp()
+    except Exception:
+        pass
