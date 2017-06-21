@@ -20,6 +20,7 @@ import os
 import requests
 from rest_framework.response import Response
 from django.db import transaction
+from smart_manager.models import Service
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
                                  ContainerOption, DCustomConfig,
                                  DContainerLink, DContainerEnv)
@@ -63,7 +64,6 @@ class RockOnView(rfc.GenericView):
                                'pending Task(%s).' % (ft.uuid, pt.uuid))
                         handle_exception(Exception(msg), self.request)
                     failed_rids[rid].delete()
-                    logger.debug('deleted failed task')
                     del failed_rids[rid]
             for ro in RockOn.objects.all():
                 if (ro.state == 'installed'):
@@ -383,6 +383,10 @@ class RockOnView(rfc.GenericView):
                 eo.delete()
 
     def _get_available(self):
+        if Service.objects.get(name='docker').config is None:
+            # don't fetch if service is not configured.
+            return {}
+
         url_root = settings.ROCKONS.get('remote_metastore')
         remote_root = ('%s/%s' %
                        (url_root, settings.ROCKONS.get('remote_root')))
