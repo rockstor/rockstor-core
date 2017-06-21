@@ -135,7 +135,7 @@ ServicesView = Backbone.View.extend({
         var serviceName = $(event.target).attr('data-service-name');
         var serviceModel = this.collection.get(serviceName); // extract the service model from the collection to obtain config property
         if(!serviceModel.get('config')){
-            app_router.navigate('services/docker/edit', {
+            app_router.navigate('services/' + serviceName + '/edit', {
                 trigger: true
             });
         } else {
