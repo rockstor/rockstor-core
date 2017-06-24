@@ -16,8 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 from django.db import models
-
+from django.conf import settings
 
 class ConfigBackup(models.Model):
     filename = models.CharField(max_length=64)
@@ -28,5 +29,13 @@ class ConfigBackup(models.Model):
     def __unicode__(self):
         return "{0}".format(self.filename)
 
+    def full_path(self):
+        return os.path.join(self.cb_dir(), self.filename)
+
     class Meta:
         app_label = 'storageadmin'
+
+    @staticmethod
+    def cb_dir():
+        return settings.DEFAULT_CB_DIR
+

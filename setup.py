@@ -33,6 +33,7 @@ setup(
     entry_points={
         'console_scripts': [
             'backup-plugin = backup.scheduler:main',
+            'backup-config = scripts.config_backup:main',
             'bootstrap = scripts.bootstrap:main',
             'data-collector = smart_manager.data_collector:main',
             'debug-mode = scripts.debugmode:main',

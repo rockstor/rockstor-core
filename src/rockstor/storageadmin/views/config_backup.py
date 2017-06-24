@@ -25,7 +25,8 @@ from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from django.core.management import call_command
-from system.osi import run_command
+from system.osi import (run_command, md5sum)
+from system.config_backup import backup_config
 from datetime import datetime
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from django_ztask.decorators import task
@@ -160,58 +161,28 @@ def restore_config(cbid):
 
 class ConfigBackupMixin(object):
     serializer_class = ConfigBackupSerializer
-    cb_dir = os.path.join(settings.MEDIA_ROOT, 'config-backups')
-
-    @staticmethod
-    def _md5sum(fp):
-        return run_command(['/usr/bin/md5sum', fp])[0][0].split()[0]
 
 
 class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         for cbo in ConfigBackup.objects.all():
-            fp = os.path.join(self.cb_dir, cbo.filename)
+            fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
             if (not os.path.isfile(fp)):
                 cbo.delete()
-            md5sum = self._md5sum(fp)
-            if (md5sum != cbo.md5sum):
+            fp_md5sum = md5sum(fp)
+            if (fp_md5sum != cbo.md5sum):
                 logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
                              'Deleting dbo' %
-                             (cbo.filename, cbo.md5sum, md5sum))
+                             (cbo.filename, cbo.md5sum, fp_md5sum))
                 cbo.delete()
         return ConfigBackup.objects.filter().order_by('-id')
 
     @transaction.atomic
     def post(self, request):
-        models = {'storageadmin':
-                  ['user', 'group', 'sambashare', 'netatalkshare', 'nfsexport',
-                   'nfsexportgroup', 'advancednfsexport', ],
-                  'smart_manager':
-                  ['service', ], }
-        model_list = []
-        for a in models:
-            for m in models[a]:
-                model_list.append('%s.%s' % (a, m))
-        logger.debug('model list = %s' % model_list)
+        logger.debug('backing up config...')
         with self._handle_exception(request):
-            filename = ('backup-%s.json' %
-                        datetime.now().strftime('%Y-%m-%d-%H%M%S'))
-            if (not os.path.isdir(self.cb_dir)):
-                os.mkdir(self.cb_dir)
-            fp = os.path.join(self.cb_dir, filename)
-            with open(fp, 'w') as dfo:
-                call_command('dumpdata', *model_list, stdout=dfo)
-                dfo.write('\n')
-                call_command('dumpdata', database='smart_manager', *model_list,
-                             stdout=dfo)
-            run_command(['/usr/bin/gzip', fp])
-            gz_name = ('%s.gz' % filename)
-            fp = os.path.join(self.cb_dir, gz_name)
-            md5sum = self._md5sum(fp)
-            size = os.stat(fp).st_size
-            cbo = ConfigBackup(filename=gz_name, md5sum=md5sum, size=size)
-            cbo.save()
+            cbo = backup_config()
             return Response(ConfigBackupSerializer(cbo).data)
 
 
@@ -221,7 +192,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
     def delete(self, request, backup_id):
         with self._handle_exception(request):
             cbo = self._validate_input(backup_id, request)
-            fp = os.path.join(self.cb_dir, cbo.filename)
+            fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
             if (os.path.isfile(fp)):
                 os.remove(fp)
             cbo.delete()
@@ -232,7 +203,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
         with self._handle_exception(request):
             command = request.data.get('command', 'restore')
             if (command == 'restore'):
-                cbo = self._validate_input(backup_id)
+                cbo = self._validate_input(backup_id, request)
                 # models that need to be restored.
                 # 1. User, Group, Accesskeys?
                 # 2. SambaShare
@@ -260,14 +231,14 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         for cbo in ConfigBackup.objects.all():
-            fp = os.path.join(self.cb_dir, cbo.filename)
+            fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
             if (not os.path.isfile(fp)):
                 cbo.delete()
-            md5sum = self._md5sum(fp)
-            if (md5sum != cbo.md5sum):
+            fp_md5sum = md5sum(fp)
+            if (fp_md5sum != cbo.md5sum):
                 logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
                              'Deleting dbo' %
-                             (cbo.filename, cbo.md5sum, md5sum))
+                             (cbo.filename, cbo.md5sum, fp_md5sum))
                 cbo.delete()
         return ConfigBackup.objects.filter().order_by('-id')
 
@@ -282,11 +253,12 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
             cbo = ConfigBackup.objects.create(
                 filename=filename, config_backup=file_obj
             )
-            if (not os.path.isdir(self.cb_dir)):
-                os.mkdir(self.cb_dir)
-            fp = os.path.join(self.cb_dir, filename)
+            cb_dir = ConfigBackup.cb_dir()
+            if (not os.path.isdir()):
+                os.mkdir(cb_dir)
+            fp = os.path.join(cb_dir, filename)
 
-            cbo.md5sum = self._md5sum(fp)
+            cbo.md5sum = md5sum(fp)
             cbo.size = os.stat(fp).st_size
             cbo.save()
             return Response(ConfigBackupSerializer(cbo).data)
