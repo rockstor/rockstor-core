@@ -1035,8 +1035,12 @@ def device_scan(dev_byid_list=['all']):
                 continue
             dev_byid_withpath = ('/dev/disk/by-id/%s' % dev_byid)
             if os.path.exists(dev_byid_withpath):  # only scan existing devices
+                # using throw=False, to process the rc != 0 logic
+                # afterwards. Without throw=False, when rc != 0, exception is
+                # raised and the following if statement will never get
+                # executed.
                 out, err, rc = run_command(
-                    [BTRFS, 'device', 'scan', dev_byid_withpath])
+                    [BTRFS, 'device', 'scan', dev_byid_withpath], throw=False)
                 if rc != 0:
                     # Return on first non zero return code.
                     # Note that a drive specific device scan on a non btrfs
