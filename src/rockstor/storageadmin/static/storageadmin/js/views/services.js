@@ -131,13 +131,22 @@ ServicesView = Backbone.View.extend({
     },
 
     switchStatus: function(event, state) {
-
+        console.log("the event is: " + event + " The state is: " + state);
         var serviceName = $(event.target).attr('data-service-name');
-        if (state) {
-            this.startService(serviceName);
+        var serviceModel = this.collection.get(serviceName); // extract the service model from the collection to obtain config property
+
+        if (this.configurable_services.indexOf(serviceName) > -1 && !serviceModel.get('config') && state) {
+            app_router.navigate('services/' + serviceName + '/edit', {
+                trigger: true
+            });
         } else {
-            this.stopService(serviceName);
+            if (state) {
+                this.startService(serviceName);
+            } else {
+                this.stopService(serviceName);
+            }
         }
+
     },
 
     startService: function(serviceName) {
