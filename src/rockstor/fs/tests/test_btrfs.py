@@ -15,7 +15,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
-                      share_id)
+                      share_id, device_scan)
 from mock import patch
 
 
@@ -26,6 +26,11 @@ class Pool(object):
 
 
 class BTRFSTests(unittest.TestCase):
+    """
+    The tests in this suite can be run via the following command:
+    cd <root dir of rockstor ie /opt/rockstor>
+    ./bin/test --settings=test-settings -v 3 -p test_btrfs*
+    """
     def setUp(self):
         self.patch_run_command = patch('fs.btrfs.run_command')
         self.mock_run_command = self.patch_run_command.start()
@@ -424,3 +429,48 @@ class BTRFSTests(unittest.TestCase):
                          msg="Failed to get existing share_id regular example")
         with self.assertRaises(Exception):
             share_id(pool, nonexistent_share)
+
+    def test_device_scan_all(self):
+        """
+        Test device_scan with no arguments passed which defaults to scanning
+        the entire system
+        """
+        # setup mock output from a successful full system scan ie
+        # run_command executing 'btrfs device scan'
+        # In system wide scan mode device_scan simply returns the same so
+        # these values stand as run_command mock and expected output.
+        out = ['Scanning for Btrfs filesystems', '']
+        err = ['']
+        rc = 0
+        self.mock_run_command.return_value = (out, err, rc)
+        # Now test device_scan when executing the same, ie via no parameters
+        # call where it should return the exact same output.
+        self.assertEqual(device_scan(), (out, err, rc),
+                         msg="Failed to return results of successful system "
+                             "wide 'btrfs device scan'.")
+
+    def test_device_scan_parameter(self):
+        """
+        Test device_scan across various input.
+        """
+        # Expected output for a detached or non existent device parameter.
+        # This is also the expected output if an empty list is passed.
+        out = err = ['']
+        rc = 0
+        self.assertEqual(
+            device_scan(['detached-ea847422dff841fca3b716fb7dcdaa5a']),
+            (out, err, rc),
+            msg='Failed to ignore detached device.')
+        self.assertEqual(device_scan(['nonexistent-device']), (out, err, rc),
+                         msg='Failed to ignore nonexistent-device.')
+        self.assertEqual(device_scan([]), (out, err, rc),
+                         msg='Failed to ignore empty list.')
+        # Test for device_scan having been passed the base device name of a
+        # partitioned device.
+        # Mockup run_command return values for scanning a partitioned device:
+        out = ["Scanning for Btrfs filesystems in '/dev/vdc'", '']
+        err = ["ERROR: device scan failed on '/dev/vdc': Invalid argument", '']
+        rc = 1
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(device_scan(['virtio-serial-1']), (out, err, rc),
+                         msg='Failed to return results from non btrfs device.')

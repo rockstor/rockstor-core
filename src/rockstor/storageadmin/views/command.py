@@ -63,15 +63,8 @@ class CommandView(NFSExportMixin, APIView):
             try:
                 mount_root(p)
                 first_dev = p.disk_set.first()
-                first_dev_name = first_dev.name
-                # if we are looking at a device with a redirect role then
-                # redirect accordingly.
-                if first_dev.role is not None:
-                    disk_role_dict = json.loads(first_dev.role)
-                    if 'redirect' in disk_role_dict:
-                        # consider replacing None with first_dev.name
-                        first_dev_name = disk_role_dict.get('redirect', None)
-                pool_info = get_pool_info(first_dev_name)
+                # Observe any redirect role by using target_name.
+                pool_info = get_pool_info(first_dev.target_name)
                 p.name = pool_info['label']
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = p.usage_bound()

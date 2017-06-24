@@ -57,11 +57,13 @@ class PoolMixin(object):
         """
         Takes a series of disk objects and filters them based on their roles.
         For disk with a redirect role the role's value is substituted for that
-        disks name. This effects a name re-direction for redirect disks.
+        disks name. This effects a name re-direction for redirect role disks.
+        N.B. Disk model now has sister code under Disk.target_name property.
         :param disks:  list of disks object
         :param request:
         :return: list of disk names post role filter processing
         """
+        # TODO: Consider revising to use new Disk.target_name property.
         try:
             # Build dictionary of disks with roles
             role_disks = {d for d in disks if d.role is not None}
