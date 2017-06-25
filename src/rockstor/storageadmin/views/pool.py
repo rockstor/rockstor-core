@@ -325,14 +325,14 @@ class PoolListView(PoolMixin, rfc.GenericView):
 class PoolDetailView(PoolMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
-            pool = Pool.objects.get(name=self.kwargs['pname'])
+            pool = Pool.objects.get(id=self.kwargs['pid'])
             serialized_data = PoolInfoSerializer(pool)
             return Response(serialized_data.data)
         except Pool.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     @transaction.atomic
-    def put(self, request, pname, command):
+    def put(self, request, pid, command):
         """
         resize a pool.
         @pname: pool's name
@@ -341,14 +341,14 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
         """
         with self._handle_exception(request):
             try:
-                pool = Pool.objects.get(name=pname)
+                pool = Pool.objects.get(id=pid)
             except:
-                e_msg = ('Pool(%s) does not exist.' % pname)
+                e_msg = ('Pool(%d) does not exist.' % pid)
                 handle_exception(Exception(e_msg), request)
 
             if (pool.role == 'root'):
-                e_msg = ('Edit operations are not allowed on this Pool(%s) '
-                         'as it contains the operating system.' % pname)
+                e_msg = ('Edit operations are not allowed on this Pool(%d) '
+                         'as it contains the operating system.' % pid)
                 handle_exception(Exception(e_msg), request)
 
             if (command == 'remount'):
@@ -484,30 +484,30 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             return Response(PoolInfoSerializer(pool).data)
 
     @transaction.atomic
-    def delete(self, request, pname, command=''):
+    def delete(self, request, pid, command=''):
         force = True if (command == 'force') else False
         with self._handle_exception(request):
             try:
-                pool = Pool.objects.get(name=pname)
+                pool = Pool.objects.get(id=pid)
             except:
-                e_msg = ('Pool(%s) does not exist.' % pname)
+                e_msg = ('Pool(%d) does not exist.' % pid)
                 handle_exception(Exception(e_msg), request)
 
             if (pool.role == 'root'):
-                e_msg = ('Deletion of Pool(%s) is not allowed as it contains '
-                         'the operating system.' % pname)
+                e_msg = ('Deletion of Pool(%d) is not allowed as it contains '
+                         'the operating system.' % pid)
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(pool=pool).exists()):
                 if not force:
-                    e_msg = ('Pool(%s) is not empty. Delete is not allowed '
+                    e_msg = ('Pool(%d) is not empty. Delete is not allowed '
                              'until '
-                             'all shares in the pool are deleted' % (pname))
+                             'all shares in the pool are deleted' % (pid))
                     handle_exception(Exception(e_msg), request)
                 for so in Share.objects.filter(pool=pool):
                     remove_share(so.pool, so.subvol_name, so.pqgroup,
                                  force=force)
-            pool_path = ('%s%s' % (settings.MNT_PT, pname))
+            pool_path = ('%s%s' % (settings.MNT_PT, pool.name))
             umount_root(pool_path)
             pool.delete()
             try:

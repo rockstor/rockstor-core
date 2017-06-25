@@ -104,7 +104,7 @@ var DiskCollection = RockStorPaginatedCollection.extend({
 
 var Pool = Backbone.Model.extend({
     url: function() {
-        return '/api/pools/' + this.get('poolName') + '/';
+        return '/api/pools/' + this.get('pid') + '/';
     },
     sizeGB: function() {
         return this.get('size') / (1024 * 1024);
@@ -128,17 +128,6 @@ var PoolCollection = RockStorPaginatedCollection.extend({
     baseUrl: '/api/pools'
 });
 
-var SupportCase = Backbone.Model.extend({
-    url: function() {
-        return '/api/support/' + this.get('supportCaseId') + '/';
-    }
-});
-
-var SupportCaseCollection = Backbone.Collection.extend({
-    model: SupportCase,
-    url: '/api/support'
-});
-
 var Share = Backbone.Model.extend({
     url: function() {
         return '/api/shares/' + this.get('shareName');
@@ -148,7 +137,7 @@ var Share = Backbone.Model.extend({
 
 var PoolShare = Backbone.Model.extend({
     url: function() {
-        return '/api/pools/' + this.get('poolName');
+        return '/api/pools/' + this.get('pid');
     }
 });
 
@@ -158,7 +147,7 @@ var PoolShareCollection = Backbone.Collection.extend({
         this.options = options;
     },
     url: function() {
-        return '/api/pools/' + this.options.poolName + '/shares';
+        return '/api/pools/' + this.options.pid + '/shares';
     }
 });
 
@@ -228,14 +217,14 @@ var SnapshotsCollection = RockStorPaginatedCollection.extend({
 });
 
 
-var Poolscrub = Backbone.Model.extend({
+var PoolScrub = Backbone.Model.extend({
     url: function() {
         return '/api/pools/' + this.get('poolName') + '/scrub';
     }
 });
 
-var PoolscrubCollection = RockStorPaginatedCollection.extend({
-    model: Poolscrub,
+var PoolScrubCollection = RockStorPaginatedCollection.extend({
+    model: PoolScrub,
     initialize: function(models, options) {
         this.constructor.__super__.initialize.apply(this, arguments);
         if (options) {
@@ -254,7 +243,7 @@ var PoolscrubCollection = RockStorPaginatedCollection.extend({
 
 var PoolRebalance = Backbone.Model.extend({
     url: function() {
-        return '/api/pools/' + this.get('poolName') + '/balance';
+        return '/api/pools/' + this.get('pid') + '/balance';
     }
 });
 
@@ -266,8 +255,8 @@ var PoolRebalanceCollection = RockStorPaginatedCollection.extend({
             this.snapType = options.snapType;
         }
     },
-    setUrl: function(poolName) {
-        this.baseUrl = '/api/pools/' + poolName + '/balance';
+    setUrl: function(pid) {
+        this.baseUrl = '/api/pools/' + pid + '/balance';
     },
     extraParams: function() {
         var p = this.constructor.__super__.extraParams.apply(this, arguments);
@@ -557,19 +546,19 @@ var TaskDef = Backbone.Model.extend({
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).wakeup;
         }
-        return false;        
+        return false;
     },
     rtc_hour: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).rtc_hour;
         }
-        return 0;        
+        return 0;
     },
     rtc_minute: function () {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).rtc_minute;
         }
-        return 0;        
+        return 0;
     }
 
 });

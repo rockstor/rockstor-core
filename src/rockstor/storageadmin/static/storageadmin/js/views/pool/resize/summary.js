@@ -69,7 +69,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
             raidLevel = this.model.get('raidChange') ? this.model.get('raidLevel') :
                 this.model.get('pool').get('raid');
             return $.ajax({
-                url: '/api/pools/' + this.model.get('pool').get('name') + '/add',
+                url: '/api/pools/' + this.model.get('pool').get('id') + '/add',
                 type: 'PUT',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -84,7 +84,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
             });
         } else if (choice == 'remove') {
             return $.ajax({
-                url: '/api/pools/' + this.model.get('pool').get('name') + '/remove',
+                url: '/api/pools/' + this.model.get('pool').get('id') + '/remove',
                 type: 'PUT',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -99,7 +99,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
             });
         } else if (choice == 'raid') {
             return $.ajax({
-                url: '/api/pools/' + this.model.get('pool').get('name') + '/add',
+                url: '/api/pools/' + this.model.get('pool').get('id') + '/add',
                 type: 'PUT',
                 dataType: 'json',
                 contentType: 'application/json',

@@ -34,16 +34,16 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
     serializer_class = PoolBalanceSerializer
 
     @staticmethod
-    def _validate_pool(pname, request):
+    def _validate_pool(pid, request):
         try:
-            return Pool.objects.get(name=pname)
+            return Pool.objects.get(id=pid)
         except:
-            e_msg = ('Pool(%s) does not exist' % pname)
+            e_msg = ('Pool(%d) does not exist' % pid)
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            pool = self._validate_pool(self.kwargs['pname'], self.request)
+            pool = self._validate_pool(self.kwargs['pid'], self.request)
             self._balance_status(pool)
             return PoolBalance.objects.filter(pool=pool).order_by('-id')
 
@@ -87,8 +87,8 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
         return ps
 
     @transaction.atomic
-    def post(self, request, pname, command=None):
-        pool = self._validate_pool(pname, request)
+    def post(self, request, pid, command=None):
+        pool = self._validate_pool(pid, request)
         if (command is not None and command != 'status'):
             e_msg = ('Unknown balance command: %s' % command)
             handle_exception(Exception(e_msg), request)
@@ -109,7 +109,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                     p.save()
                 else:
                     e_msg = ('A Balance process is already running for '
-                             'pool(%s).' % pname)
+                             'pool(%s).' % pool.name)
                     handle_exception(Exception(e_msg), request)
 
             tid = self._balance_start(pool, force=force)

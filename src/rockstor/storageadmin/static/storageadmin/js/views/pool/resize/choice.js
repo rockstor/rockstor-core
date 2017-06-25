@@ -9,7 +9,7 @@ PoolResizeChoice = RockstorWizardPage.extend({
     events: {
         'click #change-raid': 'changeRaid',
         'click #add-disks': 'addDisks',
-        'click #remove-disks': 'removeDisks',
+        'click #remove-disks': 'removeDisks'
     },
 
     changeRaid: function() {

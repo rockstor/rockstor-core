@@ -32,16 +32,16 @@ logger = logging.getLogger(__name__)
 class PoolScrubView(rfc.GenericView):
     serializer_class = PoolScrubSerializer
 
-    def _validate_pool(self, pname, request):
+    def _validate_pool(self, pid, request):
         try:
-            return Pool.objects.get(name=pname)
+            return Pool.objects.get(id=pid)
         except:
-            e_msg = ('Pool: %s does not exist' % pname)
+            e_msg = ('Pool: %s does not exist' % pid)
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            pool = self._validate_pool(self.kwargs['pname'], self.request)
+            pool = self._validate_pool(self.kwargs['pid'], self.request)
             self._scrub_status(pool)
             return PoolScrub.objects.filter(pool=pool).order_by('-id')
 
@@ -62,8 +62,8 @@ class PoolScrubView(rfc.GenericView):
         return ps
 
     @transaction.atomic
-    def post(self, request, pname, command=None):
-        pool = self._validate_pool(pname, request)
+    def post(self, request, pid, command=None):
+        pool = self._validate_pool(pid, request)
         if (command is not None and command != 'status'):
             e_msg = ('Unknown scrub command: %s' % command)
             handle_exception(Exception(e_msg), request)
@@ -84,8 +84,8 @@ class PoolScrubView(rfc.GenericView):
                     p.save()
                 else:
                     e_msg = ('A Scrub process is already running for '
-                             'pool(%s). If you really want to kill it '
-                             'and start a new scrub, use force option' % pname)
+                             'pool(%d). If you really want to kill it '
+                             'and start a new scrub, use force option' % pid)
                     handle_exception(Exception(e_msg), request)
 
             scrub_pid = scrub_start(pool, force=force)
