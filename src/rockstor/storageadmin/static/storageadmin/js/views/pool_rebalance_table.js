@@ -48,7 +48,7 @@ PoolRebalanceTableModule = RockstorModuleView.extend({
         $(this.el).append(this.template({
             collection: this.collection,
             collectionNotEmpty: !this.collection.isEmpty(),
-            pool: this.pool,
+            pool: this.pool
         }));
         this.$('[rel=tooltip]').tooltip({
             placement: 'bottom'
@@ -64,7 +64,7 @@ PoolRebalanceTableModule = RockstorModuleView.extend({
         var _this = this;
         event.preventDefault();
         $(this.el).html(this.startRebalanceTemplate({
-            pool: this.pool,
+            pool: this.pool
         }));
 
         this.validator = this.$('#pool-rebalance-form').validate({
@@ -81,7 +81,7 @@ PoolRebalanceTableModule = RockstorModuleView.extend({
                     postdata = '{"force": "true"}';
                 }
                 $.ajax({
-                    url: '/api/pools/' + _this.pool.get('name') + '/balance',
+                    url: '/api/pools/' + _this.pool.get('id') + '/balance',
                     type: 'POST',
                     data: postdata,
                     success: function() {

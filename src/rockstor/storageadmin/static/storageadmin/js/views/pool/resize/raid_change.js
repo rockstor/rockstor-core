@@ -39,7 +39,7 @@ PoolRaidChange = RockstorWizardPage.extend({
     render: function() {
         $(this.el).html(this.template({
             model: this.model,
-            raidLevel: this.model.get('pool').get('raid'),
+            raidLevel: this.model.get('pool').get('raid')
         }));
         this.disks.fetch();
         return this;

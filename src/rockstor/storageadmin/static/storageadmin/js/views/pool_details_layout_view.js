@@ -29,26 +29,26 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     initialize: function() {
         // call initialize of base
         this.constructor.__super__.initialize.apply(this, arguments);
-        this.poolName = this.options.poolName;
+        this.pid = this.options.pid;
         this.cView = this.options.cView;
         this.template = window.JST.pool_pool_details_layout;
         this.resize_pool_info_template = window.JST.pool_resize_pool_info;
         this.compression_info_template = window.JST.pool_compression_info;
         this.pool = new Pool({
-            poolName: this.poolName
+            pid: this.pid
         });
         // create poolscrub models
-        this.poolscrubs = new PoolscrubCollection([], {
+        this.poolscrubs = new PoolScrubCollection([], {
             snapType: 'admin'
         });
         this.poolscrubs.pageSize = 5;
-        this.poolscrubs.setUrl(this.poolName);
+        this.poolscrubs.setUrl(this.pid);
         // create pool re-balance models
         this.poolrebalances = new PoolRebalanceCollection([], {
             snapType: 'admin'
         });
         this.poolrebalances.pageSize = 5;
-        this.poolrebalances.setUrl(this.poolName);
+        this.poolrebalances.setUrl(this.pid);
 
         this.dependencies.push(this.pool);
         this.dependencies.push(this.poolscrubs);
@@ -63,7 +63,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         };
         this.initHandlebarHelpers();
         this.poolShares = new PoolShareCollection([], {
-            poolName: this.poolName
+            pid: this.pid
         });
     },
 
@@ -72,7 +72,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         'click #js-confirm-pool-delete': 'confirmPoolDelete',
         'click #js-resize-pool': 'resizePool',
         'click #js-submit-resize': 'resizePoolSubmit',
-        'click #js-resize-cancel': 'resizePoolCancel',
+        'click #js-resize-cancel': 'resizePoolCancel'
     },
 
     render: function() {
@@ -89,7 +89,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         $(this.el).html(this.template({
             share: this.poolShares.models[0].attributes.results,
             poolName: this.pool.get('name'),
-            isPoolRoleRoot: poolRoleIsRoot,
+            isPoolRoleRoot: poolRoleIsRoot
         }));
 
         this.subviews['pool-info'] = new PoolInfoModule({
@@ -119,7 +119,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
 
         this.$('#ph-compression-info').html(this.compression_info_template({
-            pool: this.pool.toJSON(),
+            pool: this.pool.toJSON()
         }));
 
         this.$('#ph-resize-pool-info').html(
@@ -141,9 +141,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         //Bootstrap Inline Edit
         $.fn.editable.defaults.mode = 'inline';
         var compr = this.pool.get('compression');
-        var poolName = this.pool.get('poolName');
         var mntOptn = this.pool.get('mnt_options');
-        var url = '/api/pools/' + poolName + '/remount';
+        var url = '/api/pools/' + this.pool.get('id') + '/remount';
         $('#comprOptn').editable({
             value: compr,
             source: [{
@@ -167,7 +166,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
                     data: {
                         'compression': newCompr,
                         'mnt_options': mntOptn
-                    },
+                    }
                 });
             }
         });
@@ -208,8 +207,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-
-        var url = '/api/pools/' + this.poolName + '/force';
+        var url = '/api/pools/' + this.pool.get('id') + '/force';
         $.ajax({
             url: url,
             type: 'DELETE',
@@ -263,7 +261,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
                     }
                 });
                 $.ajax({
-                    url: '/api/pools/' + _this.pool.get('name') + '/remove',
+                    url: '/api/pools/' + _this.pool.get('id') + '/remove',
                     type: 'PUT',
                     dataType: 'json',
                     contentType: 'application/json',
@@ -312,7 +310,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
             }
         });
         $.ajax({
-            url: '/api/pools/' + _this.pool.get('name') + '/add',
+            url: '/api/pools/' + _this.pool.get('id') + '/add',
             type: 'PUT',
             dataType: 'json',
             contentType: 'application/json',

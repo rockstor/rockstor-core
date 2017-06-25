@@ -42,8 +42,8 @@ var AppRouter = Backbone.Router.extend({
         'disks/luks/:diskName': 'luksDrive',
         'disks/:diskName': 'showDisk',
         'pools': 'showPools',
-        'pools/:poolName': 'showPool',
-        'pools/:poolName/?cView=:cView': 'showPool',
+        'pools/:pid': 'showPool',
+        'pools/:pid/?cView=:cView': 'showPool',
         'add_pool': 'addPool',
         'shares': 'showShares',
         'add_share?poolName=:poolName': 'addShare',
@@ -246,13 +246,13 @@ var AppRouter = Backbone.Router.extend({
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    showPool: function(poolName, cView) {
+    showPool: function(pid, cView) {
         this.renderSidebar('storage', 'pools');
         $('#maincontent').empty();
         this.cleanup();
         this.currentLayout = new PoolDetailsLayoutView({
-            poolName: poolName,
-            cView: cView,
+            pid: pid,
+            cView: cView
         });
         $('#maincontent').append(this.currentLayout.render().el);
     },

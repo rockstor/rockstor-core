@@ -15,7 +15,7 @@
   <tbody>
     {{#each poolCollection}}
         <tr>
-            <td><a href="#pools/{{this.name}}"><i class="glyphicon glyphicon-list"></i>&nbsp;{{this.name}}</a>
+            <td><a href="#pools/{{this.id}}"><i class="glyphicon glyphicon-list"></i>&nbsp;{{this.name}}</a>
             {{#if (isRoot this.role)}}
                 <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS.
                 You can create Shares in it like in any other pool on the system.
@@ -24,7 +24,7 @@
 
             <td>{{humanReadableSize 'size' this.size this.reclaimable this.free}}
                 {{#unless (isRoot this.role)}}
-                      &nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
+                      &nbsp;<a href="#pools/{{this.id}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
                 {{/unless}}
             </td>
 
@@ -34,19 +34,19 @@
 
             <td>{{this.raid}}
                 {{#unless (isRoot this.role)}}
-                      &nbsp;<a href="#pools/{{this.name}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
+                      &nbsp;<a href="#pools/{{this.id}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
                 {{/unless}}
             </td>
             <td>
             {{#if (isRoot this.role)}}
                     OFF
             {{else}}
-                <strong><a href="#" class="status" data-type="select" data-mntoptn="{{this.mnt_options}}" data-pname="{{this.name}}">
+                <strong><a href="#" class="status" data-type="select" data-mntoptn="{{this.mnt_options}}" data-pid="{{this.id}}">
                 {{this.compression}}</a></strong>
             {{/if}}
             </td>
             <td>{{#unless (isRoot this.role)}}
-                <strong><a href="#" class="mntOptns" data-type="text" data-comp="{{this.compression}}" data-pname="{{this.name}}">
+                <strong><a href="#" class="mntOptns" data-type="text" data-comp="{{this.compression}}" data-pid="{{this.id}}">
                 {{this.mnt_options}}</a></strong>
                 {{/unless}}
             </td>
@@ -84,12 +84,12 @@
             <td>{{#if (isRoot this.role)}}
                     N/A
                 {{else}}
-                    <a id="delete_pool_{{this.name}}" data-name="{{this.name}}" data-action="delete" rel="tooltip" title="Delete pool">
+                    <a id="delete_pool_{{this.id}}" data-id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete pool">
                     <i class="glyphicon glyphicon-trash"></i></a>
                 {{/if}}
             </td>
         </tr>
-        <div id="delete-pool-modal-{{this.name}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div id="delete-pool-modal-{{this.id}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
          <div class="modal-dialog">
           <div class="modal-content">
            <div class="modal-header">
@@ -103,7 +103,7 @@
            </div>
            <div class="modal-footer">
             <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
-            <button id="js-confirm-pool-delete" data-name="{{this.name}}" class="btn btn-primary">Confirm</button>
+            <button id="js-confirm-pool-delete" data-id="{{this.id}}" class="btn btn-primary">Confirm</button>
            </div>
           </div>
          </div>

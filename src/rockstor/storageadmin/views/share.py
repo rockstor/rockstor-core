@@ -188,7 +188,7 @@ class PoolShareListView(ShareMixin, rfc.GenericView):
     serializer_class = SharePoolSerializer
 
     def get_queryset(self, *args, **kwargs):
-        pool = Pool.objects.get(name=self.kwargs.get('pname'))
+        pool = Pool.objects.get(id=self.kwargs.get('pid'))
         return pool.share_set.all()
 
 

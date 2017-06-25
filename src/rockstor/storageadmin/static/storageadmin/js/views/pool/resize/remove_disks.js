@@ -27,7 +27,7 @@
 PoolRemoveDisks = RockstorWizardPage.extend({
     events: {
         'click #checkAll': 'selectAllCheckboxes',
-        'click [class="diskname"]': 'clickCheckbox',
+        'click [class="diskname"]': 'clickCheckbox'
     },
 
     initialize: function() {

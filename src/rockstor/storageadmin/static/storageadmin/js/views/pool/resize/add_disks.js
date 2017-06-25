@@ -29,7 +29,7 @@ PoolAddDisks = RockstorWizardPage.extend({
 
     events: {
         'click #checkAll': 'selectAllCheckboxes',
-        'click [class="diskname"]': 'clickCheckbox',
+        'click [class="diskname"]': 'clickCheckbox'
     },
 
     initialize: function () {
@@ -46,7 +46,7 @@ PoolAddDisks = RockstorWizardPage.extend({
         RockstorWizardPage.prototype.render.apply(this, arguments);
         $(this.el).html(this.template({
             model: this.model.toJSON(),
-            raidLevel: this.model.get('pool').get('raid'),
+            raidLevel: this.model.get('pool').get('raid')
         }));
         this.disks.fetch();
         return this;
@@ -103,7 +103,7 @@ PoolAddDisks = RockstorWizardPage.extend({
         this.model.set('diskNames', diskNames);
         if (this.model.get('raidChange')) {
             this.model.set('raidLevel', this.$('#raid-level').val());
-        } 
+        }
         return $.Deferred().resolve();
     },
 
@@ -143,15 +143,15 @@ PoolAddDisks = RockstorWizardPage.extend({
         Handlebars.registerHelper('display_raid_levels', function(){
             var html = '';
             var _this = this;
-            var levels = ['raid0', 'raid1', 'raid10', 'raid5', 'raid6']; 
-            _.each(levels, function(level) { 
+            var levels = ['raid0', 'raid1', 'raid10', 'raid5', 'raid6'];
+            _.each(levels, function(level) {
                 if (_this.raidLevel != level) {
                     html += '<option value="' + level + '">' + level + '</option>';
                 }
             });
             return new Handlebars.SafeString(html);
         });
-        
+
         Handlebars.registerHelper('mathHelper', function (value, options) {
             return parseInt(value) + 1;
         });
@@ -161,4 +161,3 @@ PoolAddDisks = RockstorWizardPage.extend({
         });
     }
 });
-

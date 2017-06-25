@@ -37,7 +37,6 @@ PoolsView = RockstorLayoutView.extend({
     },
 
     initialize: function() {
-
         this.constructor.__super__.initialize.apply(this, arguments);
         this.pools_table_template = window.JST.pool_pools_table;
         this.collection = new PoolCollection();
@@ -47,7 +46,6 @@ PoolsView = RockstorLayoutView.extend({
         this.dependencies.push(this.collection);
         this.collection.on('reset', this.renderPools, this);
         this.initHandlebarHelpers();
-
     },
 
     render: function() {
@@ -98,17 +96,17 @@ PoolsView = RockstorLayoutView.extend({
                      {value: 'lzo', text: 'lzo'}
             ],
             success: function(response, newCompr){
-                         //use $(this) to dynamically get pool name from select dropdown.
-                var poolName = $(this).data('pname');
+                //use $(this) to dynamically get pool name from select dropdown.
+                var pid = $(this).data('pid');
                 var mntOptn = $(this).data('mntoptn');
                 $.ajax({
-                    url: '/api/pools/' + poolName + '/remount',
+                    url: '/api/pools/' + pid + '/remount',
                     type: 'PUT',
                     dataType: 'json',
                     data: {
                         'compression': newCompr,
                         'mnt_options': mntOptn
-                    },
+                    }
                 });
             }
         });
@@ -117,28 +115,27 @@ PoolsView = RockstorLayoutView.extend({
             title: 'Edit Mount Options',
             emptytext: 'None',
             success: function(response, newMntOptns){
-                var poolName = $(this).data('pname');
+                var pid = $(this).data('pid');
                 var compr = $(this).data('comp');
                 $.ajax({
-                    url: '/api/pools/' + poolName + '/remount',
+                    url: '/api/pools/' + pid + '/remount',
                     type: 'PUT',
                     dataType: 'json',
                     data: {
                         'compression': compr,
                         'mnt_options': newMntOptns
-                    },
+                    }
                 });
             }
         });
-
         return this;
     },
 
-    displayPoolInformation: function (poolName) {
+    displayPoolInformation: function (pid) {
         // set share name in confirm dialog
         // this.$('#pass-pool-name').html(poolName);
         //show the dialog
-        this.$('#delete-pool-modal-' + poolName).modal();
+        this.$('#delete-pool-modal-' + pid).modal();
         return false;
     },
 
@@ -149,8 +146,8 @@ PoolsView = RockstorLayoutView.extend({
         // Remove share names upon reopening
         $poolShares.html('');
         if (buttonDisabled(button)) return false;
-        var poolName = button.attr('data-name');
-        var poolShares = new PoolShareCollection([], {poolName: poolName});
+        var pid = button.attr('data-id');
+        var poolShares = new PoolShareCollection([], {pid: pid});
         poolShares.fetch({
             success: function (data) {
                 var shares = poolShares.models[0].attributes.results;
@@ -159,12 +156,12 @@ PoolsView = RockstorLayoutView.extend({
                     _.each(shares, function(share) {
                         $poolShares.append('<li>' + share.name +  ' (' + share.size_gb + ' GB)</li>');
                     });
-                    _this.displayPoolInformation(poolName);
+                    _this.displayPoolInformation(pid);
                 }
             },
             error: function (err) {
                 // Display anyways
-                _this.displayPoolInformation(poolName);
+                _this.displayPoolInformation(pid);
             }
         });
     },
@@ -174,15 +171,15 @@ PoolsView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var poolName = button.attr('data-name');
-        var url = '/api/pools/' + poolName + '/force';
+        var pid = button.attr('data-id');
+        var url = '/api/pools/' + pid + '/force';
         $.ajax({
             url: url,
             type: 'DELETE',
             dataType: 'json',
             success: function() {
                 enableButton(button);
-                _this.$('#delete-pool-modal-' + poolName).modal('hide');
+                _this.$('#delete-pool-modal-' + pid).modal('hide');
                 $('.modal-backdrop').remove();
                 _this.render();
             },
@@ -257,4 +254,3 @@ PoolsView = RockstorLayoutView.extend({
         });
     }
 });
-
