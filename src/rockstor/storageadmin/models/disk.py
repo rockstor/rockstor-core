@@ -23,6 +23,16 @@ from system.osi import get_disk_power_status, read_hdparm_setting, \
     get_disk_APM_level, get_dev_temp_name
 
 
+class AttachedManager(models.Manager):
+    """Manager subclass to return only attached disks"""
+    use_for_related_fields = True
+    def attached(self):
+        # Return default queryset after excluding name="detached-*" items.
+        # Alternative lookup type __regex=r'^detached-'
+        query_set = self.get_queryset()
+        return query_set.exclude(name__startswith='detached-')
+
+
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
     pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
@@ -58,6 +68,10 @@ class Disk(models.Model):
     role can be Null if no flags are in use.
     """
     role = models.CharField(max_length=1024, null=True)
+
+    # The default manager is the first defined.
+    attached = AttachedManager()  # Only return attached Disk objects.
+    objects = models.Manager()  # Ensure Object manager is still accessible.
 
     @property
     def pool_name(self, *args, **kwargs):
