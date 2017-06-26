@@ -24,6 +24,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
+from storageadmin.views import DiskMixin
 from system.osi import (uptime, kernel_info)
 from fs.btrfs import (mount_share, mount_root, qgroup_create, get_pool_info,
                       pool_raid, mount_snap)
@@ -47,7 +48,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CommandView(NFSExportMixin, APIView):
+class CommandView(DiskMixin, NFSExportMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,
                               RockstorOAuth2Authentication,)
@@ -78,7 +79,7 @@ class CommandView(NFSExportMixin, APIView):
     @transaction.atomic
     def post(self, request, command, rtcepoch=None):
         if (command == 'bootstrap'):
-
+            self._update_disk_state()
             self._refresh_pool_state()
             for p in Pool.objects.all():
                 import_shares(p, request)
@@ -291,6 +292,10 @@ class CommandView(NFSExportMixin, APIView):
                 msg = ('Failed to disable auto update due to this exception:  '
                        '%s' % e.__str__())
                 handle_exception(Exception(msg), request)
+
+        if (command == 'refresh-disk-state'):
+            self._update_disk_state()
+            return Response()
 
         if (command == 'refresh-pool-state'):
             self._refresh_pool_state()
