@@ -58,14 +58,22 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
     @transaction.atomic
     def _refresh_pool_state():
         for p in Pool.objects.all():
+            # If our pool has no disks, detached included, then delete it.
+            # We leave pools with all detached members in place intentionally.
             if (p.disk_set.count() == 0):
                 p.delete()
                 continue
+            # Log if no attached members are found, ie all devs are detached.
+            if p.disk_set.attached().count() == 0:
+                logger.error('Skipping Pool (%s) mount as there '
+                             'are no attached devices. Moving on.' %
+                             p.name)
+                continue
             try:
                 mount_root(p)
-                first_dev = p.disk_set.first()
+                first_attached_dev = p.disk_set.attached().first()
                 # Observe any redirect role by using target_name.
-                pool_info = get_pool_info(first_dev.target_name)
+                pool_info = get_pool_info(first_attached_dev.target_name)
                 p.name = pool_info['label']
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = p.usage_bound()
@@ -82,9 +90,13 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             self._update_disk_state()
             self._refresh_pool_state()
             for p in Pool.objects.all():
+                if p.disk_set.attached().count() == 0:
+                    continue
                 import_shares(p, request)
 
             for share in Share.objects.all():
+                if share.pool.disk_set.attached().count() == 0:
+                    continue
                 try:
                     if (share.pqgroup == settings.MODEL_DEFS['pqgroup']):
                         share.pqgroup = qgroup_create(share.pool)
