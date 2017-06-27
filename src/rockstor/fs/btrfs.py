@@ -352,7 +352,7 @@ def mount_share(share, mnt_pt):
         return
     mount_root(share.pool)
     pool_device = ('/dev/disk/by-id/%s' %
-                   share.pool.disk_set.first().target_name)
+                   share.pool.disk_set.attached().first().target_name)
     subvol_str = 'subvol=%s' % share.subvol_name
     create_tmp_dir(mnt_pt)
     toggle_path_rw(mnt_pt, rw=False)
@@ -362,7 +362,7 @@ def mount_share(share, mnt_pt):
 
 def mount_snap(share, snap_name, snap_mnt=None):
     pool_device = ('/dev/disk/by-id/%s' %
-                   share.pool.disk_set.first().target_name)
+                   share.pool.disk_set.attached().first().target_name)
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
     rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
@@ -648,7 +648,7 @@ def rollback_snap(snap_name, sname, subvol_name, pool):
     shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
     create_tmp_dir(mnt_pt)
     subvol_str = 'subvol=%s' % sname
-    dpath = '/dev/disk/by-id/%s' % pool.disk_set.first().target_name
+    dpath = '/dev/disk/by-id/%s' % pool.disk_set.attached().first().target_name
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, dpath, mnt_pt]
     run_command(mnt_cmd)
 
