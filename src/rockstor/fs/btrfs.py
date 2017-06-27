@@ -245,7 +245,7 @@ def mount_root(pool):
     # the relevant devices and avoids the potential overkill of a system wide
     # call such as is performed in the rockstor-bootstrap service on boot.
     # Disk.target_name ensures we observe any redirect roles.
-    device_scan([dev.target_name for dev in pool.disk_set.all()])
+    device_scan([dev.target_name for dev in pool.disk_set.attached()])
     if (os.path.exists(mnt_device)):
         if (len(mnt_options) > 0):
             mnt_cmd.extend(['-o', mnt_options])
@@ -257,9 +257,9 @@ def mount_root(pool):
     if (pool.disk_set.count() < 1):
         raise Exception('Cannot mount Pool(%s) as it has no disks in it.'
                         % pool.name)
-    last_device = pool.disk_set.last()
-    logger.info('Mount by label failed.')
-    for device in pool.disk_set.all():
+    last_device = pool.disk_set.attached().last()
+    logger.info('Mount by label (%s) failed.' % mnt_device)
+    for device in pool.disk_set.attached():
         mnt_device = ('/dev/disk/by-id/%s' % device.target_name)
         logger.info('Attempting mount by device (%s).' % mnt_device)
         if (os.path.exists(mnt_device)):
