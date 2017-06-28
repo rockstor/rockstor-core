@@ -885,6 +885,7 @@ $(document).ready(function() {
         var detail = jqXhr.responseText;
         var errJson = {};
         var tb = [];
+        var userError = false;
         if (jqXhr.status != 403) {
             new Clipboard('#clip');
             // dont show forbidden errors (for setup screen)
@@ -894,7 +895,11 @@ $(document).ready(function() {
                 if (errJson.length > 1) {
                     tb = errJson.slice(1);
                 }
-            } else if (jqXhr.status >= 400 && jqXhr.status < 500) {
+                if(jqXhr.status == 400){
+                    tb = [];
+                    userError = true;
+                }
+            } else if (jqXhr.status > 400 && jqXhr.status < 500) {
                 detail = 'Unknown client error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
             } else if (jqXhr.status >= 500 && jqXhr.status < 600) {
                 detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
@@ -906,13 +911,15 @@ $(document).ready(function() {
                     tb: tb,
                     stable: RockStorGlobals.updateChannel == 'Stable',
                     help: errJson.help,
-                    ajaxSettings: ajaxSettings
+                    ajaxSettings: ajaxSettings,
+                    userError: userError
                 }));
             } else {
                 $('.overlay-content', '#global-err-overlay').html(popuperrTemplate({
                     detail: detail,
                     tb: tb,
-                    stable: RockStorGlobals.updateChannel == 'Stable'
+                    stable: RockStorGlobals.updateChannel == 'Stable',
+                    userError: userError
                 }));
                 $('#global-err-overlay').overlay().load();
             }
