@@ -1,8 +1,11 @@
-<div class="alert alert-danger">
-  <strong><h5>Houston, we've had a problem.</h5></strong>
+  <div class="alert alert-danger">
+  {{#unless userError}}
+    <strong><h5>Houston, we've had a problem.</h5></strong>
+  {{/unless}}
   <div class="global-err-content">
     {{detail}}
   </div><br/>
+  {{#unless userError}}
   <div id="errorContent" class="global-err-content tracebackDiv">
     <pre>{{#each tb}}
             {{this}}
@@ -11,6 +14,7 @@
   </div>
 </div>
 <br>
+
 <div class="err-help reportError">
   {{#if stable}}
     <p>As a subscriber to Stable updates, you are eligible for commercial support. Please follow these steps to get help from the Rockstor team.</p>
@@ -32,3 +36,4 @@
         {{/if}}
   </ol>
 </div> <!-- err-help -->
+{{/unless}}
