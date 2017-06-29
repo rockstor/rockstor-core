@@ -52,6 +52,7 @@ def main():
     while True:
         try:
             aw = APIWrapper()
+            time.sleep(2)
             aw.api_call('network')
             aw.api_call('commands/bootstrap', calltype='post')
             break

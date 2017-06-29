@@ -245,7 +245,7 @@ def mount_root(pool):
     # the relevant devices and avoids the potential overkill of a system wide
     # call such as is performed in the rockstor-bootstrap service on boot.
     # Disk.target_name ensures we observe any redirect roles.
-    device_scan([dev.target_name for dev in pool.disk_set.all()])
+    device_scan([dev.target_name for dev in pool.disk_set.attached()])
     if (os.path.exists(mnt_device)):
         if (len(mnt_options) > 0):
             mnt_cmd.extend(['-o', mnt_options])
@@ -257,9 +257,9 @@ def mount_root(pool):
     if (pool.disk_set.count() < 1):
         raise Exception('Cannot mount Pool(%s) as it has no disks in it.'
                         % pool.name)
-    last_device = pool.disk_set.last()
-    logger.info('Mount by label failed.')
-    for device in pool.disk_set.all():
+    last_device = pool.disk_set.attached().last()
+    logger.info('Mount by label (%s) failed.' % mnt_device)
+    for device in pool.disk_set.attached():
         mnt_device = ('/dev/disk/by-id/%s' % device.target_name)
         logger.info('Attempting mount by device (%s).' % mnt_device)
         if (os.path.exists(mnt_device)):
@@ -352,7 +352,7 @@ def mount_share(share, mnt_pt):
         return
     mount_root(share.pool)
     pool_device = ('/dev/disk/by-id/%s' %
-                   share.pool.disk_set.first().target_name)
+                   share.pool.disk_set.attached().first().target_name)
     subvol_str = 'subvol=%s' % share.subvol_name
     create_tmp_dir(mnt_pt)
     toggle_path_rw(mnt_pt, rw=False)
@@ -362,7 +362,7 @@ def mount_share(share, mnt_pt):
 
 def mount_snap(share, snap_name, snap_mnt=None):
     pool_device = ('/dev/disk/by-id/%s' %
-                   share.pool.disk_set.first().target_name)
+                   share.pool.disk_set.attached().first().target_name)
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
     rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
@@ -648,7 +648,7 @@ def rollback_snap(snap_name, sname, subvol_name, pool):
     shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
     create_tmp_dir(mnt_pt)
     subvol_str = 'subvol=%s' % sname
-    dpath = '/dev/disk/by-id/%s' % pool.disk_set.first().name
+    dpath = '/dev/disk/by-id/%s' % pool.disk_set.attached().first().target_name
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, dpath, mnt_pt]
     run_command(mnt_cmd)
 

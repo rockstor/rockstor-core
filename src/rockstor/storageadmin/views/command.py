@@ -24,6 +24,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
+from storageadmin.views import DiskMixin
 from system.osi import (uptime, kernel_info)
 from fs.btrfs import (mount_share, mount_root, qgroup_create, get_pool_info,
                       pool_raid, mount_snap)
@@ -47,7 +48,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CommandView(NFSExportMixin, APIView):
+class CommandView(DiskMixin, NFSExportMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,
                               RockstorOAuth2Authentication,)
@@ -57,14 +58,22 @@ class CommandView(NFSExportMixin, APIView):
     @transaction.atomic
     def _refresh_pool_state():
         for p in Pool.objects.all():
+            # If our pool has no disks, detached included, then delete it.
+            # We leave pools with all detached members in place intentionally.
             if (p.disk_set.count() == 0):
                 p.delete()
                 continue
+            # Log if no attached members are found, ie all devs are detached.
+            if p.disk_set.attached().count() == 0:
+                logger.error('Skipping Pool (%s) mount as there '
+                             'are no attached devices. Moving on.' %
+                             p.name)
+                continue
             try:
                 mount_root(p)
-                first_dev = p.disk_set.first()
+                first_attached_dev = p.disk_set.attached().first()
                 # Observe any redirect role by using target_name.
-                pool_info = get_pool_info(first_dev.target_name)
+                pool_info = get_pool_info(first_attached_dev.target_name)
                 p.name = pool_info['label']
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = p.usage_bound()
@@ -78,12 +87,16 @@ class CommandView(NFSExportMixin, APIView):
     @transaction.atomic
     def post(self, request, command, rtcepoch=None):
         if (command == 'bootstrap'):
-
+            self._update_disk_state()
             self._refresh_pool_state()
             for p in Pool.objects.all():
+                if p.disk_set.attached().count() == 0:
+                    continue
                 import_shares(p, request)
 
             for share in Share.objects.all():
+                if share.pool.disk_set.attached().count() == 0:
+                    continue
                 try:
                     if (share.pqgroup == settings.MODEL_DEFS['pqgroup']):
                         share.pqgroup = qgroup_create(share.pool)
@@ -291,6 +304,10 @@ class CommandView(NFSExportMixin, APIView):
                 msg = ('Failed to disable auto update due to this exception:  '
                        '%s' % e.__str__())
                 handle_exception(Exception(msg), request)
+
+        if (command == 'refresh-disk-state'):
+            self._update_disk_state()
+            return Response()
 
         if (command == 'refresh-pool-state'):
             self._refresh_pool_state()
