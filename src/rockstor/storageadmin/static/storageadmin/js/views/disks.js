@@ -67,13 +67,13 @@ DisksView = RockstorLayoutView.extend({
         this.$('[rel=tooltip-top]').tooltip({
             placement: 'top',
             container: '#disks-table'
-        });        
+        });
         //initialize bootstrap switch
         this.$('[type=\'checkbox\']').bootstrapSwitch();
         this.$('[type=\'checkbox\']').bootstrapSwitch('onColor', 'success'); //left side text color
         this.$('[type=\'checkbox\']').bootstrapSwitch('offColor', 'danger'); //right side text color
-        
-        
+
+
       //added ext func to sort over SMART input checkboxes
         $.fn.dataTable.ext.order['dom-checkbox'] = function ( settings, col ) {
             return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
@@ -96,10 +96,10 @@ DisksView = RockstorLayoutView.extend({
                 null,
                 null,
                 { 'orderDataType': 'dom-checkbox' }
-            ]            
+            ]
         };
 
-        this.renderDataTables(customs);        
+        this.renderDataTables(customs);
     },
 
     setupDisks: function () {
@@ -120,10 +120,10 @@ DisksView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var diskName = button.data('disk-name');
-        if (confirm('Are you sure you want to force the following device into Standby mode ' + diskName + '?')) {
+        var diskId = button.data('disk-id');
+        if (confirm('Are you sure you want to force the device into Standby mode ?')) {
             $.ajax({
-                url: '/api/disks/' + diskName + '/pause',
+                url: '/api/disks/' + diskId + '/pause',
                 type: 'POST',
                 success: function (data, status, xhr) {
                     _this.render();
@@ -141,10 +141,10 @@ DisksView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var diskName = button.data('disk-name');
-        if (confirm('Are you sure you want to completely delete all data on the disk ' + diskName + '?')) {
+        var diskId = button.data('disk-id');
+        if (confirm('Are you sure you want to completely delete all data on the disk ?')) {
             $.ajax({
-                url: '/api/disks/' + diskName + '/wipe',
+                url: '/api/disks/' + diskId + '/wipe',
                 type: 'POST',
                 success: function (data, status, xhr) {
                     _this.render();
@@ -162,10 +162,10 @@ DisksView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var diskName = button.data('disk-name');
-        if (confirm('Are you sure you want to erase BTRFS filesystem(s) on the disk ' + diskName + '?')) {
+        var diskId = button.data('disk-id');
+        if (confirm('Are you sure you want to erase BTRFS filesystem(s) on the disk ?')) {
             $.ajax({
-                url: '/api/disks/' + diskName + '/btrfs-wipe',
+                url: '/api/disks/' + diskId + '/btrfs-wipe',
                 type: 'POST',
                 success: function (data, status, xhr) {
                     _this.render();
@@ -183,10 +183,10 @@ DisksView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var diskName = button.data('disk-name');
-        if (confirm('Are you sure you want to automatically import pools, shares and snapshots that may be on the disk ' + diskName + '?')) {
+        var diskId = button.data('disk-id');
+        if (confirm('Are you sure you want to automatically import pools, shares and snapshots that may be on the disk ?')) {
             $.ajax({
-                url: '/api/disks/' + diskName + '/btrfs-disk-import',
+                url: '/api/disks/' + diskId + '/btrfs-disk-import',
                 type: 'POST',
                 success: function (data, status, xhr) {
                     _this.render();
@@ -204,10 +204,10 @@ DisksView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var diskName = button.data('disk-name');
-        if (confirm('Are you sure you want to delete the disk ' + diskName + '?')) {
+        var diskId = button.data('disk-id');
+        if (confirm('Are you sure you want to delete the disk ?')) {
             $.ajax({
-                url: '/api/disks/' + diskName,
+                url: '/api/disks/' + diskId,
                 type: 'DELETE',
                 success: function (data, status, xhr) {
                     _this.render();
@@ -455,18 +455,18 @@ DisksView = RockstorLayoutView.extend({
     },
 
     smartToggle: function (event, state) {
-        var disk_name = $(event.target).attr('data-disk-name');
+        var disk_id = $(event.target).attr('data-disk-id');
         if (state) {
-            this.smartOn(disk_name);
+            this.smartOn(disk_id);
         } else {
-            this.smartOff(disk_name);
+            this.smartOff(disk_id);
         }
     },
 
-    smartOff: function (disk_name) {
+    smartOff: function (disk_id) {
         var _this = this;
         $.ajax({
-            url: '/api/disks/' + disk_name + '/disable-smart',
+            url: '/api/disks/' + disk_id + '/disable-smart',
             type: 'POST',
             success: function (data, status, xhr) {
                 _this.render();
@@ -474,10 +474,10 @@ DisksView = RockstorLayoutView.extend({
         });
     },
 
-    smartOn: function (disk_name) {
+    smartOn: function (disk_id) {
         var _this = this;
         $.ajax({
-            url: '/api/disks/' + disk_name + '/enable-smart',
+            url: '/api/disks/' + disk_id + '/enable-smart',
             type: 'POST',
             success: function (data, status, xhr) {
                 _this.render();
@@ -485,4 +485,3 @@ DisksView = RockstorLayoutView.extend({
         });
     }
 });
-

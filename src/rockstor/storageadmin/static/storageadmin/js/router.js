@@ -35,12 +35,12 @@ var AppRouter = Backbone.Router.extend({
         'setup': 'doSetup',
         'home': 'showHome',
         'disks': 'showDisks',
-        'disks/blink/:diskName': 'blinkDrive',
-        'disks/smartcustom/:diskName': 'smartcustomDrive',
-        'disks/spindown/:diskName': 'spindownDrive',
-        'disks/role/:diskName': 'roleDrive',
-        'disks/luks/:diskName': 'luksDrive',
-        'disks/:diskName': 'showDisk',
+        'disks/blink/:diskId': 'blinkDrive',
+        'disks/smartcustom/:diskId': 'smartcustomDrive',
+        'disks/spindown/:diskId': 'spindownDrive',
+        'disks/role/:diskId': 'roleDrive',
+        'disks/luks/:diskId': 'luksDrive',
+        'disks/:diskId': 'showDisk',
         'pools': 'showPools',
         'pools/:pid': 'showPool',
         'pools/:pid/?cView=:cView': 'showPool',
@@ -174,58 +174,58 @@ var AppRouter = Backbone.Router.extend({
 
     },
 
-    blinkDrive: function(diskName) {
+    blinkDrive: function(diskId) {
         this.renderSidebar('storage', 'disks');
         this.cleanup();
         this.currentLayout = new BlinkDiskView({
-            diskName: diskName
+            diskId: diskId
         });
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    smartcustomDrive: function(diskName) {
+    smartcustomDrive: function(diskId) {
         this.renderSidebar('storage', 'disks');
         this.cleanup();
         this.currentLayout = new SmartcustomDiskView({
-            diskName: diskName
+            diskId: diskId
         });
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    spindownDrive: function(diskName) {
+    spindownDrive: function(diskId) {
         this.renderSidebar('storage', 'disks');
         this.cleanup();
         this.currentLayout = new SpindownDiskView({
-            diskName: diskName
+            diskId: diskId
         });
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    roleDrive: function(diskName) {
+    roleDrive: function(diskId) {
         this.renderSidebar('storage', 'disks');
         this.cleanup();
-        this.currentLayout = new SetroleDiskView({diskName: diskName});
+        this.currentLayout = new SetroleDiskView({diskId: diskId});
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    luksDrive: function(diskName) {
+    luksDrive: function(diskId) {
         this.renderSidebar('storage', 'disks');
         this.cleanup();
-        this.currentLayout = new LuksDiskView({diskName: diskName});
+        this.currentLayout = new LuksDiskView({diskId: diskId});
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    showDisk: function(diskName) {
+    showDisk: function(diskId) {
         this.renderSidebar('storage', 'disks');
         $('#maincontent').empty();
         this.cleanup();
         this.currentLayout = new DiskDetailsLayoutView({
-            diskName: diskName
+            diskId: diskId
         });
         $('#maincontent').append(this.currentLayout.render().el);
     },

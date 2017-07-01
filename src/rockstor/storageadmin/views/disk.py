@@ -371,7 +371,7 @@ class DiskListView(DiskMixin, rfc.GenericView):
         with self._handle_exception(self.request):
             return Disk.objects.all().order_by('name')
 
-    def post(self, request, command, dname=None):
+    def post(self, request, command, did=None):
         with self._handle_exception(request):
             if (command == 'scan'):
                 return self._update_disk_state()
@@ -384,11 +384,11 @@ class DiskDetailView(rfc.GenericView):
     serializer_class = DiskInfoSerializer
 
     @staticmethod
-    def _validate_disk(dname, request):
+    def _validate_disk(did, request):
         try:
-            return Disk.objects.get(name=dname)
+            return Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk(%s) does not exist' % dname)
+            e_msg = ('Disk(%s) does not exist' % did)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -450,60 +450,59 @@ class DiskDetailView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
     def get(self, *args, **kwargs):
-        if 'dname' in self.kwargs:
+        if 'did' in self.kwargs:
             try:
-                data = Disk.objects.get(name=self.kwargs['dname'])
+                data = Disk.objects.get(id=self.kwargs['did'])
                 serialized_data = DiskInfoSerializer(data)
                 return Response(serialized_data.data)
             except:
                 return Response()
 
     @transaction.atomic
-    def delete(self, request, dname):
+    def delete(self, request, did):
         try:
-            disk = Disk.objects.get(name=dname)
+            disk = Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk: %s does not exist' % dname)
+            e_msg = ('Disk: %d does not exist' % did)
             handle_exception(Exception(e_msg), request)
 
         if (disk.offline is not True):
-            e_msg = ('Disk: %s is not offline. Cannot delete' % dname)
+            e_msg = ('Disk: %d is not offline. Cannot delete' % did)
             handle_exception(Exception(e_msg), request)
 
         try:
             disk.delete()
             return Response()
         except Exception as e:
-            e_msg = ('Could not remove disk(%s) due to system error' % dname)
+            e_msg = ('Could not remove disk(%s) due to system '
+                     'error' % disk.name)
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
 
-    def post(self, request, command, dname):
+    def post(self, request, did, command):
         with self._handle_exception(request):
-            if (command == 'wipe'):
-                return self._wipe(dname, request)
-            if (command == 'btrfs-wipe'):
-                return self._wipe(dname, request)
+            if (command in ('wipe', 'btrfs-wipe')):
+                return self._wipe(did, request)
             if (command == 'luks-format'):
-                return self._luks_format(dname, request, passphrase='')
+                return self._luks_format(did, request, passphrase='')
             if (command == 'btrfs-disk-import'):
-                return self._btrfs_disk_import(dname, request)
+                return self._btrfs_disk_import(did, request)
             if (command == 'blink-drive'):
-                return self._blink_drive(dname, request)
+                return self._blink_drive(did, request)
             if (command == 'enable-smart'):
-                return self._toggle_smart(dname, request, enable=True)
+                return self._toggle_smart(did, request, enable=True)
             if (command == 'disable-smart'):
-                return self._toggle_smart(dname, request)
+                return self._toggle_smart(did, request)
             if (command == 'smartcustom-drive'):
-                return self._smartcustom_drive(dname, request)
+                return self._smartcustom_drive(did, request)
             if (command == 'spindown-drive'):
-                return self._spindown_drive(dname, request)
+                return self._spindown_drive(did, request)
             if (command == 'pause'):
-                return self._pause(dname, request)
+                return self._pause(did, request)
             if (command == 'role-drive'):
-                return self._role_disk(dname, request)
+                return self._role_disk(did, request)
             if (command == 'luks-drive'):
-                return self._luks_disk(dname, request)
+                return self._luks_disk(did, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, '
                  'btrfs-wipe, luks-format, btrfs-disk-import, blink-drive, '
@@ -512,22 +511,22 @@ class DiskDetailView(rfc.GenericView):
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
-    def _wipe(self, dname, request):
-        disk = self._validate_disk(dname, request)
+    def _wipe(self, did, request):
+        disk = self._validate_disk(did, request)
         disk_name = self._role_filter_disk_name(disk, request)
         # Double check sanity of role_filter_disk_name by reversing back to
         # whole disk name (db name). Also we get isPartition in the process.
         reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
                                                                    request)
         if reverse_name != disk.name:
-            e_msg = ('Wipe operation on whole or partition of device (%s) was '
+            e_msg = ('Wipe operation on whole or partition of device (%d) was '
                      'rejected as there was a discrepancy in device name '
                      'resolution. Wipe was called with device name (%s) which '
-                     'redirected to (%s) but a check on this redirection '
+                     'redirected to (%d) but a check on this redirection '
                      'returned device name (%s), which is not equal to the '
                      'caller name as was expected. A Disks page Rescan may '
                      'help.'
-                     % (dname, dname, disk_name, reverse_name))
+                     % (disk.name, disk.name, disk_name, reverse_name))
             raise Exception(e_msg)
         wipe_disk(disk_name)
         disk.parted = isPartition
@@ -603,8 +602,8 @@ class DiskDetailView(rfc.GenericView):
         return Response(DiskInfoSerializer(disk).data)
 
     @transaction.atomic
-    def _luks_format(self, dname, request, passphrase):
-        disk = self._validate_disk(dname, request)
+    def _luks_format(self, did, request, passphrase):
+        disk = self._validate_disk(did, request)
         disk_name = self._role_filter_disk_name(disk, request)
         # Double check sanity of role_filter_disk_name by reversing back to
         # whole disk name (db name). Also we get isPartition in the process.
@@ -618,7 +617,7 @@ class DiskDetailView(rfc.GenericView):
                      'returned device name (%s), which is not equal to the '
                      'caller name as was expected. A Disks page Rescan may '
                      'help.'
-                     % (dname, dname, disk_name, reverse_name))
+                     % (disk.name, disk.name, disk_name, reverse_name))
             raise Exception(e_msg)
         # Check if we are a partition as we don't support LUKS in partition.
         # Front end should filter this out as an presented option but be
@@ -627,7 +626,7 @@ class DiskDetailView(rfc.GenericView):
             e_msg = ('A LUKS format was requested on device name (%s) which '
                      'was identifyed as a partiton. Rockstor does not '
                      'support LUKS in partition, only whole disk.'
-                     % dname)
+                     % disk.name)
             raise Exception(e_msg)
         luks_format_disk(disk_name, passphrase)
         disk.parted = isPartition  # should be False by now.
@@ -656,8 +655,8 @@ class DiskDetailView(rfc.GenericView):
         return Response(DiskInfoSerializer(disk).data)
 
     @transaction.atomic
-    def _smartcustom_drive(self, dname, request):
-        disk = self._validate_disk(dname, request)
+    def _smartcustom_drive(self, did, request):
+        disk = self._validate_disk(did, request)
         # TODO: Check on None, null, or '' for default in next command
         custom_smart_options = str(
             request.data.get('smartcustom_options', ''))
@@ -667,9 +666,9 @@ class DiskDetailView(rfc.GenericView):
         return Response(DiskInfoSerializer(disk).data)
 
     @transaction.atomic
-    def _btrfs_disk_import(self, dname, request):
+    def _btrfs_disk_import(self, did, request):
         try:
-            disk = self._validate_disk(dname, request)
+            disk = self._validate_disk(did, request)
             disk_name = self._role_filter_disk_name(disk, request)
             p_info = get_pool_info(disk_name)
             # get some options from saved config?
@@ -708,18 +707,18 @@ class DiskDetailView(rfc.GenericView):
                 import_snapshots(share)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
-            e_msg = ('Failed to import any pool on this device(%s). Error: %s'
-                     % (dname, e.__str__()))
+            e_msg = ('Failed to import any pool on this device(%d). Error: %s'
+                     % (did, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
-    def _role_disk(self, dname, request):
+    def _role_disk(self, did, request):
         """
         Resets device role db entries and wraps _wipe() but will only call
         _wipe() if no redirect role changes are also requested. If we fail
         to associate these 2 tasks then there is a risk of the redirect not
         coming into play prior to the wipe.
-        :param dname: disk name
+        :param did: disk id
         :param request:
         :return:
         """
@@ -728,7 +727,7 @@ class DiskDetailView(rfc.GenericView):
         redirect_role_change = False
         luks_passwords_match = False
         try:
-            disk = self._validate_disk(dname, request)
+            disk = self._validate_disk(did, request)
             # We can use this disk name directly as it is our db reference
             # no need to user _role_filter_disk_name as we only want to change
             # the db fields anyway.
@@ -820,7 +819,7 @@ class DiskDetailView(rfc.GenericView):
                                      'configuration" of "No auto unlock."')
                             raise Exception(e_msg)
                     # Not sure if this is the correct way to call our wipe.
-                    return self._wipe(dname, request)
+                    return self._wipe(disk.id, request)
                 if is_luks_format_ticked:
                     if not luks_passwords_match:
                         # Simple password mismatch, should be caught by front
@@ -856,18 +855,18 @@ class DiskDetailView(rfc.GenericView):
                                  'please select wipe first then return and '
                                  're-select LUKS format.')
                         raise Exception(e_msg)
-                    return self._luks_format(dname, request, luks_pass_one)
+                    return self._luks_format(disk.name, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
             e_msg = ('Failed to configure drive role, or wipe existing '
                      'filesystem, or do LUKS format on device (%s). Error: %s'
-                     % (dname, e.__str__()))
+                     % (did, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
     @classmethod
     @transaction.atomic
-    def _luks_disk(cls, dname, request):
-        disk = cls._validate_disk(dname, request)
+    def _luks_disk(cls, did, request):
+        disk = cls._validate_disk(did, request)
         crypttab_selection = str(
             request.data.get('crypttab_selection', 'false'))
         is_create_keyfile_ticked = request.data.get('create_keyfile_tick',
@@ -885,19 +884,19 @@ class DiskDetailView(rfc.GenericView):
             e_msg = ('LUKS operation not support on this Disk(%s) as it is '
                      'not recognized as a LUKS container (ie no "LUKS" role '
                      'found.)'
-                     % dname)
+                     % disk.name)
             handle_exception(Exception(e_msg), request)
         # Retrieve the uuid of our LUKS container.
         if 'uuid' not in roles['LUKS']:
             e_msg = ('Cannot complete LUKS configuration request as no uuid '
-                     'key was found in Disk(%s) LUKS role value. ' % dname)
+                     'key was found in Disk(%s) LUKS role value. ' % disk.name)
             handle_exception(Exception(e_msg), request)
         disk_uuid = roles['LUKS']['uuid']
         # catch create keyfile without pass request (shouldn't happen)
         if is_create_keyfile_ticked and luks_passphrase == '':
             e_msg = ('Cannot create LUKS keyfile without authorization via '
                      'passphrase. Empty passphrase received for Disk(%s).'
-                     % dname)
+                     % disk.name)
             handle_exception(Exception(e_msg), request)
         # catch keyfile request without compatible "Boot up config" selection.
         if crypttab_selection == 'none' or crypttab_selection == 'false':
@@ -905,7 +904,7 @@ class DiskDetailView(rfc.GenericView):
                 e_msg = ('Inconsistent LUKS configuration request for '
                          'Disk(%s). Keyfile creation requested without '
                          'compatible "Boot up configuratin" option'
-                         % dname)
+                         % disk.name)
                 handle_exception(Exception(e_msg), request)
         # Having performed the basic parameter validation above, we are ready
         # to try and apply the requested config. This is a multipart process.
@@ -942,7 +941,7 @@ class DiskDetailView(rfc.GenericView):
                                                             luks_passphrase):
                 e_msg = ('There was an unknown problem with establish_keyfile '
                          'when called by _luks_disk() for Disk(%s). Keyfile '
-                         'may not have been established.' % dname)
+                         'may not have been established.' % disk.name)
                 handle_exception(Exception(e_msg), request)
             # Having established our keyfile we update our LUKS role but only
             # for non custom keyfile config. As we don't change custom keyfile
@@ -959,7 +958,7 @@ class DiskDetailView(rfc.GenericView):
                 e_msg = ('There was an unknown problem with update_crypttab '
                          'when called by _luks_disk() for Disk(%s). No custom '
                          'keyfile config found. No /etc/crypttab changes were '
-                         'made.' % dname)
+                         'made.' % disk.name)
                 handle_exception(Exception(e_msg), request)
         else:
             # crypttab_selection = 'none' or 'false' so update crypttab
@@ -967,7 +966,7 @@ class DiskDetailView(rfc.GenericView):
             if not update_crypttab(disk_uuid, crypttab_selection):
                 e_msg = ('There was an unknown problem with update_crypttab '
                          'when called by _luks_disk() for Disk(%s). No '
-                         '/etc/crypttab changes were made.' % dname)
+                         '/etc/crypttab changes were made.' % disk.name)
                 handle_exception(Exception(e_msg), request)
         # Reflect the crypttab changes in our LUKS role.
         if crypttab_selection == 'false':
@@ -989,17 +988,17 @@ class DiskDetailView(rfc.GenericView):
         out, err, rc = trigger_systemd_update()
         if rc != 0:
             e_msg = ('There was an unknown problem with systemd update when '
-                     'called by _luks_disk() for Disk(%s).' % dname)
+                     'called by _luks_disk() for Disk(%s).' % disk.name)
             handle_exception(Exception(e_msg), request)
         return Response()
 
     @classmethod
     @transaction.atomic
-    def _toggle_smart(cls, dname, request, enable=False):
-        disk = cls._validate_disk(dname, request)
+    def _toggle_smart(cls, did, request, enable=False):
+        disk = cls._validate_disk(did, request)
         if (not disk.smart_available):
             e_msg = ('S.M.A.R.T support is not available on this Disk(%s)'
-                     % dname)
+                     % disk.name)
             handle_exception(Exception(e_msg), request)
         smart.toggle_smart(disk.name, disk.smart_options, enable)
         disk.smart_enabled = enable
@@ -1007,8 +1006,8 @@ class DiskDetailView(rfc.GenericView):
         return Response(DiskInfoSerializer(disk).data)
 
     @classmethod
-    def _blink_drive(cls, dname, request):
-        disk = cls._validate_disk(dname, request)
+    def _blink_drive(cls, did, request):
+        disk = cls._validate_disk(did, request)
         total_time = int(request.data.get('total_time', 90))
         blink_time = int(request.data.get('blink_time', 15))
         sleep_time = int(request.data.get('sleep_time', 5))
@@ -1016,8 +1015,8 @@ class DiskDetailView(rfc.GenericView):
         return Response()
 
     @classmethod
-    def _spindown_drive(cls, dname, request):
-        disk = cls._validate_disk(dname, request)
+    def _spindown_drive(cls, did, request):
+        disk = cls._validate_disk(did, request)
         spindown_time = int(request.data.get('spindown_time', 20))
         spindown_message = str(
             request.data.get('spindown_message', 'message issue!'))
@@ -1027,7 +1026,7 @@ class DiskDetailView(rfc.GenericView):
         return Response()
 
     @classmethod
-    def _pause(cls, dname, request):
-        disk = cls._validate_disk(dname, request)
+    def _pause(cls, did, request):
+        disk = cls._validate_disk(did, request)
         enter_standby(disk.name)
         return Response()

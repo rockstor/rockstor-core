@@ -38,16 +38,16 @@ class DiskSMARTDetailView(rfc.GenericView):
     serializer_class = SMARTInfoSerializer
 
     @staticmethod
-    def _validate_disk(dname, request):
+    def _validate_disk(did, request):
         try:
-            return Disk.objects.get(name=dname)
+            return Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk: %s does not exist' % dname)
+            e_msg = ('Disk: %d does not exist' % did)
             handle_exception(Exception(e_msg), request)
 
     def get(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            disk = self._validate_disk(kwargs['dname'], self.request)
+            disk = self._validate_disk(kwargs['did'], self.request)
             try:
                 sinfo = SMARTInfo.objects.filter(disk=disk).order_by('-toc')[0]
                 return Response(SMARTInfoSerializer(sinfo).data)
@@ -109,9 +109,9 @@ class DiskSMARTDetailView(rfc.GenericView):
                       assessment=smartid[15]).save()
         return Response(SMARTInfoSerializer(si).data)
 
-    def post(self, request, dname, command):
+    def post(self, request, did, command):
         with self._handle_exception(request):
-            disk = self._validate_disk(dname, request)
+            disk = self._validate_disk(did, request)
             if (command == 'info'):
                 return self._info(disk)
             elif (command == 'test'):

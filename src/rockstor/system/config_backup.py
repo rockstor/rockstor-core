@@ -25,12 +25,14 @@ from system.osi import (run_command, md5sum)
 
 logger = logging.getLogger(__name__)
 
+
 def backup_config():
     models = {'storageadmin':
-                  ['user', 'group', 'sambashare', 'netatalkshare', 'nfsexport',
-                   'nfsexportgroup', 'advancednfsexport', ],
+              ['user', 'group', 'sambashare', 'sambacustomconfig',
+               'netatalkshare', 'nfsexport',
+               'nfsexportgroup', 'advancednfsexport', ],
               'smart_manager':
-                  ['service', ], }
+              ['service', ], }
     model_list = []
     for a in models:
         for m in models[a]:
@@ -46,7 +48,8 @@ def backup_config():
     with open(fp, 'w') as dfo:
         call_command('dumpdata', *model_list, stdout=dfo)
         dfo.write('\n')
-        call_command('dumpdata', database='smart_manager', *model_list, stdout=dfo)
+        call_command('dumpdata', database='smart_manager', *model_list,
+                     stdout=dfo)
     run_command(['/usr/bin/gzip', fp])
     gz_name = ('%s.gz' % filename)
     fp = os.path.join(cb_dir, gz_name)
@@ -54,4 +57,3 @@ def backup_config():
     cbo = ConfigBackup(filename=gz_name, md5sum=md5sum(fp), size=size)
     cbo.save()
     return cbo
-

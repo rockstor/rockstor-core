@@ -33,7 +33,7 @@ BlinkDiskView = RockstorLayoutView.extend({
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_blink_disks;
         this.disks = new DiskCollection();
-        this.diskName = this.options.diskName;
+        this.diskId = this.options.diskId;
         this.dependencies.push(this.disks);
     },
 
@@ -47,13 +47,15 @@ BlinkDiskView = RockstorLayoutView.extend({
             this.$('[rel=tooltip]').tooltip('hide');
         }
         var _this = this;
-        var disk_name = this.diskName;
-        var serialNumber = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('serial');
+        var disk_id = this.diskId;
+        var diskObj = this.disks.find(function(d) {
+            return (d.get('id') == disk_id);
+        });
+        var diskName = diskObj.get('name');
+        var serialNumber = diskObj.get('serial');
 
         $(this.el).html(this.template({
-            diskName: this.diskName,
+            diskName: diskName,
             serialNumber: serialNumber
         }));
 
@@ -132,7 +134,7 @@ BlinkDiskView = RockstorLayoutView.extend({
             rules: {
                 total_time: 'validateTotalTime',
                 blink_time: 'validateBlinkTime',
-                sleep_time: 'validateSleepTime',
+                sleep_time: 'validateSleepTime'
             },
 
             submitHandler: function() {
@@ -140,7 +142,7 @@ BlinkDiskView = RockstorLayoutView.extend({
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
                 var submitmethod = 'POST';
-                var posturl = '/api/disks/' + disk_name + '/blink-drive';
+                var posturl = '/api/disks/' + disk_id + '/blink-drive';
                 $.ajax({
                     url: posturl,
                     type: submitmethod,

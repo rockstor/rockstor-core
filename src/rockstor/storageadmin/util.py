@@ -29,7 +29,7 @@ except Exception as e:
     logger.exception(e)
 
 
-def handle_exception(e, request, e_msg=None):
+def handle_exception(e, request, e_msg=None, status_code=500):
     """
     if e_msg is provided, exception is raised with that string. This is useful
     for optionally humanizing the message. Otherwise, error from the exception
@@ -43,4 +43,5 @@ def handle_exception(e, request, e_msg=None):
 
     logger.exception('exception: %s' % e.__str__())
     logger.debug('Current Rockstor version: %s' % version)
-    raise RockStorAPIException(detail=e_msg, trace=traceback.format_exc())
+    raise RockStorAPIException(status_code=status_code, detail=e_msg,
+                               trace=traceback.format_exc())
