@@ -51,26 +51,26 @@ class UserMixin(object):
                 re.match(settings.USERNAME_REGEX, username) is None):
             e_msg = ('Username is invalid. It must confirm to the regex: %s' %
                      (settings.USERNAME_REGEX))
-            handle_exception(Exception(e_msg), request)
+            handle_exception(Exception(e_msg), request, status_code=400)
         if (len(username) > 30):
             e_msg = ('Username cannot be more than 30 characters long')
-            handle_exception(Exception(e_msg), request)
+            handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['username'] = username
         password = request.data.get('password', None)
         if (password is None or password == ''):
             e_msg = ('Password must be a valid string')
-            handle_exception(Exception(e_msg), request)
+            handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['password'] = password
         admin = request.data.get('admin', True)
         if (type(admin) != bool):
             e_msg = ('Admin(user type) must be a boolean')
-            handle_exception(Exception(e_msg), request)
+            handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['admin'] = admin
         shell = request.data.get('shell', '/bin/bash')
         if (shell not in settings.VALID_SHELLS):
             e_msg = ('shell(%s) is not valid. Valid shells are %s' %
                      (shell, settings.VALID_SHELLS))
-            handle_exception(Exception(e_msg), request)
+            handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['shell'] = shell
         email = request.data.get('email', None)
         input_fields['email'] = email
@@ -83,7 +83,7 @@ class UserMixin(object):
             except ValueError as e:
                 e_msg = ('UID must be an integer, try again. Exception: %s'
                          % e.__str__())
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), request, status_code=400)
 
         input_fields['group'] = request.data.get('group', None)
         input_fields['public_key'] = cls._validate_public_key(request)
@@ -116,7 +116,7 @@ class UserListView(UserMixin, rfc.GenericView):
             if (DjangoUser.objects.filter(
                     username=invar['username']).exists() or
                     User.objects.filter(username=invar['username']).exists()):
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), request, status_code=400)
             users = combined_users()
             groups = combined_groups()
             invar['gid'] = None
@@ -131,7 +131,8 @@ class UserListView(UserMixin, rfc.GenericView):
 
             for u in users:
                 if (u.username == invar['username']):
-                    handle_exception(Exception(e_msg), request)
+                    handle_exception(Exception(e_msg), request,
+                                     status_code=400)
                 elif (u.uid == invar['uid']):
                     e_msg = ('uid: %d already exists. Please choose a '
                              'different one.' % invar['uid'])

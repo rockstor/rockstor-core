@@ -44,8 +44,9 @@ class OauthAppView(rfc.GenericView):
             name = request.data.get('name')
             username = request.user.username
             if (OauthApp.objects.filter(name=name).exists()):
-                e_msg = ('application with name: %s already exists.' % name)
-                handle_exception(Exception(e_msg), request)
+                e_msg = ('application with name: %s already exists. Choose a '
+                         'different name.' % name)
+                handle_exception(Exception(e_msg), request, status_code=400)
 
             try:
                 user = User.objects.get(username=username)
@@ -81,7 +82,7 @@ class OauthAppView(rfc.GenericView):
                          'please create another one with the same name as it '
                          'is required by Rockstor internally.' %
                          (id, settings.ROOT_DIR))
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), request, status_code=400)
 
             app.application.delete()
             app.delete()

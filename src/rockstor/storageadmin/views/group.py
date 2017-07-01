@@ -50,20 +50,22 @@ class GroupListView(rfc.GenericView):
                     re.match(settings.USERNAME_REGEX, groupname) is None):
                 e_msg = ('Groupname is invalid. It must confirm to the '
                          'regex: %s' % (settings.USERNAME_REGEX))
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), request, status_code=400)
             if (len(groupname) > 30):
                 e_msg = ('Groupname cannot be more than 30 characters long')
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), request, status_code=400)
 
             for g in combined_groups():
                 if (g.groupname == groupname):
                     e_msg = ('Group(%s) already exists. Choose a different '
                              'one' % g.groupname)
-                    handle_exception(Exception(e_msg), request)
+                    handle_exception(Exception(e_msg), request,
+                                     status_code=400)
                 if (g.gid == gid):
                     e_msg = ('GID(%s) already exists. Choose a different one' %
                              gid)
-                    handle_exception(Exception(e_msg), request)
+                    handle_exception(Exception(e_msg), request,
+                                     status_code=400)
 
             groupadd(groupname, gid)
             grp_entries = grp.getgrnam(groupname)
@@ -104,7 +106,7 @@ class GroupDetailView(rfc.GenericView):
             if (groupname in self.exclude_list):
                 e_msg = ('Delete of restricted group(%s) is not supported.' %
                          groupname)
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), request, status_code=400)
 
             if (Group.objects.filter(groupname=groupname).exists()):
                 g = Group.objects.get(groupname=groupname)
