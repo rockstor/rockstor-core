@@ -19,9 +19,9 @@
   <tbody>
     {{#each diskCollection}}
     <tr>
-      <td><a href="#disks/{{this.name}}"><i class="glyphicon glyphicon-hdd"></i>&nbsp;{{this.name}}</a>
+      <td><a href="#disks/{{this.id}}"><i class="glyphicon glyphicon-hdd"></i>&nbsp;{{this.name}}</a>
         {{#if this.offline}}
-            <a href="#" class="delete" data-disk-name="{{this.name}}" title="Disk is unusable because it is detached.
+            <a href="#" class="delete" data-disk-id="{{this.id}}" title="Disk is unusable because it is detached.
             Click to delete it from the system if it is not to be reattached." rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
         {{else if (isRootDevice this.role)}}
               <i class="glyphicon glyphicon-registration-mark" title="Rockstor System Drive." rel="tooltip"></i>
@@ -34,60 +34,60 @@
                 {{/if}}
             {{else}}
                 {{#if (isLuksContainerUnlocked this.role)}}
-                    <a href="#disks/luks/{{this.name}}" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (unlocked)." rel="tooltip">
+                    <a href="#disks/luks/{{this.id}}" class="luks_drive" data-disk-id="{{this.id}}" title="Full Disk LUKS Container (unlocked)." rel="tooltip">
                     <i class="fa fa-unlock"></i></a>
                 {{else}}
-                    <a href="#disks/luks/{{this.name}}" class="luks_drive" data-disk-name="{{this.name}}" title="Full Disk LUKS Container (locked)." rel="tooltip">
+                    <a href="#disks/luks/{{this.id}}" class="luks_drive" data-disk-id="{{this.id}}" title="Full Disk LUKS Container (locked)." rel="tooltip">
                     <i class="fa fa-lock"></i></a>
                 {{/if}}
             {{/if}}
         {{else if (isMdraidMember this.role)}}
-            <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Mdraid member (UI pending)." rel="tooltip">
+            <a href="#" class="raid_member" data-disk-id="{{this.id}}" title="Mdraid member (UI pending)." rel="tooltip">
               <i class="glyphicon glyphicon-info-sign"></i></a>
         {{else if (isBcache this.role)}}
-            <a href="#" class="bcache_backing_drive" data-disk-name="{{this.name}}" title="Bcache Backing Drive (UI pending)." rel="tooltip">
+            <a href="#" class="bcache_backing_drive" data-disk-id="{{this.id}}" title="Bcache Backing Drive (UI pending)." rel="tooltip">
             <i class="glyphicon glyphicon-link"></i></a>
         {{else if (isBcacheCdev this.role)}}
-            <a href="#" class="bcache_caching_drive" data-disk-name="{{this.name}}" title="Bcache Caching Drive (UI pending)." rel="tooltip">
+            <a href="#" class="bcache_caching_drive" data-disk-id="{{this.id}}" title="Bcache Caching Drive (UI pending)." rel="tooltip">
             <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
         {{else if this.parted}}
             {{#if (hasUserRole this.role)}}
-                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="User Assigned Role found on partitioned disk, click to edit." rel="tooltip">
+                <a href="#disks/role/{{this.id}}" class="user_role_part" data-disk-id="{{this.id}}" title="User Assigned Role found on partitioned disk, click to edit." rel="tooltip">
                 <i class="glyphicon glyphicon-tags"></i></a>
                 {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
-                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Partition is unusable because it has an existing BTRFS filesystem on it.
-                    Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this partition automatically (Note: whole disk btrfs is recommended)." rel="tooltip">
+                    <a href="#disks/role/{{this.id}}" class="user_role_part" data-disk-id="{{this.id}}" title="Partition is unusable because it has an existing BTRFS filesystem on it.
+                    Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-id="{{this.id}}" title="Click to import data (pools, shares and snapshots) on this partition automatically (Note: whole disk btrfs is recommended)." rel="tooltip">
                     <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
                 {{else if this.pool_name}}
                     <i class="glyphicon glyphicon-map-marker" title="Drive partition (via Redirect Role) is mapped to a Pool" rel="tooltip"></i>
                 {{/if}}
             {{else}}
                 {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
-                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions: one of which has an existing BTRFS filesystem on it. A User Assigned redirect role is required prior to import.
+                    <a href="#disks/role/{{this.id}}" class="user_role_part" data-disk-id="{{this.id}}" title="Disk is unusable as it contains partitions: one of which has an existing BTRFS filesystem on it. A User Assigned redirect role is required prior to import.
                     Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
                 {{else}}
-                    <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable as it contains partitions and no User Assigned Role.
+                    <a href="#disks/role/{{this.id}}" class="user_role_part" data-disk-id="{{this.id}}" title="Disk is unusable as it contains partitions and no User Assigned Role.
                     Click to configure or wipe." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
                 {{/if}}
             {{/if}}
         {{else}} <!-- We are non of the above top level ifs / else ifs at this point -->
             {{#if (isNullPoolBtrfs this.btrfs_uuid this.pool_name)}}
-                <a href="#disks/role/{{this.name}}" class="user_role_part" data-disk-name="{{this.name}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
-                Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="{{this.name}}" title="Click to import data (pools, shares and snapshots) on this disk automatically. Multi-device support included." rel="tooltip">
+                <a href="#disks/role/{{this.id}}" class="user_role_part" data-disk-id="{{this.id}}" title="Disk is unusable because it has an existing whole disk BTRFS filesystem on it.
+                Click to configure or wipe." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-id="{{this.id}}" title="Click to import data (pools, shares and snapshots) on this disk automatically. Multi-device support included." rel="tooltip">
                 <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
             {{else}}
                 {{#if (hasUserRole this.role)}}
-                    <a href="#disks/role/{{this.name}}" class="user_role_whole" data-disk-name="{{this.name}}" title="Whole Disk Role found, click to inspect/edit." rel="tooltip">
+                    <a href="#disks/role/{{this.id}}" class="user_role_whole" data-disk-id="{{this.id}}" title="Whole Disk Role found, click to inspect/edit." rel="tooltip">
                     <i class="glyphicon glyphicon-tag"></i></a>
                 {{else}}
                     {{#if this.pool_name}}
                         <i class="glyphicon glyphicon-map-marker" title="Whole drive is mapped to a Pool" rel="tooltip"></i>
                     {{else}}
                         {{#if (isOpenLuks this.role)}}
-                            <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assign an optional Whole Disk Role (Excluding LUKS container or bcache), click to edit." rel="tooltip">
+                            <a href="#disks/role/{{this.id}}" class="no_user_role_whole" data-disk-id="{{this.id}}" title="Assign an optional Whole Disk Role (Excluding LUKS container or bcache), click to edit." rel="tooltip">
                             <i class="glyphicon glyphicon-question-sign"></i></a>
                         {{else}}
-                            <a href="#disks/role/{{this.name}}" class="no_user_role_whole" data-disk-name="{{this.name}}" title="Assign an optional Whole Disk Role (ie LUKS/bcache etc), click to edit." rel="tooltip">
+                            <a href="#disks/role/{{this.id}}" class="no_user_role_whole" data-disk-id="{{this.id}}" title="Assign an optional Whole Disk Role (ie LUKS/bcache etc), click to edit." rel="tooltip">
                             <i class="glyphicon glyphicon-question-sign"></i></a>
                         {{/if}}
                     {{/if}}
@@ -98,7 +98,7 @@
           they are found independently and in addition to other roles.
           Ie the root fs (flagged above) on an open LUKS container. -->
           {{#if (isOpenLuks this.role)}}
-          <a href="#disks/luks/{{this.name}}" class="open_luks_drive" data-disk-name="{{this.name}}"
+          <a href="#disks/luks/{{this.id}}" class="open_luks_drive" data-disk-id="{{this.id}}"
              title="Open LUKS Volume." rel="tooltip">
               <i class="glyphicon glyphicon-eye-open"></i></a>
           {{/if}}
@@ -109,14 +109,14 @@
           Please ensure that disks are provided with unique serial numbers before proceeding further.</div>
         {{else if this.serial}}
         {{this.serial}}
-        &nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/{{this.name}}" title="A tool to physically identify the hard drive with this serial number." rel="tooltip">
+        &nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/{{this.id}}" title="A tool to physically identify the hard drive with this serial number." rel="tooltip">
           <i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp;
         {{/checkSerialStatus}}
       </td>
       <td>{{humanReadableSize this.size}}</td>
       <td>
         {{#if pool_name}}
-        <a href="#pools/{{this.pool_name}}">{{this.pool_name}}</a>
+        <a href="#pools/{{this.pool}}">{{this.pool_name}}</a>
         {{/if}}
       </td>
       <td>
@@ -124,11 +124,11 @@
           <i class="glyphicon glyphicon-pause"></i>{{this.power_state}} <i class="glyphicon glyphicon-hourglass"></i>
         {{else}}
           {{#if (powerStateActiveIdle this.power_state)}}
-            <a href="#" class="pause" data-disk-name="{{this.name}}" title="Force drive into Standby mode." rel="tooltip"><i class="glyphicon glyphicon-pause"></i></a>
+            <a href="#" class="pause" data-disk-id="{{this.id}}" title="Force drive into Standby mode." rel="tooltip"><i class="glyphicon glyphicon-pause"></i></a>
           {{else}}
             <i class="glyphicon glyphicon-pause"></i>
           {{/if}}
-          {{this.power_state}} <a href="#disks/spindown/{{this.name}}" title="Click to configure Spin Down." rel="tooltip"><i class="glyphicon glyphicon-hourglass"></i></a>
+          {{this.power_state}} <a href="#disks/spindown/{{this.id}}" title="Click to configure Spin Down." rel="tooltip"><i class="glyphicon glyphicon-hourglass"></i></a>
         {{/if}}
         {{this.hdparm_setting}}
       </td>
@@ -140,13 +140,13 @@
         {{#if this.smart_options}}
         {{this.smart_options}}&nbsp;
         {{/if}}
-        <a href="#disks/smartcustom/{{this.name}}" title="Click to add/edit Custom SMART options. Rescan to Apply." rel="tooltip-top">
+        <a href="#disks/smartcustom/{{this.id}}" title="Click to add/edit Custom SMART options. Rescan to Apply." rel="tooltip-top">
           <i class="glyphicon glyphicon-pencil"></i></a>
         {{#unless smart_available}}
         Not Supported
       </td>
       {{else}}
-      <input type="checkbox" data-disk-name="{{this.name}}" data-size="mini" {{#if smart_enabled}}checked{{/if}}></input>
+      <input type="checkbox" data-disk-id="{{this.id}}" data-size="mini" {{#if smart_enabled}}checked{{/if}}></input>
       {{/unless}}
       </td>
     </tr>

@@ -37,7 +37,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_setrole_disks;
         this.disks = new DiskCollection();
-        this.diskName = this.options.diskName;
+        this.diskId = this.options.diskId;
         this.dependencies.push(this.disks);
         this.initHandlebarHelpers();
     },
@@ -52,23 +52,15 @@ SetroleDiskView = RockstorLayoutView.extend({
             this.$('[rel=tooltip]').tooltip('hide');
         }
         var _this = this;
-        var disk_name = this.diskName;
-        // retrieve local copy of disk serial number
-        var serialNumber = this.disks.find(function (d) {
-            return (d.get('name') == disk_name);
-        }).get('serial');
-        // retrieve local copy of current disk role
-        var diskRole = this.disks.find(function (d) {
-            return (d.get('name') == disk_name);
-        }).get('role');
-        // get the btrfsuuid for this device
-        var disk_btrfs_uuid = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('btrfs_uuid');
-        // get the pool for this device
-        var disk_pool = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('pool');
+        var disk_id = this.diskId;
+        var disk_obj = this.disks.find(function(d) {
+            return (d.get('id') == disk_id);
+        });
+        var serialNumber = disk_obj.get('serial');
+        var diskRole = disk_obj.get('role');
+        var disk_btrfs_uuid = disk_obj.get('btrfs_uuid');
+        var disk_pool = disk_obj.get('pool');
+        var diskName = disk_obj.get('name');
         // parse the diskRole json to a local object
         try {
             var role_obj = JSON.parse(diskRole);
@@ -131,7 +123,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         this.current_crypttab_status = current_crypttab_status;
 
         $(this.el).html(this.template({
-            diskName: this.diskName,
+            diskName: diskName,
             serialNumber: serialNumber,
             diskRole: diskRole,
             role_obj: role_obj,
@@ -278,7 +270,7 @@ SetroleDiskView = RockstorLayoutView.extend({
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
                 var submitmethod = 'POST';
-                var posturl = '/api/disks/' + disk_name + '/role-drive';
+                var posturl = '/api/disks/' + disk_id + '/role-drive';
                 $.ajax({
                     url: posturl,
                     type: submitmethod,

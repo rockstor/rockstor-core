@@ -33,7 +33,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_smartcustom_disks;
         this.disks = new DiskCollection();
-        this.diskName = this.options.diskName;
+        this.diskId = this.options.diskId;
         this.dependencies.push(this.disks);
     },
 
@@ -47,13 +47,12 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             this.$('[rel=tooltip]').tooltip('hide');
         }
         var _this = this;
-        var disk_name = this.diskName;
-        var serialNumber = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('serial');
-        var currentSmartCustom = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('smart_options');
+        var disk_id = this.diskId;
+        var disk_obj = this.disks.find(function(d) {
+            return (d.get('id') == disk_id);_
+        });
+        var serialNumber = disk_obj.get('serial');
+        var currentSmartCustom = disk_obj.get('smart_options');
 
         $(this.el).html(this.template({
             diskName: this.diskName,

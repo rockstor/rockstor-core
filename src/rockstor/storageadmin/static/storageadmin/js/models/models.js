@@ -29,7 +29,7 @@ var Setup = Backbone.Model.extend({});
 
 var Disk = Backbone.Model.extend({
     url: function() {
-        return '/api/disks/' + this.get('diskName');
+        return '/api/disks/' + this.get('diskId');
     },
     available: function () {
         return _.isNull(this.get('pool')) && !this.get('offline') &&
@@ -119,7 +119,7 @@ var Pool = Backbone.Model.extend({
 
 var SmartInfo = Backbone.Model.extend({
     url: function() {
-        return '/api/disks/smart/info/' + this.get('diskName');
+        return '/api/disks/smart/info/' + this.get('diskId');
     }
 });
 

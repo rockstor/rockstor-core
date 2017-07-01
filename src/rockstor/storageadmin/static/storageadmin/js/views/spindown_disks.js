@@ -34,7 +34,7 @@ SpindownDiskView = RockstorLayoutView.extend({
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_spindown_disks;
         this.disks = new DiskCollection();
-        this.diskName = this.options.diskName;
+        this.diskId = this.options.diskId;
         this.dependencies.push(this.disks);
         this.tickFormatter = function(d) {
             var formatter = d3.format(',.0f');
@@ -69,7 +69,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             this.$('[rel=tooltip]').tooltip('hide');
         }
         var _this = this;
-        var disk_name = this.diskName;
+        var disk_id = this.diskId;
         var spindownTimes = {
             '30 seconds': 6,
             '1 minute': 12,
@@ -85,21 +85,15 @@ SpindownDiskView = RockstorLayoutView.extend({
             'Remove config': -1
         };
         _this.spindownTimes = spindownTimes;
-        // retrieve local copy of disk serial number
-        var serialNumber = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('serial');
-        // retrieve local copy of current hdparm settings
-        var hdparmSetting = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('hdparm_setting');
-        // retrieve local copy of current apm level
-        var apmLevel = this.disks.find(function(d) {
-            return (d.get('name') == disk_name);
-        }).get('apm_level');
+        var diskObj = this.disks.find(function(d) {
+            return (d.get('id') == disk_id);
+        });
+        var serialNumber = diskObj.get('serial');
+        var hdparmSetting = diskObj.get('hdparm_setting');
+        var apmLevel = diskObj.get('apm_level');
 
         $(this.el).html(this.template({
-            diskName: this.diskName,
+            diskName: diskObj.name,
             serialNumber: serialNumber,
             spindownTimes: spindownTimes,
             hdparmSetting: hdparmSetting,
@@ -191,7 +185,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             onkeyup: false,
             rules: {
                 spindown_time: 'required',
-                apm_value: 'validateApmValue',
+                apm_value: 'validateApmValue'
                 //slider: {
                 //    required: "#enable_apm:checked" // slider required only if
                 //    // APM settings tickbox enabled.
@@ -203,7 +197,7 @@ SpindownDiskView = RockstorLayoutView.extend({
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
                 var submitmethod = 'POST';
-                var posturl = '/api/disks/' + disk_name + '/spindown-drive';
+                var posturl = '/api/disks/' + disk_id + '/spindown-drive';
                 var data = _this.$('#add-spindown-disk-form').getJSON();
                 var selected_time = data.spindown_time;
                 var spindown_text = 'no message';
