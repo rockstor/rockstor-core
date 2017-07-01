@@ -131,7 +131,6 @@ ServicesView = Backbone.View.extend({
     },
 
     switchStatus: function(event, state) {
-        console.log("the event is: " + event + " The state is: " + state);
         var serviceName = $(event.target).attr('data-service-name');
         var serviceModel = this.collection.get(serviceName); // extract the service model from the collection to obtain config property
 

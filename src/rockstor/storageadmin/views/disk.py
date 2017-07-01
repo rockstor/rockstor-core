@@ -388,7 +388,7 @@ class DiskDetailView(rfc.GenericView):
         try:
             return Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk(%s) does not exist' % did)
+            e_msg = ('Disk(%d) does not exist' % did)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -855,7 +855,7 @@ class DiskDetailView(rfc.GenericView):
                                  'please select wipe first then return and '
                                  're-select LUKS format.')
                         raise Exception(e_msg)
-                    return self._luks_format(disk.name, request, luks_pass_one)
+                    return self._luks_format(disk.id, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
             e_msg = ('Failed to configure drive role, or wipe existing '

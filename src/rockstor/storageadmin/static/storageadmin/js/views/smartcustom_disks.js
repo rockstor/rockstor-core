@@ -49,7 +49,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         var _this = this;
         var disk_id = this.diskId;
         var disk_obj = this.disks.find(function(d) {
-            return (d.get('id') == disk_id);_
+            return (d.get('id') == disk_id);
         });
         var serialNumber = disk_obj.get('serial');
         var currentSmartCustom = disk_obj.get('smart_options');

@@ -28,15 +28,15 @@
     <tr>
         <td>{{this.name}}
             {{#if this.parted}}
-            <a href="#disks/role/{{this.name}}" class="user_role_part"
-               data-disk-name="{{this.name}}"
+            <a href="#disks/role/{{this.id}}" class="user_role_part"
+               data-disk-id="{{this.id}}"
                title="Partition (Redirect Role), click to review."
                rel="tooltip">
                 <i class="glyphicon glyphicon-tags"></i></a>
             {{/if}}
             {{#if (isOpenLuks this.role)}}
-            <a href="#disks/luks/{{this.name}}" class="open_luks_drive"
-               data-disk-name="{{this.name}}"
+            <a href="#disks/luks/{{this.id}}" class="open_luks_drive"
+               data-disk-id="{{this.id}}"
                title="Open LUKS Volume, click to review." rel="tooltip">
                 <i class="glyphicon glyphicon-eye-open"></i></a>
             {{/if}}

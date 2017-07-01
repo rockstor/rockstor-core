@@ -60,7 +60,7 @@ LuksDiskView = RockstorLayoutView.extend({
         var diskRole = disk_obj.get('role');
         var disk_btrfs_uuid = disk_obj.get('btrfs_uuid');
         var disk_pool = disk_obj.get('pool');
-        var diskName = disk_obj.get('name');
+        var disk_name = disk_obj.get('name');
         // parse the diskRole json to a local object
         try {
             var role_obj = JSON.parse(diskRole);
@@ -149,7 +149,7 @@ LuksDiskView = RockstorLayoutView.extend({
         this.keyfile_exists = keyfile_exists;
 
         $(this.el).html(this.template({
-            diskName: diskName,
+            diskName: disk_name,
             serialNumber: serialNumber,
             diskRole: diskRole,
             role_obj: role_obj,
@@ -301,6 +301,7 @@ LuksDiskView = RockstorLayoutView.extend({
     },
 
     initHandlebarHelpers: function () {
+        var _this = this;
         Handlebars.registerHelper('display_luks_container_or_volume', function () {
             var html = '';
             if (this.is_luks) {
@@ -321,8 +322,8 @@ LuksDiskView = RockstorLayoutView.extend({
                 // We have an locked LUKS container
                 if (this.current_crypttab_status == false){
                     // no current crypttab entry
-                    html += '<a href="#disks/role/' + this.diskName;
-                    html += '" class="luks_drive" data-disk-name="' + this.diskName;
+                    html += '<a href="#disks/role/' + _this.diskId;
+                    html += '" class="luks_drive" data-disk-id="' + _this.diskId;
                     html += '" title="Wipe locked LUKS Container" rel="tooltip">';
                     html += 'Wipe locked LUKS container<i class="fa fa-eraser"></i></a>';
                 }
