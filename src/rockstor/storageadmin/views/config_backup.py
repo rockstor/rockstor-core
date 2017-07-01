@@ -24,10 +24,8 @@ from storageadmin.models import ConfigBackup
 from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from django.core.management import call_command
-from system.osi import (run_command, md5sum)
+from system.osi import md5sum
 from system.config_backup import backup_config
-from datetime import datetime
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from django_ztask.decorators import task
 from cli.rest_util import api_call
