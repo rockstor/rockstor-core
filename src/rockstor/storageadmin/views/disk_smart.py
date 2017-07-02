@@ -42,7 +42,7 @@ class DiskSMARTDetailView(rfc.GenericView):
         try:
             return Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk: %d does not exist' % did)
+            e_msg = ('Disk: %s does not exist' % did)
             handle_exception(Exception(e_msg), request)
 
     def get(self, *args, **kwargs):

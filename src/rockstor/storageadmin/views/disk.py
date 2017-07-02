@@ -388,7 +388,7 @@ class DiskDetailView(rfc.GenericView):
         try:
             return Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk(%d) does not exist' % did)
+            e_msg = ('Disk(%s) does not exist' % did)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -463,11 +463,11 @@ class DiskDetailView(rfc.GenericView):
         try:
             disk = Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk: %d does not exist' % did)
+            e_msg = ('Disk: %s does not exist' % did)
             handle_exception(Exception(e_msg), request)
 
         if (disk.offline is not True):
-            e_msg = ('Disk: %d is not offline. Cannot delete' % did)
+            e_msg = ('Disk: %s is not offline. Cannot delete' % did)
             handle_exception(Exception(e_msg), request)
 
         try:
@@ -519,10 +519,10 @@ class DiskDetailView(rfc.GenericView):
         reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
                                                                    request)
         if reverse_name != disk.name:
-            e_msg = ('Wipe operation on whole or partition of device (%d) was '
+            e_msg = ('Wipe operation on whole or partition of device (%s) was '
                      'rejected as there was a discrepancy in device name '
                      'resolution. Wipe was called with device name (%s) which '
-                     'redirected to (%d) but a check on this redirection '
+                     'redirected to (%s) but a check on this redirection '
                      'returned device name (%s), which is not equal to the '
                      'caller name as was expected. A Disks page Rescan may '
                      'help.'
@@ -707,7 +707,7 @@ class DiskDetailView(rfc.GenericView):
                 import_snapshots(share)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
-            e_msg = ('Failed to import any pool on this device(%d). Error: %s'
+            e_msg = ('Failed to import any pool on this device(%s). Error: %s'
                      % (did, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
