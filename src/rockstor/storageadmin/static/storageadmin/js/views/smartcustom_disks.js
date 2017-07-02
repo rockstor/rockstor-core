@@ -269,7 +269,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
                 var submitmethod = 'POST';
-                var posturl = '/api/disks/' + disk_name + '/smartcustom-drive';
+                var posturl = '/api/disks/' + disk_id + '/smartcustom-drive';
                 $.ajax({
                     url: posturl,
                     type: submitmethod,
