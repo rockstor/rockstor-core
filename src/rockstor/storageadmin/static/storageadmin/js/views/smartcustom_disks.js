@@ -53,9 +53,10 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         });
         var serialNumber = disk_obj.get('serial');
         var currentSmartCustom = disk_obj.get('smart_options');
+        var disk_name = disk_obj.get('name');
 
         $(this.el).html(this.template({
-            diskName: this.diskName,
+            diskName: disk_name,
             serialNumber: serialNumber,
             currentSmartCustom: currentSmartCustom
         }));
