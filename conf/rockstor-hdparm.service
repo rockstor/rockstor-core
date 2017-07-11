@@ -1,8 +1,8 @@
 [Unit]
 Description=Rockstor hdparm settings
 After=suspend.target
-# Rockstor-hdparm - the automated maintenance of this file requires a clear line
-# at the end of both the Unit and Service sections, but no other clear lines.
+Requires=systemd-udev-settle.service
+# N.B. Requires a clear line after Unit & Service sections. No others permitted.
 # The line count of the template file in <rockstorroot>/conf is used to evaluate
 # if an 'all entries removed' scenario has been reached. If any modification are
 # made to the template file please also delete the generated file,
