@@ -91,9 +91,10 @@ SpindownDiskView = RockstorLayoutView.extend({
         var serialNumber = diskObj.get('serial');
         var hdparmSetting = diskObj.get('hdparm_setting');
         var apmLevel = diskObj.get('apm_level');
+        var disk_name = diskObj.get('name');
 
         $(this.el).html(this.template({
-            diskName: diskObj.name,
+            diskName: disk_name,
             serialNumber: serialNumber,
             spindownTimes: spindownTimes,
             hdparmSetting: hdparmSetting,
