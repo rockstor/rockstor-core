@@ -145,7 +145,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 if (taskType == 'snapshot') {
                     html += '(' + JSON.parse(jsonMeta).share + ')';
                 } else if (taskType == 'scrub') {
-                    html += '(' + JSON.parse(jsonMeta).pool + ')';
+                    html += '(' + JSON.parse(jsonMeta).pool_name + ')';
                 }
                 html += '</td>';
                 html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';

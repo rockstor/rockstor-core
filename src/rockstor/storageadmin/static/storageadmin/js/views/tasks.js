@@ -81,9 +81,9 @@ TasksView = RockstorLayoutView.extend({
         Handlebars.registerHelper('display_snapshot_scrub', function() {
             var html = '';
             if (this.taskDef.get('task_type') == 'snapshot') {
-                html += 'Snapshot of Share[' + JSON.parse(this.taskDef.get('json_meta')).share + ']';
+                html += 'Snapshot of Share [' + JSON.parse(this.taskDef.get('json_meta')).share + ']';
             } else if (this.taskDef.get('task_type') == 'scrub'){
-                html += 'Scrub of Pool[' + JSON.parse(this.taskDef.get('json_meta')).pool + ']';
+                html += 'Scrub of Pool [' + JSON.parse(this.taskDef.get('json_meta')).pool_name + ']';
             } else {
                 html += this.taskDef.get('task_type');
             }

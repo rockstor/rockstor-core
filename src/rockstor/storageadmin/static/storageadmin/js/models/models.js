@@ -530,6 +530,12 @@ var TaskDef = Backbone.Model.extend({
         }
         return '';
     },
+    pool_name: function() {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).pool_name;
+        }
+        return '';
+    },
     visible: function() {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).visible;
