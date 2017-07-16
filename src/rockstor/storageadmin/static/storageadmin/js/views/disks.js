@@ -398,6 +398,22 @@ DisksView = RockstorLayoutView.extend({
             return false;
         });
 
+        // Identify LVM2_member devices by return of true / false.
+        // Works by examining the Disk.role field. Based on sister handlebars
+        // helper 'isBcache'
+        Handlebars.registerHelper('isLVM2member', function (role) {
+            var roleAsJson = asJSON(role);
+            if (roleAsJson == false) return false;
+            // We have a json string ie non legacy role info so we can examine:
+            if (roleAsJson.hasOwnProperty('LVM2member')) {
+                // We have an LVM2 member (Physical Volume) which we tag to
+                // avoid it's accidental re-use / delete.
+                return true;
+            }
+            // In all other cases return false.
+            return false;
+        });
+
         // Identify User assigned role disks by return of true / false.
         // Works by examining the Disk.role field. Based on sister handlebars
         // helper 'isBcache'

@@ -48,8 +48,8 @@ logger = logging.getLogger(__name__)
 # and the post processing present in scan_disks()
 # LUKS currently stands for full disk crypto container.
 SCAN_DISKS_KNOWN_ROLES = ['mdraid', 'root', 'LUKS', 'openLUKS', 'bcache',
-                          'bcachecdev', 'partitions']
-WHOLE_DISK_FORMAT_ROLES = ['LUKS', 'bcache', 'bcachecdev']
+                          'bcachecdev', 'partitions', 'LVM2member']
+WHOLE_DISK_FORMAT_ROLES = ['LUKS', 'bcache', 'bcachecdev', 'LVM2member']
 
 
 class DiskMixin(object):
@@ -263,6 +263,12 @@ class DiskMixin(object):
                 # but likewise must be specifically attributed (ie to fast
                 # ssd type drives) so we flag in the role system differently.
                 disk_roles_identified['bcachecdev'] = 'bcache-%s' % d.uuid
+            if d.fstype == 'LVM2_member':
+                # LVM2 Physical Volume: scan_disks() can inform us of the truth
+                # regarding whole disk physical volumes via their fstype.
+                # Assigning a role to avoid these devices being seen as unused.
+                # The current value of this role is a placeholder and unused.
+                disk_roles_identified['LVM2member'] = str(d.fstype)
             if d.root is True:
                 # ROOT DISK: scan_disks() has already identified the current
                 # truth regarding the device hosting our root '/' fs so update
@@ -854,6 +860,11 @@ class DiskDetailView(rfc.GenericView):
                                  're-deploy as a different LUKS container '
                                  'please select wipe first then return and '
                                  're-select LUKS format.')
+                        raise Exception(e_msg)
+                    if 'LVM2member' in roles:
+                        # shouldn't happen but guard against it anyway.
+                        e_msg = ('LUKS format requested on an LVM2 member. '
+                                 'Please first wipe this device.')
                         raise Exception(e_msg)
                     return self._luks_format(disk.id, request, luks_pass_one)
             return Response(DiskInfoSerializer(disk).data)

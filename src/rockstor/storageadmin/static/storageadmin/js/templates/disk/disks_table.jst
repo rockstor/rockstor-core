@@ -50,6 +50,9 @@
         {{else if (isBcacheCdev this.role)}}
             <a href="#" class="bcache_caching_drive" data-disk-id="{{this.id}}" title="Bcache Caching Drive (UI pending)." rel="tooltip">
             <i class="glyphicon glyphicon-link"></i><i class="glyphicon glyphicon-link"></i></a>
+        {{else if (isLVM2member this.role)}}
+            <a href="#disks/role/{{this.id}}" class="LVM2_member" data-disk-id="{{this.id}}" title="Disk is unusable as it is an LVM2 member (Physical Volume). Click to wipe." rel="tooltip">
+            <i class="glyphicon glyphicon-cog"></i></a>
         {{else if this.parted}}
             {{#if (hasUserRole this.role)}}
                 <a href="#disks/role/{{this.id}}" class="user_role_part" data-disk-id="{{this.id}}" title="User Assigned Role found on partitioned disk, click to edit." rel="tooltip">
