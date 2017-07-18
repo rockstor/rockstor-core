@@ -74,7 +74,7 @@ DisksView = RockstorLayoutView.extend({
         this.$('[type=\'checkbox\']').bootstrapSwitch('offColor', 'danger'); //right side text color
 
 
-      //added ext func to sort over SMART input checkboxes
+        //added ext func to sort over SMART input checkboxes
         $.fn.dataTable.ext.order['dom-checkbox'] = function ( settings, col ) {
             return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
                 return $('input', td).prop('checked') ? '1' : '0';

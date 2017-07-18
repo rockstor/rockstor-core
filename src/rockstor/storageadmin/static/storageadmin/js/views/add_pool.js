@@ -248,16 +248,16 @@ AddPoolView = Backbone.View.extend({
                     raid_level: $('#raid_level').val()
                 }
             })
-            .done(function(result) {
-                target = $('#usable > b');
-                if (result) {
-                    target.text(humanize.filesize(result));
-                    target.css('color', 'green');
-                } else {
-                    target.text('Not enough disks selected.');
-                    target.css('color', 'red');
-                }
-            });
+                .done(function(result) {
+                    target = $('#usable > b');
+                    if (result) {
+                        target.text(humanize.filesize(result));
+                        target.css('color', 'green');
+                    } else {
+                        target.text('Not enough disks selected.');
+                        target.css('color', 'red');
+                    }
+                });
         }
         return this;
     },
@@ -307,14 +307,14 @@ AddPoolView = Backbone.View.extend({
                 mnt_options: mnt_options
             })
         })
-        .done(function() {
-            enableButton(button);
-            $('#add-pool-form input').tooltip('hide');
-            app_router.navigate('pools', {trigger: true});
-        })
-        .fail(function() {
-            enableButton(button);
-        });
+            .done(function() {
+                enableButton(button);
+                $('#add-pool-form input').tooltip('hide');
+                app_router.navigate('pools', {trigger: true});
+            })
+            .fail(function() {
+                enableButton(button);
+            });
     },
 
     cancel: function (event) {

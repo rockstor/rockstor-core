@@ -37,6 +37,7 @@ module.exports = {
         'strict': 'off',
         'no-unused-vars': 'off',
         'no-undef': 'off',
+        'no-useless-escape': 'off',
         'indent': [
             'error',
             4

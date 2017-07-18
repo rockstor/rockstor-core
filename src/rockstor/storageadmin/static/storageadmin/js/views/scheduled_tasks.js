@@ -57,7 +57,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 return moment(task.get('start')).valueOf();
             }).reverse();
         });
-		// remove existing tooltips
+        // remove existing tooltips
         if (this.$('[rel=tooltip]')) {
             this.$('[rel=tooltip]').tooltip('hide');
         }
@@ -79,7 +79,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
         disableButton(button);
         var taskId = $(event.currentTarget).attr('data-task-id');
         var enabled = $(event.currentTarget).attr('data-action') == 'enable'
-			? true : false;
+            ? true : false;
         $.ajax({
             url: '/api/sm/tasks/' + taskId,
             type: 'PUT',
