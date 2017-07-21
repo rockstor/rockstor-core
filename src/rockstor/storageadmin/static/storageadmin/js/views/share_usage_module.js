@@ -46,6 +46,7 @@ ShareUsageModule = RockstorModuleView.extend({
             module_name: this.module_name,
             share: this.share,
             poolName: this.share.get('pool').name,
+            pid: this.share.get('pool').id,
             shareCreatedDate: moment(this.share.get('toc')).format(RS_DATE_FORMAT),
         }));
         this.renderGraph();
