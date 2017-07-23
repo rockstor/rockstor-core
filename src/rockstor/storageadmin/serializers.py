@@ -49,6 +49,8 @@ class PoolInfoSerializer(serializers.ModelSerializer):
     disks = DiskInfoSerializer(many=True, source='disk_set')
     free = serializers.IntegerField()
     reclaimable = serializers.IntegerField()
+    mount_status = serializers.CharField()
+    is_mounted = serializers.BooleanField()
 
     class Meta:
         model = Pool
@@ -139,6 +141,8 @@ class ShareSerializer(serializers.ModelSerializer):
     snapshots = SnapshotSerializer(many=True, source='snapshot_set')
     pool = PoolInfoSerializer()
     nfs_exports = NFSExportSerializer(many=True, source='nfsexport_set')
+    mount_status = serializers.CharField()
+    is_mounted = serializers.BooleanField()
 
     class Meta:
         model = Share
