@@ -6,6 +6,7 @@
       <th>Size</th>
       <th>Usage</th>
       <th>Raid</th>
+      <th>Active mount options / Status</th>
       <th>Compression</th>
       <th>Extra mount options</th>
       <th>Disks</th>
@@ -36,6 +37,12 @@
                 {{#unless (isRoot this.role)}}
                       &nbsp;<a href="#pools/{{this.id}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>
                 {{/unless}}
+            </td>
+            <td>{{#if this.is_mounted}}
+                    {{this.mount_status}}
+                {{else}}
+                    <strong><span style="color:red">{{this.mount_status}}</span></strong>
+                {{/if}}
             </td>
             <td>
             {{#if (isRoot this.role)}}

@@ -78,6 +78,8 @@ SnapshotsView = SnapshotsCommonView.extend({
                 return share.get('id') == snapshots[i].share;
             });
             snapshots[i].share = shareMatch.get('name');
+            snapshots[i].share_is_mounted = shareMatch.get('is_mounted');
+            snapshots[i].share_mount_status = shareMatch.get('mount_status');
         }
         $(this.el).append(_this.template({
             snapshots: snapshots,
