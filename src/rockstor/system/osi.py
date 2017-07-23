@@ -61,6 +61,10 @@ UDEVADM = '/usr/sbin/udevadm'
 UMOUNT = '/bin/umount'
 WIPEFS = '/usr/sbin/wipefs'
 RTC_WAKE_FILE = '/sys/class/rtc/rtc0/wakealarm'
+RETURN_BOOLEAN = True
+EXCLUDED_MOUNT_DEVS = ['sysfs', 'proc', 'devtmpfs', 'securityfs', 'tmpfs',
+                         'devpts', 'cgroup', 'pstore', 'configfs', 'systemd-1',
+                         'mqueue', 'debugfs', 'hugetlbfs', 'nfsd', 'sunrpc']
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
@@ -763,15 +767,45 @@ def gethostname():
 
 def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
     mnt_pt = mnt_prefix + sname
-    return is_mounted(mnt_pt)
+    return mount_status(mnt_pt, RETURN_BOOLEAN)
 
 
 def is_mounted(mnt_pt):
+    return mount_status(mnt_pt, RETURN_BOOLEAN)
+
+
+def mount_status(mnt_pt, return_boolean=False):
+    """
+    Parses /proc/mounts to extract the status of a given mount point.
+    Line fields are as follows:
+    dev_name mount_point fstype mount_options dummy_value dummy_value
+    In either mode this function typically takes around 0.05ms without GC.
+    It should be kept light as it is called frequently by Pool and Share
+    models via their mount_status and is_mounted properties.
+    :param mnt_pt: pool (volume) or subvolume mount point (with full path).
+    :param return_boolean: If set to 'True' only a boolean is returned,
+    otherwise a string of current mount options, or 'unmounted', is returned.
+    :return: if return_boolean then True or False depending on mount state.
+    If return_boolean=False (default) then a string is returned of the current
+    mount options, or 'unmounted' if no relevant /proc/mounts entry was found.
+    """
     with open('/proc/mounts') as pfo:
-        for line in pfo.readlines():
-            if (re.search(' ' + mnt_pt + ' ', line) is not None):
-                return True
-    return False
+        for each_line in pfo.readlines():
+            line_fields = each_line.split()
+            if len(line_fields) < 4:
+                # Avoid index issues as we expect >= 4 columns.
+                continue
+            if line_fields[0] in EXCLUDED_MOUNT_DEVS:
+                # Skip excluded/special mount devices ie sysfs, proc, etc.
+                continue
+            if line_fields[1] == mnt_pt:
+                # We have an active mount, return according to personality.
+                if return_boolean:
+                    return True
+                return line_fields[3]
+    if return_boolean:
+        return False
+    return 'unmounted'
 
 
 def remount(mnt_pt, mnt_options):
