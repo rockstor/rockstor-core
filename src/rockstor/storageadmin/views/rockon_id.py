@@ -147,7 +147,7 @@ class RockOnIdView(rfc.GenericView):
                     for e in env_map.keys():
                         if (not DContainerEnv.objects.filter(
                                 container=co, key=e).exists()):
-                            e_msg = ('Invalid environment variabled(%s)' % e)
+                            e_msg = ('Invalid environment variable(%s)' % e)
                             handle_exception(Exception(e_msg), request)
                         ceo = DContainerEnv.objects.get(container=co, key=e)
                         ceo.val = env_map[e]
