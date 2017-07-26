@@ -30,7 +30,7 @@ from fs.btrfs import (mount_share, mount_root, qgroup_create, get_pool_info,
                       pool_raid, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl
-from system.osi import (is_share_mounted, system_shutdown, system_reboot,
+from system.osi import (system_shutdown, system_reboot,
                         system_suspend, set_system_rtc_wake)
 from storageadmin.models import (Share, NFSExport, SFTP, Pool, Snapshot,
                                  UpdateSubscription, AdvancedNFSExport)
@@ -101,7 +101,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     if (share.pqgroup == settings.MODEL_DEFS['pqgroup']):
                         share.pqgroup = qgroup_create(share.pool)
                         share.save()
-                    if (not is_share_mounted(share.name)):
+                    if not share.is_mounted:
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                         mount_share(share, mnt_pt)
                 except Exception as e:

@@ -24,7 +24,7 @@ from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from django.conf import settings
 from storageadmin.models import Share
-from fs.btrfs import (mount_share, is_share_mounted)
+from fs.btrfs import mount_share
 import re
 import shutil
 
@@ -63,7 +63,7 @@ class DockerServiceView(BaseServiceDetailView):
 
             share = self._validate_root(request, config['root_share'])
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-            if (not is_share_mounted(share.name)):
+            if not share.is_mounted:
                 mount_share(share, mnt_pt)
 
             inf = ('%s/docker.service' % (settings.CONFROOT))

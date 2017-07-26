@@ -23,7 +23,7 @@ from storageadmin.models import (NFSExport, NFSExportGroup, AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import (NFSExportGroupSerializer,
                                       AdvancedNFSExportSerializer)
-from fs.btrfs import (mount_share, is_share_mounted)
+from fs.btrfs import mount_share
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from share_helpers import validate_share
 import rest_framework_custom as rfc
@@ -64,7 +64,7 @@ class NFSExportMixin(object):
             share = fields[0].split('/')[-1]
             s = validate_share(share, request)
             mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
-            if (not is_share_mounted(s.name)):
+            if not s.is_mounted:
                 mount_share(s, mnt_pt)
             exports_d[fields[0]] = []
             for f in fields[1:]:
@@ -240,7 +240,7 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
             for s in shares:
                 mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
                 export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
-                if (not is_share_mounted(s.name)):
+                if not s.is_mounted:
                     mount_share(s, mnt_pt)
                 export = NFSExport(export_group=eg, share=s, mount=export_pt)
                 export.full_clean()

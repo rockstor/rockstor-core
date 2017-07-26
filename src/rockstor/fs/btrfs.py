@@ -227,7 +227,7 @@ def mount_root(pool):
     indicates 'no disks in pool' or 'Unknown Reason'
     """
     root_pool_mnt = DEFAULT_MNT_DIR + pool.name
-    if (is_share_mounted(pool.name)):
+    if pool.is_mounted:
         return root_pool_mnt
     # Creates a directory to act as the mount point.
     create_tmp_dir(root_pool_mnt)
