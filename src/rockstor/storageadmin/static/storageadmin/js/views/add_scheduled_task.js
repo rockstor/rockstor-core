@@ -78,6 +78,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                 share: this.taskDef.share(),
                 prefix: this.taskDef.prefix(),
                 pool: this.taskDef.pool(),
+                pool_name: this.taskDef.pool_name(),
                 maxCount: this.taskDef.max_count(),
                 visible: this.taskDef.visible(),
                 writable: this.taskDef.writable(),
@@ -172,6 +173,13 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                     }
                 },
                 pool: {
+                    required: {
+                        depends: function(element) {
+                            return (_this.$('#task_type').val() == 'scrub');
+                        }
+                    }
+                },
+                'meta.pool_name': {
                     required: {
                         depends: function(element) {
                             return (_this.$('#task_type').val() == 'scrub');

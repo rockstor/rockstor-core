@@ -9,7 +9,7 @@
         <div class="col-md-4">
             <select class="form-control" id="pool" name="meta.pool">
             {{#each pools}}
-                <option value="{{this.name}}">{{this.name}}</option>
+                <option value="{{this.id}}">{{this.name}}</option>
             {{/each}}
             </select>
         </div><!--col-md-4-->
@@ -17,9 +17,9 @@
 </div><!--row -->
 {{else}}
 <div class="form-group">
-    <label class="control-label col-sm-4" for="share">Pool: </label>
+    <label class="control-label col-sm-4" for="share">Pool name: </label>
     <div class="col-sm-6">
-        <input type="text" class="form-control" value="{{> taskObj.pool}}" disabled />
+        <input type="text" class="form-control" value="{{> taskObj.pool_name}}" disabled />
     </div>    
 </div>
 {{/if}}
