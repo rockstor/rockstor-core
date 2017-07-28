@@ -113,6 +113,11 @@ SetroleDiskView = RockstorLayoutView.extend({
         } else {
             is_open_luks = false;
         }
+        // convenience flag to indicate if a device is an LVM2 member.
+        var is_lvm2member;
+        if (role_obj !== null && role_obj.hasOwnProperty('LVM2member')) {
+            is_lvm2member = true;
+        }
 
         this.current_redirect = current_redirect;
         this.partitions = partitions;
@@ -121,6 +126,7 @@ SetroleDiskView = RockstorLayoutView.extend({
         this.is_luks = is_luks;
         this.is_unlocked = is_unlocked;
         this.current_crypttab_status = current_crypttab_status;
+        this.is_lvm2member = is_lvm2member;
 
         $(this.el).html(this.template({
             diskName: diskName,
@@ -133,7 +139,8 @@ SetroleDiskView = RockstorLayoutView.extend({
             is_luks: is_luks,
             is_open_luks: is_open_luks,
             is_unlocked: is_unlocked,
-            current_crypttab_status: current_crypttab_status
+            current_crypttab_status: current_crypttab_status,
+            is_lvm2member: is_lvm2member
         }));
 
         this.$('#add-role-disk-form :input').tooltip({
@@ -366,7 +373,8 @@ SetroleDiskView = RockstorLayoutView.extend({
         // helps to avoid some potential confusion when re-formatting a LUKS
         // container as it forces a traditional wipe first.
         if (_.isEmpty(this.partitions) && this.disk_btrfs_uuid == null
-            && this.is_open_luks !== true && this.is_luks !== true) {
+            && this.is_open_luks !== true && this.is_luks !== true
+            && this.is_lvm2member !== true) {
             luks_tick.removeAttr('disabled');
             this.$('#luks_options').show();
         } else {
@@ -389,6 +397,8 @@ SetroleDiskView = RockstorLayoutView.extend({
                 whole_disk_fstype = 'btrfs';
             } else if (this.is_luks) {
                 whole_disk_fstype = 'LUKS';
+            } else if (this.is_lvm2member) {
+                whole_disk_fstype = 'LVM2_member';
             } else {
                 whole_disk_fstype = 'None';
             }
