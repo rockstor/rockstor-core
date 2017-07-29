@@ -84,7 +84,7 @@ class PoolScrubView(rfc.GenericView):
                     p.save()
                 else:
                     e_msg = ('A Scrub process is already running for '
-                             'pool(%d). If you really want to kill it '
+                             'pool(%s). If you really want to kill it '
                              'and start a new scrub, use force option' % pid)
                     handle_exception(Exception(e_msg), request)
 
