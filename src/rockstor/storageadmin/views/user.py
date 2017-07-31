@@ -84,7 +84,14 @@ class UserMixin(object):
                 e_msg = ('UID must be an integer, try again. Exception: %s'
                          % e.__str__())
                 handle_exception(Exception(e_msg), request, status_code=400)
-
+        input_fields['gid'] = request.data.get('gid', None)
+        if (input_fields['gid'] is not None):
+            try:
+                input_fields['gid'] = int(input_fields['gid'])
+            except ValueError as e:
+                e_msg = ('GID must be an integer, try again. Exception: %s'
+                         % e.__str__())
+                handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['group'] = request.data.get('group', None)
         input_fields['public_key'] = cls._validate_public_key(request)
         return input_fields
@@ -119,14 +126,19 @@ class UserListView(UserMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request, status_code=400)
             users = combined_users()
             groups = combined_groups()
-            invar['gid'] = None
+            # As we have not yet established a pre-existing group, set to None.
             admin_group = None
             if (invar['group'] is not None):
+                # We have a group setting so search for existing group name
+                # match. Matching by group name has precedence over gid.
                 for g in groups:
                     if (g.groupname == invar['group']):
+                        # We have an existing group name match in invar
+                        # so overwrite requested gid to match existing gid.
                         invar['gid'] = g.gid
+                        # Set the admin_group to our existing group object.
                         admin_group = g
-                        invar['group'] = g
+                        invar['group'] = g  # exchange name for db group item.
                         break
 
             for u in users:
@@ -156,13 +168,29 @@ class UserListView(UserMixin, rfc.GenericView):
             if (invar['public_key'] is not None):
                 add_ssh_key(invar['username'], invar['public_key'])
             del(invar['password'])
-            if (admin_group is None):
-                admin_group = Group(gid=invar['gid'],
-                                    groupname=invar['username'],
-                                    admin=True)
-                admin_group.save()
+            if admin_group is None:
+                # We have no identified pre-existing group by name but there
+                # could still be an existing group match by gid, if so we
+                # use that group object as our new User.group foreign key link.
+                if Group.objects.filter(gid=invar['gid']).exists():
+                    admin_group = Group.objects.get(gid=invar['gid'])
+                else:
+                    # As we are creating a new group we set admin=True to
+                    # flag this group as administered by Rockstor.
+                    if invar['group'] is None:
+                        admin_group = Group(gid=invar['gid'],
+                                            groupname=invar['username'],
+                                            admin=True)
+                    else:
+                        admin_group = Group(gid=invar['gid'],
+                                            groupname=invar['group'],
+                                            admin=True)
+                    admin_group.save()  # save our new group object.
+                # set our invar dict group entry to our admin_group object.
                 invar['group'] = admin_group
+            # now we create our user object based on the contents of invar[]
             suser = User(**invar)
+            # validate and save our suser object.
             suser.full_clean()
             suser.save()
             return Response(SUserSerializer(suser).data)
