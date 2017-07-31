@@ -138,6 +138,7 @@ class UserListView(UserMixin, rfc.GenericView):
                         invar['gid'] = g.gid
                         # Set the admin_group to our existing group object.
                         admin_group = g
+                        admin_group.save()
                         invar['group'] = g  # exchange name for db group item.
                         break
 
