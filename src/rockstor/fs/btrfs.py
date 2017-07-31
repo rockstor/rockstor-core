@@ -752,10 +752,19 @@ def update_quota(pool, qgroup, size_bytes):
 
 
 def volume_usage(pool, volume_id, pvolume_id=None):
-
     """
     New function to collect volumes rusage and eusage instead of share_usage
     plus parent rusage and eusage (2015/* qgroup)
+    N.B. this function has 2 personalities.
+    When called with 2 parameters (pool, volume_id) it returns 2 values.
+    But with 3 parameters (pool, volume_id, pvolume_id) it returns 4 values if
+    the last parameter is != None.
+    :param pool: Pool object
+    :param volume_id: qgroupid eg '0/261'
+    :param pvolume_id: qgroupid eg '2015/4'
+    :return: list of len 2 (when pvolul_id=None) or 4 elements. The first 2
+    pertain to the qgroupid=volume_id the second 2, if present, are for the
+    qgroupid=pvolume_id. I.e [rfer, excl, rfer, excl]
     """
     # Obtain path to share in pool, this preserved because
     # granting pool exists
@@ -770,7 +779,6 @@ def volume_usage(pool, volume_id, pvolume_id=None):
         if (len(fields) > 0 and short_id in fields[1]):
             volume_dir = root_pool_mnt + '/' + fields[8]
             break
-
     """
     Rockstor volume/subvolume hierarchy is not standard
     and Snapshots actually not always under Share but on Pool,
@@ -784,27 +792,26 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     Note: 2015/* rfer and excl sizes are always equal so to compute
     current real size we can indistinctly use one of them.
     """
-
     cmd = [BTRFS, 'qgroup', 'show', volume_dir]
     out, err, rc = run_command(cmd, log=True)
-    rusage = eusage = 0
-    pqgroup_rusage = pqgroup_eusage = 0
-    share_sizes = []
-
+    volume_id_sizes = [0, 0]
+    pvolume_id_sizes = [0, 0]
     for line in out:
         fields = line.split()
-        if (len(fields) > 0 and '/' in fields[0]):
+        # We may index up to [2] fields (3 values) so ensure they exist.
+        if (len(fields) > 2 and '/' in fields[0]):
             qgroup = fields[0]
             if (qgroup == volume_id):
                 rusage = convert_to_kib(fields[1])
                 eusage = convert_to_kib(fields[2])
-                share_sizes.extend((rusage, eusage))
+                volume_id_sizes = [rusage, eusage]
             if (pvolume_id is not None and qgroup == pvolume_id):
                 pqgroup_rusage = convert_to_kib(fields[1])
                 pqgroup_eusage = convert_to_kib(fields[2])
-                share_sizes.extend((pqgroup_rusage, pqgroup_eusage))
-
-    return share_sizes
+                pvolume_id_sizes = [pqgroup_rusage, pqgroup_eusage]
+    if pvolume_id is None:
+        return volume_id_sizes
+    return volume_id_sizes + pvolume_id_sizes
 
 
 def shares_usage(pool, share_map, snap_map):

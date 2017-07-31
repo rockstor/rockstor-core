@@ -236,6 +236,37 @@ class BTRFSTests(unittest.TestCase):
              '2015/2        2.04MiB      2.04MiB ',
              '2015/3        7.37GiB      7.37GiB ',
              '2015/4       63.00MiB     63.00MiB ', '']
+        # the following is an example of fresh clone of a snapshot post import.
+        o2 = ['qgroupid         rfer         excl ',
+              '--------         ----         ---- ',
+              '0/5          16.00KiB     16.00KiB ',
+              '0/258        16.00KiB     16.00KiB ',
+              '0/261        16.00KiB     16.00KiB ',
+              '0/262        16.00KiB     16.00KiB ',
+              '0/263        16.00KiB     16.00KiB ',
+              '2015/1          0.00B        0.00B ',
+              '2015/2          0.00B        0.00B ',
+              '2015/3          0.00B        0.00B ',
+              '2015/4          0.00B        0.00B ',
+              '2015/5          0.00B        0.00B ',
+              '2015/6          0.00B        0.00B ',
+              '2015/7          0.00B        0.00B ',
+              '2015/8          0.00B        0.00B ',
+              '2015/9          0.00B        0.00B ',
+              '2015/10         0.00B        0.00B ',
+              '2015/11         0.00B        0.00B ',
+              '2015/12         0.00B        0.00B ',
+              '2015/13         0.00B        0.00B ',
+              '2015/14         0.00B        0.00B ',
+              '2015/15         0.00B        0.00B ',
+              '2015/16         0.00B        0.00B ',
+              '2015/17         0.00B        0.00B ',
+              '2015/18         0.00B        0.00B ',
+              '2015/19      16.00KiB     16.00KiB ',
+              '2015/20         0.00B        0.00B ',
+              '2015/21      16.00KiB     16.00KiB ',
+              '2015/22      16.00KiB     16.00KiB ',
+              '']
         e = ['']
         rc = 0
         # is_mounted returning True avoids mount command calls in mount_root()
@@ -262,6 +293,20 @@ class BTRFSTests(unittest.TestCase):
         self.assertEqual(volume_usage(pool, volume_id, pvolume_id2),
                          expected_results_snapshot,
                          msg='Failed to retrieve snapshot rfer and excl usage')
+        # As we have now observed a rogue db field entry for pvolume_id of
+        # -1/-1 which in turn caused our subject "volume_usage" to return only
+        # 2 values when callers using 3 actual parameters expect 4 values, we
+        # should test to ensure dependable parameter count to return value
+        # count behaviour when the 3rd parameter is not None.
+        # In the above test involving 3 actual parameters where the last is
+        # not None ie pvolume_id = '-1/-1' we prove 4 return values.
+        self.mock_run_command.return_value = (o2, e, rc)
+        pvolume_id3 = '-1/-1'
+        expected_results_rogue_pvolume_id = [16, 16, 0, 0]
+        # here we choose to return 0, 0 in place of the
+        self.assertEqual(volume_usage(pool, volume_id, pvolume_id3),
+                         expected_results_rogue_pvolume_id,
+                         msg='Failed to handle bogus pvolume_id')
 
 
 # TODO: add test_balance_status_finished
