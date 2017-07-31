@@ -157,16 +157,18 @@ def update_shell(username, shell):
 def useradd(username, shell, uid=None, gid=None):
     pw_entry = None
     try:
+        # Use unix password db to assess prior user status by name
         pw_entry = pwd.getpwnam(username)
     except:
         pass
     if (pw_entry is not None):
+        # If we have a prior user by name assess uid gid mismatches.
         if (uid is not None and uid != pw_entry.pw_uid):
             raise Exception('User({0}) already exists, but her uid({1}) is '
                             'different from the input({2}).'.format(
                                 username, pw_entry.pw_uid, uid))
         if (gid is not None and gid != pw_entry.pw_gid):
-            raise Exception('User({0}) already exists, but her git({1}) is '
+            raise Exception('User({0}) already exists, but her gid({1}) is '
                             'different from the input({2}).'.format(
                                 username, pw_entry.pw_gid, gid))
         if (shell != pw_entry.pw_shell):
