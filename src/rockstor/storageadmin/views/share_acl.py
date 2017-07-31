@@ -21,7 +21,7 @@ from django.db import transaction
 from django.conf import settings
 from storageadmin.models import Share
 from storageadmin.serializers import ShareSerializer
-from fs.btrfs import (mount_share, is_share_mounted, umount_root)
+from fs.btrfs import (mount_share, umount_root)
 from storageadmin.views import ShareListView
 from system.acl import (chown, chmod)
 
@@ -53,7 +53,7 @@ class ShareACLView(ShareListView):
 
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
             force_mount = False
-            if (not is_share_mounted(share.name)):
+            if not share.is_mounted:
                 mount_share(share, mnt_pt)
                 force_mount = True
             chown(mnt_pt, options['owner'], options['group'],

@@ -27,7 +27,7 @@ from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from share import ShareMixin
 from system.samba import (refresh_smb_config, status, restart_samba)
-from fs.btrfs import (mount_share, is_share_mounted)
+from fs.btrfs import mount_share
 
 import logging
 logger = logging.getLogger(__name__)
@@ -152,7 +152,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                     cco = SambaCustomConfig(smb_share=smb_share,
                                             custom_config=cc)
                     cco.save()
-                if (not is_share_mounted(share.name)):
+                if not share.is_mounted:
                     mount_share(share, mnt_pt)
 
                 admin_users = request.data.get('admin_users', [])
@@ -218,7 +218,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                 cco = SambaCustomConfig(smb_share=smbo, custom_config=cc)
                 cco.save()
             for smb_o in SambaShare.objects.all():
-                if (not is_share_mounted(smb_o.share.name)):
+                if not smb_o.share.is_mounted:
                     mnt_pt = ('%s%s' % (settings.MNT_PT, smb_o.share.name))
                     try:
                         mount_share(smb_o.share, mnt_pt)

@@ -40,12 +40,12 @@
         <input class="js-snapshot-select-all inline" type="checkbox" name="snapshot-select-all" ></input>
       </th>
       <th>Snapshot Name</th>
-      <th>Created on</th>
-      <th>Share</th>
-      <th>Visibility to user</th>
-      <th>Writable</th>
       <th>Total Size</th>
       <th>Exclusive Size</th>
+      <th>Created on</th>
+      <th>Share (Active mount options / Status)</th>
+      <th>Visibility</th>
+      <th>Writable</th>
     </tr>
   </thead>
   <tbody>
@@ -54,7 +54,7 @@
               <td><input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" 
               data-name="{{this.name}}" data-id='{{this.id}}' {{checkboxValue this.name}}></input>
               </td>
-              <td><i class="glyphicon glyphicon-camera"></i> {{this.name}} &nbsp;&nbsp;&nbsp;&nbsp;
+              <td><i class="glyphicon glyphicon-camera"></i>&nbsp;{{this.name}}
                {{#if this.writable}}
                     <a class="js-snapshot-clone" href="#" data-name="{{this.name}}" data-share-name="{{this.share}}">
                     <i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i></a>
@@ -62,9 +62,17 @@
                 <a href="#" class="js-snapshot-delete" id="delete_snapshot_{{this.name}}" data-name="{{this.name}}" data-size="{{getSize this.eusage}}" 
                 data-share-name="{{this.share}}" data-action="delete" title="Delete snapshot">
                 <i rel="tooltip" title="Delete snapshot" class="glyphicon glyphicon-trash"></i></a>
-               </td>
+              </td>
+              <td>{{getSize this.rusage}}</td>
+              <td>{{getSize this.eusage}}</td>
               <td>{{getToc this.toc}}</td>
-              <td><a href="#shares/{{this.share}}">{{this.share}}</a></td>
+              <td><a href="#shares/{{this.share}}">{{this.share}}</a>
+                  {{#if this.share_is_mounted}}
+                    ({{this.share_mount_status}})
+                  {{else}}
+                    (<strong><span style="color:red">{{this.share_mount_status}}</span></strong>)
+                  {{/if}}
+              </td>
                <td>
                {{#if this.uvisible}}
                     Visible
@@ -79,8 +87,6 @@
                     No
                {{/if}}
                </td>
-               <td>{{getSize this.rusage}}</td>
-               <td>{{getSize this.eusage}}</td>
           </tr>
   {{/each}}
   </tbody> 

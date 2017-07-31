@@ -46,6 +46,11 @@ ShareUsageModule = RockstorModuleView.extend({
             module_name: this.module_name,
             share: this.share,
             poolName: this.share.get('pool').name,
+            pool_is_mounted: this.share.get('pool').is_mounted,
+            pool_mount_status: this.share.get('pool').mount_status,
+            share_is_mounted: this.share.get('is_mounted'),
+            share_mount_status: this.share.get('mount_status'),
+            pid: this.share.get('pool').id,
             shareCreatedDate: moment(this.share.get('toc')).format(RS_DATE_FORMAT),
         }));
         this.renderGraph();

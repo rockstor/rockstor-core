@@ -22,8 +22,11 @@ from django.db.models.signals import (post_save, post_delete)
 from django.dispatch import receiver
 
 from storageadmin.models import Pool
+from system.osi import mount_status
 from .netatalk_share import NetatalkShare
 from system.services import (systemctl, refresh_afp_config)
+
+RETURN_BOOLEAN = True
 
 
 class Share(models.Model):
@@ -60,6 +63,23 @@ class Share(models.Model):
     @property
     def size_gb(self):
         return self.size / (1024.0 * 1024.0)
+
+    @property
+    def mount_status(self, *args, **kwargs):
+        # Presents raw string of active mount options
+        try:
+            return mount_status('%s%s' % (settings.MNT_PT, self.name))
+        except:
+            return None
+
+    @property
+    def is_mounted(self, *args, **kwargs):
+        # Calls mount_status in return boolean mode.
+        try:
+            return mount_status('%s%s' % (settings.MNT_PT, self.name),
+                                RETURN_BOOLEAN)
+        except:
+            return False
 
     class Meta:
         app_label = 'storageadmin'

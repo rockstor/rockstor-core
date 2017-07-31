@@ -21,7 +21,7 @@ from django.utils.timezone import utc
 from django.conf import settings
 from storageadmin.models import (Share, Snapshot, SFTP)
 from smart_manager.models import ShareUsage
-from fs.btrfs import (mount_share, mount_snap, is_share_mounted, is_mounted,
+from fs.btrfs import (mount_share, mount_snap, is_mounted,
                       umount_root, shares_info, volume_usage, snaps_info,
                       qgroup_create, update_quota)
 from storageadmin.util import handle_exception
@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 
 def helper_mount_share(share, mnt_pt=None):
-    if (not is_share_mounted(share.name)):
-        if(mnt_pt is None):
+    if not share.is_mounted:
+        if mnt_pt is None:
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
         mount_share(share, mnt_pt)
 

@@ -139,12 +139,14 @@ SharesView = RockstorLayoutView.extend({
 
         Handlebars.registerHelper('displayCompressionAlgo', function(shareCompression,shareName) {
             var html = '';
-            if(shareCompression && shareCompression != 'no'){
-                html += shareCompression;
+            if (shareCompression && shareCompression != 'no') {
+                html += shareCompression + ' ';
             } else {
-                html += 'None(defaults to pool level compression, if any)   ' +
-				'<a href="#shares/' + shareName + '/?cView=edit"><i class="glyphicon glyphicon-pencil"></i></a>';
+                html += 'Same as Pool ';
             }
+            html += '<a href="#shares/' + shareName + '/?cView=edit"' +
+                'title="Edit share compression setting" rel="tooltip">' +
+                '<i class="glyphicon glyphicon-pencil"></i></a>';
             return new Handlebars.SafeString(html);
         });
 

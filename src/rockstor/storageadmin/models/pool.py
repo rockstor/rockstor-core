@@ -19,6 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from django.conf import settings
 from fs.btrfs import pool_usage, usage_bound
+from system.osi import mount_status
+
+RETURN_BOOLEAN = True
 
 
 class Pool(models.Model):
@@ -53,6 +56,23 @@ class Pool(models.Model):
                       .values_list('size', flat=True)
                       .order_by('-size')]
         return usage_bound(disk_sizes, len(disk_sizes), self.raid)
+
+    @property
+    def mount_status(self, *args, **kwargs):
+        # Presents raw string of active mount options akin to mnt_options field
+        try:
+            return mount_status('%s%s' % (settings.MNT_PT, self.name))
+        except:
+            return None
+
+    @property
+    def is_mounted(self, *args, **kwargs):
+        # Calls mount_status in return boolean mode.
+        try:
+            return mount_status('%s%s' % (settings.MNT_PT, self.name),
+                                RETURN_BOOLEAN)
+        except:
+            return False
 
     class Meta:
         app_label = 'storageadmin'

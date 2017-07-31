@@ -25,7 +25,6 @@ from storageadmin.models import (Share, Pool, Snapshot, NFSExport, SambaShare,
 from smart_manager.models import Replica
 from fs.btrfs import (add_share, remove_share, update_quota, volume_usage,
                       set_property, mount_share, qgroup_id, qgroup_create)
-from system.osi import is_share_mounted
 from system.services import systemctl
 from storageadmin.serializers import ShareSerializer, SharePoolSerializer
 from storageadmin.util import handle_exception
@@ -177,7 +176,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                       compression_algo=compression)
             s.save()
             mnt_pt = '%s%s' % (settings.MNT_PT, sname)
-            if (not is_share_mounted(sname)):
+            if not s.is_mounted:
                 mount_share(s, mnt_pt)
             if (compression != 'no'):
                 set_property(mnt_pt, 'compression', compression)

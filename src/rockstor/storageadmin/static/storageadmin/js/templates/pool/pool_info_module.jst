@@ -22,7 +22,14 @@
 <!-- Content -->
 <div class="module-content">
   <h3>Details</h3>
-  Created on <strong>{{getPoolCreationDate model.toc}}</strong><br/>
-  Raid Configuration: <strong>{{model.raid}}</strong>
+  Created on: <strong>{{getPoolCreationDate model.toc}}</strong><br/>
+  Raid configuration: <strong>{{model.raid}}</strong><br/>
+  Active mount options / Status: <strong>
+  {{#if model.is_mounted}}
+    {{model.mount_status}}
+  {{else}}
+    <span style="color:red">{{model.mount_status}}</span>
+  {{/if}}
+  </strong>
 </div> <!-- module-content -->
  

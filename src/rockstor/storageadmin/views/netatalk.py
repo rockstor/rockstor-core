@@ -23,7 +23,7 @@ from storageadmin.models import NetatalkShare
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetatalkShareSerializer
 from storageadmin.exceptions import RockStorAPIException
-from fs.btrfs import (mount_share, is_share_mounted)
+from fs.btrfs import mount_share
 from system.services import (systemctl, refresh_afp_config)
 import rest_framework_custom as rfc
 from share_helpers import validate_share
@@ -129,7 +129,7 @@ class NetatalkListView(rfc.GenericView):
                                      description=cur_description,
                                      time_machine=time_machine)
                 afpo.save()
-                if (not is_share_mounted(share.name)):
+                if not share.is_mounted:
                     mount_share(share, mnt_pt)
             refresh_afp_config(list(NetatalkShare.objects.all()))
             systemctl('netatalk', 'reload-or-restart')

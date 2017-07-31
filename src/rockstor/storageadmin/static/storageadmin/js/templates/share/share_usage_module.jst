@@ -20,8 +20,22 @@
 </script>
 
 <div id="ph-share-info">
-  Created on {{shareCreatedDate}} <br>
-  Pool: <a href="#pools/{{poolName}}">{{poolName}}</a> 
+  Created on: <strong>{{shareCreatedDate}}</strong><br>
+  Pool (Active mount options / Status): <a href="#pools/{{pid}}">{{poolName}}</a>
+  {{#if pool_is_mounted}}
+    ({{pool_mount_status}})
+  {{else}}
+    (<strong><span style="color:red">{{pool_mount_status}}</span></strong>)
+  {{/if}}
+  <br>
+  Active mount options / Status:
+  <strong>
+  {{#if share_is_mounted}}
+    {{share_mount_status}}
+  {{else}}
+    <span style="color:red">{{share_mount_status}}</span>
+  {{/if}}
+  </strong>
 </div>
 <br><br>
 <div id="chart"></div>
