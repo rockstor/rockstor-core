@@ -252,7 +252,7 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
                 filename=filename, config_backup=file_obj
             )
             cb_dir = ConfigBackup.cb_dir()
-            if (not os.path.isdir()):
+            if not os.path.isdir(cb_dir):
                 os.mkdir(cb_dir)
             fp = os.path.join(cb_dir, filename)
 
