@@ -38,6 +38,7 @@ class User(models.Model):
     homedir = models.CharField(max_length=1024, null=True)
     email = models.CharField(max_length=1024, null=True, blank=True,
                              validators=[validate_email])
+    # 'admin' field represents indicator of Rockstor web admin capability.
     admin = models.BooleanField(default=True)
     group = models.ForeignKey(Group, null=True, blank=True)
 
