@@ -53,16 +53,22 @@ def restore_users_groups(ml):
     logger.debug('Started restoring users and groups.')
     users = []
     groups = []
+    # Dictionary to map group pk to group name. Used to re-establishes user
+    # to group name relationship.
+    groupname_from_pk = {}
     for m in ml:
         if (m['model'] == 'storageadmin.user'):
             users.append(m['fields'])
         if (m['model'] == 'storageadmin.group'):
+            groupname_from_pk[m['pk']] = m['fields']['groupname']
             groups.append(m['fields'])
 
     # order is important, first create all the groups and then users.
     for g in groups:
         generic_post('%s/groups' % BASE_URL, g)
     for u in users:
+        # Replace user record 'group' field pk value with resolved group name.
+        u['group'] = groupname_from_pk[u['group']]
         # users are created with default(rockstor) password
         u['password'] = 'rockstor'
         generic_post('%s/users' % BASE_URL, u)

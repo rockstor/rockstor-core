@@ -22,6 +22,9 @@ from django.db import models
 class Group(models.Model):
     gid = models.IntegerField(unique=True)
     groupname = models.CharField(max_length=1024, null=True)
+    # 'admin' field represents indicator of Rockstor managed group;
+    # ie pre-existing group (eg audio) will be False. Rockstor created groups
+    # are admin=True.
     admin = models.BooleanField(default=False)
 
     class Meta:
