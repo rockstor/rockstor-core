@@ -40,6 +40,9 @@ class BTRFSTests(unittest.TestCase):
         # setup mock patch for mount_root() in fs.btrfs
         self.patch_mount_root = patch('fs.btrfs.mount_root')
         self.mock_mount_root = self.patch_mount_root.start()
+        # some procedures use os.path.exists so setup mock
+        self.patch_os_path_exists = patch('os.path.exists')
+        self.mock_os_path_exists = self.patch_os_path_exists.start()
 
     def tearDown(self):
         patch.stopall()
@@ -506,6 +509,7 @@ class BTRFSTests(unittest.TestCase):
             device_scan(['detached-ea847422dff841fca3b716fb7dcdaa5a']),
             (out, err, rc),
             msg='Failed to ignore detached device.')
+        self.mock_os_path_exists.return_value = False
         self.assertEqual(device_scan(['nonexistent-device']), (out, err, rc),
                          msg='Failed to ignore nonexistent-device.')
         self.assertEqual(device_scan([]), (out, err, rc),
@@ -516,6 +520,9 @@ class BTRFSTests(unittest.TestCase):
         out = ["Scanning for Btrfs filesystems in '/dev/vdc'", '']
         err = ["ERROR: device scan failed on '/dev/vdc': Invalid argument", '']
         rc = 1
+        # To make this test portable we have to mock os.path.exists() as True
+        # so that our otherwise bogus block device is considered as existing.
+        self.mock_os_path_exists.return_value = True
         self.mock_run_command.return_value = (out, err, rc)
         self.assertEqual(device_scan(['virtio-serial-1']), (out, err, rc),
                          msg='Failed to return results from non btrfs device.')
