@@ -83,6 +83,7 @@ PoolRebalanceTableModule = RockstorModuleView.extend({
                 $.ajax({
                     url: '/api/pools/' + _this.pool.get('id') + '/balance',
                     type: 'POST',
+                    contentType: 'application/json',
                     data: postdata,
                     success: function() {
                         _this.$('#pool-rebalance-form :input').tooltip('hide');
