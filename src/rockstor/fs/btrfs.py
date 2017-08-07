@@ -928,7 +928,7 @@ def usage_bound(disk_sizes, num_devices, raid_level):
 
 def scrub_start(pool, force=False):
     mnt_pt = mount_root(pool)
-    p = PoolScrub(mnt_pt)
+    p = PoolScrub(mnt_pt, force)
     p.start()
     return p.pid
 
