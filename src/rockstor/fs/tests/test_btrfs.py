@@ -15,7 +15,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
-                      share_id, device_scan)
+                      share_id, device_scan, scrub_status)
 from mock import patch
 
 
@@ -399,6 +399,161 @@ class BTRFSTests(unittest.TestCase):
         self.assertEqual(balance_status(pool), expected_results,
                          msg=("Failed to correctly identify balance "
                               "paused status"))
+
+    def test_scrub_status_running(self):
+        """
+        Test to see if scrub_status correctly identifies running status
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ['scrub status for 030baa1c-faab-4599-baa4-6077f7f6451b',
+               '\tscrub started at Sun Aug  6 15:08:37 2017, running for 00:00:05',  # noqa E501
+               '\tdata_extents_scrubbed: 26409',
+               '\ttree_extents_scrubbed: 4495',
+               '\tdata_bytes_scrubbed: 832385024',
+               '\ttree_bytes_scrubbed: 73646080', '\tread_errors: 0',
+               '\tcsum_errors: 0', '\tverify_errors: 0', '\tno_csum: 272',
+               '\tcsum_discards: 0', '\tsuper_errors: 0',
+               '\tmalloc_errors: 0',
+               '\tuncorrectable_errors: 0', '\tunverified_errors: 0',
+               '\tcorrected_errors: 0', '\tlast_physical: 1392836608', '']
+        err = ['']
+        rc = 0
+        expected_results = {'status': 'running', 'csum_discards': 0,
+                            'super_errors': 0,
+                            'data_extents_scrubbed': 26409,
+                            'last_physical': 1392836608,
+                            'tree_bytes_scrubbed': 73646080,
+                            'no_csum': 272,
+                            'read_errors': 0, 'verify_errors': 0,
+                            'uncorrectable_errors': 0, 'malloc_errors': 0,
+                            'unverified_errors': 0,
+                            'tree_extents_scrubbed': 4495,
+                            'kb_scrubbed': 812876, 'csum_errors': 0,
+                            'corrected_errors': 0}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(scrub_status(pool), expected_results,
+                         msg=("Failed to identify scrub running state."))
+
+    def test_scrub_status_finished(self):
+        """
+        Test to see if scrub_status correctly identifies finished status
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ['scrub status for 030baa1c-faab-4599-baa4-6077f7f6451b',
+               '\tscrub started at Sun Aug  6 16:39:43 2017 and finished after 00:00:16',  # noqa E501
+               '\tdata_extents_scrubbed: 81795',
+               '\ttree_extents_scrubbed: 5264',
+               '\tdata_bytes_scrubbed: 2881429504',
+               '\ttree_bytes_scrubbed: 86245376', '\tread_errors: 0',
+               '\tcsum_errors: 0', '\tverify_errors: 0', '\tno_csum: 272',
+               '\tcsum_discards: 0', '\tsuper_errors: 0', '\tmalloc_errors: 0',
+               '\tuncorrectable_errors: 0', '\tunverified_errors: 0',
+               '\tcorrected_errors: 0', '\tlast_physical: 5993660416', '']
+        err = ['']
+        rc = 0
+        expected_results = {'status': 'finished', 'csum_discards': 0,
+                            'super_errors': 0, 'data_extents_scrubbed': 81795,
+                            'last_physical': 5993660416,
+                            'tree_bytes_scrubbed': 86245376, 'no_csum': 272,
+                            'read_errors': 0, 'verify_errors': 0,
+                            'uncorrectable_errors': 0, 'malloc_errors': 0,
+                            'unverified_errors': 0,
+                            'tree_extents_scrubbed': 5264, 'duration': 16,
+                            'kb_scrubbed': 2813896, 'csum_errors': 0,
+                            'corrected_errors': 0}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(scrub_status(pool), expected_results,
+                         msg=("Failed to identify scrub finished state."))
+
+    def test_scrub_status_halted(self):
+        """
+        Test to see if scrub_status correctly identifies interrupted status
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ['scrub status for 8adf7f0b-65ec-4e00-83cc-7f5855201185',
+               '\tscrub started at Sun Aug  6 12:18:39 2017, interrupted after 00:00:09, not running',  # noqa E501
+               '\tdata_extents_scrubbed: 49335',
+               '\ttree_extents_scrubbed: 9262',
+               '\tdata_bytes_scrubbed: 2286493696',
+               '\ttree_bytes_scrubbed: 151748608', '\tread_errors: 0',
+               '\tcsum_errors: 0', '\tverify_errors: 0', '\tno_csum: 2816',
+               '\tcsum_discards: 0', '\tsuper_errors: 0', '\tmalloc_errors: 0',
+               '\tuncorrectable_errors: 0', '\tunverified_errors: 0',
+               '\tcorrected_errors: 0', '\tlast_physical: 16706174976', '']
+        err = ['']
+        rc = 0
+        expected_results = {'status': 'halted', 'csum_discards': 0,
+                            'super_errors': 0, 'data_extents_scrubbed': 49335,
+                            'last_physical': 16706174976,
+                            'tree_bytes_scrubbed': 151748608, 'no_csum': 2816,
+                            'read_errors': 0, 'verify_errors': 0,
+                            'uncorrectable_errors': 0, 'malloc_errors': 0,
+                            'unverified_errors': 0,
+                            'tree_extents_scrubbed': 9262, 'duration': 9,
+                            'kb_scrubbed': 2232904, 'csum_errors': 0,
+                            'corrected_errors': 0}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(scrub_status(pool), expected_results,
+                         msg=("Failed to identify scrub halted state."))
+
+    def test_scrub_status_conn_reset(self):
+        """
+        Test to see if scrub_status correctly identifies 'no stats available'
+        :return:
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ['scrub status for 8adf7f0b-65ec-4e00-83cc-7f5855201185',
+               '\tno stats available', '\tdata_extents_scrubbed: 0',
+               '\ttree_extents_scrubbed: 0', '\tdata_bytes_scrubbed: 0',
+               '\ttree_bytes_scrubbed: 0', '\tread_errors: 0',
+               '\tcsum_errors: 0', '\tverify_errors: 0', '\tno_csum: 0',
+               '\tcsum_discards: 0', '\tsuper_errors: 0', '\tmalloc_errors: 0',
+               '\tuncorrectable_errors: 0', '\tunverified_errors: 0',
+               '\tcorrected_errors: 0', '\tlast_physical: 0', '']
+        err = ['WARNING: failed to read status: Connection reset by peer', '']
+        rc = 0
+        expected_results = {'status': 'conn-reset'}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(scrub_status(pool), expected_results,
+                         msg=("Failed to identify conn-reset state."))
+
+    def test_scrub_status_cancelled(self):
+        """
+        Test to see if scrub_status correctly identifies cancelled status
+        :return:
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ['scrub status for 8adf7f0b-65ec-4e00-83cc-7f5855201185',
+               '\tscrub started at Mon Aug  7 15:29:52 2017 and was aborted after 00:04:56',  # noqa E501
+               '\tdata_extents_scrubbed: 1292470',
+               '\ttree_extents_scrubbed: 9299',
+               '\tdata_bytes_scrubbed: 83593609216',
+               '\ttree_bytes_scrubbed: 152354816', '\tread_errors: 0',
+               '\tcsum_errors: 0', '\tverify_errors: 0', '\tno_csum: 5632',
+               '\tcsum_discards: 0', '\tsuper_errors: 0', '\tmalloc_errors: 0',
+               '\tuncorrectable_errors: 0', '\tunverified_errors: 0',
+               '\tcorrected_errors: 0', '\tlast_physical: 103077314560', '']
+        err = ['']
+        rc = 0
+        expected_results = {'status': 'cancelled', 'csum_discards': 0,
+                            'super_errors': 0,
+                            'data_extents_scrubbed': 1292470,
+                            'last_physical': 103077314560,
+                            'tree_bytes_scrubbed': 152354816, 'no_csum': 5632,
+                            'read_errors': 0, 'verify_errors': 0,
+                            'uncorrectable_errors': 0, 'malloc_errors': 0,
+                            'unverified_errors': 0,
+                            'tree_extents_scrubbed': 9299, 'duration': 296,
+                            'kb_scrubbed': 81634384, 'csum_errors': 0,
+                            'corrected_errors': 0}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.assertEqual(scrub_status(pool), expected_results,
+                         msg=("Failed to identify cancelled state."))
 
     def test_share_id(self):
         """
