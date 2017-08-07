@@ -934,24 +934,57 @@ def scrub_start(pool, force=False):
 
 
 def scrub_status(pool):
+    """
+    Returns the raw statistics per-device (-R option) of the ongoing or last
+    known btrfs scrub. Works by parsing the output of the following command:
+    btrfs scrub status -R <mount-point>
+    :param pool: pool object
+    :return: dictionary indexed via 'status' and if a finished or halted, or
+    cancelld scrub is indicated then the duration of that scrub is added as
+    value to added index 'duration'. In all 'status' cases bar 'unknown',
+    data_bytes_scrubbed is passed as value to index 'kb_scrubbed' and all
+    other -R invoked details are returned as key value pairs.
+    """
     stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool)
     out, err, rc = run_command([BTRFS, 'scrub', 'status', '-R', mnt_pt])
-    if (len(out) > 1):
-        if (re.search('running', out[1]) is not None):
+    if err != [''] and len(err) > 0:
+        if err[0] == "WARNING: failed to read status: Connection reset by " \
+                     "peer":
+            stats['status'] = 'conn-reset'
+            return stats
+    if len(out) > 1:
+        if re.search('interrupted', out[1]) is not None:
+            stats['status'] = 'halted'
+            # extract the duration from towards the end of the first line eg:
+            # "... 2017, interrupted after 00:00:09, not running"
+            dfields = out[1].split()[-3].strip(',').split(':')
+            stats['duration'] = ((int(dfields[0]) * 60 * 60) +
+                                 (int(dfields[1]) * 60) + int(dfields[2]))
+        elif re.search('running', out[1]) is not None:
             stats['status'] = 'running'
-        elif (re.search('finished', out[1]) is not None):
+        elif re.search('finished', out[1]) is not None:
             stats['status'] = 'finished'
+            # extract the duration from the end of the first line eg:
+            # "... 2017 and finished after 00:00:16"
+            dfields = out[1].split()[-1].split(':')
+            stats['duration'] = ((int(dfields[0]) * 60 * 60) +
+                                 (int(dfields[1]) * 60) + int(dfields[2]))
+        elif re.search('aborted', out[1]) is not None:
+            stats['status'] = 'cancelled'
+            # extract the duration from the end of the first line eg:
+            # "... 2017 and was aborted after 00:04:56"
+            # TODO: we have code duplication here re finished clause above.
             dfields = out[1].split()[-1].split(':')
             stats['duration'] = ((int(dfields[0]) * 60 * 60) +
                                  (int(dfields[1]) * 60) + int(dfields[2]))
         else:
             return stats
-    else:
+    else:  # we have an unknown status as out is 0 or 1 lines long.
         return stats
     for l in out[2:-1]:
         fields = l.strip().split(': ')
-        if (fields[0] == 'data_bytes_scrubbed'):
+        if fields[0] == 'data_bytes_scrubbed':
             stats['kb_scrubbed'] = int(fields[1]) / 1024
         else:
             stats[fields[0]] = int(fields[1])
