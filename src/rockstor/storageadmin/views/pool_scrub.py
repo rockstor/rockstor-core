@@ -53,7 +53,9 @@ class PoolScrubView(rfc.GenericView):
             return Response()
         if (ps.status == 'started' or ps.status == 'running'):
             cur_status = scrub_status(pool)
-            if (cur_status['status'] == 'finished'):
+            if cur_status['status'] == 'finished' \
+                    or cur_status['status'] == 'halted' \
+                    or cur_status['status'] == 'cancelled':
                 duration = int(cur_status['duration'])
                 cur_status['end_time'] = (ps.start_time +
                                           timedelta(seconds=duration))

@@ -23,6 +23,7 @@ from storageadmin.models import Pool
 class PoolScrub(models.Model):
 
     pool = models.ForeignKey(Pool)
+    # with a max of 10 chars we use 'halted' to indicated 'interrupted'
     status = models.CharField(max_length=10, default='started')
     pid = models.IntegerField()
     start_time = models.DateTimeField(auto_now=True)
