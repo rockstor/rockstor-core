@@ -83,6 +83,7 @@ PoolScrubTableModule = RockstorModuleView.extend({
                 $.ajax({
                     url: '/api/pools/' + _this.pool.get('id') + '/scrub',
                     type: 'POST',
+                    contentType: 'application/json',
                     data: postdata,
                     success: function() {
                         _this.$('#pool-scrub-form :input').tooltip('hide');
