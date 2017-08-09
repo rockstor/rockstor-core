@@ -113,7 +113,7 @@ SnapshotsView = SnapshotsCommonView.extend({
         $(this.el).html(this.addTemplate({
             snapshots: this.collection,
         }));
-        this.$('#shares').chosen();
+        this.$('#shares').select2();
         var err_msg = '';
         var name_err_msg = function() {
             return err_msg;
