@@ -132,9 +132,9 @@ AddSambaExportView = RockstorLayoutView.extend({
 
         }));
         if(this.sambaShareId == null) {
-            this.$('#shares').chosen();
+            this.$('#shares').select2();
         }
-        this.$('#admin_users').chosen();
+        this.$('#admin_users').select2();
         this.$('#add-samba-export-form :input').tooltip({
             html: true,
             placement: 'right'

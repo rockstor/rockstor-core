@@ -18,7 +18,7 @@
             {{/if}}
             <div class="col-sm-4">
                 {{#if sambaShareIdNull}}
-                    <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
+                    <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple="multiple">
                     {{#each shares}}
                         <option value="{{this.name}}">{{this.name}}</option>
                     {{/each}}
