@@ -81,7 +81,7 @@ EditNFSExportView = RockstorLayoutView.extend({
             modify_choices: this.modify_choices,
             sync_choices: this.sync_choices
         }));
-        this.$('#shares').chosen();
+        this.$('#shares').select2();
         this.$('#edit-nfs-export-form :input').tooltip({
             placement: 'right'
         });

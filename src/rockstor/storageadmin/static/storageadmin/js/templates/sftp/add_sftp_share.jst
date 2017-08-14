@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="col-md-8">
+<div class="col-md-8">
 <div class="panel panel-default">
 <div class="panel-heading">Add SFTP Share</div>
 <div class="panel-body">
@@ -9,29 +9,25 @@
         <!-- Shares -->
         <div class="form-group">
           <label class="col-sm-4 control-label" for="shares">Shares to export via sftp<span class="required">*</span></label>
-          <div class="controls">
-	    <div class="col-sm-8">
-              <select class="form-control shorten-input" name="shares" id="shares" size="10" multiple data-placeholder="Select shares">
+	      <div class="col-sm-4">
+              <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares" multiple="multiple">
         		{{#each shares}}
         		      <option value="{{this.name}}">{{this.name}}</option>
         		{{/each}}
               </select>
-	    </div>
-          </div>
+	      </div>
         </div>
 
         <!-- Read only -->
         <div class="form-group">
           <label class="col-sm-4 control-label" for="read_only">Access type</label>
-          <div class="controls">
-	    <div class="col-sm-8">
+	      <div class="col-sm-8">
               <label class="radio-inline">
 		<input type="radio" name="read_only" value="false" checked="checked"> Writable
               </label>
               <label class="radio-inline">
 		<input type="radio" name="read_only" value="true"> Read only
               </label>
-	    </div>
           </div>
         </div>
 

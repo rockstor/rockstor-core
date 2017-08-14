@@ -89,7 +89,7 @@ AddAFPShareView = RockstorLayoutView.extend({
             placement: 'right'
         });
 
-        this.$('#shares').chosen();
+        this.$('#shares').select2();
 
 
         $.validator.setDefaults({

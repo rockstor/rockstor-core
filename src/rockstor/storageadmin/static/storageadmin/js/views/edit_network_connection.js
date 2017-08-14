@@ -137,7 +137,7 @@ NetworkConnectionView = RockstorLayoutView.extend({
             }
         });
 
-        this.$('#devices').chosen();
+        this.$('#devices').select2();
 
         this.$('#name').tooltip({
             html: true,

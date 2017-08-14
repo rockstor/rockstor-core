@@ -1,22 +1,22 @@
 <div class="row">
-  <div class="col-md-8">
+<div class="col-md-8">
 <div class="panel panel-default">
-<div class="panel-heading">
-{{#if afpShareIdNotNull}}
-    Edit afp export
-{{else}}
-    Add afp export
-{{/if}}
-</div>
-<div class="panel-body">
+    <div class="panel-heading">
+        {{#if afpShareIdNotNull}}
+            Edit afp export
+        {{else}}
+            Add afp export
+        {{/if}}
+    </div>
+    <div class="panel-body">
       <form id="add-afp-share-form" name="aform" class="form-horizontal">
         <div class="messages"></div>
 
         <!-- Shares -->
         <div class="form-group">
           <label class="col-sm-4 control-label" for="shares">Shares to export via afp<span class="required">*</span></label>
-          <div class="col-sm-8">
-            <select name="shares" id="shares" size="10" class='required' multiple data-placeholder="Select shares" >
+          <div class="col-sm-4">
+            <select class="form-control" name="shares" id="shares" size="10" class='required' data-placeholder="Select shares to export" multiple="multiple">
             {{display_shares_dropdown}}
             </select>
           </div>

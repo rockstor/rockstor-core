@@ -85,7 +85,7 @@
             <div class="form-group">
                 <label class="col-sm-4 control-label" for="devices">Devices <span class="required"> *</span></label>
             <div class="col-sm-4">
-                <select class="form-control" id="devices" name="devices" size="20" data-placeholder="select devices" multiple {{#if connection}}disabled{{/if}}>
+                <select class="form-control" id="devices" name="devices" size="20" data-placeholder="select devices" multiple="multiple" {{#if connection}}disabled{{/if}}>
                     {{#each devices}}
                         <option value="{{this.name}}" {{#if ../connection}}{{selectedDevice this}}{{/if}}>{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
                     {{/each}}
