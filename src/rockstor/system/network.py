@@ -16,13 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
 import json
-from osi import run_command
+import logging
+import re
+
+from .exceptions import CommandException
+from .osi import run_command
 
 
 NMCLI = '/usr/bin/nmcli'
 DEFAULT_MTU = 1500
+logger = logging.getLogger(__name__)
 
 
 def val(s):
@@ -47,7 +51,16 @@ def devices():
             'mtu': None,
             'state': None,
         }
-        o2, e2, r2 = run_command([NMCLI, 'd', 'show', dev])
+        try:
+            o2, e2, r2 = run_command([NMCLI, 'd', 'show', dev])
+        except CommandException as e:
+            # especially veth devices can vanish abruptly sometimes.
+            if e.rc == 10:
+                logger.exception(e)
+                logger.debug('device: {} vanished. Discarding it'.format(dev))
+                continue
+            raise
+
         for l in o2:
             if (re.match('GENERAL.TYPE:', l) is not None):
                 tmap['dtype'] = val(l)
@@ -92,7 +105,16 @@ def connections():
             'ipv6_dns': None,
             'ipv6_dns_search': None,
         }
-        o2, e2, rc2 = run_command([NMCLI, 'c', 'show', uuid, ])
+        try:
+            o2, e2, rc2 = run_command([NMCLI, 'c', 'show', uuid, ])
+        except CommandException as e:
+            # in case the connection disappears
+            if e.rc == 10:
+                logger.exception(e)
+                logger.debug('connection: {} vanished. Discarding it'.format(
+                    uuid))
+                continue
+            raise e
         for l in o2:
             if (re.match('ipv4.method:', l) is not None):
                 tmap['ipv4_method'] = val(l)
