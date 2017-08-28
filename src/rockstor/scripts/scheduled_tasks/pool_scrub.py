@@ -27,6 +27,10 @@ from django.utils.timezone import utc
 import logging
 logger = logging.getLogger(__name__)
 
+# List of scrub states considered terminal (non running):
+TERMINAL_SCRUB_STATES = ['error', 'finished', 'halted', 'cancelled',
+                         'conn-reset']
+
 
 def update_state(t, pool, aw):
     url = ('pools/%s/scrub/status' % pool)
@@ -56,11 +60,11 @@ def main():
 
         if (Task.objects.filter(task_def=tdo).exists()):
             ll = Task.objects.filter(task_def=tdo).order_by('-id')[0]
-            if (ll.state != 'error' and ll.state != 'finished'):
+            if ll.state not in TERMINAL_SCRUB_STATES:
                 logger.debug('Non terminal state(%s) for task(%d). Checking '
                              'again.' % (ll.state, tid))
                 cur_state = update_state(ll, meta['pool'], aw)
-                if (cur_state != 'error' and cur_state != 'finished'):
+                if cur_state not in TERMINAL_SCRUB_STATES:
                     return logger.debug('Non terminal state(%s) for task(%d). '
                                         'A new task will not be run.' %
                                         (cur_state, tid))
@@ -82,7 +86,7 @@ def main():
 
         while True:
             cur_state = update_state(t, meta['pool'], aw)
-            if (cur_state == 'error' or cur_state == 'finished'):
+            if cur_state in TERMINAL_SCRUB_STATES:
                 logger.debug('task(%d) finished with state(%s).' %
                              (tid, cur_state))
                 break
