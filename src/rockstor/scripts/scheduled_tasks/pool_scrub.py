@@ -81,7 +81,6 @@ def main():
             t.state = 'error'
             logger.exception(e)
         finally:
-            t.end = datetime.utcnow().replace(tzinfo=utc)
             t.save()
 
         while True:
@@ -89,6 +88,8 @@ def main():
             if cur_state in TERMINAL_SCRUB_STATES:
                 logger.debug('task(%d) finished with state(%s).' %
                              (tid, cur_state))
+                t.end = datetime.utcnow().replace(tzinfo=utc)
+                t.save()
                 break
             logger.debug('pending state(%s) for scrub task(%d). Will check '
                          'again in 60 seconds.' % (cur_state, tid))
