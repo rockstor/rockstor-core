@@ -133,6 +133,3 @@ PoolRebalanceTableModule = RockstorModuleView.extend({
     }
 
 });
-
-//Add pagination
-Cocktail.mixin(PoolRebalanceTableModule, PaginationMixin);
