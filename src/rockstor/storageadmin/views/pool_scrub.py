@@ -36,7 +36,7 @@ class PoolScrubView(rfc.GenericView):
         try:
             return Pool.objects.get(id=pid)
         except:
-            e_msg = ('Pool: %s does not exist' % pid)
+            e_msg = ('Pool with database id: ({}) does not exist.'.format(pid))
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
@@ -65,7 +65,7 @@ class PoolScrubView(rfc.GenericView):
     def post(self, request, pid, command=None):
         pool = self._validate_pool(pid, request)
         if (command is not None and command != 'status'):
-            e_msg = ('Unknown scrub command: %s' % command)
+            e_msg = ('Unknown scrub command: ({}).'.format(command))
             handle_exception(Exception(e_msg), request)
 
         with self._handle_exception(request):
@@ -84,8 +84,9 @@ class PoolScrubView(rfc.GenericView):
                     p.save()
                 else:
                     e_msg = ('A Scrub process is already running for '
-                             'pool(%s). If you really want to kill it '
-                             'and start a new scrub, use force option' % pid)
+                             'pool ({}). If you really want to kill it '
+                             'and start a new scrub, use the force option.'
+                             .format(pool.name))
                     handle_exception(Exception(e_msg), request)
 
             scrub_pid = scrub_start(pool, force=force)
