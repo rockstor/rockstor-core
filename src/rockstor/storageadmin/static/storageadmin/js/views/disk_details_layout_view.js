@@ -174,6 +174,7 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     initHandlebarHelpers: function() {
+
         Handlebars.registerHelper('isAboveMinLength', function(minValue, target, options) {
             // check we have all the arguments we expect
             if (arguments.length != 3) {
@@ -186,6 +187,17 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
             } else {
                 return options.inverse(this);
             }
+        });
+
+        Handlebars.registerHelper('lastScannedOn', function () {
+            var html = '';
+            if (this.identity.scanned_on != null){
+                html += 'Information presented was manually scanned on: ' +
+                    this.identity.scanned_on + ' ';
+            } else {
+                html += 'No prior manual scan initiated: ';
+            }
+            return new Handlebars.SafeString(html);
         });
     }
 });
