@@ -81,9 +81,15 @@ TasksView = RockstorLayoutView.extend({
         Handlebars.registerHelper('display_snapshot_scrub', function() {
             var html = '';
             if (this.taskDef.get('task_type') == 'snapshot') {
+                // TODO: once snapshot task moved to new share api change this
+                // TODO: to a share details page link akin to Scrubs below.
                 html += 'Snapshot of Share [' + JSON.parse(this.taskDef.get('json_meta')).share_name + ']';
             } else if (this.taskDef.get('task_type') == 'scrub'){
-                html += 'Scrub of Pool [' + JSON.parse(this.taskDef.get('json_meta')).pool_name + ']';
+                html += 'Scrub of Pool (<a href="#pools/';
+                // TODO: fix this to go direct to Scrubs tab
+                html += JSON.parse(this.taskDef.get('json_meta')).pool + '">';
+                html += JSON.parse(this.taskDef.get('json_meta')).pool_name;
+                html += '</a>) See "Scrubs" tab for details.';
             } else {
                 html += this.taskDef.get('task_type');
             }
