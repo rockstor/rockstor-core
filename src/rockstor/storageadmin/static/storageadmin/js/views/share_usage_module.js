@@ -28,8 +28,7 @@ ShareUsageModule = RockstorModuleView.extend({
     events: {
         'click #js-resize': 'edit',
         'click #js-resize-save': 'save',
-        'click #js-resize-cancel': 'cancel',
-
+        'click #js-resize-cancel': 'cancel'
     },
 
     initialize: function() {
@@ -51,10 +50,9 @@ ShareUsageModule = RockstorModuleView.extend({
             share_is_mounted: this.share.get('is_mounted'),
             share_mount_status: this.share.get('mount_status'),
             pid: this.share.get('pool').id,
-            shareCreatedDate: moment(this.share.get('toc')).format(RS_DATE_FORMAT),
+            shareCreatedDate: moment(this.share.get('toc')).format(RS_DATE_FORMAT)
         }));
         this.renderGraph();
-        //this.renderBar();
         return this;
     },
 
@@ -70,7 +68,6 @@ ShareUsageModule = RockstorModuleView.extend({
         free = total - used;
         var dataSet = [used, free];
         var data = [Math.round((used / total) * 100), Math.round((free / total) * 100)];
-        //var data = [70,30]; //convert to percentages
         var dataLabels = ['used', 'free'];
         var colors = {
             used: {
@@ -170,7 +167,7 @@ ShareUsageModule = RockstorModuleView.extend({
         event.preventDefault();
         $(this.el).html(this.editTemplate({
             share: this.share,
-            newSizeVal: humanize.filesize(this.share.get('size') * 1024).replace(/[^0-9\.]+/g, ''),
+            newSizeVal: humanize.filesize(this.share.get('size') * 1024).replace(/[^0-9\.]+/g, '')
         }));
     },
 
@@ -193,7 +190,7 @@ ShareUsageModule = RockstorModuleView.extend({
             size = size * 1024 * 1024 * 1024;
         }
         $.ajax({
-            url: '/api/shares/' + this.share.get('name'),
+            url: '/api/shares/' + this.share.get('id'),
             type: 'PUT',
             dataType: 'json',
             data: {

@@ -48,11 +48,11 @@ var AppRouter = Backbone.Router.extend({
         'shares': 'showShares',
         'add_share?poolName=:poolName': 'addShare',
         'add_share': 'addShare',
-        'shares/:shareName': 'showShare',
-        'shares/:shareName/create-clone': 'createCloneFromShare',
-        'shares/:shareName/snapshots/:snapName/create-clone': 'createCloneFromSnapshot',
-        'shares/:shareName/rollback': 'rollbackShare',
-        'shares/:shareName/?cView=:cView': 'showShare',
+        'shares/:shareId': 'showShare',
+        'shares/:shareId/create-clone': 'createCloneFromShare',
+        'shares/:shareId/snapshots/:snapName/create-clone': 'createCloneFromSnapshot',
+        'shares/:shareId/rollback': 'rollbackShare',
+        'shares/:shareId/?cView=:cView': 'showShare',
         'snapshots': 'showSnapshots',
         'services': 'showServices',
         'services/:serviceName/edit': 'configureService',
@@ -298,13 +298,13 @@ var AppRouter = Backbone.Router.extend({
 
     },
 
-    showShare: function(shareName, cView) {
+    showShare: function(shareId, cView) {
         this.renderSidebar('storage', 'shares');
         $('#maincontent').empty();
         this.cleanup();
         this.currentLayout = new ShareDetailsLayoutView({
-            shareName: shareName,
-            cView: cView,
+            shareId: shareId,
+            cView: cView
         });
         $('#maincontent').append(this.currentLayout.render().el);
     },
@@ -536,34 +536,34 @@ var AppRouter = Backbone.Router.extend({
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    createCloneFromShare: function(shareName) {
+    createCloneFromShare: function(shareId) {
         this.renderSidebar('storage', 'shares');
         this.cleanup();
         this.currentLayout = new CreateCloneView({
             sourceType: 'share',
-            shareName: shareName
+            shareId: shareId
         });
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    createCloneFromSnapshot: function(shareName, snapName) {
+    createCloneFromSnapshot: function(shareId, snapName) {
         this.renderSidebar('storage', 'shares');
         this.cleanup();
         this.currentLayout = new CreateCloneView({
             sourceType: 'snapshot',
-            shareName: shareName,
+            shareId: shareId,
             snapName: snapName
         });
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
 
-    rollbackShare: function(shareName) {
+    rollbackShare: function(shareId) {
         this.renderSidebar('storage', 'shares');
         this.cleanup();
         this.currentLayout = new RollbackView({
-            shareName: shareName,
+            shareId: shareId
         });
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);

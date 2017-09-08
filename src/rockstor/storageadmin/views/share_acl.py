@@ -29,9 +29,9 @@ from system.acl import (chown, chmod)
 class ShareACLView(ShareListView):
 
     @transaction.atomic
-    def post(self, request, sname):
+    def post(self, request, sid):
         with self._handle_exception(request):
-            share = Share.objects.get(name=sname)
+            share = Share.objects.get(id=sid)
             options = {
                 'owner': 'root',
                 'group': 'root',

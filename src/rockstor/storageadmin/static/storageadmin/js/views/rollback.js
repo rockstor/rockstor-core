@@ -37,11 +37,11 @@ RollbackView = RockstorLayoutView.extend({
         this.snapshot_list_template = window.JST.share_rollback_snapshot_list;
         // Dependencies
         this.share = new Share({
-            shareName: this.options.shareName
+            sid: this.options.shareId
         });
         this.collection = new SnapshotCollection();
         this.collection.pageSize = 10;
-        this.collection.setUrl(this.options.shareName);
+        this.collection.setUrl(this.options.shareId);
         this.dependencies.push(this.share);
         this.dependencies.push(this.collection);
         this.collection.on('reset', this.renderSnapshotList, this);
@@ -57,14 +57,14 @@ RollbackView = RockstorLayoutView.extend({
         var _this = this;
         $(this.el).html(this.template({
             collection: this.collection,
-            shareName: this.share.get('name'),
+            shareName: this.share.get('name')
         }));
         this.renderSnapshotList();
         this.$('#rollback-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-                snapshot: 'required',
+                snapshot: 'required'
             },
             submitHandler: function() {
                 var button = _this.$('#rollback-share');
@@ -83,7 +83,7 @@ RollbackView = RockstorLayoutView.extend({
         this.$('#ph-snapshot-list').html(this.snapshot_list_template({
             rollbackSnaps: this.collection.toJSON(),
             collection: this.collection,
-            collectionNotEmpty: !this.collection.isEmpty(),
+            collectionNotEmpty: !this.collection.isEmpty()
         }));
     },
 
@@ -94,7 +94,7 @@ RollbackView = RockstorLayoutView.extend({
         disableButton(button);
         var snapName = this.$('input:radio[name=snapshot]:checked').val();
         $.ajax({
-            url: '/api/shares/' + _this.share.get('name') + '/rollback',
+            url: '/api/shares/' + _this.share.get('id') + '/rollback',
             type: 'POST',
             dataType: 'json',
             contentType: 'application/json',
@@ -105,7 +105,7 @@ RollbackView = RockstorLayoutView.extend({
                 enableButton(button);
                 _this.$('#confirm-rollback').modal('hide');
                 $('.modal-backdrop').remove();
-                app_router.navigate('shares/' + _this.share.get('name'), {
+                app_router.navigate('shares/' + _this.share.get('id'), {
                     trigger: true
                 });
 
@@ -114,12 +114,11 @@ RollbackView = RockstorLayoutView.extend({
                 enableButton(button);
             },
         });
-
     },
 
     cancel: function(event) {
         if (event) event.preventDefault();
-        app_router.navigate('shares/' + this.share.get('name'), {
+        app_router.navigate('shares/' + this.share.get('id'), {
             trigger: true
         });
     },

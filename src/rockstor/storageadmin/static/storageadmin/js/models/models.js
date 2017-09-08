@@ -130,7 +130,7 @@ var PoolCollection = RockStorPaginatedCollection.extend({
 
 var Share = Backbone.Model.extend({
     url: function() {
-        return '/api/shares/' + this.get('shareName');
+        return '/api/shares/' + this.get('sid');
     }
 });
 
@@ -185,7 +185,7 @@ var ContainerCollection = RockStorPaginatedCollection.extend({
 
 var Snapshot = Backbone.Model.extend({
     url: function() {
-        return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');
+        return '/api/shares/' + this.get('shareId') + '/' + this.get('snapName');
     }
 });
 
@@ -197,8 +197,8 @@ var SnapshotCollection = RockStorPaginatedCollection.extend({
             this.snapType = options.snapType;
         }
     },
-    setUrl: function(shareName) {
-        this.baseUrl = '/api/shares/' + shareName + '/snapshots';
+    setUrl: function(shareId) {
+        this.baseUrl = '/api/shares/' + shareId + '/snapshots';
     },
     extraParams: function() {
         var p = this.constructor.__super__.extraParams.apply(this, arguments);
