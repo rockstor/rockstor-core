@@ -107,13 +107,35 @@ PoolScrubTableModule = RockstorModuleView.extend({
         this.render();
     },
 
-    initHandlebarHelpers: function() {
-        Handlebars.registerHelper('display_poolScrub_table', function() {
+    initHandlebarHelpers: function () {
+        Handlebars.registerHelper('display_poolScrub_table', function () {
+            var _this = this;
             var html = '';
-            this.collection.each(function(poolscrub, index) {
+            var errorStats = ['read_errors', 'csum_errors', 'verify_errors',
+                'super_errors', 'malloc_errors', 'uncorrectable_errors',
+                'unverified_errors', 'corrected_errors'];
+            var errorStatsLen = errorStats.length;
+            this.collection.each(function (poolscrub, index) {
+                var errorMarks = '';
+                // Tally number of non zero error stats
+                // (no forEach available in Handlebars helper context.)
+                for (var i = 0; i < errorStatsLen; i++) {
+                    if (poolscrub.get(errorStats[i]) !== 0) {
+                        errorMarks += '!';
+                    }
+                }
                 html += '<tr>';
                 html += '<td>' + poolscrub.get('id') + '</td>';
-                html += '<td>' + poolscrub.get('status') + '</td>';
+                // construct our href as pools/pid/scrubId for Scrub Details.
+                html += '<td><a href="#pools/' + _this.pool.get('id') + '/';
+                html += poolscrub.get('id') + '">';
+                html += poolscrub.get('status') + '</a>';
+                if (errorMarks !== '') {
+                    html += '<span style="color:darkred"><strong>';
+                    html += ' ' + 'ERRORS FOUND' + errorMarks;
+                    html += '</strong></span>';
+                }
+                html += '</td>';
                 html += '<td>';
                 if (poolscrub.get('start_time')) {
                     html += moment(poolscrub.get('start_time')).format(RS_DATE_FORMAT);
