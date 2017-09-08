@@ -41,7 +41,6 @@ TasksView = RockstorLayoutView.extend({
         this.collection = new TaskCollection(null, {
             taskDefId: this.taskDefId
         });
-        this.collection.pageSize = 10;
         this.dependencies.push(this.collection);
         this.collection.on('reset', this.renderTasks, this);
         // has the replica been fetched? prevents renderReplicaTrails executing
