@@ -25,6 +25,7 @@ class PoolScrub(models.Model):
     pool = models.ForeignKey(Pool)
     # with a max of 10 chars we use 'halted' to indicated 'interrupted'
     status = models.CharField(max_length=10, default='started')
+    # pid is the process id of a scrub job
     pid = models.IntegerField()
     start_time = models.DateTimeField(auto_now=True)
     end_time = models.DateTimeField(null=True)
