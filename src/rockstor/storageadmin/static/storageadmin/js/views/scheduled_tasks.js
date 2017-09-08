@@ -57,7 +57,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 return moment(task.get('start')).valueOf();
             }).reverse();
         });
-		// remove existing tooltips
+        // remove existing tooltips
         if (this.$('[rel=tooltip]')) {
             this.$('[rel=tooltip]').tooltip('hide');
         }
@@ -143,9 +143,13 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
                 html += '<td>' + taskType + '&nbsp;';
                 if (taskType == 'snapshot') {
+                    // TODO: once we have snapshot task moved to new API
+                    // TODO: add link to share details page akin to pool below.
                     html += '(' + JSON.parse(jsonMeta).share_name + ')';
                 } else if (taskType == 'scrub') {
-                    html += '(' + JSON.parse(jsonMeta).pool_name + ')';
+                    // TODO: make pool name link to pool details page
+                    html += '(<a href="#pools/' + JSON.parse(jsonMeta).pool + '">';
+                    html += JSON.parse(jsonMeta).pool_name + '</a>)';
                 }
                 html += '</td>';
                 html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
