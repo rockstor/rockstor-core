@@ -167,7 +167,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                         var task = taskMapId[0],
                             taskState = task.get('state');
 
-                        if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') {
+                        if (taskState != 'started' && taskState != 'running' && taskState != 'finished') {
                             html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> ' + taskState + '</a>';
                         } else if (taskState == 'finished') {
                             html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + moment(task.get('end')).fromNow() + '</a>';
