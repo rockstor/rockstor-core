@@ -19,9 +19,8 @@
  */
 </script>
 
-<h4>Task history for {{taskName}} &nbsp;
-( {{display_snapshot_scrub}} )
-</h4>
+<span class="h2">Task history for {{taskName}}</span><br>
+{{display_snapshot_scrub}}
 {{#if collectionNotEmpty}}
   <div class="row">
     <div class="col-md-12">
@@ -30,21 +29,21 @@
         <thead>
           <tr>
             <th scope="col" abbr="ID">ID</th>
+            <th scope="col" abbr="Status">Status</th>
             <th scope="col" abbr="Start Time">Start Time</th>
             <th scope="col" abbr="End Time">End Time</th>
-            <th scope="col" abbr="Status">Status</th>
           </tr>
         </thead>
         <tbody>
           {{#each taskColl}}
             <tr>
                 <td>{{this.id}}</td>
+                <td>{{this.state}}</td>
                 <td>{{dateFormat this.start}}</td>
                 <td>{{#if this.end}} 
                         {{dateFormat this.end}}
                     {{/if}}
                 </td>
-                <td>{{this.state}}</td>
             </tr>
           {{/each}}
         </tbody>
