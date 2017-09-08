@@ -687,7 +687,19 @@ def qgroup_create(pool):
     # mount pool
     mnt_pt = mount_root(pool)
     qid = ('%s/%d' % (QID, qgroup_max(mnt_pt) + 1))
-    o, e, rc = run_command([BTRFS, 'qgroup', 'create', qid, mnt_pt], log=True)
+    try:
+        out, err, rc = run_command([BTRFS, 'qgroup', 'create', qid, mnt_pt],
+                                   log=True)
+    except CommandException as e:
+        # ro mount options will result in o= [''], rc = 1 and e[0] =
+        emsg = 'ERROR: unable to create quota group: Read-only file system'
+        # this is non fatal so we catch this specific error and info log it.
+        if e.rc == 1 and e.err[0] == emsg:
+            logger.info('Pool: {} is Read-only, skipping qgroup '
+                        'create.'.format(pool.name))
+            return qid
+        # raise an exception as usual otherwise
+        raise
     return qid
 
 
@@ -748,7 +760,23 @@ def update_quota(pool, qgroup, size_bytes):
     # It looks like we'll see the fixes in 4.2 and final ones by 4.3.
     # cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
     cmd = [BTRFS, 'qgroup', 'limit', 'none', qgroup, root_pool_mnt]
-    return run_command(cmd, log=True)
+    # Set defaults in case our run_command fails to assign them.
+    out = err = ['']
+    rc = 0
+    try:
+        out, err, rc = run_command(cmd, log=True)
+    except CommandException as e:
+        # ro mount options will result in o= [''], rc = 1 and e[0] =
+        emsg = 'ERROR: unable to limit requested quota group: ' \
+               'Read-only file system'
+        # this is non fatal so we catch this specific error and info log it.
+        if e.rc == 1 and e.err[0] == emsg:
+            logger.info('Pool: {} is Read-only, skipping qgroup '
+                        'limit.'.format(pool.name))
+            return out, err, rc
+        # raise an exception as usual otherwise
+        raise
+    return out, err, rc
 
 
 def volume_usage(pool, volume_id, pvolume_id=None):
