@@ -92,6 +92,7 @@ SharesView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         shareName = button.attr('data-name');
+        sid = button.attr('data-id');
         shareUsage = button.attr('data-usage');
 		// set share name in confirm dialog
         _this.$('.pass-share-name').html(shareName);
@@ -106,7 +107,7 @@ SharesView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var url = '/api/shares/' + shareName;
+        var url = '/api/shares/' + sid;
         if($('#force-delete').prop('checked')){
             url += '/force';
         }
@@ -137,14 +138,14 @@ SharesView = RockstorLayoutView.extend({
             return humanize.filesize(num * 1024);
         });
 
-        Handlebars.registerHelper('displayCompressionAlgo', function(shareCompression,shareName) {
+        Handlebars.registerHelper('displayCompressionAlgo', function(shareCompression,shareId) {
             var html = '';
             if (shareCompression && shareCompression != 'no') {
                 html += shareCompression + ' ';
             } else {
                 html += 'Same as Pool ';
             }
-            html += '<a href="#shares/' + shareName + '/?cView=edit"' +
+            html += '<a href="#shares/' + shareId + '/?cView=edit"' +
                 'title="Edit share compression setting" rel="tooltip">' +
                 '<i class="glyphicon glyphicon-pencil"></i></a>';
             return new Handlebars.SafeString(html);
@@ -182,4 +183,3 @@ SharesView = RockstorLayoutView.extend({
         });
     }
 });
-

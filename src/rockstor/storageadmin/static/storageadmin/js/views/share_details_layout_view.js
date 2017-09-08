@@ -35,13 +35,13 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         'click #js-submit-compression': 'updateCompression',
         'click #js-delete': 'deleteShare',
         'click #js-cancel': 'cancel',
-        'click #js-confirm-share-delete': 'confirmShareDelete',
+        'click #js-confirm-share-delete': 'confirmShareDelete'
     },
 
     initialize: function() {
         // call initialize of base
         this.constructor.__super__.initialize.apply(this, arguments);
-        this.shareName = this.options.shareName;
+        this.shareId = this.options.shareId;
         this.template = window.JST.share_share_details_layout;
         this.rollback_btn_template = window.JST.share_share_details_rollback_btn;
         this.shareAclTemplate = window.JST.share_share_acl;
@@ -53,10 +53,10 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 
         // create models
         this.share = new Share({
-            shareName: this.shareName
+            sid: this.shareId
         });
         this.snapshots = new SnapshotCollection([]);
-        this.snapshots.setUrl(this.shareName);
+        this.snapshots.setUrl(this.shareId);
 
         this.users = new UserCollection();
         this.users.pageSize = RockStorGlobals.maxPageSize;
@@ -67,7 +67,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         this.dependencies.push(this.snapshots);
         this.dependencies.push(this.users);
         this.dependencies.push(this.groups);
-        //this.dependencies.push(this.iscsi_target);
         this.dependencies.push(this.appliances);
         this.modify_choices = [{
             name: 'ro',
@@ -131,6 +130,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         $(this.el).html(this.template({
             share: this.share,
             shareName: this.share.get('name'),
+            shareId: this.share.get('id'),
             shareUsage: humanize.filesize(this.share.get('rusage') * 1024),
             snapshots: this.snapshots,
             permStr: this.parsePermStr(this.share.get('perms')),
@@ -157,7 +157,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
             this.$('#ph-compression-info').html(this.compression_info_template({
                 share: this.share,
                 shareCompression: this.share.get('compression_algo'),
-                shareCompressionNull: this.shareCompressBool,
+                shareCompressionNull: this.shareCompressBool
             }));
         }
         this.$('ul.nav.nav-tabs').tabs('div.css-panes > div');
@@ -177,8 +177,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         }
         this.$('#rollback-btn-ph').html(this.rollback_btn_template({
             foundWritableSnapshot: foundWritableSnapshot,
-            shareName: this.share.get('name'),
-            rollbackBtnDisabler: rollbackBtnDisabler,
+            shareId: this.share.get('id'),
+            rollbackBtnDisabler: rollbackBtnDisabler
         }));
 
     },
@@ -193,7 +193,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
             if (buttonDisabled(button)) return false;
             disableButton(button);
             $.ajax({
-                url: '/api/shares/' + _this.share.get('name') + '/snapshots/' + $('#snapshot-name').val(),
+                url: '/api/shares/' + _this.share.get('id') + '/snapshots/' + $('#snapshot-name').val(),
                 type: 'POST',
                 dataType: 'json'
             }).done(function() {
@@ -221,7 +221,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        var url = '/api/shares/' + _this.share.get('name');
+        var url = '/api/shares/' + _this.share.get('id');
         if ($('#force-delete').prop('checked')) {
             url += '/force';
         }
@@ -242,6 +242,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
             }
         });
     },
+
     cancel: function(event) {
         if (event) event.preventDefault();
         app_router.navigate('shares', {
@@ -255,7 +256,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
             shareOwner: this.share.get('owner'),
             shareGroup: this.share.get('group'),
             sharePerms: this.share.get('perms'),
-            permStr: this.parsePermStr(this.share.get('perms')),
+            permStr: this.parsePermStr(this.share.get('perms'))
         }));
     },
 
@@ -266,7 +267,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
             permStr: this.parsePermStr(this.share.get('perms')),
             users: this.users.toJSON(),
             groups: this.groups.toJSON(),
-            sharePerms: this.share.get('perms'),
+            sharePerms: this.share.get('perms')
         }));
     },
 
@@ -283,7 +284,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
             perms: permStr
         };
         $.ajax({
-            url: '/api/shares/' + this.share.get('name') + '/acl',
+            url: '/api/shares/' + this.share.get('id') + '/acl',
             type: 'POST',
             data: data,
             dataType: 'json',
@@ -305,7 +306,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         event.preventDefault();
         this.$('#ph-access-control').html(this.shareAclTemplate({
             share: this.share,
-            permStr: this.parsePermStr(this.share.get('perms')),
+            permStr: this.parsePermStr(this.share.get('perms'))
         }));
     },
 
@@ -370,7 +371,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-compression-info').html(this.compression_info_template({
             share: this.share,
             shareCompression: this.share.get('compression_algo'),
-            shareCompressionNull: this.shareCompressBool,
+            shareCompressionNull: this.shareCompressBool
         }));
     },
 
@@ -381,11 +382,11 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         if (buttonDisabled(button)) return false;
         disableButton(button);
         $.ajax({
-            url: '/api/shares/' + this.share.get('name'),
+            url: '/api/shares/' + this.share.get('id'),
             type: 'PUT',
             dataType: 'json',
             data: {
-                'compression': this.$('#compression').val(),
+                'compression': this.$('#compression').val()
             },
             success: function() {
                 _this.hideCompressionTooltips();

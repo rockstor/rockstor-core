@@ -56,7 +56,7 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
             collection: this.collection,
             collectionNotEmpty: !this.collection.isEmpty(),
             selectedSnapshots: this.selectedSnapshots,
-            share: this.share,
+            share: this.share
         }));
         this.$('[rel=tooltip]').tooltip({
             placement: 'bottom'
@@ -110,7 +110,7 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
                 $.ajax({
-                    url: '/api/shares/' + _this.share.get('name') + '/snapshots/' + _this.$('#snapshot-name').val(),
+                    url: '/api/shares/' + _this.share.get('id') + '/snapshots/' + _this.$('#snapshot-name').val(),
                     type: 'POST',
                     dataType: 'json',
                     contentType: 'application/json',
@@ -139,13 +139,13 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
         var _this = this;
         var name = $(event.currentTarget).attr('data-name');
         var esize = $(event.currentTarget).attr('data-size');
-        var share_name = this.share.get('name');
+        var share_id = this.share.get('id');
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         if (confirm('Deleting snapshot(' + name + ') deletes ' + esize + ' of data permanently. Do you really want to delete it?')) {
             disableButton(button);
             $.ajax({
-                url: '/api/shares/' + share_name + '/snapshots/' + name,
+                url: '/api/shares/' + share_id + '/snapshots/' + name,
                 type: 'DELETE',
                 success: function() {
                     enableButton(button);
@@ -171,7 +171,7 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
         // even after new page has loaded.
         this.$('[rel=tooltip]').tooltip('hide');
         var name = $(event.currentTarget).attr('data-name');
-        var url = 'shares/' + this.share.get('name') + '/snapshots/' +
+        var url = 'shares/' + this.share.get('id') + '/snapshots/' +
             name + '/create-clone';
         app_router.navigate(url, {
             trigger: true
@@ -184,7 +184,7 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
         event.preventDefault();
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
-        var share_name = this.share.get('name');
+        var share_id = this.share.get('id');
         if (this.selectedSnapshots.length == 0) {
             alert('Select at least one snapshot to delete');
         } else {
@@ -209,7 +209,7 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
             if (confirm(confirmMsg + snapNames + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
                 disableButton(button);
                 $.ajax({
-                    url: '/api/shares/' + share_name + '/snapshots?id=' + snapIds,
+                    url: '/api/shares/' + share_id + '/snapshots?id=' + snapIds,
                     type: 'DELETE',
                     success: function() {
                         enableButton(button);

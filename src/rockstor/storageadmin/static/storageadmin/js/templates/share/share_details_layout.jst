@@ -21,7 +21,7 @@
 <div class="messages"></div>
 <div class="pull-right">
   <span id="rollback-btn-ph"></span>
-    <a id="js-clone" class="btn btn-primary" href="#shares/{{shareName}}/create-clone"><i class="glyphicon glyphicon-book "></i> Clone</a>
+    <a id="js-clone" class="btn btn-primary" href="#shares/{{shareId}}/create-clone"><i class="glyphicon glyphicon-book "></i> Clone</a>
 	{{#unless isSystemShare}}
         <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="glyphicon glyphicon-trash "></i> Delete </button>
 	{{/unless}}
@@ -51,8 +51,8 @@
         <div class="messages"></div>
 
         <p>By deleting <strong><em>{{shareName}}</em></strong>, all it's data (<strong>{{shareUsage}}</strong>) will be lost. Are you sure?</p>
-      
-      <label><input type="checkbox" id="force-delete" name="force-delete"> Force Delete &nbsp;<i class="fa fa-info-circle fa-lg" 
+
+      <label><input type="checkbox" id="force-delete" name="force-delete"> Force Delete &nbsp;<i class="fa fa-info-circle fa-lg"
     title="Forces the deletion of undetected Snapshots and then deletes the Share. Useful to forcefully delete the Rock-on root share, for example." rel="tooltip"></i></label>
       </div>
       <div class="modal-footer">

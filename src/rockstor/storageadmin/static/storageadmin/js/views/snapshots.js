@@ -84,7 +84,7 @@ SnapshotsView = SnapshotsCommonView.extend({
         $(this.el).append(_this.template({
             snapshots: snapshots,
             snapshotsNotEmpty: !_this.collection.isEmpty(),
-            collection: _this.collection,
+            collection: _this.collection
         }));
 
         this.$('[rel=tooltip]').tooltip({
@@ -107,11 +107,18 @@ SnapshotsView = SnapshotsCommonView.extend({
         this.collection.setUrl(shareName);
     },
 
+    getShareId: function(shareName) {
+        var shareMatch = this.shares.find(function(share) {
+            return share.get('name') == shareName;
+        });
+        return shareMatch.get('id');
+    },
+
     add: function(event) {
         var _this = this;
         event.preventDefault();
         $(this.el).html(this.addTemplate({
-            snapshots: this.collection,
+            snapshots: this.collection
         }));
         this.$('#shares').select2();
         var err_msg = '';
@@ -141,10 +148,11 @@ SnapshotsView = SnapshotsCommonView.extend({
             submitHandler: function() {
                 var button = _this.$('#js-snapshot-save');
                 var shareName = $('#shares').val();
+                var shareId = _this.getShareId(shareName);
                 if (buttonDisabled(button)) return false;
                 disableButton(button);
                 $.ajax({
-                    url: '/api/shares/' + shareName + '/snapshots/' + _this.$('#snapshot_name').val(),
+                    url: '/api/shares/' + shareId + '/snapshots/' + _this.$('#snapshot_name').val(),
                     type: 'POST',
                     dataType: 'json',
                     contentType: 'application/json',
@@ -172,13 +180,14 @@ SnapshotsView = SnapshotsCommonView.extend({
         var _this = this;
         var name = $(event.currentTarget).attr('data-name');
         var shareName = $(event.currentTarget).attr('data-share-name');
+        var shareId = _this.getShareId(shareName);
         var esize = $(event.currentTarget).attr('data-size');
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
         if (confirm('Deleting snapshot(' + name + ') deletes ' + esize + ' of data permanently. Do you really want to delete it?')) {
             disableButton(button);
             $.ajax({
-                url: '/api/shares/' + shareName + '/snapshots/' + name,
+                url: '/api/shares/' + shareId + '/snapshots/' + name,
                 type: 'DELETE',
                 success: function() {
                     enableButton(button);
@@ -204,7 +213,8 @@ SnapshotsView = SnapshotsCommonView.extend({
         this.$('[rel=tooltip]').tooltip('hide');
         var name = $(event.currentTarget).attr('data-name');
         var shareName = $(event.currentTarget).attr('data-share-name');
-        var url = 'shares/' + shareName + '/snapshots/' +
+        var shareId = this.getShareId(shareName);
+        var url = 'shares/' + shareId + '/snapshots/' +
             name + '/create-clone';
         app_router.navigate(url, {
             trigger: true
@@ -250,9 +260,9 @@ SnapshotsView = SnapshotsCommonView.extend({
 
                     _this.shares.each(function(share, index) {
                         if (s.get('share') == share.get('id')) {
-                            var shareName = share.get('name');
+                            var shareId = share.get('id');
                             $.ajax({
-                                url: '/api/shares/' + shareName + '/snapshots/' + name,
+                                url: '/api/shares/' + shareId + '/snapshots/' + name,
                                 type: 'DELETE',
                                 success: function() {
                                     enableButton(button);
@@ -273,7 +283,6 @@ SnapshotsView = SnapshotsCommonView.extend({
                     });
                 });
             }
-
         }
     },
 
