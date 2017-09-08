@@ -44,6 +44,7 @@ var AppRouter = Backbone.Router.extend({
         'pools': 'showPools',
         'pools/:pid': 'showPool',
         'pools/:pid/?cView=:cView': 'showPool',
+        'pools/:pid/:scrubId': 'showScrub',
         'add_pool': 'addPool',
         'shares': 'showShares',
         'add_share?poolName=:poolName': 'addShare',
@@ -253,6 +254,17 @@ var AppRouter = Backbone.Router.extend({
         this.currentLayout = new PoolDetailsLayoutView({
             pid: pid,
             cView: cView
+        });
+        $('#maincontent').append(this.currentLayout.render().el);
+    },
+
+    showScrub: function(pid, scrubId) {
+        this.renderSidebar('storage', 'pools');
+        $('#maincontent').empty();
+        this.cleanup();
+        this.currentLayout = new ScrubDetailsView({
+            pid: pid,
+            scrubId: scrubId
         });
         $('#maincontent').append(this.currentLayout.render().el);
     },
