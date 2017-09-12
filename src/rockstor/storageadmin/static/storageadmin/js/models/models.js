@@ -518,6 +518,12 @@ var TaskDef = Backbone.Model.extend({
         }
         return '';
     },
+    share_name: function() {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).share_name;
+        }
+        return '';
+    },
     prefix: function() {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).prefix;

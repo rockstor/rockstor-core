@@ -76,6 +76,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                 name: this.taskDef.get('name'),
                 type: this.taskDef.get('task_type'),
                 share: this.taskDef.share(),
+                share_name: this.taskDef.share_name(),
                 prefix: this.taskDef.prefix(),
                 pool: this.taskDef.pool(),
                 pool_name: this.taskDef.pool_name(),
@@ -149,6 +150,13 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                     min: 1
                 },
                 share: {
+                    required: {
+                        depends: function(element) {
+                            return (_this.$('#task_type').val() == 'snapshot');
+                        }
+                    }
+                },
+                'meta.share_name': {
                     required: {
                         depends: function(element) {
                             return (_this.$('#task_type').val() == 'snapshot');
