@@ -68,7 +68,7 @@ def delete(aw, share, snap_type, prefix, max_count):
         name__startswith=prefix).order_by('-id')
     for snap in snapshots[max_count:]:
         try:
-            url = ('shares/%s/snapshots/%s' % (share.id, snap.name))
+            url = ('shares/{}/snapshots/{}'.format(share.id, snap.name))
             aw.api_call(url, data=None, calltype='delete', save_error=False)
         except Exception as e:
             logger.error('Failed to delete old snapshots exceeding the '
@@ -105,7 +105,7 @@ def main():
             name = ('%s_%s'
                     % (meta['prefix'],
                        datetime.now().strftime(settings.SNAP_TS_FORMAT)))
-            url = ('shares/%s/snapshots/%s' % (share.id, name))
+            url = ('shares/{}/snapshots/{}'.format(share.id, name))
             # only create a new snap if there's no overflow situation. This
             # prevents runaway snapshot creation beyond max_count+1.
             if(delete(aw, share, stype, prefix, max_count)):
