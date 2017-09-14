@@ -20,7 +20,7 @@
                 {{#if sambaShareIdNull}}
                     <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple="multiple">
                     {{#each shares}}
-                        <option value="{{this.name}}">{{this.name}}</option>
+                        <option value="{{this.id}}">{{this.name}}</option>
                     {{/each}}
                     </select>
                 {{/if}}
