@@ -143,11 +143,11 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
                 html += '<td>' + taskType + '&nbsp;';
                 if (taskType == 'snapshot') {
-                    // TODO: once we have snapshot task moved to new API
-                    // TODO: add link to share details page akin to pool below.
-                    html += '(' + JSON.parse(jsonMeta).share_name + ')';
+                    // TODO: fix this to go direct to Snapshots tab.
+                    html += '(<a href="#shares/' + JSON.parse(jsonMeta).share + '">';
+                    html += JSON.parse(jsonMeta).share_name + '</a>)';
                 } else if (taskType == 'scrub') {
-                    // TODO: make pool name link to pool details page
+                    // TODO: fix this to go direct to Scrubs tab.
                     html += '(<a href="#pools/' + JSON.parse(jsonMeta).pool + '">';
                     html += JSON.parse(jsonMeta).pool_name + '</a>)';
                 }
