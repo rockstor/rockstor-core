@@ -20,7 +20,7 @@
                 {{#if sambaShareIdNull}}
                     <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple="multiple">
                     {{#each shares}}
-                        <option value="{{this.name}}">{{this.name}}</option>
+                        <option value="{{this.id}}">{{this.name}}</option>
                     {{/each}}
                     </select>
                 {{/if}}
@@ -61,54 +61,55 @@
         <div class="form-group">
           <label class="col-sm-4 control-label" for="comment">Comment</label>
           <div class="col-sm-4">
-              <input type="text" id="comment" class="form-control" name="comment" 
+              <input type="text" id="comment" class="form-control" name="comment"
                 {{#if sambaShareIdNotNull}}
                      value="{{smbShareComment}}"
                 {{else}}
-                     value="Samba-Export" 
+                     value="Samba-Export"
                 {{/if}}
                title="Comment string to associate with the new share">
           </div>
-	     </div>
+        </div>
 
-	     <div class="form-group">
+      <div class="form-group">
              <div class="col-sm-4"></div>
-    	     <div class="col-sm-4">
-    	       <input type="checkbox" name="shadow_copy"
-        	    {{#if smbSnapshotPrefixRule}}
-        	       checked="true"
-        	    {{/if}} 
-    	       id="shadow_copy">Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
-            </div>
+        <div class="col-sm-4">
+          <input type="checkbox" name="shadow_copy"
+                 {{#if smbSnapshotPrefixRule}}
+                 checked="true"
+                 {{/if}}
+          id="shadow_copy">Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
+        </div>
           </div> <!-- closing form group -->
           <div class="form-group"
             {{#unless smbSnapshotPrefixRule}}
-    		   style="visibility: hidden"
-		    {{/unless}}
-		  id="snapprefix-ph">
-		  <label class="col-sm-4 control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
+                style="visibility: hidden"
+            {{/unless}}
+      id="snapprefix-ph">
+      <label class="col-sm-4 control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
           <div class="col-sm-4">
-             <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" 
-		      {{#if sambaShareIdNotNull}}
-		          value="{{smbShareSnapPrefix}}"
-		      {{/if}}
-		     title="Prefix of Snapshots for this Share. You must use this prefix when scheduling Snapshot tasks for this Share for shadow copies to work.">
+             <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix"
+                    {{#if sambaShareIdNotNull}}
+                    value="{{smbShareSnapPrefix}}"
+                    {{/if}}
+            title="Prefix of Snapshots for this Share. You must use this prefix when scheduling Snapshot tasks for this Share for shadow copies to work.">
           </div>
         </div>
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="custom_config">Custom configuration </label>
           <div class="col-sm-8">
-            <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" 
-			title="You can provide custom parameters here. These lines will be added to 
-			the section of each Share selected above in smb.conf">{{# if sambaShareIdNotNull}}{{configList}}{{/if}}</textarea>
-        </div>
+            <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control"
+                      title="You can provide custom parameters here. These lines will be added to
+                      the section of each Share selected above in smb.conf">
+              {{#if sambaShareIdNotNull}}{{configList}}{{/if}}</textarea>
+          </div>
 
       </div>
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">
-	    <a id="cancel" class="btn btn-default">Cancel</a>
-	    <input type="Submit" id="create-samba-export" class="btn btn-primary" value="Submit"></input>
+            <a id="cancel" class="btn btn-default">Cancel</a>
+            <input type="Submit" id="create-samba-export" class="btn btn-primary" value="Submit"></input>
           </div>
         </div>
 
@@ -129,17 +130,16 @@
       <div class="modal-body">
         <div class="messages"></div>
         <p>
-	  This feature is useful if you'll be accessing this Share from Windows
-	  clients. By enabling this feature, you can browse older versions or
-	  "shadow copies" of files from Windows. You can read technical details
-	  on <a href="https://en.wikipedia.org/wiki/Shadow_Copy"
-	  target="_blank">Wikipedia</a>.
-	</p>
-	<p>
-	  In addition to enabling this feature, you need to schedule
-	  Snapshots. Read our <a href="http://rockstor.com/docs"
-	  target="_blank">documentation</a> for more information.
-	</p>
+          This feature is useful if you'll be accessing this Share from Windows
+          clients. By enabling this feature, you can browse older versions or
+          "shadow copies" of files from Windows. You can read technical details
+          on <a href="https://en.wikipedia.org/wiki/Shadow_Copy" target="_blank">Wikipedia</a>.
+        </p>
+        <p>
+    In addition to enabling this feature, you need to schedule
+    Snapshots. Read our <a href="http://rockstor.com/docs"
+                           target="_blank">documentation</a> for more information.
+  </p>
       </div>
     </div>
   </div>
