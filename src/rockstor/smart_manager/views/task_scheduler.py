@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from smart_manager.models import TaskDefinition
-from storageadmin.models import (Pool, EmailClient)
+from storageadmin.models import (Pool, Share, EmailClient)
 from smart_manager.serializers import TaskDefinitionSerializer
 from django.db import transaction
 from django.conf import settings
@@ -40,7 +40,6 @@ class TaskSchedulerMixin(object):
         crontab = request.data.get('crontab')
         crontabwindow = request.data.get('crontabwindow')
         meta = request.data.get('meta', {})
-        # "if 'rtc_hour'" block moved to below dictionary type check on meta.
         if (type(meta) != dict):
             e_msg = ('meta must be a dictionary, not %s' % type(meta))
             handle_exception(Exception(e_msg), request)
@@ -51,6 +50,16 @@ class TaskSchedulerMixin(object):
             # Add pool_name to task meta dictionary
             pool = Pool.objects.get(id=meta['pool'])
             meta['pool_name'] = pool.name
+        if 'share' in meta:
+            if not meta['share'].isdigit():
+                raise Exception('Non-digit share element ({}) in meta {}'
+                                .format(meta['share'], meta))
+            if not Share.objects.filter(id=meta['share']).exists():
+                raise Exception('Non-existent Share id (%s) in meta. %s' %
+                                (meta['pool'], meta))
+            # Add share_name to task meta dictionary
+            share = Share.objects.get(id=meta['share'])
+            meta['share_name'] = share.name
         if 'rtc_hour' in meta:
             meta['rtc_hour'] = int(meta['rtc_hour'])
             meta['rtc_minute'] = int(meta['rtc_minute'])

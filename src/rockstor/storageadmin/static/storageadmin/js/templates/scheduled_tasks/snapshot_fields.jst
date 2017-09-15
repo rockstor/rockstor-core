@@ -6,14 +6,14 @@
     </div>
     <div class="row">
         <div class="col-sm-4">
-	        <select class="form-control" id="share" name="meta.share">
+            <select class="form-control" id="share" name="meta.share">
             {{#each shares}}
-                <option value="{{this.name}}">{{this.name}}</option>
+                <option value="{{this.id}}">{{this.name}}</option>
             {{/each}}
-	        </select>
+            </select>
         </div>
         <div class="col-sm-4">
-	        <input class="form-control" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshots will be named with this prefix. The format is prefix_YYYYMMDDHHMM">
+            <input class="form-control" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshots will be named with this prefix. The format is prefix_YYYYMMDDHHMM">
         </div>
     </div>
 </div>
@@ -39,9 +39,9 @@
 </div>
 {{else}}
 <div class="form-group">
-    <label class="control-label col-sm-4" for="share">Share: </label>
+    <label class="control-label col-sm-4" for="share">Share name: </label>
     <div class="col-sm-6">
-        <input type="text" class="form-control" value="{{> taskObj.share}}" disabled />
+        <input type="text" class="form-control" value="{{> taskObj.share_name}}" disabled />
     </div>
 </div>
 <div class="form-group">
@@ -61,8 +61,8 @@
     <div class="col-sm-offset-4 col-sm-6">
         <div class="checkbox">
             <label>
-			    <input class="checkbox" type="checkbox" id="writable" name="meta.writable" {{> taskObj.writable}} title="Make snapshots writable"> Make snapshots writable?
-			</label>
+                <input class="checkbox" type="checkbox" id="writable" name="meta.writable" {{> taskObj.writable}} title="Make snapshots writable"> Make snapshots writable?
+            </label>
         </div>
     </div>
 </div>
@@ -71,8 +71,8 @@
     <div class="col-sm-offset-4 col-sm-6">
         <div class="checkbox">
             <label>
-			    <input class="checkbox" type="checkbox" id="visible" name="meta.visible" {{> taskObj.visible}} title="Make snapshots visible to the end user"> Make snapshots visible?
-			</label>
+                <input class="checkbox" type="checkbox" id="visible" name="meta.visible" {{> taskObj.visible}} title="Make snapshots visible to the end user"> Make snapshots visible?
+            </label>
         </div>
     </div>
 </div>

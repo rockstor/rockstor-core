@@ -34,10 +34,15 @@ def validate_snap_meta(meta):
         raise Exception('meta must be a dictionary, not %s' % type(meta))
     if ('prefix' not in meta):
         raise Exception('prefix missing from meta. %s' % meta)
+    if ('share_name' not in meta):
+        raise Exception('share_name missing from meta. {}'.format(meta))
     if ('share' not in meta):
         raise Exception('share missing from meta. %s' % meta)
-    if (not Share.objects.filter(name=meta['share']).exists()):
-        raise Exception('Non-existent Share(%s) in meta. %s' %
+    if not meta['share'].isdigit():
+        raise Exception('Non-digit share element ({}) in meta {}'
+                        .format(meta['share'], meta))
+    if (not Share.objects.filter(id=meta['share']).exists()):
+        raise Exception('Non-existent Share id (%s) in meta. %s' %
                         (meta['share'], meta))
     if ('max_count' not in meta):
         raise Exception('max_count missing from meta. %s' % meta)
@@ -63,7 +68,7 @@ def delete(aw, share, snap_type, prefix, max_count):
         name__startswith=prefix).order_by('-id')
     for snap in snapshots[max_count:]:
         try:
-            url = ('shares/%s/snapshots/%s' % (share.name, snap.name))
+            url = ('shares/{}/snapshots/{}'.format(share.id, snap.name))
             aw.api_call(url, data=None, calltype='delete', save_error=False)
         except Exception as e:
             logger.error('Failed to delete old snapshots exceeding the '
@@ -87,7 +92,7 @@ def main():
             return
         meta = json.loads(tdo.json_meta)
         validate_snap_meta(meta)
-        share = Share.objects.get(name=meta['share'])
+        share = Share.objects.get(id=meta['share'])
         max_count = int(float(meta['max_count']))
         prefix = ('%s_' % meta['prefix'])
 
@@ -100,7 +105,7 @@ def main():
             name = ('%s_%s'
                     % (meta['prefix'],
                        datetime.now().strftime(settings.SNAP_TS_FORMAT)))
-            url = ('shares/%s/snapshots/%s' % (share.name, name))
+            url = ('shares/{}/snapshots/{}'.format(share.id, name))
             # only create a new snap if there's no overflow situation. This
             # prevents runaway snapshot creation beyond max_count+1.
             if(delete(aw, share, stype, prefix, max_count)):
