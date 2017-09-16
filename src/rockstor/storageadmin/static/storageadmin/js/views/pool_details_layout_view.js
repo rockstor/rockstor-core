@@ -41,13 +41,11 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.poolscrubs = new PoolScrubCollection([], {
             snapType: 'admin'
         });
-        this.poolscrubs.pageSize = 5;
         this.poolscrubs.setUrl(this.pid);
         // create pool re-balance models
         this.poolrebalances = new PoolRebalanceCollection([], {
             snapType: 'admin'
         });
-        this.poolrebalances.pageSize = 5;
         this.poolrebalances.setUrl(this.pid);
 
         this.dependencies.push(this.pool);

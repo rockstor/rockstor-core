@@ -155,6 +155,3 @@ PoolScrubTableModule = RockstorModuleView.extend({
     }
 
 });
-
-//Add pagination
-Cocktail.mixin(PoolScrubTableModule, PaginationMixin);
