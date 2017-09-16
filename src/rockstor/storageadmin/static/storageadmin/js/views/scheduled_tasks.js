@@ -57,7 +57,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 return moment(task.get('start')).valueOf();
             }).reverse();
         });
-		// remove existing tooltips
+        // remove existing tooltips
         if (this.$('[rel=tooltip]')) {
             this.$('[rel=tooltip]').tooltip('hide');
         }
@@ -143,9 +143,13 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
                 html += '<td>' + taskType + '&nbsp;';
                 if (taskType == 'snapshot') {
-                    html += '(' + JSON.parse(jsonMeta).share_name + ')';
+                    // TODO: fix this to go direct to Snapshots tab.
+                    html += '(<a href="#shares/' + JSON.parse(jsonMeta).share + '">';
+                    html += JSON.parse(jsonMeta).share_name + '</a>)';
                 } else if (taskType == 'scrub') {
-                    html += '(' + JSON.parse(jsonMeta).pool_name + ')';
+                    // TODO: fix this to go direct to Scrubs tab.
+                    html += '(<a href="#pools/' + JSON.parse(jsonMeta).pool + '">';
+                    html += JSON.parse(jsonMeta).pool_name + '</a>)';
                 }
                 html += '</td>';
                 html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
@@ -163,7 +167,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
                         var task = taskMapId[0],
                             taskState = task.get('state');
 
-                        if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') {
+                        if (taskState != 'started' && taskState != 'running' && taskState != 'finished') {
                             html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> ' + taskState + '</a>';
                         } else if (taskState == 'finished') {
                             html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + moment(task.get('end')).fromNow() + '</a>';

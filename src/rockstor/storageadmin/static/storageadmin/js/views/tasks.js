@@ -41,7 +41,6 @@ TasksView = RockstorLayoutView.extend({
         this.collection = new TaskCollection(null, {
             taskDefId: this.taskDefId
         });
-        this.collection.pageSize = 10;
         this.dependencies.push(this.collection);
         this.collection.on('reset', this.renderTasks, this);
         // has the replica been fetched? prevents renderReplicaTrails executing
@@ -81,9 +80,17 @@ TasksView = RockstorLayoutView.extend({
         Handlebars.registerHelper('display_snapshot_scrub', function() {
             var html = '';
             if (this.taskDef.get('task_type') == 'snapshot') {
-                html += 'Snapshot of Share [' + JSON.parse(this.taskDef.get('json_meta')).share_name + ']';
+                html += 'Snapshot of Share (<a href="#shares/';
+                // TODO: fix this to go direct to Snapshots tab.
+                html += JSON.parse(this.taskDef.get('json_meta')).share + '">';
+                html += JSON.parse(this.taskDef.get('json_meta')).share_name;
+                html += '</a>): see "Snapshots" tab for details.';
             } else if (this.taskDef.get('task_type') == 'scrub'){
-                html += 'Scrub of Pool [' + JSON.parse(this.taskDef.get('json_meta')).pool_name + ']';
+                html += 'Scrub of Pool (<a href="#pools/';
+                // TODO: fix this to go direct to Scrubs tab.
+                html += JSON.parse(this.taskDef.get('json_meta')).pool + '">';
+                html += JSON.parse(this.taskDef.get('json_meta')).pool_name;
+                html += '</a>): see "Scrubs" tab for details.';
             } else {
                 html += this.taskDef.get('task_type');
             }

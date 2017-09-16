@@ -1,0 +1,73 @@
+<script>
+/*
+ * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+<span class="h2">Scrub Details page.</span>
+<br>
+Formatted output from: <strong> btrfs scrub status -R /mnt2/{{poolName}} </strong>
+for the given job ID. If job is running then browser refresh for
+update.
+<br>
+<span class="h4">Scrub Status values:</span>
+<ul>
+ <li><strong>running:</strong> Ongoing, <strong>finished:</strong> Completed,
+  <strong> terminated:</strong> Job open when force scrub initiated.</li>
+ <li><strong>halted:</strong> Interrupted e.g. reboot,
+  <strong>cancelled:</strong> btrfs scrub cancel /mnt2/{{poolName}} executed.</li>
+ <li><strong>conn-reset:</strong> Forced scrub encountered running scrub.</li>
+</ul>
+
+
+<div class="row">
+ <div class="col-md-8">
+  <label class="control-label"></label>
+  <div class="form-box">
+   <form class="form-horizontal" id="scrub-detail-form" name="scrubdetailform">
+    <div class="messages"></div>
+
+    <!-- Form Header Info -->
+    <div class="form-group">
+     <div class="col-sm-offset-4 col-sm-8">
+      <h4>Pool name:&nbsp;&nbsp;<strong>{{poolName}}</strong></h4>
+      <h4>Scrub Status:&nbsp;&nbsp;<strong>{{scrubStatus}}</strong></h4>
+     </div>
+    </div>
+
+    <!-- Table displaying Scrub Detail -->
+    <div class="form-group" id="pool_scrub_detail_table_group">
+     <label class="col-sm-4 control-label">Scrub Statistics</label>
+     <div class="col-sm-6">
+      <div class="poolScrubDetailsTable">
+       <table id="pool_scrub_details_table" class="table table-condensed table-bordered share-table tablesorter" summary="Pool Scrub Details Table">
+        <thead>
+        <tr>
+         <th>Attribute</th>
+         <th>Value</th>
+        </tr>
+        </thead>
+         {{display_pool_scrub_details_table}}
+        </table>
+      </div>
+     </div>
+    </div><!-- pool_scrub_detail_table_group -->
+
+    </form>
+  </div>
+ </div>
+</div>

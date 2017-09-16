@@ -219,7 +219,8 @@ var SnapshotsCollection = RockStorPaginatedCollection.extend({
 
 var PoolScrub = Backbone.Model.extend({
     url: function() {
-        return '/api/pools/' + this.get('poolName') + '/scrub';
+        // retrieve pool specific scrubs by pool id.
+        return '/api/pools/' + this.get('pid') + '/scrub';
     }
 });
 
@@ -231,8 +232,9 @@ var PoolScrubCollection = RockStorPaginatedCollection.extend({
             this.snapType = options.snapType;
         }
     },
-    setUrl: function(poolName) {
-        this.baseUrl = '/api/pools/' + poolName + '/scrub';
+    // pid = Pool database id
+    setUrl: function(pid) {
+        this.baseUrl = '/api/pools/' + pid + '/scrub';
     },
     extraParams: function() {
         var p = this.constructor.__super__.extraParams.apply(this, arguments);
