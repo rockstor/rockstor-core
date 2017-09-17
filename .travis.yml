@@ -5,7 +5,8 @@ python:
 
 # command to install dependencies
 install:
-  - python rockstor/rockstor-core/bootstrap.py -c rockstor/rockstor-core/buildout.cfg
+  - ls -lart ~
+  - python ./bootstrap.py -c ./buildout.cfg
   - rockstor-/rockstor-core/buildout -N -c rockstor/rockstor-core/buildout.cfg
 
 # command to run tests
