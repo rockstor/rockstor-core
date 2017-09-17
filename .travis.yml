@@ -10,4 +10,6 @@ install:
 
 # command to run tests
 script:
-  - rockstor/rockstor-core/bin/django test rockstor/rockstor-core/src/rockstor/smart_manager/
+  - pwd
+  - ls -lart ~
+  - ./bin/django test ./src/rockstor/smart_manager/
