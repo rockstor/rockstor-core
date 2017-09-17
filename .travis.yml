@@ -3,9 +3,11 @@ python:
   - "2.7"
   - "pypy"
 
+sudo: required
+
 # command to install dependencies
 install:
-  - ls -lart ~
+  - apt-get install libzmq python-zmq
   - python ./bootstrap.py -c ./buildout.cfg
   - ./bin/buildout -N -c ./buildout.cfg
 
