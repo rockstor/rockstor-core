@@ -203,6 +203,8 @@ def envars(container):
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
+        # pull image explicitly so we get updates on re-installs.
+        run_command([DOCKER, 'pull', c.dimage.name])
         cmd = list(DCMD2) + ['--name', c.name, ]
         cmd.extend(vol_ops(c))
         if (c.uid is not None):

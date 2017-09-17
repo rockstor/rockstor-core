@@ -100,6 +100,8 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
         fake_env = dict(os.environ)
         fake_env['LANG'] = 'en_US.UTF-8'
         cmd = map(str, cmd)
+        if log:
+            logger.debug('Running command: {}'.format(' '.join(cmd)))
         p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr,
                              stdin=stdin, env=fake_env)
         out, err = p.communicate(input=input)
@@ -107,15 +109,15 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
         err = err.split('\n')
         rc = p.returncode
     except Exception as e:
-        msg = ('Exception while running command(%s): %s' % (cmd, e.__str__()))
-        raise Exception(msg)
+        raise Exception(
+            'Exception while running command({}): {}'.format(cmd, e))
 
-    if (rc != 0):
-        if (log):
+    if rc != 0:
+        if log:
             e_msg = ('non-zero code({0}) returned by command: {1}. output: '
                      '{2} error: {3}'.format(rc, cmd, out, err))
             logger.error(e_msg)
-        if (throw):
+        if throw:
             raise CommandException(cmd, out, err, rc)
     return (out, err, rc)
 
@@ -1654,7 +1656,7 @@ def get_whole_dev_uuid(dev_byid):
     lsblk -o uuid,name /dev/disk/by-id/virtio-serial-3
     UUID                                 NAME
     6ca7a3eb-7c40-4f9e-925c-b109d68040dd vdf
-    which is quicker and more versatile than 
+    which is quicker and more versatile than
     """
     dev_uuid = ''
     dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
@@ -1677,9 +1679,9 @@ def get_uuid_name_map():
     mapping of all attached by-uuid device names to their sdX counterparts.
     Modeled on the existing get_byid_name_map() but simpler as no duplicate
     device by different names are expected. Ie one uuid name per device.
-    :return: dictionary indexed (keyed) by sdX type names with associated 
-    by-uuid type names as the values, or an empty dictionary if a non zero 
-    return code was encountered by run_command or no by-uuid type names were 
+    :return: dictionary indexed (keyed) by sdX type names with associated
+    by-uuid type names as the values, or an empty dictionary if a non zero
+    return code was encountered by run_command or no by-uuid type names were
     found (unlikely).
     """
     uuid_name_map = {}
@@ -2016,13 +2018,13 @@ def trigger_udev_update():
 
 def trigger_systemd_update():
     """Reruns all systemd generators (see man systemd.generator 7).
-    In some instances systemd managed resources can be out of date with 
+    In some instances systemd managed resources can be out of date with
     associated configuration file changes which can lead to a confusion via
     prior configurations being still current. An example of this is when
     /etc/crypttab is changed and it's systemd generated service files no
     longer reflect the 'source of truth' that /etc/crypttab represents.
     The systemd-cryptsetup-generator scans the contents of /etc/crypttab
-    and establishes service files for each (eg LUKS) mapped device. An 
+    and establishes service files for each (eg LUKS) mapped device. An
     example of one of these generated files is:
     /var/run/systemd/generator/systemd-cryptsetup@<mapped-name>.service
     Running 'systemctl daemon-reload' requests that all such resources be
