@@ -1,0 +1,13 @@
+language: python
+python:
+  - "2.7"
+  - "pypy"
+
+# command to install dependencies
+install:
+  - python ./bootstrap.py -c ./buildout.cfg
+  - ./buildout -N -c ./buildout.cfg
+
+# command to run tests
+script:
+  - ./bin/django test src/rockstor/smart_manager/
