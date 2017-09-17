@@ -7,7 +7,7 @@ sudo: required
 
 # command to install dependencies
 install:
-  - apt-get install libzmq python-zmq
+  - sudo apt-get install libzmq python-zmq
   - python ./bootstrap.py -c ./buildout.cfg
   - ./bin/buildout -N -c ./buildout.cfg
 
