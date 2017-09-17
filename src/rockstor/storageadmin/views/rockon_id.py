@@ -66,7 +66,7 @@ class RockOnIdView(rfc.GenericView):
             try:
                 rockon = RockOn.objects.get(id=rid)
             except:
-                e_msg = ('Rock-on(%d) does not exist' % rid)
+                e_msg = ('Rock-on({}) does not exist'.format(rid))
                 handle_exception(Exception(e_msg), request)
 
             try:

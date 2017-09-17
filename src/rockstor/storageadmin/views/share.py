@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db import transaction
 from storageadmin.models import (Share, Pool, Snapshot, NFSExport, SambaShare,
-                                 SFTP)
+                                 SFTP, RockOn)
 from smart_manager.models import Replica
 from fs.btrfs import (add_share, remove_share, update_quota, volume_usage,
                       set_property, mount_share, qgroup_id, qgroup_create)
@@ -242,7 +242,11 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 systemctl(s.name, 'stop')
                 systemctl(s.name, 'disable')
                 s.config = None
-                return s.save()
+                s.save()
+
+                # delete all rockon metadata.
+                RockOn.objects.all().delete()
+                return
             e_msg = ('Share(%s) cannot be deleted because it is in use '
                      'by Rock-on service. If you must delete anyway, select '
                      'the force checkbox and try again.' % sname)
