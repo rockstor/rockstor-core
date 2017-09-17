@@ -5,9 +5,9 @@ python:
 
 # command to install dependencies
 install:
-  - python ./bootstrap.py -c ./buildout.cfg
+  - python rockstor/rockstor-core/bootstrap.py -c rockstor/rockstor-core/buildout.cfg
   - rockstor-/rockstor-core/buildout -N -c rockstor/rockstor-core/buildout.cfg
 
 # command to run tests
 script:
-  - rockstor/rockstor-core/bin/django test src/rockstor/smart_manager/
+  - rockstor/rockstor-core/bin/django test rockstor/rockstor-core/src/rockstor/smart_manager/
