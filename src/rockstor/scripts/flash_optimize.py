@@ -32,7 +32,7 @@ FSTRIM_NAME = 'rockstor-fstrim'
 FSTRIM_BASE = '%s%s' % (SYSTEMD_DIR, FSTRIM_NAME)
 FSTRIM_SERVICE = '%s.service' % FSTRIM_BASE
 FSTRIM_TIMER = '%s.timer' % FSTRIM_BASE
-SYSCTL_CONF = '/etc/sysctl.conf'
+SYSCTL_CONF = '/etc/sysctl.d/99-rockstor.conf'
 ROOT_FS = ['/', '/boot', '/home', ]
 
 
@@ -127,10 +127,10 @@ def update_sysctl():
         for t in tuneups:
             tfo.write('%s\n' % t)
     move(npath, SYSCTL_CONF)
-    logging.info('moved %s to %s' % (npath, SYSCTL_CONF))
+    logging.info('moved {} to {}'.format(npath, SYSCTL_CONF))
     o, e, rc = run_command(['/usr/sbin/sysctl', '-p'])
     logging.info('Successfully updated sysctl')
-    logging.debug('sysctl -p out: %s err: %s' % (o, e))
+    logging.debug('sysctl -p out: {} err: {}'.format(o, e))
 
 
 def update_fstab():
