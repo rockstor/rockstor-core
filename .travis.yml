@@ -7,7 +7,7 @@ python:
 install:
   - ls -lart ~
   - python ./bootstrap.py -c ./buildout.cfg
-  - rockstor-/rockstor-core/buildout -N -c rockstor/rockstor-core/buildout.cfg
+  - ./bin/buildout -N -c ./buildout.cfg
 
 # command to run tests
 script:
