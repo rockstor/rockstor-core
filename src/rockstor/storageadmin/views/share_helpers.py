@@ -109,8 +109,7 @@ def import_shares(pool, request):
             continue
         try:
             cshare = Share.objects.get(name=s_on_disk)
-            cshares_d = shares_info('%s%s' % (settings.MNT_PT,
-                                              cshare.pool.name))
+            cshares_d = shares_info(cshare.pool)
             if (s_on_disk in cshares_d):
                 e_msg = ('Another pool(%s) has a Share with this same '
                          'name(%s) as this pool(%s). This configuration '
