@@ -406,8 +406,15 @@ def snapshot_list(mnt_pt):
 
 
 def shares_info(pool):
-    # return a list of share names under this mount_point.
-    # useful to gather names of all shares in a pool
+    """
+    Returns a list of share/subvol names by retrieving the mount point of the
+    passed pool and using this to run "btrfs subvol list -s mnt_point".
+    N.B. Child snapshots and subvolumes are ignored but writable snapshots that
+    are immediate children of a pool (vol) are not ignored and regarded as
+    shares in their own right.
+    :param pool: Pool object
+    :return: list of share/subvol names found under Pool.name
+    """
     try:
         mnt_pt = mount_root(pool)
     except CommandException as e:
