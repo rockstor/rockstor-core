@@ -109,7 +109,6 @@ def import_shares(pool, request):
             continue
         try:
             cshare = Share.objects.get(name=s_on_disk)
-            logger.debug('######## cshare.pool.name={}'.format(cshare.pool.name))
             cshares_d = shares_info('%s%s' % (settings.MNT_PT,
                                               cshare.pool.name))
             if (s_on_disk in cshares_d):
