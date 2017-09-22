@@ -70,15 +70,18 @@ def toggle_sftp_visibility(share, snap_name, on=True):
 
 
 def import_shares(pool, request):
-    shares = [s.name for s in Share.objects.filter(pool=pool)]
-    shares_d = shares_info(pool)
-    for s in shares:
-        if (s not in shares_d):
-            Share.objects.get(pool=pool, name=s).delete()
-    for s in shares_d:
-        if (s in shares):
-            share = Share.objects.get(name=s)
-            share.qgroup = shares_d[s]
+    # Establish known shares/subvols within our db for the given pool:
+    shares_in_db = [s_on_disk.name for s_on_disk in Share.objects.filter(pool=pool)]
+    # Find the actual/current shares/subvols within the given pool:
+    shares_on_disk = shares_info(pool)
+    # Delete db Share object if it is no longer found on disk.
+    for s_in_db in shares_in_db:
+        if (s_in_db not in shares_on_disk):
+            Share.objects.get(pool=pool, name=s_in_db).delete()
+    for s_on_disk in shares_on_disk:
+        if (s_on_disk in shares_in_db):
+            share = Share.objects.get(name=s_on_disk)
+            share.qgroup = shares_on_disk[s_on_disk]
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
                 volume_usage(pool, share.qgroup, share.pqgroup)
             ts = datetime.utcnow().replace(tzinfo=utc)
@@ -89,38 +92,39 @@ def import_shares(pool, request):
                 share.eusage = eusage
                 share.pqgroup_rusage = pqgroup_rusage
                 share.pqgroup_eusage = pqgroup_eusage
-                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
+                su = ShareUsage(name=s_on_disk, r_usage=rusage, e_usage=eusage,
                                 ts=ts)
                 su.save()
             else:
                 try:
-                    su = ShareUsage.objects.filter(name=s).latest('id')
+                    su = ShareUsage.objects.filter(name=s_on_disk).latest('id')
                     su.ts = ts
                     su.count += 1
                 except ShareUsage.DoesNotExist:
-                    su = ShareUsage(name=s, r_usage=rusage,
+                    su = ShareUsage(name=s_on_disk, r_usage=rusage,
                                     e_usage=eusage, ts=ts)
                 finally:
                     su.save()
             share.save()
             continue
         try:
-            cshare = Share.objects.get(name=s)
+            cshare = Share.objects.get(name=s_on_disk)
+            logger.debug('######## cshare.pool.name={}'.format(cshare.pool.name))
             cshares_d = shares_info('%s%s' % (settings.MNT_PT,
                                               cshare.pool.name))
-            if (s in cshares_d):
+            if (s_on_disk in cshares_d):
                 e_msg = ('Another pool(%s) has a Share with this same '
                          'name(%s) as this pool(%s). This configuration '
                          'is not supported. You can delete one of them '
                          'manually with this command: '
                          'btrfs subvol delete %s[pool name]/%s' %
-                         (cshare.pool.name, s, pool.name, settings.MNT_PT, s))
+                         (cshare.pool.name, s_on_disk, pool.name, settings.MNT_PT, s_on_disk))
                 handle_exception(Exception(e_msg), request)
             else:
                 cshare.pool = pool
-                cshare.qgroup = shares_d[s]
+                cshare.qgroup = shares_on_disk[s_on_disk]
                 cshare.size = pool.size
-                cshare.subvol_name = s
+                cshare.subvol_name = s_on_disk
                 cshare.rusage, cshare.eusage,
                 cshare.pqgroup_rusage, cshare.pqgroup_eusage = \
                     volume_usage(pool, cshare.qgroup, cshare.pqgroup)
@@ -128,10 +132,10 @@ def import_shares(pool, request):
         except Share.DoesNotExist:
             pqid = qgroup_create(pool)
             update_quota(pool, pqid, pool.size * 1024)
-            nso = Share(pool=pool, qgroup=shares_d[s], pqgroup=pqid, name=s,
-                        size=pool.size, subvol_name=s)
+            nso = Share(pool=pool, qgroup=shares_on_disk[s_on_disk], pqgroup=pqid, name=s_on_disk,
+                        size=pool.size, subvol_name=s_on_disk)
             nso.save()
-        mount_share(nso, '%s%s' % (settings.MNT_PT, s))
+        mount_share(nso, '%s%s' % (settings.MNT_PT, s_on_disk))
 
 
 def import_snapshots(share):
