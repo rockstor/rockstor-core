@@ -111,12 +111,14 @@ def import_shares(pool, request):
             cshare = Share.objects.get(name=s_on_disk)
             cshares_d = shares_info(cshare.pool)
             if (s_on_disk in cshares_d):
-                e_msg = ('Another pool(%s) has a Share with this same '
-                         'name(%s) as this pool(%s). This configuration '
+                e_msg = ('Another pool ({}) has a Share with this same '
+                         'name ({}) as this pool ({}). This configuration '
                          'is not supported. You can delete one of them '
-                         'manually with this command: '
-                         'btrfs subvol delete %s[pool name]/%s' %
-                         (cshare.pool.name, s_on_disk, pool.name, settings.MNT_PT, s_on_disk))
+                         'manually with the following command: '
+                         '"btrfs subvol delete {}[pool name]/{}" WARNING this '
+                         'will remove the entire contents of that subvolume.'
+                         .format(cshare.pool.name, s_on_disk, pool.name,
+                                 settings.MNT_PT, s_on_disk))
                 handle_exception(Exception(e_msg), request)
             else:
                 cshare.pool = pool
