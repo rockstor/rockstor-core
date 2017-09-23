@@ -82,6 +82,7 @@ def import_shares(pool, request):
     # Check if each share in pool also has a db counterpart.
     for s_in_pool in shares_in_pool:
         if s_in_pool in shares_in_pool_db:
+            logger.debug('Updating pre-existing same pool db share entry.')
             # We have a pool db share counterpart so retrieve and update it.
             share = Share.objects.get(name=s_in_pool)
             share.qgroup = shares_in_pool[s_in_pool]
@@ -111,6 +112,8 @@ def import_shares(pool, request):
             share.save()
             continue
         try:
+            logger.debug('No prior entries in scanned pool trying all pools.')
+            logger.debug('Share name = {}.'.format(s_in_pool))
             # Test (Try) for an existing system wide Share db entry.
             cshare = Share.objects.get(name=s_in_pool)
             # Get a list of Rockstor relevant subvols (ie shares and clones)
@@ -127,7 +130,9 @@ def import_shares(pool, request):
                                  settings.MNT_PT, s_in_pool))
                 handle_exception(Exception(e_msg), request)
             else:
-                # Update the prior existing db share entry.
+                # Update the prior existing db share entry previously
+                # associated with another pool.
+                logger.debug('Updating prior db entry from another pool.')
                 cshare.pool = pool
                 cshare.qgroup = shares_in_pool[s_in_pool]
                 cshare.size = pool.size
@@ -137,6 +142,7 @@ def import_shares(pool, request):
                     volume_usage(pool, cshare.qgroup, cshare.pqgroup)
                 cshare.save()
         except Share.DoesNotExist:
+            logger.debug('Db share entry does not exist - creating.')
             # We have a share on disk that has no db counterpart so create one.
             # Retrieve pool quota id for use in db Share object creation.
             pqid = qgroup_create(pool)
