@@ -71,17 +71,20 @@ def toggle_sftp_visibility(share, snap_name, on=True):
 
 def import_shares(pool, request):
     # Establish known shares/subvols within our db for the given pool:
-    shares_in_db = [s_on_disk.name for s_on_disk in Share.objects.filter(pool=pool)]
+    shares_in_pool_db = [s.name for s in Share.objects.filter(pool=pool)]
     # Find the actual/current shares/subvols within the given pool:
-    shares_on_disk = shares_info(pool)
+    # Limited to Rockstor relevant subvols ie shares and clones.
+    shares_in_pool = shares_info(pool)
     # Delete db Share object if it is no longer found on disk.
-    for s_in_db in shares_in_db:
-        if (s_in_db not in shares_on_disk):
-            Share.objects.get(pool=pool, name=s_in_db).delete()
-    for s_on_disk in shares_on_disk:
-        if (s_on_disk in shares_in_db):
-            share = Share.objects.get(name=s_on_disk)
-            share.qgroup = shares_on_disk[s_on_disk]
+    for s_in_pool_db in shares_in_pool_db:
+        if s_in_pool_db not in shares_in_pool:
+            Share.objects.get(pool=pool, name=s_in_pool_db).delete()
+    # Check if each share in pool also has a db counterpart.
+    for s_in_pool in shares_in_pool:
+        if s_in_pool in shares_in_pool_db:
+            # We have a pool db share counterpart so retrieve and update it.
+            share = Share.objects.get(name=s_in_pool)
+            share.qgroup = shares_in_pool[s_in_pool]
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
                 volume_usage(pool, share.qgroup, share.pqgroup)
             ts = datetime.utcnow().replace(tzinfo=utc)
@@ -92,50 +95,56 @@ def import_shares(pool, request):
                 share.eusage = eusage
                 share.pqgroup_rusage = pqgroup_rusage
                 share.pqgroup_eusage = pqgroup_eusage
-                su = ShareUsage(name=s_on_disk, r_usage=rusage, e_usage=eusage,
+                su = ShareUsage(name=s_in_pool, r_usage=rusage, e_usage=eusage,
                                 ts=ts)
                 su.save()
             else:
                 try:
-                    su = ShareUsage.objects.filter(name=s_on_disk).latest('id')
+                    su = ShareUsage.objects.filter(name=s_in_pool).latest('id')
                     su.ts = ts
                     su.count += 1
                 except ShareUsage.DoesNotExist:
-                    su = ShareUsage(name=s_on_disk, r_usage=rusage,
+                    su = ShareUsage(name=s_in_pool, r_usage=rusage,
                                     e_usage=eusage, ts=ts)
                 finally:
                     su.save()
             share.save()
             continue
         try:
-            cshare = Share.objects.get(name=s_on_disk)
+            # Test (Try) for an existing system wide Share db entry.
+            cshare = Share.objects.get(name=s_in_pool)
+            # Get a list of Rockstor relevant subvols (ie shares and clones)
+            # for the prior existing db share entry's pool.
             cshares_d = shares_info(cshare.pool)
-            if (s_on_disk in cshares_d):
+            if s_in_pool in cshares_d:
                 e_msg = ('Another pool ({}) has a Share with this same '
                          'name ({}) as this pool ({}). This configuration '
                          'is not supported. You can delete one of them '
                          'manually with the following command: '
                          '"btrfs subvol delete {}[pool name]/{}" WARNING this '
                          'will remove the entire contents of that subvolume.'
-                         .format(cshare.pool.name, s_on_disk, pool.name,
-                                 settings.MNT_PT, s_on_disk))
+                         .format(cshare.pool.name, s_in_pool, pool.name,
+                                 settings.MNT_PT, s_in_pool))
                 handle_exception(Exception(e_msg), request)
             else:
+                # Update the prior existing db share entry.
                 cshare.pool = pool
-                cshare.qgroup = shares_on_disk[s_on_disk]
+                cshare.qgroup = shares_in_pool[s_in_pool]
                 cshare.size = pool.size
-                cshare.subvol_name = s_on_disk
+                cshare.subvol_name = s_in_pool
                 cshare.rusage, cshare.eusage,
                 cshare.pqgroup_rusage, cshare.pqgroup_eusage = \
                     volume_usage(pool, cshare.qgroup, cshare.pqgroup)
                 cshare.save()
         except Share.DoesNotExist:
+            # We have a share on disk that has no db counterpart so create one.
+            # Retrieve pool quota id for use in db Share object creation.
             pqid = qgroup_create(pool)
             update_quota(pool, pqid, pool.size * 1024)
-            nso = Share(pool=pool, qgroup=shares_on_disk[s_on_disk], pqgroup=pqid, name=s_on_disk,
-                        size=pool.size, subvol_name=s_on_disk)
+            nso = Share(pool=pool, qgroup=shares_in_pool[s_in_pool], pqgroup=pqid, name=s_in_pool,
+                        size=pool.size, subvol_name=s_in_pool)
             nso.save()
-        mount_share(nso, '%s%s' % (settings.MNT_PT, s_on_disk))
+        mount_share(nso, '%s%s' % (settings.MNT_PT, s_in_pool))
 
 
 def import_snapshots(share):
