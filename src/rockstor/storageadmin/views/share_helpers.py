@@ -84,7 +84,7 @@ def import_shares(pool, request):
         if s_in_pool in shares_in_pool_db:
             logger.debug('Updating pre-existing same pool db share entry.')
             # We have a pool db share counterpart so retrieve and update it.
-            share = Share.objects.get(name=s_in_pool)
+            share = Share.objects.get(name=s_in_pool, pool=pool)
             share.qgroup = shares_in_pool[s_in_pool]
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
                 volume_usage(pool, share.qgroup, share.pqgroup)
