@@ -150,7 +150,7 @@ def import_shares(pool, request):
             nso = Share(pool=pool, qgroup=shares_in_pool[s_in_pool], pqgroup=pqid, name=s_in_pool,
                         size=pool.size, subvol_name=s_in_pool)
             nso.save()
-        mount_share(nso, '%s%s' % (settings.MNT_PT, s_in_pool))
+            mount_share(nso, '%s%s' % (settings.MNT_PT, s_in_pool))
 
 
 def import_snapshots(share):
