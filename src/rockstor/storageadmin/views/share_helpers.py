@@ -137,9 +137,9 @@ def import_shares(pool, request):
                 cshare.qgroup = shares_in_pool[s_in_pool]
                 cshare.size = pool.size
                 cshare.subvol_name = s_in_pool
-                cshare.rusage, cshare.eusage,
-                cshare.pqgroup_rusage, cshare.pqgroup_eusage = \
-                    volume_usage(pool, cshare.qgroup, cshare.pqgroup)
+                (cshare.rusage, cshare.eusage, cshare.pqgroup_rusage,
+                 cshare.pqgroup_eusage) = volume_usage(pool, cshare.qgroup,
+                                                       cshare.pqgroup)
                 cshare.save()
         except Share.DoesNotExist:
             logger.debug('Db share entry does not exist - creating.')
