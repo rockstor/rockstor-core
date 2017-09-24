@@ -29,6 +29,9 @@ from storageadmin.util import handle_exception
 import logging
 logger = logging.getLogger(__name__)
 
+NEW_ENTRY = True
+UPDATE_TS = False
+
 
 def helper_mount_share(share, mnt_pt=None):
     if not share.is_mounted:
@@ -89,7 +92,6 @@ def import_shares(pool, request):
             share.qgroup = shares_in_pool[s_in_pool]
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
                 volume_usage(pool, share.qgroup, share.pqgroup)
-            ts = datetime.utcnow().replace(tzinfo=utc)
             if (rusage != share.rusage or eusage != share.eusage or
                pqgroup_rusage != share.pqgroup_rusage or
                pqgroup_eusage != share.pqgroup_eusage):
@@ -97,19 +99,9 @@ def import_shares(pool, request):
                 share.eusage = eusage
                 share.pqgroup_rusage = pqgroup_rusage
                 share.pqgroup_eusage = pqgroup_eusage
-                su = ShareUsage(name=s_in_pool, r_usage=rusage, e_usage=eusage,
-                                ts=ts)
-                su.save()
+                update_shareusage_db(s_in_pool, rusage, eusage)
             else:
-                try:
-                    su = ShareUsage.objects.filter(name=s_in_pool).latest('id')
-                    su.ts = ts
-                    su.count += 1
-                except ShareUsage.DoesNotExist:
-                    su = ShareUsage(name=s_in_pool, r_usage=rusage,
-                                    e_usage=eusage, ts=ts)
-                finally:
-                    su.save()
+                update_shareusage_db(s_in_pool, rusage, eusage, UPDATE_TS)
             share.save()
             continue
         try:
@@ -167,20 +159,38 @@ def import_snapshots(share):
             so = Snapshot(share=share, name=s, real_name=s,
                           writable=snaps_d[s][1], qgroup=snaps_d[s][0])
         rusage, eusage = volume_usage(share.pool, snaps_d[s][0])
-        ts = datetime.utcnow().replace(tzinfo=utc)
         if (rusage != so.rusage or eusage != so.eusage):
             so.rusage = rusage
             so.eusage = eusage
-            su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage, ts=ts)
-            su.save()
+            update_shareusage_db(s, rusage, eusage)
         else:
-            try:
-                su = ShareUsage.objects.filter(name=s).latest('id')
-                su.ts = ts
-                su.count += 1
-            except ShareUsage.DoesNotExist:
-                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
-                                ts=ts)
-            finally:
-                su.save()
+            update_shareusage_db(s, rusage, eusage, UPDATE_TS)
         so.save()
+
+
+def update_shareusage_db(subvol_name, rusage, eusage, new_entry=True):
+    """
+    Creates a new share/subvol db usage entry, or updates an existing one with
+    a new time stamp and count increment.
+    The 'create new entry' mode is expected to be faster.
+    :param subvol_name: share/subvol name
+    :param rusage: Referenced/shared usage
+    :param eusage: Exclusive usage
+    :param new_entry: If True create a new entry with the passed params,
+    otherwise attempt to update the latest (by id) entry with time and count.
+    """
+    ts = datetime.utcnow().replace(tzinfo=utc)
+    if new_entry:
+        su = ShareUsage(name=subvol_name, r_usage=rusage, e_usage=eusage,
+                        ts=ts)
+        su.save()
+    else:
+        try:
+            su = ShareUsage.objects.filter(name=subvol_name).latest('id')
+            su.ts = ts
+            su.count += 1
+        except ShareUsage.DoesNotExist:
+            su = ShareUsage(name=subvol_name, r_usage=rusage, e_usage=eusage,
+                            ts=ts)
+        finally:
+            su.save()
