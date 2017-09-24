@@ -81,6 +81,7 @@ def import_shares(pool, request):
             Share.objects.get(pool=pool, name=s_in_pool_db).delete()
     # Check if each share in pool also has a db counterpart.
     for s_in_pool in shares_in_pool:
+        logger.debug('Share name = {}.'.format(s_in_pool))
         if s_in_pool in shares_in_pool_db:
             logger.debug('Updating pre-existing same pool db share entry.')
             # We have a pool db share counterpart so retrieve and update it.
@@ -113,7 +114,6 @@ def import_shares(pool, request):
             continue
         try:
             logger.debug('No prior entries in scanned pool trying all pools.')
-            logger.debug('Share name = {}.'.format(s_in_pool))
             # Test (Try) for an existing system wide Share db entry.
             cshare = Share.objects.get(name=s_in_pool)
             # Get a list of Rockstor relevant subvols (ie shares and clones)
