@@ -3,16 +3,12 @@ python:
   - "2.7"
   - "pypy"
 
-sudo: required
+script: pytest
 
-# command to install dependencies
 install:
-  - sudo apt-get install libzmq python-zmq
-  - python ./bootstrap.py -c ./buildout.cfg
-  - ./bin/buildout -N -c ./buildout.cfg
+  - python bootstrap.py -c test-buildout.cfg
+  - ./bin/buildout -N -c test-buildout.cfg
 
 # command to run tests
 script:
-  - pwd
-  - ls -lart ~
   - ./bin/django test ./src/rockstor/smart_manager/
