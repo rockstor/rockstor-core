@@ -133,15 +133,22 @@ def import_shares(pool, request):
                  cshare.pqgroup_eusage) = volume_usage(pool, cshare.qgroup,
                                                        cshare.pqgroup)
                 cshare.save()
+                update_shareusage_db(s_in_pool, cshare.rusage, cshare.eusage)
         except Share.DoesNotExist:
             logger.debug('Db share entry does not exist - creating.')
             # We have a share on disk that has no db counterpart so create one.
             # Retrieve pool quota id for use in db Share object creation.
             pqid = qgroup_create(pool)
             update_quota(pool, pqid, pool.size * 1024)
-            nso = Share(pool=pool, qgroup=shares_in_pool[s_in_pool], pqgroup=pqid, name=s_in_pool,
-                        size=pool.size, subvol_name=s_in_pool)
+            rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
+                volume_usage(pool, shares_in_pool[s_in_pool], pqid)
+            nso = Share(pool=pool, qgroup=shares_in_pool[s_in_pool],
+                        pqgroup=pqid, name=s_in_pool, size=pool.size,
+                        subvol_name=s_in_pool, rusage=rusage, eusage=eusage,
+                        pqgroup_rusage=pqgroup_rusage,
+                        pqgroup_eusage=pqgroup_eusage)
             nso.save()
+            update_shareusage_db(s_in_pool, rusage, eusage)
             mount_share(nso, '%s%s' % (settings.MNT_PT, s_in_pool))
 
 
