@@ -103,10 +103,15 @@ SnapshotsView = SnapshotsCommonView.extend({
         return this;
     },
 
+    // may be redundant
     setShareName: function(shareName) {
         this.collection.setUrl(shareName);
     },
 
+    // it may be this method is redundant if, instead, we retrieve share id
+    // via added template attribute data-share-id sourced from snapshots array
+    // and move to shareID as value in share drop down (snapshot_add_template).
+    // See other TODOs in this file.
     getShareId: function(shareName) {
         var shareMatch = this.shares.find(function(share) {
             return share.get('name') == shareName;
@@ -147,6 +152,11 @@ SnapshotsView = SnapshotsCommonView.extend({
             },
             submitHandler: function() {
                 var button = _this.$('#js-snapshot-save');
+                // TODO: if handlebars helper show_shares_dropdown moves to
+                // passing value of shareId then the following line could be:
+                // var shareId = $('#shares').val();
+                // making the existing shareID def redundant and removes the
+                // need to call getShareID: assuming shareName is not needed.
                 var shareName = $('#shares').val();
                 var shareId = _this.getShareId(shareName);
                 if (buttonDisabled(button)) return false;
@@ -180,6 +190,8 @@ SnapshotsView = SnapshotsCommonView.extend({
         var _this = this;
         var name = $(event.currentTarget).attr('data-name');
         var shareName = $(event.currentTarget).attr('data-share-name');
+        // TODO: consider moving next line to:
+        // var shareId = $(event.currentTarget).attr('data-share-id');
         var shareId = _this.getShareId(shareName);
         var esize = $(event.currentTarget).attr('data-size');
         var button = $(event.currentTarget);
@@ -213,6 +225,8 @@ SnapshotsView = SnapshotsCommonView.extend({
         this.$('[rel=tooltip]').tooltip('hide');
         var name = $(event.currentTarget).attr('data-name');
         var shareName = $(event.currentTarget).attr('data-share-name');
+        // TODO: consider moving next line to:
+        // var shareId = $(event.currentTarget).attr('data-share-id');
         var shareId = this.getShareId(shareName);
         var url = 'shares/' + shareId + '/snapshots/' +
             name + '/create-clone';
@@ -335,6 +349,8 @@ SnapshotsView = SnapshotsCommonView.extend({
             var html = '';
             _this.shares.each(function(share, index) {
                 var shareName = share.get('name');
+                // var shareId = share.get('id');
+                // TODO: consider above shareId as value: avoids getShareId() use.
                 html += '<option value="' + shareName + '">' + shareName + '</option>';
             });
             return new Handlebars.SafeString(html);
