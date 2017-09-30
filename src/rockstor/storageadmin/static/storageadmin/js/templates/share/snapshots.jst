@@ -56,17 +56,17 @@
               </td>
               <td><i class="glyphicon glyphicon-camera"></i>&nbsp;{{this.name}}
                {{#if this.writable}}
-                    <a class="js-snapshot-clone" href="#" data-name="{{this.name}}" data-share-name="{{this.share}}">
+                    <a class="js-snapshot-clone" href="#" data-name="{{this.name}}" data-share-name="{{this.share_name}}">
                     <i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i></a>
                {{/if}}
                 <a href="#" class="js-snapshot-delete" id="delete_snapshot_{{this.name}}" data-name="{{this.name}}" data-size="{{getSize this.eusage}}" 
-                data-share-name="{{this.share}}" data-action="delete" title="Delete snapshot">
+                data-share-name="{{this.share_name}}" data-action="delete" title="Delete snapshot">
                 <i rel="tooltip" title="Delete snapshot" class="glyphicon glyphicon-trash"></i></a>
               </td>
               <td>{{getSize this.rusage}}</td>
               <td>{{getSize this.eusage}}</td>
               <td>{{getToc this.toc}}</td>
-              <td><a href="#shares/{{this.share}}">{{this.share}}</a>
+              <td><a href="#shares/{{this.share}}">{{this.share_name}}</a>
                   {{#if this.share_is_mounted}}
                     ({{this.share_mount_status}})
                   {{else}}

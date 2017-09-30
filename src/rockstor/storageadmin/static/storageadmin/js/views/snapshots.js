@@ -77,7 +77,7 @@ SnapshotsView = SnapshotsCommonView.extend({
             var shareMatch = _this.shares.find(function(share) {
                 return share.get('id') == snapshots[i].share;
             });
-            snapshots[i].share = shareMatch.get('name');
+            snapshots[i].share_name = shareMatch.get('name');
             snapshots[i].share_is_mounted = shareMatch.get('is_mounted');
             snapshots[i].share_mount_status = shareMatch.get('mount_status');
         }
