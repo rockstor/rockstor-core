@@ -406,8 +406,18 @@ def snapshot_list(mnt_pt):
 
 
 def shares_info(pool):
-    # return a list of share names under this mount_point.
-    # useful to gather names of all shares in a pool
+    """
+    Returns a dictionary of share/subvol names via passed pool mount point
+    lookup and using this to run "btrfs subvol list -s mnt_point" for snapshots
+    and "btrfs subvol list -p mnt_point" for all subvols including parent id.
+    N.B. Child snapshots and subvolumes are ignored but writable snapshots that
+    are immediate children of a pool (vol) are not ignored and regarded as
+    shares in their own right (a Share 'clone' in Rockstor parlance).
+    :param pool: Pool object
+    :return: dictionary indexed by share/subvol names found directly under
+    Pool.name. Indexed values are share/subvol qgroup ie "0/266" see
+    Share.qgroup model definition.
+    """
     try:
         mnt_pt = mount_root(pool)
     except CommandException as e:

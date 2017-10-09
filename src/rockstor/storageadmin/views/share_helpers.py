@@ -29,6 +29,9 @@ from storageadmin.util import handle_exception
 import logging
 logger = logging.getLogger(__name__)
 
+NEW_ENTRY = True
+UPDATE_TS = False
+
 
 def helper_mount_share(share, mnt_pt=None):
     if not share.is_mounted:
@@ -70,18 +73,25 @@ def toggle_sftp_visibility(share, snap_name, on=True):
 
 
 def import_shares(pool, request):
-    shares = [s.name for s in Share.objects.filter(pool=pool)]
-    shares_d = shares_info(pool)
-    for s in shares:
-        if (s not in shares_d):
-            Share.objects.get(pool=pool, name=s).delete()
-    for s in shares_d:
-        if (s in shares):
-            share = Share.objects.get(name=s)
-            share.qgroup = shares_d[s]
+    # Establish known shares/subvols within our db for the given pool:
+    shares_in_pool_db = [s.name for s in Share.objects.filter(pool=pool)]
+    # Find the actual/current shares/subvols within the given pool:
+    # Limited to Rockstor relevant subvols ie shares and clones.
+    shares_in_pool = shares_info(pool)
+    # Delete db Share object if it is no longer found on disk.
+    for s_in_pool_db in shares_in_pool_db:
+        if s_in_pool_db not in shares_in_pool:
+            Share.objects.get(pool=pool, name=s_in_pool_db).delete()
+    # Check if each share in pool also has a db counterpart.
+    for s_in_pool in shares_in_pool:
+        logger.debug('Share name = {}.'.format(s_in_pool))
+        if s_in_pool in shares_in_pool_db:
+            logger.debug('Updating pre-existing same pool db share entry.')
+            # We have a pool db share counterpart so retrieve and update it.
+            share = Share.objects.get(name=s_in_pool, pool=pool)
+            share.qgroup = shares_in_pool[s_in_pool]
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
                 volume_usage(pool, share.qgroup, share.pqgroup)
-            ts = datetime.utcnow().replace(tzinfo=utc)
             if (rusage != share.rusage or eusage != share.eusage or
                pqgroup_rusage != share.pqgroup_rusage or
                pqgroup_eusage != share.pqgroup_eusage):
@@ -89,49 +99,57 @@ def import_shares(pool, request):
                 share.eusage = eusage
                 share.pqgroup_rusage = pqgroup_rusage
                 share.pqgroup_eusage = pqgroup_eusage
-                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
-                                ts=ts)
-                su.save()
+                update_shareusage_db(s_in_pool, rusage, eusage)
             else:
-                try:
-                    su = ShareUsage.objects.filter(name=s).latest('id')
-                    su.ts = ts
-                    su.count += 1
-                except ShareUsage.DoesNotExist:
-                    su = ShareUsage(name=s, r_usage=rusage,
-                                    e_usage=eusage, ts=ts)
-                finally:
-                    su.save()
+                update_shareusage_db(s_in_pool, rusage, eusage, UPDATE_TS)
             share.save()
             continue
         try:
-            cshare = Share.objects.get(name=s)
-            cshares_d = shares_info('%s%s' % (settings.MNT_PT,
-                                              cshare.pool.name))
-            if (s in cshares_d):
-                e_msg = ('Another pool(%s) has a Share with this same '
-                         'name(%s) as this pool(%s). This configuration '
+            logger.debug('No prior entries in scanned pool trying all pools.')
+            # Test (Try) for an existing system wide Share db entry.
+            cshare = Share.objects.get(name=s_in_pool)
+            # Get a list of Rockstor relevant subvols (ie shares and clones)
+            # for the prior existing db share entry's pool.
+            cshares_d = shares_info(cshare.pool)
+            if s_in_pool in cshares_d:
+                e_msg = ('Another pool ({}) has a Share with this same '
+                         'name ({}) as this pool ({}). This configuration '
                          'is not supported. You can delete one of them '
-                         'manually with this command: '
-                         'btrfs subvol delete %s[pool name]/%s' %
-                         (cshare.pool.name, s, pool.name, settings.MNT_PT, s))
+                         'manually with the following command: '
+                         '"btrfs subvol delete {}[pool name]/{}" WARNING this '
+                         'will remove the entire contents of that subvolume.'
+                         .format(cshare.pool.name, s_in_pool, pool.name,
+                                 settings.MNT_PT, s_in_pool))
                 handle_exception(Exception(e_msg), request)
             else:
+                # Update the prior existing db share entry previously
+                # associated with another pool.
+                logger.debug('Updating prior db entry from another pool.')
                 cshare.pool = pool
-                cshare.qgroup = shares_d[s]
+                cshare.qgroup = shares_in_pool[s_in_pool]
                 cshare.size = pool.size
-                cshare.subvol_name = s
-                cshare.rusage, cshare.eusage,
-                cshare.pqgroup_rusage, cshare.pqgroup_eusage = \
-                    volume_usage(pool, cshare.qgroup, cshare.pqgroup)
+                cshare.subvol_name = s_in_pool
+                (cshare.rusage, cshare.eusage, cshare.pqgroup_rusage,
+                 cshare.pqgroup_eusage) = volume_usage(pool, cshare.qgroup,
+                                                       cshare.pqgroup)
                 cshare.save()
+                update_shareusage_db(s_in_pool, cshare.rusage, cshare.eusage)
         except Share.DoesNotExist:
+            logger.debug('Db share entry does not exist - creating.')
+            # We have a share on disk that has no db counterpart so create one.
+            # Retrieve pool quota id for use in db Share object creation.
             pqid = qgroup_create(pool)
             update_quota(pool, pqid, pool.size * 1024)
-            nso = Share(pool=pool, qgroup=shares_d[s], pqgroup=pqid, name=s,
-                        size=pool.size, subvol_name=s)
+            rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
+                volume_usage(pool, shares_in_pool[s_in_pool], pqid)
+            nso = Share(pool=pool, qgroup=shares_in_pool[s_in_pool],
+                        pqgroup=pqid, name=s_in_pool, size=pool.size,
+                        subvol_name=s_in_pool, rusage=rusage, eusage=eusage,
+                        pqgroup_rusage=pqgroup_rusage,
+                        pqgroup_eusage=pqgroup_eusage)
             nso.save()
-        mount_share(nso, '%s%s' % (settings.MNT_PT, s))
+            update_shareusage_db(s_in_pool, rusage, eusage)
+            mount_share(nso, '%s%s' % (settings.MNT_PT, s_in_pool))
 
 
 def import_snapshots(share):
@@ -148,20 +166,38 @@ def import_snapshots(share):
             so = Snapshot(share=share, name=s, real_name=s,
                           writable=snaps_d[s][1], qgroup=snaps_d[s][0])
         rusage, eusage = volume_usage(share.pool, snaps_d[s][0])
-        ts = datetime.utcnow().replace(tzinfo=utc)
         if (rusage != so.rusage or eusage != so.eusage):
             so.rusage = rusage
             so.eusage = eusage
-            su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage, ts=ts)
-            su.save()
+            update_shareusage_db(s, rusage, eusage)
         else:
-            try:
-                su = ShareUsage.objects.filter(name=s).latest('id')
-                su.ts = ts
-                su.count += 1
-            except ShareUsage.DoesNotExist:
-                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
-                                ts=ts)
-            finally:
-                su.save()
+            update_shareusage_db(s, rusage, eusage, UPDATE_TS)
         so.save()
+
+
+def update_shareusage_db(subvol_name, rusage, eusage, new_entry=True):
+    """
+    Creates a new share/subvol db usage entry, or updates an existing one with
+    a new time stamp and count increment.
+    The 'create new entry' mode is expected to be faster.
+    :param subvol_name: share/subvol name
+    :param rusage: Referenced/shared usage
+    :param eusage: Exclusive usage
+    :param new_entry: If True create a new entry with the passed params,
+    otherwise attempt to update the latest (by id) entry with time and count.
+    """
+    ts = datetime.utcnow().replace(tzinfo=utc)
+    if new_entry:
+        su = ShareUsage(name=subvol_name, r_usage=rusage, e_usage=eusage,
+                        ts=ts)
+        su.save()
+    else:
+        try:
+            su = ShareUsage.objects.filter(name=subvol_name).latest('id')
+            su.ts = ts
+            su.count += 1
+        except ShareUsage.DoesNotExist:
+            su = ShareUsage(name=subvol_name, r_usage=rusage, e_usage=eusage,
+                            ts=ts)
+        finally:
+            su.save()
