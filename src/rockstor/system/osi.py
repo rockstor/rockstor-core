@@ -823,7 +823,7 @@ def wipe_disk(disk_byid):
     :return: o, e, rc tuple returned by the run_command wrapper running the
     locally generated wipefs command.
     """
-    disk_byid_withpath = ('/dev/disk/by-id/%s' % disk_byid)
+    disk_byid_withpath = get_device_path(disk_byid)
     return run_command([WIPEFS, '-a', disk_byid_withpath])
 
 
@@ -839,7 +839,7 @@ def blink_disk(disk_byid, total_exec, read, sleep):
     :param sleep: light off time.
     :return: None.
     """
-    dd_cmd = [DD, 'if=/dev/disk/by-id/%s' % disk_byid, 'of=/dev/null',
+    dd_cmd = [DD, 'if=%s' % get_device_path(disk_byid), 'of=/dev/null',
               'bs=512', 'conv=noerror']
     p = subprocess.Popen(dd_cmd, shell=False, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
@@ -1375,7 +1375,7 @@ def get_disk_power_status(dev_byid):
     # hdparm -C -q /dev/sda
     # drive state is:  active/idle
     out, err, rc = run_command(
-        [HDPARM, '-C', '-q', '/dev/disk/by-id/%s' % dev_byid], throw=False)
+        [HDPARM, '-C', '-q', get_device_path(dev_byid)], throw=False)
     if len(err) != 1:
         # In some instances an error can be returned even with rc=0.
         # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
@@ -1410,7 +1410,7 @@ def get_disk_APM_level(dev_byid):
     #  APM_level<tab>= off
     #  APM_level<tab>= not supported
     out, err, rc = run_command(
-        [HDPARM, '-B', '-q', '/dev/disk/by-id/%s' % dev_byid], throw=False)
+        [HDPARM, '-B', '-q', get_device_path(dev_byid)], throw=False)
     if len(err) != 1:
         # In some instances an error can be returned even with rc=0.
         # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
@@ -1452,7 +1452,7 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
         return False
     # hdparm -S works on partitions so base_dev is not needed, but it does
     # require a full path ie /dev/disk/by-id/dev_byid; dev_by along is no good.
-    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    dev_byid_withpath = get_device_path(dev_byid)
     # md devices arn't offered a spindown config: unknown status from hdparm
     # -C.  Their member disks are exposed on the Disks page so for the time
     # being their spin down times are addressed as regular disks are.  Don't
@@ -1642,6 +1642,20 @@ def get_byid_name_map():
     return byid_name_map
 
 
+def get_device_path(by_id):
+    """
+    Return full path for given device id.
+    For testing and adaptations, this can be adjusted for supporting devices
+    (like nbd) which have no device-by-id entry. That said, DO NOT put
+    workarounds here if there is any other way to do it. The by-id treatment
+    is for having stable device names across reboots and unplugging and
+    re-plugging devices, our database can get confused if that consistency is
+    not there. See https://github.com/rockstor/rockstor-core/pull/1704 for
+    some discussion of this topic.
+    """
+    return '/dev/disk/by-id/%s' % by_id
+
+
 def get_whole_dev_uuid(dev_byid):
     """
     Simple wrapper around "lsblk -n -o uuid <dev_name>" to retrieve a device's
@@ -1659,7 +1673,7 @@ def get_whole_dev_uuid(dev_byid):
     which is quicker and more versatile than
     """
     dev_uuid = ''
-    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    dev_byid_withpath = get_device_path(dev_byid)
     out, err, rc = run_command([LSBLK, '-n', '-o', 'uuid', dev_byid_withpath],
                                throw=False)
     if rc != 0:
@@ -1721,7 +1735,7 @@ def get_dev_temp_name(dev_byid):
     :return: sda type device name without path or if no match is found then
     dev_byid is returned.
     """
-    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    dev_byid_withpath = get_device_path(dev_byid)
     try:
         temp_name = os.readlink(dev_byid_withpath).split('/')[-1]
     except OSError:
@@ -1939,7 +1953,7 @@ def read_hdparm_setting(dev_byid):
     infile = '/etc/systemd/system/rockstor-hdparm.service'
     if not os.path.isfile(infile):
         return None
-    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    dev_byid_withpath = get_device_path(dev_byid)
     dev_byid_found = False
     with open(infile) as ino:
         for line in ino.readlines():
@@ -1978,7 +1992,7 @@ def enter_standby(dev_byid):
     :return: None or out, err, rc of command
     """
     # TODO: candidate for move to system/hdparm
-    hdparm_command = [HDPARM, '-q', '-y', '/dev/disk/by-id/%s' % dev_byid]
+    hdparm_command = [HDPARM, '-q', '-y', get_device_path(dev_byid)]
     return run_command(hdparm_command)
 
 

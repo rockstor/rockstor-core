@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from osi import run_command, get_base_device_byid
+from osi import run_command, get_base_device_byid, get_device_path
 from tempfile import mkstemp
 from shutil import move
 import logging
@@ -408,7 +408,7 @@ def get_dev_options(dev_byid, custom_options=''):
         # Empty custom_options or they have never been set so just return
         # full path to base device as nothing else to do.
         dev_options = [
-            '/dev/disk/by-id/%s' % get_base_device_byid(dev_byid, TESTMODE)]
+            get_device_path(get_base_device_byid(dev_byid, TESTMODE))]
     else:
         # Convert string of custom options into a list ready for run_command
         # TODO: think this ascii should be utf-8 as that's kernel standard
@@ -419,8 +419,7 @@ def get_dev_options(dev_byid, custom_options=''):
         if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
             # add full path to our custom options as we see no raid target dev
             dev_options += [
-                '/dev/disk/by-id/{}'.format(
-                    get_base_device_byid(dev_byid, TESTMODE))
+                get_device_path(get_base_device_byid(dev_byid, TESTMODE))
             ]
     # Note on raid controller target devices.  /dev/twe#, or /dev/twa#, or
     # /dev/twl# are 3ware controller targets devs respectively 3x-xxxx,
