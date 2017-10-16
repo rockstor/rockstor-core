@@ -20,7 +20,7 @@ import re
 from tempfile import mkstemp
 import shutil
 from system.exceptions import CommandException
-from system.osi import run_command, get_uuid_name_map
+from system.osi import run_command, get_uuid_name_map, get_device_path
 import logging
 
 logger = logging.getLogger(__name__)
@@ -142,7 +142,7 @@ def luks_format_disk(disk_byid, passphrase):
     :param passphrase: luks passphrase used to encrypt master key.
     :return: o, e, rc tuple as returned by cryptsetup luksFormat command.
     """
-    disk_byid_withpath = ('/dev/disk/by-id/%s' % disk_byid)
+    disk_byid_withpath = get_device_path(disk_byid)
     # Create a temp file to pass our passphrase to our cryptsetup command.
     tfo, npath = mkstemp()
     # Pythons _candidate_tempdir_list() should ensure our npath temp file is
@@ -483,7 +483,7 @@ def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
         # keyfile has already been registered. UI will not ask for passphrase
         # as it is assumed that an existing keyfile is already registered.
         return True
-    dev_byid_withpath = '/dev/disk/by-id/%s' % dev_byid
+    dev_byid_withpath = get_device_path(dev_byid)
     tfo, npath = mkstemp()
     # Pythons _candidate_tempdir_list() should ensure our npath temp file is
     # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
