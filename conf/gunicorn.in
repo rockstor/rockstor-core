@@ -29,7 +29,7 @@ case "$1" in
   start)
         log_daemon_msg "Starting deferred execution scheduler" "gunicorn"
 
-        $DAEMON --bind=$BIND --pid=$PIDFILE --worker-class socketio.sgunicorn.GeventSocketIOWorker --workers=$WORKERS --log-file=$LOGFILE --pythonpath=$PYPATH --settings=settings wsgi:application
+        $DAEMON --bind=$BIND --pid=$PIDFILE --worker-class socketio.sgunicorn.GeventSocketIOWorker --workers=$WORKERS --log-file=$LOGFILE --pythonpath=$PYPATH wsgi:application
         log_end_msg $?
     ;;
   stop)
