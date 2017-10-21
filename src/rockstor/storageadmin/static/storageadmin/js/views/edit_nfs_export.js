@@ -51,7 +51,7 @@ EditNFSExportView = RockstorLayoutView.extend({
             value: 'rw'
         },
         {
-            name: 'Read-only',
+            name: 'Read only',
             value: 'ro'
         },
         ];

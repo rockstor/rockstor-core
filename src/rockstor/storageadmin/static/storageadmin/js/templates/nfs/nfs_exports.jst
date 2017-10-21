@@ -42,9 +42,9 @@
       <table id="nfs-exports-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of nfs exports">
         <thead>
           <tr>
-            <th scope="col" abbr="Host String">Host String</th>
             <th scope="col" abbr="Shares">Shares</th>
-            <th scope="col" abbr="Writable">Writable</th>
+            <th scope="col" abbr="Host String">Host String</th>
+            <th scope="col" abbr="Read only">Read only</th>
             <th scope="col" abbr="Sync">Sync / Async</th>
             <th scope="col" abbr="Actions">Actions</th>
           </tr>
@@ -52,15 +52,15 @@
         <tbody>
           {{#each nfsCollection}}
             <tr>
-                <td>{{this.host_str}}</td>
                 <td>
                 {{#each this.exports}}
-                    {{this.share}} {{showNfsShares @index ../this.exports}}
+                    <a href="#shares/{{this.share_id}}">{{this.share}}</a> {{showNfsShares @index ../this.exports}}
                 {{/each}}
                 </td>
+                <td>{{this.host_str}}</td>
                 <td>{{showWritableOption this.editable}}</td>
                 <td>{{this.syncable}}</td>
-                <td><a href="#nfs-exports/edit/{{this.id}}"><i class="glyphicon glyphicon-edit"></i></a>&nbsp;
+                <td><a href="#nfs-exports/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;
                 <a href="#" class="delete-nfs-export" data-id="{{this.id}}"><i class="glyphicon glyphicon-trash"></i></a>
                 </td>
             </tr>

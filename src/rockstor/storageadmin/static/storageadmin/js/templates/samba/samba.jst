@@ -33,7 +33,7 @@
         <tbody>
           {{#each samba}}
             <tr>
-                <td>{{this.share}}</td>
+                <td><a href="#shares/{{this.share_id}}">{{this.share}}</a></td>
                 <td>{{this.browsable}}</td>
                 <td>{{this.guest_ok}}</td>
                 <td>{{this.read_only}}</td>

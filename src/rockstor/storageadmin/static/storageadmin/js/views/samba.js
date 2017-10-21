@@ -56,7 +56,7 @@ SambaView = RockstorLayoutView.extend({
 
     renderSamba: function() {
         this.freeShares = this.shares.reject(function(share) {
-            s = this.collection.find(function(sambaShare) {
+            var s = this.collection.find(function(sambaShare) {
                 return (sambaShare.get('share') == share.get('name'));
             });
             return !_.isUndefined(s);

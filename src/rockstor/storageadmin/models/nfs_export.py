@@ -32,5 +32,8 @@ class NFSExport(models.Model):
     def share_name(self, *args, **kwargs):
         return self.share.name
 
+    def share_id(self, *args, **kwargs):
+        return self.share.id
+
     class Meta:
         app_label = 'storageadmin'

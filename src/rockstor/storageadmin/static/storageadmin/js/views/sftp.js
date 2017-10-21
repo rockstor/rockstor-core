@@ -55,7 +55,7 @@ SFTPView = RockstorLayoutView.extend({
 
     renderSFTP: function() {
         this.freeShares = this.shares.reject(function(share) {
-            s = this.collection.find(function(sftpShare) {
+            var s = this.collection.find(function(sftpShare) {
                 return (sftpShare.get('share') == share.get('name'));
             });
             return !_.isUndefined(s);
@@ -201,9 +201,9 @@ SFTPView = RockstorLayoutView.extend({
         Handlebars.registerHelper('displaySftpPermission', function(sftpEditable) {
             var html = '';
             if (sftpEditable == 'ro') {
-                html += 'Read only';
+                html += 'yes';
             } else {
-                html += 'Writable';
+                html += 'no';
             }
             return new Handlebars.SafeString(html);
         });
