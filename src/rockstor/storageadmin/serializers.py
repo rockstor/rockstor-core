@@ -63,6 +63,7 @@ class SnapshotSerializer(serializers.ModelSerializer):
 
 class NFSExportSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+    share_id = serializers.CharField()
 
     class Meta:
         model = NFSExport
@@ -117,6 +118,7 @@ class SambaCustomConfigSerializer(serializers.ModelSerializer):
 
 class SambaShareSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+    share_id = serializers.CharField()
     admin_users = SUserSerializer(many=True)
     custom_config = SambaCustomConfigSerializer(many=True,
                                                 source='sambacustomconfig_set')
@@ -199,6 +201,7 @@ class SetupSerializer(serializers.ModelSerializer):
 
 class SFTPSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+    share_id = serializers.CharField()
 
     class Meta:
         model = SFTP
@@ -214,6 +217,7 @@ class OauthAppSerializer(serializers.ModelSerializer):
 
 class NetatalkShareSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+    share_id = serializers.CharField()
 
     class Meta:
         model = NetatalkShare

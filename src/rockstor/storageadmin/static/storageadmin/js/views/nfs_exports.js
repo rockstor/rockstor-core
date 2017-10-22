@@ -184,7 +184,7 @@ NFSExportsView = RockstorLayoutView.extend({
         });
 
         Handlebars.registerHelper('showWritableOption', function(editable) {
-            return editable == 'rw' ? 'Writable' : 'Read-only';
+            return editable == 'rw' ? 'no' : 'yes';
         });
     }
 

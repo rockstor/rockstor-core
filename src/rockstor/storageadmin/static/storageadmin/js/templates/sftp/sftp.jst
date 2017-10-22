@@ -18,15 +18,15 @@
       <table id="sftp-shares-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of sftp shares">
         <thead>
           <tr>
-            <th scope="col" abbr="Host String">Share name</th>
-            <th scope="col" abbr="Access type">Read only</th>
+            <th scope="col" abbr="Host String">Share</th>
+            <th scope="col" abbr="Read only">Read only</th>
             <th scope="col" abbr="Actions">Actions</th>
           </tr>
         </thead>
         <tbody>
           {{#each sftpShare}}
             <tr>
-                <td>{{this.share}}</td>
+                <td><a href="#shares/{{this.share_id}}">{{this.share}}</a></td>
                 <td>{{displaySftpPermission this.editable}}</td>
                 <td><a href="#" class="delete-sftp-share" data-id="{{this.id}}">
                 <i class="glyphicon glyphicon-trash"></i></a></td>
