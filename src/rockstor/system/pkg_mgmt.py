@@ -94,7 +94,7 @@ def current_version():
 def rpm_build_info(pkg):
     version = None
     date = None
-    o, e, rc = run_command([RPM, '-qi', pkg])
+    o, e, rc = run_command([YUM, 'info', pkg])
     for l in o:
         if (re.match('Build Date', l) is not None):
             # eg: Build Date  : Tue 11 Aug 2015 02:25:24 PM PDT

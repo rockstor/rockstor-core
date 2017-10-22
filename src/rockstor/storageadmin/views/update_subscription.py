@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
+from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import (UpdateSubscription, Appliance)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import UpdateSubscriptionSerializer
@@ -59,11 +60,12 @@ class UpdateSubscriptionListView(rfc.GenericView):
         ono.status = status
         ono.save()
         if (status == 'inactive'):
-            e_msg = ('Activation code(%s) could not be authorized. '
-                     'Verify the code and try again. If '
-                     'the problem persists, contact '
-                     'support@rockstor.com' % ono.password)
-            raise Exception(e_msg)
+            e_msg = (
+                'Activation code({}) could not be authorized for your '
+                'appliance({}). Verify the code and try again. If the problem'
+                ' persists, email support@rockstor.com with this '
+                'message').format(ono.password, appliance.uuid)
+            raise RockStorAPIException(status_code=400, detail=e_msg)
         if (status != 'active'):
             e_msg = ('Failed to activate subscription. status code: '
                      '%s details: %s' % (status, text))
@@ -79,7 +81,8 @@ class UpdateSubscriptionListView(rfc.GenericView):
                 if (password is None):
                     e_msg = ('Activation code is required for '
                              'Stable subscription')
-                    handle_exception(Exception(e_msg), request)
+                    handle_exception(Exception(e_msg), request,
+                                     status_code=400)
                 # remove any leading or trailing white spaces. happens enough
                 # times due to copy-paste.
                 password = password.strip()
