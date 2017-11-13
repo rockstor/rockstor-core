@@ -57,9 +57,6 @@ class TaskSchedulerMixin(object):
             if not Share.objects.filter(id=meta['share']).exists():
                 raise Exception('Non-existent Share id (%s) in meta. %s' %
                                 (meta['pool'], meta))
-            # Add share_name to task meta dictionary
-            share = Share.objects.get(id=meta['share'])
-            meta['share_name'] = share.name
         if 'rtc_hour' in meta:
             meta['rtc_hour'] = int(meta['rtc_hour'])
             meta['rtc_minute'] = int(meta['rtc_minute'])

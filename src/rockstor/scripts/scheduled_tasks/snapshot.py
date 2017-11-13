@@ -34,16 +34,17 @@ def validate_snap_meta(meta):
         raise Exception('meta must be a dictionary, not %s' % type(meta))
     if ('prefix' not in meta):
         raise Exception('prefix missing from meta. %s' % meta)
-    if ('share_name' not in meta):
-        raise Exception('share_name missing from meta. {}'.format(meta))
     if ('share' not in meta):
         raise Exception('share missing from meta. %s' % meta)
-    if not meta['share'].isdigit():
-        raise Exception('Non-digit share element ({}) in meta {}'
-                        .format(meta['share'], meta))
-    if (not Share.objects.filter(id=meta['share']).exists()):
-        raise Exception('Non-existent Share id (%s) in meta. %s' %
-                        (meta['share'], meta))
+    if meta['share'].isdigit():
+        if (not Share.objects.filter(id=meta['share']).exists()):
+            raise Exception('Non-existent Share id (%s) in meta. %s' %
+                            (meta['share'], meta))
+    else:
+        # TODO: this else clause should be removed in #1854
+        if (not Share.objects.filter(name=meta['share']).exists()):
+            raise Exception('share ({}) in meta {} doesnt exist'
+                            .format(meta['share'], meta))
     if ('max_count' not in meta):
         raise Exception('max_count missing from meta. %s' % meta)
     try:
@@ -92,7 +93,17 @@ def main():
             return
         meta = json.loads(tdo.json_meta)
         validate_snap_meta(meta)
-        share = Share.objects.get(id=meta['share'])
+
+        # to keep backwards compatibility, allow for share to be either
+        # name or id and migrate the metadata. To be removed in #1854
+        try:
+            share = Share.objects.get(id=meta['share'])
+        except ValueError:
+            share = Share.objects.get(name=meta['share'])
+            meta['share'] = share.id
+            tdo.json_meta = json.dumps(meta)
+            tdo.save()
+
         max_count = int(float(meta['max_count']))
         prefix = ('%s_' % meta['prefix'])
 
