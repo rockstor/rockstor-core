@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework import (serializers, pagination)
-from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
-                                  SProbe, NFSDCallDistribution,
-                                  NFSDClientDistribution,
-                                  NFSDShareDistribution,
-                                  DiskStat, NetStat,
-                                  NFSDShareClientDistribution,
-                                  NFSDUidGidDistribution, TaskDefinition, Task,
-                                  Replica, ReplicaTrail, ReplicaShare,
-                                  ReceiveTrail, Service)
+from .models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
+                     SProbe, NFSDCallDistribution,
+                     NFSDClientDistribution,
+                     NFSDShareDistribution,
+                     DiskStat, NetStat,
+                     NFSDShareClientDistribution,
+                     NFSDUidGidDistribution, TaskDefinition, Task,
+                     Replica, ReplicaTrail, ReplicaShare,
+                     ReceiveTrail, Service)
 from smart_manager.taplib.probe_config import TapConfig
 
 
@@ -118,6 +118,9 @@ class SProbeConfigSerializer(serializers.Serializer):
 
 
 class TaskDefinitionSerializer(serializers.ModelSerializer):
+    share_name = serializers.CharField()
+    pool_name = serializers.CharField()
+
     class Meta:
         model = TaskDefinition
 

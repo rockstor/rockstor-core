@@ -145,11 +145,11 @@ ScheduledTasksView = RockstorLayoutView.extend({
                 if (taskType == 'snapshot') {
                     // TODO: fix this to go direct to Snapshots tab.
                     html += '(<a href="#shares/' + JSON.parse(jsonMeta).share + '">';
-                    html += JSON.parse(jsonMeta).share_name + '</a>)';
+                    html += t.get('share_name') + '</a>)';
                 } else if (taskType == 'scrub') {
                     // TODO: fix this to go direct to Scrubs tab.
                     html += '(<a href="#pools/' + JSON.parse(jsonMeta).pool + '">';
-                    html += JSON.parse(jsonMeta).pool_name + '</a>)';
+                    html += t.get('pool_name') + '</a>)';
                 }
                 html += '</td>';
                 html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
