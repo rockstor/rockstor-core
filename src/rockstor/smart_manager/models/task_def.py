@@ -16,7 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import json
+
 from django.db import models
+from storageadmin.models import (Pool, Share)
 
 
 class TaskDefinition(models.Model):
@@ -39,3 +42,25 @@ class TaskDefinition(models.Model):
 
     class Meta:
         app_label = 'smart_manager'
+
+    @property
+    def share_name(self, *args, **kwargs):
+        sn = None
+        if self.task_type == 'snapshot':
+            task_metadata = json.loads(self.json_meta)
+            try:
+                sn = Share.objects.get(id=task_metadata['share']).name
+            except Share.DoesNotExist:
+                sn = 'N/A'
+        return sn
+
+    @property
+    def pool_name(self, *args, **kwargs):
+        pn = None
+        if self.task_type == 'scrub':
+            task_metadata = json.loads(self.json_meta)
+            try:
+                pn = Pool.objects.get(id=task_metadata['pool']).name
+            except Pool.DoesNotExist:
+                pn = 'N/A'
+        return pn
