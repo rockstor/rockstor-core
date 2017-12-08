@@ -832,7 +832,7 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     current real size we can indistinctly use one of them.
     """
     cmd = [BTRFS, 'qgroup', 'show', volume_dir]
-    out, err, rc = run_command(cmd, log=True)
+    out, err, rc = run_command(cmd, log=True, throw=False)
     volume_id_sizes = [0, 0]
     pvolume_id_sizes = [0, 0]
     for line in out:
