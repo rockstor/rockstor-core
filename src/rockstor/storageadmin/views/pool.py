@@ -347,6 +347,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (pool.role == 'root'):
+                # update formatting and use now validated pool name not pid.
                 e_msg = ('Edit operations are not allowed on this Pool(%d) '
                          'as it contains the operating system.' % pid)
                 handle_exception(Exception(e_msg), request)
