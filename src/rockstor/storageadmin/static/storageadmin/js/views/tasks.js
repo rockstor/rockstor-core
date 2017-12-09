@@ -83,13 +83,13 @@ TasksView = RockstorLayoutView.extend({
                 html += 'Snapshot of Share (<a href="#shares/';
                 // TODO: fix this to go direct to Snapshots tab.
                 html += JSON.parse(this.taskDef.get('json_meta')).share + '">';
-                html += JSON.parse(this.taskDef.get('json_meta')).share_name;
+                html += this.taskDef.get('share_name');
                 html += '</a>): see "Snapshots" tab for details.';
             } else if (this.taskDef.get('task_type') == 'scrub'){
                 html += 'Scrub of Pool (<a href="#pools/';
                 // TODO: fix this to go direct to Scrubs tab.
                 html += JSON.parse(this.taskDef.get('json_meta')).pool + '">';
-                html += JSON.parse(this.taskDef.get('json_meta')).pool_name;
+                html += this.taskDef.get('pool_name');
                 html += '</a>): see "Scrubs" tab for details.';
             } else {
                 html += this.taskDef.get('task_type');
