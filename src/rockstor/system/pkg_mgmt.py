@@ -94,14 +94,15 @@ def current_version():
 def rpm_build_info(pkg):
     version = None
     date = None
-    o, e, rc = run_command([YUM, 'info', pkg])
+    o, e, rc = run_command([YUM, 'info', 'installed', '-v', pkg])
     for l in o:
-        if (re.match('Build Date', l) is not None):
-            # eg: Build Date  : Tue 11 Aug 2015 02:25:24 PM PDT
-            # we return 2015-Aug-11
+        if (re.match('Buildtime', l) is not None):
+            # eg: "Buildtime   : Tue Dec  5 13:34:06 2017"
+            # we return 2017-Dec-06
+            # Note the one day on from retrieved Buildtime with zero padding.
             dfields = l.strip().split()
-            dstr = ' '.join(dfields[3:7])
-            bdate = datetime.strptime(dstr, '%a %d %b %Y')
+            dstr = dfields[6] + ' ' + dfields[3] + ' ' + dfields[4]
+            bdate = datetime.strptime(dstr, '%Y %b %d')
             bdate += timedelta(days=1)
             date = bdate.strftime('%Y-%b-%d')
         if (re.match('Version ', l) is not None):
