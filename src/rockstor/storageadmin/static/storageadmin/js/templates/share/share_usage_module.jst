@@ -28,6 +28,13 @@
     (<strong><span style="color:red">{{pool_mount_status}}</span></strong>)
   {{/if}}
   <br>
+  Pool Quotas:&nbsp;
+  {{#if pool_quotas_enabled}}
+    Enabled
+  {{else}}
+    <strong><span style="color:red">Disabled</span></strong>
+  {{/if}}
+  <br>
   Active mount options / Status:
   <strong>
   {{#if share_is_mounted}}

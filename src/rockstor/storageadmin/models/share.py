@@ -21,6 +21,7 @@ from django.db import models
 from django.db.models.signals import (post_save, post_delete)
 from django.dispatch import receiver
 
+from fs.btrfs import qgroup_exists
 from storageadmin.models import Pool
 from system.osi import mount_status
 from .netatalk_share import NetatalkShare
@@ -78,6 +79,19 @@ class Share(models.Model):
         try:
             return mount_status('%s%s' % (settings.MNT_PT, self.name),
                                 RETURN_BOOLEAN)
+        except:
+            return False
+
+    @property
+    def pqgroup_exist(self, *args, **kwargs):
+        # Returns boolean status of pqgroup existence
+        try:
+            if str(self.pqgroup) == '-1/-1':
+                return False
+            else:
+                return qgroup_exists(
+                    '%s%s' % (settings.MNT_PT, self.pool.name),
+                    '%s' % self.pqgroup)
         except:
             return False
 

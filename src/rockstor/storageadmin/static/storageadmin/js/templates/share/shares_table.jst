@@ -12,11 +12,11 @@
       <tr>
         <th>Name</th>
         <th>Size</th>
-        <th>Usage <i class="fa fa-info-circle" title="Current share content"></th>
-        <th>Btrfs Usage <i class="fa fa-info-circle" title="Current share content including snapshots"></th>
+        <th>Usage <i class="fa fa-info-circle" title="Share content - uses Quotas" /></th>
+        <th>Btrfs Usage <i class="fa fa-info-circle" title="Share content inc snapshots - uses Quotas" /></th>
         <th>Active mount options / Status</th>
-        <th>Pool (Active mount options / Status)</th>
-        <th>Compression <i class="fa fa-info-circle" title="Inherits pool setting if not specified on share"></th>
+        <th>Pool (Active mount options / Status) Quotas</th>
+        <th>Compression <i class="fa fa-info-circle" title="Inherits pool setting if not specified on share" /></th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -39,6 +39,11 @@
                 ({{this.pool.mount_status}})
             {{else}}
                 (<strong><span style="color:red">{{this.pool.mount_status}}</span></strong>)
+            {{/if}}
+            {{# if this.pool.quotas_enabled}}
+                Enabled
+            {{else}}
+                <strong><span style="color:red">Disabled</span></strong>
             {{/if}}
         </td>
         <td>

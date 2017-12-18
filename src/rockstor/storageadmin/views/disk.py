@@ -707,6 +707,7 @@ class DiskDetailView(rfc.GenericView):
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
             po.size = po.usage_bound()
             po.save()
+            # TODO: enable_quota could well break an import from a ro pool.
             enable_quota(po)
             import_shares(po, request)
             for share in Share.objects.filter(pool=po):

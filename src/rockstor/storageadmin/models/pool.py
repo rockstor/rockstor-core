@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from django.conf import settings
-from fs.btrfs import pool_usage, usage_bound
+from fs.btrfs import pool_usage, usage_bound, \
+    are_quotas_enabled
 from system.osi import mount_status
 
 RETURN_BOOLEAN = True
@@ -71,6 +72,14 @@ class Pool(models.Model):
         try:
             return mount_status('%s%s' % (settings.MNT_PT, self.name),
                                 RETURN_BOOLEAN)
+        except:
+            return False
+
+    @property
+    def quotas_enabled(self, *args, **kwargs):
+        # Calls are_quotas_enabled for boolean response
+        try:
+            return are_quotas_enabled('%s%s' % (settings.MNT_PT, self.name))
         except:
             return False
 

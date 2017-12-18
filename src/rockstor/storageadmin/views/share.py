@@ -24,7 +24,8 @@ from storageadmin.models import (Share, Pool, Snapshot, NFSExport, SambaShare,
                                  SFTP, RockOn)
 from smart_manager.models import Replica
 from fs.btrfs import (add_share, remove_share, update_quota, volume_usage,
-                      set_property, mount_share, qgroup_id, qgroup_create)
+                      set_property, mount_share, qgroup_id, qgroup_create,
+                      share_pqgroup_assign)
 from system.services import systemctl
 from storageadmin.serializers import ShareSerializer, SharePoolSerializer
 from storageadmin.util import handle_exception
@@ -34,7 +35,11 @@ import json
 from smart_manager.models import Service
 
 import logging
+
 logger = logging.getLogger(__name__)
+
+# The following model/db default setting is also used when quotas are disabled.
+PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 
 
 class ShareMixin(object):
@@ -216,7 +221,24 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                              'of the share.' %
                              (new_size, cur_rusage))
                     handle_exception(Exception(e_msg), request)
-                update_quota(share.pool, share.pqgroup, new_size * 1024)
+                # quota maintenance
+                if share.pool.quotas_enabled:
+                    # Only try create / update quotas if they are enabled,
+                    # pqgroup of PQGROUP_DEFAULT (-1/-1) indicates no pqgroup,
+                    # ie quotas were disabled when update was requested.
+                    if share.pqgroup == PQGROUP_DEFAULT or \
+                            not share.pqgroup_exist:
+                        # if quotas were disabled or pqgroup non-existent.
+                        share.pqgroup = qgroup_create(share.pool)
+                        share.save()
+                    update_quota(share.pool, share.pqgroup, new_size * 1024)
+                    share_pqgroup_assign(share.pqgroup, share)
+                else:
+                    # Our pool's quotas are disabled so reset pqgroup to -1/-1.
+                    if share.pqgroup != PQGROUP_DEFAULT:
+                        # Only reset if necessary
+                        share.pqgroup = PQGROUP_DEFAULT
+                        share.save()
                 share.size = new_size
             if ('compression' in request.data):
                 new_compression = self._validate_compression(request)
