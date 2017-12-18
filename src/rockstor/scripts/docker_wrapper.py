@@ -34,4 +34,5 @@ def main():
         sys.exit('Failed to mount Docker root(%s). Exception: %s' %
                  (mnt_pt, e.__str__()))
     run_command([DOCKERD, '--log-driver=journald', '--storage-driver',
-                 'btrfs', '--data-root', mnt_pt])
+                 'btrfs', '--storage-opt', 'btrfs.min_space=1G', '--data-root',
+                 mnt_pt])
