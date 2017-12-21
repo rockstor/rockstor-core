@@ -26,6 +26,7 @@ from system.osi import run_command, create_tmp_dir, is_share_mounted, \
 from system.exceptions import (CommandException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
+from django.conf import settings
 import logging
 
 """
@@ -41,7 +42,8 @@ UMOUNT = '/bin/umount'
 DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 QID = '2015'
-
+# The following model/db default setting is also used when quotas are disabled.
+PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 
 def add_pool(pool, disks):
     """
@@ -678,13 +680,71 @@ def disable_quota(pool_name):
     return switch_quota(pool_name, flag='disable')
 
 
+def are_quotas_enabled(mnt_pt):
+    """
+    Simple wrapper around 'btrfs qgroup show -f --raw mnt_pt' intended
+    as a fast determiner of True / False status of quotas enabled
+    :param mnt_pt: Mount point of btrfs filesystem
+    :return: True on rc = 0 False otherwise.
+    """
+    o, e, rc = run_command([BTRFS, 'qgroup', 'show', '-f', '--raw', mnt_pt])
+    if rc == 0:
+        return True
+    return False
+
+
+def qgroup_exists(mnt_pt, qgroup):
+    """
+    Simple wrapper around 'btrfs qgroup show --raw mnt_pt' intended to
+    establish if a specific qgroup exists on a btrfs filesystem.
+    :param mnt_pt: btrfs filesystem mount point, usually the pool.
+    :param qgroup: qgroup of the form 2015/n (intended for use with pqgroup)
+    :return: True is given qgroup exists in command output, False otherwise.
+    """
+    o, e, rc = run_command([BTRFS, 'qgroup', 'show', '--raw', mnt_pt])
+    # example output:
+    # 'qgroupid         rfer         excl '
+    # '-------         ----         ---- '
+    # '0/5             16384        16384 '
+    # ...
+    # '2015/12             0            0 '
+    if rc == 0 and len(o) > 2:
+        # index from 2 to miss header lines and -1 to skip end blank line = []
+        qgroup_list = [line.split()[0] for line in o[2:-1]]
+        # eg from rockstor_rockstor pool we get:
+        # qgroup_list=['0/5', '0/257', '0/258', '0/260', '2015/1', '2015/2']
+        if qgroup in qgroup_list:
+            return True
+    return False
+
+
 def qgroup_id(pool, share_name):
     sid = share_id(pool, share_name)
     return '0/' + sid
 
 
 def qgroup_max(mnt_pt):
-    o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt], log=True)
+    """
+    Parses the output of "btrfs qgroup show mnt_pt" to find the highest qgroup
+    matching QID/* if non is found then 0 will be returned.
+    Quotas not enabled is flagged by a -1 return value.
+    :param mnt_pt: A given btrfs mount point.
+    :return: -1 if quotas not enabled, else highest 2015/* qgroup found or 0
+    """
+    try:
+        o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt], log=True)
+    except CommandException as e:
+        # disabled quotas will result in o = [''], rc = 1 and e[0] =
+        emsg = "ERROR: can't list qgroups: quotas not enabled"
+        # this is non fatal so we catch this specific error and info log it.
+        if e.rc == 1 and e.err[0] == emsg:
+            logger.info('Mount Point: {} has Quotas disabled, skipping qgroup '
+                        'show.'.format(mnt_pt))
+            # and return our default res
+            return -1
+        # otherwise we raise an exception as normal.
+        raise
+    # if no exception was raised find the max 2015/qgroup
     res = 0
     for l in o:
         if (re.match('%s/' % QID, l) is not None):
@@ -694,10 +754,33 @@ def qgroup_max(mnt_pt):
     return res
 
 
-def qgroup_create(pool):
+def qgroup_create(pool, qgroup='-1/-1'):
+    """
+    When passed only a pool an attempt will be made to ascertain if quotas is
+    enabled, if not '-1/-1' is returned as a flag to indicate this state.
+    If quotas are not enabled then the highest available quota of the form
+    2015/n is selected and created, if possible.
+    If passed both a pool and a specific qgroup an attempt is made, given the
+    same behaviour as above, to create this specific group: this scenario is
+    primarily used to re-establish prior existing qgroups post quota disable,
+    share manipulation, quota enable cycling.
+    :param pool: A pool object.
+    :param qgroup: native qgroup of the form 2015/n
+    :return: -1/-1 on quotas disabled, otherwise it will return the native
+    quota whose creation was attempt.
+    """
     # mount pool
     mnt_pt = mount_root(pool)
-    qid = ('%s/%d' % (QID, qgroup_max(mnt_pt) + 1))
+    max_native_qgroup = qgroup_max(mnt_pt)
+    if max_native_qgroup == -1:
+        # We have received a quotas disabled flag so will be unable to create
+        # a new quota group. So return our db default which can in turn flag
+        # an auto updated of pqgroup upon next refresh-share-state.
+        return PQGROUP_DEFAULT
+    if qgroup != PQGROUP_DEFAULT:
+        qid = qgroup
+    else:
+        qid = ('%s/%d' % (QID, max_native_qgroup + 1))
     try:
         out, err, rc = run_command([BTRFS, 'qgroup', 'create', qid, mnt_pt],
                                    log=True)
@@ -715,7 +798,18 @@ def qgroup_create(pool):
 
 
 def qgroup_destroy(qid, mnt_pt):
-    o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt])
+    cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
+    try:
+        o, e, rc = run_command(cmd, log=True)
+    except CommandException as e:
+        # we may have quotas disabled so catch and deal.
+        emsg = "ERROR: can't list qgroups: quotas not enabled"
+        if e.rc == 1 and e.err[0] == emsg:
+            # we have quotas disabled so can't destroy any anyway so skip
+            # and deal by returning False so our caller moves on.
+            return False
+        # otherwise we raise an exception as normal
+        raise e
     for l in o:
         if (re.match(qid, l) is not None and l.split()[0] == qid):
             return run_command([BTRFS, 'qgroup', 'destroy', qid, mnt_pt],
@@ -726,7 +820,19 @@ def qgroup_destroy(qid, mnt_pt):
 def qgroup_is_assigned(qid, pqid, mnt_pt):
     # Returns true if the given qgroup qid is already assigned to pqid for the
     # path(mnt_pt)
-    o, e, rc = run_command([BTRFS, 'qgroup', 'show', '-pc', mnt_pt])
+    cmd = [BTRFS, 'qgroup', 'show', '-pc', mnt_pt]
+    try:
+        o, e, rc = run_command(cmd, log=True)
+    except CommandException as e:
+        # we may have quotas disabled so catch and deal.
+        emsg = "ERROR: can't list qgroups: quotas not enabled"
+        if e.rc == 1 and e.err[0] == emsg:
+            # No deed to scan output as nothing to see with quotas disabled.
+            # And since no quota capability can be enacted we return True
+            # to avoid our caller trying any further with quotas.
+            return True
+        # otherwise we raise an exception as normal
+        raise e
     for l in o:
         fields = l.split()
         if (len(fields) > 3 and
@@ -736,7 +842,26 @@ def qgroup_is_assigned(qid, pqid, mnt_pt):
     return False
 
 
+def share_pqgroup_assign(pqgroup, share):
+    """
+    Convenience wrapper to qgroup_assign() for use with a share object where
+    we wish to assign / reassign it's current db held qgroup to a passed
+    pqgroup.
+    :param pqgroup: pqgroup to use as parent.
+    :param share: share object
+    :return: qgroup_assign() result.
+    """
+    mnt_pt = '{}/{}'.format(settings.MNT_PT, share.pool.name)
+    return qgroup_assign(share.qgroup, pqgroup, mnt_pt)
+
+
 def qgroup_assign(qid, pqid, mnt_pt):
+    """
+    Wrapper for 'BTRFS, qgroup, assign, qid, pqid, mnt_pt'
+    :param qid: qgroup to assign as child of pqgroup
+    :param pqid: pqgroup to use as parent
+    :param mnt_pt: btrfs filesystem mountpoint (usually the associated pool)
+    """
     if (qgroup_is_assigned(qid, pqid, mnt_pt)):
         return True
 
@@ -744,7 +869,7 @@ def qgroup_assign(qid, pqid, mnt_pt):
     # "WARNING: # quotas may be inconsistent, rescan needed" and returns with
     # exit code 1.
     try:
-        run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt])
+        run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt], log=True)
     except CommandException as e:
         wmsg = 'WARNING: quotas may be inconsistent, rescan needed'
         if (e.rc == 1 and e.err[0] == wmsg):
@@ -766,14 +891,21 @@ def qgroup_assign(qid, pqid, mnt_pt):
 
 
 def update_quota(pool, qgroup, size_bytes):
+    # TODO: consider changing qgroup to pqgroup if we are only used this way.
     root_pool_mnt = mount_root(pool)
     # Until btrfs adds better support for qgroup limits. We'll not set limits.
     # It looks like we'll see the fixes in 4.2 and final ones by 4.3.
+    # Update: Further quota improvements look to be landing in 4.15.
     # cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
     cmd = [BTRFS, 'qgroup', 'limit', 'none', qgroup, root_pool_mnt]
     # Set defaults in case our run_command fails to assign them.
     out = err = ['']
     rc = 0
+    if qgroup == '-1/-1':
+        # We have a 'quotas disabled' qgroup value flag, log and return blank.
+        logger.info('Pool: {} ignoring '
+                    'update_quota on {}'.format(pool.name, qgroup))
+        return out, err, rc
     try:
         out, err, rc = run_command(cmd, log=True)
     except CommandException as e:
@@ -784,6 +916,25 @@ def update_quota(pool, qgroup, size_bytes):
         if e.rc == 1 and e.err[0] == emsg:
             logger.info('Pool: {} is Read-only, skipping qgroup '
                         'limit.'.format(pool.name))
+            return out, err, rc
+        # quotas disabled results in o = [''], rc = 1 and e[0] =
+        emsg2 = 'ERROR: unable to limit requested quota group: ' \
+                'Invalid argument'
+        # quotas disabled is not a fatal failure but here we key from what
+        # is a non specific error: 'Invalid argument'.
+        # TODO: improve this clause as currently too broad.
+        # TODO: we could for example use if qgroup_max(mnt) == -1
+        if e.rc == 1 and e.err[0] == emsg2:
+            logger.info('Pool: {} has encountered a qgroup limit issue, '
+                        'skipping qgroup limit. Disabled quotas can cause '
+                        'this error'.format(pool.name))
+            return out, err, rc
+        emsg3 = 'ERROR: unable to limit requested quota group: ' \
+                'No such file or directory'
+        if e.rc == 1 and e.err[0] == emsg3:
+            logger.info('Pool: {} is missing expected '
+                        'qgroup {}'.format(pool.name, qgroup))
+            logger.info('Previously disabled quotas can cause this issue')
             return out, err, rc
         # raise an exception as usual otherwise
         raise

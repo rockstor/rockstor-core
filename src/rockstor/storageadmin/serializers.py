@@ -51,6 +51,7 @@ class PoolInfoSerializer(serializers.ModelSerializer):
     reclaimable = serializers.IntegerField()
     mount_status = serializers.CharField()
     is_mounted = serializers.BooleanField()
+    quotas_enabled = serializers.BooleanField()
 
     class Meta:
         model = Pool
@@ -145,6 +146,7 @@ class ShareSerializer(serializers.ModelSerializer):
     nfs_exports = NFSExportSerializer(many=True, source='nfsexport_set')
     mount_status = serializers.CharField()
     is_mounted = serializers.BooleanField()
+    pqgroup_exist = serializers.BooleanField()
 
     class Meta:
         model = Share

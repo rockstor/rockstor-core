@@ -47,6 +47,7 @@ ShareUsageModule = RockstorModuleView.extend({
             poolName: this.share.get('pool').name,
             pool_is_mounted: this.share.get('pool').is_mounted,
             pool_mount_status: this.share.get('pool').mount_status,
+            pool_quotas_enabled: this.share.get('pool').quotas_enabled,
             share_is_mounted: this.share.get('is_mounted'),
             share_mount_status: this.share.get('mount_status'),
             pid: this.share.get('pool').id,

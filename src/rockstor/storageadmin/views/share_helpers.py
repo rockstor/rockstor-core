@@ -23,10 +23,12 @@ from storageadmin.models import (Share, Snapshot, SFTP)
 from smart_manager.models import ShareUsage
 from fs.btrfs import (mount_share, mount_snap, is_mounted,
                       umount_root, shares_info, volume_usage, snaps_info,
-                      qgroup_create, update_quota)
+                      qgroup_create, update_quota, share_pqgroup_assign)
 from storageadmin.util import handle_exception
+from copy import deepcopy
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 NEW_ENTRY = True
@@ -78,20 +80,48 @@ def import_shares(pool, request):
     # Find the actual/current shares/subvols within the given pool:
     # Limited to Rockstor relevant subvols ie shares and clones.
     shares_in_pool = shares_info(pool)
+    # List of pool's share.pqgroups so we can remove inadvertent duplication.
+    # All pqgroups are removed when quotas are disabled, combined with a part
+    # refresh we could have duplicates within the db.
+    share_pqgroups_used = []
     # Delete db Share object if it is no longer found on disk.
     for s_in_pool_db in shares_in_pool_db:
         if s_in_pool_db not in shares_in_pool:
             Share.objects.get(pool=pool, name=s_in_pool_db).delete()
     # Check if each share in pool also has a db counterpart.
     for s_in_pool in shares_in_pool:
-        logger.debug('Share name = {}.'.format(s_in_pool))
+        logger.debug('---- Share name = {}.'.format(s_in_pool))
         if s_in_pool in shares_in_pool_db:
             logger.debug('Updating pre-existing same pool db share entry.')
             # We have a pool db share counterpart so retrieve and update it.
             share = Share.objects.get(name=s_in_pool, pool=pool)
+            # Initially default our pqgroup value to db default of '-1/-1'
+            # This way, unless quotas are enabled, all pqgroups will be
+            # returned to db default.
+            pqgroup = settings.MODEL_DEFS['pqgroup']
+            if share.pool.quotas_enabled:
+                # Quotas are enabled on our pool so we can validate pqgroup.
+                if share.pqgroup == pqgroup or not share.pqgroup_exist \
+                        or share.pqgroup in share_pqgroups_used:
+                    # we have a void '-1/-1' or non existent pqgroup or
+                    # this pqgroup has already been seen / used in this pool.
+                    logger.debug('#### replacing void, non-existent, or '
+                                 'duplicate pqgroup')
+                    pqgroup = qgroup_create(pool)
+                    update_quota(pool, pqgroup, share.size * 1024)
+                    share_pqgroup_assign(pqgroup, share)
+                else:
+                    # Our share's pqgroup looks OK so use it.
+                    pqgroup = share.pqgroup
+                # Record our use of this pqgroup to spot duplicates later.
+                share_pqgroups_used.append(deepcopy(share.pqgroup))
+            if share.pqgroup != pqgroup:
+                # we need to update our share.pqgroup
+                share.pqgroup = pqgroup
+                share.save()
             share.qgroup = shares_in_pool[s_in_pool]
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
-                volume_usage(pool, share.qgroup, share.pqgroup)
+                volume_usage(pool, share.qgroup, pqgroup)
             if (rusage != share.rusage or eusage != share.eusage or
                pqgroup_rusage != share.pqgroup_rusage or
                pqgroup_eusage != share.pqgroup_eusage):
@@ -137,7 +167,7 @@ def import_shares(pool, request):
         except Share.DoesNotExist:
             logger.debug('Db share entry does not exist - creating.')
             # We have a share on disk that has no db counterpart so create one.
-            # Retrieve pool quota id for use in db Share object creation.
+            # Retrieve new pool quota id for use in db Share object creation.
             pqid = qgroup_create(pool)
             update_quota(pool, pqid, pool.size * 1024)
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \

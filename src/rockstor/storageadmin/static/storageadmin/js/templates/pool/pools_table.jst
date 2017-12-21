@@ -5,6 +5,7 @@
       <th>Name</th>
       <th>Size</th>
       <th>Usage</th>
+      <th>Quotas</th>
       <th>Raid</th>
       <th>Active mount options / Status</th>
       <th>Compression</th>
@@ -32,7 +33,12 @@
             <td>{{humanReadableSize 'usage' this.size this.reclaimable this.free}}
                 <strong>({{humanReadableSize 'usagePercent' this.size this.reclaimable this.free}} %)</strong>
             </td>
-
+            <td>{{#if this.quotas_enabled}}
+                    Enabled
+                {{else}}
+                    <strong><span style="color:red">Disabled</span></strong>
+                {{/if}}
+            </td>
             <td>{{this.raid}}
                 {{#unless (isRoot this.role)}}
                       &nbsp;<a href="#pools/{{this.id}}/?cView=resize"><i class="fa fa-pencil-square-o"></i></a>

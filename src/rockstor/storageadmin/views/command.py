@@ -26,7 +26,7 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from storageadmin.views import DiskMixin
 from system.osi import (uptime, kernel_info)
-from fs.btrfs import (mount_share, mount_root, qgroup_create, get_pool_info,
+from fs.btrfs import (mount_share, mount_root, get_pool_info,
                       pool_raid, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl
@@ -92,15 +92,13 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             for p in Pool.objects.all():
                 if p.disk_set.attached().count() == 0:
                     continue
+                # Import / update db shares counterpart for managed pool.
                 import_shares(p, request)
 
             for share in Share.objects.all():
                 if share.pool.disk_set.attached().count() == 0:
                     continue
                 try:
-                    if (share.pqgroup == settings.MODEL_DEFS['pqgroup']):
-                        share.pqgroup = qgroup_create(share.pool)
-                        share.save()
                     if not share.is_mounted:
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                         mount_share(share, mnt_pt)
