@@ -61,6 +61,6 @@ class TaskDefinition(models.Model):
             task_metadata = json.loads(self.json_meta)
             try:
                 pn = Pool.objects.get(id=task_metadata['pool']).name
-            except Pool.DoesNotExist:
+            except Exception:
                 pn = 'N/A'
         return pn
