@@ -50,11 +50,11 @@ class ShareMixin(object):
         try:
             size = int(size)
         except:
-            handle_exception(Exception('Share size must be an integer'),
+            handle_exception(Exception('Share size must be an integer.'),
                              request)
         if (size < settings.MIN_SHARE_SIZE):
-            e_msg = ('Share size should atleast be %dKB. Given size is %dKB'
-                     % (settings.MIN_SHARE_SIZE, size))
+            e_msg = ('Share size should be at least {} KB. Given size is '
+                     '{} KB.'.format(settings.MIN_SHARE_SIZE, size))
             handle_exception(Exception(e_msg), request)
         if (size > pool.size):
             return pool.size
@@ -66,8 +66,8 @@ class ShareMixin(object):
         if (compression is None):
             compression = 'no'
         if (compression not in settings.COMPRESSION_TYPES):
-            e_msg = ('Unsupported compression algorithm(%s). Use one of '
-                     '%s' % (compression, settings.COMPRESSION_TYPES))
+            e_msg = ('Unsupported compression algorithm ({}). Use one of '
+                     '({}).'.format(compression, settings.COMPRESSION_TYPES))
             handle_exception(Exception(e_msg), request)
         return compression
 
@@ -76,12 +76,12 @@ class ShareMixin(object):
         try:
             share = Share.objects.get(id=sid)
             if (share.name == 'home' or share.name == 'root'):
-                e_msg = ('Operation not permitted on this Share(%s) because '
-                         'it is a special system Share' % share.name)
+                e_msg = ('Operation not permitted on this Share ({}) because '
+                         'it is a special system Share.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
             return share
         except Share.DoesNotExist:
-            e_msg = ('Share id: {} does not exist'.format(sid))
+            e_msg = ('Share id: ({}) does not exist.'.format(sid))
             handle_exception(Exception(e_msg), request)
 
 
@@ -140,7 +140,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             try:
                 pool = Pool.objects.get(name=pool_name)
             except:
-                e_msg = ('Pool(%s) does not exist.' % pool_name)
+                e_msg = ('Pool ({}) does not exist.'.format(pool_name))
                 handle_exception(Exception(e_msg), request)
             compression = self._validate_compression(request)
             size = self._validate_share_size(request, pool)
@@ -154,25 +154,26 @@ class ShareListView(ShareMixin, rfc.GenericView):
 
             if (len(sname) > 254):
                 # btrfs subvolume names cannot exceed 254 characters.
-                e_msg = ('Share name length cannot exceed 254 characters')
+                e_msg = ('Share name length cannot exceed 254 characters.')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share(%s) already exists. Choose a '
-                         'different name' % sname)
+                e_msg = ('Share ({}) already exists. Choose a '
+                         'different name.'.format(sname))
                 handle_exception(Exception(e_msg), request)
 
             if (Pool.objects.filter(name=sname).exists()):
-                e_msg = ('A Pool with this name(%s) exists. Share '
+                e_msg = ('A Pool with this name ({}) exists. Share '
                          'and Pool names must be distinct. Choose '
-                         'a different name' % sname)
+                         'a different name.'.format(sname))
                 handle_exception(Exception(e_msg), request)
             replica = False
             if ('replica' in request.data):
                 replica = request.data['replica']
                 if (type(replica) != bool):
-                    e_msg = ('replica must be a boolean, not %s' %
-                             type(replica))
+                    # TODO: confirm this 'type' call works as format parameter.
+                    e_msg = ('Replica must be a boolean, '
+                             'not {}.'.format(type(replica)))
                     handle_exception(Exception(e_msg), request)
             pqid = qgroup_create(pool)
             add_share(pool, sname, pqid)
@@ -219,9 +220,8 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 cur_rusage, cur_eusage = volume_usage(share.pool, qid)
                 if (new_size < cur_rusage):
                     e_msg = ('Unable to resize because requested new '
-                             'size(%dKB) is less than current usage(%dKB)'
-                             'of the share.' %
-                             (new_size, cur_rusage))
+                             'size {} KB is less than current usage {} KB '
+                             'of the share.'.format(new_size, cur_rusage))
                     handle_exception(Exception(e_msg), request)
                 # quota maintenance
                 if share.pool.quotas_enabled:
@@ -271,9 +271,9 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 # delete all rockon metadata.
                 RockOn.objects.all().delete()
                 return
-            e_msg = ('Share(%s) cannot be deleted because it is in use '
-                     'by Rock-on service. If you must delete anyway, select '
-                     'the force checkbox and try again.' % sname)
+            e_msg = ('Share ({}) cannot be deleted because it is in use '
+                     'by the Rock-on service. To override this block select '
+                     'the force checkbox and try again.'.format(sname))
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -287,35 +287,37 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             share = self._validate_share(request, sid)
             if (Snapshot.objects.filter(share=share,
                                         snap_type='replication').exists()):
-                e_msg = ('Share(%s) cannot be deleted as it has replication '
-                         'related snapshots.' % share.name)
+                e_msg = ('Share ({}) cannot be deleted as it has replication '
+                         'related snapshots.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
 
             if (NFSExport.objects.filter(share=share).exists()):
-                e_msg = ('Share(%s) cannot be deleted as it is exported via '
-                         'nfs. Delete nfs exports and try again' % share.name)
+                e_msg = ('Share ({}) cannot be deleted as it is exported via '
+                         'nfs. Delete nfs exports and '
+                         'try again.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
 
             if (SambaShare.objects.filter(share=share).exists()):
-                e_msg = ('Share(%s) cannot be deleted as it is shared via '
-                         'Samba. Unshare and try again' % share.name)
+                e_msg = ('Share ({}) cannot be deleted as it is shared via '
+                         'Samba. Unshare and try again.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
 
             if (Snapshot.objects.filter(share=share).exists()):
-                e_msg = ('Share(%s) cannot be deleted as it has '
-                         'snapshots. Delete snapshots and try '
-                         'again' % share.name)
+                e_msg = ('Share ({}) cannot be deleted as it has '
+                         'snapshots. Delete snapshots and '
+                         'try again.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
 
             if (SFTP.objects.filter(share=share).exists()):
-                e_msg = ('Share(%s) cannot be deleted as it is exported via '
-                         'SFTP. Delete SFTP export and try again' % share.name)
+                e_msg = ('Share ({}) cannot be deleted as it is exported via '
+                         'SFTP. Delete SFTP export and '
+                         'try again.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
 
             if (Replica.objects.filter(share=share.name).exists()):
-                e_msg = ('Share(%s) is configured for replication. If you are '
-                         'sure, delete the replication task and try again.'
-                         % share.name)
+                e_msg = ('Share ({}) is configured for replication. If you '
+                         'are sure, delete the replication task and '
+                         'try again.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
 
             self._rockon_check(request, share.name, force=force)
@@ -325,8 +327,8 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                              force=force)
             except Exception as e:
                 logger.exception(e)
-                e_msg = ('Failed to delete the Share(%s). Error from '
-                         'the OS: %s' % (share.name, e.__str__()))
+                e_msg = ('Failed to delete the Share ({}). Error from '
+                         'the OS: {}'.format(share.name, e.__str__()))
                 handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()
