@@ -49,5 +49,5 @@ class PincardView(rfc.GenericView):
 
             return Response(response_data)
         e_msg = ('Unsupported command ({}). Valid commands are '
-                 'create, reset.'.format(command))
+                 'create, reset.').format(command)
         handle_exception(Exception(e_msg), request)
