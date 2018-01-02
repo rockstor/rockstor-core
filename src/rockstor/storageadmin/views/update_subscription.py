@@ -61,14 +61,14 @@ class UpdateSubscriptionListView(rfc.GenericView):
         ono.save()
         if (status == 'inactive'):
             e_msg = (
-                'Activation code({}) could not be authorized for your '
-                'appliance({}). Verify the code and try again. If the problem'
-                ' persists, email support@rockstor.com with this '
-                'message').format(ono.password, appliance.uuid)
+                'Activation code ({}) could not be authorized for your '
+                'appliance ({}). Verify the code and try again. If the '
+                'problem persists, email support@rockstor.com with this '
+                'message.').format(ono.password, appliance.uuid)
             raise RockStorAPIException(status_code=400, detail=e_msg)
         if (status != 'active'):
-            e_msg = ('Failed to activate subscription. status code: '
-                     '%s details: %s' % (status, text))
+            e_msg = ('Failed to activate subscription. Status code: '
+                     '{} details: {}').format(status, text)
             raise Exception(e_msg)
         switch_repo(ono)
         return ono
@@ -80,7 +80,7 @@ class UpdateSubscriptionListView(rfc.GenericView):
                 password = request.data.get('activation_code', None)
                 if (password is None):
                     e_msg = ('Activation code is required for '
-                             'Stable subscription')
+                             'Stable subscription.')
                     handle_exception(Exception(e_msg), request,
                                      status_code=400)
                 # remove any leading or trailing white spaces. happens enough
