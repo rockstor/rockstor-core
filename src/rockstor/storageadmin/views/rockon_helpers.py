@@ -58,8 +58,8 @@ def rockon_status(name):
 def rm_container(name):
     o, e, rc = run_command([DOCKER, 'stop', name], throw=False)
     o, e, rc = run_command([DOCKER, 'rm', name], throw=False)
-    return logger.debug('Attempted to remove a container ({}). Out: {} '
-                        'Err: {} rc: {}.'.format(name, o, e, rc))
+    return logger.debug(('Attempted to remove a container ({}). Out: {} '
+                        'Err: {} rc: {}.').format(name, o, e, rc))
 
 
 @task()
@@ -75,8 +75,8 @@ def generic_start(rockon):
                 rockon=rockon).order_by('launch_order'):
             run_command([DOCKER, 'start', c.name])
     except Exception as e:
-        logger.error('Exception while starting the '
-                     'rockon ({}).'.format(rockon.name))
+        logger.error(('Exception while starting the '
+                     'rockon ({}).').format(rockon.name))
         logger.exception(e)
         new_status = 'start_failed'
     finally:
@@ -98,8 +98,8 @@ def generic_stop(rockon):
                 rockon=rockon).order_by('-launch_order'):
             run_command([DOCKER, 'stop', c.name])
     except Exception as e:
-        logger.debug('Exception while stopping the '
-                     'rockon ({}).'.format(rockon.name))
+        logger.debug(('Exception while stopping the '
+                     'rockon ({}).').format(rockon.name))
         logger.exception(e)
         new_status = 'stop_failed'
     finally:
@@ -138,8 +138,8 @@ def uninstall(rid, new_state='available'):
         globals().get('%s_uninstall' % rockon.name.lower(),
                       generic_uninstall)(rockon)
     except Exception as e:
-        logger.debug('Exception while uninstalling the '
-                     'rockon ({}).'.format(rid))
+        logger.debug(('Exception while uninstalling the '
+                     'rockon ({}).').format(rid))
         logger.exception(e)
         new_state = 'installed'
     finally:
