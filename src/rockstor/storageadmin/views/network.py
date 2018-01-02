@@ -201,14 +201,14 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
         if (not isinstance(devices, list)):
             raise Exception('devices must be a list')
         if (len(devices) < size):
-            raise Exception('A minimum of {} devices are '
-                            'required.'.format(size))
+            raise Exception(('A minimum of {} devices are '
+                            'required.').format(size))
         for d in devices:
             try:
                 NetworkDevice.objects.get(name=d)
                 # if device belongs to another connection, change it.
             except NetworkDevice.DoesNotExist:
-                e_msg = ('Unknown network device ({})'.format(d))
+                e_msg = 'Unknown network device ({}).'.format(d)
                 handle_exception(Exception(e_msg), request)
         return devices
 
@@ -219,14 +219,14 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
             name = request.data.get('name')
             if (NetworkConnection.objects.filter(name=name).exists()):
                 e_msg = ('Connection name ({}) is already in use. Choose a '
-                         'different name.'.format(name))
+                         'different name.').format(name)
                 handle_exception(Exception(e_msg), request)
 
             # auto of manual
             method = request.data.get('method')
             if (method not in self.config_methods):
                 e_msg = ('Unsupported config method ({}). Supported ones '
-                         'include: ({}).'.format(method, self.config_methods))
+                         'include: ({}).').format(method, self.config_methods)
                 handle_exception(Exception(e_msg), request)
             if (method == 'manual'):
                 # ipaddr is of the format <IP>/<netmask>. eg:
@@ -240,7 +240,7 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
             ctype = request.data.get('ctype')
             if (ctype not in self.ctypes):
                 e_msg = ('Unsupported connection type ({}). Supported ones '
-                         'include: ({}).'.format(ctype, self.ctypes))
+                         'include: ({}).').format(ctype, self.ctypes)
                 handle_exception(Exception(e_msg), request)
             devices = request.data.get('devices', None)
             if (ctype == 'team'):
@@ -248,8 +248,8 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                 team_profile = request.data.get('team_profile')
                 if (team_profile not in self.team_profiles):
                     e_msg = ('Unsupported team profile ({}). Supported ones '
-                             'include: ({}).'.format(team_profile,
-                                                     self.team_profiles))
+                             'include: ({}).').format(team_profile,
+                                                      self.team_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
                 network.new_team_connection(name, self.runners[team_profile],
@@ -266,8 +266,8 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                 bond_profile = request.data.get('bond_profile')
                 if (bond_profile not in self.bond_profiles):
                     e_msg = ('Unsupported bond profile ({}). Supported ones '
-                             'include: ({}).'.format(bond_profile,
-                                                     self.bond_profiles))
+                             'include: ({}).').format(bond_profile,
+                                                      self.bond_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
                 network.new_bond_connection(name, bond_profile, devices,
@@ -293,7 +293,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
         try:
             return NetworkConnection.objects.get(id=id)
         except NetworkConnection.DoesNotExist:
-            e_msg = ('Network connection ({}) does not exist.'.format(id))
+            e_msg = 'Network connection ({}) does not exist.'.format(id)
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -305,7 +305,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
             mtu = DEFAULT_MTU
             try:
                 e_msg = ('The mtu must be an integer in {} - {} '
-                         'range.'.format(MIN_MTU, MAX_MTU))
+                         'range.').format(MIN_MTU, MAX_MTU)
                 mtu = int(request.data.get('mtu', DEFAULT_MTU))
                 if mtu < MIN_MTU or mtu > MAX_MTU:
                     handle_exception(Exception(e_msg), request)
@@ -360,7 +360,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                 e_msg = ('This connection ({}) is designated for '
                          'management and cannot be deleted. If you really '
                          'need to delete it, change the Rockstor service '
-                         'configuration and try again.'.format(nco.name))
+                         'configuration and try again.').format(nco.name)
                 handle_exception(Exception(e_msg), request)
             self._delete_connection(nco)
             return Response()
