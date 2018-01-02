@@ -47,7 +47,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                     return Snapshot.objects.filter().order_by('-id')
 
                 e_msg = ('Share id ({}) does '
-                         'not exist.'.format(self.kwargs['sid']))
+                         'not exist.').format(self.kwargs['sid'])
                 handle_exception(Exception(e_msg), self.request)
 
             if ('snap_name' in self.kwargs):
@@ -109,7 +109,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 snap_type, writable):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             e_msg = ('Snapshot ({}) already exists for '
-                     'the share ({}).'.format(snap_name, share.name))
+                     'the share ({}).').format(snap_name, share.name)
             handle_exception(Exception(e_msg), request)
 
         snap_size = 0
@@ -135,14 +135,14 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             uvisible = request.data.get('uvisible', False)
             if (type(uvisible) != bool):
                 e_msg = ('Element "uvisible" must be a boolean, '
-                         'not ({}).'.format(type(uvisible)))
+                         'not ({}).').format(type(uvisible))
                 handle_exception(Exception(e_msg), request)
 
             snap_type = request.data.get('snap_type', 'admin')
             writable = request.data.get('writable', False)
             if (type(writable) != bool):
                 e_msg = ('Element "writable" must be a boolean, '
-                         'not ({}).'.format(type(writable)))
+                         'not ({}).').format(type(writable))
                 handle_exception(Exception(e_msg), request)
             if (command is None):
                 ret = self._create(share, snap_name, request,
@@ -154,8 +154,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                         self._toggle_visibility(share, ret.data['real_name'])
                     except Exception as e:
                         msg = ('Failed to make the snapshot ({}) visible. '
-                               'Exception: ({}).'.format(snap_name,
-                                                         e.__str__()))
+                               'Exception: ({}).').format(snap_name,
+                                                          e.__str__())
                         logger.error(msg)
                         logger.exception(e)
 
@@ -163,8 +163,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                         toggle_sftp_visibility(share, ret.data['real_name'])
                     except Exception as e:
                         msg = ('Failed to make the snapshot ({}) visible for '
-                               'SFTP. Exception: ({}).'.format(snap_name,
-                                                               e.__str__()))
+                               'SFTP. Exception: ({}).').format(snap_name,
+                                                                e.__str__())
                         logger.error(msg)
                         logger.exception(e)
 
@@ -207,7 +207,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         try:
             return Share.objects.get(id=sid)
         except:
-            e_msg = ('Share with id ({}) does not exist.'.format(sid))
+            e_msg = 'Share with id ({}) does not exist.'.format(sid)
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
