@@ -101,16 +101,17 @@ def create_clone(share, new_name, request, logger, snapshot=None):
     # if snapshot is None, create clone of the share.
     # If it's not, then clone it.
     if (re.match(settings.SHARE_REGEX + '$', new_name) is None):
-        e_msg = ('Clone name is invalid. It must start with a letter and can'
-                 ' contain letters, digits, _, . and - characters')
+        e_msg = ('Clone name is invalid. It must start with a letter and can '
+                 'contain letters, digits, _, . and - characters.')
         handle_exception(Exception(e_msg), request)
     if (Share.objects.filter(name=new_name).exists()):
-        e_msg = ('Another Share with name: %s already exists.' % new_name)
+        e_msg = ('Another share with name ({}) '
+                 'already exists.'.format(new_name))
         handle_exception(Exception(e_msg), request)
     if (Snapshot.objects.filter(share=share, name=new_name).exists()):
-        e_msg = ('Snapshot with name: %s already exists for the '
-                 'share: %s. Choose a different name' %
-                 (new_name, share.name))
+        e_msg = ('Snapshot with name ({}) already exists for the '
+                 'share ({}). Choose a different name.'.format(new_name,
+                                                               share.name))
         handle_exception(Exception(e_msg), request)
 
     try:
