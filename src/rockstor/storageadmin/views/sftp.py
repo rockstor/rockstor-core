@@ -45,7 +45,7 @@ class SFTPListView(rfc.GenericView):
     def post(self, request):
         with self._handle_exception(request):
             if ('shares' not in request.data):
-                e_msg = ('Must provide share names')
+                e_msg = 'Must provide share names.'
                 handle_exception(Exception(e_msg), request)
             shares = [validate_share(s, request) for s in
                       request.data['shares']]
@@ -58,13 +58,13 @@ class SFTPListView(rfc.GenericView):
             input_map = {}
             for share in shares:
                 if (SFTP.objects.filter(share=share).exists()):
-                    e_msg = ('Share(%s) is already exported via SFTP' %
-                             share.name)
+                    e_msg = ('Share ({}) is already exported '
+                             'via SFTP.'.format(share.name))
                     handle_exception(Exception(e_msg), request)
                 if (share.owner == 'root'):
-                    e_msg = ('Share(%s) is owned by root. It cannot be '
-                             'exported via SFTP with root ownership' %
-                             share.name)
+                    e_msg = ('Share ({}) is owned by root. It cannot be '
+                             'exported via SFTP with '
+                             'root ownership.'.format(share.name))
                     handle_exception(Exception(e_msg), request)
             for share in shares:
                 sftpo = SFTP(share=share, editable=editable)
@@ -103,7 +103,8 @@ class SFTPDetailView(rfc.GenericView):
             try:
                 sftpo = SFTP.objects.get(id=id)
             except:
-                e_msg = ('SFTP config for the id(%s) does not exist' % id)
+                e_msg = ('SFTP config for the id ({}) '
+                         'does not exist.'.format(id))
                 handle_exception(Exception(e_msg), request)
 
             mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT,
