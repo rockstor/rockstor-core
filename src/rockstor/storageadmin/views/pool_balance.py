@@ -38,7 +38,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
         try:
             return Pool.objects.get(id=pid)
         except:
-            e_msg = ('Pool(%d) does not exist' % pid)
+            e_msg = ('Pool ({}) does not exist.'.format(pid))
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
@@ -90,7 +90,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
     def post(self, request, pid, command=None):
         pool = self._validate_pool(pid, request)
         if (command is not None and command != 'status'):
-            e_msg = ('Unknown balance command: %s' % command)
+            e_msg = ('Unknown balance command ({}).'.format(command))
             handle_exception(Exception(e_msg), request)
 
         with self._handle_exception(request):
@@ -109,7 +109,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                     p.save()
                 else:
                     e_msg = ('A Balance process is already running for '
-                             'pool(%s).' % pool.name)
+                             'pool ({}).'.format(pool.name))
                     handle_exception(Exception(e_msg), request)
 
             tid = self._balance_start(pool, force=force)
