@@ -66,7 +66,7 @@ class RockOnIdView(rfc.GenericView):
             try:
                 rockon = RockOn.objects.get(id=rid)
             except:
-                e_msg = ('Rock-on ({}) does not exist.'.format(rid))
+                e_msg = 'Rock-on ({}) does not exist.'.format(rid)
                 handle_exception(Exception(e_msg), request)
 
             try:
@@ -96,7 +96,7 @@ class RockOnIdView(rfc.GenericView):
                     for sname in share_map.keys():
                         dest_dir = share_map[sname]
                         if (not Share.objects.filter(name=sname).exists()):
-                            e_msg = ('Invalid share ({}).'.format(sname))
+                            e_msg = 'Invalid share ({}).'.format(sname)
                             handle_exception(Exception(e_msg), request)
                         if (DVolume.objects.filter(
                                 container=co, dest_dir=dest_dir).exists()):
@@ -120,7 +120,7 @@ class RockOnIdView(rfc.GenericView):
                                         'rock-on ({}). Choose a different '
                                         'port. If you must choose the same '
                                         'port, uninstall ({}) first and try '
-                                        'again.'.format(p, conf_ro, conf_ro))
+                                        'again.').format(p, conf_ro, conf_ro)
                                     handle_exception(Exception(e_msg), request)
                                 # change the host port to next available.
                                 dup_po.hostp = self._next_available_default_hostp(dup_po.hostp)  # noqa E501
@@ -147,7 +147,7 @@ class RockOnIdView(rfc.GenericView):
                         if (not DContainerEnv.objects.filter(
                                 container=co, key=e).exists()):
                             e_msg = ('Invalid environment variable '
-                                     '({}).'.format(e))
+                                     '({}).').format(e)
                             handle_exception(Exception(e_msg), request)
                         ceo = DContainerEnv.objects.get(container=co, key=e)
                         ceo.val = env_map[e]
@@ -159,13 +159,13 @@ class RockOnIdView(rfc.GenericView):
                 self._pending_check(request)
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on ({}) is not currently installed. Cannot '
-                             'uninstall it.'.format(rockon.name))
+                             'uninstall it.').format(rockon.name)
                     handle_exception(Exception(e_msg), request)
                 if (rockon.status == 'started' or
                         rockon.status == 'pending_start'):
                     e_msg = ('Rock-on ({}) must be stopped before it can '
                              'be uninstalled. Stop it and '
-                             'try again.'.format(rockon.name))
+                             'try again.').format(rockon.name)
                     handle_exception(Exception(e_msg), request)
                 uninstall.async(rockon.id)
                 rockon.state = 'pending_uninstall'
@@ -176,36 +176,36 @@ class RockOnIdView(rfc.GenericView):
                 self._pending_check(request)
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on ({}) is not currently installed. Cannot '
-                             'update it.'.format(rockon.name))
+                             'update it.').format(rockon.name)
                     handle_exception(Exception(e_msg), request)
                 if (rockon.status == 'started' or
                         rockon.status == 'pending_start'):
                     e_msg = ('Rock-on ({}) must be stopped before it can '
                              'be updated. Stop it and '
-                             'try again.'.format(rockon.name))
+                             'try again.').format(rockon.name)
                     handle_exception(Exception(e_msg), request)
                 share_map = request.data.get('shares')
                 for co in DContainer.objects.filter(rockon=rockon):
                     for s in share_map.keys():
                         sname = share_map[s]
                         if (not Share.objects.filter(name=sname).exists()):
-                            e_msg = ('Invalid share ({}).'.format(sname))
+                            e_msg = 'Invalid share ({}).'.format(sname)
                             handle_exception(Exception(e_msg), request)
                         so = Share.objects.get(name=sname)
                         if (DVolume.objects.filter(
                                 container=co, share=so).exists()):
                             e_msg = ('Share ({}) is already assigned to '
-                                     'this rock-on.'.format(sname))
+                                     'this rock-on.').format(sname)
                             handle_exception(Exception(e_msg), request)
                         if (DVolume.objects.filter(
                                 container=co, dest_dir=s).exists()):
                             e_msg = ('Directory ({}) is already mapped for '
-                                     'this rock-on.'.format(s))
+                                     'this rock-on.').format(s)
                             handle_exception(Exception(e_msg), request)
                         if (not s.startswith('/')):
                             e_msg = ('Invalid directory ({}). Must provide an '
                                      'absolute path. Eg: '
-                                     '(/data/media).'.format(s))
+                                     '(/data/media).').format(s)
                             handle_exception(Exception(e_msg), request)
                         do = DVolume(container=co, share=so, uservol=True,
                                      dest_dir=s)
