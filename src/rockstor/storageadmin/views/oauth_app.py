@@ -45,14 +45,13 @@ class OauthAppView(rfc.GenericView):
             username = request.user.username
             if (OauthApp.objects.filter(name=name).exists()):
                 e_msg = ('Application with name ({}) already exists. Choose a '
-                         'different name.'.format(name))
+                         'different name.').format(name)
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             try:
                 user = User.objects.get(username=username)
             except:
-                e_msg = ('User with name ({}) does '
-                         'not exist.'.format(username))
+                e_msg = 'User with name ({}) does not exist.'.format(username)
                 handle_exception(Exception(e_msg), request)
 
             client_type = OauthApplication.CLIENT_CONFIDENTIAL
@@ -71,7 +70,7 @@ class OauthAppView(rfc.GenericView):
             try:
                 app = OauthApp.objects.get(id=id)
             except:
-                e_msg = ('Application with id ({}) does not exist.'.format(id))
+                e_msg = 'Application with id ({}) does not exist.'.format(id)
                 handle_exception(Exception(e_msg), request)
 
             if (app.name == settings.OAUTH_INTERNAL_APP):
@@ -82,7 +81,7 @@ class OauthAppView(rfc.GenericView):
                          '{}bin/delete-api-key command. If you do delete it, '
                          'please create another one with the same name as it '
                          'is required by Rockstor '
-                         'internally.'.format(id, settings.ROOT_DIR))
+                         'internally.').format(id, settings.ROOT_DIR)
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             app.application.delete()
