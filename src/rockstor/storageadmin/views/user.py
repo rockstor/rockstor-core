@@ -49,27 +49,27 @@ class UserMixin(object):
         username = request.data.get('username', None)
         if (username is None or
                 re.match(settings.USERNAME_REGEX, username) is None):
-            e_msg = ('Username is invalid. It must confirm to the regex: %s' %
-                     (settings.USERNAME_REGEX))
+            e_msg = ('Username is invalid. It must conform to the '
+                     'regex: ({}).').format(settings.USERNAME_REGEX)
             handle_exception(Exception(e_msg), request, status_code=400)
         if (len(username) > 30):
-            e_msg = ('Username cannot be more than 30 characters long')
+            e_msg = 'Username cannot be more than 30 characters long.'
             handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['username'] = username
         password = request.data.get('password', None)
         if (password is None or password == ''):
-            e_msg = ('Password must be a valid string')
+            e_msg = 'Password must be a valid string.'
             handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['password'] = password
         admin = request.data.get('admin', True)
         if (type(admin) != bool):
-            e_msg = ('Admin(user type) must be a boolean')
+            e_msg = 'Element "admin" (user type) must be a boolean.'
             handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['admin'] = admin
         shell = request.data.get('shell', '/bin/bash')
         if (shell not in settings.VALID_SHELLS):
-            e_msg = ('shell(%s) is not valid. Valid shells are %s' %
-                     (shell, settings.VALID_SHELLS))
+            e_msg = ('Element shell ({}) is not valid. Valid shells '
+                     'are ({}).').format(shell, settings.VALID_SHELLS)
             handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['shell'] = shell
         email = request.data.get('email', None)
@@ -81,16 +81,16 @@ class UserMixin(object):
             try:
                 input_fields['uid'] = int(input_fields['uid'])
             except ValueError as e:
-                e_msg = ('UID must be an integer, try again. Exception: %s'
-                         % e.__str__())
+                e_msg = ('UID must be an integer, try again. '
+                         'Exception: ({}).').format(e.__str__())
                 handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['gid'] = request.data.get('gid', None)
         if (input_fields['gid'] is not None):
             try:
                 input_fields['gid'] = int(input_fields['gid'])
             except ValueError as e:
-                e_msg = ('GID must be an integer, try again. Exception: %s'
-                         % e.__str__())
+                e_msg = ('GID must be an integer, try again. '
+                         'Exception: ({}).').format(e.__str__())
                 handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['group'] = request.data.get('group', None)
         input_fields['public_key'] = cls._validate_public_key(request)
@@ -102,7 +102,7 @@ class UserMixin(object):
         if (public_key is not None):
             public_key = public_key.strip()
             if (not is_pub_key(public_key)):
-                e_msg = ('Public key is invalid')
+                e_msg = 'Public key is invalid.'
                 handle_exception(Exception(e_msg), request)
         return public_key
 
@@ -118,8 +118,8 @@ class UserListView(UserMixin, rfc.GenericView):
 
             invar = self._validate_input(request)
             # Check that a django user with the same name does not exist
-            e_msg = ('User(%s) already exists. Please choose a different'
-                     ' username' % invar['username'])
+            e_msg = ('User ({}) already exists. Please choose a different '
+                     'username.').format(invar['username'])
             if (DjangoUser.objects.filter(
                     username=invar['username']).exists() or
                     User.objects.filter(username=invar['username']).exists()):
@@ -147,8 +147,8 @@ class UserListView(UserMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request,
                                      status_code=400)
                 elif (u.uid == invar['uid']):
-                    e_msg = ('uid: %d already exists. Please choose a '
-                             'different one.' % invar['uid'])
+                    e_msg = ('UID ({}) already exists. Please choose a '
+                             'different one.').format(invar['uid'])
                     handle_exception(Exception(e_msg), request)
 
             if (invar['admin']):
@@ -211,8 +211,8 @@ class UserDetailView(UserMixin, rfc.GenericView):
         with self._handle_exception(request):
             if (username in self.exclude_list):
                 if (username != 'root'):
-                    e_msg = ('Editing restricted user(%s) is not supported.' %
-                             username)
+                    e_msg = ('Editing restricted user ({}) is '
+                             'not supported.').format(username)
                     handle_exception(Exception(e_msg), request)
             email = request.data.get('email', None)
             new_pw = request.data.get('password', None)
@@ -225,9 +225,9 @@ class UserDetailView(UserMixin, rfc.GenericView):
                 if (admin is True):
                     if (u.user is None):
                         if (new_pw is None):
-                            e_msg = ('password reset is required to '
-                                     'enable admin access. please provide '
-                                     'a new password')
+                            e_msg = ('Password reset is required to '
+                                     'enable admin access. Please provide '
+                                     'a new password.')
                             handle_exception(Exception(e_msg), request)
                         auser = DjangoUser.objects.create_user(username,
                                                                None, new_pw)
@@ -268,7 +268,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                     add_ssh_key(username, public_key, cur_public_key)
                     break
             if (suser is None):
-                e_msg = ('User(%s) does not exist' % username)
+                e_msg = 'User ({}) does not exist.'.format(username)
                 handle_exception(Exception(e_msg), request)
 
             return Response(SUserSerializer(suser).data)
@@ -277,12 +277,12 @@ class UserDetailView(UserMixin, rfc.GenericView):
     def delete(self, request, username):
         with self._handle_exception(request):
             if request.user.username == username:
-                e_msg = ('Cannot delete the currently logged in user')
+                e_msg = 'Cannot delete the currently logged in user.'
                 handle_exception(Exception(e_msg), request)
 
             if (username in self.exclude_list):
-                e_msg = ('Delete of restricted user(%s) is not supported.' %
-                         username)
+                e_msg = ('Delete of restricted user ({}) is '
+                         'not supported.').format(username)
                 handle_exception(Exception(e_msg), request)
 
             gid = None
@@ -300,7 +300,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                         found = True
                         break
                 if (found is False):
-                    e_msg = ('User(%s) does not exist' % username)
+                    e_msg = 'User ({}) does not exist.'.format(username)
                     handle_exception(Exception(e_msg), request)
 
             for g in combined_groups():
@@ -316,7 +316,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
             except Exception as e:
                 logger.exception(e)
                 e_msg = ('A low level error occured while deleting '
-                         'the user: %s' % username)
+                         'the user ({}).').format(username)
                 handle_exception(Exception(e_msg), request)
 
             return Response()
