@@ -227,7 +227,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
             return ConfigBackup.objects.get(id=backup_id)
         except ConfigBackup.DoesNotExist:
             e_msg = ('Config backup for the id ({}) '
-                     'does not exist.'.format(backup_id))
+                     'does not exist.').format(backup_id)
             handle_exception(Exception(e_msg), request)
 
 
@@ -253,7 +253,7 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
             file_obj = request.data['file']
             if (ConfigBackup.objects.filter(filename=filename).exists()):
                 msg = ('Config backup ({}) already exists. Uploading a '
-                       'duplicate is not allowed.'.format(filename))
+                       'duplicate is not allowed.').format(filename)
                 handle_exception(Exception(msg), request)
             cbo = ConfigBackup.objects.create(
                 filename=filename, config_backup=file_obj
