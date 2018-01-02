@@ -34,7 +34,8 @@ class PincardView(rfc.GenericView):
 
             if (command == 'create'):
                 response_data = save_pincard(user)
-                logger.debug('Created new pincard for user with uid %s' % user)
+                logger.debug('Created new pincard for user with '
+                             'uid ({}).'.format(user))
 
             if (command == 'reset'):
                 uid = request.data.get('uid')
@@ -43,10 +44,10 @@ class PincardView(rfc.GenericView):
                     user, uid, pinlist)
                 response_data = {'response': reset_response,
                                  'status': reset_status}
-                logger.debug('Received password reset request for user %s'
-                             % user)
+                logger.debug('Received password reset request for '
+                             'user ({}).'.format(user))
 
             return Response(response_data)
-        e_msg = ('Unsupported command(%s). Valid commands are create, reset'
-                 % command)
+        e_msg = ('Unsupported command ({}). Valid commands are '
+                 'create, reset.'.format(command))
         handle_exception(Exception(e_msg), request)
