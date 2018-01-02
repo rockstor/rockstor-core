@@ -46,7 +46,7 @@ def validate_share(sname, request):
     try:
         return Share.objects.get(name=sname)
     except:
-        e_msg = ('Share with name: %s does not exist' % sname)
+        e_msg = ('Share with name ({}) does not exist.'.format(sname))
         handle_exception(Exception(e_msg), request)
 
 
@@ -108,7 +108,7 @@ def import_shares(pool, request):
                     # we have a void '-1/-1' or non existent pqgroup or
                     # this pqgroup has already been seen / used in this pool.
                     logger.debug('#### replacing void, non-existent, or '
-                                 'duplicate pqgroup')
+                                 'duplicate pqgroup.')
                     pqgroup = qgroup_create(pool)
                     update_quota(pool, pqgroup, share.size * 1024)
                     share_pqgroup_assign(pqgroup, share)
@@ -144,7 +144,7 @@ def import_shares(pool, request):
             # for the prior existing db share entry's pool.
             cshares_d = shares_info(cshare.pool)
             if s_in_pool in cshares_d:
-                e_msg = ('Another pool ({}) has a Share with this same '
+                e_msg = ('Another pool ({}) has a share with this same '
                          'name ({}) as this pool ({}). This configuration '
                          'is not supported. You can delete one of them '
                          'manually with the following command: '
