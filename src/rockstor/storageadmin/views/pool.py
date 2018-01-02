@@ -248,7 +248,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
                      request.data.get('disks')]
             pname = request.data['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
-                e_msg = ('Invalid characters in Pool name. Following '
+                e_msg = ('Invalid characters in pool name. Following '
                          'characters are allowed: letter(a-z or A-Z), '
                          'digit(0-9), '
                          'hyphen(-), underscore(_) or a period(.).')
@@ -264,7 +264,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=pname).exists()):
-                e_msg = ('A Share with this name ({}) exists. Pool and Share '
+                e_msg = ('A share with this name ({}) exists. Pool and share '
                          'names must be distinct. '
                          'Choose a different name.'.format(pname))
                 handle_exception(Exception(e_msg), request)
@@ -348,7 +348,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
 
             if (pool.role == 'root'):
                 # update formatting and use now validated pool name not pid.
-                e_msg = ('Edit operations are not allowed on this Pool ({}) '
+                e_msg = ('Edit operations are not allowed on this pool ({}) '
                          'as it contains the operating '
                          'system.'.format(pool.name))
                 handle_exception(Exception(e_msg), request)
@@ -366,7 +366,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             if (command == 'add'):
                 for d in disks:
                     if (d.pool is not None):
-                        e_msg = ('Disk ({}) cannot be added to this Pool ({}) '
+                        e_msg = ('Disk ({}) cannot be added to this pool ({}) '
                                  'because it belongs to another pool ({})'
                                  '.'.format(d.name, pool.name, d.pool.name))
                         handle_exception(Exception(e_msg), request)
@@ -425,7 +425,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     if (d.pool is None or d.pool != pool):
                         e_msg = ('Disk ({}) cannot be removed because it does '
                                  'not belong to this '
-                                 'Pool ({}).'.format(d.name, pool.name))
+                                 'pool ({}).'.format(d.name, pool.name))
                         handle_exception(Exception(e_msg), request)
                 remaining_disks = (Disk.objects.filter(pool=pool).count() -
                                    num_new_disks)
@@ -496,7 +496,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (pool.role == 'root'):
-                e_msg = ('Deletion of Pool ({}) is not allowed as it contains '
+                e_msg = ('Deletion of pool ({}) is not allowed as it contains '
                          'the operating system.'.format(pool.name))
                 handle_exception(Exception(e_msg), request)
 

@@ -76,8 +76,8 @@ class ShareMixin(object):
         try:
             share = Share.objects.get(id=sid)
             if (share.name == 'home' or share.name == 'root'):
-                e_msg = ('Operation not permitted on this Share ({}) because '
-                         'it is a special system Share.'.format(share.name))
+                e_msg = ('Operation not permitted on this share ({}) because '
+                         'it is a special system share.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
             return share
         except Share.DoesNotExist:
@@ -147,7 +147,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             sname = request.data.get('sname', None)
             if ((sname is None or
                  re.match('%s$' % settings.SHARE_REGEX, sname) is None)):
-                e_msg = ('Invalid characters in Share name. Following are '
+                e_msg = ('Invalid characters in share name. Following are '
                          'allowed: letter(a-z or A-Z), digit(0-9), '
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
@@ -163,8 +163,8 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (Pool.objects.filter(name=sname).exists()):
-                e_msg = ('A Pool with this name ({}) exists. Share '
-                         'and Pool names must be distinct. Choose '
+                e_msg = ('A pool with this name ({}) exists. Share '
+                         'and pool names must be distinct. Choose '
                          'a different name.'.format(sname))
                 handle_exception(Exception(e_msg), request)
             replica = False
@@ -327,7 +327,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                              force=force)
             except Exception as e:
                 logger.exception(e)
-                e_msg = ('Failed to delete the Share ({}). Error from '
+                e_msg = ('Failed to delete the share ({}). Error from '
                          'the OS: {}'.format(share.name, e.__str__()))
                 handle_exception(Exception(e_msg), request)
             share.delete()
