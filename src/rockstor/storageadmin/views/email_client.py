@@ -125,19 +125,19 @@ class EmailClientView(rfc.GenericView):
             commands_list = ['send-test-email', 'check-smtp-auth']
             if (command is not None):
                 if (command not in commands_list):
-                    e_msg = ('unknown command(%s) is not supported.' %
-                             command)
+                    e_msg = ('Unknown command ({}) is '
+                             'not supported.'.format(command))
                     handle_exception(Exception(e_msg), request)
 
                 if (command == 'send-test-email'):
                     if (EmailClient.objects.count() == 0):
-                        e_msg = ('E-mail account must be setup first before '
-                                 'test e-mail could be sent')
+                        e_msg = ('E-mail account must be setup before a '
+                                 'test e-mail can be sent.')
                         handle_exception(Exception(e_msg), request)
 
                     eco = EmailClient.objects.all()[0]
-                    subject = ('Test message from Rockstor. Appliance id: %s' %
-                               Appliance.objects.get(current_appliance=True).uuid)  # noqa E501
+                    subject = ('Test message from Rockstor. Appliance id: '
+                               '{}'.format(Appliance.objects.get(current_appliance=True).uuid))  # noqa E501
                     send_test_email(eco, subject)
                     return Response()
 
