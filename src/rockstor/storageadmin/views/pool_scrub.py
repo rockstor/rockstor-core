@@ -36,7 +36,7 @@ class PoolScrubView(rfc.GenericView):
         try:
             return Pool.objects.get(id=pid)
         except:
-            e_msg = ('Pool with database id: ({}) does not exist.'.format(pid))
+            e_msg = ('Pool with id ({}) does not exist.'.format(pid))
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
