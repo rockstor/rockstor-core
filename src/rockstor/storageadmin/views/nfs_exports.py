@@ -59,7 +59,7 @@ class NFSExportMixin(object):
         for e in exports:
             fields = e.split()
             if (len(fields) < 2):
-                e_msg = ('Invalid exports input -- ({}).'.format(e))
+                e_msg = 'Invalid exports input -- ({}).'.format(e)
                 handle_exception(Exception(e_msg), request)
             share = fields[0].split('/')[-1]
             s = validate_share(share, request)
@@ -71,7 +71,7 @@ class NFSExportMixin(object):
                 cf = f.split('(')
                 if (len(cf) != 2 or cf[1][-1] != ')'):
                     e_msg = ('Invalid exports input -- ({}). Offending '
-                             'section: ({}).'.format(e, f))
+                             'section: ({}).').format(e, f)
                     handle_exception(Exception(e_msg), request)
                 exports_d[fields[0]].append(
                     {'client_str': cf[0], 'option_list': cf[1][:-1],
@@ -121,7 +121,7 @@ class NFSExportMixin(object):
                 if (e.export_group.id == export_id):
                     continue
                 e_msg = ('An export already exists for the host string: '
-                         '({}).'.format(host_str))
+                         '({}).').format(host_str)
                 handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -130,7 +130,7 @@ class NFSExportMixin(object):
             return NFSExportGroup.objects.get(id=export_id)
         except:
             e_msg = ('NFS export with id ({}) '
-                     'does not exist.'.format(export_id))
+                     'does not exist.').format(export_id)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -139,7 +139,7 @@ class NFSExportMixin(object):
             refresh_nfs_exports(exports)
         except Exception as e:
             e_msg = ('A lower level error occured while refreshing '
-                     'NFS exports: ({}).'.format(e.__str__()))
+                     'NFS exports: ({}).').format(e.__str__())
             handle_exception(Exception(e_msg), request)
 
 
