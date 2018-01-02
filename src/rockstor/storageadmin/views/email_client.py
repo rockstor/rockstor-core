@@ -126,7 +126,7 @@ class EmailClientView(rfc.GenericView):
             if (command is not None):
                 if (command not in commands_list):
                     e_msg = ('Unknown command ({}) is '
-                             'not supported.'.format(command))
+                             'not supported.').format(command)
                     handle_exception(Exception(e_msg), request)
 
                 if (command == 'send-test-email'):
@@ -137,7 +137,7 @@ class EmailClientView(rfc.GenericView):
 
                     eco = EmailClient.objects.all()[0]
                     subject = ('Test message from Rockstor. Appliance id: '
-                               '{}'.format(Appliance.objects.get(current_appliance=True).uuid))  # noqa E501
+                               '{}').format(Appliance.objects.get(current_appliance=True).uuid)  # noqa E501
                     send_test_email(eco, subject)
                     return Response()
 
