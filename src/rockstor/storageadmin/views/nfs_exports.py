@@ -59,7 +59,7 @@ class NFSExportMixin(object):
         for e in exports:
             fields = e.split()
             if (len(fields) < 2):
-                e_msg = ('Invalid exports input -- %s' % e)
+                e_msg = ('Invalid exports input -- ({}).'.format(e))
                 handle_exception(Exception(e_msg), request)
             share = fields[0].split('/')[-1]
             s = validate_share(share, request)
@@ -70,8 +70,8 @@ class NFSExportMixin(object):
             for f in fields[1:]:
                 cf = f.split('(')
                 if (len(cf) != 2 or cf[1][-1] != ')'):
-                    e_msg = ('Invalid exports input -- %s. offending '
-                             'section: %s' % (e, f))
+                    e_msg = ('Invalid exports input -- ({}). Offending '
+                             'section: ({}).'.format(e, f))
                     handle_exception(Exception(e_msg), request)
                 exports_d[fields[0]].append(
                     {'client_str': cf[0], 'option_list': cf[1][:-1],
@@ -120,8 +120,8 @@ class NFSExportMixin(object):
             if (e.export_group.host_str == host_str):
                 if (e.export_group.id == export_id):
                     continue
-                e_msg = ('An export already exists for the host string: %s' %
-                         host_str)
+                e_msg = ('An export already exists for the host string: '
+                         '({}).'.format(host_str))
                 handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -129,7 +129,8 @@ class NFSExportMixin(object):
         try:
             return NFSExportGroup.objects.get(id=export_id)
         except:
-            e_msg = ('NFS export with id: %s does not exist' % export_id)
+            e_msg = ('NFS export with id ({}) '
+                     'does not exist.'.format(export_id))
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -138,7 +139,7 @@ class NFSExportMixin(object):
             refresh_nfs_exports(exports)
         except Exception as e:
             e_msg = ('A lower level error occured while refreshing '
-                     'NFS exports: %s' % e.__str__())
+                     'NFS exports: ({}).'.format(e.__str__()))
             handle_exception(Exception(e_msg), request)
 
 
@@ -152,7 +153,7 @@ class NFSExportGroupListView(NFSExportMixin, rfc.GenericView):
     def post(self, request):
         with self._handle_exception(request):
             if ('shares' not in request.data):
-                e_msg = ('Cannot export without specifying shares')
+                e_msg = 'Cannot export without specifying shares.'
                 handle_exception(Exception(e_msg), request)
             shares = [validate_share(s, request) for s in
                       request.data['shares']]
@@ -219,7 +220,7 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
     def put(self, request, export_id):
         with self._handle_exception(request):
             if ('shares' not in request.data):
-                e_msg = ('Cannot export without specifying shares')
+                e_msg = 'Cannot export without specifying shares.'
                 handle_exception(Exception(e_msg), request)
             shares = [validate_share(s, request) for s in
                       request.data['shares']]
@@ -285,7 +286,7 @@ class AdvancedNFSExportView(NFSExportMixin, rfc.GenericView):
     def post(self, request):
         with self._handle_exception(request):
             if ('entries' not in request.data):
-                e_msg = ('Cannot export without specifying entries')
+                e_msg = 'Cannot export without specifying entries.'
                 handle_exception(Exception(e_msg), request)
 
             AdvancedNFSExport.objects.all().delete()
