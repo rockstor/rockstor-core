@@ -70,7 +70,7 @@ class SambaMixin(object):
 
         options['custom_config'] = request.data.get('custom_config', [])
         if (type(options['custom_config']) != list):
-            e_msg = ('custom config must be a list of strings')
+            e_msg = 'Custom config must be a list of strings.'
             handle_exception(Exception(e_msg), request)
         if (options['browsable'] not in cls.BOOL_OPTS):
             e_msg = ('Invalid choice for browsable. Possible '
@@ -96,7 +96,7 @@ class SambaMixin(object):
             if (options['snapshot_prefix'] is None or
                     len(options['snapshot_prefix'].strip()) == 0):
                 e_msg = ('Invalid choice for snapshot_prefix. It must be a '
-                         'valid non-empty string')
+                         'valid non-empty string.')
                 handle_exception(Exception(e_msg), request)
 
         return options
@@ -129,7 +129,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         if ('shares' not in request.data):
-            e_msg = ('Must provide share names')
+            e_msg = 'Must provide share names.'
             handle_exception(Exception(e_msg), request)
         shares = [self._validate_share(request, s) for s in
                   request.data['shares']]
@@ -138,8 +138,8 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
         del(options['custom_config'])
         for share in shares:
             if (SambaShare.objects.filter(share=share).exists()):
-                e_msg = ('Share(%s) is already exported via Samba' %
-                         share.name)
+                e_msg = ('Share ({}) is already exported via '
+                         'Samba.'.format(share.name))
                 handle_exception(Exception(e_msg), request)
         with self._handle_exception(request):
             for share in shares:
@@ -180,7 +180,8 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
             SambaCustomConfig.objects.filter(smb_share=smbo).delete()
             smbo.delete()
         except:
-            e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
+            e_msg = ('Samba export for the id ({}) '
+                     'does not exist.'.format(smb_id))
             handle_exception(Exception(e_msg), request)
 
         with self._handle_exception(request):
@@ -194,7 +195,8 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
             try:
                 smbo = SambaShare.objects.get(id=smb_id)
             except:
-                e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
+                e_msg = ('Samba export for the id ({}) '
+                         'does not exist.'.format(smb_id))
                 handle_exception(Exception(e_msg), request)
 
             options = self._validate_input(request, smbo=smbo)
@@ -225,8 +227,8 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                     except Exception as e:
                         logger.exception(e)
                         if (smb_o.id == smbo.id):
-                            e_msg = ('Failed to mount share(%s) due to a low '
-                                     'level error.' % smb_o.share.name)
+                            e_msg = ('Failed to mount share ({}) due to a low '
+                                     'level error.'.format(smb_o.share.name))
                             handle_exception(Exception(e_msg), request)
 
             refresh_smb_config(list(SambaShare.objects.all()))
