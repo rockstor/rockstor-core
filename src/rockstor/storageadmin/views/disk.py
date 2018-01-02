@@ -103,8 +103,8 @@ class DiskMixin(object):
             # Serial numbers beginning with 'fake-serial-' are from scan_disks.
             if (do.serial in serial_numbers_seen) or (
                     re.match('fake-serial-', do.serial) is not None):
-                logger.info('Deleting duplicate or fake (by serial) Disk db '
-                            'entry. Serial = %s' % do.serial)
+                logger.info('Deleting duplicate or fake (by serial) disk db '
+                            'entry. Serial = ({}).'.format(do.serial))
                 do.delete()  # django >=1.9 returns a dict of deleted items.
                 # Continue onto next db disk object as nothing more to process.
                 continue
@@ -384,7 +384,7 @@ class DiskListView(DiskMixin, rfc.GenericView):
             if (command == 'scan'):
                 return self._update_disk_state()
 
-        e_msg = ('Unsupported command(%s).' % command)
+        e_msg = ('Unsupported command ({}).'.format(command))
         handle_exception(Exception(e_msg), request)
 
 
@@ -396,7 +396,7 @@ class DiskDetailView(rfc.GenericView):
         try:
             return Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk(%s) does not exist' % did)
+            e_msg = ('Disk id ({}) does not exist.'.format(did))
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -420,7 +420,8 @@ class DiskDetailView(rfc.GenericView):
                     disk_name = disk_role_dict.get('redirect', None)
             return disk_name
         except:
-            e_msg = ('Problem with role filter of disk(%s)' % disk)
+            e_msg = ('Problem with role filter of '
+                     'disk ({}).'.format(disk.name))
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -454,7 +455,8 @@ class DiskDetailView(rfc.GenericView):
             # we have found no indication of redirect role name changes.
             return disk_name, isPartition
         except:
-            e_msg = ('Problem reversing role filter disk name(%s)' % disk_name)
+            e_msg = ('Problem reversing role filter disk '
+                     'name ({}).'.format(disk_name))
             handle_exception(Exception(e_msg), request)
 
     def get(self, *args, **kwargs):
@@ -471,19 +473,20 @@ class DiskDetailView(rfc.GenericView):
         try:
             disk = Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk: %s does not exist' % did)
+            e_msg = ('Disk id ({}) does not exist.'.format(did))
             handle_exception(Exception(e_msg), request)
 
         if (disk.offline is not True):
-            e_msg = ('Disk: %s is not offline. Cannot delete' % did)
+            e_msg = ('Disk ({}) is not offline. '
+                     'Cannot delete.'.format(disk.name))
             handle_exception(Exception(e_msg), request)
 
         try:
             disk.delete()
             return Response()
         except Exception as e:
-            e_msg = ('Could not remove disk(%s) due to system '
-                     'error' % disk.name)
+            e_msg = ('Could not remove disk ({}) due to a system '
+                     'error.'.format(disk.name))
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
 
@@ -512,10 +515,11 @@ class DiskDetailView(rfc.GenericView):
             if (command == 'luks-drive'):
                 return self._luks_disk(did, request)
 
-        e_msg = ('Unsupported command(%s). Valid commands are wipe, '
+        e_msg = ('Unsupported command ({}). Valid commands are; wipe, '
                  'btrfs-wipe, luks-format, btrfs-disk-import, blink-drive, '
                  'enable-smart, disable-smart, smartcustom-drive, '
-                 'spindown-drive, pause, role-drive, luks-drive' % command)
+                 'spindown-drive, pause, role-drive, '
+                 'luks-drive.'.format(command))
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -527,14 +531,14 @@ class DiskDetailView(rfc.GenericView):
         reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
                                                                    request)
         if reverse_name != disk.name:
-            e_msg = ('Wipe operation on whole or partition of device (%s) was '
+            e_msg = ('Wipe operation on whole or partition of device ({}) was '
                      'rejected as there was a discrepancy in device name '
-                     'resolution. Wipe was called with device name (%s) which '
-                     'redirected to (%s) but a check on this redirection '
-                     'returned device name (%s), which is not equal to the '
+                     'resolution. Wipe was called with device name ({}) which '
+                     'redirected to ({}) but a check on this redirection '
+                     'returned device name ({}), which is not equal to the '
                      'caller name as was expected. A Disks page Rescan may '
-                     'help.'
-                     % (disk.name, disk.name, disk_name, reverse_name))
+                     'help.'.format(disk.name, disk.name, disk_name,
+                                    reverse_name))
             raise Exception(e_msg)
         wipe_disk(disk_name)
         disk.parted = isPartition
@@ -579,9 +583,9 @@ class DiskDetailView(rfc.GenericView):
                         if rc != 0:
                             e_msg = ('Systemd cryptsetup start after a '
                                      'wipefs -a for Open LUKS Volume device '
-                                     '(%s) encountered an error: out=%s, '
-                                     'err=%s, rc=%s' %
-                                     (disk_name, out, err, rc))
+                                     '({}) encountered an error: out={}, '
+                                     'err={}, rc={}.'.format(disk_name,
+                                                             out, err, rc))
                             raise Exception(e_msg)
             # Wiping a whole disk will remove all whole disk formats: ie LUKS
             # containers and bcache backing and caching device formats.
@@ -618,23 +622,23 @@ class DiskDetailView(rfc.GenericView):
         reverse_name, isPartition = self._reverse_role_filter_name(disk_name,
                                                                    request)
         if reverse_name != disk.name:
-            e_msg = ('LUKS operation on whole or partition of device (%s) was '
+            e_msg = ('LUKS operation on whole or partition of device ({}) was '
                      'rejected as there was a discrepancy in device name '
-                     'resolution. _make_luks was called with device name (%s) '
-                     'which redirected to (%s) but a check on this redirect '
-                     'returned device name (%s), which is not equal to the '
+                     'resolution. _make_luks was called with device name ({}) '
+                     'which redirected to ({}) but a check on this redirect '
+                     'returned device name ({}), which is not equal to the '
                      'caller name as was expected. A Disks page Rescan may '
-                     'help.'
-                     % (disk.name, disk.name, disk_name, reverse_name))
+                     'help.'.format(disk.name, disk.name, disk_name,
+                                    reverse_name))
             raise Exception(e_msg)
         # Check if we are a partition as we don't support LUKS in partition.
         # Front end should filter this out as an presented option but be
         # should block at this level as well.
         if isPartition:
-            e_msg = ('A LUKS format was requested on device name (%s) which '
+            e_msg = ('A LUKS format was requested on device name ({}) which '
                      'was identifyed as a partiton. Rockstor does not '
-                     'support LUKS in partition, only whole disk.'
-                     % disk.name)
+                     'support LUKS in partition, '
+                     'only whole disk.'.format(disk.name))
             raise Exception(e_msg)
         luks_format_disk(disk_name, passphrase)
         disk.parted = isPartition  # should be False by now.
@@ -716,8 +720,8 @@ class DiskDetailView(rfc.GenericView):
                 import_snapshots(share)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
-            e_msg = ('Failed to import any pool on this device(%s). Error: %s'
-                     % (did, e.__str__()))
+            e_msg = ('Failed to import any pool on device id ({}). '
+                     'Error: ({}).'.format(did, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -777,13 +781,13 @@ class DiskDetailView(rfc.GenericView):
                 if is_delete_ticked:
                     # changing redirect and wiping concurrently are blocked
                     e_msg = ("Wiping a device while changing it's redirect "
-                             "role is not supported. Please do one at a time")
+                             "role is not supported. Please do one at a time.")
                     raise Exception(e_msg)
                 if is_luks_format_ticked:
                     # changing redirect and requesting LUKS format are blocked
                     e_msg = ("LUKS formating a device while changing it's "
                              "redirect role is not supported. Please do one "
-                             "at a time")
+                             "at a time.")
                     raise Exception(e_msg)
                 # We have a redirect role change and no delete or LUKS ticks so
                 # return our dict back to a json format and stash in disk.role
@@ -840,15 +844,15 @@ class DiskDetailView(rfc.GenericView):
                         # Check of password = '', front end should
                         # filter this out but check anyway.
                         e_msg = ('LUKS passphase empty. Aborting. Please try '
-                                 'again')
+                                 'again.')
                         raise Exception(e_msg)
                     if len(luks_pass_one) < 14:
-                        e_msg = ('LUKS passphrase of less then 14 characters'
+                        e_msg = ('LUKS passphrase of less then 14 characters '
                                  'is not supported. Please re-enter.')
                         raise Exception(e_msg)
                     if re.search('[^\x20-\x7E]', luks_pass_one) is not None:
                         e_msg = ('A LUKS passphrase containing non 7-bit '
-                                 'ASCII(32-126) characters is not supported '
+                                 'ASCII (32-126) characters is not supported '
                                  'as boot entry character codes may differ. '
                                  'Please re-enter.')
                         raise Exception(e_msg)
@@ -873,8 +877,8 @@ class DiskDetailView(rfc.GenericView):
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
             e_msg = ('Failed to configure drive role, or wipe existing '
-                     'filesystem, or do LUKS format on device (%s). Error: %s'
-                     % (did, e.__str__()))
+                     'filesystem, or do LUKS format on device id ({}). '
+                     'Error: ({}).'.format(did, e.__str__()))
             handle_exception(Exception(e_msg), request)
 
     @classmethod
@@ -895,30 +899,30 @@ class DiskDetailView(rfc.GenericView):
         if disk.role is not None:
             roles = json.loads(disk.role)
         if 'LUKS' not in roles:
-            e_msg = ('LUKS operation not support on this Disk(%s) as it is '
+            e_msg = ('LUKS operation not support on this disk ({}) as it is '
                      'not recognized as a LUKS container (ie no "LUKS" role '
-                     'found.)'
-                     % disk.name)
+                     'found).'.format(disk.name))
             handle_exception(Exception(e_msg), request)
         # Retrieve the uuid of our LUKS container.
         if 'uuid' not in roles['LUKS']:
             e_msg = ('Cannot complete LUKS configuration request as no uuid '
-                     'key was found in Disk(%s) LUKS role value. ' % disk.name)
+                     'key was found in disk ({}) LUKS '
+                     'role value.'.format(disk.name))
             handle_exception(Exception(e_msg), request)
         disk_uuid = roles['LUKS']['uuid']
         # catch create keyfile without pass request (shouldn't happen)
         if is_create_keyfile_ticked and luks_passphrase == '':
             e_msg = ('Cannot create LUKS keyfile without authorization via '
-                     'passphrase. Empty passphrase received for Disk(%s).'
-                     % disk.name)
+                     'passphrase. Empty passphrase received for '
+                     'disk ({}).'.format(disk.name))
             handle_exception(Exception(e_msg), request)
         # catch keyfile request without compatible "Boot up config" selection.
         if crypttab_selection == 'none' or crypttab_selection == 'false':
             if is_create_keyfile_ticked:
                 e_msg = ('Inconsistent LUKS configuration request for '
-                         'Disk(%s). Keyfile creation requested without '
-                         'compatible "Boot up configuratin" option'
-                         % disk.name)
+                         'disk ({}). Keyfile creation requested without '
+                         'compatible "Boot up configuration" '
+                         'option.'.format(disk.name))
                 handle_exception(Exception(e_msg), request)
         # Having performed the basic parameter validation above, we are ready
         # to try and apply the requested config. This is a multipart process.
@@ -954,8 +958,8 @@ class DiskDetailView(rfc.GenericView):
                                                             crypttab_selection,
                                                             luks_passphrase):
                 e_msg = ('There was an unknown problem with establish_keyfile '
-                         'when called by _luks_disk() for Disk(%s). Keyfile '
-                         'may not have been established.' % disk.name)
+                         'when called by _luks_disk() for disk ({}). Keyfile '
+                         'may not have been established.'.format(disk.name))
                 handle_exception(Exception(e_msg), request)
             # Having established our keyfile we update our LUKS role but only
             # for non custom keyfile config. As we don't change custom keyfile
@@ -970,17 +974,17 @@ class DiskDetailView(rfc.GenericView):
             if not custom_keyfile and not update_crypttab(disk_uuid,
                                                           crypttab_selection):
                 e_msg = ('There was an unknown problem with update_crypttab '
-                         'when called by _luks_disk() for Disk(%s). No custom '
-                         'keyfile config found. No /etc/crypttab changes were '
-                         'made.' % disk.name)
+                         'when called by _luks_disk() for disk ({}). '
+                         'No custom keyfile config found. No /etc/crypttab '
+                         'changes were made.'.format(disk.name))
                 handle_exception(Exception(e_msg), request)
         else:
             # crypttab_selection = 'none' or 'false' so update crypttab
             # irrespective of existing custom keyfile config.
             if not update_crypttab(disk_uuid, crypttab_selection):
                 e_msg = ('There was an unknown problem with update_crypttab '
-                         'when called by _luks_disk() for Disk(%s). No '
-                         '/etc/crypttab changes were made.' % disk.name)
+                         'when called by _luks_disk() for disk ({}). No '
+                         '/etc/crypttab changes were made.'.format(disk.name))
                 handle_exception(Exception(e_msg), request)
         # Reflect the crypttab changes in our LUKS role.
         if crypttab_selection == 'false':
@@ -1002,7 +1006,7 @@ class DiskDetailView(rfc.GenericView):
         out, err, rc = trigger_systemd_update()
         if rc != 0:
             e_msg = ('There was an unknown problem with systemd update when '
-                     'called by _luks_disk() for Disk(%s).' % disk.name)
+                     'called by _luks_disk() for disk ({}).'.format(disk.name))
             handle_exception(Exception(e_msg), request)
         return Response()
 
@@ -1011,8 +1015,8 @@ class DiskDetailView(rfc.GenericView):
     def _toggle_smart(cls, did, request, enable=False):
         disk = cls._validate_disk(did, request)
         if (not disk.smart_available):
-            e_msg = ('S.M.A.R.T support is not available on this Disk(%s)'
-                     % disk.name)
+            e_msg = ('S.M.A.R.T support is not available on '
+                     'disk ({}).'.format(disk.name))
             handle_exception(Exception(e_msg), request)
         smart.toggle_smart(disk.name, disk.smart_options, enable)
         disk.smart_enabled = enable
