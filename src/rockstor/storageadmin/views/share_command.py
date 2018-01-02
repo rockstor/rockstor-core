@@ -37,7 +37,7 @@ class ShareCommandView(ShareMixin, rfc.GenericView):
         try:
             return Share.objects.get(id=sid)
         except ObjectDoesNotExist:
-            e_msg = ('Share id ({}) does not exist.'.format(sid))
+            e_msg = 'Share id ({}) does not exist.'.format(sid)
             handle_exception(Exception(e_msg), request)
 
     def _validate_snapshot(self, request, share):
@@ -46,7 +46,7 @@ class ShareCommandView(ShareMixin, rfc.GenericView):
             return Snapshot.objects.get(share=share, name=snap_name)
         except ObjectDoesNotExist:
             e_msg = ('Snapshot ({}) does not exist for '
-                     'share ({}).'.format(snap_name, share.name))
+                     'share ({}).').format(snap_name, share.name)
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -64,13 +64,13 @@ class ShareCommandView(ShareMixin, rfc.GenericView):
                 if (NFSExport.objects.filter(share=share).exists()):
                     e_msg = ('Share ({}) cannot be rolled back as it is '
                              'exported via NFS. Delete NFS exports and '
-                             'try again.'.format(share.name))
+                             'try again.').format(share.name)
                     handle_exception(Exception(e_msg), request)
 
                 if (SambaShare.objects.filter(share=share).exists()):
                     e_msg = ('Share ({}) cannot be rolled back as it is '
                              'shared via Samba. Unshare and '
-                             'try again.'.format(share.name))
+                             'try again.').format(share.name)
                     handle_exception(Exception(e_msg), request)
 
                 rollback_snap(snap.real_name, share.name, share.subvol_name,
