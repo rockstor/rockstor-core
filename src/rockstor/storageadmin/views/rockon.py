@@ -61,7 +61,7 @@ class RockOnView(rfc.GenericView):
                         # this should never be the case. pending tasks either
                         # succeed and get deleted or they are marked failed.
                         msg = ('Found a failed Task ({}) in the future of a '
-                               'pending Task ({}).'.format(ft.uuid, pt.uuid))
+                               'pending Task ({}).').format(ft.uuid, pt.uuid)
                         handle_exception(Exception(msg), self.request)
                     failed_rids[rid].delete()
                     del failed_rids[rid]
@@ -76,13 +76,13 @@ class RockOnView(rfc.GenericView):
                         func_name = t.function_name.split('.')[-1]
                         ro.state = '%s_failed' % func_name
                     elif (ro.id not in pending_rids):
-                        logger.error('Rockon ({}) is in pending state but '
+                        logger.error(('Rockon ({}) is in pending state but '
                                      'there is no pending or failed task '
-                                     'for it.'.format(ro.name))
+                                     'for it.').format(ro.name))
                         ro.state = '%s_failed' % ro.state.split('_')[1]
                     else:
-                        logger.debug('Rockon ({}) is in pending '
-                                     'state.'.format(ro.name))
+                        logger.debug(('Rockon ({}) is in pending '
+                                     'state.').format(ro.name))
                 elif (ro.state == 'uninstall_failed'):
                     ro.state = 'installed'
                 ro.save()
@@ -109,7 +109,7 @@ class RockOnView(rfc.GenericView):
                         logger.exception(e)
                 if (len(error_str) > 0):
                     e_msg = ('Errors occurred while processing updates for '
-                             'the following Rock-ons ({}).'.format(error_str))
+                             'the following Rock-ons ({}).').format(error_str)
                     handle_exception(Exception(e_msg), request)
             return Response()
 
@@ -166,7 +166,7 @@ class RockOnView(rfc.GenericView):
             if (ro.state not in ('available', 'install_failed')):
                 e_msg = ('Cannot add/remove container definitions for {} as '
                          'it is not in available state. Uninstall the '
-                         'Rock-on first and try again.'.format(ro.name))
+                         'Rock-on first and try again.').format(ro.name)
                 handle_exception(Exception(e_msg), self.request)
             # rock-on is in available state. we can safely wipe metadata
             # and start fresh.
@@ -181,7 +181,7 @@ class RockOnView(rfc.GenericView):
                     e_msg = ('Duplicate container ({}) definition detected. '
                              'It belongs to another Rock-on ({}). Uninstall '
                              'one of them and '
-                             'try again.'.format(co.name, co.rockon.name))
+                             'try again.').format(co.name, co.rockon.name)
                     handle_exception(Exception(e_msg), self.request)
 
                 if (co.dimage.name != c_d['image']):
@@ -189,7 +189,7 @@ class RockOnView(rfc.GenericView):
                         e_msg = ('Cannot change image of the container ({}) '
                                  'as it belongs to an installed Rock-on ({}). '
                                  'Uninstall it first and '
-                                 'try again.'.format(co.name, ro.name))
+                                 'try again.').format(co.name, ro.name)
                         handle_exception(Exception(e_msg), self.request)
                     co.dimage.delete()
             if (co is None):
@@ -212,7 +212,7 @@ class RockOnView(rfc.GenericView):
                     e_msg = ('Cannot add/remove port definitions of the '
                              'container ({}) as it belongs to an installed '
                              'Rock-on ({}). Uninstall it first and '
-                             'try again.'.format(co.name, ro.name))
+                             'try again.').format(co.name, ro.name)
                     handle_exception(Exception(e_msg), self.request)
                 DPort.objects.filter(container=co).delete()
 
@@ -263,7 +263,7 @@ class RockOnView(rfc.GenericView):
                     e_msg = ('Cannot add/remove volume definitions of the '
                              'container ({}) as it belongs to an installed '
                              'Rock-on ({}). Uninstall it first and '
-                             'try again.'.format(co.name, ro.name))
+                             'try again.').format(co.name, ro.name)
                     handle_exception(Exception(e_msg), self.request)
                 # Delete all volume entries for this container so that they
                 # might be created a fresh.
@@ -391,7 +391,7 @@ class RockOnView(rfc.GenericView):
         remote_root = ('%s/%s' %
                        (url_root, settings.ROCKONS.get('remote_root')))
         msg = ('Error while processing remote metastore '
-               'at ({}).'.format(remote_root))
+               'at ({}).').format(remote_root)
         with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
             if (response.status_code != 200):
@@ -402,7 +402,7 @@ class RockOnView(rfc.GenericView):
         for k, v in root.items():
             cur_meta_url = '%s/%s' % (url_root, v)
             msg = ('Error while processing Rock-on profile '
-                   'at ({}).'.format(cur_meta_url))
+                   'at ({}).').format(cur_meta_url)
             with self._handle_exception(self.request, msg=msg):
                 cur_res = requests.get(cur_meta_url, timeout=10)
                 if (cur_res.status_code != 200):
@@ -414,7 +414,7 @@ class RockOnView(rfc.GenericView):
             for f in os.listdir(local_root):
                 fp = '%s/%s' % (local_root, f)
                 msg = ('Error while processing Rock-on profile '
-                       'at ({}).'.format(fp))
+                       'at ({}).').format(fp)
                 with self._handle_exception(self.request, msg=msg):
                     with open(fp) as fo:
                         ds = json.load(fo)
