@@ -104,8 +104,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                         mount_share(share, mnt_pt)
                 except Exception as e:
                     e_msg = ('Exception while mounting a share ({}) during '
-                             'bootstrap: ({}).'.format(share.name,
-                                                       e.__str__()))
+                             'bootstrap: ({}).').format(share.name,
+                                                        e.__str__())
                     logger.error(e_msg)
                     logger.exception(e)
 
@@ -113,7 +113,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     import_snapshots(share)
                 except Exception as e:
                     e_msg = ('Exception while importing snapshots of share '
-                             '({}): ({}).'.format(share.name, e.__str__()))
+                             '({}): ({}).').format(share.name, e.__str__())
                     logger.error(e_msg)
                     logger.exception(e)
 
@@ -123,8 +123,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                         mount_snap(snap.share, snap.real_name)
                     except Exception as e:
                         e_msg = ('Failed to make the snapshot ({}) visible. '
-                                 'Exception: ({}).'.format(snap.real_name,
-                                                           e.__str__()))
+                                 'Exception: ({}).').format(snap.real_name,
+                                                            e.__str__())
                         logger.error(e_msg)
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
@@ -135,7 +135,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     sftp_snap_toggle(sftpo.share)
                 except Exception as e:
                     e_msg = ('Exception while exporting a SFTP share during '
-                             'bootstrap: ({}).'.format(e.__str__()))
+                             'bootstrap: ({}).').format(e.__str__())
                     logger.error(e_msg)
 
             try:
@@ -148,7 +148,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 self.refresh_wrapper(exports, request, logger)
             except Exception as e:
                 e_msg = ('Exception while bootstrapping NFS: '
-                         '({}).'.format(e.__str__()))
+                         '({}).').format(e.__str__())
                 logger.error(e_msg)
 
             #  bootstrap services
@@ -161,7 +161,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 systemctl('atd', 'start')
             except Exception as e:
                 e_msg = ('Exception while setting service statuses during '
-                         'bootstrap: ({}).'.format(e.__str__()))
+                         'bootstrap: ({}).').format(e.__str__())
                 logger.error(e_msg)
                 handle_exception(Exception(e_msg), request)
 
@@ -195,7 +195,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response(update_check(subscription=subo))
             except Exception as e:
                 e_msg = ('Unable to check update due to a system error: '
-                         '({}).'.format(e.__str__()))
+                         '({}).').format(e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'update'):
@@ -212,7 +212,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response('Done')
             except Exception as e:
                 e_msg = ('Update failed due to this exception: '
-                         '({}).'.format(e.__str__()))
+                         '({}).').format(e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'current-version'):
@@ -220,7 +220,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response(current_version())
             except Exception as e:
                 e_msg = ('Unable to check current version due to this '
-                         'exception: ({}).'.format(e.__str__()))
+                         'exception: ({}).').format(e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         # default has shutdown and reboot with delay set to now
@@ -245,7 +245,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 system_shutdown(delay)
             except Exception as e:
                 msg = ('Failed to shutdown the system due to a low level '
-                       'error: ({}).'.format(e.__str__()))
+                       'error: ({}).').format(e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
@@ -257,7 +257,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 system_reboot(delay)
             except Exception as e:
                 msg = ('Failed to reboot the system due to a low level '
-                       'error: ({}).'.format(e.__str__()))
+                       'error: ({}).').format(e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
@@ -270,7 +270,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 system_suspend()
             except Exception as e:
                 msg = ('Failed to suspend the system due to a low level '
-                       'error: ({}).'.format(e.__str__()))
+                       'error: ({}).').format(e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
@@ -293,7 +293,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response({'enabled': True, })
             except Exception as e:
                 msg = ('Failed to enable auto update due to this exception: '
-                       '({}).'.format(e.__str__()))
+                       '({}).').format(e.__str__())
                 handle_exception(Exception(msg), request)
 
         if (command == 'disable-auto-update'):
@@ -302,7 +302,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response({'enabled': False, })
             except Exception as e:
                 msg = ('Failed to disable auto update due to this exception:  '
-                       '({}).'.format(e.__str__()))
+                       '({}).').format(e.__str__())
                 handle_exception(Exception(msg), request)
 
         if (command == 'refresh-disk-state'):
