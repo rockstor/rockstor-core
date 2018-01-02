@@ -41,12 +41,12 @@ def generic_post(url, payload):
     try:
         api_call(url, data=payload, calltype='post', headers=headers,
                  save_error=False)
-        logger.debug('Successfully created resource: %s. payload: %s' %
-                     (url, payload))
+        logger.debug('Successfully created resource: {}. '
+                     'Payload: {}'.format(url, payload))
     except Exception as e:
-        logger.error('Exception occured while creating resource: %s. '
-                     'payload: %s. exception: %s. Moving on.' %
-                     (url, payload, e.__str__()))
+        logger.error('Exception occurred while creating resource: {}. '
+                     'Payload: {}. Exception: {}. '
+                     'Moving on.'.format(url, payload, e.__str__()))
 
 
 def restore_users_groups(ml):
@@ -136,7 +136,7 @@ def restore_services(ml):
             if (config is not None):
                 config = json.loads(config)
                 services[name] = {'config': config, }
-    logger.debug('services = %s' % services)
+    logger.debug('services = ({}).'.format(services))
     for s in services:
         generic_post('%s/sm/services/%s/config' % (BASE_URL, s), services[s])
     logger.debug('Finished restoring services.')
@@ -176,9 +176,9 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
                 cbo.delete()
             fp_md5sum = md5sum(fp)
             if (fp_md5sum != cbo.md5sum):
-                logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
-                             'Deleting dbo' %
-                             (cbo.filename, cbo.md5sum, fp_md5sum))
+                logger.error('md5sum mismatch for {}. cbo: {} file: {}. '
+                             'Deleting dbo.'.format(cbo.filename, cbo.md5sum,
+                                                    fp_md5sum))
                 cbo.delete()
         return ConfigBackup.objects.filter().order_by('-id')
 
@@ -226,7 +226,8 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
         try:
             return ConfigBackup.objects.get(id=backup_id)
         except ConfigBackup.DoesNotExist:
-            e_msg = ('Config backup for the id(%s) does not exist' % backup_id)
+            e_msg = ('Config backup for the id ({}) '
+                     'does not exist.'.format(backup_id))
             handle_exception(Exception(e_msg), request)
 
 
@@ -240,9 +241,9 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
                 cbo.delete()
             fp_md5sum = md5sum(fp)
             if (fp_md5sum != cbo.md5sum):
-                logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
-                             'Deleting dbo' %
-                             (cbo.filename, cbo.md5sum, fp_md5sum))
+                logger.error('md5sum mismatch for {}. cbo: {} file: {}. '
+                             'Deleting dbo'.format(cbo.filename, cbo.md5sum,
+                                                   fp_md5sum))
                 cbo.delete()
         return ConfigBackup.objects.filter().order_by('-id')
 
@@ -251,8 +252,8 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
             filename = request.data['file-name']
             file_obj = request.data['file']
             if (ConfigBackup.objects.filter(filename=filename).exists()):
-                msg = ('Config backup(%s) already exists. Uploading a '
-                       'duplicate is not allowed.' % filename)
+                msg = ('Config backup ({}) already exists. Uploading a '
+                       'duplicate is not allowed.'.format(filename))
                 handle_exception(Exception(msg), request)
             cbo = ConfigBackup.objects.create(
                 filename=filename, config_backup=file_obj
