@@ -56,7 +56,7 @@ class NetatalkDetailView(rfc.GenericView):
         try:
             afpo.delete()
         except:
-            e_msg = ('Failed to delete AFP config for id ({}).'.format(afp_id))
+            e_msg = 'Failed to delete AFP config for id ({}).'.format(afp_id)
             handle_exception(Exception(e_msg), request)
 
         self._refresh_and_reload(request)
@@ -67,8 +67,7 @@ class NetatalkDetailView(rfc.GenericView):
         try:
             return NetatalkShare.objects.get(id=afp_id)
         except:
-            e_msg = ('AFP export for the id ({}) does not '
-                     'exist.'.format(afp_id))
+            e_msg = 'AFP export for the id ({}) does not exist.'.format(afp_id)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -76,7 +75,7 @@ class NetatalkDetailView(rfc.GenericView):
         time_machine = request.data.get('time_machine', 'yes')
         if (time_machine != 'yes' and time_machine != 'no'):
             e_msg = ('Time_machine must be yes or no. '
-                     'Not ({}).'.format(time_machine))
+                     'Not ({}).').format(time_machine)
             handle_exception(Exception(e_msg), request)
         return time_machine
 
@@ -87,7 +86,7 @@ class NetatalkDetailView(rfc.GenericView):
             return systemctl('netatalk', 'reload-or-restart')
         except Exception as e:
             e_msg = ('Failed to reload Netatalk server. '
-                     'Exception: ({}).'.format(e.__str__()))
+                     'Exception: ({}).').format(e.__str__())
             handle_exception(Exception(e_msg), request)
 
 
@@ -112,13 +111,13 @@ class NetatalkListView(rfc.GenericView):
         time_machine = request.data.get('time_machine', 'yes')
         if (time_machine != 'yes' and time_machine != 'no'):
             e_msg = ('Time_machine must be yes or no. '
-                     'Not ({}).'.format(time_machine))
+                     'Not ({}).').format(time_machine)
             handle_exception(Exception(e_msg), request)
 
         for share in shares:
             if (NetatalkShare.objects.filter(share=share).exists()):
                 e_msg = ('Share ({}) is already exported '
-                         'via AFP.'.format(share.name))
+                         'via AFP.').format(share.name)
                 handle_exception(Exception(e_msg), request)
 
         try:
