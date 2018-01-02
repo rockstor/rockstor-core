@@ -105,13 +105,12 @@ def create_clone(share, new_name, request, logger, snapshot=None):
                  'contain letters, digits, _, . and - characters.')
         handle_exception(Exception(e_msg), request)
     if (Share.objects.filter(name=new_name).exists()):
-        e_msg = ('Another share with name ({}) '
-                 'already exists.'.format(new_name))
+        e_msg = 'Another share with name ({}) already exists.'.format(new_name)
         handle_exception(Exception(e_msg), request)
     if (Snapshot.objects.filter(share=share, name=new_name).exists()):
         e_msg = ('Snapshot with name ({}) already exists for the '
-                 'share ({}). Choose a different name.'.format(new_name,
-                                                               share.name))
+                 'share ({}). Choose a different name.').format(new_name,
+                                                                share.name)
         handle_exception(Exception(e_msg), request)
 
     try:
