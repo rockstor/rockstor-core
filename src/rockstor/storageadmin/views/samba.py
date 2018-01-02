@@ -139,7 +139,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
         for share in shares:
             if (SambaShare.objects.filter(share=share).exists()):
                 e_msg = ('Share ({}) is already exported via '
-                         'Samba.'.format(share.name))
+                         'Samba.').format(share.name)
                 handle_exception(Exception(e_msg), request)
         with self._handle_exception(request):
             for share in shares:
@@ -181,7 +181,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
             smbo.delete()
         except:
             e_msg = ('Samba export for the id ({}) '
-                     'does not exist.'.format(smb_id))
+                     'does not exist.').format(smb_id)
             handle_exception(Exception(e_msg), request)
 
         with self._handle_exception(request):
@@ -196,7 +196,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                 smbo = SambaShare.objects.get(id=smb_id)
             except:
                 e_msg = ('Samba export for the id ({}) '
-                         'does not exist.'.format(smb_id))
+                         'does not exist.').format(smb_id)
                 handle_exception(Exception(e_msg), request)
 
             options = self._validate_input(request, smbo=smbo)
@@ -228,7 +228,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                         logger.exception(e)
                         if (smb_o.id == smbo.id):
                             e_msg = ('Failed to mount share ({}) due to a low '
-                                     'level error.'.format(smb_o.share.name))
+                                     'level error.').format(smb_o.share.name)
                             handle_exception(Exception(e_msg), request)
 
             refresh_smb_config(list(SambaShare.objects.all()))
