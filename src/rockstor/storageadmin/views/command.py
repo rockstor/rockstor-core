@@ -103,16 +103,17 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                         mount_share(share, mnt_pt)
                 except Exception as e:
-                    e_msg = ('Exception while mounting a share(%s) during '
-                             'bootstrap: %s' % (share.name, e.__str__()))
+                    e_msg = ('Exception while mounting a share ({}) during '
+                             'bootstrap: ({}).'.format(share.name,
+                                                       e.__str__()))
                     logger.error(e_msg)
                     logger.exception(e)
 
                 try:
                     import_snapshots(share)
                 except Exception as e:
-                    e_msg = ('Exception while importing Snapshots of '
-                             'Share(%s): %s' % (share.name, e.__str__()))
+                    e_msg = ('Exception while importing snapshots of share '
+                             '({}): ({}).'.format(share.name, e.__str__()))
                     logger.error(e_msg)
                     logger.exception(e)
 
@@ -121,9 +122,9 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     try:
                         mount_snap(snap.share, snap.real_name)
                     except Exception as e:
-                        e_msg = ('Failed to make the Snapshot(%s) visible. '
-                                 'Exception: %s' %
-                                 (snap.real_name, e.__str__()))
+                        e_msg = ('Failed to make the snapshot ({}) visible. '
+                                 'Exception: ({}).'.format(snap.real_name,
+                                                           e.__str__()))
                         logger.error(e_msg)
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
@@ -133,8 +134,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
                     sftp_snap_toggle(sftpo.share)
                 except Exception as e:
-                    e_msg = ('Exception while exportin a sftp share during '
-                             'bootstrap: %s' % e.__str__())
+                    e_msg = ('Exception while exporting a SFTP share during '
+                             'bootstrap: ({}).'.format(e.__str__()))
                     logger.error(e_msg)
 
             try:
@@ -146,7 +147,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 exports.update(exports_d)
                 self.refresh_wrapper(exports, request, logger)
             except Exception as e:
-                e_msg = ('Exception while bootstrapping NFS: %s' % e.__str__())
+                e_msg = ('Exception while bootstrapping NFS: '
+                         '({}).'.format(e.__str__()))
                 logger.error(e_msg)
 
             #  bootstrap services
@@ -159,7 +161,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 systemctl('atd', 'start')
             except Exception as e:
                 e_msg = ('Exception while setting service statuses during '
-                         'bootstrap: %s' % e.__str__())
+                         'bootstrap: ({}).'.format(e.__str__()))
                 logger.error(e_msg)
                 handle_exception(Exception(e_msg), request)
 
@@ -192,8 +194,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                         pass
                 return Response(update_check(subscription=subo))
             except Exception as e:
-                e_msg = ('Unable to check update due to a system error: %s'
-                         % e.__str__())
+                e_msg = ('Unable to check update due to a system error: '
+                         '({}).'.format(e.__str__()))
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'update'):
@@ -209,8 +211,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     update_run(yum_update=True)
                 return Response('Done')
             except Exception as e:
-                e_msg = ('Update failed due to this exception: %s'
-                         % e.__str__())
+                e_msg = ('Update failed due to this exception: '
+                         '({}).'.format(e.__str__()))
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'current-version'):
@@ -218,7 +220,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response(current_version())
             except Exception as e:
                 e_msg = ('Unable to check current version due to this '
-                         'exception: ' % e.__str__())
+                         'exception: ({}).'.format(e.__str__()))
                 handle_exception(Exception(e_msg), request)
 
         # default has shutdown and reboot with delay set to now
@@ -232,7 +234,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             delay = 3
 
         if (command == 'shutdown'):
-            msg = ('The system will now be shutdown')
+            msg = 'The system will now be shutdown.'
             try:
                 # if shutdown request coming from a scheduled task
                 # with rtc wake up time on we set it before
@@ -243,32 +245,32 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 system_shutdown(delay)
             except Exception as e:
                 msg = ('Failed to shutdown the system due to a low level '
-                       'error: %s' % e.__str__())
+                       'error: ({}).'.format(e.__str__()))
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
 
         if (command == 'reboot'):
-            msg = ('The system will now reboot')
+            msg = 'The system will now reboot.'
             try:
                 request.session.flush()
                 system_reboot(delay)
             except Exception as e:
-                msg = ('Failed to reboot the system due to a low level error: '
-                       '%s' % e.__str__())
+                msg = ('Failed to reboot the system due to a low level '
+                       'error: ({}).'.format(e.__str__()))
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
 
         if (command == 'suspend'):
-            msg = ('The system will now be suspended to RAM')
+            msg = 'The system will now be suspended to RAM.'
             try:
                 request.session.flush()
                 set_system_rtc_wake(rtcepoch)
                 system_suspend()
             except Exception as e:
                 msg = ('Failed to suspend the system due to a low level '
-                       'error: %s' % e.__str__())
+                       'error: ({}).'.format(e.__str__()))
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
@@ -291,7 +293,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response({'enabled': True, })
             except Exception as e:
                 msg = ('Failed to enable auto update due to this exception: '
-                       '%s' % e.__str__())
+                       '({}).'.format(e.__str__()))
                 handle_exception(Exception(msg), request)
 
         if (command == 'disable-auto-update'):
@@ -300,7 +302,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response({'enabled': False, })
             except Exception as e:
                 msg = ('Failed to disable auto update due to this exception:  '
-                       '%s' % e.__str__())
+                       '({}).'.format(e.__str__()))
                 handle_exception(Exception(msg), request)
 
         if (command == 'refresh-disk-state'):
