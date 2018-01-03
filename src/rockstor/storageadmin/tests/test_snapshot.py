@@ -106,7 +106,7 @@ class SnapshotTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Share: invalid does not exist")
+        e_msg = "Share with id (invalid) does not exist."
         self.assertEqual(response.data['detail'], e_msg)
 
         # Invalid uvisible bool type
@@ -120,7 +120,7 @@ class SnapshotTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("uvisible must be a boolean, not <type 'unicode'>")
+        e_msg = "Element 'uvisible' must be a boolean, not (<type 'unicode'>)."
         self.assertEqual(response.data['detail'], e_msg)
 
         # Create duplicate snapshot
@@ -134,7 +134,7 @@ class SnapshotTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Snapshot(snap2) already exists for the Share(share2).")
+        e_msg = "Snapshot (snap2) already exists for the share (share2)."
         self.assertEqual(response.data['detail'], e_msg)
 
         # Happy Path
@@ -167,13 +167,17 @@ class SnapshotTests(APITestMixin, APITestCase):
         # Delete snapshot that does not exists
         snap_name = 'snap3'
         share_name = 'share1'
+        duff_share_id = '99'
 
         response = self.client.delete('%s/%s/snapshots/%s' %
                                       (self.BASE_URL, share_name, snap_name))
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Snapshot(snap3) does not exist.')
+        # e_msg = ('Snapshot (snap3) does not exist.')
+        # TODO: Test needs updating as expected strings are now:
+        e_msg = 'Snapshot id 99 does not exist.'
+        e_msg2 = 'Snapshot name (snap3) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # Delete without snapshot name
