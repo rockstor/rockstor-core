@@ -36,12 +36,12 @@ def handle_exception(e, request, e_msg=None, status_code=500):
     object is used.
     """
     if (e_msg is not None):
-        e_msg = '%s. Lower level exception: %s' % (e_msg, e.__str__())
+        e_msg = '({}). Lower level exception: ({}).'.format(e_msg, e.__str__())
         logger.error(e_msg)
     else:
         e_msg = e.__str__()
 
-    logger.exception('exception: %s' % e.__str__())
-    logger.debug('Current Rockstor version: %s' % version)
+    logger.exception('Exception: {}'.format(e.__str__()))
+    logger.debug('Current Rockstor version: {}'.format(version))
     raise RockStorAPIException(status_code=status_code, detail=e_msg,
                                trace=traceback.format_exc())
