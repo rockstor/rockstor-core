@@ -20,7 +20,7 @@ import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool, Share)
-from fs.btrfs import (enable_quota, btrfs_uuid, mount_root,
+from fs.btrfs import (enable_quota, mount_root,
                       get_pool_info, pool_raid)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
@@ -325,7 +325,9 @@ class DiskMixin(object):
                 dob.save()
                 p.size = p.usage_bound()
                 enable_quota(p)
-                p.uuid = btrfs_uuid(dob.name)
+                # scan_disks() has already acquired our fs uuid so inherit it.
+                # We have already established btrfs as the fs type.
+                p.uuid = d.uuid
                 p.save()
             # save our updated db disk object
             dob.save()
