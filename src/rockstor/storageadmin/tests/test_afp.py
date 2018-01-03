@@ -75,7 +75,7 @@ class AFPTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Must provide share names')
+        e_msg = 'Must provide share names.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # create afp export with invalid time machine value
@@ -85,7 +85,7 @@ class AFPTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('time_machine must be yes or no. not invalid')
+        e_msg = 'Time_machine must be yes or no. Not (invalid).'
         self.assertEqual(response.data['detail'], e_msg)
 
         # create afp export with already existing share
@@ -95,7 +95,7 @@ class AFPTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Share(share1) is already exported via AFP')
+        e_msg = 'Share (share1) is already exported via AFP.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -117,7 +117,7 @@ class AFPTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('AFP export for the id(1) does not exist')
+        e_msg = 'AFP export for the id (1) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # edit afp export with invalid time machine value
@@ -129,7 +129,7 @@ class AFPTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('time_machine must be yes or no. not invalid')
+        e_msg = 'Time_machine must be yes or no. Not (invalid).'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -151,7 +151,7 @@ class AFPTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('AFP export for the id(12) does not exist')
+        e_msg = 'AFP export for the id (12) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
