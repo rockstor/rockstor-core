@@ -89,7 +89,7 @@ class NFSExportTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Cannot export without specifying shares')
+        e_msg = 'Cannot export without specifying shares.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -107,7 +107,7 @@ class NFSExportTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('An export already exists for the host string: *')
+        e_msg = 'An export already exists for the host string: (*).'
         self.assertEqual(response.data['detail'], e_msg)
 
         # Add nfs-export with invalid nfs-client
@@ -118,7 +118,7 @@ class NFSExportTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('An export already exists for the host string: *')
+        e_msg = 'An export already exists for the host string: (*).'
         self.assertEqual(response.data['detail'], e_msg)
 
     def test_no_nfs_client(self):
@@ -135,6 +135,7 @@ class NFSExportTests(APITestMixin, APITestCase):
 
     def test_invalid_nfs_client2(self):
 
+        # TODO: Test needs updating
         # invalid post request
         # Add nfs-export providing invalid nfs client
         self.mock_refresh_nfs_exports.side_effect = Exception()
@@ -146,12 +147,13 @@ class NFSExportTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Invalid Hostname or IP: host%%%edu')
+        e_msg = 'Invalid Hostname or IP: host%%%edu'
         self.assertEqual(response.data['detail'], e_msg)
         self.mock_refresh_nfs_exports.side_effect = None
 
     def test_invalid_nfs_client3(self):
 
+        # TODO: Test needs updating
         # invalid put request
         # edit nfs-export providing invalid nfs-client
         self.mock_refresh_nfs_exports.side_effect = Exception()
@@ -164,12 +166,13 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Invalid Hostname or IP: host%%%edu')
+        e_msg = 'Invalid Hostname or IP: host%%%edu'
         self.assertEqual(response.data['detail'], e_msg)
         self.mock_refresh_nfs_exports.side_effect = None
 
     def test_invalid_admin_host1(self):
 
+        # TODO: Test needs updating
         # invalid post request
         # Add nfs-export providing invalid admin host
         self.mock_refresh_nfs_exports.side_effect = Exception()
@@ -180,7 +183,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Invalid admin host: admin%host')
+        e_msg = 'Invalid admin host: admin%host'
         self.assertEqual(response.data['detail'], e_msg)
         self.mock_refresh_nfs_exports.side_effect = None
 
@@ -197,7 +200,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Invalid admin host: admin%host')
+        e_msg = 'Invalid admin host: admin%host'
         self.assertEqual(response.data['detail'], e_msg)
         self.mock_refresh_nfs_exports.side_effect = None
 
@@ -220,7 +223,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Cannot export without specifying shares')
+        e_msg = 'Cannot export without specifying shares.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -251,7 +254,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('NFS export with id: 5 does not exist')
+        e_msg = 'NFS export with id (5) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
     def test_delete_requests(self):
@@ -273,7 +276,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('NFS export with id: 5 does not exist')
+        e_msg = 'NFS export with id (5) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
     def test_adv_nfs_get(self):
@@ -292,7 +295,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Cannot export without specifying entries')
+        e_msg = 'Cannot export without specifying entries.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -307,7 +310,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Invalid exports input -- /export/share2')
+        e_msg = 'Invalid exports input -- (/export/share2).'
         self.assertEqual(response.data['detail'], e_msg)
 
         # Invalid entries
@@ -316,8 +319,8 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Invalid exports input -- /export/share2 *.edu(rw,async,'
-                 'insecure. offending section: *.edu(rw,async,insecure')
+        e_msg = ('Invalid exports input -- (/export/share2 *.edu(rw,async,'
+                 'insecure). Offending section: (*.edu(rw,async,insecure).')
         self.assertEqual(response.data['detail'], e_msg)
 
         # Invalid entries
@@ -326,5 +329,5 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Invalid exports input -- invalid')
+        e_msg = 'Invalid exports input -- (invalid).'
         self.assertEqual(response.data['detail'], e_msg)
