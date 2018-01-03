@@ -81,7 +81,7 @@ class ShareMixin(object):
                 handle_exception(Exception(e_msg), request)
             return share
         except Share.DoesNotExist:
-            e_msg = 'Share id: ({}) does not exist.'.format(sid)
+            e_msg = 'Share id ({}) does not exist.'.format(sid)
             handle_exception(Exception(e_msg), request)
 
 
@@ -293,7 +293,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
 
             if (NFSExport.objects.filter(share=share).exists()):
                 e_msg = ('Share ({}) cannot be deleted as it is exported via '
-                         'nfs. Delete nfs exports and '
+                         'NFS. Delete NFS exports and '
                          'try again.').format(share.name)
                 handle_exception(Exception(e_msg), request)
 

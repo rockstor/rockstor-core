@@ -134,8 +134,9 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             share = self._validate_share(sid, request)
             uvisible = request.data.get('uvisible', False)
             if (type(uvisible) != bool):
-                e_msg = ('Element "uvisible" must be a boolean, '
-                         'not ({}).').format(type(uvisible))
+                # N.B. quote type important - test string involves ('unicode')
+                e_msg = ("Element 'uvisible' must be a boolean, "
+                         "not ({}).").format(type(uvisible))
                 handle_exception(Exception(e_msg), request)
 
             snap_type = request.data.get('snap_type', 'admin')

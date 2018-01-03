@@ -315,7 +315,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                 userdel(username)
             except Exception as e:
                 logger.exception(e)
-                e_msg = ('A low level error occured while deleting '
+                e_msg = ('A low level error occurred while deleting '
                          'the user ({}).').format(username)
                 handle_exception(Exception(e_msg), request)
 

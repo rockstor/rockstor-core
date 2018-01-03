@@ -138,7 +138,7 @@ class NFSExportMixin(object):
         try:
             refresh_nfs_exports(exports)
         except Exception as e:
-            e_msg = ('A lower level error occured while refreshing '
+            e_msg = ('A lower level error occurred while refreshing '
                      'NFS exports: ({}).').format(e.__str__())
             handle_exception(Exception(e_msg), request)
 
