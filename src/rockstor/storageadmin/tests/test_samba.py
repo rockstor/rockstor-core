@@ -90,7 +90,7 @@ class SambaTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Must provide share names')
+        e_msg = 'Must provide share names.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # create samba with invalid browsable, guest_ok, read_only choices
@@ -163,7 +163,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Share(share1) is already exported via Samba')
+        e_msg = 'Share (share1) is already exported via Samba.'
         self.assertEqual(response.data['detail'], e_msg)
 
     def test_put_requests(self):
@@ -180,7 +180,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Samba export for the id(12) does not exist')
+        e_msg = 'Samba export for the id (12) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # edit samba with invalid custom config
@@ -192,7 +192,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('custom config must be a list of strings')
+        e_msg = 'Custom config must be a list of strings.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # test mount_share exception case
@@ -204,7 +204,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Failed to mount share(share6) due to a low level error.')
+        e_msg = 'Failed to mount share (share6) due to a low level error.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -247,7 +247,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Samba export for the id(12) does not exist')
+        e_msg = 'Samba export for the id (12) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
