@@ -90,8 +90,8 @@ class PoolTests(APITestMixin, APITestCase):
         data = {'disks': ('sdc', 'sdd',),
                 'pname': 'singlepool2',
                 'raid_level': 'derp', }
-        e_msg = ("Unsupported raid level. use one of: "
-                 "('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')")
+        e_msg = ("Unsupported raid level. Use one of: "
+                 "('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6').")
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -102,8 +102,9 @@ class PoolTests(APITestMixin, APITestCase):
         data = {'disks': ('sdc', 'sdd',),
                 'pname': 'share1',
                 'raid_level': 'raid0', }
-        e_msg = ('A Share with this name(share1) exists. Pool and Share names '
-                 'must be distinct. Choose a different name')
+        e_msg = ('A share with this name (share1) exists. Pool and share '
+                 'names must be distinct. '
+                 'Choose a different name.')
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -112,7 +113,7 @@ class PoolTests(APITestMixin, APITestCase):
 
         # edit a pool that doesn't exist
         data2 = {'disks': ('sdc', 'sdd',)}
-        e_msg = ('Pool(raid0pool) does not exist.')
+        e_msg = 'Pool with id (raid0pool) does not exist.'
         response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL,
                                     data=data2)
         self.assertEqual(response4.status_code,
@@ -129,7 +130,7 @@ class PoolTests(APITestMixin, APITestCase):
 
         # attempt to add disk to root pool
         e_msg = ('Edit operations are not allowed on this '
-                 'Pool(rockstor_rockstor) as it contains the operating '
+                 'pool (rockstor_rockstor) as it contains the operating '
                  'system.')
         response2 = self.client.put('%s/rockstor_rockstor/add' % self.BASE_URL,
                                     data=data2)
@@ -139,7 +140,7 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response2.data['detail'], e_msg)
 
         # attempt to delete root pool
-        e_msg = ('Deletion of Pool(rockstor_rockstor) is not allowed as it '
+        e_msg = ('Deletion of pool (rockstor_rockstor) is not allowed as it '
                  'contains the operating system.')
         response5 = self.client.delete('%s/rockstor_rockstor' % self.BASE_URL)
         self.assertEqual(response5.status_code,
@@ -170,10 +171,15 @@ class PoolTests(APITestMixin, APITestCase):
             self.assertEqual(response.data['name'], pname)
 
         # invalid pool names
-        e_msg = ('Pool name must start with a alphanumeric(a-z0-9) character '
-                 'and can be followed by any of the following characters: '
-                 'letter(a-z), digits(0-9), hyphen(-), underscore(_) or a '
-                 'period(.).')
+        # e_msg = ('Pool name must start with a alphanumeric(a-z0-9) character '
+        #          'and can be followed by any of the following characters: '
+        #          'letter(a-z), digits(0-9), hyphen(-), underscore(_) or a '
+        #          'period(.).')
+        # TODO: Test needs updating:
+        e_msg = ('Invalid characters in pool name. Following '
+                 'characters are allowed: letter(a-z or A-Z), '
+                 'digit(0-9), '
+                 'hyphen(-), underscore(_) or a period(.).')
         invalid_pool_names = ('Pool $', '-pool', '.pool', '', ' ',)
 
         for pname in invalid_pool_names:
@@ -185,7 +191,7 @@ class PoolTests(APITestMixin, APITestCase):
             self.assertEqual(response.data['detail'], e_msg)
 
         # pool name with more than 255 characters
-        e_msg = ('Pool name must be less than 255 characters')
+        e_msg = 'Pool name must be less than 255 characters.'
 
         data['pname'] = 'P' + 'o' * 254 + 'l'
         response = self.client.post(self.BASE_URL, data=data)
@@ -208,8 +214,8 @@ class PoolTests(APITestMixin, APITestCase):
                 'pname': 'singlepool',
                 'raid_level': 'single',
                 'compression': 'derp'}
-        e_msg = ("Unsupported compression algorithm(derp). "
-                 "Use one of ('lzo', 'zlib', 'no')")
+        e_msg = ("Unsupported compression algorithm (derp). "
+                 "Use one of ('lzo', 'zlib', 'no').")
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -300,15 +306,15 @@ class PoolTests(APITestMixin, APITestCase):
                 'raid_level': 'single',
                 'compression': 'zlib',
                 'mnt_options': 'alloc_star'}
-        e_msg = ("mount option(alloc_star) not allowed. Make sure there "
+        e_msg = ("mount option (alloc_star) not allowed. Make sure there "
                  "are no whitespaces in the input. Allowed options: "
-                 "['alloc_start', 'autodefrag', 'clear_cache', 'commit', "
+                 "(['alloc_start', 'autodefrag', 'clear_cache', 'commit', "
                  "'compress-force', 'degraded', 'discard', 'fatal_errors', "
                  "'inode_cache', 'max_inline', 'metadata_ratio', 'noacl', "
                  "'noatime', 'nodatacow', 'nodatasum', 'nospace_cache', "
                  "'nossd', 'ro', 'rw', 'skip_balance', 'space_cache', "
                  "'ssd', 'ssd_spread', 'thread_pool', "
-                 "'']")
+                 "'']).")
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -316,7 +322,7 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['detail'], e_msg)
 
         data['mnt_options'] = 'alloc_start'
-        e_msg = ('Value for mount option(alloc_start) must be an integer')
+        e_msg = 'Value for mount option (alloc_start) must be an integer.'
         response2 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response2.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -354,7 +360,7 @@ class PoolTests(APITestMixin, APITestCase):
 
         # test invalid compress-force
         data2 = {'mnt_options': 'compress-force=1'}
-        e_msg = ("compress-force is only allowed with ('lzo', 'zlib', 'no')")
+        e_msg = "compress-force is only allowed with ('lzo', 'zlib', 'no')."
         response3 = self.client.put('%s/singleton/remount' % self.BASE_URL,
                                     data=data2)
         self.assertEqual(response3.status_code,
@@ -404,7 +410,7 @@ class PoolTests(APITestMixin, APITestCase):
         # create pool with 0 disks
         data = {'pname': 'singlepool',
                 'raid_level': 'single', }
-        e_msg = ("'NoneType' object is not iterable")
+        e_msg = "'NoneType' object is not iterable"
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -434,7 +440,7 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(len(response3.data['disks']), 2)
 
         # create a pool with a duplicate name
-        e_msg = ('Pool(singlepool2) already exists. Choose a different name')
+        e_msg = 'Pool (singlepool2) already exists. Choose a different name.'
         response4 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -442,7 +448,7 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response4.data['detail'], e_msg)
 
         # invalid put command
-        e_msg = ('command(derp) is not supported.')
+        e_msg = 'Command (derp) is not supported.'
         response5 = self.client.put('%s/singlepool2/derp' % self.BASE_URL,
                                     data=data)
         self.assertEqual(response5.status_code,
@@ -452,7 +458,7 @@ class PoolTests(APITestMixin, APITestCase):
 
         # attempt to add disk that does not exist
         data3 = {'disks': ('derp'), }
-        e_msg = ('Disk(d) does not exist')
+        e_msg = 'Disk with id (d) does not exist.'
         response5 = self.client.put('%s/singlepool2/add' %
                                     self.BASE_URL, data=data3)
         self.assertEqual(response5.status_code,
@@ -462,8 +468,8 @@ class PoolTests(APITestMixin, APITestCase):
 
         # add a disk that already belongs to a pool
         data4 = {'disks': ('sdc',)}
-        e_msg = ('Disk(sdc) cannot be added to this Pool(singlepool) '
-                 'because it belongs to another pool(singlepool2)')
+        e_msg = ('Disk (sdc) cannot be added to this pool (singlepool) '
+                 'because it belongs to another pool (singlepool2).')
         response6 = self.client.put('%s/singlepool/add' %
                                     self.BASE_URL, data=data4)
         self.assertEqual(response6.status_code,
@@ -491,7 +497,7 @@ class PoolTests(APITestMixin, APITestCase):
                 'raid_level': 'raid0', }
 
         # create pool with 1 disk
-        e_msg = ('At least two disks are required for the raid level: raid0')
+        e_msg = 'At least 2 disks are required for the raid level: raid0.'
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -532,16 +538,16 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response3.data)
-        e_msg = ('Disks cannot be removed from a pool with this raid(raid0) '
-                 'configuration')
+        e_msg = ('Disks cannot be removed from a pool with this raid (raid0) '
+                 'configuration.')
         self.assertEqual(response3.data['detail'], e_msg)
 
         # add 3 disks & change raid_level
         data3 = {'disks': ('sde', 'sdf', 'sdg',),
                  'raid_level': 'raid1', }
-        e_msg = ('A Balance process is already running for this '
-                 'pool(raid0pool). Resize is not supported during a balance '
-                 'process.')
+        e_msg = ('A Balance process is already running or paused '
+                 'for this pool (raid0pool). Resize is not supported '
+                 'during a balance process.')
         response4 = self.client.put('%s/raid0pool/add' %
                                     self.BASE_URL, data=data3)
         self.assertEqual(response4.status_code,
@@ -569,7 +575,7 @@ class PoolTests(APITestMixin, APITestCase):
                 'raid_level': 'raid1', }
 
         # create pool with 1 disk
-        e_msg = ('At least two disks are required for the raid level: raid1')
+        e_msg = 'At least 2 disks are required for the raid level: raid1.'
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -611,9 +617,10 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response3.data)
-        e_msg = ("Removing these([u'sdg']) disks may shrink the pool by "
-                 "2097152KB, which is greater than available free space "
-                 "2097152KB. This is not supported.")
+        e_msg = ("Removing disks ([u'sdg']) may shrink the pool by "
+                 '2097152 KB, which is greater than available free '
+                 'space 2097152 KB. This is '
+                 'not supported.')
         self.assertEqual(response3.data['detail'], e_msg)
         self.mock_pool_usage.return_value = (14680064, 10, 4194305)
 
@@ -628,7 +635,7 @@ class PoolTests(APITestMixin, APITestCase):
         # remove 1 more disk which makes the raid with invalid number of disks
         data3 = {'disks': ('sdc',), }
         e_msg = ('Disks cannot be removed from this pool because its raid '
-                 'configuration(raid1) requires a minimum of 2 disks')
+                 'configuration (raid1) requires a minimum of 2 disks.')
         response4 = self.client.put('%s/raid1pool/remove' %
                                     self.BASE_URL, data=data3)
         self.assertEqual(response4.status_code,
@@ -656,8 +663,8 @@ class PoolTests(APITestMixin, APITestCase):
                 'raid_level': 'raid10', }
 
         # create pool with 1 disk
-        e_msg = ('A minimum of Four drives are required for the raid '
-                 'level: raid10')
+        e_msg = ('A minimum of 4 drives are required for the raid '
+                 'level: raid10.')
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -685,7 +692,7 @@ class PoolTests(APITestMixin, APITestCase):
         # remove 2 disks
         data3 = {'disks': ('sde', 'sdd',), }
         e_msg = ('Disks cannot be removed from this pool because its raid '
-                 'configuration(raid10) requires a minimum of 4 disks')
+                 'configuration (raid10) requires a minimum of 4 disks.')
         response4 = self.client.put('%s/raid10pool/remove' %
                                     self.BASE_URL, data=data3)
         self.assertEqual(response4.status_code,
@@ -709,7 +716,7 @@ class PoolTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response4.data)
         e_msg = ('Disks cannot be removed from this pool because its raid '
-                 'configuration(raid10) requires a minimum of 4 disks')
+                 'configuration (raid10) requires a minimum of 4 disks.')
         self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
@@ -731,7 +738,7 @@ class PoolTests(APITestMixin, APITestCase):
                 'raid_level': 'raid5', }
 
         # create pool with 1 disk
-        e_msg = ('Two or more disks are required for the raid level: raid5')
+        e_msg = '2 or more disks are required for the raid level: raid5.'
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -770,8 +777,8 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response4.data)
-        e_msg = ('Disk(sde) cannot be removed because it does not belong '
-                 'to this Pool(raid5pool)')
+        e_msg = ('Disk (sde) cannot be removed because it does not belong '
+                 'to this pool (raid5pool).')
         self.assertEqual(response4.data['detail'], e_msg)
 
         # remove 1 more disk which makes total number of disks less than 2
@@ -782,7 +789,7 @@ class PoolTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response4.data)
         e_msg = ('Disks cannot be removed from this pool because its raid '
-                 'configuration(raid5) requires a minimum of 2 disks')
+                 'configuration (raid5) requires a minimum of 2 disks.')
         self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
@@ -805,7 +812,7 @@ class PoolTests(APITestMixin, APITestCase):
                 'raid_level': 'raid6', }
 
         # create pool with 1 disk
-        e_msg = ('Three or more disks are required for the raid level: raid6')
+        e_msg = '3 or more disks are required for the raid level: raid6.'
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -837,8 +844,8 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response4.data)
-        e_msg = ('Disk(sde) cannot be removed because it does not belong to '
-                 'this Pool(raid6pool)')
+        e_msg = ('Disk (sde) cannot be removed because it does not belong to '
+                 'this pool (raid6pool).')
         self.assertEqual(response4.data['detail'], e_msg)
 
         # remove 2 disks
@@ -857,7 +864,7 @@ class PoolTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response4.data)
         e_msg = ('Disks cannot be removed from this pool because its raid '
-                 'configuration(raid6) requires a minimum of 3 disks')
+                 'configuration (raid6) requires a minimum of 3 disks.')
         self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
@@ -900,7 +907,7 @@ class PoolTests(APITestMixin, APITestCase):
         # remove 1 disk & change raid_level
         data2 = {'disks': ('sdc',),
                  'raid_level': 'raid0', }
-        e_msg = ('Raid configuration cannot be changed while removing disks')
+        e_msg = 'Raid configuration cannot be changed while removing disks.'
         response4 = self.client.put('%s/raid0pool/remove' % self.BASE_URL,
                                     data=data2)
         self.assertEqual(response4.status_code,
@@ -923,7 +930,7 @@ class PoolTests(APITestMixin, APITestCase):
         # migrate 'raid1' to 'single'
         data5 = {'disks': ('sdh',),
                  'raid_level': 'single', }
-        e_msg = ('Pool migration from raid1 to single is not supported.')
+        e_msg = 'Pool migration from raid1 to single is not supported.'
         response4 = self.client.put('%s/raid1pool/add' % self.BASE_URL,
                                     data=data5)
         self.assertEqual(response4.status_code,
@@ -932,8 +939,8 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response4.data['detail'], e_msg)
 
         # invalid migrate 'raid1' to 'raid10' with total disks < 4
-        e_msg = ('A minimum of Four drives are required for the raid '
-                 'level: raid10')
+        e_msg = ('A minimum of 4 drives are required for the raid '
+                 'level: raid10.')
         data5 = {'disks': ('sdh',),
                  'raid_level': 'raid10', }
         response4 = self.client.put('%s/raid1pool/add' % self.BASE_URL,
@@ -944,8 +951,8 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response4.data['detail'], e_msg)
 
         # invalid migrate from raid1 to raid6 with total disks < 3
-        e_msg = ('A minimum of Three drives are required for the raid '
-                 'level: raid6')
+        e_msg = ('A minimum of 3 drives are required for the raid '
+                 'level: raid6.')
         data5 = {'disks': [],
                  'raid_level': 'raid6', }
         response4 = self.client.put('%s/raid1pool/add' % self.BASE_URL,
@@ -970,8 +977,8 @@ class PoolTests(APITestMixin, APITestCase):
     def test_delete_pool(self, mock_share):
 
         # delete pool that is not empty
-        e_msg = ("Pool(pool1) is not empty. Delete is not allowed until all "
-                 "shares in the pool are deleted")
+        e_msg = ("Pool (pool1) is not empty. Delete is not allowed until all "
+                 "shares in the pool are deleted.")
         response5 = self.client.delete('%s/pool1' % self.BASE_URL)
         self.assertEqual(response5.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
