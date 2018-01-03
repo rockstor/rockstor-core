@@ -72,7 +72,7 @@ class EmailTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = 'unknown command(send-email) is not supported.'
+        e_msg = 'Unknown command (send-email) is not supported.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # send test email before setting up email account
@@ -81,8 +81,8 @@ class EmailTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('E-mail account must be setup first before test '
-                 'e-mail could be sent')
+        e_msg = ('E-mail account must be setup before a '
+                 'test e-mail can be sent.')
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
