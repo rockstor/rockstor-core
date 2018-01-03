@@ -88,8 +88,8 @@ class UserTests(APITestMixin, APITestCase):
             self.assertEqual(response.status_code,
                              status.HTTP_500_INTERNAL_SERVER_ERROR,
                              msg=response.data)
-            e_msg = ("Username is invalid. It must confirm to the regex: "
-                     "[A-Za-z][-a-zA-Z0-9_]*$")
+            e_msg = ("Username is invalid. It must conform to the regex: "
+                     "([A-Za-z][-a-zA-Z0-9_]*$).")
             self.assertEqual(response.data['detail'], e_msg)
 
         # username with more than 30 characters
@@ -99,7 +99,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Username cannot be more than 30 characters long")
+        e_msg = "Username cannot be more than 30 characters long."
         self.assertEqual(response.data['detail'], e_msg)
 
         # create user with no password
@@ -108,7 +108,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Password must be a valid string")
+        e_msg = "Password must be a valid string."
         self.assertEqual(response.data['detail'], e_msg)
 
         # create user with invalid admin(not boolean)
@@ -117,7 +117,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Admin(user type) must be a boolean")
+        e_msg = 'Element "admin" (user type) must be a boolean.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # create user with invalid shell
@@ -126,8 +126,8 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("shell(Y) is not valid. Valid shells are ('/opt/rock-dep"
-                 "/bin/rcli', '/bin/bash', '/sbin/nologin')")
+        e_msg = ("Element shell (Y) is not valid. Valid shells are "
+                 "('/opt/rock-dep/bin/rcli', '/bin/bash', '/sbin/nologin').")
         self.assertEqual(response.data['detail'], e_msg)
 
         # create user with existing username
@@ -136,8 +136,8 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("User(admin) already exists. Please choose a different "
-                 "username")
+        e_msg = ("User (admin) already exists. Please choose a different "
+                 "username.")
         self.assertEqual(response.data['detail'], e_msg)
 
         # create user with existing username admin2 and uid
@@ -146,8 +146,8 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("User(admin2) already exists. Please choose a different "
-                 "username")
+        e_msg = ("User (admin2) already exists. Please choose a different "
+                 "username.")
         self.assertEqual(response.data['detail'], e_msg)
 
         # create a user with existing uid (admin2 has uid 1001)
@@ -157,7 +157,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("uid: 1001 already exists. Please choose a different one.")
+        e_msg = "UID (1001) already exists. Please choose a different one."
         self.assertEqual(response.data['detail'], e_msg)
 
         # create a user that is already a system user(eg: root)
@@ -166,8 +166,8 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("User(root) already exists. Please choose a different "
-                 "username")
+        e_msg = ("User (root) already exists. Please choose a different "
+                 "username.")
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -193,7 +193,9 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("UID must be an integer")
+        # e_msg = ("UID must be an integer")
+        # TODO: Test need update for the following:
+        e_msg = 'UID must be an integer, try again. Exception: (None).'
         self.assertEqual(response.data['detail'], e_msg)
 
     def test_duplicate_name2(self):
@@ -204,8 +206,8 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("User(chrony) already exists. Please choose a different "
-                 "username")
+        e_msg = ("User (chrony) already exists. Please choose a different "
+                 "username.")
         self.assertEqual(response.data['detail'], e_msg)
 
     def test_duplicate_name1(self):
@@ -217,8 +219,8 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("User(admin2) already exists. Please choose a different "
-                 "username")
+        e_msg = ("User (admin2) already exists. Please choose a different "
+                 "username.")
         self.assertEqual(response.data['detail'], e_msg)
 
     def test_email_validation(self):
@@ -254,7 +256,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("User(admin5) does not exist")
+        e_msg = "User (admin5) does not exist."
         self.assertEqual(response.data['detail'], e_msg)
 
         data = {'password': 'admin2', 'group': 'admin'}
@@ -262,7 +264,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Editing restricted user(bin) is not supported.")
+        e_msg = "Editing restricted user (bin) is not supported."
         self.assertEqual(response.data['detail'], e_msg)
 
         data = {'admin': True, 'group': 'admin'}
@@ -270,8 +272,8 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("password reset is required to enable admin access. please "
-                 "provide a new password")
+        e_msg = ("Password reset is required to enable admin access. Please "
+                 "provide a new password.")
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -300,7 +302,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("User(admin5) does not exist")
+        e_msg = "User (admin5) does not exist."
         self.assertEqual(response.data['detail'], e_msg)
 
         # delete user that does not exists
@@ -309,7 +311,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Delete of restricted user(bin) is not supported.")
+        e_msg = "Delete of restricted user (bin) is not supported."
         self.assertEqual(response.data['detail'], e_msg)
 
         username = 'admin2'
@@ -318,7 +320,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("A low level error occured while deleting the user: admin2")
+        e_msg = "A low level error occurred while deleting the user (admin2)."
         self.assertEqual(response.data['detail'], e_msg)
 
         # delete currently logged in user
@@ -328,7 +330,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ("Cannot delete the currently logged in user")
+        e_msg = "Cannot delete the currently logged in user."
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
