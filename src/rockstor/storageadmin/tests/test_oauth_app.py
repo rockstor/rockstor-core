@@ -60,7 +60,8 @@ class OauthAppTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('application with name: cliapp already exists.')
+        e_msg = ('Application with name (cliapp) already exists. Choose a '
+                 'different name.')
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -77,7 +78,7 @@ class OauthAppTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('application(invalid) does not exist')
+        e_msg = 'Application with id (invalid) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # invalid delete operation
@@ -87,11 +88,13 @@ class OauthAppTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('application(cliapp) cannot be deleted because it is used '
-                 'internally by Rockstor. If you really need to delete it, '
-                 'login as root and use /opt/rock-dep/bin/delete-api-key '
-                 'command. If you do delete it, please create another one '
-                 'with the same name as it is required by Rockstor '
+        e_msg = ('Application with id (cliapp) cannot be deleted because '
+                 'it is '
+                 'used internally by Rockstor. If you really need to '
+                 'delete it, login as root and use '
+                 '/opt/rock-dep/delete-api-key command. If you do delete it, '
+                 'please create another one with the same name as it '
+                 'is required by Rockstor '
                  'internally.')
         self.assertEqual(response.data['detail'], e_msg)
 
