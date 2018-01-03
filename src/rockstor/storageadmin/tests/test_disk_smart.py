@@ -72,7 +72,7 @@ class DiskSmartTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Disk: invalid does not exist')
+        e_msg = 'Disk id (invalid) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # invalid command
@@ -80,8 +80,8 @@ class DiskSmartTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Unknown command: invalid. Only valid commands are info '
-                 'and test')
+        e_msg = ('Unknown command: (invalid). The only valid commands are '
+                 'info and test.')
         self.assertEqual(response.data['detail'], e_msg)
 
         # unsupported self test
@@ -90,7 +90,7 @@ class DiskSmartTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Unsupported Self-Test: invalid')
+        e_msg = 'Unsupported Self-Test: (invalid).'
         self.assertEqual(response.data['detail'], e_msg)
 
         # test command
