@@ -96,13 +96,14 @@ class NetworkTests(APITestMixin, APITestCase):
         """
         put, change itype
         """
+        # TODO: test needs updating, interface now different.
         # invalid network interface
         data = {'itype': 'management'}
         response = self.client.put('%s/invalid' % self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = 'Netowrk interface(invalid) does not exist.'
+        e_msg = 'Network connection (invalid) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # edit configuration with out providing config method
