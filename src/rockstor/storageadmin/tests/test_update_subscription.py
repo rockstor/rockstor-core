@@ -60,7 +60,7 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Activation code is required for Stable subscription')
+        e_msg = 'Activation code is required for Stable subscription.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # repo staturn returning inactive
@@ -70,9 +70,17 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Activation code(None) could not be authorized. Verify the '
-                 'code and try again. If the problem persists, contact '
-                 'support@rockstor.com')
+        # e_msg = (
+        #         'Activation code (None) could not be authorized. Verify the '
+        #         'code and try again. If the problem persists, contact '
+        #         'support@rockstor.com')
+        # TODO Test needs updating to accommodate for newer message + app uuid.
+        appliance_uuid = '1234'
+        e_msg = (
+                'Activation code (None) could not be authorized for your '
+                'appliance (1234). Verify the code and try again. If the '
+                'problem persists, email support@rockstor.com with this '
+                'message.')
         self.assertEqual(response.data['detail'], e_msg)
         self.mock_repo_status.return_value = ('active', 'public repo')
 
@@ -83,7 +91,7 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Failed to activate subscription. status code: invalid '
+        e_msg = ('Failed to activate subscription. Status code: invalid '
                  'details: public repo')
         self.assertEqual(response.data['detail'], e_msg)
         self.mock_repo_status.return_value = ('active', 'public repo')
