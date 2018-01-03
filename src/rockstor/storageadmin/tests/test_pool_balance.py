@@ -60,7 +60,7 @@ class PoolBalanceTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Pool(invalid) does not exist')
+        e_msg = 'Pool (invalid) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # Invalid scrub command
@@ -71,7 +71,7 @@ class PoolBalanceTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Unknown balance command: invalid')
+        e_msg = 'Unknown balance command (invalid).'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
