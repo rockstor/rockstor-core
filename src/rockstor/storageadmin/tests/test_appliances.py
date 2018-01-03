@@ -88,7 +88,7 @@ class AppliancesTests(APITestMixin, APITestCase):
                          msg=response.data)
 
         e_msg = ('The appliance with ip = 192.168.56.101 already exists '
-                 'and cannot be added again')
+                 'and cannot be added again.')
         self.assertEqual(response.data['detail'], e_msg)
 
         # invalid management port
@@ -99,7 +99,7 @@ class AppliancesTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Invalid management port(invalid) supplied. Try again')
+        e_msg = 'Invalid management port (invalid) supplied. Try again.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
@@ -124,5 +124,5 @@ class AppliancesTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Appliance(11) does not exist')
+        e_msg = 'Appliance id (11) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
