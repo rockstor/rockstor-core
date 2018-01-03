@@ -130,10 +130,15 @@ class ShareTests(APITestMixin, APITestCase):
             self.assertEqual(response.data['name'], sname)
 
         # invalid pool names
-        e_msg = ('Share name must start with a alphanumeric(a-z0-9) character '
-                 'and can be followed by any of the following characters: '
-                 'letter(a-z), digits(0-9), hyphen(-), underscore(_) or a '
-                 'period(.).')
+        # e_msg = ('Share name must start with a alphanumeric(a-z0-9) character '
+        #          'and can be followed by any of the following characters: '
+        #          'letter(a-z), digits(0-9), hyphen(-), underscore(_) or a '
+        #          'period(.).')
+        # TODO Test needs updating
+        e_msg = ('Invalid characters in share name. Following are '
+                 'allowed: letter(a-z or A-Z), digit(0-9), '
+                 'hyphen(-), underscore(_) or a period(.).')
+
         invalid_names = ('Share $', '-share', '.share', '', ' ',)
         for sname in invalid_names:
             data['sname'] = sname
@@ -144,7 +149,7 @@ class ShareTests(APITestMixin, APITestCase):
             self.assertEqual(response.data['detail'], e_msg)
 
         # Share name with more than 255 characters
-        e_msg = ('Share name length cannot exceed 254 characters')
+        e_msg = 'Share name length cannot exceed 254 characters.'
 
         data['sname'] = 'Sh' + 'a' * 251 + 're'
         response = self.client.post(self.BASE_URL, data=data)
@@ -168,7 +173,7 @@ class ShareTests(APITestMixin, APITestCase):
         # create a share on a pool that does not exist
         data = {'sname': 'rootshare', 'pool': 'does_not_exist',
                 'size': 1048576}
-        e_msg = ('Pool(does_not_exist) does not exist.')
+        e_msg = 'Pool (does_not_exist) does not exist.'
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -184,7 +189,7 @@ class ShareTests(APITestMixin, APITestCase):
 
         # create a share with invalid compression
         data['compression'] = 'invalid'
-        e_msg2 = ("Unsupported compression algorithm(invalid). Use one of "
+        e_msg2 = ("Unsupported compression algorithm (invalid). Use one of "
                   "('lzo', 'zlib', 'no')")
         response3 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response3.status_code,
@@ -194,7 +199,7 @@ class ShareTests(APITestMixin, APITestCase):
 
         # create a share with invalid size (too small)
         data2 = {'sname': 'too_small', 'pool': 'rockstor_rockstor', 'size': 1}
-        e_msg3 = ('Share size should atleast be 100KB. Given size is 1KB')
+        e_msg3 = 'Share size should be at least 100 KB. Given size is 1 KB.'
         response4 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -203,7 +208,7 @@ class ShareTests(APITestMixin, APITestCase):
 
         # create a share with invalid size (non integer)
         data2['size'] = 'non int'
-        e_msg4 = ('Share size must be an integer')
+        e_msg4 = 'Share size must be an integer.'
         response5 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response5.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -213,8 +218,9 @@ class ShareTests(APITestMixin, APITestCase):
         # create share with same name as a pool that already exists
         data3 = {'sname': 'rockstor_rockstor', 'pool': 'rockstor_rockstor',
                  'size': 1048576}
-        e_msg5 = ('A Pool with this name(rockstor_rockstor) exists. Share and '
-                  'Pool names must be distinct. Choose a different name')
+        e_msg5 = ('A pool with this name (rockstor_rockstor) exists. Share '
+                  'and pool names must be distinct. Choose '
+                  'a different name.')
         response6 = self.client.post(self.BASE_URL, data=data3)
         self.assertEqual(response6.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -223,7 +229,7 @@ class ShareTests(APITestMixin, APITestCase):
 
         # create share with name that already exists
         data3['sname'] = 'rootshare'
-        e_msg6 = ('Share(rootshare) already exists. Choose a different name')
+        e_msg6 = 'Share (rootshare) already exists. Choose a different name.'
         response7 = self.client.post(self.BASE_URL, data=data3)
         self.assertEqual(response7.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -242,7 +248,7 @@ class ShareTests(APITestMixin, APITestCase):
         # create share with invalid replica
         data5 = {'sname': 'invalid_replica', 'pool': 'rockstor_rockstor',
                  'size': 100, 'replica': 'non-bool'}
-        e_msg7 = ("replica must be a boolean, not <type 'unicode'>")
+        e_msg7 = "Replica must be a boolean, not (<type 'unicode'>)."
         response9 = self.client.post(self.BASE_URL, data=data5)
         self.assertEqual(response9.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -290,8 +296,8 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response3.data)
-        e_msg = ('Operation not permitted on this Share(root) because it is '
-                 'a special system Share')
+        e_msg = ('Operation not permitted on this share (root) because it is '
+                 'a special system share.')
         self.assertEqual(response3.data['detail'], e_msg)
 
         # resize a 'home' share
@@ -300,8 +306,8 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response3.data)
-        e_msg = ('Operation not permitted on this Share(home) because it is a '
-                 'special system Share')
+        e_msg = ('Operation not permitted on this share (home) because it is '
+                 'a special system share.')
         self.assertEqual(response3.data['detail'], e_msg)
 
         # resize to below current share usage value
@@ -310,8 +316,8 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response3.data)
-        e_msg = ('Unable to resize because requested new size(400KB) is less '
-                 'than current usage(500KB) of the share.')
+        e_msg = ('Unable to resize because requested new size (400KB) is less '
+                 'than current usage (500KB) of the share.')
         self.assertEqual(response3.data['detail'], e_msg)
 
         # resize below 100KB
@@ -321,7 +327,7 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response3.data)
-        e_msg = ('Share size should atleast be 100KB. Given size is 99KB')
+        e_msg = 'Share size should be at least 100 KB. Given size is 99 KB.'
         self.assertEqual(response3.data['detail'], e_msg)
 
         # resize a share that doesn't exist
@@ -330,7 +336,7 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response3.data)
-        e_msg = ('Share(invalid) does not exist')
+        e_msg = 'Share id (invalid) does not exist.'
         self.assertEqual(response3.data['detail'], e_msg)
 
     def test_compression(self):
@@ -348,8 +354,8 @@ class ShareTests(APITestMixin, APITestCase):
         # create share with invalid compression
         data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
                 'size': 100, 'compression': 'derp'}
-        e_msg = ("Unsupported compression algorithm(derp). "
-                 "Use one of ('lzo', 'zlib', 'no')")
+        e_msg = ("Unsupported compression algorithm (derp). "
+                 "Use one of ('lzo', 'zlib', 'no').")
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -440,7 +446,7 @@ class ShareTests(APITestMixin, APITestCase):
         # Delete share with replication related snapshots
         mock_snapshot.objects.filter(
             share=share, snap_type='replication').exists.return_value = True
-        e_msg = ('Share(rootshare) cannot be deleted as it has replication '
+        e_msg = ('Share (rootshare) cannot be deleted as it has replication '
                  'related snapshots.')
         response2 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response2.status_code,
@@ -452,8 +458,8 @@ class ShareTests(APITestMixin, APITestCase):
 
         # Delete share with NFS export
         mock_nfs.objects.filter(share=share).exists.return_value = True
-        e_msg = ('Share(rootshare) cannot be deleted as it is exported via '
-                 'nfs. Delete nfs exports and try again')
+        e_msg = ('Share (rootshare) cannot be deleted as it is exported via '
+                 'NFS. Delete NFS exports and try again.')
         response3 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -463,8 +469,8 @@ class ShareTests(APITestMixin, APITestCase):
 
         # Delete share that is shared via Samba
         mock_samba.objects.filter(share=share).exists.return_value = True
-        e_msg = ('Share(rootshare) cannot be deleted as it is shared via '
-                 'Samba. Unshare and try again')
+        e_msg = ('Share (rootshare) cannot be deleted as it is shared via '
+                 'Samba. Unshare and try again.')
         response4 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -474,7 +480,7 @@ class ShareTests(APITestMixin, APITestCase):
 
         # Delete share with SFTP export
         mock_sftp.objects.filter(share=share).exists.return_value = True
-        e_msg = ('Share(rootshare) cannot be deleted as it is exported via '
+        e_msg = ('Share (rootshare) cannot be deleted as it is exported via '
                  'SFTP. Delete SFTP export and try again')
         response6 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response6.status_code,
@@ -487,8 +493,8 @@ class ShareTests(APITestMixin, APITestCase):
         # TODO this test get triggered by check for snap_type='replication'
         mock_snapshot.objects.filter(
             share=share, snap_type='admin').exists.return_value = True
-        e_msg = ('Share(rootshare) cannot be deleted as it has snapshots. '
-                 'Delete snapshots and try again')
+        e_msg = ('Share (rootshare) cannot be deleted as it has snapshots. '
+                 'Delete snapshots and try again.')
         response5 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response5.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -498,7 +504,7 @@ class ShareTests(APITestMixin, APITestCase):
             share=share, snap_type='admin').exists.return_value = False
 
         # delete a share that doesn't exist
-        e_msg = ('Share(invalid) does not exist')
+        e_msg = 'Share id (invalid) does not exist.'
         response9 = self.client.delete('%s/invalid' % self.BASE_URL)
         self.assertEqual(response9.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -532,7 +538,7 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['name'], 'rootshare')
 
         # Delete share
-        e_msg = ('Failed to delete the Share(rootshare). Error from the OS: ')
+        e_msg = 'Failed to delete the share (rootshare). Error from the OS: '
         mock_service.objects.get.side_effect = None
         self.mock_remove_share.side_effect = Exception
         response7 = self.client.delete('%s/rootshare' % self.BASE_URL)
@@ -546,11 +552,9 @@ class ShareTests(APITestMixin, APITestCase):
         class MockService(object):
             def __init__(self, **kwargs):
                 self.config = {'root_share': 'rootshare', }
-        e_msg = ('Share(rootshare) cannot be deleted because it is in use '
-                 'by Rock-on service. If you really need to delete '
-                 'it, (1)turn the service off, (2)change its '
-                 'configuration to use a different Share and then '
-                 '(3)try deleting this Share(%s) again.')
+        e_msg = ('Share (rootshare) cannot be deleted because it is in use '
+                 'by the Rock-on service. To override this block select '
+                 'the force checkbox and try again.')
         mock_service.objects.get.side_effect = MockService
         response7 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response7.status_code,
