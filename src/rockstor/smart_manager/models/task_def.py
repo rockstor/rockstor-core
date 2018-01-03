@@ -50,7 +50,7 @@ class TaskDefinition(models.Model):
             task_metadata = json.loads(self.json_meta)
             try:
                 sn = Share.objects.get(id=task_metadata['share']).name
-            except Share.DoesNotExist:
+            except Exception:
                 sn = 'N/A'
         return sn
 
