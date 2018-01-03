@@ -73,7 +73,7 @@ class ShareCommandTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Share(cshare1) does not exist')
+        e_msg = 'Share id (cshare1) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
         conf = {'get.side_effect': None}
         mock_share.objects.configure_mock(**conf)
@@ -110,7 +110,7 @@ class ShareCommandTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Share(rshare2) does not exist')
+        e_msg = 'Share id (rshare2) does not exist.'
         self.assertEqual(response.data['detail'], e_msg)
 
         # rollback share snapshot does not exist
@@ -125,7 +125,7 @@ class ShareCommandTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Snapshot(rsnap2) does not exist for this Share(rshare2)')
+        e_msg = 'Snapshot (rsnap2) does not exist for this share (rshare2).'
         self.assertEqual(response.data['detail'], e_msg)
         mock_snapshot.objects.get.side_effect = None
         mock_share.objects.get.side_effect = None
@@ -136,8 +136,8 @@ class ShareCommandTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Share(rshare2) cannot be rolled back as it is exported via '
-                 'nfs. Delete nfs exports and try again')
+        e_msg = ('Share (rshare2) cannot be rolled back as it is exported via '
+                 'NFS. Delete nfs exports and try again.')
         self.assertEqual(response.data['detail'], e_msg)
 
         # rollback share while exported via Samba
@@ -147,8 +147,8 @@ class ShareCommandTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Share(rshare2) cannot be rolled back as it is shared'
-                 ' via Samba. Unshare and try again')
+        e_msg = ('Share (rshare2) cannot be rolled back as it is shared '
+                 'via Samba. Unshare and try again.')
         self.assertEqual(response.data['detail'], e_msg)
 
         # rollback happy path
