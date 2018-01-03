@@ -74,7 +74,7 @@ class GroupTests(APITestMixin, APITestCase):
             self.assertEqual(response.status_code,
                              status.HTTP_500_INTERNAL_SERVER_ERROR,
                              msg=response.data)
-            err_msg = ('Groupname is invalid. It must confirm to the regex: '
+            err_msg = ('Groupname is invalid. It must conform to the regex: '
                        '[A-Za-z][-a-zA-Z0-9_]*$')
             self.assertEqual(response.data['detail'], err_msg)
 
@@ -84,7 +84,7 @@ class GroupTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.content)
-        err_msg = 'Groupname cannot be more than 30 characters long'
+        err_msg = 'Groupname cannot be more than 30 characters long.'
         self.assertEqual(response.data['detail'], err_msg)
 
         # invalid gid
@@ -94,7 +94,7 @@ class GroupTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        err_msg = 'GID(1001) already exists. Choose a different one'
+        err_msg = 'GID (1001) already exists. Choose a different one.'
         self.assertEqual(response.data['detail'], err_msg)
 
         # happy path
@@ -109,7 +109,7 @@ class GroupTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        err_msg = 'Group(foobargroup) does not exist'
+        err_msg = 'Group (foobargroup) does not exist.'
         self.assertEqual(response.data['detail'], err_msg)
 
         # delete a restricted group
@@ -117,7 +117,7 @@ class GroupTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        err_msg = 'Delete of restricted group(root) is not supported.'
+        err_msg = 'Delete of restricted group (root) is not supported.'
         self.assertEqual(response.data['detail'], err_msg)
 
         # happy path
