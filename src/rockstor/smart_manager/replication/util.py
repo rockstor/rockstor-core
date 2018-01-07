@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import time
 from storageadmin.exceptions import RockStorAPIException
-from storageadmin.models import Appliance
+from storageadmin.models import Appliance, Share
 from cli import APIWrapper
 import logging
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ class ReplicationMixin(object):
             self.raw = APIWrapper(client_id=a.client_id,
                                   client_secret=a.client_secret,
                                   url=url)
+        # TODO: update url to include senders shareId as sname is now invalid
         return self.raw.api_call(url='shares/%s' % sname)
 
     def update_replica_status(self, rtid, data):
@@ -114,7 +115,8 @@ class ReplicationMixin(object):
 
     def create_snapshot(self, sname, snap_name, snap_type='replication'):
         try:
-            url = ('shares/%s/snapshots/%s' % (sname, snap_name))
+            share = Share.objects.get(name=sname)
+            url = ('shares/%s/snapshots/%s' % (share.id, snap_name))
             return self.law.api_call(url, data={'snap_type': snap_type, },
                                      calltype='post', save_error=False)
         except RockStorAPIException as e:
@@ -123,9 +125,30 @@ class ReplicationMixin(object):
                 return logger.debug(e.detail)
             raise e
 
+    def update_repclone(self, sname, snap_name):
+        """
+        Call the dedicated create_repclone via it's url to supplant our
+        share with the given snapshot. Intended for use in receive.py to turn
+        the oldest snapshot into an existing share via unmount, mv, mount
+        cycle.
+        :param sname: Existing share name
+        :param snap_name: Name of snapshot to supplant given share with.
+        :return: False if there is a failure.
+        """
+        try:
+            share = Share.objects.get(name=sname)
+            url = 'shares/{}/snapshots/{}/repclone'.format(share.id, snap_name)
+            return self.law.api_call(url, calltype='post', save_error=False)
+        except RockStorAPIException as e:
+            if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
+                logger.debug(e.detail)
+                return False
+            raise e
+
     def delete_snapshot(self, sname, snap_name):
         try:
-            url = ('shares/%s/snapshots/%s' % (sname, snap_name))
+            share = Share.objects.get(name=sname)
+            url = ('shares/%s/snapshots/%s' % (share.id, snap_name))
             self.law.api_call(url, calltype='delete', save_error=False)
             return True
         except RockStorAPIException as e:
@@ -162,10 +185,17 @@ class ReplicationMixin(object):
             return self.law.api_call('commands/refresh-share-state', data=None,
                                      calltype='post', save_error=False)
         except Exception as e:
-            logger.error('Exception while refresh Shar state: %s'
+            logger.error('Exception while refreshing Share state: %s'
                          % e.__str__())
 
     def humanize_bytes(self, num, units=('Bytes', 'KB', 'MB', 'GB',)):
+        """
+        Recursive routine to establish and then return the most appropriate
+        num expression given the contents of units. Ie 1023 Bytes or 4096 KB
+        :param num: Assumed to be in Byte units.
+        :param units: list of units to recurse through
+        :return: "1023 Bytes" or "4.28 KB" etc given num=1023 or num=4384 )
+        """
         if (num < 1024 or len(units) == 1):
             return '%.2f %s' % (num, units[0])
         return self.humanize_bytes(num/1024, units[1:])

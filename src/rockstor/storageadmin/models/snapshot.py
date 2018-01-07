@@ -25,6 +25,8 @@ class Snapshot(models.Model):
     """display name of the snapshot"""
     name = models.CharField(max_length=4096)
     """real name of the snapshot"""
+    # TODO: Is real_name an equivalent to the Share model subvol-name, and
+    # TODO; if so should it contain the full path.
     real_name = models.CharField(max_length=4096, default='unknownsnap')
     """read-only by default"""
     writable = models.BooleanField(default=False)

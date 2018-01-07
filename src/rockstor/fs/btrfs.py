@@ -351,6 +351,9 @@ def add_share(pool, share_name, qid):
 
 
 def mount_share(share, mnt_pt):
+    # TODO: Consider making mnt_pt optional as per helper_mount_share() as then
+    # TODO: we could remove almost system wide many duplicates of temp mnt_pt
+    # TODO: created just prior and only for this methods call.
     if (is_mounted(mnt_pt)):
         return
     mount_root(share.pool)
@@ -560,6 +563,7 @@ def remove_share(pool, share_name, pqgroup, force=False):
     mount root pool
     btrfs subvolume delete root_mnt/vol_name
     umount root pool
+    :param pool: pool object
     """
     if (is_share_mounted(share_name)):
         mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
@@ -1292,8 +1296,20 @@ def set_property(mnt_pt, name, val, mount=True):
         return run_command(cmd)
 
 
-def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
-    if (not os.path.isdir(subvol_path)):
+def get_snap(subvol_path, oldest=False, num_retain=None, regex=None,
+             test_mode=False):
+    """
+    If the supplied path is a directory, it's last element after delimiter (/)
+    it taken and used as the share name. A subvol list is then generated via
+    "btrfs subvol list -o subvol_path" command.
+    :param subvol_path:
+    :param oldest:
+    :param num_retain:
+    :param regex:
+    :param test_mode:
+    :return:
+    """
+    if (not os.path.isdir(subvol_path)) and not test_mode:
         return None
     share_name = subvol_path.split('/')[-1]
     cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]

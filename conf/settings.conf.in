@@ -314,7 +314,7 @@ SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICATION = {
 	    'ipc_socket': '/var/run/replication.sock',
 	    'max_send_attempts': 10,
-	    'max_snap_retain': 5,
+	    'max_snap_retain': 2,
 	    'listener_port': 10002,
 }
 

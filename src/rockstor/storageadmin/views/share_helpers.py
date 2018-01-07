@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import re
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
@@ -87,6 +87,8 @@ def import_shares(pool, request):
     # Delete db Share object if it is no longer found on disk.
     for s_in_pool_db in shares_in_pool_db:
         if s_in_pool_db not in shares_in_pool:
+            logger.debug('Removing, missing on disk, share db entry ({}) from '
+                         'pool ({}).'.format(s_in_pool_db, pool.name))
             Share.objects.get(pool=pool, name=s_in_pool_db).delete()
     # Check if each share in pool also has a db counterpart.
     for s_in_pool in shares_in_pool:
@@ -168,15 +170,26 @@ def import_shares(pool, request):
             logger.debug('Db share entry does not exist - creating.')
             # We have a share on disk that has no db counterpart so create one.
             # Retrieve new pool quota id for use in db Share object creation.
+            # As the replication receive share is 'special' we tag it as such.
+            replica = False
+            share_name = s_in_pool
+            if re.match('.snapshot', s_in_pool) is not None:
+                # We have an initial replication share, non snap in .snapshots.
+                # We could change it's name here but still a little mixing
+                # of name and subvol throughout project.
+                replica = True
+                logger.debug('Initial receive quirk-subvol found: Importing '
+                             'as share and setting replica flag.')
             pqid = qgroup_create(pool)
             update_quota(pool, pqid, pool.size * 1024)
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
                 volume_usage(pool, shares_in_pool[s_in_pool], pqid)
             nso = Share(pool=pool, qgroup=shares_in_pool[s_in_pool],
-                        pqgroup=pqid, name=s_in_pool, size=pool.size,
+                        pqgroup=pqid, name=share_name, size=pool.size,
                         subvol_name=s_in_pool, rusage=rusage, eusage=eusage,
                         pqgroup_rusage=pqgroup_rusage,
-                        pqgroup_eusage=pqgroup_eusage)
+                        pqgroup_eusage=pqgroup_eusage,
+                        replica=replica)
             nso.save()
             update_shareusage_db(s_in_pool, rusage, eusage)
             mount_share(nso, '%s%s' % (settings.MNT_PT, s_in_pool))
@@ -188,11 +201,15 @@ def import_snapshots(share):
     snaps = [s.name for s in Snapshot.objects.filter(share=share)]
     for s in snaps:
         if (s not in snaps_d):
+            logger.debug('Removing, missing on disk, snapshot db entry ({}) '
+                         'from share ({}).'.format(s, share.name))
             Snapshot.objects.get(share=share, name=s).delete()
     for s in snaps_d:
         if (s in snaps):
             so = Snapshot.objects.get(share=share, name=s)
         else:
+            logger.debug('Adding, missing in db, on disk snapshot ({}) '
+                         'against share ({}).'.format(s, share.name))
             so = Snapshot(share=share, name=s, real_name=s,
                           writable=snaps_d[s][1], qgroup=snaps_d[s][0])
         rusage, eusage = volume_usage(share.pool, snaps_d[s][0])

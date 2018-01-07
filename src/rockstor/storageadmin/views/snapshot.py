@@ -28,7 +28,7 @@ from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from share_helpers import toggle_sftp_visibility
-from clone_helpers import create_clone
+from clone_helpers import create_clone, create_repclone
 from nfs_exports import NFSExportMixin
 
 import logging
@@ -171,6 +171,31 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 snapshot = Snapshot.objects.get(share=share, name=snap_name)
                 return create_clone(share, new_name, request, logger,
                                     snapshot=snapshot)
+            if (command == 'repclone'):
+                # When repclone is first called the oldest snapshot is
+                # actually a share. This is an artifact of import_shares()
+                # identifying the first snapshot incorrectly as a share.
+                # TODO: As a temporary work around for this, and to avoid
+                # TODO: modifying import_shares / import_snapshots for what is
+                # TODO: currently stable behaviour we simply try for a share
+                # TODO: if no snapshot is found, ie failing over to accommodate
+                # TODO: for the currently quirky behaviour of the imports.
+                # TODO: Note: this snap as share quirk is temporary as once a
+                # TODO: replication cycle has completed it is removed.
+                try:
+                    snapshot = Snapshot.objects.get(share=share,
+                                                    name=snap_name)
+                except Snapshot.DoesNotExist:
+                    # Here we rely on the polymorphism of Share/Snap and that
+                    # this quirky share is located as per regular snapshots.
+                    # The subvol of our snap-as-share-quirk is as per a snap:
+                    # ".snapshots/sharename/snapname"
+                    quirk_snap_share = '.snapshots/{}/{}'.format(share.name,
+                                                                 snap_name)
+                    logger.debug('Fail through for snap-as-share-quirk')
+                    snapshot = Share.objects.get(subvol_name=quirk_snap_share)
+                return create_repclone(share, request, logger,
+                                       snapshot=snapshot)
             e_msg = ('Unknown command: %s' % command)
             handle_exception(Exception(e_msg), request)
 

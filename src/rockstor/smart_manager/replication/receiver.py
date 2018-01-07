@@ -27,9 +27,10 @@ from django.conf import settings
 from django import db
 from contextlib import contextmanager
 from util import ReplicationMixin
-from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
+from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol,
+                      mount_share)
 from system.osi import run_command
-from storageadmin.models import (Pool, Appliance)
+from storageadmin.models import (Pool, Share, Appliance)
 from smart_manager.models import (ReplicaShare, ReceiveTrail)
 import shutil
 from cli import APIWrapper
@@ -57,7 +58,8 @@ class Receiver(ReplicationMixin, Process):
         self.kb_received = 0
         self.rid = None
         self.rtid = None
-        self.num_retain_snaps = 5
+        # We mirror senders max_snap_retain via settings.REPLICATION
+        self.num_retain_snaps = settings.REPLICATION.get('max_snap_retain')
         self.ctx = zmq.Context()
         self.rp = None
         self.raw = None
@@ -201,28 +203,21 @@ class Receiver(ReplicationMixin, Process):
             oldest_snap = get_oldest_snap(self.snap_dir, self.num_retain_snaps,
                                           regex='_replication_')
             if (oldest_snap is not None):
-                snap_path = ('%s/%s' % (self.snap_dir, oldest_snap))
-                share_path = ('%s%s/%s' %
-                              (settings.MNT_PT, self.dest_pool,
-                               self.sname))
-                pool = Pool.objects.get(name=self.dest_pool)
-                remove_share(pool, self.sname, '-1/-1')
-                set_property(snap_path, 'ro', 'false',
-                             mount=False)
-                run_command(['/usr/bin/rm', '-rf', share_path],
-                            throw=False)
-                shutil.move(snap_path, share_path)
-                self.delete_snapshot(self.sname, oldest_snap)
+                self.update_repclone(self.sname, oldest_snap)
+                self.refresh_share_state()
+                self.refresh_snapshot_state()
 
             self.msg = ('Failed to prune old Snapshots')
             self._delete_old_snaps(self.sname, self.snap_dir,
                                    self.num_retain_snaps + 1)
 
-            self.msg = ('Failed to validate the source share(%s) on '
-                        'sender(uuid: %s '
-                        ') Did the ip of the sender change?' %
-                        (self.src_share, self.sender_id))
-            self.validate_src_share(self.sender_id, self.src_share)
+            # TODO: The following should be re-instantiated once we have a
+            # TODO: working method for doing so. see validate_src_share.
+            # self.msg = ('Failed to validate the source share(%s) on '
+            #             'sender(uuid: %s '
+            #             ') Did the ip of the sender change?' %
+            #             (self.src_share, self.sender_id))
+            # self.validate_src_share(self.sender_id, self.src_share)
 
             sub_vol = ('%s%s/%s'
                        % (settings.MNT_PT, self.dest_pool, self.sname))
@@ -293,14 +288,17 @@ class Receiver(ReplicationMixin, Process):
                             self.msg = ('btrfs-recv exited with unexpected '
                                         'exitcode(%s). ' % self.rp.returncode)
                             raise Exception(self.msg)
+                        data = {'status': 'succeeded',
+                                'kb_received':
+                                    self.total_bytes_received / 1024, }
+                        self.msg = ('Failed to update receive trail for '
+                                    'rtid: %d' % self.rtid)
+                        self.update_receive_trail(self.rtid, data)
+
                         self._send_recv('btrfs-recv-finished')
                         self.refresh_share_state()
                         self.refresh_snapshot_state()
 
-                        self.msg = ('Failed to update receive trail for '
-                                    'rtid: %d' % self.rtid)
-                        self.update_receive_trail(self.rtid, {'status':
-                                                              'succeeded', })
                         dsize, drate = self.size_report(
                             self.total_bytes_received, t0)
                         logger.debug('Id: %s. Receive complete. Total data '
@@ -322,6 +320,11 @@ class Receiver(ReplicationMixin, Process):
                         self.total_bytes_received += len(message)
                         if (num_msgs == 1000):
                             num_msgs = 0
+                            data = {'status': 'pending',
+                                    'kb_received':
+                                        self.total_bytes_received / 1024, }
+                            self.update_receive_trail(self.rtid, data)
+
                             dsize, drate = self.size_report(
                                 self.total_bytes_received, t0)
                             logger.debug('Id: %s. Receiver alive. Data '

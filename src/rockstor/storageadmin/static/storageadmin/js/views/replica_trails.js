@@ -41,7 +41,6 @@ ReplicaTrailsView = RockstorLayoutView.extend({
         this.collection = new ReplicaTrailCollection(null, {
             replicaId: this.replicaId
         });
-        this.collection.pageSize = 10;
         this.dependencies.push(this.collection);
         this.collection.on('reset', this.renderReplicaTrails, this);
         // has the replica been fetched? prevents renderReplicaTrails executing
@@ -76,6 +75,22 @@ ReplicaTrailsView = RockstorLayoutView.extend({
         this.$('[rel=tooltip]').tooltip({
             placement: 'bottom'
         });
+        //Added columns definition for sorting purpose
+        var customs = {
+            'iDisplayLength': 15,
+            'aLengthMenu': [
+                [15, 30, 45, -1],
+                [15, 30, 45, 'All']
+            ],
+            'order': [[0, 'desc']],
+            'columns': [
+                null, null, null, null, null, null,
+                {
+                    'orderDataType': 'dom-checkbox'
+                }
+            ]
+        };
+        this.renderDataTables(customs);
     },
 
     initHandlebarHelpers: function() {
@@ -96,12 +111,17 @@ ReplicaTrailsView = RockstorLayoutView.extend({
         });
 
         Handlebars.registerHelper('humanReadableSize', function(size) {
-            return humanize.filesize(size * 1024);
+            if (size === 0){
+                return '0 or < 1KB'
+            } else {
+                return humanize.filesize(size * 1024);
+            }
         });
 
         Handlebars.registerHelper('getRate', function(endTime, startTime, kbSent) {
+            if (kbSent === 0) return 'N/A'
             var d;
-            if (kbSent) {
+            if (endTime != null) {
                 d = moment(endTime).diff(moment(startTime)) / 1000;
             } else {
                 d = moment().diff(moment(startTime)) / 1000;
@@ -112,6 +132,3 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 
 
 });
-
-//Add pagination
-Cocktail.mixin(ReplicaTrailsView, PaginationMixin);
