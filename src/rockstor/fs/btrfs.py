@@ -39,6 +39,7 @@ MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
 MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
+CHATTR = '/usr/bin/chattr'
 DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 QID = '2015'
@@ -557,9 +558,14 @@ def share_id(pool, share_name):
 def remove_share(pool, share_name, pqgroup, force=False):
     """
     umount share if its mounted.
-    mount root pool
-    btrfs subvolume delete root_mnt/vol_name
-    umount root pool
+    unsures given pool is mounted.
+    if force flag set then first delete all share's subvolumes.
+    btrfs subvolume delete root_mnt/vol_name.
+    destroy shares qgroup and associated pqgroup.
+    :param pool: pool object
+    :param share_name: Share name as in share.name
+    :param pqgroup: Pqgroup to be removed
+    :param force: Flag used to also remove all subvolumes of the given share.
     """
     if (is_share_mounted(share_name)):
         mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
@@ -568,12 +574,20 @@ def remove_share(pool, share_name, pqgroup, force=False):
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     if (not is_subvol(subvol_mnt_pt)):
         return
+    # Remove the immutable flag if set as this will block a subvol delete
+    # with an 'Operation not permitted' and leave an unmounted share.
+    # This flag can also break replication as we supplant the transient share.
+    # The immutable flag has been seen to spontaneously appear. Upon this
+    # bug being resolved we might consider promoting to force=True calls only.
+    chattr_cmd = [CHATTR, '-i', subvol_mnt_pt]
+    run_command(chattr_cmd, log=True)
     if (force):
         o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-o',
                                 subvol_mnt_pt])
         for l in o:
             if (re.match('ID ', l) is not None):
                 subvol = root_pool_mnt + '/' + l.split()[-1]
+                # TODO: consider recursive immutable flag removal.
                 run_command([BTRFS, 'subvolume', 'delete', subvol], log=True)
     qgroup = ('0/%s' % share_id(pool, share_name))
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
