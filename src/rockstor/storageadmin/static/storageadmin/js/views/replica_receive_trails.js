@@ -67,8 +67,22 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
         this.$('[rel=tooltip]').tooltip({
             placement: 'bottom'
         });
-
-        this.renderDataTables();
+        //Added columns definition for sorting purpose
+        var customs = {
+            'iDisplayLength': 15,
+            'aLengthMenu': [
+                [15, 30, 45, -1],
+                [15, 30, 45, 'All']
+            ],
+            'order': [[0, 'desc']],
+            'columns': [
+                null, null, null, null, null, null,
+                {
+                    'orderDataType': 'dom-checkbox'
+                }
+            ]
+        };
+        this.renderDataTables(customs);
     },
 
     initHandlebarHelpers: function() {
@@ -89,12 +103,17 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
         });
 
         Handlebars.registerHelper('humanReadableSize', function(size) {
-            return humanize.filesize(size * 1024);
+            if (size === 0){
+                return '0 or < 1KB'
+            } else {
+                return humanize.filesize(size * 1024);
+            }
         });
 
         Handlebars.registerHelper('getRate', function(endTime, startTime, kbReceived) {
+            if (kbReceived === 0) return 'N/A'
             var d;
-            if (kbReceived) {
+            if (endTime != null) {
                 d = moment(endTime).diff(moment(startTime)) / 1000;
             } else {
                 d = moment().diff(moment(startTime)) / 1000;
@@ -104,6 +123,3 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
     }
 
 });
-
-//Add pagination
-Cocktail.mixin(ReplicaReceiveTrailsView, PaginationMixin);

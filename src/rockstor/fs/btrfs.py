@@ -46,6 +46,7 @@ QID = '2015'
 # The following model/db default setting is also used when quotas are disabled.
 PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 
+
 def add_pool(pool, disks):
     """
     Makes a btrfs pool (filesystem) of name 'pool' using the by-id disk names
@@ -352,6 +353,9 @@ def add_share(pool, share_name, qid):
 
 
 def mount_share(share, mnt_pt):
+    # TODO: Consider making mnt_pt optional as per helper_mount_share() as then
+    # TODO: we could remove almost system wide many duplicates of temp mnt_pt
+    # TODO: created just prior and only for this methods call.
     if (is_mounted(mnt_pt)):
         return
     mount_root(share.pool)
@@ -1306,8 +1310,20 @@ def set_property(mnt_pt, name, val, mount=True):
         return run_command(cmd)
 
 
-def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
-    if (not os.path.isdir(subvol_path)):
+def get_snap(subvol_path, oldest=False, num_retain=None, regex=None,
+             test_mode=False):
+    """
+    If the supplied path is a directory, it's last element after delimiter (/)
+    it taken and used as the share name. A subvol list is then generated via
+    "btrfs subvol list -o subvol_path" command.
+    :param subvol_path:
+    :param oldest:
+    :param num_retain:
+    :param regex:
+    :param test_mode:
+    :return:
+    """
+    if (not os.path.isdir(subvol_path)) and not test_mode:
         return None
     share_name = subvol_path.split('/')[-1]
     cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]

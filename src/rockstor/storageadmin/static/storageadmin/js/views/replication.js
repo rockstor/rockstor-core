@@ -346,6 +346,3 @@ ReplicationView = RockstorLayoutView.extend({
     }
 
 });
-
-//Add pagination
-Cocktail.mixin(ReplicationView, PaginationMixin);

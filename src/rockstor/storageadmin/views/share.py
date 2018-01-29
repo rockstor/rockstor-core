@@ -105,9 +105,11 @@ class ShareListView(ShareMixin, rfc.GenericView):
             # If this box is receiving replication backups, the first full-send
             # is interpreted as a Share(because it does not have a parent
             # subvol/snapshot) It is a transient subvolume that gets rolled
-            # into a proper Share after 5 incremental-sends. Until then, keep
-            # such transient shares hidden from the UI, mostly for costmetic
-            # and UX reasons.
+            # into a proper Share after max_snap_retain + 1 incremental-sends.
+            # Until then, keep such transient shares hidden from the UI, mostly
+            # for cosmetic and UX reasons.
+            # TODO: This currently fails to work, needs investigating, leaving
+            # TODO: for now as good for indicting the initial rep phases.
             return Share.objects.exclude(
                 name__regex=r'^\.snapshots/.*/.*_replication_').order_by('-id')
 
