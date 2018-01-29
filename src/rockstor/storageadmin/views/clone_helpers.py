@@ -19,11 +19,82 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from storageadmin.models import (Share, Snapshot)
 from storageadmin.util import handle_exception
 from fs.btrfs import (add_clone, share_id, update_quota, mount_share,
-                      qgroup_create)
+                      qgroup_create, set_property, remove_share)
 from rest_framework.response import Response
 from storageadmin.serializers import ShareSerializer
 import re
+import shutil
 from django.conf import settings
+
+from system.osi import run_command
+
+
+def create_repclone(share, request, logger, snapshot):
+    """
+    Variant of create_clone but where the share already exists and is to be
+    supplanted by a snapshot which is effectively moved into the shares prior
+    position, both in the db and on the file system. This is achieved thus:
+    Unmount target share - (via remove_share()).
+    Btrfs subvol delete target share (via remove_share()).
+    Remove prior target share mount point (dir).
+    Move snap source to target share's former location (becomes share on disk).
+    Update existing target share db entry with source snap's qgroup / usage.
+    Remove source snap's db entry: updated share db entry makes it redundant.
+    Remount share (which now represents the prior snap's subvol relocated).
+    :param share: Share object to be supplanted
+    :param request:
+    :param logger: Logger object to reference
+    :param snapshot: Source snapshot/quirk share object to supplant target.
+    :return: response of serialized share (in it's updated form)
+    """
+    try:
+        logger.debug('Supplanting share ({}) with '
+                     'snapshot ({}).'.format(share.name, snapshot.name))
+        # We first strip our snapshot.name of any path as when we encounter the
+        # initially created receive subvol it is identified as a share with a
+        # snapshots location as it's subvol name (current quirk of import sys).
+        # E.g. first receive subvol/share-in-snapdir name example:
+        # ".snapshots/C583C37F-...1712B_sharename/sharename_19_replication_1".
+        # Subsequent more regular snapshots (in db as such) are named thus:
+        # "sharename_19_replication_2" or "sharename_19_replication_2" and on.
+        # The 19 in the above names is the generation of the replication task.
+        #
+        # Normalise source name across initial quirk share & subsequent snaps.
+        source_name = snapshot.name.split('/')[-1]
+        # Note in the above we have to use Object.name for polymorphism, but
+        # our share is passed by it's subvol (potential fragility point).
+        snap_path = '{}{}/.snapshots/{}/{}'.format(settings.MNT_PT,
+                                                   share.pool.name, share.name,
+                                                   source_name)
+        # eg /mnt2/poolname/.snapshots/sharename/snapname
+        share_path = ('{}{}/{}'.format(settings.MNT_PT, share.pool.name,
+                                       share.name))
+        # eg /mnt2/poolname/sharename
+        # unmount and then subvol deletes our on disk share
+        remove_share(share.pool, share.name, '-1/-1')
+        # Remove read only flag on our snapshot subvol
+        set_property(snap_path, 'ro', 'false', mount=False)
+        # Ensure removed share path is clean, ie remove mount point.
+        run_command(['/usr/bin/rm', '-rf', share_path], throw=False)
+        # Now move snapshot to prior shares location. Given both a share and
+        # a snapshot are subvols, we effectively promote the snap to a share.
+        shutil.move(snap_path, share_path)
+        # This should have re-established our just removed subvol.
+        # Supplant share db info with snap info to reflect new on disk state.
+        share.qgroup = snapshot.qgroup
+        share.rusage = snapshot.rusage
+        share.eusage = snapshot.eusage
+        share.save()
+        # delete our now redundant snapshot/quirky share db entry
+        snapshot.delete()
+        # update our share's quota
+        update_quota(share.pool, share.pqgroup, share.size * 1024)
+        # mount our newly supplanted share
+        mnt_pt = '{}{}'.format(settings.MNT_PT, share.name)
+        mount_share(share, mnt_pt)
+        return Response(ShareSerializer(share).data)
+    except Exception as e:
+        handle_exception(e, request)
 
 
 def create_clone(share, new_name, request, logger, snapshot=None):

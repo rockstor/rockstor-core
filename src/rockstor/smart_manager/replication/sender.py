@@ -44,6 +44,7 @@ class Sender(ReplicationMixin, Process):
         self.receiver_ip = receiver_ip
         self.receiver_port = replica.data_port
         self.replica = replica
+        # TODO: may need to send local shareId so it can be verifed remotely
         self.snap_name = '%s_%d_replication' % (replica.share, replica.id)
         self.snap_name += '_1' if (rt is None) else '_%d' % (rt.id + 1)
         self.snap_id = '%s_%s' % (self.uuid, self.snap_name)
@@ -223,18 +224,22 @@ class Sender(ReplicationMixin, Process):
 
             #  create a snapshot only if it's not already from a previous
             #  failed attempt.
+            # TODO: If one does exist we fail which seems harsh as we may be
+            # TODO: able to pickup where we left of depending on the failure.
             self.msg = ('Failed to create snapshot: %s. Aborting.'
                         % self.snap_name)
             self.create_snapshot(self.replica.share, self.snap_name)
 
-            retries_left = 10
+            retries_left = settings.REPLICATION.get('max_send_attempts')
+
             poll_interval = 6000  # 6 seconds
             while (True):
                 socks = dict(self.poll.poll(poll_interval))
                 if (socks.get(self.send_req) == zmq.POLLIN):
                     # not really necessary because we just want one reply for
                     # now.
-                    retries_left = 10
+                    retries_left = settings. \
+                        REPLICATION.get('max_send_attempts')
                     command, reply = self.send_req.recv_multipart()
                     if (command == 'receiver-ready'):
                         if (self.rt is not None):
@@ -324,7 +329,7 @@ class Sender(ReplicationMixin, Process):
                 except IOError:
                     continue
                 except Exception as e:
-                    self.msg = ('Exception occured while reading low '
+                    self.msg = ('Exception occurred while reading low '
                                 'level btrfs '
                                 'send data for %s. Aborting.' % self.snap_id)
                     if (alive):

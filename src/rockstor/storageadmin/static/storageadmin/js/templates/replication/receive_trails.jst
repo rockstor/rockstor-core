@@ -26,7 +26,7 @@
   <div class="row">
     <div class="col-md-12">
       <div class="messages"></div>
-      <table id="receive-trails-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="Replica trails">
+      <table id="receive-trails-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="Receive trails">
         <thead>
           <tr>
             <th scope="col" abbr="ID">ID</th>
@@ -35,7 +35,7 @@
             <th scope="col" abbr="Start Time">End Time</th>
             <th scope="col" abbr="Start Time">Status</th>
             <th scope="col" abbr="Start Time">Duration</th>
-            <th scope="col" abbr="Start Time">Data transferred / Transfer rate (KB)</th>
+            <th scope="col" abbr="Start Time">Data transferred at rate</th>
           </tr>
         </thead>
         <tbody>
@@ -58,7 +58,7 @@
                     {{getDuration this.end_ts receive_pending}}
                     {{/if}}
                 </td>
-                <td>{{humanReadableSize this.kb_received}} at {{getRate this.end_ts this.receive_pending this.kb_received}} /sec.</td>
+                <td>{{humanReadableSize this.kb_received}} at {{getRate this.end_ts this.receive_pending this.kb_received}}/sec</td>
             </tr>
           {{/each}}
         </tbody>
