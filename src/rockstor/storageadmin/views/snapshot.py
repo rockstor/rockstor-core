@@ -200,7 +200,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                     snapshot = Share.objects.get(subvol_name=quirk_snap_share)
                 return create_repclone(share, request, logger,
                                        snapshot=snapshot)
-            e_msg = ('Unknown command: %s' % command)
+            e_msg = 'Unknown command: ({}).'.format(command)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
