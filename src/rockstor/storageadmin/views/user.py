@@ -69,7 +69,7 @@ class UserMixin(object):
         shell = request.data.get('shell', '/bin/bash')
         if (shell not in settings.VALID_SHELLS):
             e_msg = ('Element shell ({}) is not valid. Valid shells '
-                     'are ({}).').format(shell, settings.VALID_SHELLS)
+                     'are {}.').format(shell, settings.VALID_SHELLS)
             handle_exception(Exception(e_msg), request, status_code=400)
         input_fields['shell'] = shell
         email = request.data.get('email', None)
@@ -123,6 +123,7 @@ class UserListView(UserMixin, rfc.GenericView):
             if (DjangoUser.objects.filter(
                     username=invar['username']).exists() or
                     User.objects.filter(username=invar['username']).exists()):
+
                 handle_exception(Exception(e_msg), request, status_code=400)
             users = combined_users()
             groups = combined_groups()
