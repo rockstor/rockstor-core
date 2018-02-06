@@ -690,6 +690,15 @@
     }
 },
 {
+    "fields": {
+        "admin": true,
+        "groupname": "test-user",
+        "gid": 1031
+    },
+    "model": "storageadmin.group",
+    "pk": 5
+},
+{
     "pk": 1, 
     "model": "storageadmin.user", 
     "fields": {
@@ -762,6 +771,23 @@
         "email": null, 
         "homedir": "/home/admin4"
     }
+},
+{
+    "fields": {
+        "username": "test-user",
+        "public_key": null,
+        "shell": "/bin/bash",
+        "group": 5,
+        "uid": 1031,
+        "admin": false,
+        "gid": 1031,
+        "user": null,
+        "smb_shares": [],
+        "email": null,
+        "homedir": "/home/test-user"
+    },
+    "model": "storageadmin.user",
+    "pk": 7
 },
 {
     "pk": 1, 
