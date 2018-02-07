@@ -1,0 +1,369 @@
+[
+{
+    "fields": {
+        "username": "admin",
+        "first_name": "",
+        "last_name": "",
+        "is_active": true,
+        "is_superuser": false,
+        "is_staff": false,
+        "last_login": "2018-02-07T18:54:22.173Z",
+        "groups": [],
+        "user_permissions": [],
+        "password": "pbkdf2_sha256$20000$TGVpYcKhzrUs$7KmgcbennXNnXixXckOVrHG0zXDndmsheNO6TagRwjQ=",
+        "email": "",
+        "date_joined": "2018-02-07T18:54:21.909Z"
+    },
+    "model": "auth.user",
+    "pk": 1
+},
+{
+    "fields": {
+        "expire_date": "2018-02-21T18:54:22.178Z",
+        "session_data": "Mjc5ZjIyZmZmNmViN2ViNmU4MzM3YzA3MzY0ZTFmOTQwMWFiYmRkMDp7Il9hdXRoX3VzZXJfaGFzaCI6IjMzNTBjMmViZjA0ZGRjZWY3NWYzNmM0MzE3ZmIxMWMzOWI1M2Y2MWUiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZCIsIl9hdXRoX3VzZXJfaWQiOiIxIn0="
+    },
+    "model": "sessions.session",
+    "pk": "9ebgzovjqxps70ood0jp8qigwrosnvlp"
+},
+{
+    "fields": {
+        "domain": "example.com",
+        "name": "example.com"
+    },
+    "model": "sites.site",
+    "pk": 1
+},
+{
+    "fields": {
+        "raid": "single",
+        "compression": null,
+        "uuid": "b3d201a8-b497-4365-a90d-a50c50b8e808",
+        "name": "rockstor_rockstor",
+        "mnt_options": null,
+        "role": "root",
+        "toc": "2018-02-07T18:55:23.700Z",
+        "size": 7025459
+    },
+    "model": "storageadmin.pool",
+    "pk": 1
+},
+{
+    "fields": {
+        "raid": "raid0",
+        "compression": null,
+        "uuid": null,
+        "name": "rock-pool",
+        "mnt_options": null,
+        "role": null,
+        "toc": "2018-02-07T18:55:23.675Z",
+        "size": 8388608
+    },
+    "model": "storageadmin.pool",
+    "pk": 2
+},
+{
+    "fields": {
+        "smart_enabled": false,
+        "parted": false,
+        "btrfs_uuid": "a42eafc7-6f3a-4a5c-ad6e-73ec789d07ce",
+        "vendor": "0x1af4",
+        "name": "virtio-serial-1",
+        "smart_available": false,
+        "transport": null,
+        "smart_options": null,
+        "role": null,
+        "serial": "serial-1",
+        "offline": false,
+        "model": null,
+        "pool": 2,
+        "size": 4194304
+    },
+    "model": "storageadmin.disk",
+    "pk": 1
+},
+{
+    "fields": {
+        "smart_enabled": false,
+        "parted": false,
+        "btrfs_uuid": "a42eafc7-6f3a-4a5c-ad6e-73ec789d07ce",
+        "vendor": "0x1af4",
+        "name": "virtio-serial-2",
+        "smart_available": false,
+        "transport": null,
+        "smart_options": null,
+        "role": null,
+        "serial": "serial-2",
+        "offline": false,
+        "model": null,
+        "pool": 2,
+        "size": 4194304
+    },
+    "model": "storageadmin.disk",
+    "pk": 2
+},
+{
+    "fields": {
+        "smart_enabled": false,
+        "parted": true,
+        "btrfs_uuid": "b3d201a8-b497-4365-a90d-a50c50b8e808",
+        "vendor": "0x1af4",
+        "name": "virtio-3579-part3",
+        "smart_available": false,
+        "transport": null,
+        "smart_options": null,
+        "role": "{\"root\": \"btrfs\"}",
+        "serial": "3579",
+        "offline": false,
+        "model": null,
+        "pool": 1,
+        "size": 7025459
+    },
+    "model": "storageadmin.disk",
+    "pk": 3
+},
+{
+    "fields": {
+        "pqgroup_rusage": 0,
+        "group": "root",
+        "name": "home",
+        "perms": "755",
+        "pqgroup": "2015/5",
+        "eusage": 16,
+        "uuid": null,
+        "pqgroup_eusage": 0,
+        "compression_algo": null,
+        "owner": "root",
+        "replica": false,
+        "qgroup": "0/258",
+        "toc": "2018-02-07T18:55:23.802Z",
+        "subvol_name": "home",
+        "rusage": 16,
+        "pool": 1,
+        "size": 7025459
+    },
+    "model": "storageadmin.share",
+    "pk": 1
+},
+{
+    "fields": {
+        "pqgroup_rusage": 0,
+        "group": "root",
+        "name": "root",
+        "perms": "755",
+        "pqgroup": "2015/6",
+        "eusage": 2212495,
+        "uuid": null,
+        "pqgroup_eusage": 0,
+        "compression_algo": null,
+        "owner": "root",
+        "replica": false,
+        "qgroup": "0/257",
+        "toc": "2018-02-07T18:55:23.840Z",
+        "subvol_name": "root",
+        "rusage": 2212495,
+        "pool": 1,
+        "size": 7025459
+    },
+    "model": "storageadmin.share",
+    "pk": 2
+},
+{
+    "fields": {
+        "pqgroup_rusage": 0,
+        "group": "root",
+        "name": "rock-share",
+        "perms": "755",
+        "pqgroup": "2015/197",
+        "eusage": 16,
+        "uuid": null,
+        "pqgroup_eusage": 0,
+        "compression_algo": null,
+        "owner": "root",
+        "replica": false,
+        "qgroup": "0/703",
+        "toc": "2018-02-07T18:55:23.758Z",
+        "subvol_name": "rock-share",
+        "rusage": 16,
+        "pool": 2,
+        "size": 8388608
+    },
+    "model": "storageadmin.share",
+    "pk": 3
+},
+{
+    "fields": {
+        "autoconnect": true,
+        "name": "eth0",
+        "ipv6_dns": null,
+        "ipv4_addresses": "192.168.124.235/24",
+        "ipv6_gw": null,
+        "ipv6_addresses": null,
+        "ipv4_dns": "192.168.124.1",
+        "state": "activated",
+        "ipv4_method": "auto",
+        "ipv6_dns_search": null,
+        "master": null,
+        "ipv4_gw": "192.168.124.1",
+        "ipv4_dns_search": null,
+        "ipv6_method": null,
+        "uuid": "8dca3630-8c54-4ad7-8421-327cc2d3d14a"
+    },
+    "model": "storageadmin.networkconnection",
+    "pk": 1
+},
+{
+    "fields": {
+        "name": "lo",
+        "state": "10 (unmanaged)",
+        "dtype": "loopback",
+        "connection": null,
+        "mtu": "65536",
+        "mac": "00:00:00:00:00:00"
+    },
+    "model": "storageadmin.networkdevice",
+    "pk": 1
+},
+{
+    "fields": {
+        "name": "eth0",
+        "state": "100 (connected)",
+        "dtype": "ethernet",
+        "connection": 1,
+        "mtu": "1500",
+        "mac": "52:54:00:58:5D:66"
+    },
+    "model": "storageadmin.networkdevice",
+    "pk": 2
+},
+{
+    "fields": {
+        "connection": 1,
+        "mtu": "auto",
+        "mac": "52:54:00:58:5D:66",
+        "cloned_mac": null
+    },
+    "model": "storageadmin.ethernetconnection",
+    "pk": 1
+},
+{
+    "fields": {
+        "current_appliance": true,
+        "uuid": "679E27FE-EB1A-4DE4-98EF-D9416830C4F5",
+        "mgmt_port": 443,
+        "ip": "",
+        "hostname": "install-test",
+        "client_id": null,
+        "client_secret": null
+    },
+    "model": "storageadmin.appliance",
+    "pk": 1
+},
+{
+    "fields": {
+        "admin": true,
+        "groupname": "admin",
+        "gid": 1002
+    },
+    "model": "storageadmin.group",
+    "pk": 1
+},
+{
+    "fields": {
+        "username": "admin",
+        "public_key": null,
+        "shell": "/bin/bash",
+        "group": 1,
+        "uid": 1002,
+        "admin": true,
+        "gid": 1002,
+        "user": [
+            "admin"
+        ],
+        "smb_shares": [],
+        "email": null,
+        "homedir": "/home/admin"
+    },
+    "model": "storageadmin.user",
+    "pk": 1
+},
+{
+    "fields": {
+        "setup_network": false,
+        "setup_user": true,
+        "setup_disks": false,
+        "setup_system": true
+    },
+    "model": "storageadmin.setup",
+    "pk": 1
+},
+{
+    "fields": {
+        "display_name": "Backup",
+        "css_file_name": "backup",
+        "description": "Backup Server functionality",
+        "js_file_name": "backup",
+        "key": "",
+        "name": "backup"
+    },
+    "model": "storageadmin.plugin",
+    "pk": 1
+},
+{
+    "fields": {
+        "application": 1,
+        "name": "cliapp",
+        "user": 1
+    },
+    "model": "storageadmin.oauthapp",
+    "pk": 1
+},
+{
+    "fields": {
+        "redirect_uris": "",
+        "name": "cliapp",
+        "client_type": "confidential",
+        "user": [
+            "admin"
+        ],
+        "client_id": "zf0fowbWQryO2cnEiPWGKInus8FWY8PlRnRWltJm",
+        "skip_authorization": false,
+        "client_secret": "AVfY3P43UquT2MQqLyfgX0YOi00g3wvV9pAt148JkRZg04YjQzHOaZX6kjA2UZxV6VKDSudz3EPh5zjXg2KE9sv2SM9qpq79OmcYLjhCXQ1NYuAiNXXMmHzbKv2GY9AN",
+        "authorization_grant_type": "client-credentials"
+    },
+    "model": "oauth2_provider.application",
+    "pk": 1
+},
+{
+    "fields": {
+        "application": 1,
+        "token": "fMPUrsRcen9wLFVB03vJDjRnWVSiAt",
+        "expires": "2018-02-08T04:54:22.916Z",
+        "user": null,
+        "scope": "read write"
+    },
+    "model": "oauth2_provider.accesstoken",
+    "pk": 1
+},
+{
+    "fields": {
+        "application": 1,
+        "token": "vJMXnH7JR1L37MVkoMzUH8uiPJOki9",
+        "expires": "2018-02-08T04:54:22.928Z",
+        "user": null,
+        "scope": "read write"
+    },
+    "model": "oauth2_provider.accesstoken",
+    "pk": 2
+},
+{
+    "fields": {
+        "application": 1,
+        "token": "OWupZ75lzh3SfMvCKF9n1Qn0Uypqaj",
+        "expires": "2018-02-08T04:54:22.928Z",
+        "user": null,
+        "scope": "read write"
+    },
+    "model": "oauth2_provider.accesstoken",
+    "pk": 3
+}
+]
