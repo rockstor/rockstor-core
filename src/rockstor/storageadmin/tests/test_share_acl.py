@@ -16,7 +16,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
+import mock
 from mock import patch
+
+from storageadmin import serializers
+from storageadmin.models import Snapshot, Pool, Share
 from storageadmin.tests.test_api import APITestMixin
 
 
@@ -32,11 +36,68 @@ class ShareAclTests(APITestMixin, APITestCase):
                                       'mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
 
+        # patch chown - system.acl wrappers for run_command
+        cls.patch_chown = patch('storageadmin.views.share_acl.chown')
+        cls.mock_chown = cls.patch_chown.start()
+        cls.mock_chown.return_value = ([''], [''], 0)
+
+        # patch chmod - system.acl wrapper for run_command
+        cls.patch_chmod = patch('storageadmin.views.share_acl.chmod')
+        cls.mock_chmod = cls.patch_chmod.start()
+        cls.mock_chmod.return_value = ([''], [''], 0)
+
     @classmethod
     def tearDownClass(cls):
         super(ShareAclTests, cls).tearDownClass()
 
-    def test_post_requests(self):
+    # May need to moc the ShareSerializer
+    @mock.patch('storageadmin.views.share_acl.ShareSerializer')
+    # we require Snapshot mock as ShareSerializer includes a snapshots field,
+    # see: storageadmin/serializers.py
+    @mock.patch('storageadmin.views.share_acl.Pool')
+    @mock.patch('storageadmin.views.share_acl.Snapshot')
+    @mock.patch('storageadmin.views.share_acl.Share')
+    def test_post_requests(self, mock_share, mock_snapshot, mock_pool,
+                           mock_share_serializer):
+
+        class MockShareSerializer(serializers.ModelSerializer):
+            mount_status = serializers.CharField()
+            is_mounted = serializers.BooleanField()
+            pqgroup_exist = serializers.BooleanField()
+
+            class Meta:
+                model = Share
+
+            def __init__(self, **kwargs):
+                pass
+
+        # Mocking from object avoids having to also mock a pool instance
+        # for self.pool.
+        class MockShare(object):
+            def __init__(self, **kwargs):
+                self.id = 55
+                self.name = 'share3'
+                self.subvol_name = 'share3'
+                self.pool = 1
+                self.size = 8924160
+                self.is_mounted = True
+                self.snapshot_set = None
+                # self.snapshots = []
+
+            def save(self):
+                pass
+
+        class MockPool(object):
+            def __init__(self, **kwargs):
+                self.id = 1
+                self.name = 'rockstor_rockstor'
+                self.disk_set = None
+
+        mock_share.objects.get.side_effect = MockShare
+        mock_snapshot.objects.get.side_effect = Snapshot.DoesNotExist
+
+        mock_pool.objects.get.side_effect = MockPool
+        mock_pool.objects.get.disk_set.side_effect = None
 
         # happy path
         shareId = 12
@@ -47,5 +108,5 @@ class ShareAclTests(APITestMixin, APITestCase):
         # TODO: The following FAIL due to:
         # "Exception: Share matching query does not exist."
         # but shareId is in fix2.json !
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
