@@ -77,7 +77,7 @@ class SFTPTests(APITestMixin, APITestCase):
                          msg=response.data)
 
         e_msg = 'Must provide share names.'
-        self.assertEqual(response.data['detail'], e_msg)
+        self.assertEqual(response.data[0], e_msg)
 
         # create sftp with already existing share
         data = {'shares': ('share2',)}
@@ -87,7 +87,7 @@ class SFTPTests(APITestMixin, APITestCase):
                          msg=response.data)
 
         e_msg = 'Share (share2) is already exported via SFTP.'
-        self.assertEqual(response.data['detail'], e_msg)
+        self.assertEqual(response.data[0], e_msg)
 
         # create sftp with share owned by root
         data = {'shares': ('share1',)}
@@ -98,7 +98,7 @@ class SFTPTests(APITestMixin, APITestCase):
 
         e_msg = ('Share (share1) is owned by root. It cannot be exported via '
                  'SFTP with root ownership.')
-        self.assertEqual(response.data['detail'], e_msg)
+        self.assertEqual(response.data[0], e_msg)
 
         # happy path
         data = {'shares': ('share3',), 'read_only': 'true', }
@@ -118,7 +118,7 @@ class SFTPTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
         e_msg = 'SFTP config for the id (1) does not exist.'
-        self.assertEqual(response.data['detail'], e_msg)
+        self.assertEqual(response.data[0], e_msg)
 
         # happy path
         sftp_id = 4
