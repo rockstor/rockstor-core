@@ -18,8 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
+import mock
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+from storageadmin.models import Pool
 
 
 class PoolBalanceTests(APITestMixin, APITestCase):
@@ -42,48 +44,75 @@ class PoolBalanceTests(APITestMixin, APITestCase):
     def tearDownClass(cls):
         super(PoolBalanceTests, cls).tearDownClass()
 
-    def test_get(self):
+    # @mock.patch('storageadmin.views.pool_balance.Pool')
+    @mock.patch('storageadmin.views.pool_balance.Pool')
+    def test_get(self, mock_pool):
 
         # get base URL
-        # 'pool1' is the pool already created and exits in fix1.json
-        response = self.client.get('%s/pool1/balance' % self.BASE_URL)
+        # 'pool1' is the pool already created and exits in fix1.json id=2
+
+        class MockPool(object):
+            def __init__(self, **kwargs):
+                self.id = 2
+                self.name = 'pool1'
+
+            def save(self):
+                pass
+
+        mock_pool.objects.get.side_effect = MockPool
+        pId = 2
+        response = self.client.get('{}/{}/balance'.format(self.BASE_URL, pId))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
+    # @mock.patch('storageadmin.views.pool_balance.Pool')
     def test_post_requests(self):
 
         # invalid pool
         data = {'force': 'true'}
-        response = self.client.post('%s/invalid/balance' % self.BASE_URL,
-                                    data=data)
-        self.assertEqual(response.status_code,
+        non_pId = 99999
+        # mock_pool.objects.get.side_effect = Pool.DoesNotExist
+        r = self.client.post('{}/{}/balance'.format(self.BASE_URL, non_pId),
+                             data=data)
+        self.assertEqual(r.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
+                         msg=r.data)
 
-        e_msg = 'Pool (invalid) does not exist.'
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = 'Pool ({}) does not exist.'.format(non_pId)
+        self.assertEqual(r.data[0], e_msg)
+
+        # class MockPool(object):
+        #     def __init__(self, **kwargs):
+        #         self.id = 2
+        #         self.name = 'pool1'
+        #
+        #     def save(self):
+        #         pass
+        #
+        # mock_pool.objects.get.side_effect = MockPool
 
         # Invalid scrub command
         data = {'force': 'true'}
-        response = self.client.post('%s/pool1/balance/invalid' % self.BASE_URL,
-                                    data=data)
-        self.assertEqual(response.status_code,
+        pId = 2
+        r = self.client.post('{}/{}/balance/invalid'.format(self.BASE_URL,
+                                                            pId), data=data)
+        self.assertEqual(r.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
+                         msg=r.data)
 
         e_msg = 'Unknown balance command (invalid).'
-        self.assertEqual(response.data['detail'], e_msg)
+        self.assertEqual(r.data[0], e_msg)
 
         # happy path
         data = {'force': 'true'}
-        response = self.client.post('%s/pool1/balance' % self.BASE_URL,
-                                    data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        r = self.client.post('{}/{}/balance'.format(self.BASE_URL, pId),
+                             data=data)
+        self.assertEqual(r.status_code,
+                         status.HTTP_200_OK, msg=r.data)
 
         # happy path
         data = {'force': 'true'}
-        response = self.client.post('%s/pool1/balance/status' % self.BASE_URL,
-                                    data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        r = self.client.post('{}/{}/balance/status'.format(self.BASE_URL, pId),
+                             data=data)
+        self.assertEqual(r.status_code,
+                         status.HTTP_200_OK, msg=r.data)
