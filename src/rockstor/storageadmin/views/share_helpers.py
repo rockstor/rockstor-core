@@ -23,7 +23,8 @@ from storageadmin.models import (Share, Snapshot, SFTP)
 from smart_manager.models import ShareUsage
 from fs.btrfs import (mount_share, mount_snap, is_mounted,
                       umount_root, shares_info, volume_usage, snaps_info,
-                      qgroup_create, update_quota, share_pqgroup_assign)
+                      qgroup_create, update_quota, share_pqgroup_assign,
+                      qgroup_assign)
 from storageadmin.util import handle_exception
 from copy import deepcopy
 
@@ -33,6 +34,9 @@ logger = logging.getLogger(__name__)
 
 NEW_ENTRY = True
 UPDATE_TS = False
+# The following model/db default setting is also used when quotas are disabled
+# or when a Read-only state prevents creation of a new pqgroup.
+PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 
 
 def helper_mount_share(share, mnt_pt=None):
@@ -100,7 +104,7 @@ def import_shares(pool, request):
             # Initially default our pqgroup value to db default of '-1/-1'
             # This way, unless quotas are enabled, all pqgroups will be
             # returned to db default.
-            pqgroup = settings.MODEL_DEFS['pqgroup']
+            pqgroup = PQGROUP_DEFAULT
             if share.pool.quotas_enabled:
                 # Quotas are enabled on our pool so we can validate pqgroup.
                 if share.pqgroup == pqgroup or not share.pqgroup_exist \
@@ -110,8 +114,9 @@ def import_shares(pool, request):
                     logger.debug('#### replacing void, non-existent, or '
                                  'duplicate pqgroup')
                     pqgroup = qgroup_create(pool)
-                    update_quota(pool, pqgroup, share.size * 1024)
-                    share_pqgroup_assign(pqgroup, share)
+                    if pqgroup is not PQGROUP_DEFAULT:
+                        update_quota(pool, pqgroup, share.size * 1024)
+                        share_pqgroup_assign(pqgroup, share)
                 else:
                     # Our share's pqgroup looks OK so use it.
                     pqgroup = share.pqgroup
@@ -180,14 +185,17 @@ def import_shares(pool, request):
                 replica = True
                 logger.debug('Initial receive quirk-subvol found: Importing '
                              'as share and setting replica flag.')
+            qid = shares_in_pool[s_in_pool]
             pqid = qgroup_create(pool)
-            update_quota(pool, pqid, pool.size * 1024)
+            if pqid is not PQGROUP_DEFAULT:
+                update_quota(pool, pqid, pool.size * 1024)
+                pool_mnt_pt = '{}{}'.format(settings.MNT_PT, pool.name)
+                qgroup_assign(qid, pqid, pool_mnt_pt)
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
-                volume_usage(pool, shares_in_pool[s_in_pool], pqid)
-            nso = Share(pool=pool, qgroup=shares_in_pool[s_in_pool],
-                        pqgroup=pqid, name=share_name, size=pool.size,
-                        subvol_name=s_in_pool, rusage=rusage, eusage=eusage,
-                        pqgroup_rusage=pqgroup_rusage,
+                volume_usage(pool, qid, pqid)
+            nso = Share(pool=pool, qgroup=qid, pqgroup=pqid, name=share_name,
+                        size=pool.size, subvol_name=s_in_pool, rusage=rusage,
+                        eusage=eusage, pqgroup_rusage=pqgroup_rusage,
                         pqgroup_eusage=pqgroup_eusage,
                         replica=replica)
             nso.save()

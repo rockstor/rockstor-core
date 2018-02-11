@@ -50,7 +50,7 @@ PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 def add_pool(pool, disks):
     """
     Makes a btrfs pool (filesystem) of name 'pool' using the by-id disk names
-    provided, then enables quotas for this pool.
+    provided, then attempts to enables quotas for this pool.
     :param pool: name of pool to create.
     :param disks: list of by-id disk names without paths to make the pool from.
     :return o, err, rc from last command executed.
@@ -70,8 +70,6 @@ def add_pool(pool, disks):
     # additional level of isolation.
     # Only execute enable_quota on above btrfs command having an rc=0
     if rc == 0:
-        # N.B. enable_quota wraps switch_quota() which doesn't enable logging
-        # so log what we have on rc != 0.
         out2, err2, rc2 = enable_quota(pool)
         if rc2 != 0:
             e_msg = (
@@ -675,7 +673,7 @@ def rollback_snap(snap_name, sname, subvol_name, pool):
     mount_root(pool)
     if (is_share_mounted(sname)):
         umount_root(mnt_pt)
-    remove_share(pool, subvol_name, '-1/-1')
+    remove_share(pool, subvol_name, PQGROUP_DEFAULT)
     shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
     create_tmp_dir(mnt_pt)
     subvol_str = 'subvol=%s' % sname
@@ -687,7 +685,20 @@ def rollback_snap(snap_name, sname, subvol_name, pool):
 def switch_quota(pool, flag='enable'):
     root_mnt_pt = mount_root(pool)
     cmd = [BTRFS, 'quota', flag, root_mnt_pt]
-    return run_command(cmd)
+    try:
+        o, e, rc = run_command(cmd, log=True)
+    except CommandException as e:
+        # Avoid failure when attempting an enable/disable quota change if
+        # our pool (vol) is ro: by catching this specific CommandException:
+        emsg = "ERROR: quota command failed: Read-only file system"
+        if e.err[0] == emsg:
+            logger.error('Failed to {} quotas on pool ({}). To resolve '
+                         'run "btrfs quota {} {}".'.format(flag, pool.name,
+                                                           flag, root_mnt_pt))
+            return e.out, e.err, e.rc
+        # otherwise we raise an exception as normal.
+        raise e
+    return o, e, rc
 
 
 def enable_quota(pool):
@@ -755,7 +766,7 @@ def qgroup_max(mnt_pt):
         # disabled quotas will result in o = [''], rc = 1 and e[0] =
         emsg = "ERROR: can't list qgroups: quotas not enabled"
         # this is non fatal so we catch this specific error and info log it.
-        if e.rc == 1 and e.err[0] == emsg:
+        if e.err[0] == emsg:
             logger.info('Mount Point: {} has Quotas disabled, skipping qgroup '
                         'show.'.format(mnt_pt))
             # and return our default res
@@ -772,20 +783,20 @@ def qgroup_max(mnt_pt):
     return res
 
 
-def qgroup_create(pool, qgroup='-1/-1'):
+def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
     """
     When passed only a pool an attempt will be made to ascertain if quotas is
     enabled, if not '-1/-1' is returned as a flag to indicate this state.
-    If quotas are not enabled then the highest available quota of the form
-    2015/n is selected and created, if possible.
+    If quotas are enabled then the highest available quota of the form
+    2015/n is selected and created, if possible (Read-only caveat).
     If passed both a pool and a specific qgroup an attempt is made, given the
     same behaviour as above, to create this specific group: this scenario is
     primarily used to re-establish prior existing qgroups post quota disable,
     share manipulation, quota enable cycling.
     :param pool: A pool object.
     :param qgroup: native qgroup of the form 2015/n
-    :return: -1/-1 on quotas disabled, otherwise it will return the native
-    quota whose creation was attempt.
+    :return: -1/-1 on quotas disabled or Read-only fs encountered, otherwise
+    it will return the successfully created native quota, ie 2015/n.
     """
     # mount pool
     mnt_pt = mount_root(pool)
@@ -806,10 +817,15 @@ def qgroup_create(pool, qgroup='-1/-1'):
         # ro mount options will result in o= [''], rc = 1 and e[0] =
         emsg = 'ERROR: unable to create quota group: Read-only file system'
         # this is non fatal so we catch this specific error and info log it.
-        if e.rc == 1 and e.err[0] == emsg:
+        if e.err[0] == emsg:
             logger.info('Pool: {} is Read-only, skipping qgroup '
                         'create.'.format(pool.name))
-            return qid
+            # We now return PQGROUP_DEFAULT because our proposed next
+            # available pqgroup can't be assigned anyway (Read-only file
+            # system). This in turn avoids populating share db pqgroup with
+            # non existent pqgroups and further flags for retires via the
+            # existing quota disabled management system.
+            return PQGROUP_DEFAULT
         # raise an exception as usual otherwise
         raise
     return qid
@@ -822,7 +838,7 @@ def qgroup_destroy(qid, mnt_pt):
     except CommandException as e:
         # we may have quotas disabled so catch and deal.
         emsg = "ERROR: can't list qgroups: quotas not enabled"
-        if e.rc == 1 and e.err[0] == emsg:
+        if e.err[0] == emsg:
             # we have quotas disabled so can't destroy any anyway so skip
             # and deal by returning False so our caller moves on.
             return False
@@ -844,7 +860,7 @@ def qgroup_is_assigned(qid, pqid, mnt_pt):
     except CommandException as e:
         # we may have quotas disabled so catch and deal.
         emsg = "ERROR: can't list qgroups: quotas not enabled"
-        if e.rc == 1 and e.err[0] == emsg:
+        if e.err[0] == emsg:
             # No deed to scan output as nothing to see with quotas disabled.
             # And since no quota capability can be enacted we return True
             # to avoid our caller trying any further with quotas.
@@ -889,8 +905,14 @@ def qgroup_assign(qid, pqid, mnt_pt):
     try:
         run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt], log=True)
     except CommandException as e:
+        emsg = 'ERROR: unable to assign quota group: Read-only file system'
+        # this is non fatal so we catch this specific error and info log it.
+        if e.err[0] == emsg:
+            logger.info('Read-only fs ({}), skipping qgroup assign: '
+                        'child ({}), parent ({}).'.format(mnt_pt, qid, pqid))
+            return e.out, e.err, e.rc
         wmsg = 'WARNING: quotas may be inconsistent, rescan needed'
-        if (e.rc == 1 and e.err[0] == wmsg):
+        if e.err[0] == wmsg:
             # schedule a rescan if one is not currently running.
             dmsg = ('Quota inconsistency while assigning %s. Rescan scheduled.'
                     % qid)
@@ -899,7 +921,7 @@ def qgroup_assign(qid, pqid, mnt_pt):
                 return logger.debug(dmsg)
             except CommandException as e2:
                 emsg = 'ERROR: quota rescan failed: Operation now in progress'
-                if (e2.rc == 1 and e2.err[0] == emsg):
+                if e2.err[0] == emsg:
                     return logger.debug('%s.. Another rescan already in '
                                         'progress.' % dmsg)
                 logger.exception(e2)
@@ -919,8 +941,9 @@ def update_quota(pool, qgroup, size_bytes):
     # Set defaults in case our run_command fails to assign them.
     out = err = ['']
     rc = 0
-    if qgroup == '-1/-1':
-        # We have a 'quotas disabled' qgroup value flag, log and return blank.
+    if qgroup == PQGROUP_DEFAULT:
+        # We have a 'quotas disabled' or 'Read-only' qgroup value flag,
+        # log and return blank.
         logger.info('Pool: {} ignoring '
                     'update_quota on {}'.format(pool.name, qgroup))
         return out, err, rc
@@ -931,7 +954,7 @@ def update_quota(pool, qgroup, size_bytes):
         emsg = 'ERROR: unable to limit requested quota group: ' \
                'Read-only file system'
         # this is non fatal so we catch this specific error and info log it.
-        if e.rc == 1 and e.err[0] == emsg:
+        if e.err[0] == emsg:
             logger.info('Pool: {} is Read-only, skipping qgroup '
                         'limit.'.format(pool.name))
             return out, err, rc
@@ -942,14 +965,14 @@ def update_quota(pool, qgroup, size_bytes):
         # is a non specific error: 'Invalid argument'.
         # TODO: improve this clause as currently too broad.
         # TODO: we could for example use if qgroup_max(mnt) == -1
-        if e.rc == 1 and e.err[0] == emsg2:
+        if e.err[0] == emsg2:
             logger.info('Pool: {} has encountered a qgroup limit issue, '
                         'skipping qgroup limit. Disabled quotas can cause '
                         'this error'.format(pool.name))
             return out, err, rc
         emsg3 = 'ERROR: unable to limit requested quota group: ' \
                 'No such file or directory'
-        if e.rc == 1 and e.err[0] == emsg3:
+        if e.err[0] == emsg3:
             logger.info('Pool: {} is missing expected '
                         'qgroup {}'.format(pool.name, qgroup))
             logger.info('Previously disabled quotas can cause this issue')
@@ -970,7 +993,7 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     :param pool: Pool object
     :param volume_id: qgroupid eg '0/261'
     :param pvolume_id: qgroupid eg '2015/4'
-    :return: list of len 2 (when pvolul_id=None) or 4 elements. The first 2
+    :return: list of len 2 (when pvolume_id=None) or 4 elements. The first 2
     pertain to the qgroupid=volume_id the second 2, if present, are for the
     qgroupid=pvolume_id. I.e [rfer, excl, rfer, excl]
     """
