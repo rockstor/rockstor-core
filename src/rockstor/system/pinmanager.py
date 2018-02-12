@@ -97,6 +97,7 @@ def username_to_uid(username):
 
     # Convert from username to user uid
     try:
+        # retrieve the password database entry for a given username
         user_uid = getpwnam(username).pw_uid
     except KeyError:
         # user doesn't exist
@@ -173,8 +174,10 @@ def generate_pincard():
 def flush_pincard(uid):
 
     # Clear all Pincard entries for selected user
-    Pincard.objects.filter(user=int(uid)).delete()
-
+    # But only if we have a uid, see username_to_uid() which will return None
+    # if called when the given user no longer exists.
+    if uid is not None:
+        Pincard.objects.filter(user=int(uid)).delete()
 
 def save_pincard(uid):
 
