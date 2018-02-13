@@ -223,7 +223,9 @@ def refresh_afp_config(afpl):
         rockstor_section = False
         tfo.write('; Netatalk 3.x configuration file\n\n')
         tfo.write('[Global]\n')
-        tfo.write('mimic model = RackMac\n\n')
+        tfo.write('mimic model = RackMac\n')
+        tfo.write('uam list = uams_dhx.so,uams_dhx2.so\n')
+        tfo.write('save password = no\n\n')
         for line in afo.readlines():
             if (re.match(';####BEGIN: Rockstor AFP CONFIG####', line)
                     is not None):
