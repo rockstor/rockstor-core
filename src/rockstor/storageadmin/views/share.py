@@ -38,7 +38,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# The following model/db default setting is also used when quotas are disabled.
+# The following model/db default setting is also used when quotas are disabled
+# or when a Read-only state prevents creation of a new pqgroup.
 PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 
 
@@ -177,11 +178,13 @@ class ShareListView(ShareMixin, rfc.GenericView):
             pqid = qgroup_create(pool)
             add_share(pool, sname, pqid)
             qid = qgroup_id(pool, sname)
-            update_quota(pool, pqid, size * 1024)
             s = Share(pool=pool, qgroup=qid, pqgroup=pqid, name=sname,
                       size=size, subvol_name=sname, replica=replica,
                       compression_algo=compression)
             s.save()
+            if pqid is not PQGROUP_DEFAULT:
+                update_quota(pool, pqid, size * 1024)
+                share_pqgroup_assign(pqid, s)
             mnt_pt = '%s%s' % (settings.MNT_PT, sname)
             if not s.is_mounted:
                 mount_share(s, mnt_pt)
@@ -233,8 +236,12 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                         # if quotas were disabled or pqgroup non-existent.
                         share.pqgroup = qgroup_create(share.pool)
                         share.save()
-                    update_quota(share.pool, share.pqgroup, new_size * 1024)
-                    share_pqgroup_assign(share.pqgroup, share)
+                    if share.pqgroup is not PQGROUP_DEFAULT:
+                        # Only update quota and assign if now non default as
+                        # default can also indicate Read-only fs at this point.
+                        update_quota(share.pool, share.pqgroup,
+                                     new_size * 1024)
+                        share_pqgroup_assign(share.pqgroup, share)
                 else:
                     # Our pool's quotas are disabled so reset pqgroup to -1/-1.
                     if share.pqgroup != PQGROUP_DEFAULT:

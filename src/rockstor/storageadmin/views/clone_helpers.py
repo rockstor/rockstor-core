@@ -19,7 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from storageadmin.models import (Share, Snapshot)
 from storageadmin.util import handle_exception
 from fs.btrfs import (add_clone, share_id, update_quota, mount_share,
-                      qgroup_create, set_property, remove_share)
+                      qgroup_create, set_property, remove_share,
+                      share_pqgroup_assign)
 from rest_framework.response import Response
 from storageadmin.serializers import ShareSerializer
 import re
@@ -122,10 +123,12 @@ def create_clone(share, new_name, request, logger, snapshot=None):
         snap_id = share_id(share.pool, new_name)
         qgroup_id = ('0/%s' % snap_id)
         pqid = qgroup_create(share.pool)
-        update_quota(share.pool, pqid, share.size * 1024)
         new_share = Share(pool=share.pool, qgroup=qgroup_id, pqgroup=pqid,
                           name=new_name, size=share.size, subvol_name=new_name)
         new_share.save()
+        if pqid is not settings.MODEL_DEFS['pqgroup']:
+            update_quota(new_share.pool, pqid, new_share.size * 1024)
+            share_pqgroup_assign(pqid, new_share)
         # Mount our new clone share.
         mnt_pt = '{}{}'.format(settings.MNT_PT, new_name)
         mount_share(new_share, mnt_pt)
