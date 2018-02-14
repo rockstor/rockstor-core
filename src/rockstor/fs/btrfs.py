@@ -138,7 +138,7 @@ def pool_raid(mnt_pt):
         if (len(fields) > 1):
             block = fields[0][:-1].lower()
             raid = fields[1][:-1].lower()
-            if block not in raid_d and raid is not 'DUP':
+            if block not in raid_d:
                 raid_d[block] = raid
     if (raid_d['metadata'] == 'single'):
         raid_d['data'] = raid_d['metadata']
@@ -1225,15 +1225,15 @@ def scrub_status(pool):
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
     cmd = ['btrfs', 'balance', 'start', mnt_pt]
-    # TODO: Confirm -f is doing what is intended, man states for reducing
-    # TODO: metadata from say raid1 to single.
     # With no filters we also get a warning that block some balances due to
     # expected long execution time, in this case "--full-balance" is required.
-    # N.B. currently force in Web-UI does not mean force here.
-    if (force):
+    if force:
         cmd.insert(3, '-f')
-    if (convert is not None):
+    if convert is not None:
         cmd.insert(3, '-dconvert=%s' % convert)
+        # Override metadata on single pools to be dup, as per btrfs default.
+        if convert == 'single':
+            convert = 'dup'
         cmd.insert(3, '-mconvert=%s' % convert)
     else:
         # As we are running with no convert filters a warning and 10 second
@@ -1241,6 +1241,7 @@ def start_balance(mnt_pt, force=False, convert=None):
         # This warning is now present in the Web-UI "Start a new balance"
         # button tooltip.
         cmd.insert(3, '--full-balance')
+    logger.debug('Balance command ({}).'.format(cmd))
     run_command(cmd)
 
 

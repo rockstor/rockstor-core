@@ -113,7 +113,12 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
         this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
         this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
-        this.renderDataTables();
+        // Sort all SubView tables in descending order by initial column.
+        // This way we see the latest Scrub / Balance items at the top.
+        var customs = {
+            'order': [[0, 'desc']]
+        };
+        this.renderDataTables(customs);
 
 
         this.$('#ph-compression-info').html(this.compression_info_template({

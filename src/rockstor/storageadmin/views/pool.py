@@ -212,6 +212,13 @@ class PoolMixin(object):
 
     def _balance_start(self, pool, force=False, convert=None):
         mnt_pt = mount_root(pool)
+        if convert is None and pool.raid == 'single':
+            # Btrfs balance without convert filters will convert dup level
+            # metadata on a single level data pool to raid1 on multi disk
+            # pools. Avoid by explicit convert in this instance.
+            logger.info('Preserve single data, dup metadata by explicit '
+                        'convert.')
+            convert = 'single'
         start_balance.async(mnt_pt, force=force, convert=convert)
         tid = 0
         count = 0
@@ -375,7 +382,9 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                                  'web-ui' % d.name)
                         handle_exception(Exception(e_msg), request)
 
-                if (pool.raid != 'single' and new_raid == 'single'):
+                if pool.raid == 'single' and new_raid == 'raid10':
+                    # TODO: Consider removing once we have better space calc.
+                    # Avoid extreme raid level change upwards (space issues).
                     e_msg = ('Pool migration from %s to %s is not supported.'
                              % (pool.raid, new_raid))
                     handle_exception(Exception(e_msg), request)
@@ -404,7 +413,12 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, dnames)
-                tid = self._balance_start(pool, convert=new_raid)
+                # During dev add we also offer raid level change, if selected
+                # blanket apply '-f' to allow for reducing metadata integrity.
+                force = False
+                if new_raid != pool.raid:
+                    force = True
+                tid = self._balance_start(pool, force=force, convert=new_raid)
                 ps = PoolBalance(pool=pool, tid=tid)
                 ps.save()
 
