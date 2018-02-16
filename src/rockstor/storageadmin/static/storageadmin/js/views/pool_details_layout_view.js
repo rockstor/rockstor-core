@@ -143,18 +143,12 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         var url = '/api/pools/' + this.pool.get('id') + '/remount';
         $('#comprOptn').editable({
             value: compr,
-            source: [{
-                value: 'no',
-                text: 'no'
-            },
-            {
-                value: 'zlib',
-                text: 'zlib'
-            },
-            {
-                value: 'lzo',
-                text: 'lzo'
-            }
+            emptytext: 'Unset',
+            emptyclass: 'editable-empty-custom',
+            source: [
+                {value: 'no', text: 'no'},
+                {value: 'zlib', text: 'zlib'},
+                {value: 'lzo', text: 'lzo'}
             ],
             success: function(response, newCompr) {
                 $.ajax({
@@ -172,6 +166,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         $('#mntOptions').editable({
             title: 'Edit Mount Options',
             emptytext: 'None',
+            emptyclass: 'editable-empty-custom',
             success: function(response, newMntOptns) {
                 $.ajax({
                     url: url,

@@ -317,7 +317,9 @@ class DiskMixin(object):
             if (dob.pool is None and d.root is True):
                 # setup our special root disk db entry in Pool
                 # TODO: dynamically retrieve raid level.
-                p = Pool(name=d.label, raid='single', role='root')
+                # TODO: dynamically retrieve compression level.
+                p = Pool(name=d.label, raid='single', role='root',
+                         compression='no')
                 p.save()
                 p.disk_set.add(dob)
                 # update disk db object to reflect special root pool status
@@ -679,8 +681,9 @@ class DiskDetailView(rfc.GenericView):
             disk = self._validate_disk(did, request)
             disk_name = self._role_filter_disk_name(disk, request)
             p_info = get_pool_info(disk_name)
-            # get some options from saved config?
-            po = Pool(name=p_info['label'], raid="unknown")
+            # Create our initial pool object, default to no compression.
+            po = Pool(name=p_info['label'], raid="unknown",
+                      compression="no")
             # need to save it so disk objects get updated properly in the for
             # loop below.
             po.save()
