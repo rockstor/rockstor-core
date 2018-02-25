@@ -191,6 +191,32 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
             placement: 'right'
         });
 
+        var url_quotas = '/api/pools/' + this.pool.get('id') + '/quotas';
+        $('#editQuota').editable({
+            // emptyclass: 'editable-empty-custom',
+            source: [
+                {value: 'Enabled', text: 'Enabled'},
+                {value: 'Disabled', text: 'Disabled'}
+            ],
+            success: function(response, quotasEditVal) {
+                $.ajax({
+                    url: url_quotas,
+                    type: 'PUT',
+                    dataType: 'json',
+                    data: {
+                        'quotas': quotasEditVal
+                    },
+                });
+            }
+        });
+
+        // Attempt to colour "Disabled" red. Non functional currently.
+        // https://vitalets.github.io/bootstrap-editable/
+        $('#editQuota').on('render', function (e, editable) {
+            // colour #EB6841 is our default for links.
+            var colors = {'Enabled': '#EB6841', 'Disabled': 'red'};
+            $(this).css("color", colors[editable.value]);
+        });
     },
 
     deletePool: function(event) {
@@ -400,6 +426,13 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
                 return true;
             }
             return false;
+        });
+        // Simple Boolean to Text converter for use with Pool.quotas_enabled.
+        Handlebars.registerHelper('isEnabledDisabled', function (q_enabled) {
+            if (q_enabled) {
+                return 'Enabled';
+            }
+            return 'Disabled'
         });
     }
 });

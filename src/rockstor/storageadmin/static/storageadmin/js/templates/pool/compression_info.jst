@@ -34,6 +34,19 @@
             {{/if}}
         </td>
     </tr>
+    <tr>
+        <td>Quotas</td>
+        <td>&nbsp;&nbsp;
+            <strong>
+                  <a href="#" id="editQuota" data-type="select" data-title="<strong>Enabled: </strong> (Rockstor default) - Used to track and limit
+                  (pending feature) pool share usage.<br><strong>Disabled: </strong> (optional) - significant performance benefits with
+                  high snapshot count (>200/share) and when balancing large pools (double digit TB).<br>Note: when quotas are
+                  disabled share usage is (currently) not tracked and can show <strong><i>0 bytes.</i></strong>">
+                      {{isEnabledDisabled pool.quotas_enabled}}
+                  </a>
+            </strong>
+        </td>
+    </tr>
 </table>
 
 
