@@ -50,18 +50,30 @@
                     <strong><span style="color:red">{{this.mount_status}}</span></strong>
                 {{/if}}
             </td>
-            <td>
-            {{#if (isRoot this.role)}}
-                    OFF
-            {{else}}
-                <strong><a href="#" class="status" data-type="select" data-mntoptn="{{this.mnt_options}}" data-pid="{{this.id}}">
-                {{this.compression}}</a></strong>
-            {{/if}}
+            <td>{{#if (isRoot this.role)}}
+                    {{this.compression}}
+                {{else}}
+                    <strong><a href="#" class="cmpOptns" data-name="cmpOptns" data-type="select" data-mntoptn="{{this.mnt_options}}"
+                               data-value="{{this.compression}}" data-pid="{{this.id}}" data-title="Pool compression algorithm.
+                               <br><strong>zlib: </strong>slower than lzo but higher compression ratio.<br><strong>lzo: </strong>
+                               faster than zlib but lower compression ratio.<br>Pool level compression applies to all it's Shares.
+                               <br>Alternatively: consider Share level compression.<br>Unchanged data remains at prior setting
+                               until balanced.">
+                    {{this.compression}}</a></strong>
+                {{/if}}
             </td>
-            <td>{{#unless (isRoot this.role)}}
-                <strong><a href="#" class="mntOptns" data-type="text" data-comp="{{this.compression}}" data-pid="{{this.id}}">
-                {{this.mnt_options}}</a></strong>
-                {{/unless}}
+            <td>{{#if (isRoot this.role)}}
+                    {{this.mnt_options}}
+                {{else}}
+                    <strong><a href="#" class="mntOptns" data-name="mntOptns" data-type="text" data-comp="{{this.compression}}"
+                               data-value="{{this.mnt_options}}" data-pid="{{this.id}}" data-title="This is for <strong>Advanced
+                               users</strong> to provide specific BTRFS mount options.<br> Type them as a comma separated string
+                               of options without any spaces.<br> Allowed options are <strong>alloc_start, autodefrag, clear_cache,
+                               commit, compress-force, degraded, discard, fatal_errors, inode_cache, max_inline, metadata_ratio,
+                               noacl, noatime, nodatacow, nodatasum, nospace_cache, nossd, ro, rw, skip_balance, space_cache, ssd,
+                               ssd_spread, thread_pool</strong>">
+                    {{this.mnt_options}}</a></strong>
+                {{/if}}
             </td>
             <td>
                 {{#if (isRoot this.role)}}

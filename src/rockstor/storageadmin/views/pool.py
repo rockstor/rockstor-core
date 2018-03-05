@@ -86,8 +86,9 @@ class PoolMixin(object):
 
     @staticmethod
     def _validate_compression(request):
+        # Define default compression value, if not entered, as 'no'.
         compression = request.data.get('compression', 'no')
-        if (compression is None):
+        if (compression is None or compression == ''):
             compression = 'no'
         if (compression not in settings.COMPRESSION_TYPES):
             e_msg = ('Unsupported compression algorithm(%s). Use one of '

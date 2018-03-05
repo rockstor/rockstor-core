@@ -89,7 +89,9 @@ PoolsView = RockstorLayoutView.extend({
 
         //X-editable Inline Edit.
         $.fn.editable.defaults.mode = 'inline';
-        $('.status').editable({
+        $('.cmpOptns').editable({
+            emptytext: 'Unset',
+            emptyclass: 'editable-empty-custom',
             source: [
                      {value: 'no', text: 'no'},
                      {value: 'zlib', text: 'zlib'},
@@ -114,6 +116,7 @@ PoolsView = RockstorLayoutView.extend({
         $('.mntOptns').editable({
             title: 'Edit Mount Options',
             emptytext: 'None',
+            emptyclass: 'editable-empty-custom',
             success: function(response, newMntOptns){
                 var pid = $(this).data('pid');
                 var compr = $(this).data('comp');
@@ -128,6 +131,13 @@ PoolsView = RockstorLayoutView.extend({
                 });
             }
         });
+
+        $('#pools-table').tooltip({
+            selector: '[data-title]',
+            html: true,
+            placement: 'bottom'
+        });
+
         return this;
     },
 

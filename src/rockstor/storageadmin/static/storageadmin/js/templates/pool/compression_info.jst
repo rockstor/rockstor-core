@@ -2,28 +2,36 @@
     <tr>
         <td>Compression algorithm: </td>
         <td>&nbsp;&nbsp;
-        <strong>
+            {{#if (isRoot pool.role)}}
+                {{pool.compression}}
+            {{else}}
+            <strong>
             <a href="#" id="comprOptn" data-type="select"
-            data-title="Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>
-            slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>
-            Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you 
-            like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
+            data-title="Pool compression algorithm.<br><strong>zlib: </strong>
+            slower than lzo but higher compression ratio.<br><strong>lzo: </strong>faster than zlib but lower compression ratio.<br>
+            Pool level compression applies to all it's Shares.<br>Alternatively: consider Share level compression.
+            <br>Unchanged data remains at prior setting until balanced."
             >{{pool.compression}}
             </a>
-        </strong>
+            </strong>
+            {{/if}}
         </td>
     </tr>
     <tr>
         <td>Extra mount options: </td>
         <td>&nbsp;&nbsp;
-        <strong>
+            {{#if (isRoot pool.role)}}
+                {{pool.mnt_options}}
+            {{else}}
+            <strong>
             <a href="#" id="mntOptions" data-type='text' data-title="This is for <strong>Advanced users</strong> to provide specific BTRFS mount options.<br>
             Type them as a comma separated string of options without any spaces.<br>
             Allowed options are <strong>alloc_start, autodefrag, clear_cache, commit, compress-force, degraded, discard,
             fatal_errors, inode_cache, max_inline, metadata_ratio, noacl, noatime, nodatacow, nodatasum, nospace_cache, 
             nossd, ro, rw, skip_balance, space_cache, ssd, ssd_spread, thread_pool</strong>">
             {{pool.mnt_options}}</a>
-        </strong>
+            </strong>
+            {{/if}}
         </td>
     </tr>
 </table>

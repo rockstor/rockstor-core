@@ -197,7 +197,7 @@ AddPoolView = Backbone.View.extend({
         this.$('#compression').tooltip({
             html: true,
             placement: 'right',
-            title: 'Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don\'t enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary.'
+            title: 'Choose a Pool compression algorithm.<br><strong>zlib: </strong>slower than lzo but higher compression ratio.<br><strong>lzo: </strong>faster than zlib but lower compression ratio.<br>Pool level compression applies to all it\'s Shares.<br>Alternatively: consider Share level compression.<br>This setting can be changed at any time.'
         });
 
         $('#add-pool-form').validate({
