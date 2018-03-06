@@ -52,6 +52,7 @@ class PoolInfoSerializer(serializers.ModelSerializer):
     mount_status = serializers.CharField()
     is_mounted = serializers.BooleanField()
     quotas_enabled = serializers.BooleanField()
+    has_missing_dev = serializers.BooleanField()
 
     class Meta:
         model = Pool

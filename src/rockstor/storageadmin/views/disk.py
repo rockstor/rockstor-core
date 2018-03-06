@@ -316,6 +316,7 @@ class DiskMixin(object):
             # the attached disk is our root disk (flagged by scan_disks)
             if (dob.pool is None and d.root is True):
                 # setup our special root disk db entry in Pool
+                # TODO: call get_pool_info() & pool_raid() for following TODOs.
                 # TODO: dynamically retrieve raid level.
                 # TODO: dynamically retrieve compression level.
                 p = Pool(name=d.label, raid='single', role='root',

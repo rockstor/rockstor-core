@@ -1048,6 +1048,22 @@ $(document).ready(function() {
         }
     };
 
+    var displayPoolDegradedStatus = function (data) {
+        var html = '';
+        if (data.status === 'degraded') {
+            html += '<i class="fa fa-warning fa-inverse" style="color: red;"> Pool Degraded Alert </i>';
+            $('#pool-degraded-status').fadeOut(1500, function(){
+                $('#pool-degraded-status').attr('title', data.message);
+                $('#pool-degraded-status').html(html).fadeIn(1500);
+            });
+        } else {
+            $('#pool-degraded-status').fadeOut(1500, function() {
+                $('#pool-degraded-status').attr('title', '');
+                $('#pool-degraded-status').empty();
+            });
+        }
+    };
+
     var displayLoadAvg = function(data) {
         var n = parseInt(data);
         var mins = Math.floor(n / 60) % 60;
@@ -1162,6 +1178,7 @@ $(document).ready(function() {
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software_update');
     RockStorSocket.addListener(displayShutdownStatus, this, 'sysinfo:shutdown_status');
+    RockStorSocket.addListener(displayPoolDegradedStatus, this, 'sysinfo:pool_degraded_status');
 
     //insert pagination partial helper functions here
     Handlebars.registerHelper('pagination', function() {

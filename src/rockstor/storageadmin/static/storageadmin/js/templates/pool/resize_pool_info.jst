@@ -1,4 +1,8 @@
-<h3>Disks</h3>
+<h3>Disks
+    {{#if pool.has_missing_dev}}
+    &nbsp;(<strong><span style="color:red">Some Missing</span></strong>)
+    {{/if}}
+</h3>
 
 <table id="pool-disk-table"
        class="table table-condensed table-bordered table-hover">

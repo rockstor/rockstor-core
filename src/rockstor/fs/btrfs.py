@@ -85,46 +85,110 @@ def add_pool(pool, disks):
     return out, err, rc
 
 
+def is_pool_missing_dev(label):
+    """
+    Simple and fast wrapper around 'btrfs fi show --raw label' to return True /
+    False depending on if a device is reported missing from the given pool by
+    label. Works by matching the end of output lines for the string 'missing',
+    which is either, post remount reboot (first and last populated line) or
+    the last line (dev removed and no remount).
+    Label is used as this is preserved in our Pool db so will work if the pool
+    fails to mount, and there by allows surfacing this as a potential reason
+    for the mount failure.
+    :param label: Pool label.
+    :return: True if at least one device was found to be missing, False if not.
+    """
+    if label is None:
+        return False
+    # --raw used to minimise pre-processing of irrelevant 'used' info (units).
+    cmd = [BTRFS, 'fi', 'show', '--raw', label]
+    o, e, rc = run_command(cmd)
+    if o[-3].endswith('missing') or o[0].endswith('missing'):
+        return True
+    return False
+
+
+def degraded_pools_found():
+    """
+    Primarily intended to indicate the existence of any degraded pools, managed
+    or otherwise. Originally used by data_collector to feed real time Web-UI
+    indicators. Non-managed pool coverage allows for the indication of a
+    degraded mount requirement pre-import or on fresh disaster recovery
+    installs.
+    :return: Number of degraded pools as indicated by any line ending in
+    "missing" following an associated "Label" line.
+    """
+    # --raw used to minimise pre-processing of irrelevant 'used' info (units).
+    cmd = [BTRFS, 'fi', 'show', '--raw']
+    o, e, rc = run_command(cmd)
+    degraded_pool_count = 0
+    in_pool = False
+    for line in o:
+        if not in_pool and line[0:3] == 'Lab':
+            in_pool = True
+            continue
+        if in_pool and line.endswith('missing'):
+            # we are in pool details and have found a missing device
+            degraded_pool_count += 1
+            # use in_pool switch to avoid counting this pool twice if it has
+            # multiple missing as at least 1 missing dev is degraded.
+            in_pool = False
+        elif line == '':
+            # pool listings delimited by blank lines
+            in_pool = False
+    return degraded_pool_count
+
+
 def get_pool_info(disk):
     """
-    Extracts any pool information by running btrfs fi show <disk> and collates
-    the results by 'Label', 'uuid', and a list of disk names. The disks names
-    found are translated to the by-id type (/dev/disk/by-id)so that their
+    Extracts pool information by running btrfs fi show <disk> and collates
+    the results in a property keyed dictionary The disks ('disks' key) names
+    found are translated to the by-id type (/dev/disk/by-id) so that their
     counterparts in the db's Disk.name field can be found.
     N.B. devices without serial may have no by-id counterpart.
+    Enforces a non 'none' label by substituting the uuid if label = none.
     Used by CommandView()._refresh_pool_state() and
     DiskDetailView()._btrfs_disk_import
     :param disk: by-id disk name without path
-    :return: a dictionary with keys of 'disks', 'label', and 'uuid';
-    disks keys a list of devices, while label and uuid keys are for strings.
+    :return: a dictionary with keys of 'disks', 'label', 'uuid',
+    'hasMissingDev', 'fullDevCount', and 'missingDevCount'.
+    'disks' keys a list of devices, while 'label' and 'uuid' keys are
+    for strings. 'hasMissingDev' is Boolean and defaults to False.
+    'fullDevCount' is taken from the "Total devices" line.
+    'missingDevCount' is derived from fullDevCount - attached devs count.
     """
     dpath = get_device_path(disk)
     cmd = [BTRFS, 'fi', 'show', dpath]
     o, e, rc = run_command(cmd)
-    pool_info = {'disks': [], }
+    pool_info = {'disks': [], 'hasMissingDev': False, 'fullDevCount': 0,
+                 'missingDevCount': 0}
+    full_dev_count = 0  # Number of devices in non degraded state.
+    attached_dev_count = 0  # Number of currently attached devices.
     for l in o:
-        if (re.match('Label', l) is not None):
+        if re.match('Label', l) is not None:
             fields = l.split()
             pool_info['uuid'] = fields[3]
             label = fields[1].strip("'")
             if label == 'none':
                 # fs has no label, set label = uuid.
                 label = pool_info['uuid']
+                # This requirement limits importing ro pools with no label.
                 run_command([BTRFS, 'fi', 'label', dpath, label])
             pool_info['label'] = label
-        elif (re.match('\tdevid', l) is not None):
+        elif re.match('\tdevid', l) is not None:
             # We have a line starting wth <tab>devid, extract the dev name.
-            # Previously this would have been sda and used as is but we need
-            # it's by-id references as that is the new format for Disks.name.
-            # Original sda extraction:
-            # pool_info['disks'].append(l.split()[-1].split('/')[-1])
-            # Updated '/dev/sda' extraction to save on a split we no longer
-            # need and use this 'now' name to get our by-id name with path
-            # removed. This is required as that is how device names are stored
-            # in the db Disk.name so that we can locate a drive and update it's
-            # pool field reference.
+            # We convert this into the db Disk.name by-id format so that our
+            # caller can locate a drive and update it's pool field reference.
+            attached_dev_count += 1
             dev_byid, is_byid = get_dev_byid_name(l.split()[-1], True)
             pool_info['disks'].append(dev_byid)
+        elif re.match('\tTotal devices', l) is not None:
+            fields = l.split()
+            full_dev_count = int(fields[2])
+        elif re.match('\t\*\*\* Some devices missing', l) is not None:
+            pool_info['hasMissingDev'] = True
+    pool_info['fullDevCount'] = full_dev_count
+    pool_info['missingDevCount'] = full_dev_count - attached_dev_count
     return pool_info
 
 

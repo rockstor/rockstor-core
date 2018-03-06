@@ -19,6 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # @todo: Let's deprecate gevent in favor of django channels and we won't need
 # monkey patching and flake8 exceptions.
 from gevent import monkey
+
+from fs.btrfs import degraded_pools_found
+
 monkey.patch_all()
 
 import psutil  # noqa E402
@@ -43,7 +46,7 @@ from system.osi import uptime, kernel_info, get_byid_name_map  # noqa E402
 from datetime import (datetime, timedelta)  # noqa E402
 import time  # noqa E402
 from django.utils.timezone import utc  # noqa E402
-from storageadmin.models import Disk  # noqa E402
+from storageadmin.models import Disk, Pool  # noqa E402
 from smart_manager.models import Service  # noqa E402
 from system.services import service_status  # noqa E402
 from cli.api_wrapper import APIWrapper  # noqa E402
@@ -852,6 +855,7 @@ class SysinfoNamespace(RockstorIO):
         self.spawn(self.send_localtime, sid)
         self.spawn(self.send_uptime, sid)
         self.spawn(self.shutdown_status, sid)
+        self.spawn(self.pool_degraded_status, sid)
 
     # Run on every disconnect
     def on_disconnect(self, sid):
@@ -884,6 +888,8 @@ class SysinfoNamespace(RockstorIO):
                               'key': 'sysinfo:kernel_info',
                               'data': kernel_info(self.supported_kernel)
                           })
+                # kernel_info() in above raises an Exception if the running
+                # kernel != supported kernel and so:
             except Exception as e:
                 logger.error('Exception while gathering kernel info: %s' %
                              e.__str__())
@@ -990,6 +996,41 @@ class SysinfoNamespace(RockstorIO):
             self.emit('shutdown_status',
                       {
                           'key': 'sysinfo:shutdown_status',
+                          'data': data
+                      })
+
+            gevent.sleep(30)
+
+    def pool_degraded_status(self):
+
+        # Examples of data.message:
+        # "Pools found degraded: (2) unimported"
+        # "Pools found degraded: (rock-pool)"
+        # "Pools found degraded: (rock-pool, rock-pool-3)"
+        # "Pools found degraded: (rock-pool, rock-pool-3), plus (1) unimported"
+        while self.start:
+            data = {'status': 'OK'}
+            deg_pools_count = degraded_pools_found()
+            if deg_pools_count > 0:
+                data['status'] = 'degraded'
+                data['message'] = 'Pools found degraded: '
+                labels = []
+                for p in Pool.objects.all():
+                    if p.has_missing_dev:
+                        deg_pools_count -= 1
+                        labels.append(p.name)
+                if labels != []:
+                    data['message'] += '({})'.format(', '.join(labels))
+                if deg_pools_count > 0:
+                    # we have degraded un-managed pools, add this info
+                    if labels != []:
+                        data['message'] += ', plus '
+                    data['message'] += '({}) ' \
+                                       'unimported'.format(deg_pools_count)
+
+            self.emit('pool_degraded_status',
+                      {
+                          'key': 'sysinfo:pool_degraded_status',
                           'data': data
                       })
 
