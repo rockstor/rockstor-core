@@ -1254,7 +1254,17 @@ def balance_status(pool):
     ie indexed by 'status' and 'percent_done'.
     """
     stats = {'status': 'unknown', }
-    mnt_pt = mount_root(pool)
+    # The balance status of an umounted pool is undetermined / unknown, ie it
+    # could still be mid balance: our balance status command requires a
+    # relevant active mount path.
+    # Note that if we silently fail through the mount confirmation then our
+    # balance status will reflect the system pool balance status.
+    try:
+        mnt_pt = mount_root(pool)
+    except Exception as e:
+        logger.error('Exception while refreshing balance status for Pool({}). '
+                     'Returning "unknown": {}'.format(pool.name, e.__str__()))
+        return stats
     out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
                                throw=False)
     if (len(out) > 0):
