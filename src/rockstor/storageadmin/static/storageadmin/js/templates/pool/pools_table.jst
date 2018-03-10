@@ -33,11 +33,18 @@
             <td>{{humanReadableSize 'usage' this.size this.reclaimable this.free}}
                 <strong>({{humanReadableSize 'usagePercent' this.size this.reclaimable this.free}} %)</strong>
             </td>
-            <td>{{#if this.quotas_enabled}}
-                    Enabled
-                {{else}}
-                    <strong><span style="color:red">Disabled</span></strong>
-                {{/if}}
+            <td>
+                <strong>
+                    <a href="#" class="editQuotaOverview" data-name="editQuotaOverview" data-type="select"
+                       data-value="{{isEnabledDisabled this.quotas_enabled}}" data-pid="{{this.id}}"
+                       data-title="<strong>Enabled: </strong> (Rockstor default) - Used to track and limit
+                       (pending feature) pool share usage.<br><strong>Disabled: </strong> (optional) - significant
+                       performance benefits with high snapshot count (>200/share) and when balancing large
+                       pools (double digit TB).<br>Note: when quotas are disabled share usage is (currently)
+                       not tracked and can show <strong><i>0 bytes.</i></strong>">
+                        {{isEnabledDisabled this.quotas_enabled}}
+                    </a>
+                </strong>
             </td>
             <td>{{this.raid}}
                 {{#unless (isRoot this.role)}}

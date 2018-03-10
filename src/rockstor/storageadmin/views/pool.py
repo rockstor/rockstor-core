@@ -28,7 +28,7 @@ from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
                       btrfs_uuid, mount_root, start_balance, usage_bound,
-                      remove_share)
+                      remove_share, enable_quota, disable_quota, rescan_quotas)
 from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -83,6 +83,20 @@ class PoolMixin(object):
         except:
             e_msg = ('Problem with role filter of disks' % disks)
             handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    def _validate_new_quota_state(request):
+        logger.debug('#### validate_new_quota_state received new_state '
+                     '=({}).'.format(request.data.get('quotas')))
+        new_val = request.data.get('quotas', 'Enabled')
+        if new_val is None:
+            # We default to Quotas enabled if input is in doubt.
+            new_val = 'Enabled'
+        if new_val != 'Enabled' and new_val != 'Disabled':
+            e_msg = ('Unsupported quotas request ({}). '
+                     'Expecting "Enabled" or "Disabled"'.format(new_val))
+            handle_exception(Exception(e_msg), request)
+        return new_val
 
     @staticmethod
     def _validate_compression(request):
@@ -208,6 +222,39 @@ class PoolMixin(object):
                      'downtime):\n 1. systemctl stop rockstor\n'
                      '2. unmount manually\n3. systemctl start rockstor\n.' %
                      failed_remounts)
+            handle_exception(Exception(e_msg), request)
+        return Response(PoolInfoSerializer(pool).data)
+
+    @classmethod
+    def _quotas(cls, request, pool):
+        new_quota_state = cls._validate_new_quota_state(request)
+        # If no change from current pool quota state then do nothing
+        current_state = 'Enabled'
+        if not pool.quotas_enabled:
+            current_state = 'Disabled'
+        if new_quota_state == current_state:
+            return Response()
+        try:
+            if new_quota_state == 'Enabled':
+                # Current issue with requiring enable to be executed twice !!!
+                # As of 4.12.4-1.el7.elrepo.x86_64
+                # this avoids "ERROR: quota rescan failed: Invalid argument"
+                # when attempting a rescan.
+                # Look similar to https://patchwork.kernel.org/patch/9928635/
+                enable_quota(pool)
+                enable_quota(pool)
+                # As of 4.12.4-1.el7.elrepo.x86_64
+                # The second above enable_quota() call currently initiates a
+                # rescan so the following is redundant; however this may not
+                # always be the case so leaving as it will auto skip if a scan
+                # in in progress anyway.
+                rescan_quotas(pool)
+            else:
+                disable_quota(pool)
+        except:
+            e_msg = 'Failed to Enable (and rescan) / Disable Quotas for ' \
+                    'Pool ({}). Requested quota state ' \
+                    'was ({}).'.format(pool.name, new_quota_state)
             handle_exception(Exception(e_msg), request)
         return Response(PoolInfoSerializer(pool).data)
 
@@ -354,13 +401,16 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 e_msg = ('Pool(%d) does not exist.' % pid)
                 handle_exception(Exception(e_msg), request)
 
-            if (pool.role == 'root'):
+            if (pool.role == 'root' and command != 'quotas'):
                 e_msg = ('Edit operations are not allowed on this Pool(%d) '
                          'as it contains the operating system.' % pid)
                 handle_exception(Exception(e_msg), request)
 
             if (command == 'remount'):
                 return self._remount(request, pool)
+
+            if (command == 'quotas'):
+                return self._quotas(request, pool)
 
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks', [])]

@@ -705,8 +705,31 @@ def enable_quota(pool):
     return switch_quota(pool)
 
 
-def disable_quota(pool_name):
-    return switch_quota(pool_name, flag='disable')
+def disable_quota(pool):
+    return switch_quota(pool, flag='disable')
+
+
+def rescan_quotas(pool):
+    root_mnt_pt = mount_root(pool)
+    cmd = [BTRFS, 'quota', 'rescan', root_mnt_pt]
+    try:
+        o, e, rc = run_command(cmd, log=True)
+    except CommandException as e:
+        # Catch breaking exception on Read-only filesystem, log and move on.
+        emsg = 'ERROR: quota rescan failed: Read-only file system'
+        if e.err[0] == emsg:
+            logger.info('Pool: ({}) is Read-only, skipping '
+                        'quota rescan.'.format(pool.name))
+            return e.out, e.err, e.rc
+        # Catch breaking exception for non fatal 'already running' state.
+        emsg2 = 'ERROR: quota rescan failed: Operation now in progress'
+        if e.err[0] == emsg2:
+            logger.info('Pool ({}) has quota rescan in progress, skipping '
+                        'rescan request.'.format(pool.name))
+            return e.out, e.err, e.rc
+        # otherwise we raise an exception as normal.
+        raise e
+    return o, e, rc
 
 
 def are_quotas_enabled(mnt_pt):
