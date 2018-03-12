@@ -15,7 +15,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
-                      share_id, device_scan, scrub_status)
+                      share_id, device_scan, scrub_status,
+                      degraded_pools_found)
 from mock import patch
 
 
@@ -681,3 +682,214 @@ class BTRFSTests(unittest.TestCase):
         self.mock_run_command.return_value = (out, err, rc)
         self.assertEqual(device_scan(['virtio-serial-1']), (out, err, rc),
                          msg='Failed to return results from non btrfs device.')
+
+    def test_degraded_pools_found(self):
+        """
+        Test degraded_pools_found() across various btrfs fi show outputs.
+        """
+        # Setup mock output from/for run_command.
+        # degraded_pools_found() only deals with out but we have err and rc
+        # in case of future enhancement / requirement, ie other tests to come.
+
+        fi_show_out = [[
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2304409600',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vdb3',
+            '',
+            "Label: 'rock-pool-2'  uuid: 52053a67-1a53-4cb8-bf17-69abca623bef",
+            '\tTotal devices 2 FS bytes used 409600',
+            '\tdevid    1 size 5368709120 used 2155872256 path /dev/vde',
+            '\tdevid    2 size 5368709120 used 16777216 path /dev/vdd',
+            '',
+            "Label: 'rock-pool'  uuid: 924d9d64-4943-4eac-a52e-1918e963a34f",
+            '\tTotal devices 3 FS bytes used 475136',
+            '\tdevid    1 size 5368709120 used 310378496 path /dev/vda',
+            '\tdevid    2 size 5368709120 used 1107296256 path /dev/vdc',
+            '\t*** Some devices missing',
+            '', '']]
+        num_deg = [1]
+        err = [['']]
+        rc = [0]
+
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2306293760',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vdb3',
+            '',
+            "Label: 'rock-pool-2'  uuid: 52053a67-1a53-4cb8-bf17-69abca623bef",
+            '\tTotal devices 2 FS bytes used 409600',
+            '\tdevid    1 size 5368709120 used 2155872256 path /dev/vde',
+            '\tdevid    2 size 5368709120 used 16777216 path /dev/vdd',
+            '',
+            'warning, device 2 is missing',
+            "Label: 'rock-pool'  uuid: 924d9d64-4943-4eac-a52e-1918e963a34f",
+            '\tTotal devices 3 FS bytes used 475136',
+            '\tdevid    1 size 5368709120 used 310378496 path /dev/vda',
+            '\t*** Some devices missing',
+            '', ''])
+        num_deg.append(1)
+        err.append([''])
+        rc.append(0)
+
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2297679872',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vda3',
+            '',
+            'warning, device 3 is missing',
+            'warning, device 3 is missing',
+            "Label: 'rock-pool-2'  uuid: 6b1e11db-dafb-470c-8ad2-165e1c6296a0",
+            '\tTotal devices 2 FS bytes used 409600',
+            '\tdevid    2 size 5368709120 used 16777216 path /dev/vdb',
+            '\t*** Some devices missing',
+            '',
+            "Label: 'rock-pool'  uuid: b775142a-a9f7-46af-909c-379331b6abcb",
+            '\tTotal devices 3 FS bytes used 409600',
+            '\tdevid    1 size 5368709120 used 8388608 path /dev/vdd',
+            '\t*** Some devices missing',
+            '', ''])
+        num_deg.append(2)
+        err = ['bytenr mismatch, want=29687808, have=0',
+               "Couldn't read tree root",
+               'bytenr mismatch, want=20987904, have=0',
+               'ERROR: cannot read chunk root', '']
+        rc.append(0)
+
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2308558848',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vdb3',
+            '',
+            'warning, device 2 is missing',
+            "Label: 'rock-pool'  uuid: 924d9d64-4943-4eac-a52e-1918e963a34f",
+            '\tTotal devices 3 FS bytes used 475136',
+            '\tdevid    1 size 5368709120 used 310378496 path /dev/vda',
+            '\t*** Some devices missing',
+            '',
+            "Label: 'rock-pool-2'  uuid: 52053a67-1a53-4cb8-bf17-69abca623bef",
+            '\tTotal devices 2 FS bytes used 409600',
+            '\tdevid    2 size 5368709120 used 16777216 path /dev/vdc',
+            '\t*** Some devices missing',
+            '', ''])
+        num_deg.append(2)
+        err.append(['bytenr mismatch, want=29491200, have=0',
+                    "Couldn't read tree root", ''])
+        rc.append(0)
+
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2310893568',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vdb3',
+            '', ''])
+        num_deg.append(0)
+        err.append([''])
+        rc.append(0)
+
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2295517184',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vdb3',
+            '',
+            "Label: 'rock-pool'  uuid: 83b73c7e-4165-48dd-a249-ef49450f4f13",
+            '\tTotal devices 3 FS bytes used 409600',
+            '\tdevid    1 size 5368709120 used 8388608 path /dev/vdf',
+            '\tdevid    3 size 5368709120 used 16777216 path /dev/vde',
+            '\t*** Some devices missing',
+            '', ''])
+        num_deg.append(1)
+        err.append(['bytenr mismatch, want=29687808, have=0',
+                    "Couldn't read tree root", ''])
+        rc.append(0)
+
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2311786496',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vdb3',
+            '',
+            'warning, device 1 is missing',
+            'warning, device 2 is missing',
+            'warning, device 2 is missing',
+            "Label: 'rock-pool'  uuid: 924d9d64-4943-4eac-a52e-1918e963a34f",
+            '\tTotal devices 3 FS bytes used 475136',
+            '\tdevid    2 size 5368709120 used 1107296256 path /dev/vdc',
+            '\tdevid    3 size 5368709120 used 1342177280 path /dev/vdd',
+            '\t*** Some devices missing',
+            '',
+            "Label: 'rock-pool-2'  uuid: 52053a67-1a53-4cb8-bf17-69abca623bef",
+            '\tTotal devices 2 FS bytes used 409600',
+            '\tdevid    1 size 5368709120 used 2155872256 path /dev/vdf',
+            '\t*** Some devices missing',
+            '', ''])
+        num_deg.append(2)
+        err.append(['bytenr mismatch, want=1104330752, have=26120339456',
+                    "Couldn't read tree root",
+                    'bytenr mismatch, want=20987904, have=0',
+                    'ERROR: cannot read chunk root', ''])
+        rc.append(0)
+
+        # Quirky instance with apparently 3 degraded but "rock-pool-3" has a
+        # "Total devices"=1 and there is one disk shown attached. Note
+        # that there is no trailing "\t*** Some devices missing" but there
+        # are multiple preceding lines indicating "device 2 is missing".
+        # A non degraded mount of rock-pool-3 was then successfully achieved
+        # the the output there after showed no signs of issue.
+        # So we don't count this pool as degraded in degraded_pools_found().
+        # But it would still be counted as degraded by is_pool_missing_dev()!!
+        # This diversity in degraded pool assessment may prove useful later.
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2.16GiB',
+            '\tdevid    1 size 6.71GiB used 3.25GiB path /dev/vdb3',
+            '',
+            'warning, device 2 is missing',
+            'warning, device 2 is missing',
+            'bytenr mismatch, want=20987904, have=0',
+            'ERROR: cannot read chunk root',
+            "Label: 'rock-pool-3'  uuid: c013682a-51e3-4d92-a5e0-378acc5485da",
+            '\tTotal devices 1 FS bytes used 208.00KiB',
+            '\tdevid    1 size 5.00GiB used 536.00MiB path /dev/vdc',
+            '',
+            "Label: 'rock-pool-2'  uuid: 9828f1c6-51f7-4d40-a7d3-0a9fbe8a2cbb",
+            '\tTotal devices 2 FS bytes used 400.00KiB',
+            '\tdevid    1 size 5.00GiB used 2.01GiB path /dev/vdd',
+            '\t*** Some devices missing',
+            '',
+            "Label: 'rock-pool'  uuid: 6245b4ec-d452-42ed-ad5a-2c9ae33e4f5d",
+            '\tTotal devices 2 FS bytes used 336.00KiB',
+            '\tdevid    2 size 5.00GiB used 848.00MiB path /dev/vde'
+            '\t*** Some devices missing',
+            '', ''])
+        num_deg.append(2)
+        err.append(['bytenr mismatch, want=20987904, have=0',
+                    'ERROR: cannot read chunk root', ''])
+        rc.append(0)
+
+        # 2 disks removed from last pool (mounted), pool then unmounted.
+        fi_show_out.append([
+            "Label: 'rockstor_install-test'  uuid: b3d201a8-b497-4365-a90d-a50c50b8e808",  # noqa E501
+            '\tTotal devices 1 FS bytes used 2293907456',
+            '\tdevid    1 size 7204765696 used 3489660928 path /dev/vdb3',
+            '',
+            "Label: 'rock-pool-2'  uuid: 7e2d0333-8075-4c0b-b8f8-fb072cac573f",
+            '\tTotal devices 2 FS bytes used 409600',
+            '\tdevid    1 size 5368709120 used 2155872256 path /dev/vda',
+            '\tdevid    2 size 5368709120 used 16777216 path /dev/vdc',
+            '',
+            'warning, device 3 is missing',
+            'warning, device 3 is missing',
+            "Label: 'rock-pool'  uuid: 83b73c7e-4165-48dd-a249-ef49450f4f13",
+            '\tTotal devices 3 FS bytes used 409600',
+            '\tdevid    2 size 5368709120 used 2147483648 path /dev/vdd',
+            '\t*** Some devices missing',
+            '', ''])
+        num_deg.append(1)
+        err.append(['bytenr mismatch, want=20987904, have=0',
+                    'ERROR: cannot read chunk root', ''])
+        rc.append(0)
+
+        # Cycle through each of the above mock_run_command data sets.
+        for out, e, r, count in zip(fi_show_out, err, rc, num_deg):
+            self.mock_run_command.return_value = (out, e, r)
+            self.assertEqual(degraded_pools_found(), count,
+                             msg='Un-expected degraded pool count. Mock ({}) '
+                                 'count expected ({})'.format(out, count))

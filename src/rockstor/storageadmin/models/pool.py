@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from django.conf import settings
 from fs.btrfs import pool_usage, usage_bound, \
-    are_quotas_enabled
+    are_quotas_enabled, is_pool_missing_dev
 from system.osi import mount_status
 
 RETURN_BOOLEAN = True
@@ -38,6 +38,23 @@ class Pool(models.Model):
     mnt_options = models.CharField(max_length=4096, null=True)
     """optional aux info. eg: role = root for OS Pool"""
     role = models.CharField(max_length=256, null=True)
+
+    def __init__(self, *args, **kwargs):
+        super(Pool, self).__init__(*args, **kwargs)
+        self.update_missing_dev()
+
+    def update_missing_dev(self, *args, **kwargs):
+        # Establish an instance variable to track missing device status.
+        # Currently Boolean and may be updated during instance life by
+        # calling this method again or directly setting the field.
+        try:
+            self.missing_dev = is_pool_missing_dev(self.name)
+        except:
+            self.missing_dev = False
+
+    @property
+    def has_missing_dev(self, *args, **kwargs):
+        return self.missing_dev
 
     @property
     def free(self, *args, **kwargs):

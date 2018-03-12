@@ -112,6 +112,9 @@
                     "&nbsp;
                     {{/each}}
                 {{/if}}
+                {{#if this.has_missing_dev}}
+                    <strong><span style="color:red">SOME MISSING</span></strong>
+                {{/if}}
             </td>
             <td>{{#if (isRoot this.role)}}
                     N/A

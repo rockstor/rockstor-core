@@ -70,11 +70,13 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                              p.name)
                 continue
             try:
-                mount_root(p)
+                # Get and save what info we can prior to mount.
                 first_attached_dev = p.disk_set.attached().first()
                 # Observe any redirect role by using target_name.
                 pool_info = get_pool_info(first_attached_dev.target_name)
                 p.name = pool_info['label']
+                p.save()
+                mount_root(p)
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = p.usage_bound()
                 p.save()
