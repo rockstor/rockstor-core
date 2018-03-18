@@ -15,15 +15,19 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import mock
 from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
+
+from storageadmin.models import Pool
 from storageadmin.tests.test_api import APITestMixin
 
 
 class PoolScrubTests(APITestMixin, APITestCase):
-    fixtures = ['fix1.json']
+    # fixture assumed to have:
+    # 1 non sys pool (id=2, name='rock-pool', raid='raid1')
+    fixtures = ['test_pool_scrub_balance.json']
     BASE_URL = '/api/pools'
 
     @classmethod
@@ -46,48 +50,59 @@ class PoolScrubTests(APITestMixin, APITestCase):
     def tearDownClass(cls):
         super(PoolScrubTests, cls).tearDownClass()
 
-    def test_get(self):
+    @mock.patch('storageadmin.views.pool_scrub.Pool')
+    def test_get(self, mock_pool):
+
+        temp_pool = Pool(id=2, name='rock-pool', raid='raid', size=88025459)
+        mock_pool.objects.get.return_value = temp_pool
 
         # get base URL
-        # 'pool1' is the pool already created and exits in fix1.json
-        response = self.client.get('%s/pool1/scrub' % self.BASE_URL)
+        pId = 2  # already created and exists in fixture
+        response = self.client.get('{}/{}/scrub'.format(self.BASE_URL, pId))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
-    def test_post_requests(self):
+    def test_post_requests_1(self):
 
         # invalid pool
         data = {'force': 'true'}
-        response = self.client.post('%s/invalid/scrub' % self.BASE_URL,
+        pId = 99999
+        response = self.client.post('{}/{}/scrub'.format(self.BASE_URL, pId),
                                     data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        e_msg = ('Pool: invalid does not exist')
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = 'Pool with id ({}) does not exist.'.format(pId)
+        self.assertEqual(response.data[0], e_msg)
+
+    @mock.patch('storageadmin.views.pool_scrub.Pool')
+    def test_post_requests_2(self, mock_pool):
+
+        temp_pool = Pool(id=2, name='rock-pool', raid='raid', size=88025459)
+        mock_pool.objects.get.return_value = temp_pool
 
         # Invalid scrub command
         data = {'force': 'true'}
-        response = self.client.post('%s/pool1/scrub/invalid' % self.BASE_URL,
-                                    data=data)
+        pId = 2
+        response = self.client.post('{}/{}/scrub/invalid-scrub-command'
+                                    ''.format(self.BASE_URL, pId), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-
-        e_msg = ('Unknown scrub command: invalid')
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = 'Unknown scrub command: (invalid-scrub-command).'
+        self.assertEqual(response.data[0], e_msg)
 
         # happy path
         data = {'force': 'true'}
-        response = self.client.post('%s/pool1/scrub' % self.BASE_URL,
+        response = self.client.post('{}/{}/scrub'.format(self.BASE_URL,pId),
                                     data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
         # happy path
         data = {'force': 'true'}
-        response = self.client.post('%s/pool1/scrub/status' % self.BASE_URL,
+        response = self.client.post('{}/{}/scrub/status'.format(self.BASE_URL,pId),
                                     data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)

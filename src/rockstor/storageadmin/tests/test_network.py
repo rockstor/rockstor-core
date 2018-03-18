@@ -23,58 +23,106 @@ from storageadmin.tests.test_api import APITestMixin
 
 
 class NetworkTests(APITestMixin, APITestCase):
-    fixtures = ['fix1.json']
+    # Fixture from single ethernet KVM instance for now to start off new
+    # mocking required after recent api change.
+    fixtures = ['test_network.json']
+    # TODO: Needs changing as API url different ie connection|devices|refresh
+    # see referenced pr in setUpClass
     BASE_URL = '/api/network'
 
     @classmethod
     def setUpClass(cls):
         super(NetworkTests, cls).setUpClass()
 
+        # N.B. major changes were made to network functionality via pr:
+        # https://github.com/rockstor/rockstor-core/pull/1253
+        # which added new network primitives via system/network.py
+
+        # TODO: Needs a few mock changes, adding starters.
+
         # post mocks
 
-        cls.patch_config_network_device = patch(
-            'storageadmin.views.network.config_network_device')
-        cls.mock_config_network_device = cls.patch_config_network_device.start()  # noqa E501
-        cls.mock_config_network_device.return_value = 'out', 'err', 0
+        # devices map dictionary
+        cls.patch_devices = patch('system.network.devices')
+        cls.mock_devices = cls.patch_devices.start()
+        cls.mock_devices.return_value = {
+            'lo': {'dtype': 'loopback', 'mac': '00:00:00:00:00:00',
+                   'state': '10 (unmanaged)', 'mtu': '65536'},
+            'eth0': {'dtype': 'ethernet', 'mac': '52:54:00:58:5D:66',
+                     'connection': 'eth0', 'state': '100 (connected)',
+                     'mtu': '1500'}}
 
-        # return value is set as per the network interface configuration data
-        # in fixture fix1.json
-        cls.patch_get_net_config = patch(
-            'storageadmin.views.network.get_net_config')
-        cls.mock_get_net_config = cls.patch_get_net_config.start()
-        cls.mock_get_net_config.return_value = {
-            'enp0s3': {
-                'autoconnect': 'yes',
-                'name': 'enp0s3',
-                'state': 'activated',
-                'dname': 'enp0s3',
-                'dtype': 'ethernet',
-                'dspeed': '1000 Mb/s',
-                'ipaddr': '192.168.56.101',
-                'netmask': '255.255.255.0',
-                'ctype': '802-3-ethernet',
-                'mac': '08:00:27:F6:2C:85',
-                'method': 'auto'},
-            'enp0s8': {
-                'dns_servers': '10.0.3.3',
-                'dtype': 'ethernet',
-                'ctype': '802-3-ethernet',
-                'mac': '08:00:27:BA:4B:88',
-                'gateway': '10.0.3.2',
-                'autoconnect': 'yes',
-                'name': 'enp0s8',
-                'dname': 'enp0s8',
-                'dspeed': '1000 Mb/s',
-                'ipaddr': '10.0.3.15',
-                'netmask': '255.255.255.0',
-                'state': 'activated',
-                'method': 'auto'
-            }
-        }
+        # connections map dictionary
+        cls.patch_connections = patch('system.network.connections')
+        cls.mock_connections = cls.patch_connections.start()
+        cls.mock_connections.return_value = {
+            '8dca3630-8c54-4ad7-8421-327cc2d3d14a':
+                {'ctype': '802-3-ethernet',
+                 'ipv6_addresses': None,
+                 'ipv4_method': 'auto',
+                 'ipv6_method': None,
+                 'ipv6_dns': None,
+                 'name': 'eth0',
+                 'ipv4_addresses': '192.168.124.235/24',
+                 'ipv6_gw': None,
+                 'ipv4_dns': '192.168.124.1',
+                 'state': 'activated',
+                 'ipv6_dns_search': None,
+                 '802-3-ethernet': {
+                     'mac': '52:54:00:58:5D:66',
+                     'mtu': 'auto',
+                     'cloned_mac': None},
+                 'ipv4_gw': '192.168.124.1',
+                 'ipv4_dns_search': None}}
+
+
+        # valid_connection
+        cls.patch_valid_connection = patch('system.network.valid_connection')
+        cls.mock_valid_connection = cls.patch_valid_connection.start()
+        cls.mock_valid_connection.return_value = True
+
+        # toggle_connection
+        cls.patch_toggle_connection = patch('system.network.toggle_connection')
+        cls.mock_toggle_connection = cls.patch_toggle_connection.start()
+        cls.mock_toggle_connection.return_value = [''], [''], 0
+
+        # delete_connection
+        cls.patch_delete_connection = patch('system.network.delete_connection')
+        cls.mock_delete_connection = cls.patch_delete_connection.start()
+        cls.mock_delete_connection.return_value = [''], [''], 0
+
+        # reload_connection
+        cls.patch_reload_connection = patch('system.network.reload_connection')
+        cls.mock_reload_connection = cls.patch_reload_connection.start()
+        cls.mock_reload_connection.return_value = [''], [''], 0
+
+        # new_connection_helper
+        cls.patch_new_con_helper = patch(
+            'system.network.new_connection_helper')
+        cls.mock_new_con_helper = cls.patch_new_con_helper.start()
+        cls.mock_new_con_helper.return_value = [''], [''], 0
+
+        # new_ethernet_connection
+        cls.patch_new_eth_conn = patch(
+            'system.network.new_ethernet_connection')
+        cls.mock_new_eth_conn = cls.patch_new_eth_conn.start()
+        cls.mock_new_eth_conn.return_value = [''], [''], 0
+
+        # new_member_helper
+        cls.patch_new_mem_helper = patch('system.network.new_member_helper')
+        cls.mock_new_mem_helper = cls.patch_new_mem_helper.start()
+        cls.mock_new_mem_helper.return_value = [''], [''], 0
+
+        # TODO: Also need to mock
+        # system.network.new_team_connection
+        # and
+        # system.network.new_bond_connection
 
     @classmethod
     def tearDownClass(cls):
         super(NetworkTests, cls).tearDownClass()
+
+    # TODO: Probably needs a re-write from here down due to API change.
 
     # Fixture fix1.json has the test data. networks already exits in data are
     # 'enp0s3' and 'enp0s8'

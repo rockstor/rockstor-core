@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
@@ -26,20 +26,26 @@ class APITestMixin(APITestCase):
 
     @classmethod
     def setUpClass(cls):
-        # error handling run_command mocks
-        cls.patch_run_command = patch('storageadmin.util.run_command')
-        cls.mock_run_command = cls.patch_run_command.start()
-        cls.mock_run_command.return_value = True
+        pass
+        # run_command removed as we no longer zip log files so no need to mock.
+        # # error handling run_command mocks
+        # cls.patch_run_command = patch('storageadmin.util.run_command')
+        # cls.mock_run_command = cls.patch_run_command.start()
+        # cls.mock_run_command.return_value = True
 
     @classmethod
     def tearDownClass(cls):
         patch.stopall()
 
     def setUp(self):
-        self.client.login(username='admin', password='admin')
+        # self.client.login(username='admin', password='admin')
+        self.user = User.objects.create(username='admin',
+                                        password='admin', is_active=1)
+        self.client.force_authenticate(user=self.user)
 
     def tearDown(self):
         self.client.logout()
+        self.client.force_authenticate(user=None)
 
     def get_base(self, baseurl, name=True):
         """

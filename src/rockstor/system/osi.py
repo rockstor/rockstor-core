@@ -2004,17 +2004,22 @@ def hostid():
     There's a lazy vendor problem where uuid is not set and defaults to
     03000200-0400-0500-0006-000700080009 or
     00020003-0004-0005-0006-000700080009. I don't know how these values are
-    populated, but emperically it seems to be just these
-    two. non-persistent uuid is generated even in this case.
+    populated, but empirically it seems to be just these
+    two. A non-persistent uuid is also generated in this case.
 
+    Observed motherboards with these fake non unique puuids:
+    ASRock N3700-ITX
+    ASRock C2550D4I
+    ASRock J3455 ITX - Thanks to forum member adworacz for reporting this one.
     """
+
     fake_puuids = ('03000200-0400-0500-0006-000700080009',
                    '00020003-0004-0005-0006-00070008000')
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
             puuid = fo.readline().strip()
             if (puuid in fake_puuids):
-                raise
+                raise CommandException
             return puuid
     except:
         return '%s-%s' % (run_command([HOSTID])[0][0], str(uuid.uuid4()))

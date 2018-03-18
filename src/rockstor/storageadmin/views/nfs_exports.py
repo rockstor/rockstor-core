@@ -206,7 +206,9 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
                 nfs4_mount_teardown(export_pt)
                 cur_exports.remove(e)
                 e.delete()
-            eg.delete()
+            # Following conditional delete was informed by test_nfs_export.py:
+            if eg.id is not None:
+                eg.delete()
             exports = self.create_nfs_export_input(cur_exports)
             adv_entries = [e.export_str for e in
                            AdvancedNFSExport.objects.all()]

@@ -33,14 +33,21 @@ class LoginTests(APITestMixin, APITestCase):
 
     def test_post_requests(self):
 
-        # happy path
-        data = {'username': 'admin', 'password': 'admin'}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-
         # Unauthorised user
         data = {'username': 'admin', 'password': 'invalid'}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_401_UNAUTHORIZED, msg=response.data)
+
+        # TODO:
+        # The following fails but we have admin/admin setup in APITestMixin.
+        # also on real system
+        # curl -d "username=admin&password=admin" --insecure -X POST
+        # https://127.0.0.1:443/api/login
+        # logs 200 in "/var/log/nginx/access.log"
+
+        # happy path
+        data = {'username': 'admin', 'password': 'admin'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
