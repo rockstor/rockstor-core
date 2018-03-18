@@ -312,8 +312,24 @@ class BTRFSTests(unittest.TestCase):
                          expected_results_rogue_pvolume_id,
                          msg='Failed to handle bogus pvolume_id')
 
-
-# TODO: add test_balance_status_finished
+    def test_balance_status_finished(self):
+        """
+        Moc return value of run_command executing btrfs balance status
+        pool_mount_point for a Pool with "No balance" indicated, this is
+        interpreted as a finished /non running balance and returns percent
+        done as 100%.
+        :return:
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ["No balance found on '/mnt2/test-pool'", '']
+        err = ['']
+        rc = 0
+        expected_results = {'status': 'finished', 'percent_done': 100}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.mock_mount_root.return_value = '/mnt2/test-pool'
+        self.assertEqual(balance_status(pool), expected_results,
+                         msg=('Failed to correctly identify balance finished '
+                              'status'))
 
     def test_balance_status_in_progress(self):
         """
@@ -329,7 +345,7 @@ class BTRFSTests(unittest.TestCase):
         # rc=0
         # example return for ongoing balance operation:
         pool = Pool(raid='raid0', name='test-pool')
-        out = ["Balance on '/mnt2/rock-pool' is running",
+        out = ["Balance on '/mnt2/test-pool' is running",
                '7 out of about 114 chunks balanced (8 considered),  94% left',
                '']
         err = ['']
@@ -337,7 +353,7 @@ class BTRFSTests(unittest.TestCase):
         rc = 1
         expected_results = {'status': 'running', 'percent_done': 6}
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.mock_mount_root.return_value = '/mnt2/test-pool'
         self.assertEqual(balance_status(pool), expected_results,
                          msg=("Failed to correctly identify "
                               "balance running status"))
@@ -349,7 +365,7 @@ class BTRFSTests(unittest.TestCase):
         """
         pool = Pool(raid='raid0', name='test-pool')
         # run_command moc return values.
-        out = ["Balance on '/mnt2/rock-pool' is running, cancel requested",
+        out = ["Balance on '/mnt2/test-pool' is running, cancel requested",
                ('15 out of about 114 chunks balanced (16 considered),  '
                 '87% left'),
                '']
@@ -358,7 +374,7 @@ class BTRFSTests(unittest.TestCase):
         rc = 1
         expected_results = {'status': 'cancelling', 'percent_done': 13}
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.mock_mount_root.return_value = '/mnt2/test-pool'
         self.assertEqual(balance_status(pool), expected_results,
                          msg=("Failed to correctly identify balance cancel "
                               "requested status"))
@@ -369,7 +385,7 @@ class BTRFSTests(unittest.TestCase):
         :return:
         """
         pool = Pool(raid='raid0', name='test-pool')
-        out = ["Balance on '/mnt2/rock-pool' is running, pause requested",
+        out = ["Balance on '/mnt2/test-pool' is running, pause requested",
                '3 out of about 114 chunks balanced (4 considered),  97% left',
                '']
         err = ['']
@@ -377,7 +393,7 @@ class BTRFSTests(unittest.TestCase):
         rc = 1
         expected_results = {'status': 'pausing', 'percent_done': 3}
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.mock_mount_root.return_value = '/mnt2/test-pool'
         self.assertEqual(balance_status(pool), expected_results,
                          msg=("Failed to correctly identify balance pause "
                               "requested status"))
@@ -388,7 +404,7 @@ class BTRFSTests(unittest.TestCase):
 
         """
         pool = Pool(raid='raid0', name='test-pool')
-        out = ["Balance on '/mnt2/rock-pool' is paused",
+        out = ["Balance on '/mnt2/test-pool' is paused",
                '3 out of about 114 chunks balanced (4 considered),  97% left',
                '']
         err = ['']
@@ -396,10 +412,49 @@ class BTRFSTests(unittest.TestCase):
         rc = 1
         expected_results = {'status': 'paused', 'percent_done': 3}
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = '/mnt2/test-mount'
+        self.mock_mount_root.return_value = '/mnt2/test-pool'
         self.assertEqual(balance_status(pool), expected_results,
                          msg=("Failed to correctly identify balance "
                               "paused status"))
+
+    def test_balance_status_unknown_unmounted(self):
+        """
+        Test balance status of 'unknown' such as when a pool is not mounted
+        and fails the built in attempt to ensure it is, prior to the btrfs
+        balance status command execution. An example of this is when a pool
+        is unmounted, degraded, and has no required 'degraded' mount option.
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        mnt_error = (
+            "Error running a command. cmd = /bin/mount /dev/disk/by-label/test-pool "  # noqa E501
+            "/mnt2/test-pool -o ro,compress=no. rc = 32. stdout = ['']. stderr = "  # noqa E501
+            "['mount: wrong fs type, bad option, bad superblock on /dev/vda,', '"  # noqa E501
+            "       missing codepage or helper program, or other error', '', '  "  # noqa E501
+            "In some cases useful info is found in syslog - try', '       dmesg | "  # noqa E501
+            "tail or so.', '']")
+        expected_results = {'status': 'unknown'}
+
+        self.mock_mount_root.side_effect = Exception(mnt_error)
+        self.assertEqual(balance_status(pool), expected_results,
+                         msg=("Failed to correctly identify balance unknown"
+                              "status via mount exception failure"))
+
+    def test_balance_status_unknown_parsing(self):
+        """
+        Test of balance status of 'unknown' as a result of a parsing failure
+        of the output from btrfs balance status mnt_pt
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = ["Essentially nonsense output re: '/mnt2/test-pool'", '']
+        err = ['']
+        rc = 0
+        expected_results = {'status': 'unknown'}
+
+        self.mock_mount_root.return_value = '/mnt2/test-pool'
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(balance_status(pool), expected_results,
+                         msg=("Failed to correctly identify balance unknown"
+                              "status via parsing failure"))
 
     def test_scrub_status_running(self):
         """
