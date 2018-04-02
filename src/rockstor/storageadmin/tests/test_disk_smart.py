@@ -16,10 +16,12 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import mock
 from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
+
+from storageadmin.models import Disk
 from storageadmin.tests.test_api import APITestMixin
 
 
@@ -46,60 +48,84 @@ class DiskSmartTests(APITestMixin, APITestCase):
         cls.patch_error_logs = patch(
             'storageadmin.views.disk_smart.error_logs')
         cls.mock_error_logs = cls.patch_error_logs.start()
+        cls.mock_error_logs.return_value = {}, []
 
         cls.patch_test_logs = patch('storageadmin.views.disk_smart.test_logs')
         cls.mock_test_logs = cls.patch_test_logs.start()
+        cls.mock_test_logs.return_value = {}, []
+
+        cls.patch_run_test = patch('storageadmin.views.disk_smart.run_test')
+        cls.mock_run_test = cls.patch_run_test.start()
+        cls.mock_run_test.return_value = [''], [''], 0
+
+        cls.temp_disk = Disk(id=2, name='mock-disk', size=88025459,
+                             parted=False)
 
     @classmethod
     def tearDownClass(cls):
         super(DiskSmartTests, cls).tearDownClass()
 
-    def test_get(self):
+    @mock.patch('storageadmin.views.disk_smart.Disk')
+    def test_get(self, mock_disk):
 
+        # TODO: Don't think "api/disks/smart" is meant to work.
         # get base URL
-        response = self.client.get('%s' % self.BASE_URL)
+        # response = self.client.get('{}'.format(self.BASE_URL))
+        # self.assertEqual(response.status_code,
+        #                  status.HTTP_200_OK, msg=response.data)
+
+        mock_disk.objects.get.return_value = self.temp_disk
+
+        # get with disk id
+        response = self.client.get('{}/info/1'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
-        # get with disk name
-        response = self.client.get('%s/sdd' % self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+    def test_post_reqeusts_1(self):
 
-    def test_post_requests(self):
-        # invalid disk
-        response = self.client.post('%s/info/invalid' % self.BASE_URL)
+        # # invalid disk id
+        diskId = 99999
+        response = self.client.post('{}/info/{}'.format(self.BASE_URL, diskId))
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Disk: invalid does not exist')
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = 'Disk id ({}) does not exist.'.format(diskId)
+        self.assertEqual(response.data[0], e_msg)
+
+    @mock.patch('storageadmin.views.disk_smart.Disk')
+    def test_post_requests_2(self, mock_disk):
 
         # invalid command
-        response = self.client.post('%s/invalid/sdd' % self.BASE_URL)
+        diskId = 2
+        response = self.client.post('{}/invalid/{}'.format(self.BASE_URL,
+                                                           diskId))
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Unknown command: invalid. Only valid commands are info '
-                 'and test')
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = ('Unknown command: (invalid). The only valid commands are '
+                 'info and test.')
+        self.assertEqual(response.data[0], e_msg)
 
         # unsupported self test
         data = {'test_type': 'invalid'}
-        response = self.client.post('%s/test/sdd' % self.BASE_URL, data=data)
+        response = self.client.post('{}/test/{}'.format(self.BASE_URL, diskId),
+                                    data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('Unsupported Self-Test: invalid')
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = 'Unsupported Self-Test: (invalid).'
+        self.assertEqual(response.data[0], e_msg)
+
+        mock_disk.objects.get.return_value = self.temp_disk
 
         # test command
         data = {'test_type': 'short'}
-        response = self.client.post('%s/test/sdd' % self.BASE_URL, data=data)
+        response = self.client.post('{}/test/{}'.format(self.BASE_URL, diskId),
+                                    data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
         # happy path
-        response = self.client.post('%s/info/sdd' % self.BASE_URL)
+        response = self.client.post('{}/info/{}'.format(self.BASE_URL, diskId))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)

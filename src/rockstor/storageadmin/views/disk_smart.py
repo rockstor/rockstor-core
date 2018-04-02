@@ -42,7 +42,7 @@ class DiskSMARTDetailView(rfc.GenericView):
         try:
             return Disk.objects.get(id=did)
         except:
-            e_msg = ('Disk: %s does not exist' % did)
+            e_msg = 'Disk id ({}) does not exist.'.format(did)
             handle_exception(Exception(e_msg), request)
 
     def get(self, *args, **kwargs):
@@ -123,10 +123,11 @@ class DiskSMARTDetailView(rfc.GenericView):
                 elif (re.search('conveyance', test_type, re.IGNORECASE) is not None):  # noqa E501
                     test_type = 'conveyance'
                 else:
-                    raise Exception('Unsupported Self-Test: %s' % test_type)
+                    raise Exception(('Unsupported Self-Test: '
+                                    '({}).').format(test_type))
                 run_test(disk.name, test_type, disk.smart_options)
                 return self._info(disk)
 
-            e_msg = ('Unknown command: %s. Only valid commands are info and '
-                     'test' % command)
+            e_msg = ('Unknown command: ({}). The only valid commands are info '
+                     'and test.').format(command)
             handle_exception(Exception(e_msg), request)

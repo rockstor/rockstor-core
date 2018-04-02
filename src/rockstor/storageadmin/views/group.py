@@ -48,22 +48,22 @@ class GroupListView(rfc.GenericView):
             admin = request.data.get('admin', True)
             if (groupname is None or
                     re.match(settings.USERNAME_REGEX, groupname) is None):
-                e_msg = ('Groupname is invalid. It must confirm to the '
-                         'regex: %s' % (settings.USERNAME_REGEX))
+                e_msg = ('Groupname is invalid. It must conform to the '
+                         'regex: ({}).').format(settings.USERNAME_REGEX)
                 handle_exception(Exception(e_msg), request, status_code=400)
             if (len(groupname) > 30):
-                e_msg = ('Groupname cannot be more than 30 characters long')
+                e_msg = 'Groupname cannot be more than 30 characters long.'
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             for g in combined_groups():
                 if (g.groupname == groupname):
-                    e_msg = ('Group(%s) already exists. Choose a different '
-                             'one' % g.groupname)
+                    e_msg = ('Group ({}) already exists. Choose a different '
+                             'one.').format(g.groupname)
                     handle_exception(Exception(e_msg), request,
                                      status_code=400)
                 if (g.gid == gid):
-                    e_msg = ('GID(%s) already exists. Choose a different one' %
-                             gid)
+                    e_msg = ('GID ({}) already exists. Choose a different '
+                             'one.').format(gid)
                     handle_exception(Exception(e_msg), request,
                                      status_code=400)
 
@@ -97,15 +97,15 @@ class GroupDetailView(rfc.GenericView):
             return Response()
 
     def put(self, request, groupname):
-        e_msg = ('group edit is not supported')
+        e_msg = ('Group edit is not supported.')
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
     def delete(self, request, groupname):
         with self._handle_exception(request):
             if (groupname in self.exclude_list):
-                e_msg = ('Delete of restricted group(%s) is not supported.' %
-                         groupname)
+                e_msg = ('Delete of restricted group ({}) is not '
+                         'supported.').format(groupname)
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             if (Group.objects.filter(groupname=groupname).exists()):
@@ -118,7 +118,7 @@ class GroupDetailView(rfc.GenericView):
                         found = True
                         break
                 if (found is False):
-                    e_msg = ('Group(%s) does not exist' % groupname)
+                    e_msg = 'Group ({}) does not exist.'.format(groupname)
                     handle_exception(Exception(e_msg), request)
 
             try:

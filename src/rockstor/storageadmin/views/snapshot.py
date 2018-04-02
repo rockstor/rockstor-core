@@ -46,8 +46,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 if ('sid' not in self.kwargs):
                     return Snapshot.objects.filter().order_by('-id')
 
-                e_msg = ('Share with id: {} does not exist'.format(
-                    self.kwargs['sid']))
+                e_msg = ('Share id ({}) does '
+                         'not exist.').format(self.kwargs['sid'])
                 handle_exception(Exception(e_msg), self.request)
 
             if ('snap_name' in self.kwargs):
@@ -108,8 +108,9 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
     def _create(self, share, snap_name, request, uvisible,
                 snap_type, writable):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
-            e_msg = ('Snapshot(%s) already exists for the Share(%s).' %
-                     (snap_name, share.name))
+            # Note e_msg is consumed by replication/util.py create_snapshot()
+            e_msg = ('Snapshot ({}) already exists for '
+                     'the share ({}).').format(snap_name, share.name)
             handle_exception(Exception(e_msg), request)
 
         snap_size = 0
@@ -127,6 +128,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                      size=snap_size, qgroup=qgroup_id,
                      uvisible=uvisible, snap_type=snap_type,
                      writable=writable)
+        # The following share.save() was informed by test_snapshot.py
+        share.save()
         s.save()
         return Response(SnapshotSerializer(s).data)
 
@@ -135,13 +138,16 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             share = self._validate_share(sid, request)
             uvisible = request.data.get('uvisible', False)
             if (type(uvisible) != bool):
-                e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
+                # N.B. quote type important - test string involves ('unicode')
+                e_msg = ("Element 'uvisible' must be a boolean, "
+                         "not ({}).").format(type(uvisible))
                 handle_exception(Exception(e_msg), request)
 
             snap_type = request.data.get('snap_type', 'admin')
             writable = request.data.get('writable', False)
             if (type(writable) != bool):
-                e_msg = ('writable must be a boolean, not %s' % type(writable))
+                e_msg = ('Element "writable" must be a boolean, '
+                         'not ({}).').format(type(writable))
                 handle_exception(Exception(e_msg), request)
             if (command is None):
                 ret = self._create(share, snap_name, request,
@@ -152,17 +158,18 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                     try:
                         self._toggle_visibility(share, ret.data['real_name'])
                     except Exception as e:
-                        msg = ('Failed to make the Snapshot(%s) visible. '
-                               'Exception: %s' % (snap_name, e.__str__()))
+                        msg = ('Failed to make the snapshot ({}) visible. '
+                               'Exception: ({}).').format(snap_name,
+                                                          e.__str__())
                         logger.error(msg)
                         logger.exception(e)
 
                     try:
                         toggle_sftp_visibility(share, ret.data['real_name'])
                     except Exception as e:
-                        msg = ('Failed to make the Snapshot(%s) visible for '
-                               'SFTP. Exception: %s' %
-                               (snap_name, e.__str__()))
+                        msg = ('Failed to make the snapshot ({}) visible for '
+                               'SFTP. Exception: ({}).').format(snap_name,
+                                                                e.__str__())
                         logger.error(msg)
                         logger.exception(e)
 
@@ -197,7 +204,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                     snapshot = Share.objects.get(subvol_name=quirk_snap_share)
                 return create_repclone(share, request, logger,
                                        snapshot=snapshot)
-            e_msg = ('Unknown command: %s' % command)
+            e_msg = 'Unknown command: ({}).'.format(command)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -205,7 +212,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         try:
             return Share.objects.get(id=sid)
         except:
-            e_msg = ('Share with id: {} does not exist'.format(sid))
+            e_msg = 'Share with id ({}) does not exist.'.format(sid)
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -222,9 +229,11 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         except:
             e_msg = ''
             if (id is not None):
-                e_msg = ('Snapshot(%s) does not exist.' % id)
+                e_msg = 'Snapshot id ({}) does not exist.'.format(id)
             else:
-                e_msg = ('Snapshot(%s) does not exist.' % snap_name)
+                # Note e_msg consumed by replication/util.py update_repclone()
+                # and delete_snapshot()
+                e_msg = 'Snapshot name ({}) does not exist.'.format(snap_name)
             handle_exception(Exception(e_msg), request)
 
         if (snapshot.uvisible):

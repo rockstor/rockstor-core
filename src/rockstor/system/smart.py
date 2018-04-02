@@ -243,7 +243,7 @@ def test_logs(device, custom_options='', test_mode=TESTMODE):
 
     :param device: disk device name
     :param test_mode: False causes cat from file rather than smartctl command
-    :return: test_d as a dictionary of summarized test
+    :return: tuple of test_d as a dictionary of summarized test, plus a list
     """
     smart_command = [SMART, '-l', 'selftest', '-l',
                      'selective'] + get_dev_options(device, custom_options)

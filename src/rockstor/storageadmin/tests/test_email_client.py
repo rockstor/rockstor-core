@@ -12,16 +12,16 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
-
+import mock
 from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
+from storageadmin.models import Appliance
 from storageadmin.tests.test_api import APITestMixin
 
 
 class EmailTests(APITestMixin, APITestCase):
-    fixtures = ['fix2.json']
+    fixtures = ['test_appliances.json']
     BASE_URL = '/api/email'
 
     @classmethod
@@ -52,6 +52,11 @@ class EmailTests(APITestMixin, APITestCase):
             'storageadmin.views.email_client.update_sasl')
         cls.mock_update_sasl = cls.patch_update_sasl.start()
 
+        # all values as per fixture
+        cls.temp_appliance = \
+            Appliance(id=1, uuid='679E27FE-EB1A-4DE4-98EF-D9416830C4F5',
+                      ip='', current_appliance=True, mgmt_port=443)
+
     @classmethod
     def tearDownClass(cls):
         super(EmailTests, cls).tearDownClass()
@@ -65,25 +70,23 @@ class EmailTests(APITestMixin, APITestCase):
         # get base URL
         self.client.get(self.BASE_URL)
 
-    def test_post_requests(self):
+    def test_post_requests_1(self):
         # unknown command
-        response = self.client.post('%s/send-email' % self.BASE_URL)
+        response = self.client.post('{}/send-email'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-
-        e_msg = 'unknown command(send-email) is not supported.'
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = 'Unknown command (send-email) is not supported.'
+        self.assertEqual(response.data[0], e_msg)
 
         # send test email before setting up email account
-        response = self.client.post('%s/send-test-email' % self.BASE_URL)
+        response = self.client.post('{}/send-test-email'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-
-        e_msg = ('E-mail account must be setup first before test '
-                 'e-mail could be sent')
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = ('E-mail account must be setup before a '
+                 'test e-mail can be sent.')
+        self.assertEqual(response.data[0], e_msg)
 
         # happy path
         data = {'name': 'Tester', 'smtp_server': 'smtp.gmail.com',
@@ -93,8 +96,24 @@ class EmailTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
+    @mock.patch('storageadmin.views.email_client.Appliance')
+    def test_post_requests_2(self, mock_appliance):
+
+        # For now borrow 'happy path' from test_post_requests_1 to setup email
+        # account first so we keep Appliance mocked tests separate:
+
+        # happy path
+        data = {'name': 'Tester', 'smtp_server': 'smtp.gmail.com',
+                'password': 'password', 'sender': 'mchakravartula@gmail.com',
+                'receiver': 'mchakravartula@gmail.com'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+
+        mock_appliance.objects.get.return_value = self.temp_appliance
+
         # test 'send-test-email'
-        response = self.client.post('%s/send-test-email' % self.BASE_URL)
+        response = self.client.post('{}/send-test-email'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 

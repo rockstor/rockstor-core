@@ -12,16 +12,21 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
-
+import mock
 from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
+
+from storageadmin.models import Pool, Share, SFTP
 from storageadmin.tests.test_api import APITestMixin
 
 
 class SFTPTests(APITestMixin, APITestCase):
-    fixtures = ['fix2.json']
+    # fixture with:
+    # share-sftp (admin:admin) exported by SFTP
+    # share-root-owned (root:root) - no SFTP export
+    # share-user-owned (admin:admin) - no SFTP export.
+    fixtures = ['test_sftp.json']
     BASE_URL = '/api/sftp'
 
     @classmethod
@@ -44,6 +49,21 @@ class SFTPTests(APITestMixin, APITestCase):
         cls.mock_sftp_mount = cls.patch_sftp_mount.start()
         cls.mock_sftp_mount.return_value = True
 
+        # all values as per fixture
+        cls.temp_pool = Pool(id=10, name='rock-pool', size=5242880)
+        # the following line fails with: "Share matching query does not exist."
+        # cls.temp_share_sftp = Share.objects.get(pk=18)
+        cls.temp_share_sftp = Share(id=18, name='share-sftp',
+                                    pool=cls.temp_pool, owner='admin',
+                                    group='admin')
+        cls.temp_share_root_owned = Share(id=19, name='share-root-owned',
+                                          pool=cls.temp_pool)
+        cls.temp_share_user_owned = Share(id=20, name='share-user-owned',
+                                          pool=cls.temp_pool, owner='admin',
+                                          group='admin')
+
+        cls.temp_sftp = SFTP(id=1, share=cls.temp_share_sftp)
+
     @classmethod
     def tearDownClass(cls):
         super(SFTPTests, cls).tearDownClass()
@@ -58,15 +78,14 @@ class SFTPTests(APITestMixin, APITestCase):
         self.get_base(self.BASE_URL)
 
         # get sftp with id
-        response = self.client.get('%s/4' % self.BASE_URL)
+        response = self.client.get('{}/1'.format(self.BASE_URL))
         self.assertEqual(response.status_code, status.HTTP_200_OK,
                          msg=response)
 
-    def test_post_requests(self):
+    def test_post_requests_1(self):
         """
         invalid sftp operations
         1. Create sftp without providing share names
-        2. Create a sftp for the share that is already been exported
         """
 
         # create sftp with no share names
@@ -75,53 +94,75 @@ class SFTPTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
+        e_msg = 'Must provide share names.'
+        self.assertEqual(response.data[0], e_msg)
 
-        e_msg = ('Must provide share names')
-        self.assertEqual(response.data['detail'], e_msg)
+    @mock.patch('storageadmin.views.share_helpers.Share')
+    def test_post_requests_2(self, mock_share):
+        """
+        . Create sftp for root-owned share
+        . Create sftp for the share that is already exported
+        . Create sftp for user-owned share
+        """
 
-        # create sftp with already existing share
-        data = {'shares': ('share2',)}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-
-        e_msg = ('Share(share2) is already exported via SFTP')
-        self.assertEqual(response.data['detail'], e_msg)
+        mock_share.objects.get.return_value = self.temp_share_root_owned
 
         # create sftp with share owned by root
-        data = {'shares': ('share1',)}
+        data = {'shares': ('share-root-owned',)}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
+        e_msg = ('Share (share-root-owned) is owned by root. It cannot be '
+                 'exported via SFTP with root ownership.')
+        self.assertEqual(response.data[0], e_msg)
 
-        e_msg = ('Share(share1) is owned by root. It cannot be exported via '
-                 'SFTP with root ownership')
-        self.assertEqual(response.data['detail'], e_msg)
+        # TODO: the rest of this test fails with
+        # 'Share matching query does not exist.'
+
+        mock_share.objects.get.return_value = self.temp_share_sftp
+
+        # create sftp with already existing and sftp exported share.
+        data = {'shares': ('share-sftp',)}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+        e_msg = 'Share (share-sftp) is already exported via SFTP.'
+        self.assertEqual(response.data[0], e_msg)
+
+        mock_share.objects.get.return_value = self.temp_share_user_owned
 
         # happy path
-        data = {'shares': ('share3',), 'read_only': 'true', }
+        data = {'shares': ('share-user-owned',), 'read_only': 'true', }
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
-    def test_delete_requests(self):
+    def test_delete_requests_1(self):
         """
-        1. Delete sftp that does not exist
-        2. Delete sftp
+        1. Delete sftp export that does not exist
         """
+
         # Delete sftp that does not exists
-        sftp_id = 1
-        response = self.client.delete('%s/%d' % (self.BASE_URL, sftp_id))
+        sftp_id = 99999
+        response = self.client.delete('{}/{}'.format(self.BASE_URL, sftp_id))
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = ('SFTP config for the id(1) does not exist')
-        self.assertEqual(response.data['detail'], e_msg)
+        e_msg = 'SFTP config for the id ({}) does not exist.'.format(sftp_id)
+        self.assertEqual(response.data[0], e_msg)
+
+    @mock.patch('storageadmin.views.sftp.SFTP')
+    def test_delete_requests_2(self, mock_sftp):
+        """
+        1. Delete sftp export
+        """
+
+        mock_sftp.objects.get.return_value = self.temp_sftp
 
         # happy path
-        sftp_id = 4
-        response = self.client.delete('%s/%d' % (self.BASE_URL, sftp_id))
+        sftp_id = self.temp_sftp.id
+        response = self.client.delete('{}/{}'.format(self.BASE_URL, sftp_id))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)

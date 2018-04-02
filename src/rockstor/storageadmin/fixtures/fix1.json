@@ -18,22 +18,14 @@
     }
 },
 {
-    "pk": "d2i0y85g1huhfasd8s29ro524e57m3fd", 
+    "pk": "ymkfmc3y1grrrcn9nyh5yfl3dhpuecnd",
     "model": "sessions.session", 
     "fields": {
-        "expire_date": "2015-10-12T11:02:55.088Z", 
-        "session_data": "NjY3MGEzMTNmYmFmNzQxMGIzZTcxNTgxNDZlNTE5OWU3Mzc3OTJkMTp7Il9hdXRoX3VzZXJfYmFja2VuZCI6ImRqYW5nby5jb250cmliLmF1dGguYmFja2VuZHMuTW9kZWxCYWNrZW5kIiwiX2F1dGhfdXNlcl9pZCI6MX0="
+        "expire_date": "2018-02-17 18:33:49.001770 +00:00",
+        "session_data": "ZTc1Mjc4Y2E0OWI4NTFjZDZlYTM4MGFjYWQ1MTJmNTRjMzI1ZGQ3MDp7Il9hdXRoX3VzZXJfaGFzaCI6IjA3NzJhZGViMjU1MDJkYTQzNWQ4YmMzYzA4NjJhOTMwN2EyOTFmYjkiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZCIsIl9hdXRoX3VzZXJfaWQiOiIyIn0"
     }
 },
-{
-    "pk": "q873s9t0zinq9msx22l7tusl5gd8d6hp", 
-    "model": "sessions.session", 
-    "fields": {
-        "expire_date": "2015-10-12T10:52:04.944Z", 
-        "session_data": "NTJmMGVmYjQxYjU3MzUxNzIxMzJlOWI5NzZmY2ZiNmQ3OWIwNDg4Zjp7fQ=="
-    }
-},
-{
+    {
     "pk": 1, 
     "model": "sites.site", 
     "fields": {
