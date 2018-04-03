@@ -81,8 +81,8 @@ class ApplianceListView(rfc.GenericView):
             current_appliance = request.data.get('current_appliance')
             # authenticate if not adding current appliance
             if (Appliance.objects.filter(ip=ip).exists()):
-                e_msg = ('The appliance with ip = %s already exists and '
-                         'cannot be added again' % ip)
+                e_msg = ('The appliance with ip = {} already exists and '
+                         'cannot be added again.').format(ip)
                 handle_exception(Exception(e_msg), request)
 
             if (current_appliance is False):
@@ -96,8 +96,8 @@ class ApplianceListView(rfc.GenericView):
                     mgmt_port = int(request.data['mgmt_port'])
                 except Exception as e:
                     logger.exception(e)
-                    e_msg = ('Invalid management port(%s) supplied. Try '
-                             'again' % request.data['mgmt_port'])
+                    e_msg = ('Invalid management port ({}) supplied. Try '
+                             'again.').format(request.data['mgmt_port'])
                     handle_exception(Exception(e_msg), request)
                 url = ('https://%s' % ip)
                 if (mgmt_port != 443):
@@ -133,7 +133,7 @@ class ApplianceDetailView(rfc.GenericView):
             appliance = Appliance.objects.get(pk=appid)
         except Exception as e:
             logger.exception(e)
-            e_msg = ('Appliance(%s) does not exist' % appid)
+            e_msg = 'Appliance id ({}) does not exist.'.format(appid)
             handle_exception(Exception(e_msg), request)
 
         try:
@@ -146,8 +146,8 @@ class ApplianceDetailView(rfc.GenericView):
             return Response()
         except Exception as e:
             logger.exception(e)
-            e_msg = ('Failed updating hostname for appliance with id = %d'
-                     % appid)
+            e_msg = ('Failed updating hostname for appliance with '
+                     'id = ({}).').format(appid)
             handle_exception(e, request)
 
     @transaction.atomic
@@ -156,13 +156,13 @@ class ApplianceDetailView(rfc.GenericView):
             appliance = Appliance.objects.get(pk=appid)
         except Exception as e:
             logger.exception(e)
-            e_msg = ('Appliance(%s) does not exist' % appid)
+            e_msg = 'Appliance id ({}) does not exist.'.format(appid)
             handle_exception(Exception(e_msg), request)
 
         if (Replica.objects.filter(appliance=appliance.uuid).exists()):
             e_msg = ('Appliance cannot be deleted because there are '
                      'replication tasks defined for it. If you are sure, '
-                     'delete them and try again')
+                     'delete them and try again.')
             handle_exception(Exception(e_msg), request)
 
         try:
@@ -170,5 +170,5 @@ class ApplianceDetailView(rfc.GenericView):
             return Response()
         except Exception as e:
             logger.exception(e)
-            e_msg = ('Delete failed for appliance with id = %d' % appid)
+            e_msg = 'Delete failed for appliance with id = ({}).'.format(appid)
             handle_exception(e, request)

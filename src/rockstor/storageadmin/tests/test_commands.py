@@ -33,10 +33,6 @@ class CommandTests(APITestMixin, APITestCase):
         cls.mock_get_pool_info = cls.patch_get_pool_info.start()
         cls.mock_get_pool_info.return_value = {'disks': [], 'label': 'pool2'}
 
-        cls.patch_pool_usage = patch('storageadmin.views.command.pool_usage')
-        cls.mock_pool_usage = cls.patch_pool_usage.start()
-        cls.mock_pool_usage.return_value = (14680064, 10, 4194305)
-
         cls.patch_pool_raid = patch('storageadmin.views.command.pool_raid')
         cls.mock_pool_raid = cls.patch_pool_raid.start()
 
@@ -48,23 +44,9 @@ class CommandTests(APITestMixin, APITestCase):
         cls.mock_mount_root = cls.patch_mount_root.start()
         cls.mock_mount_root.return_value = 'dir/poolname'
 
-        cls.patch_device_scan = patch('storageadmin.views.command.device_scan')
-        cls.mock_device_scan = cls.patch_device_scan.start()
-        cls.mock_device_scan.return_value = True
-
-        cls.patch_qgroup_create = patch(
-            'storageadmin.views.command.qgroup_create')
-        cls.mock_qgroup_create = cls.patch_qgroup_create.start()
-        cls.mock_qgroup_create.return_value = '1'
-
         cls.patch_mount_snap = patch('storageadmin.views.command.mount_snap')
         cls.mock_mount_snap = cls.patch_mount_snap.start()
         cls.mock_mount_snap.return_value = True
-
-        cls.patch_is_share_mounted = patch(
-            'storageadmin.views.command.is_share_mounted')
-        cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
-        cls.mock_is_share_mounted.return_value = False
 
         cls.patch_update_run = patch('storageadmin.views.command.update_run')
         cls.mock_update_run = cls.patch_update_run.start()
@@ -96,105 +78,117 @@ class CommandTests(APITestMixin, APITestCase):
 
     def test_bootstrap_command(self):
         # bootstrap command
-        response = self.client.post('%s/bootstrap' % self.BASE_URL)
+        response = self.client.post('{}/bootstrap'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_utcnow_command(self):
         # utcnow command
-        response = self.client.post('%s/utcnow' % self.BASE_URL)
+        response = self.client.post('{}/utcnow'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_uptime_command(self):
         # uptime command
-        response = self.client.post('%s/uptime' % self.BASE_URL)
+        response = self.client.post('{}/uptime'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_kernel_command(self):
         # kernel command
-        response = self.client.post('%s/kernel' % self.BASE_URL)
+        response = self.client.post('{}/kernel'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_update_check_command(self):
 
         # update-check command
-        response = self.client.post('%s/update-check' % self.BASE_URL)
+        response = self.client.post('{}/update-check'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_update_command(self):
 
         # update command
-        response = self.client.post('%s/update' % self.BASE_URL)
+        response = self.client.post('{}/update'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_current_version_command(self):
 
         # current-version command
-        response = self.client.post('%s/current-version' % self.BASE_URL)
+        response = self.client.post('{}/current-version'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_current_user_command(self):
 
         # current-user command
-        response = self.client.post('%s/current-user' % self.BASE_URL)
+        response = self.client.post('{}/current-user'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_auto_update_status_command(self):
-
         # auto-update-status command
-        response = self.client.post('%s/auto-update-status' % self.BASE_URL)
+        response = self.client.post(
+            '{}/auto-update-status'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_enable_auto_update_command(self):
 
         # enable-auto-update command
-        response = self.client.post('%s/enable-auto-update' % self.BASE_URL)
+        response = self.client.post(
+            '{}/enable-auto-update'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_disable_auto_update_command(self):
 
         # disable-auto-update command
-        response = self.client.post('%s/disable-auto-update' % self.BASE_URL)
+        response = self.client.post(
+            '{}/disable-auto-update'.format(self.BASE_URL))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+
+    def test_refresh_disk_state(self):
+
+        # refresh-disk-state command
+        response = self.client.post(
+            '{}/refresh-disk-state'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_refresh_pool_state(self):
 
         # refresh-pool-state command
-        response = self.client.post('%s/refresh-pool-state' % self.BASE_URL)
+        response = self.client.post(
+            '{}/refresh-pool-state'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_refresh_share_state(self):
         # refresh-share-state command
-        response = self.client.post('%s/refresh-share-state' % self.BASE_URL)
+        response = self.client.post(
+            '{}/refresh-share-state'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_refresh_snapshot_state(self):
         # refresh-snapshot-state command
-        response = self.client.post('%s/refresh-snapshot-state'
-                                    % self.BASE_URL)
+        response = self.client.post(
+            '{}/refresh-snapshot-state'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_shutdown(self):
         # shutdown command
-        response = self.client.post('%s/shutdown' % self.BASE_URL)
+        response = self.client.post('{}/shutdown'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
     def test_reboot(self):
         # reboot command
-        response = self.client.post('%s/reboot' % self.BASE_URL)
+        response = self.client.post('{}/reboot'.format(self.BASE_URL))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)

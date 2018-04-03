@@ -27,8 +27,8 @@ class ProdExceptionMiddleware(object):
 
     def process_exception(self, request, exception):
         """just log the exception"""
-        e_msg = ('Exception occured while processing a request. Path: %s '
-                 'method: %s' % (request.path, request.method))
+        e_msg = ('Exception occurred while processing a request. Path: {} '
+                 'method: {}').format(request.path, request.method)
         logger.error(e_msg)
         logger.exception(exception)
         run_command(['/usr/bin/tar', '-c', '-z', '-f',

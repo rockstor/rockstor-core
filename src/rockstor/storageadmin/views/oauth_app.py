@@ -44,14 +44,14 @@ class OauthAppView(rfc.GenericView):
             name = request.data.get('name')
             username = request.user.username
             if (OauthApp.objects.filter(name=name).exists()):
-                e_msg = ('application with name: %s already exists. Choose a '
-                         'different name.' % name)
+                e_msg = ('Application with name ({}) already exists. Choose a '
+                         'different name.').format(name)
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             try:
                 user = User.objects.get(username=username)
             except:
-                e_msg = ('User with name: %s does not exist' % username)
+                e_msg = 'User with name ({}) does not exist.'.format(username)
                 handle_exception(Exception(e_msg), request)
 
             client_type = OauthApplication.CLIENT_CONFIDENTIAL
@@ -70,18 +70,18 @@ class OauthAppView(rfc.GenericView):
             try:
                 app = OauthApp.objects.get(id=id)
             except:
-                e_msg = ('application with id(%s) does not exist' % id)
+                e_msg = 'Application with id ({}) does not exist.'.format(id)
                 handle_exception(Exception(e_msg), request)
 
             if (app.name == settings.OAUTH_INTERNAL_APP):
-                e_msg = ('application with id(%s) cannot be deleted because '
+                e_msg = ('Application with id ({}) cannot be deleted because '
                          'it is '
                          'used internally by Rockstor. If you really need to '
                          'delete it, login as root and use '
-                         '%sbin/delete-api-key command. If you do delete it, '
+                         '{}bin/delete-api-key command. If you do delete it, '
                          'please create another one with the same name as it '
-                         'is required by Rockstor internally.' %
-                         (id, settings.ROOT_DIR))
+                         'is required by Rockstor '
+                         'internally.').format(id, settings.ROOT_DIR)
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             app.application.delete()

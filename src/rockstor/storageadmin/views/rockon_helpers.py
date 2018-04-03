@@ -58,8 +58,8 @@ def rockon_status(name):
 def rm_container(name):
     o, e, rc = run_command([DOCKER, 'stop', name], throw=False)
     o, e, rc = run_command([DOCKER, 'rm', name], throw=False)
-    return logger.debug('Attempted to remove a container(%s). out: %s '
-                        'err: %s rc: %s.' % (name, o, e, rc))
+    return logger.debug(('Attempted to remove a container ({}). Out: {} '
+                        'Err: {} rc: {}.').format(name, o, e, rc))
 
 
 @task()
@@ -75,7 +75,8 @@ def generic_start(rockon):
                 rockon=rockon).order_by('launch_order'):
             run_command([DOCKER, 'start', c.name])
     except Exception as e:
-        logger.error('Exception while starting the rockon(%s)' % rockon.name)
+        logger.error(('Exception while starting the '
+                     'rockon ({}).').format(rockon.name))
         logger.exception(e)
         new_status = 'start_failed'
     finally:
@@ -97,7 +98,8 @@ def generic_stop(rockon):
                 rockon=rockon).order_by('-launch_order'):
             run_command([DOCKER, 'stop', c.name])
     except Exception as e:
-        logger.debug('exception while stopping the rockon(%s)' % rockon.name)
+        logger.debug(('Exception while stopping the '
+                     'rockon ({}).').format(rockon.name))
         logger.exception(e)
         new_status = 'stop_failed'
     finally:
@@ -120,7 +122,7 @@ def install(rid):
         globals().get('%s_install' % rockon.name.lower(),
                       generic_install)(rockon)
     except Exception as e:
-        logger.debug('exception while installing the Rockon(%d)' % rid)
+        logger.debug('Exception while installing the Rockon ({}).'.format(rid))
         logger.exception(e)
         new_state = 'install_failed'
     finally:
@@ -136,7 +138,8 @@ def uninstall(rid, new_state='available'):
         globals().get('%s_uninstall' % rockon.name.lower(),
                       generic_uninstall)(rockon)
     except Exception as e:
-        logger.debug('exception while uninstalling the Rockon(%d)' % rid)
+        logger.debug(('Exception while uninstalling the '
+                     'rockon ({}).').format(rid))
         logger.exception(e)
         new_state = 'installed'
     finally:
@@ -268,7 +271,7 @@ def owncloud_install(rockon):
             cmd.extend(['-e', 'DB_USER=%s' % db_user, '-e',
                         'DB_PASS=%s' % db_pw, ])
         cmd.append(c.dimage.name)
-        logger.debug('docker cmd = %s' % cmd)
+        logger.debug('Docker cmd = ({}).'.format(cmd))
         run_command(cmd)
         if (c.dimage.name == 'postgres'):
             # make sure postgres is setup
@@ -279,7 +282,7 @@ def owncloud_install(rockon):
                 if (rc == 0):
                     break
                 if (cur_wait > 300):
-                    logger.error('Waited too long(300 seconds) for '
+                    logger.error('Waited too long (300 seconds) for '
                                  'postgres to initialize for owncloud. '
                                  'giving up.')
                     break

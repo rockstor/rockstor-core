@@ -75,6 +75,7 @@ class ReplicationMixin(object):
                                        save_error=False)
             return rshare['id']
         except RockStorAPIException as e:
+            # Note replica_share.py post() generates this exception message.
             if (e.detail == 'Replicashare(%s) already exists.' % data['share']):  # noqa E501
                 return self.rshare_id(data['share'])
             raise e
@@ -120,8 +121,9 @@ class ReplicationMixin(object):
             return self.law.api_call(url, data={'snap_type': snap_type, },
                                      calltype='post', save_error=False)
         except RockStorAPIException as e:
-            if (e.detail == ('Snapshot(%s) already exists for the Share(%s).' %
-                             (snap_name, sname))):
+            # Note snapshot.py _create() generates this exception message.
+            if (e.detail == ('Snapshot ({}) already exists for the share '
+                             '({}).').format(snap_name, sname)):
                 return logger.debug(e.detail)
             raise e
 
@@ -140,7 +142,12 @@ class ReplicationMixin(object):
             url = 'shares/{}/snapshots/{}/repclone'.format(share.id, snap_name)
             return self.law.api_call(url, calltype='post', save_error=False)
         except RockStorAPIException as e:
-            if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
+            # TODO: need to look further at the following as command repclone
+            # TODO: (snapshot.py post) catches Snapshot.DoesNotExist.
+            # TODO: and doesn't appear to call _delete_snapshot()
+            # Note snapshot.py _delete_snapshot() generates this exception msg.
+            if (e.detail == 'Snapshot name ({}) does not '
+                            'exist.'.format(snap_name)):
                 logger.debug(e.detail)
                 return False
             raise e
@@ -152,7 +159,9 @@ class ReplicationMixin(object):
             self.law.api_call(url, calltype='delete', save_error=False)
             return True
         except RockStorAPIException as e:
-            if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
+            # Note snapshot.py _delete_snapshot() generates this exception msg.
+            if (e.detail == 'Snapshot name ({}) does not '
+                            'exist.'.format(snap_name)):
                 logger.debug(e.detail)
                 return False
             raise e
@@ -167,7 +176,9 @@ class ReplicationMixin(object):
             return self.law.api_call(url, data=data, calltype='post',
                                      headers=headers, save_error=False)
         except RockStorAPIException as e:
-            if (e.detail == 'Share(%s) already exists. Choose a different name' % sname):  # noqa E501
+            # Note share.py post() generates this exception message.
+            if (e.detail == 'Share ({}) already exists. Choose a different '
+                            'name.'.format(sname)):  # noqa E501
                 return logger.debug(e.detail)
             raise e
 

@@ -38,6 +38,7 @@ class ReplicaShareListView(rfc.GenericView):
     def post(self, request):
         sname = request.data['share']
         if (ReplicaShare.objects.filter(share=sname).exists()):
+            # Note e_msg is consumed by replication/util.py create_rshare()
             e_msg = ('Replicashare(%s) already exists.' % sname)
             handle_exception(Exception(e_msg), request)
 
