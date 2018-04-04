@@ -93,9 +93,9 @@ PoolsView = RockstorLayoutView.extend({
             emptytext: 'Unset',
             emptyclass: 'editable-empty-custom',
             source: [
-                     {value: 'no', text: 'no'},
-                     {value: 'zlib', text: 'zlib'},
-                     {value: 'lzo', text: 'lzo'}
+                {value: 'no', text: 'no'},
+                {value: 'zlib', text: 'zlib'},
+                {value: 'lzo', text: 'lzo'}
             ],
             success: function(response, newCompr){
                 //use $(this) to dynamically get pool name from select dropdown.

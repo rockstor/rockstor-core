@@ -316,7 +316,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
             var tmp = parseInt(perms.charAt(i)).toString(2);
             p = (tmp.length == 3) ? p.concat(tmp) :
                 (tmp.length == 2) ? p.concat('0').concat(tmp) :
-                p.concat('00').concat(tmp);
+                    p.concat('00').concat(tmp);
         }
         return p;
     },

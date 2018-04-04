@@ -65,8 +65,8 @@ SetroleDiskView = RockstorLayoutView.extend({
         try {
             var role_obj = JSON.parse(diskRole);
         } catch (e) {
-                // as we can't convert this drives role to json we assume
-                // it's isRoleUsable status by false
+            // as we can't convert this drives role to json we assume
+            // it's isRoleUsable status by false
             role_obj = null;
         }
         // extract our partitions obj from the role_obj if there is one.

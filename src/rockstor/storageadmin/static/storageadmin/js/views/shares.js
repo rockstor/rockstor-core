@@ -86,7 +86,7 @@ SharesView = RockstorLayoutView.extend({
         this.renderDataTables(customs);
     },
 
-//	delete button handler
+    // delete button handler
     deleteShare: function(event) {
         var _this = this;
         var button = $(event.currentTarget);
@@ -94,10 +94,10 @@ SharesView = RockstorLayoutView.extend({
         shareName = button.attr('data-name');
         sid = button.attr('data-id');
         shareUsage = button.attr('data-usage');
-		// set share name in confirm dialog
+        // set share name in confirm dialog
         _this.$('.pass-share-name').html(shareName);
         _this.$('#pass-share-usage').html(shareUsage);
-		//show the dialog
+        //show the dialog
         _this.$('#delete-share-modal').modal();
         return false;
     },
@@ -143,7 +143,8 @@ SharesView = RockstorLayoutView.extend({
             if (shareCompression && shareCompression != 'no') {
                 html += shareCompression + ' ';
             } else {
-                html += 'Same as Pool ';
+                html += 'None(defaults to pool level compression, if any)   ' +
+                        '<a href="#shares/' + shareName + '/?cView=edit"><i class="glyphicon glyphicon-pencil"></i></a>';
             }
             html += '<a href="#shares/' + shareId + '/?cView=edit"' +
                 'title="Edit share compression setting" rel="tooltip">' +
