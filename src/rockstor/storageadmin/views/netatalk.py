@@ -123,8 +123,9 @@ class NetatalkListView(rfc.GenericView):
         try:
             for share in shares:
                 mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-                cur_description = '%s %s' % (share.name, description)
-                if (len(shares) == 1 and description != self.def_description):
+                cur_description = '%s' % share.name
+                #cur_description = '%s %s' % (share.name, description)
+                if (len(shares) == 1 and description != self.def_description and share.name == ''):
                     cur_description = description
                 afpo = NetatalkShare(share=share, path=mnt_pt,
                                      description=cur_description,
