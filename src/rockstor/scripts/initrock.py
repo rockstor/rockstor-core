@@ -346,7 +346,8 @@ def main():
         if (os.path.isdir(pg_data)):
             shutil.rmtree('/var/lib/pgsql/data')
         logging.info('initializing Postgresql...')
-        run_command(['/usr/bin/postgresql-setup', 'initdb'])
+        if (os.path.isdir('/usr/bin/postgresql-setup')):
+            run_command(['/usr/bin/postgresql-setup', 'initdb'])
         logging.info('Done.')
         run_command([SYSCTL, 'restart', 'postgresql'])
         run_command([SYSCTL, 'status', 'postgresql'])
