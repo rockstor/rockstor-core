@@ -16,14 +16,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
                       share_id, device_scan, scrub_status,
-                      degraded_pools_found)
+                      degraded_pools_found, snapshot_idmap, get_property,
+                      parse_snap_details, shares_info, get_snap)
 from mock import patch
 
 
 class Pool(object):
-    def __init__(self, raid, name):
+    def __init__(self, raid, name, role=None):
         self.raid = raid
         self.name = name
+        self.role = role
 
 
 class BTRFSTests(unittest.TestCase):
@@ -32,6 +34,7 @@ class BTRFSTests(unittest.TestCase):
     cd <root dir of rockstor ie /opt/rockstor>
     ./bin/test --settings=test-settings -v 3 -p test_btrfs*
     """
+
     def setUp(self):
         self.patch_run_command = patch('fs.btrfs.run_command')
         self.mock_run_command = self.patch_run_command.start()
@@ -56,7 +59,8 @@ class BTRFSTests(unittest.TestCase):
     #     self.assertEqual(add_pool(pool, disks), 1)
 
     def test_get_pool_raid_levels_identification(self):
-        """Presents the raid identification function with example data and compares
+        """
+        Presents the raid identification function with example data & compares
         it's return dict to that expected for the given input.  :return: 'ok'
         if all is as expected or a message indicating which raid level was
         incorrectly identified given the test data.  N.B. Only the first raid
@@ -948,3 +952,568 @@ class BTRFSTests(unittest.TestCase):
             self.assertEqual(degraded_pools_found(), count,
                              msg='Un-expected degraded pool count. Mock ({}) '
                                  'count expected ({})'.format(out, count))
+
+    def test_snapshot_idmap_no_snaps(self):
+        """
+         Tests for empty return when no snapshots found
+        """
+        out = ['']
+        err = ['']
+        rc = 0
+        pool = Pool(raid='raid0', name='test-pool')
+        expected_result = {}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(snapshot_idmap(pool), expected_result,
+                         msg="Failed expected idmap - no snaps.")
+
+    def test_snapshot_idmap_home_rollback(self):
+        """
+        Tests for a home as snap itself due to rollback to prior snap
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = [
+            'ID 284 gen 43480 cgen 40482 top level 5 otime 2018-05-02 17:04:26 path home',  # noqa E501
+            '']
+        err = ['']
+        rc = 0
+        expected_result = {'284': 'home'}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(snapshot_idmap(pool), expected_result,
+                         msg="Failed expected idmap - home reverted to snap.")
+
+    def test_snapshot_idmap_home_rollback_snap(self):
+        """
+        Tests for home reverted to prior snap (clone) which is then snapshoted:
+        as home was previously reverted to a rw snap it becomes a (rw) snapshot
+        itself; which can in turn have it's own snaps.
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = [
+            'ID 284 gen 43480 cgen 40482 top level 5 otime 2018-05-02 17:04:26 path home',  # noqa E501
+            'ID 286 gen 43444 cgen 43444 top level 5 otime 2018-05-28 11:51:11 path .snapshots/home/home-snap-1',  # noqa E501
+            '']
+        err = ['']
+        rc = 0
+        expected_result = {'284': 'home', '286': '.snapshots/home/home-snap-1'}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(snapshot_idmap(pool), expected_result,
+                         msg="Failed expected idmap - single home snap.")
+
+    def test_snapshot_idmap_mid_replication(self):
+        """
+        Test mid replication snapshot idmap (bi directional)
+        """
+        pool = Pool(raid='raid0', name='test-pool')
+        out = [
+            'ID 311 gen 162 cgen 162 top level 5 otime 2018-05-13 20:55:02 path .snapshots/rock-share/rock-share_1_replication_27',  # noqa E501
+            'ID 313 gen 167 cgen 167 top level 5 otime 2018-05-13 21:00:01 path .snapshots/rock-share/rock-share_1_replication_28',  # noqa E501
+            'ID 333 gen 280 cgen 275 top level 5 otime 2018-05-24 19:40:02 path C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share',  # noqa E501
+            'ID 334 gen 284 cgen 280 top level 5 otime 2018-05-24 19:45:02 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share/dev-rock-share_1_replication_47',  # noqa E501
+            'ID 335 gen 289 cgen 284 top level 5 otime 2018-05-24 19:50:02 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share/dev-rock-share_1_replication_48',  # noqa E501
+            'ID 336 gen 289 cgen 289 top level 5 otime 2018-05-24 19:55:02 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share/dev-rock-share_1_replication_49',  # noqa E501
+            '']
+        err = ['']
+        rc = 0
+        expected_result = {
+            '313': '.snapshots/rock-share/rock-share_1_replication_28',
+            '334': '.snapshots/C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share/dev-rock-share_1_replication_47',  # noqa E501
+            '311': '.snapshots/rock-share/rock-share_1_replication_27',
+            '336': '.snapshots/C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share/dev-rock-share_1_replication_49',  # noqa E501
+            '333': 'C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share',
+            '335': '.snapshots/C583C37F-08AE-478B-A726-E95235D1712B_dev-rock-share/dev-rock-share_1_replication_48'}  # noqa E501
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(snapshot_idmap(pool), expected_result,
+                         msg="Failed expected idmap - mid replication.")
+
+    def test_snapshot_idmap_snapper_root(self):
+        """
+        Test snapper rollback enabled root, with some Rockstor native snapshots
+        """
+        pool = Pool(raid='raid0', name='test-pool', role='root')
+        out = [
+            'ID 272 gen 1725 cgen 44 top level 267 otime 2018-06-02 12:40:42 path @/.snapshots/2/snapshot',  # noqa E501
+            'ID 283 gen 1725 cgen 84 top level 267 otime 2018-06-02 13:02:31 path @/.snapshots/13/snapshot',  # noqa E501
+            'ID 284 gen 1725 cgen 88 top level 267 otime 2018-06-02 13:05:55 path @/.snapshots/14/snapshot',  # noqa E501
+            'ID 287 gen 1725 cgen 96 top level 267 otime 2018-06-02 13:10:46 path @/.snapshots/17/snapshot',  # noqa E501
+            'ID 288 gen 1725 cgen 97 top level 267 otime 2018-06-02 13:11:17 path @/.snapshots/18/snapshot',  # noqa E501
+            'ID 289 gen 1725 cgen 1411 top level 268 otime 2018-06-03 17:21:23 path .snapshots/home/home-snap',  # noqa E501
+            'ID 296 gen 2644 cgen 2644 top level 268 otime 2018-06-04 20:50:32 path .snapshots/test-share/snap-test-share',  # noqa E501
+            'ID 297 gen 2656 cgen 2647 top level 268 otime 2018-06-04 20:51:50 path .snapshots/home/home-snap-writable',  # noqa E501
+            'ID 298 gen 2656 cgen 2656 top level 268 otime 2018-06-04 20:55:39 path home-snap-writable-clone',  # noqa E501
+            'ID 299 gen 2763 cgen 2763 top level 267 otime 2018-06-05 16:48:08 path @/.snapshots/19/snapshot',  # noqa E501
+            'ID 301 gen 2767 cgen 2766 top level 267 otime 2018-06-05 16:49:10 path @/.snapshots/20/snapshot',  # noqa E501
+            '']
+        err = ['']
+        rc = 0
+        expected_result = {'301': '.snapshots/20/snapshot',
+                           '289': '.snapshots/home/home-snap',
+                           '288': '.snapshots/18/snapshot',
+                           '272': '.snapshots/2/snapshot',
+                           '298': 'home-snap-writable-clone',
+                           '299': '.snapshots/19/snapshot',
+                           '296': '.snapshots/test-share/snap-test-share',
+                           '297': '.snapshots/home/home-snap-writable',
+                           '283': '.snapshots/13/snapshot',
+                           '284': '.snapshots/14/snapshot',
+                           '287': '.snapshots/17/snapshot'}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(snapshot_idmap(pool), expected_result,
+                         msg="Failed expected idmap - mid replication.")
+
+    def test_get_property_all(self):
+        """
+        Test get_property function for returning all available properties
+        """
+        mnt_pt = 'mock-mount'
+        out = ['ro=false', 'compression=lzo', 'label=test', '']
+        err = ['']
+        rc = 0
+        expected_result = {'compression': 'lzo', 'ro': False, 'label': 'test'}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(get_property(mnt_pt), expected_result,
+                         msg="Failed get all properties return test.")
+
+    def test_get_property_compression(self):
+        """
+        Test for a property that is not set, ie compression when not set.
+        """
+        mnt_pt = 'mock-mount'
+        out = ['']
+        err = ['']
+        rc = 0
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertIsNone(get_property(mnt_pt, 'compression'),
+                          msg="Failed get compression - 'None' expected.")
+
+    def test_get_property_ro(self):
+        """
+        Test get_property ro property specified function
+        """
+        mnt_pt = 'mock-mount'
+        out = ['ro=false', '']
+        err = ['']
+        rc = 0
+        # False expected
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertFalse(get_property(mnt_pt, 'ro'),
+                         msg="Failed ro False return.")
+        out = ['ro=true', '']
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertTrue(get_property(mnt_pt, 'ro'),
+                        msg="Failed ro True return.")
+
+    def test_parse_snap_details(self):
+        """
+        Test parse_snap_details() over a range of inputs
+        """
+        # setup mock patch for get_property() in fs.btrfs
+        self.patch_get_property = patch('fs.btrfs.get_property')
+        self.mock_get_property = self.patch_get_property.start()
+
+        p_mnt_pt = '/mnt2/test-pool'
+        # Build lists of test data, including get_property() mock return vals.
+
+        # regular (ro) replication snapshot
+        snap_rel_paths = ['.snapshots/rock-share/rock-share_1_replication_27']
+        ro_prop = [True]
+        # (snap_name, writable, is_clone)
+        expected = [('rock-share_1_replication_27', False, False)]
+
+        # regular (rw) snapshot of 'share'
+        snap_rel_paths.append('.snapshots/rock-share/writable-rock-share-snap')
+        ro_prop.append(False)
+        # (snap_name, writable, is_clone)
+        expected.append(('writable-rock-share-snap', True, False))
+
+        # clone (rw) snapshot of 'share' (ie top level dir)
+        snap_rel_paths.append('rock-share-clone')
+        ro_prop.append(False)
+        # (snap_name, writable, is_clone
+        # Note that as we consider this a share (clone) is has snap_name=None.
+        expected.append((None, True, True))
+
+        # Cycle through snap_rel_paths / ro_property / expected return values.
+        for s_rel_path, ro, result in zip(snap_rel_paths, ro_prop, expected):
+            self.mock_get_property.return_value = ro
+            self.assertEqual(parse_snap_details(p_mnt_pt, s_rel_path), result,
+                             msg="Passed Pool mount point={}, snap_rel_path"
+                                 "={} but returned (snap_name, writable, is_"
+                                 "clone) = {} .".format(p_mnt_pt, s_rel_path,
+                                                        result))
+
+    def test_shares_info_system_pool_used(self):
+        """
+        Test shares_info() on a systems pool with some snaps / clones.
+        """
+        # Set role='root' as testing system pool subvol exclusion mechanism.
+        pool = Pool(raid='raid0', name='test-pool', role='root')
+        # N.B. in this data set home is a snap ie has been rolled back to a rw
+        # snapshot.
+        snap_idmap_return = {'319': '.snapshots/home/home-snap-writable',
+                             '324': '.snapshots/sys-pool-share/snap-sys-pool-share',  # noqa E501
+                             '316': '.snapshots/home/home-snap',
+                             '323': 'clone-sys-pool-share',
+                             '320': '.snapshots/home/home-snap-writable-visible',  # noqa E501
+                             '321': '.snapshots/home-clone/home-clone-snap-writable',  # noqa E501
+                             '326': '.snapshots/sys-pool-share/snap-writable-visible-sys-pool-share',  # noqa E501
+                             '327': '.snapshots/clone-sys-pool-share/snap-clone-sys-pool-share',  # noqa E501
+                             '298': 'home-clone',
+                             '325': '.snapshots/sys-pool-share/snap-writable-sys-pool-share',  # noqa E501
+                             '296': 'home',
+                             '328': '.snapshots/clone-sys-pool-share/snap-clone-sys-pool-share-writable',  # noqa E501
+                             '329': '.snapshots/clone-sys-pool-share/snap-clone-sys-pool-share-writable-visible'}  # noqa E501
+        self.patch_snap_idmap = patch('fs.btrfs.snapshot_idmap')
+        self.mock_snap_idmap = self.patch_snap_idmap.start()
+        self.mock_snap_idmap.return_value = snap_idmap_return
+        # mock 'btrfs subvol_list_-p' (via run_command) return values
+        out = ['ID 257 gen 4986 parent 5 top level 5 path @',
+               'ID 258 gen 4986 parent 257 top level 257 path var',
+               'ID 259 gen 4534 parent 257 top level 257 path usr/local',
+               'ID 260 gen 4986 parent 257 top level 257 path tmp',
+               'ID 261 gen 4532 parent 257 top level 257 path srv',
+               'ID 262 gen 4538 parent 257 top level 257 path root',
+               'ID 263 gen 4986 parent 257 top level 257 path opt',
+               'ID 265 gen 4056 parent 257 top level 257 path boot/grub2/x86_64-efi',  # noqa E501
+               'ID 266 gen 4532 parent 257 top level 257 path boot/grub2/i386-pc',  # noqa E501
+               'ID 296 gen 4968 parent 257 top level 257 path home',
+               'ID 298 gen 4971 parent 257 top level 257 path home-clone',
+               'ID 316 gen 4954 parent 257 top level 257 path .snapshots/home/home-snap',  # noqa E501
+               'ID 319 gen 4963 parent 257 top level 257 path .snapshots/home/home-snap-writable',  # noqa E501
+               'ID 320 gen 4966 parent 257 top level 257 path .snapshots/home/home-snap-writable-visible',  # noqa E501
+               'ID 321 gen 4971 parent 257 top level 257 path .snapshots/home-clone/home-clone-snap-writable',  # noqa E501
+               'ID 322 gen 4982 parent 257 top level 257 path sys-pool-share',
+               'ID 323 gen 4986 parent 257 top level 257 path clone-sys-pool-share',  # noqa E501
+               'ID 324 gen 4979 parent 257 top level 257 path .snapshots/sys-pool-share/snap-sys-pool-share',  # noqa E501
+               'ID 325 gen 4980 parent 257 top level 257 path .snapshots/sys-pool-share/snap-writable-sys-pool-share',  # noqa E501
+               'ID 326 gen 4981 parent 257 top level 257 path .snapshots/sys-pool-share/snap-writable-visible-sys-pool-share',  # noqa E501
+               'ID 327 gen 4984 parent 257 top level 257 path .snapshots/clone-sys-pool-share/snap-clone-sys-pool-share',  # noqa E501
+               'ID 328 gen 4985 parent 257 top level 257 path .snapshots/clone-sys-pool-share/snap-clone-sys-pool-share-writable',  # noqa E501
+               'ID 329 gen 4986 parent 257 top level 257 path .snapshots/clone-sys-pool-share/snap-clone-sys-pool-share-writable-visible',  # noqa E501
+               '']
+        err = ['']
+        rc = 0
+        self.mock_run_command.return_value = (out, err, rc)
+        # default_subvolid
+        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
+        self.mock_default_subvolid = self.patch_default_subvolid.start()
+        self.mock_default_subvolid.return_value = '257'
+        # parse_snap_details
+        self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
+        self.mock_parse_snap_details = self.patch_parse_snap_details.start()
+
+        def parse_snap_details_return(*args, **kwargs):
+            # We have a few clone shares (snaps at top level) in our test data:
+            clones = ['home', 'home-clone', 'clone-sys-pool-share']
+            if args[1] in clones:
+                # (snap_name, writable, is_clone)
+                return None, True, True
+            else:
+                # brand all others as writable - ok for subvol filter test.
+                return 'arbitrary-name', True, False
+        # From above we expect the following Rockstor relevant shares:
+        expected = {'home': '0/296', 'home-clone': '0/298',
+                    'clone-sys-pool-share': '0/323', 'sys-pool-share': '0/322'}
+        self.mock_parse_snap_details.side_effect = parse_snap_details_return
+        returned = shares_info(pool)
+        self.assertEqual(returned, expected,
+                         msg="Failed system pool share/clone filtering:\n"
+                             "returned {},\nexpected {}.\n".format(returned,
+                                                                   expected))
+
+    def test_shares_info_legacy_system_pool_used(self):
+        """
+        Test shares_info() on legacy systems pool with some snaps and clones.
+        """
+        # Set role='root' as testing system pool subvol exclusion mechanism.
+        pool = Pool(raid='raid0', name='test-pool', role='root')
+        # N.B. in this data set home is a snap ie has been rolled back from a
+        # snapshot.
+        snap_idmap_return = {'288': 'home-clone',
+                             '290': 'clone-sys-pool-share',
+                             '284': 'home',
+                             '287': '.snapshots/home/home-snap-writable',
+                             '286': '.snapshots/home/home-snap'}
+        self.patch_snap_idmap = patch('fs.btrfs.snapshot_idmap')
+        self.mock_snap_idmap = self.patch_snap_idmap.start()
+        self.mock_snap_idmap.return_value = snap_idmap_return
+        # mock 'btrfs subvol_list_-p' (via run_command) return values
+        # N.B. here we see the systemd root/var/lib/machines subvol.
+        out = ['ID 257 gen 45769 parent 5 top level 5 path root',
+               'ID 260 gen 43499 parent 257 top level 257 path root/var/lib/machines',  # noqa E501
+               'ID 284 gen 44893 parent 5 top level 5 path home',
+               'ID 286 gen 44739 parent 5 top level 5 path .snapshots/home/home-snap',  # noqa E501
+               'ID 287 gen 44742 parent 5 top level 5 path .snapshots/home/home-snap-writable',  # noqa E501
+               'ID 288 gen 44893 parent 5 top level 5 path home-clone',
+               'ID 289 gen 44912 parent 5 top level 5 path sys-pool-share',
+               'ID 290 gen 44912 parent 5 top level 5 path clone-sys-pool-share',  # noqa E501
+               '']
+        err = ['']
+        rc = 0
+        self.mock_run_command.return_value = (out, err, rc)
+        # default_subvolid
+        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
+        self.mock_default_subvolid = self.patch_default_subvolid.start()
+        self.mock_default_subvolid.return_value = '5'
+        # parse_snap_details
+        self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
+        self.mock_parse_snap_details = self.patch_parse_snap_details.start()
+
+        def parse_snap_details_return(*args, **kwargs):
+            # We have a few clone shares (snaps at top level) in our test data:
+            clones = ['home', 'home-clone', 'clone-sys-pool-share']
+            if args[1] in clones:
+                # (snap_name, writable, is_clone)
+                return None, True, True
+            else:
+                # brand all others as writable - ok for subvol filter test.
+                return 'arbitrary-name', True, False
+        self.mock_parse_snap_details.side_effect = parse_snap_details_return
+        # From above we expect the following Rockstor relevant shares:
+        expected = {'home': '0/284', 'home-clone': '0/288',
+                    'clone-sys-pool-share': '0/290',
+                    'sys-pool-share': '0/289'}
+        returned = shares_info(pool)
+        self.assertEqual(returned, expected,
+                         msg="Failed system pool share/clone filtering:\n"
+                             "returned {},\nexpected {}.\n".format(returned,
+                                                                   expected))
+
+    def test_shares_info_legacy_system_pool_fresh(self):
+        """
+        Test shares_info() on fresh legacy systems pool, no snaps or clones.
+        """
+        # Set role='root' as testing system pool subvol exclusion mechanism.
+        pool = Pool(raid='raid0', name='test-pool', role='root')
+        snap_idmap_return = {}
+        self.patch_snap_idmap = patch('fs.btrfs.snapshot_idmap')
+        self.mock_snap_idmap = self.patch_snap_idmap.start()
+        self.mock_snap_idmap.return_value = snap_idmap_return
+        # mock 'btrfs subvol_list_-p' (via run_command) return values
+        # Note the systemd root/var/lib/machines subvol to be excluded.
+        out = ['ID 257 gen 98733 parent 5 top level 5 path home',
+               'ID 258 gen 99195 parent 5 top level 5 path root',
+               'ID 260 gen 78538 parent 258 top level 258 path root/var/lib/machines',  # noqa E501
+               '']
+        err = ['']
+        rc = 0
+        self.mock_run_command.return_value = (out, err, rc)
+        # default_subvolid
+        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
+        self.mock_default_subvolid = self.patch_default_subvolid.start()
+        self.mock_default_subvolid.return_value = '5'
+        self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
+        self.mock_parse_snap_details = self.patch_parse_snap_details.start()
+        # From above we expect the following Rockstor relevant shares:
+        expected = {'home': '0/257'}
+        # Mocked return value in following = (snap_name, writable, is_clone)
+        # ie no clones
+        self.mock_parse_snap_details.return_value = 'foo-bar', True, False
+        returned = shares_info(pool)
+        self.assertEqual(returned, expected,
+                         msg="Failed system pool share/clone filtering:\n"
+                             "returned {},\nexpected {}.\n".format(returned,
+                                                                   expected))
+
+    def test_shares_info_system_pool_post_btrfs_subvol_list_path_changes(self):
+        """
+        Later 'btrfs subvolume list -p' defaults to supplying path relative to
+        pool, rather than supplied subvolume.
+        ie prior change 'subvol list' item:
+        'ID 257 gen 4986 parent 5 top level 5 path @'
+        'ID 296 gen 4968 parent 257 top level 257 path home',
+        post changes:
+        'ID 257 gen 1725 parent 5 top level 5 path @'
+        'ID 264 gen 1725 parent 257 top level 257 path @/home'
+        Note: path now include it's root of @ (
+        Also drops -o option and outputs nothing when used (silent failure)!
+        """
+        # Set role='root' as testing system pool subvol exclusion mechanism.
+        pool = Pool(raid='raid0', name='test-pool', role='root')
+        # example data includes default snapper 'system' snapshots & no clones.
+        snap_idmap_return = {'289': '.snapshots/home/home-snap',
+                             '288': '.snapshots/18/snapshot',
+                             '272': '.snapshots/2/snapshot',
+                             '283': '.snapshots/13/snapshot',
+                             '284': '.snapshots/14/snapshot',
+                             '287': '.snapshots/17/snapshot'}
+        self.patch_snap_idmap = patch('fs.btrfs.snapshot_idmap')
+        self.mock_snap_idmap = self.patch_snap_idmap.start()
+        self.mock_snap_idmap.return_value = snap_idmap_return
+        # mock 'btrfs subvol_list_-p' (via run_command) return values
+        # Note the previously absent '@/' path additions.
+        out = ['ID 257 gen 1725 parent 5 top level 5 path @',
+               'ID 258 gen 1776 parent 257 top level 257 path @/var',
+               'ID 259 gen 1725 parent 257 top level 257 path @/usr/local',
+               'ID 260 gen 1776 parent 257 top level 257 path @/tmp',
+               'ID 261 gen 1725 parent 257 top level 257 path @/srv',
+               'ID 262 gen 1737 parent 257 top level 257 path @/root',
+               'ID 263 gen 1776 parent 257 top level 257 path @/opt',
+               'ID 264 gen 1725 parent 257 top level 257 path @/home',
+               'ID 265 gen 1725 parent 257 top level 257 path @/boot/grub2/x86_64-efi',  # noqa E501
+               'ID 266 gen 1725 parent 257 top level 257 path @/boot/grub2/i386-pc',  # noqa E501
+               'ID 267 gen 1725 parent 257 top level 257 path @/.snapshots',
+               'ID 268 gen 1738 parent 267 top level 267 path @/.snapshots/1/snapshot',  # noqa E501
+               'ID 272 gen 1725 parent 267 top level 267 path @/.snapshots/2/snapshot',  # noqa E501
+               'ID 283 gen 1725 parent 267 top level 267 path @/.snapshots/13/snapshot',  # noqa E501
+               'ID 284 gen 1725 parent 267 top level 267 path @/.snapshots/14/snapshot',  # noqa E501
+               'ID 287 gen 1725 parent 267 top level 267 path @/.snapshots/17/snapshot',  # noqa E501
+               'ID 288 gen 1725 parent 267 top level 267 path @/.snapshots/18/snapshot',  # noqa E501
+               'ID 289 gen 1725 parent 268 top level 268 path .snapshots/home/home-snap',  # noqa E501
+               'ID 291 gen 1725 parent 268 top level 268 path sys-share-test',
+               'ID 292 gen 1725 parent 268 top level 268 path sys-share-test-2',  # noqa E501
+               'ID 293 gen 1725 parent 268 top level 268 path test-share',
+               'ID 294 gen 1725 parent 268 top level 268 path ghost-share', '']
+        err = ['']
+        rc = 0
+        # default_subvolid
+        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
+        self.mock_default_subvolid = self.patch_default_subvolid.start()
+        self.mock_default_subvolid.return_value = '268'
+        # run_command
+        self.mock_run_command.return_value = (out, err, rc)
+        # parse_snap_details
+        self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
+        self.mock_parse_snap_details = self.patch_parse_snap_details.start()
+        # From above we expect the following Rockstor relevant shares:
+        expected = {'home': '0/264', 'test-share': '0/293',
+                    'sys-share-test-2': '0/292', 'sys-share-test': '0/291',
+                    'ghost-share': '0/294'}
+        # Mocked return value in following = (snap_name, writable, is_clone)
+        # ie no clones
+        self.mock_parse_snap_details.return_value = 'foo-bar', True, False
+        returned = shares_info(pool)
+        self.assertEqual(returned, expected,
+                         msg="Failed system pool share/clone filtering:\n"
+                             "returned {},\nexpected {}.\n".format(returned,
+                                                                   expected))
+
+# TODO: test_shares_info_system_pool_fresh
+
+    def test_get_snap_legacy(self):
+        """
+        Test get_snap() across various input.
+        """
+        # example output from
+        # get_snap() called with
+        subvol = '/mnt2/test-pool/.snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share'  # noqa E501
+        oldest = True
+        num_retain = 3
+        regex = '_replication_'
+        test_mode = True
+        out = [['ID 258 gen 184 top level 5 path new-share',
+                'ID 295 gen 184 top level 5 path .snapshots/new-share/new-share-snap',  # noqa E501
+                'ID 304 gen 220 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_test-share',  # noqa E501
+                'ID 305 gen 222 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_1',  # noqa E501
+                '']]
+        err = [['']]
+        rc = [0]
+        # the return in above case was correctly None as num_retains=3
+        expected_result = [None]
+
+        out.append(['ID 258 gen 184 top level 5 path new-share',
+                    'ID 295 gen 184 top level 5 path .snapshots/new-share/new-share-snap',  # noqa E501
+                    'ID 304 gen 220 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_test-share',  # noqa E501
+                    'ID 305 gen 227 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_1',  # noqa E501
+                    'ID 306 gen 227 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_165',  # noqa E501
+                    ''])
+        err.append([''])
+        rc.append(0)
+        # the return in above case was correctly None as num_retains=3
+        expected_result.append(None)
+
+        out.append(['ID 258 gen 184 top level 5 path new-share',
+                    'ID 295 gen 184 top level 5 path .snapshots/new-share/new-share-snap',  # noqa E501
+                    'ID 304 gen 220 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_test-share',  # noqa E501
+                    'ID 305 gen 227 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_1',  # noqa E501
+                    'ID 306 gen 230 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_165',  # noqa E501
+                    'ID 307 gen 230 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_167',  # noqa E501
+                    ''])
+        err.append([''])
+        rc.append(0)
+        # the return in above was correctly None as num_retains=3 (last time)
+        expected_result.append(None)
+
+        out.append(['ID 258 gen 184 top level 5 path new-share',
+                    'ID 295 gen 184 top level 5 path .snapshots/new-share/new-share-snap',  # noqa E501
+                    'ID 304 gen 220 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_test-share',  # noqa E501
+                    'ID 305 gen 227 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_1',  # noqa E501
+                    'ID 306 gen 230 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_165',  # noqa E501
+                    'ID 307 gen 233 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_167',  # noqa E501
+                    'ID 308 gen 233 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share/test-share_6_replication_168',  # noqa E501
+                    ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append('test-share_6_replication_1')
+        # Cycle through each of the above mock_run_command data sets.
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            # print('each out = {}'.format(o))
+            # print('each expected = {}'.format(expected))
+            self.mock_run_command.return_value = (o, e, r)
+            returned = get_snap(subvol, oldest, num_retain, regex, test_mode)
+            self.assertEqual(returned, expected,
+                             msg='Un-expected get_snap() result:\n '
+                                 'returned = ({}).\n '
+                                 'expected = ({}).'.format(returned, expected))
+
+    def test_get_snap_2(self):
+        """
+        More get_snap() test data taken after btrfs.py refactoring
+        """
+        # example output from
+        # get_snap() called with
+        subvol = '/mnt2/rock-pool/.snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share'  # noqa E501
+        # post processed share_name=C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share  # noqa E501
+        oldest = True
+        num_retain = 2
+        regex = '_replication_'
+        test_mode = True
+        out = [['ID 260 gen 52 top level 5 path clone-from-rock-share-snap',
+               'ID 293 gen 268 top level 5 path rock-share',
+               'ID 328 gen 345 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share',  # noqa E501
+               'ID 329 gen 347 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_1',  # noqa E501
+               '']]
+        err = [['']]
+        rc = [0]
+        expected_result = [None]
+
+        out.append(['ID 260 gen 52 top level 5 path clone-from-rock-share-snap',  # noqa E501
+               'ID 293 gen 268 top level 5 path rock-share',
+               'ID 328 gen 345 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share',  # noqa E501
+               'ID 329 gen 350 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_1',  # noqa E501
+               'ID 330 gen 350 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_48',  # noqa E501
+               ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(None)
+
+        out.append(['ID 260 gen 52 top level 5 path clone-from-rock-share-snap',  # noqa E501
+               'ID 293 gen 268 top level 5 path rock-share',
+               'ID 328 gen 345 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share',  # noqa E501
+               'ID 329 gen 350 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_1',  # noqa E501
+               'ID 330 gen 353 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_48',  # noqa E501
+               'ID 331 gen 353 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_49',  # noqa E501
+               ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append('rep-test-share_3_replication_1')
+
+        out.append(['ID 260 gen 52 top level 5 path clone-from-rock-share-snap',  # noqa E501
+               'ID 293 gen 268 top level 5 path rock-share',
+               'ID 329 gen 350 top level 5 path C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share',  # noqa E501
+               'ID 330 gen 353 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_48',  # noqa E501
+               'ID 331 gen 357 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_49',  # noqa E501
+               'ID 332 gen 357 top level 5 path .snapshots/C583C37F-08AE-478B-A726-E95235D1712B_rep-test-share/rep-test-share_3_replication_50',  # noqa E501
+               ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append('rep-test-share_3_replication_48')
+        # Cycle through each of the above mock_run_command data sets.
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            # print('each out = {}'.format(o))
+            # print('each expected = {}'.format(expected))
+            self.mock_run_command.return_value = (o, e, r)
+            returned = get_snap(subvol, oldest, num_retain, regex, test_mode)
+            self.assertEqual(returned, expected,
+                             msg='Un-expected get_snap() result:\n '
+                                 'returned = ({}).\n '
+                                 'expected = ({}).'.format(returned, expected))
