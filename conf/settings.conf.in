@@ -276,6 +276,10 @@ MNT_PT = '/mnt2/'
 NFS_EXPORT_ROOT = '/export/'
 SFTP_MNT_ROOT = '/mnt3/'
 
+# System volume label when no btrfs volume label is set as per default openSUSE
+# install: ie 'btrfs fi show' gives 'Label: none'
+SYS_VOL_LABEL = 'system'
+
 TAP_DIR = '${django-settings-conf:taplib}'
 TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
 MAX_TAP_WORKERS = 10
