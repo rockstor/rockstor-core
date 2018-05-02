@@ -33,16 +33,10 @@ class ShareCommandTests(APITestMixin, APITestCase):
     def setUpClass(cls):
         super(ShareCommandTests, cls).setUpClass()
 
-        # post mocks
-        cls.patch_update_quota = patch('storageadmin.views.share_command.'
-                                       'update_quota')
-        cls.mock_update_quota = cls.patch_update_quota.start()
-        cls.mock_update_quota.return_value = 'foo'
-
-        cls.patch_rollback_snap = patch('storageadmin.views.share_command.'
-                                        'rollback_snap')
-        cls.mock_rollback_snap = cls.patch_rollback_snap.start()
-        cls.mock_rollback_snap.return_value = True
+        cls.patch_create_repclone = patch('storageadmin.views.share_command.'
+                                          'create_repclone')
+        cls.mock_create_repclone = cls.patch_create_repclone.start()
+        cls.mock_create_repclone.return_value = Response('{"message": "ok!"}')
 
         cls.patch_create_clone = patch('storageadmin.views.share_command.'
                                        'create_clone')
