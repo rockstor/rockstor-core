@@ -16,14 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, NFSExport, SambaShare)
-from fs.btrfs import (update_quota, rollback_snap)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from clone_helpers import create_clone
+from clone_helpers import create_clone, create_repclone
 from share import ShareMixin
 from django.core.exceptions import ObjectDoesNotExist
 import logging
@@ -72,11 +70,4 @@ class ShareCommandView(ShareMixin, rfc.GenericView):
                              'shared via Samba. Unshare and '
                              'try again.').format(share.name)
                     handle_exception(Exception(e_msg), request)
-
-                rollback_snap(snap.real_name, share.name, share.subvol_name,
-                              share.pool)
-                update_quota(share.pool, snap.qgroup, share.size * 1024)
-                share.qgroup = snap.qgroup
-                share.save()
-                snap.delete()
-                return Response()
+                return create_repclone(share, request, logger, snap)

@@ -122,7 +122,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             for snap in Snapshot.objects.all():
                 if (snap.uvisible):
                     try:
-                        mount_snap(snap.share, snap.real_name)
+                        mount_snap(snap.share, snap.real_name, snap.qgroup)
                     except Exception as e:
                         e_msg = ('Failed to make the snapshot ({}) visible. '
                                  'Exception: ({}).').format(snap.real_name,

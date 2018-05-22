@@ -66,13 +66,13 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             return Snapshot.objects.filter(share=share).order_by('-id')
 
     @transaction.atomic
-    def _toggle_visibility(self, share, snap_name, on=True):
+    def _toggle_visibility(self, share, snap_name, snap_qgroup, on=True):
         cur_exports = list(NFSExport.objects.all())
         snap_mnt_pt = ('%s%s/.%s' % (settings.MNT_PT, share.name, snap_name))
         export_pt = snap_mnt_pt.replace(settings.MNT_PT,
                                         settings.NFS_EXPORT_ROOT)
         if (on):
-            mount_snap(share, snap_name)
+            mount_snap(share, snap_name, snap_qgroup)
 
             if (NFSExport.objects.filter(share=share).exists()):
                 se = NFSExport.objects.filter(share=share)[0]
@@ -156,7 +156,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
 
                 if (uvisible):
                     try:
-                        self._toggle_visibility(share, ret.data['real_name'])
+                        self._toggle_visibility(share, ret.data['real_name'],
+                                                ret.data['qgroup'])
                     except Exception as e:
                         msg = ('Failed to make the snapshot ({}) visible. '
                                'Exception: ({}).').format(snap_name,
@@ -165,7 +166,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                         logger.exception(e)
 
                     try:
-                        toggle_sftp_visibility(share, ret.data['real_name'])
+                        toggle_sftp_visibility(share, ret.data['real_name'],
+                                               ret.data['qgroup'])
                     except Exception as e:
                         msg = ('Failed to make the snapshot ({}) visible for '
                                'SFTP. Exception: ({}).').format(snap_name,
@@ -237,10 +239,12 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
         if (snapshot.uvisible):
-            self._toggle_visibility(share, snapshot.real_name, on=False)
-            toggle_sftp_visibility(share, snapshot.real_name, on=False)
+            self._toggle_visibility(share, snapshot.real_name, snapshot.qgroup,
+                                    on=False)
+            toggle_sftp_visibility(share, snapshot.real_name, snapshot.qgroup,
+                                   on=False)
 
-        remove_snap(share.pool, share.name, snapshot.name)
+        remove_snap(share.pool, share.name, snapshot.name, snapshot.qgroup)
         snapshot.delete()
         return Response()
 

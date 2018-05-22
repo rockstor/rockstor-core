@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 import time
 import os
-import shutil
 from system.osi import run_command, create_tmp_dir, is_share_mounted, \
     is_mounted, get_dev_byid_name, convert_to_kib, toggle_path_rw, \
     get_device_path
@@ -423,14 +422,17 @@ def mount_share(share, mnt_pt):
     mount_root(share.pool)
     pool_device = get_device_path(share.pool.disk_set.attached()
                                        .first().target_name)
-    subvol_str = 'subvol=%s' % share.subvol_name
+    qgroup = share.qgroup
+    # share.qgroup = "0/subvolid" use for subvol reference as more
+    # flexible than "subvol=share.subvol_name" (prior method).
+    subvol_str = 'subvolid={}'.format(qgroup[2:])
     create_tmp_dir(mnt_pt)
     toggle_path_rw(mnt_pt, rw=False)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
     return run_command(mnt_cmd)
 
 
-def mount_snap(share, snap_name, snap_mnt=None):
+def mount_snap(share, snap_name, snap_qgroup, snap_mnt=None):
     pool_device = get_device_path(share.pool.disk_set.attached()
                                        .first().target_name)
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
@@ -444,8 +446,10 @@ def mount_snap(share, snap_name, snap_mnt=None):
     mount_share(share, share_path)
     if (is_subvol(snap_path)):
         create_tmp_dir(snap_mnt)
-        return run_command([MOUNT, '-o', 'subvol=%s' % rel_snap_path,
-                            pool_device, snap_mnt])
+        # snap_qgroup = "0/subvolid" use for subvol reference as more
+        # flexible than "subvol=rel_snap_path" (prior method).
+        subvol_str = 'subvolid={}'.format(snap_qgroup[2:])
+        return run_command([MOUNT, '-o', subvol_str, pool_device, snap_mnt])
 
 
 def subvol_list_helper(mnt_pt):
@@ -598,12 +602,14 @@ def snaps_info(mnt_pt, share_name):
 
 def share_id(pool, share_name):
     """
-    Returns the subvolume id, becomes the share's uuid.
+    Returns the subvolume id: becomes the share's / snapshots's qgroup.
     @todo: this should be part of add_share -- btrfs create should atomically
     Works by iterating over the output of btrfs subvolume list, received from
     subvol_list_helper() looking for a match in share_name. If found the same
-    line is parsed for the ID, example line in output:
+    line is parsed for the ID, example line in above command output:
     'ID 257 gen 13616 top level 5 path rock-ons-root'
+    consequent subvol_id return value:
+    '257'
     :param pool: a pool object.
     :param share_name: target share name to find
     :return: the id for the given share_name or an Exception stating no id
@@ -662,16 +668,15 @@ def remove_share(pool, share_name, pqgroup, force=False):
     return qgroup_destroy(pqgroup, root_pool_mnt)
 
 
-def remove_snap(pool, share_name, snap_name):
+def remove_snap(pool, share_name, snap_name, snap_qgroup):
     root_mnt = mount_root(pool)
     snap_path = ('%s/.snapshots/%s/%s' %
                  (root_mnt, share_name, snap_name))
     if (is_mounted(snap_path)):
         umount_root(snap_path)
     if (is_subvol(snap_path)):
-        qgroup = ('0/%s' % share_id(pool, snap_name))
         run_command([BTRFS, 'subvolume', 'delete', snap_path], log=True)
-        return qgroup_destroy(qgroup, root_mnt)
+        return qgroup_destroy(snap_qgroup, root_mnt)
     else:
         o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
         for l in o:
@@ -720,30 +725,6 @@ def add_snap(pool, share_name, snap_name, writable):
     create_tmp_dir(snap_dir)
     snap_full_path = ('%s/%s' % (snap_dir, snap_name))
     return add_snap_helper(share_full_path, snap_full_path, writable)
-
-
-def rollback_snap(snap_name, sname, subvol_name, pool):
-    """
-    1. validate destination snapshot and umount the share
-    2. remove the share
-    3. move the snapshot to share location and mount it.
-    """
-    mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, sname))
-    snap_fp = ('%s/%s/.snapshots/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname,
-                                           snap_name))
-    if (not is_subvol(snap_fp)):
-        raise Exception('Snapshot(%s) does not exist. Rollback is not '
-                        'possible' % snap_fp)
-    mount_root(pool)
-    if (is_share_mounted(sname)):
-        umount_root(mnt_pt)
-    remove_share(pool, subvol_name, PQGROUP_DEFAULT)
-    shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
-    create_tmp_dir(mnt_pt)
-    subvol_str = 'subvol=%s' % sname
-    dpath = get_device_path(pool.disk_set.attached().first().target_name)
-    mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, dpath, mnt_pt]
-    run_command(mnt_cmd)
 
 
 def switch_quota(pool, flag='enable'):

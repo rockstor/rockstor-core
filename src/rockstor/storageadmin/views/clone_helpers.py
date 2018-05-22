@@ -20,14 +20,16 @@ from storageadmin.models import (Share, Snapshot)
 from storageadmin.util import handle_exception
 from fs.btrfs import (add_clone, share_id, update_quota, mount_share,
                       qgroup_create, set_property, remove_share,
-                      share_pqgroup_assign)
+                      share_pqgroup_assign, is_subvol)
 from rest_framework.response import Response
 from storageadmin.serializers import ShareSerializer
 import re
 import shutil
 from django.conf import settings
-
 from system.osi import run_command
+
+# The following model/db default setting is also used when quotas are disabled.
+PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 
 
 def create_repclone(share, request, logger, snapshot):
@@ -49,7 +51,7 @@ def create_repclone(share, request, logger, snapshot):
     :return: response of serialized share (in it's updated form)
     """
     try:
-        logger.debug('Supplanting share ({}) with '
+        logger.info('Supplanting share ({}) with '
                      'snapshot ({}).'.format(share.name, snapshot.name))
         # We first strip our snapshot.name of any path as when we encounter the
         # initially created receive subvol it is identified as a share with a
@@ -71,8 +73,13 @@ def create_repclone(share, request, logger, snapshot):
         share_path = ('{}{}/{}'.format(settings.MNT_PT, share.pool.name,
                                        share.name))
         # eg /mnt2/poolname/sharename
-        # unmount and then subvol deletes our on disk share
-        remove_share(share.pool, share.name, '-1/-1')
+        # Passed db snap assured by caller but this does not guarantee on disk.
+        if not is_subvol(snap_path):
+            raise Exception('Subvol with path ({}) does not exist. Aborting '
+                            'replacement of share ({}).'.format(snap_path,
+                                                                share.name))
+        # unmounts and then subvol deletes our on disk share
+        remove_share(share.pool, share.name, PQGROUP_DEFAULT)
         # Remove read only flag on our snapshot subvol
         set_property(snap_path, 'ro', 'false', mount=False)
         # Ensure removed share path is clean, ie remove mount point.
@@ -126,7 +133,7 @@ def create_clone(share, new_name, request, logger, snapshot=None):
         new_share = Share(pool=share.pool, qgroup=qgroup_id, pqgroup=pqid,
                           name=new_name, size=share.size, subvol_name=new_name)
         new_share.save()
-        if pqid is not settings.MODEL_DEFS['pqgroup']:
+        if pqid is not PQGROUP_DEFAULT:
             update_quota(new_share.pool, pqid, new_share.size * 1024)
             share_pqgroup_assign(pqid, new_share)
         # Mount our new clone share.

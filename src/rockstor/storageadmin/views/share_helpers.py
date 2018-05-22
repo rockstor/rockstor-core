@@ -60,12 +60,12 @@ def sftp_snap_toggle(share, mount=True):
                                     share.owner, share.name,
                                     snap.name))
         if (mount and not is_mounted(mnt_pt)):
-            mount_snap(share, snap.name, mnt_pt)
+            mount_snap(share, snap.name, snap.qgroup, mnt_pt)
         elif (is_mounted(mnt_pt) and not mount):
             umount_root(mnt_pt)
 
 
-def toggle_sftp_visibility(share, snap_name, on=True):
+def toggle_sftp_visibility(share, snap_name, snap_qgroup, on=True):
     if (not SFTP.objects.filter(share=share).exists()):
         return
 
@@ -73,7 +73,7 @@ def toggle_sftp_visibility(share, snap_name, on=True):
                                 share.name, snap_name))
     if (on):
         if (not is_mounted(mnt_pt)):
-            mount_snap(share, snap_name, mnt_pt)
+            mount_snap(share, snap_name, snap_qgroup, mnt_pt)
     else:
         umount_root(mnt_pt)
 
