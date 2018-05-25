@@ -280,26 +280,6 @@ def update_smb_service(logging):
     return logging.info('%s looks correct. Not updating.' % name)
 
 
-def cleanup_rclocal(logging):
-    # this could potentially be problematic if users want to have a custom
-    # rc.local file, which is not really needed or recommended due to better
-    # systemd alternative method.
-
-    # This cleanup method can be safely removed when we know there are no
-    # <3.8-9 versions out there any more.
-
-    rc_dest = '/etc/rc.d/rc.local'
-    rc_src = '%s/conf/rc.local' % BASE_DIR
-    sum1 = md5sum(rc_dest)
-    sum2 = md5sum(rc_src)
-    if (sum1 != sum2):
-        logging.info('updating %s' % rc_dest)
-        shutil.copy(rc_src, rc_dest)
-        logging.info('Done.')
-        return os.chmod(rc_dest, 755)
-    logging.info('%s looks correct. Not updating.' % rc_dest)
-
-
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
@@ -340,7 +320,6 @@ def main():
         logging.info('restarting nginx...')
         run_command([SUPERCTL, 'restart', 'nginx'])
 
-    cleanup_rclocal(logging)
     logging.info('Checking for flash and Running flash optimizations if '
                  'appropriate.')
     run_command([FLASH_OPTIMIZE, '-x'], throw=False)
