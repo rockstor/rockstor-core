@@ -34,7 +34,7 @@ class APIWrapper(object):
         self.client_secret = client_secret
         # directly connect to gunicorn, bypassing nginx as we are on the same
         # host.
-        self.url = 'http://127.0.0.1:8000'
+        self.url = 'http://127.0.0.1:443'
         if (url is not None):
             # for remote urls.
             self.url = url
