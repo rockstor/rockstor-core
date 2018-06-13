@@ -38,12 +38,23 @@ MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
 MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
-CHATTR = '/usr/bin/chattr'
 DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 QID = '2015'
 # The following model/db default setting is also used when quotas are disabled.
 PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
+# Potential candidate for settings.conf.in but currently only used here and
+# facilitates easier user modification, ie without buildout re-config step.
+# N.B. 'root/var/lib/machines' is auto created by systemd:
+# https://cgit.freedesktop.org/systemd/systemd/commit/?id=113b3fc1a8061f4a24dd0db74e9a3cd0083b2251
+ROOT_SUBVOL_EXCLUDE = ['root', '@', '@/root', 'tmp', '@/tmp', 'var', '@/var',
+                       'boot/grub2/i386-pc', '@/boot/grub2/i386-pc',
+                       'boot/grub2/x86_64-efi', '@/boot/grub2/x86_64-efi',
+                       'srv', '@/srv', 'usr/local', '@/usr/local',
+                       'opt', '@/opt', 'root/var/lib/machines',
+                       '@/.snapshots']
+# Note in the above we have a non symmetrical exclusions entry of '@/.snapshots
+# this is to help distinguish our .snapshots from snapper's rollback subvol.
 
 
 def add_pool(pool, disks):
@@ -403,10 +414,8 @@ def add_share(pool, share_name, qid):
     """
     root_pool_mnt = mount_root(pool)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
-    show_cmd = [BTRFS, 'subvolume', 'show', subvol_mnt_pt]
-    o, e, rc = run_command(show_cmd, throw=False)
-    if (rc == 0):
-        return o, e, rc
+    # Ensure our root_pool_mnt is not immutable, see: remove_share()
+    toggle_path_rw(root_pool_mnt, rw=True)
     if (not is_subvol(subvol_mnt_pt)):
         sub_vol_cmd = [BTRFS, 'subvolume', 'create', '-i', qid, subvol_mnt_pt]
         return run_command(sub_vol_cmd)
@@ -452,31 +461,45 @@ def mount_snap(share, snap_name, snap_qgroup, snap_mnt=None):
         return run_command([MOUNT, '-o', subvol_str, pool_device, snap_mnt])
 
 
-def subvol_list_helper(mnt_pt):
+def default_subvolid():
     """
-    temporary solution until btrfs is fixed. wait upto 30 secs :(
+    Returns the default vol/subvol id for /, used by system-rollback/boot-from-
+    snapshot. If not set this is ID 5 ie the top level of the volume.
+    Works by parsing the output from 'btrfs subvol get-default /':
+    not set (default):
+    ID 5 (FS_TREE)
+    no system rollback enabled:
+    ID 257 gen 5796 top level 5 path @
+    root configured for snapshots/rollback:
+    ID 268 gen 2345 top level 267 path @/.snapshots/1/snapshot
+
     """
-    num_tries = 0
-    while (True):
-        try:
-            return run_command([BTRFS, 'subvolume', 'list', mnt_pt])
-        except CommandException as ce:
-            if (ce.rc != 19):
-                # rc == 19 is due to the slow kernel cleanup thread. It should
-                # eventually succeed.
-                raise ce
-            time.sleep(1)
-            num_tries = num_tries + 1
-            if (num_tries > 30):
-                raise ce
+    cmd = [BTRFS, 'subvolume', 'get-default', '/']
+    out, e, rc = run_command(cmd, throw=False)
+    if rc == 0 and len(out) > 0:
+        # we have no run error and at least one line of output
+        return out[0].split()[1]
+    logger.exception(e)
+    raise e
 
 
-def snapshot_list(mnt_pt):
-    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
-    snaps = []
-    for s in o:
-        snaps.append(s.split()[-1])
-    return snaps
+def snapshot_idmap(pool_mnt_pt):
+    """
+    Executes 'btrfs subvol list -s pool_mnt_pt' and parses the result. Returns
+    a map/dictionary with snapshot id as key and it's path (relative to
+    pool_mnt_pt) as value, ie with the 'home' subvol having a snapshot:
+    'ID 286 gen 43444 cgen 43444 top le [...] path .snapshots/home/home-snap-1'
+    we return = {'286': '.snapshots/home/home-snap-1'}
+    :param pool_mnt_pt: Pool (vol) mount point.
+    :return: Dict of relative snapshot paths indexed by their subvol id.
+    """
+    out, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', pool_mnt_pt])
+    snap_idmap = {}
+    for line in out:
+        if re.match('ID ', line) is not None:
+            fields = line.strip().split()
+            snap_idmap[fields[1]] = fields[-1].replace('@/', '', 1)
+    return snap_idmap
 
 
 def shares_info(pool):
@@ -493,110 +516,149 @@ def shares_info(pool):
     Share.qgroup model definition.
     """
     try:
-        mnt_pt = mount_root(pool)
+        pool_mnt_pt = mount_root(pool)
     except CommandException as e:
-        if (e.rc == 32):
+        if e.rc == 32:
             # mount failed, so we just assume that something has gone wrong at
             # a lower level, like a device failure. Return empty share map.
             # application state can be removed. If the low level failure is
             # recovered, state gets reconstructed anyway.
             return {}
         raise
-    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
-    snap_idmap = {}
-    for l in o:
-        if (re.match('ID ', l) is not None):
-            fields = l.strip().split()
-            snap_idmap[fields[1]] = fields[-1]
-
-    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', mnt_pt])
+    snap_idmap = snapshot_idmap(pool_mnt_pt)
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', pool_mnt_pt])
     shares_d = {}
     share_ids = []
     for l in o:
-        if (re.match('ID ', l) is None):
+        if re.match('ID ', l) is None:
             continue
         fields = l.split()
-        vol_id = fields[1]
-        if (vol_id in snap_idmap):
-            # snapshot
-            # if the snapshot directory is direct child of a pool and is rw,
-            # then it's a Share. (aka Rockstor Share clone).
-            clone = False
-            if (len(snap_idmap[vol_id].split('/')) == 1):
-                o, e, rc = run_command([BTRFS, 'property', 'get',
-                                        '%s/%s' % (mnt_pt,
-                                                   snap_idmap[vol_id])])
-                for l in o:
-                    if (l == 'ro=false'):
-                        clone = True
-            if (not clone):
+        # Exclude root fs (in subvol) to avoid dependence on subvol name to
+        # root fs top level dir name collision for normal operation.
+        # And to expose root fs components that are themselves a subvol of
+        # the root fs subvol ie @ with subvol @/home as they are inherently
+        # more appropriate than the entire root fs anyway.
+        # temp
+        if pool.role == 'root':
+            # Vol/subvol auto mounted if no subvol/subvolid options are used.
+            # Skipped to surface it's subvols as we only surface one layer.
+            # Relevant to system rollback by booting from snapshots.
+            default_id = default_subvolid()
+            if fields[-1] in ROOT_SUBVOL_EXCLUDE or fields[1] == default_id:
+                logger.debug('Skipping excluded subvol: name=({}).'.format(
+                    fields[-1]))
                 continue
-
+        vol_id = fields[1]
+        if vol_id in snap_idmap:
+            # snapshot so check if is_clone:
+            s_name, writable, is_clone = parse_snap_details(pool_mnt_pt,
+                                                            snap_idmap[vol_id])
+            if not is_clone:
+                continue
         parent_id = fields[5]
-        if (parent_id in share_ids):
+        if parent_id in share_ids:
             # subvol of subvol. add it so child subvols can also be ignored.
             share_ids.append(vol_id)
-        elif (parent_id in snap_idmap):
+        elif parent_id in snap_idmap:
             # snapshot/subvol of snapshot.
             # add it so child subvols can also be ignored.
-            snap_idmap[vol_id] = fields[-1]
+            snap_idmap[vol_id] = fields[-1].replace('@/', '', 1)
         else:
-            shares_d[fields[-1]] = '0/%s' % vol_id
+            # Found subvol of pool or excluded subvol-  storing for return.
+            # Non snapper root rollback config:
+            # ID 257 gen 5351 parent 5 top level 5 path @
+            # ID 296 gen 5338 parent 257 top level 257 path home
+            # When root is a snapper root rollback config we have:
+            # ID 257 gen 33 parent 5 top level 5 path @
+            # ID 264 gen 216 parent 257 top level 257 path @/home
+            # We have assumed the prior behaviour and as we mount the root pool
+            # vol/subvol via it's label we have /mnt2/system not /mnt2/@.
+            # Remove '@/' from rel path if found ie '@/home' to 'home' as then
+            # pool+relative path works.
+            shares_d[fields[-1].replace('@/', '', 1)] = '0/%s' % vol_id
             share_ids.append(vol_id)
     return shares_d
 
 
-def parse_snap_details(mnt_pt, fields):
-    writable = True
+def parse_snap_details(pool_mnt_pt, snap_rel_path):
+    """
+    Returns a snapshot,s name or None if that snap is deemed to be a clone.
+    Clone (is_clone) = writable snapshot + direct child of pool_mnt_pt.
+    All calls also return writable, and is_clone booleans.
+    :param pool_mnt_pt:  Pool (vol) mount point, ie: settings.MNT_PT/pool.name
+    :param snap_rel_path: Relative snapshot path .
+    :return: snap_name (None if clone), writable (Boolean), is_clone (Boolean)
+    Note: is_clone is redundant but serves as a convenience boolean.
+    """
+    full_snap_path = pool_mnt_pt + '/' + snap_rel_path
+    # We may be querying system snapshots (boot to snapshot) so query the
+    # original as they may not exist in /mnt2/system yet.
+    if pool_mnt_pt == '{}{}'.format(settings.MNT_PT, 'system') \
+            and not os.path.exists(full_snap_path):
+        # we can try querying it's '/' original by supplanting the remount
+        # path component with it's original:
+        # ie /mnt2/system/.snapshots/2/snapshot with /.snapshots/2/snapshot
+        full_snap_path = full_snap_path.replace(pool_mnt_pt, '', 1)
+    writable = not get_property(full_snap_path, 'ro')
     snap_name = None
-    o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
-                               '%s/%s' % (mnt_pt, fields[-1])])
-    for l1 in o1:
-        if (re.match('ro=', l1) is not None):
-            if (l1.split('=')[1] == 'true'):
-                writable = False
-            if (writable is True):
-                if (len(fields[-1].split('/')) == 1):
-                    # writable snapshot + direct child of pool.
-                    # So we'll treat it as a share.
-                    continue
-            snap_name = fields[-1].split('/')[-1]
-    return snap_name, writable
+    is_clone = False
+    if writable and (len(snap_rel_path.split('/')) == 1):
+        # writable snapshot + direct child of pool = Rockstor clone.
+        is_clone = True  # (leaving snap_name = None as not a snap but a clone)
+    else:
+        snap_name = snap_rel_path.split('/')[-1]
+    return snap_name, writable, is_clone
 
 
-def snaps_info(mnt_pt, share_name):
+def snaps_info(pool_mnt_pt, share_name):
+    """
+    Generates a dictionary of Rockstor relevant on-pool snapshots which do not
+    include clones. See parse_snap_details() for clone definition.
+    Works by analysing the varying output of differently optioned btrfs subvol
+    commands and parse_snap_details() to extract the snap name (from rel path)
+    and
+    :param pool_mnt_pt: Pool (vol) mount point, ie: settings.MNT_PT/pool.name
+    :param share_name: share/snap.name
+    :return: dict indexed by snap name with tuple values of:
+    (qgroup, writable) where qgroup = 0/subvolid and writable = Boolean.
+    """
+    # -p = show parent ID, -u = uuid of subvol, -q = parent uuid of subvol
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-u', '-p', '-q',
-                            mnt_pt])
-    share_id = share_uuid = None
+                            pool_mnt_pt])
+    subvol_id = share_uuid = None
     for l in o:
-        if (re.match('ID ', l) is not None):
+        if re.match('ID ', l) is not None:
             fields = l.split()
-            if (fields[-1] == share_name):
-                share_id = fields[1]
+            if fields[-1].replace('@/', '', 1) == share_name:
+                subvol_id = fields[1]
                 share_uuid = fields[12]
-    if (share_id is None):
+    if subvol_id is None:
         return {}
-
+    # addition options to above subvol list: -s = only show snapshot subvols
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', '-p', '-q',
-                            '-u', mnt_pt])
+                            '-u', pool_mnt_pt])
     snaps_d = {}
     snap_uuids = []
     for l in o:
-        if (re.match('ID ', l) is not None):
+        if re.match('ID ', l) is not None:
             fields = l.split()
             # parent uuid must be share_uuid or another snapshot's uuid
-            if (fields[7] != share_id and fields[15] != share_uuid and
+            if (fields[7] != subvol_id and fields[15] != share_uuid and
                     fields[15] not in snap_uuids):
                 continue
-            snap_name, writable = parse_snap_details(mnt_pt, fields)
-            if (snap_name is not None):
+            # Strip @/ prior to calling parse_snap_details, see:
+            # snapshot_idmap() for same.
+            stripped_path = fields[-1].replace('@/', '', 1)
+            snap_name, writable, is_clone = parse_snap_details(pool_mnt_pt,
+                                                               stripped_path)
+            # Redundant second clause - defence against 'None' dict index.
+            if not is_clone and snap_name is not None:
                 snaps_d[snap_name] = ('0/%s' % fields[1], writable, )
                 # we rely on the observation that child snaps are listed after
                 # their parents, so no need to iterate through results
                 # separately. Instead, we add the uuid of a snap to the list
                 # and look up if it's a parent of subsequent entries.
                 snap_uuids.append(fields[17])
-
     return snaps_d
 
 
@@ -616,7 +678,8 @@ def share_id(pool, share_name):
     found
     """
     root_pool_mnt = mount_root(pool)
-    out, err, rc = subvol_list_helper(root_pool_mnt)
+    # Note: Previous sole remaining user of subvol_list_helper() - removed.
+    out, err, rc = run_command([BTRFS, 'subvolume', 'list', root_pool_mnt])
     subvol_id = None
     for line in out:
         if (re.search(share_name + '$', line) is not None):
@@ -651,8 +714,11 @@ def remove_share(pool, share_name, pqgroup, force=False):
     # This flag can also break replication as we supplant the transient share.
     # The immutable flag has been seen to spontaneously appear. Upon this
     # bug being resolved we might consider promoting to force=True calls only.
-    chattr_cmd = [CHATTR, '-i', subvol_mnt_pt]
-    run_command(chattr_cmd, log=True)
+    # TODO: Consider also using the following command to allow delete of the
+    # initial (anomalous) temp replication snap as share; but this also blindly
+    # circumvents ro 'protection' for any other share!
+    # set_property(subvol_mnt_pt, 'ro', 'false', mount=False)
+    toggle_path_rw(subvol_mnt_pt, rw=True)
     if (force):
         o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-o',
                                 subvol_mnt_pt])
@@ -678,6 +744,7 @@ def remove_snap(pool, share_name, snap_name, snap_qgroup):
         run_command([BTRFS, 'subvolume', 'delete', snap_path], log=True)
         return qgroup_destroy(snap_qgroup, root_mnt)
     else:
+        # TODO: Consider using snapshot_idmap() for dict of id -> snap-path
         o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
         for l in o:
             # just give the first match.
@@ -691,6 +758,7 @@ def add_snap_helper(orig, snap, writable):
     cmd = [BTRFS, 'subvolume', 'snapshot', orig, snap]
     if (not writable):
         cmd.insert(3, '-r')
+    # TODO: Consider removing hopefully now redundant rc = 19 exception clause.
     try:
         return run_command(cmd)
     except CommandException as ce:
@@ -720,10 +788,13 @@ def add_snap(pool, share_name, snap_name, writable):
     create a snapshot
     """
     root_pool_mnt = mount_root(pool)
-    share_full_path = ('%s/%s' % (root_pool_mnt, share_name))
-    snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
+    # Note: origin of /mnt2/system/home does not work on some multi subvol root
+    # arrangements: "ERROR: not a subvolume: /mnt2/system/home"
+    # but /mnt2/home works on legacy and multi subvol roots.
+    share_full_path = ('{}/{}'.format(settings.MNT_PT, share_name))
+    snap_dir = ('{}/.snapshots/{}'.format(root_pool_mnt, share_name))
     create_tmp_dir(snap_dir)
-    snap_full_path = ('%s/%s' % (snap_dir, snap_name))
+    snap_full_path = ('{}/{}'.format(snap_dir, snap_name))
     return add_snap_helper(share_full_path, snap_full_path, writable)
 
 
@@ -939,7 +1010,34 @@ def qgroup_is_assigned(qid, pqid, mnt_pt):
         fields = l.split()
         if (len(fields) > 3 and
                 fields[0] == qid and
-                fields[3] == pqid):
+                # Account for potential parent-child column inversion by
+                # checking both parent & child columns for parent qgroup match.
+                # Fixed upstream but observed in distro released btrfs-progs:
+                # see: https://github.com/kdave/btrfs-progs/issues/129
+                # Acknowledged correct:
+                # [0]               [1]         [2]     [3]     [4]
+                # qgroupid         rfer         excl parent  child
+                # 0/340        16.00KiB     16.00KiB 2015/2  ---
+                # 2015/2       16.00KiB     16.00KiB ---     0/340
+                # ie 2015/2 has a child of 0/340
+                #
+                # Acknowledged incorrect (observed in distro code):
+                # [0]               [1]         [2]     [3]     [4]
+                # qgroupid         rfer         excl parent  child
+                # 0/298       540.00KiB     32.00KiB ---     2015/1
+                # 2015/1      540.00KiB     32.00KiB 0/298   ---
+                # prior working comparison:
+                # fields[3] == pqid):
+                # TODO: enhance to accommodate for multiple listings via:
+                # pqid in fields[3].split(',') or the like.
+                # [0]               [1]         [2]     [3]     [4]
+                # qgroupid         rfer         excl parent  child
+                # 0/258        16.00KiB     16.00KiB 2015/1,2015/5 ---
+                # 0/311        16.00KiB     16.00KiB 2015/1        ---
+                # 0/313        16.00KiB     16.00KiB 2015/1        ---
+                # 2015/1       48.00KiB     48.00KiB ---     0/258,0/311,0/313
+                # ie 2015/1 has 3 children of 0/258,0/311,0/313
+                (fields[3] == pqid or fields[4] == pqid)):
             return True
     return False
 
@@ -1076,7 +1174,14 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     for line in out:
         fields = line.split()
         if (len(fields) > 0 and short_id in fields[1]):
-            volume_dir = root_pool_mnt + '/' + fields[8]
+            volume_dir = root_pool_mnt + '/' + fields[-1].replace('@/', '', 1)
+            # If we are system mount we my not have a /mnt2/system/mount_point,
+            # ie /mnt2/system/.snapshots/1/snapshot, hack for now by
+            # redirecting to original '/' mount.
+            if not os.path.exists(volume_dir) \
+                    and root_pool_mnt == '{}{}'.format(settings.MNT_PT,
+                                                       'system'):
+                volume_dir = volume_dir.replace(root_pool_mnt, '', 1)
             break
     """
     Rockstor volume/subvolume hierarchy is not standard
@@ -1412,6 +1517,44 @@ def set_property(mnt_pt, name, val, mount=True):
         return run_command(cmd)
 
 
+def get_property(mnt_pt, prop_name=None):
+    """
+    Convenience wrapper around 'btrfs property get prop_name mnt_pt'.
+    :param mnt_pt: Vol(pool)/subvol(share/snap) mount point.
+    :return: if called with no prop_name specified then a dict of available
+    properties. But if called with a single property then the value and type
+    appropriate for that property ie:
+    string for label (in presented in properties),
+    string for compression ie: lzo, zlib (if presented in properties),
+    and Boolean for prop_name='ro'
+    If prop_name specified but not found then None is returned.
+    N.B. compression property for subvol only, vol/pool uses mount option.
+    """
+    KNOWN_PROPERTIES = ['ro', 'compression', 'label']
+    # TODO: Consider using -t as a form of typesetting on our mnt_pt:
+    cmd = [BTRFS, 'property', 'get', mnt_pt]
+    if prop_name is not None:
+        cmd.append(prop_name)
+    o, e, rc = run_command(cmd)
+    properties = {}
+    for line in o:
+        fields = line.split('=')
+        if fields[0] in KNOWN_PROPERTIES:
+            properties[fields[0]] = fields[-1]
+    # Switch the ro property, if found, from string to Boolean.
+    if 'ro' in properties:
+        if properties['ro'] == 'true':
+            properties['ro'] = True
+        else:
+            properties['ro'] = False
+    if prop_name is None:
+        return properties
+    if prop_name in properties:
+        return properties[prop_name]
+    # We have been asked for a property we haven't found.
+    return None
+
+
 def get_snap(subvol_path, oldest=False, num_retain=None, regex=None,
              test_mode=False):
     """
@@ -1428,6 +1571,9 @@ def get_snap(subvol_path, oldest=False, num_retain=None, regex=None,
     if (not os.path.isdir(subvol_path)) and not test_mode:
         return None
     share_name = subvol_path.split('/')[-1]
+    # Note on future modifications re following command:
+    # -o shows only subvolumes below specified path but may be deprecated soon:
+    # https://www.mail-archive.com/linux-btrfs@vger.kernel.org/msg75514.html
     cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]
     o, e, rc = run_command(cmd)
     snaps = {}
