@@ -63,8 +63,8 @@ WIPEFS = '/usr/sbin/wipefs'
 RTC_WAKE_FILE = '/sys/class/rtc/rtc0/wakealarm'
 RETURN_BOOLEAN = True
 EXCLUDED_MOUNT_DEVS = ['sysfs', 'proc', 'devtmpfs', 'securityfs', 'tmpfs',
-                         'devpts', 'cgroup', 'pstore', 'configfs', 'systemd-1',
-                         'mqueue', 'debugfs', 'hugetlbfs', 'nfsd', 'sunrpc']
+                       'devpts', 'cgroup', 'pstore', 'configfs', 'systemd-1',
+                       'mqueue', 'debugfs', 'hugetlbfs', 'nfsd', 'sunrpc']
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
@@ -1541,42 +1541,51 @@ def get_dev_byid_name(device_name, remove_path=False):
     return_name = device_name
     byid_name = ''  # Should never be returned prior to reassignment.
     longest_byid_name_length = 0
-    # caveats for mapped devices that require paths for udevadm to work
+    devlinks = []  # Doubles as a flag for DEVLINKS line found.
+    # Caveats for mapped devices that require paths for udevadm to work
     # ie openLUKS containers are named eg luks-<uuid> but are not found by
     # udevadmin via --name unless a /dev/mapper path is provided.
     if re.match('luks-', str(device_name)) is not None:
         device_name = '/dev/mapper/%s' % device_name
-    # other special device name considerations can go here.
-    out, err, rc = run_command(
-        [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
-        throw=False)
+    # Other special device name considerations can go here.
+    cmd = [UDEVADM, 'info', '--query=property', '--name', str(device_name)]
+    out, err, rc = run_command(cmd, throw=False)
     if len(out) > 0 and rc == 0:
         # The output has at least one line and our udevadm executed OK.
-        # Split this first line by '=' and ' ' chars
-        fields = out[0].replace('=', ' ').split()
-        if len(fields) > 1:
-            # we have at least 2 fields in this line
-            if fields[0] == 'DEVLINKS':
-                # cycle through all device names on the DEVLINKS line
-                for index in range(1, len(fields)):
-                    # check if device name is by-id type
-                    if re.match('/dev/disk/by-id', fields[index]) is not None:
-                        is_byid = True
-                        # for openLUKS dm mapper device use dm-name-<dev-name>
-                        # as we can most easily use this format for working
-                        # form lsblk device name to by-id name via dm-name-
-                        # patch on the front.
-                        if re.match('/dev/disk/by-id/dm-name-',
-                                    fields[index]) is not None:
-                            # we have our dm-name match so assign it
-                            byid_name = fields[index]
-                            break
-                        dev_name_length = len(fields[index])
-                        # check if longer than any found previously
-                        if dev_name_length > longest_byid_name_length:
-                            longest_byid_name_length = dev_name_length
-                            # save the longest by-id type name so far.
-                            byid_name = fields[index]
+        # Some systemd/udev configs don't have DEVLINKS as the first line.
+        for line in out:
+            if re.match('DEVLINKS', line) is not None:
+                # convert 'DEVLINKS=devpath devpath devpath' to list of paths
+                devlinks = line.replace('=', ' ').split()[1:]
+                break
+        else:  # for loop else
+            logger.debug('No DEVLINKS line from command ({}).'.format(cmd))
+        if len(devlinks) > 0:
+            # We have at least 1 devlink.
+            # Sort to ensure deterministic behaviour with equal length members.
+            devlinks.sort(reverse=True)
+            for devname in devlinks:
+                # check if device name is by-id type
+                if re.match('/dev/disk/by-id', devname) is not None:
+                    is_byid = True
+                    # for openLUKS dm mapper device use dm-name-<dev-name>
+                    # as we can most easily use this format for working
+                    # from lsblk device name to by-id name via dm-name-
+                    # patch on the front.
+                    if re.match('/dev/disk/by-id/dm-name-',
+                                devname) is not None:
+                        # we have our dm-name match so assign it
+                        byid_name = devname
+                        break
+                    dev_name_length = len(devname)
+                    # check if longer than any found previously
+                    if dev_name_length > longest_byid_name_length:
+                        longest_byid_name_length = dev_name_length
+                        # save the longest by-id type name so far.
+                        byid_name = devname
+    if err == ['device node not found', '']:
+        logger.error('Device ({}) not found by '
+                     'command ({})'.format(device_name, cmd))
     if is_byid:
         # Return the longest by-id name found in the DEVLINKS line
         # or the first if multiple by-id names were of equal length.
@@ -1591,7 +1600,6 @@ def get_dev_byid_name(device_name, remove_path=False):
         return_name_fields = return_name.split('/')
         if len(return_name_fields) > 1:
             # Original device_name has path delimiters in: assume it has a path
-            # return return_name_fields[-1], is_byid
             return_name = return_name_fields[-1]
     return return_name, is_byid
 
