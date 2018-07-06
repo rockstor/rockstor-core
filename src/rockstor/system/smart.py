@@ -414,9 +414,17 @@ def get_dev_options(dev_byid, custom_options=''):
         # TODO: think this ascii should be utf-8 as that's kernel standard
         # TODO: or just use str(custom_options).split()
         dev_options = custom_options.encode('ascii').split()
+        # Remove Rockstor native 'autodev' custom smart option raid dev target.
+        # As we automatically add the full path by-id if a raid controller
+        # target dev is not found, we can simply remove this option.
+        # N.B. here we assume there is either 'autodev' or a specified target:
+        # input validation was tested to reject both being entered.
+        if 'autodev' in dev_options:
+            dev_options.remove('autodev')
         # If our custom options don't contain a raid controller target then add
         # the full path to our base device as our last device specific option.
-        if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
+        if (re.search('/dev/tw|/dev/cciss/c|/dev/sg|/dev/sd',
+                      custom_options) is None):
             # add full path to our custom options as we see no raid target dev
             dev_options += [
                 get_device_path(get_base_device_byid(dev_byid, TESTMODE))
