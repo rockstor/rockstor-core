@@ -122,7 +122,7 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
     return (out, err, rc)
 
 
-def scan_disks(min_size):
+def scan_disks(min_size, test_mode=False):
     """
     Using lsblk we scan all attached disks and categorize them according to
     if they are partitioned, their file system, if the drive hosts our / mount
@@ -132,6 +132,7 @@ def scan_disks(min_size):
     N.B. if a device (partition or whole dev) hosts swap or is of no interest
     then it is ignored.
     :param min_size: Discount all devices below this size in KB
+    :param test_mode: Used by unit tests for deterministic 'fake-serial-' mode.
     :return: List containing drives of interest
     """
     base_root_disk = root_disk()
@@ -222,6 +223,10 @@ def scan_disks(min_size):
         if (dmap['SIZE'] < min_size):
             continue
         # ----- Now we are done with easy exclusions we begin classification.
+        # If md device populate unused MODEL with basic member/raid summary.
+        if (re.match('md', dmap['NAME']) is not None):
+            # cheap way to display our member drives
+            dmap['MODEL'] = get_md_members(dmap['NAME'])
         # ------------ Start more complex classification -------------
         if (dmap['NAME'] == base_root_disk):  # as returned by root_disk()
             # We are looking at the system drive that hosts, either
@@ -248,8 +253,9 @@ def scan_disks(min_size):
         # Disk members of eg intel bios raid md devices
         # fstype='isw_raid_member' Note for future re-write; when using udevadm
         # DEVTYPE, partition and disk works for both raid and non raid
-        # partitions and devices.  Begin readability variables assignment - is
-        # this a partition regular or md type.
+        # partitions and devices.
+        # ----- Begin readability variables assignment:
+        # - is this a partition, regular or md type.
         if (dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md'):
             is_partition = True
         # - is filesystem of type btrfs
@@ -364,10 +370,17 @@ def scan_disks(min_size):
             # or
             # We have a device that is btrfs formatted
             # Or we may just be a non system disk without partitions.
-            dmap['root'] = False  # until we establish otherwise as we might be
+            dmap['root'] = is_root_disk
             if is_btrfs:
                 # a btrfs file system
-                if (re.match(base_root_disk, dmap['NAME']) is not None):
+                # Regex to identify a partition on the base_root_disk.
+                # Root on 'sda3' gives base_root_disk 'sda'.
+                # Match partitions of eg 'sda' with >= one additional digit.
+                part_regex = base_root_disk + '\d+'
+                bios_md_part = base_root_disk + 'p\d+'  # ie md126p3
+                if (re.match(part_regex, dmap['NAME']) is not None) or \
+                        (dmap['TYPE'] == 'md' and
+                         re.match(bios_md_part, dmap['NAME']) is not None):
                     # We are assuming that a partition with a btrfs fs on is
                     # our root if it's name begins with our base system disk
                     # name. Now add the properties we stashed when looking at
@@ -394,13 +407,6 @@ def scan_disks(min_size):
                     # Note we may be looking at the base_root_disk or one of
                     # it's partitions there after.
                     dmap['root'] = True
-                    # TODO: The following clause on using model to hold member
-                    # device into can be useful beyond the system disk.
-                    # If we are an md device then use get_md_members string
-                    # to populate our MODEL since it is otherwise unused.
-                    if (re.match('md', dmap['NAME']) is not None):
-                        # cheap way to display our member drives
-                        dmap['MODEL'] = get_md_members(dmap['NAME'])
                 else:
                     # We have a non system disk btrfs filesystem.
                     # Ie we are a whole disk or a partition with btrfs on but
@@ -420,7 +426,7 @@ def scan_disks(min_size):
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices and md devices so try specialized function.
                 dmap['SERIAL'] = get_disk_serial(dmap['NAME'], dmap['TYPE'])
-            # Now try specialized serial propogation methods:
+            # Now try specialized serial propagation methods:
             # Bcache virtual block devices get their backing devices uuid
             # We propagate the uuid for a bcache backing device to it's virtual
             # counterpart device for use as a serial number.
@@ -463,8 +469,12 @@ def scan_disks(min_size):
                 # disk/disks_table.jst for a use of this flag mechanism.
                 # Previously we did dmap['SERIAL'] = dmap['NAME'] which is less
                 # robust as it can itself produce duplicate serial numbers.
-                dmap['SERIAL'] = 'fake-serial-' + str(uuid.uuid4())
-                # 12 chars (fake-serial-) + 36 chars (uuid4) = 48 chars
+                if test_mode:
+                    # required for reproducible output for repeatable tests
+                    dmap['SERIAL'] = 'fake-serial-'
+                else:
+                    # 12 chars (fake-serial-) + 36 chars (uuid4) = 48 chars
+                    dmap['SERIAL'] = 'fake-serial-' + str(uuid.uuid4())
             serials_seen.append(dmap['SERIAL'])
             # replace all dmap values of '' with None.
             for key in dmap.keys():
