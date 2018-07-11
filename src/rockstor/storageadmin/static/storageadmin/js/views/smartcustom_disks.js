@@ -81,7 +81,9 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             // Areca sata /dev/sg[2-9] but for hpahcisr and hpsa drivers /dev/sg[0-9]* (lsscsi -g to help)
             // so we still have an issue there.
             // HP Smart array with cciss driver uses /dev/cciss/c[0-9]d0
-            var raidTargetRegExp = [/\/dev\/tw[e|a|l][0-9][0-5]{0,1}$/, /\/dev\/sg[0-9]$/, /\/dev\/cciss\/c[0-9]d0$/];
+            // HighPoint RocketRaid SATA RAID controller (hpt), LSI MegaRAID SAS RAID controller Dell PERC 5/i,6/i controller (megaraid)
+            // and Adaptec SAS RAID controller (​aacraid) all expect /dev/sd[a-z] type raid device targets.
+            var raidTargetRegExp = [/\/dev\/tw[e|a|l][0-9][0-5]{0,1}$/, /\/dev\/sg[0-9]$/, /\/dev\/cciss\/c[0-9]d0$/, /\/dev\/sd[a-z]$/, /autodev$/];
             // Initial cascade of syntactic checks.
             if (smartcustom_options.length == 0) {
                 // allow zero length (empty) entry to remove existing options

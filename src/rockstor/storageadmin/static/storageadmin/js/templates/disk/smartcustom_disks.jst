@@ -2,13 +2,15 @@
 <p>Please see the <a href="https://www.smartmontools.org/" target="_blank">Smartmontools</a> manual page for 
     <a href="https://www.smartmontools.org/browser/trunk/smartmontools/smartctl.8.in" target="_blank"> smartctl</a>
     for possible custom options.</p>
-<li><p>For smartmontools supported USB attached devices, ie USB to SATA adapters, please see: <a
+<li>For smartmontools supported USB attached devices, ie USB to SATA adapters, please see: <a
     href="https://www.smartmontools.org/wiki/Supported_USB-Devices" target="_blank">USB Device Support</a>.
-    </p>
 </li>
-<li><p>For smartmontools supported RAID controllers please see: <a
+<br>
+<li>For smartmontools supported RAID controllers please see: <a
     href="https://www.smartmontools.org/wiki/Supported_RAID-Controllers" target="_blank">Checking disks behind RAID controllers</a>.
-</p></li>
+  <br><i>Note: 'autodev' option for hpt, megaraid, and aacraid to replace /dev/sdX parameter, JBOD assumed.</i>
+</li>
+<br>
 <p class="text-warning">This is an advanced option that is only required in specific circumstances.
  Please follow the above links to understand any options you choose to enter.</p>
 <p class="bg-info"><strong>Note: </strong>Supported smart options are <strong>-d</strong> to specify special devices and <strong>-T</strong> to set
