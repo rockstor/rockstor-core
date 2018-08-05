@@ -298,11 +298,19 @@ class DiskMixin(object):
             else:
                 dob.role = None
             # END OF ROLE FIELD UPDATE
-            # If our existing Pool db knows of this disk's pool via it's label:
-            if (Pool.objects.filter(name=d.label).exists()):
+            # If our existing Pool db knows of this disk's pool:
+            # First find pool association if any:
+            if is_byid and d.fstype == 'btrfs':
+                # use the canonical reference from get_pool_info()
+                p_info = get_pool_info(byid_disk_name, d.root)
+                # The above call also enacts a pool auto labeling mechanism.
+                pool_name = p_info['label']
+            else:
+                # We fail over to the less robust disk label as no byid name.
+                pool_name = d.label
+            if Pool.objects.filter(name=pool_name).exists():
                 # update the disk db object's pool field accordingly.
-                dob.pool = Pool.objects.get(name=d.label)
-
+                dob.pool = Pool.objects.get(name=pool_name)
                 # this is for backwards compatibility. root pools created
                 # before the pool.role migration need this. It can safely be
                 # removed a few versions after 3.8-11 or when we reset
@@ -310,28 +318,44 @@ class DiskMixin(object):
                 if (d.root is True):
                     dob.pool.role = 'root'
                     dob.pool.save()
-            else:  # this disk is not known to exist in any pool via it's label
+            else:  # disk not member of db pool via get_pool_info() / d.label
                 dob.pool = None
-            # If no pool has yet been found with this disk's label in and
-            # the attached disk is our root disk (flagged by scan_disks)
-            if (dob.pool is None and d.root is True):
+            # If no db pool has yet been found for this disk and
+            # the attached disk is our root disk (flagged by scan_disks):
+            if dob.pool is None and d.root is True:
                 # setup our special root disk db entry in Pool
-                # TODO: call get_pool_info() & pool_raid() for following TODOs.
-                # TODO: dynamically retrieve raid level.
-                # TODO: dynamically retrieve compression level.
-                p = Pool(name=d.label, raid='single', role='root',
-                         compression='no')
-                p.save()
-                p.disk_set.add(dob)
-                # update disk db object to reflect special root pool status
-                dob.pool = p
-                dob.save()
-                p.size = p.usage_bound()
-                enable_quota(p)
-                # scan_disks() has already acquired our fs uuid so inherit it.
-                # We have already established btrfs as the fs type.
-                p.uuid = d.uuid
-                p.save()
+                # Note system disk is still a 'special' case which doesn't use
+                # the redirect role (ie: _role_filter_disk_name) even thought
+                # it's a partition. So we use it's disk name directly for now.
+                # Consider using mount_status() parse to update root pool db on
+                # active (fstab initiated) compression setting: maybe a helper
+                # around osi/mount_status('/')
+                # We cannot use get_property('/', 'compression') as
+                # we enable pool wide compression via a mount option.
+                if pool_name is not None:
+                    logger.debug('++++ Creating special system pool db entry.')
+                    root_compression = 'no'
+                    root_raid = pool_raid('/')['data']
+                    p = Pool(name=pool_name, raid=root_raid, role='root',
+                             compression=root_compression)
+                    p.save()
+                    p.disk_set.add(dob)
+                    # update disk db object to reflect special root pool status
+                    dob.pool = p
+                    dob.save()
+                    p.size = p.usage_bound()
+                    enable_quota(p)
+                    # scan_disks() has already acquired our fs uuid so inherit.
+                    # We have already established btrfs as the fs type.
+                    p.uuid = d.uuid
+                    p.save()
+                else:
+                    # Likely unlabeled pool and no by-id name for system disk
+                    # and given we rely on get_pool_info(), which takes by-id
+                    # names, to label unlabelled pools we bail out for now with
+                    # an error log message.
+                    logger.error('Skipping system pool creation. Ensure the '
+                                 'system disk has a unique serial.')
             # save our updated db disk object
             dob.save()
         # Update online db entries with S.M.A.R.T availability and status.

@@ -149,7 +149,7 @@ def degraded_pools_found():
     return degraded_pool_count
 
 
-def get_pool_info(disk):
+def get_pool_info(disk, root_pool=False):
     """
     Extracts pool information by running btrfs fi show <disk> and collates
     the results in a property keyed dictionary The disks ('disks' key) names
@@ -160,6 +160,7 @@ def get_pool_info(disk):
     Used by CommandView()._refresh_pool_state() and
     DiskDetailView()._btrfs_disk_import
     :param disk: by-id disk name without path
+    :param root_pool: Boolean flag to signify root_pool enquiry mode.
     :return: a dictionary with keys of 'disks', 'label', 'uuid',
     'hasMissingDev', 'fullDevCount', and 'missingDevCount'.
     'disks' keys a list of devices, while 'label' and 'uuid' keys are
@@ -180,10 +181,18 @@ def get_pool_info(disk):
             pool_info['uuid'] = fields[3]
             label = fields[1].strip("'")
             if label == 'none':
-                # fs has no label, set label = uuid.
-                label = pool_info['uuid']
+                # Vol/pool has no label.
+                if root_pool:
+                    # root_pool already mounted so we must use mount point.
+                    accessor = '/'
+                    label = settings.SYS_VOL_LABEL
+                else:
+                    # Non root pools without label are assumed to be unmounted.
+                    accessor = dpath
+                    label = pool_info['uuid']
                 # This requirement limits importing ro pools with no label.
-                run_command([BTRFS, 'fi', 'label', dpath, label])
+                run_command([BTRFS, 'fi', 'label', accessor, label])
+                # Consider udevadm trigger on this device as label changed.
             pool_info['label'] = label
         elif re.match('\tdevid', l) is not None:
             # We have a line starting wth <tab>devid, extract the dev name.
@@ -593,7 +602,7 @@ def parse_snap_details(pool_mnt_pt, snap_rel_path):
     full_snap_path = pool_mnt_pt + '/' + snap_rel_path
     # We may be querying system snapshots (boot to snapshot) so query the
     # original as they may not exist in /mnt2/system yet.
-    if pool_mnt_pt == '{}{}'.format(settings.MNT_PT, 'system') \
+    if pool_mnt_pt == '{}{}'.format(settings.MNT_PT, settings.SYS_VOL_LABEL) \
             and not os.path.exists(full_snap_path):
         # we can try querying it's '/' original by supplanting the remount
         # path component with it's original:
@@ -1175,12 +1184,12 @@ def volume_usage(pool, volume_id, pvolume_id=None):
         fields = line.split()
         if (len(fields) > 0 and short_id in fields[1]):
             volume_dir = root_pool_mnt + '/' + fields[-1].replace('@/', '', 1)
-            # If we are system mount we my not have a /mnt2/system/mount_point,
+            # If we are system mount we may not have a /mnt2/system/mount_point
             # ie /mnt2/system/.snapshots/1/snapshot, hack for now by
             # redirecting to original '/' mount.
             if not os.path.exists(volume_dir) \
                     and root_pool_mnt == '{}{}'.format(settings.MNT_PT,
-                                                       'system'):
+                                                       settings.SYS_VOL_LABEL):
                 volume_dir = volume_dir.replace(root_pool_mnt, '', 1)
             break
     """
