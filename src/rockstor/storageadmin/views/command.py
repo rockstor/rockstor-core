@@ -15,8 +15,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-import json
-
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -25,7 +23,8 @@ from rest_framework.authentication import (BasicAuthentication,
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from storageadmin.views import DiskMixin
-from system.osi import (uptime, kernel_info)
+from system.osi import (uptime, kernel_info, get_dev_byid_name,
+                        get_device_path)
 from fs.btrfs import (mount_share, mount_root, get_pool_info,
                       pool_raid, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
@@ -72,13 +71,27 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             try:
                 # Get and save what info we can prior to mount.
                 first_attached_dev = p.disk_set.attached().first()
+                is_root_pool = (p.role == 'root')
                 # Observe any redirect role by using target_name.
-                pool_info = get_pool_info(first_attached_dev.target_name)
-                p.name = pool_info['label']
+                byid_disk_name, is_byid = get_dev_byid_name(
+                    get_device_path(first_attached_dev.target_name))
+                if is_byid:
+                    pool_info = get_pool_info(first_attached_dev.target_name,
+                                              is_root_pool)
+                    pool_name = pool_info['label']
+                else:
+                    logger.error('Skipping pool ({}) mount as attached disk '
+                                 '({}) has no by-id name (no serial # ?)'.
+                                 format(p.name,
+                                        first_attached_dev.target_name))
+                    continue
+                p.name = pool_name
                 p.save()
                 mount_root(p)
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = p.usage_bound()
+                # Consider using mount_status() parse to update root pool db on
+                # active (fstab initiated) compression setting.
                 p.save()
             except Exception as e:
                 logger.error('Exception while refreshing state for '
@@ -94,11 +107,23 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             for p in Pool.objects.all():
                 if p.disk_set.attached().count() == 0:
                     continue
+                if not p.is_mounted:
+                    # Prior _refresh_pool_state() should have ensure a mount.
+                    logger.error('Skipping import/update of prior known '
+                                 'shares for pool ({}) as it is not mounted. '
+                                 '(see previous errors)'
+                                 '.'.format(p.name))
+                    continue
                 # Import / update db shares counterpart for managed pool.
                 import_shares(p, request)
 
             for share in Share.objects.all():
                 if share.pool.disk_set.attached().count() == 0:
+                    continue
+                if not share.pool.is_mounted:
+                    logger.error('Skipping mount of share ({}) as pool () is '
+                                 'not mounted (see previous errors)'
+                                 '.'.format(share.name, share.pool.name))
                     continue
                 try:
                     if not share.is_mounted:
