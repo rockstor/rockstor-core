@@ -365,7 +365,7 @@ def scan_disks(min_size, test_mode=False):
             # This dict will be populated when we find our partitions and back
             # port their names and fstype (as values).
         if ((not is_root_disk and not is_partition) or
-                (is_btrfs)):
+                is_btrfs):
             # We have a non system disk that is not a partition
             # or
             # We have a device that is btrfs formatted
@@ -375,12 +375,15 @@ def scan_disks(min_size, test_mode=False):
                 # a btrfs file system
                 # Regex to identify a partition on the base_root_disk.
                 # Root on 'sda3' gives base_root_disk 'sda'.
-                # Match partitions of eg 'sda' with >= one additional digit.
-                part_regex = base_root_disk + '\d+'
-                bios_md_part = base_root_disk + 'p\d+'  # ie md126p3
-                if (re.match(part_regex, dmap['NAME']) is not None) or \
-                        (dmap['TYPE'] == 'md' and
-                         re.match(bios_md_part, dmap['NAME']) is not None):
+                if re.match('sd|vd', dmap['NAME']) is not None:
+                    # eg 'sda' or 'vda' with >= one additional digit,
+                    part_regex = base_root_disk + '\d+'
+                else:
+                    # md126 or nvme0n1 with 'p' + >= one additional digit eg:
+                    # md126p3 or nvme0n1p4; also mmcblk0p2 for base mmcblk0.
+                    part_regex = base_root_disk + 'p\d+'
+                if re.match(part_regex, dmap['NAME']) is not None:
+                    logger.debug('--- Inheriting base_root_disk info ---')
                     # We are assuming that a partition with a btrfs fs on is
                     # our root if it's name begins with our base system disk
                     # name. Now add the properties we stashed when looking at
@@ -413,9 +416,9 @@ def scan_disks(min_size, test_mode=False):
                     # NOT on the system disk.
                     # Most likely a current btrfs data drive or one we could
                     # import.
-                    # As we don't understand / support btrfs in partitions
-                    # then ignore / skip this btrfs device if it's a partition
+                    # Ignore / skip this btrfs device if it's a partition
                     if is_partition:
+                        logger.debug('-- Skipping non root btrfs partition -')
                         continue
             # No more continues so the device we have is to be passed to our db
             # entry system views/disk.py ie _update_disk_state()
@@ -901,6 +904,8 @@ def root_disk():
     single character.
     :return: sdX type device name (without path) where root is mounted.
     """
+    # TODO: Consider 'lsblk -no pkname devname' rather than parse and strip.
+    # -n = no headings, -o specify output (pkname = Parent Kernel Name)
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()

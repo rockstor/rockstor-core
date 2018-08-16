@@ -1002,6 +1002,8 @@ class OSITests(unittest.TestCase):
         data disk (for btrfs in partition) virtio with serial "serial-1"
         prepared as follows with regard to partition / formatting:
 
+        First data set:
+
         yum install dosfstools
         parted -a optimal /dev/disk/by-id/virtio-serial-1
         mklabel msdos
@@ -1011,8 +1013,22 @@ class OSITests(unittest.TestCase):
         mkfs.fat -s2 -F 32 /dev/disk/by-id/virtio-serial-1-part1
         mkfs.btrfs -L btrfs-in-partition /dev/disk/by-id/virtio-serial-1-part2
 
-        Should result in appropriate "partitions=" entry for base device of
-        /dev/disk/by-id/virtio-serial-1 (/dev/vda in below test data).
+        Second data set (42nd scsi drive with a btrfs partiiton plus sda root):
+
+        parted -a optimal /dev/sdap
+        mklabel msdos
+        mkpart primary fat32 1 50%
+        mkpart primary ext2 50% 100%
+        quit
+        mkfs.fat -s2 -F 32 /dev/sdap1
+        mkfs.btrfs -L btrfs-in-partition /dev/sdap2
+
+        Should result in appropriate "partitions=" entry for base devices of
+        /dev/disk/by-id/virtio-serial-1 (/dev/vda in below test data) and
+        /dev/sdap
+
+        The second data set is to check for a regression re false positive when
+        root on sda, ie 'Regex to identify a partition on the base_root_disk.'
         """
         out = [[
             'NAME="sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
@@ -1023,9 +1039,22 @@ class OSITests(unittest.TestCase):
             'NAME="vda" MODEL="" SERIAL="" SIZE="8G" TRAN="" VENDOR="0x1af4" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
             'NAME="vda2" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="btrfs-in-partition" UUID="55284332-af66-4ca0-9647-99d9afbe0ec5"',  # noqa E501
             'NAME="vda1" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="8F05-D915"',  # noqa E501
-            '']]
+            ''], [
+            'NAME="sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="sda" MODEL="QEMU HARDDISK   " SERIAL="QM00005" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="sda2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="aaf61037-23b1-4c3b-81ca-6d07f3ed922d"',  # noqa E501
+            'NAME="sda3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="355f53a4-24e1-465e-95f3-7c422898f542"',  # noqa E501
+            'NAME="sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="04ce9f16-a0a0-4db8-8719-1083a0d4f381"',  # noqa E501
+            'NAME="sdap" MODEL="QEMU HARDDISK   " SERIAL="42nd-scsi" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="sdap2" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="btrfs-in-partition" UUID="55284332-af66-4ca0-9647-99d9afbe0ec5"',  # noqa E501
+            'NAME="sdap1" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="8F05-D915"',  # noqa E501
+            ''
+        ]]
         err = [['']]
         rc = [0]
+        # Second lsblk moc output is a duplicate of our first set for err, rc.
+        err.append(err[0])
+        rc.append(0)
         expected_result = [[
             # Note partitions entry within vda, consistent with cli prep.
             Disk(name='vda', model=None, serial='serial-1', size=4194304,
@@ -1033,6 +1062,18 @@ class OSITests(unittest.TestCase):
                  fstype='btrfs', label='btrfs-in-partition',
                  uuid='55284332-af66-4ca0-9647-99d9afbe0ec5', parted=True,
                  root=False, partitions={'vda1': 'vfat', 'vda2': 'btrfs'}),
+            Disk(name='sda3', model='QEMU HARDDISK', serial='QM00005',
+                 size=7025459, transport='sata', vendor='ATA', hctl='2:0:0:0',
+                 type='part', fstype='btrfs', label='rockstor_rockstor',
+                 uuid='355f53a4-24e1-465e-95f3-7c422898f542', parted=True,
+                 root=True, partitions={})
+        ], [
+            # Note sdap (42nd disk) hand crafted from above vda entry
+            Disk(name='sdap', model='QEMU HARDDISK', serial='42nd-scsi',
+                 size=4194304, transport='sata', vendor='ATA', hctl='3:0:0:0',
+                 type='disk', fstype='btrfs', label='btrfs-in-partition',
+                 uuid='55284332-af66-4ca0-9647-99d9afbe0ec5', parted=True,
+                 root=False, partitions={'sdap1': 'vfat', 'sdap2': 'btrfs'}),
             Disk(name='sda3', model='QEMU HARDDISK', serial='QM00005',
                  size=7025459, transport='sata', vendor='ATA', hctl='2:0:0:0',
                  type='part', fstype='btrfs', label='rockstor_rockstor',
@@ -1423,3 +1464,90 @@ class OSITests(unittest.TestCase):
                                  'returned = ({}).\n '
                                  'expected = ({}).'.format(returned,
                                                            expected))
+
+    def test_scan_disks_nvme_sys_disk(self):
+        """
+        Post pr #1925 https://github.com/rockstor/rockstor-core/pull/1946
+        a regression was observed for nvme system disk installs. Essentially
+        they were no longer recognized as attached, ie scan_disks() did not
+        return them. As a result they became detached on existing installs.
+        Thanks to forum member Jorma_Tuomainen in the following forum thread
+        for supplying this instance data to be used as a regression test set.
+        """
+        # Test data based on 2 data drives (sdb, sdb) and an nvme system drive
+        # /dev/nvme0n1 as the base device.
+        out = [[
+            'NAME="sdb" MODEL="WDC WD100EFAX-68" SERIAL="7PKNDX1C" SIZE="9.1T" TRAN="sata" VENDOR="ATA " HCTL="1:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="Data" UUID="d2f76ce6-85fd-4615-b4f8-77e1b6a69c60"',  # noqa E501
+            'NAME="sda" MODEL="WDC WD100EFAX-68" SERIAL="7PKP0MNC" SIZE="9.1T" TRAN="sata" VENDOR="ATA " HCTL="0:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="Data" UUID="d2f76ce6-85fd-4615-b4f8-77e1b6a69c60"',  # noqa E501
+            'NAME="nvme0n1" MODEL="INTEL SSDPEKKW128G7 " SERIAL="BTPY72910KCW128A" SIZE="119.2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="nvme0n1p3" MODEL="" SERIAL="" SIZE="7.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="d33115d8-3d8c-4f65-b560-8ebf72d08fbc"',  # noqa E501
+            'NAME="nvme0n1p1" MODEL="" SERIAL="" SIZE="200M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="53DC-1323"',  # noqa E501
+            'NAME="nvme0n1p4" MODEL="" SERIAL="" SIZE="110.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="4a05477f-cd4a-4614-b264-d029d98928ab"',  # noqa E501
+            'NAME="nvme0n1p2" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="497a9eda-a655-4fc4-bad8-2d9aa8661980"',  # noqa E501
+            '']]
+        err = [['']]
+        rc = [0]
+        # Second lsblk moc output is a duplicate of our first set.
+        out.append(out[0])
+        err.append(err[0])
+        rc.append(0)
+        # Setup expected results
+        expected_result = [[
+            Disk(name='sda', model='WDC WD100EFAX-68', serial='7PKP0MNC',
+                 size=9771050598, transport='sata', vendor='ATA',
+                 hctl='0:0:0:0', type='disk', fstype='btrfs', label='Data',
+                 uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
+                 root=False, partitions={}),
+            Disk(name='sdb', model='WDC WD100EFAX-68', serial='7PKNDX1C',
+                 size=9771050598, transport='sata', vendor='ATA',
+                 hctl='1:0:0:0', type='disk', fstype='btrfs', label='Data',
+                 uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
+                 root=False, partitions={})
+        ], [
+            Disk(name='nvme0n1p4', model='INTEL SSDPEKKW128G7',
+                 serial='BTPY72910KCW128A', size=116182220, transport=None,
+                 vendor=None, hctl=None, type='part', fstype='btrfs',
+                 label='rockstor_rockstor00',
+                 uuid='4a05477f-cd4a-4614-b264-d029d98928ab', parted=True,
+                 root=True, partitions={}),
+            Disk(name='sda', model='WDC WD100EFAX-68', serial='7PKP0MNC',
+                 size=9771050598, transport='sata', vendor='ATA',
+                 hctl='0:0:0:0', type='disk', fstype='btrfs', label='Data',
+                 uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
+                 root=False, partitions={}),
+            Disk(name='sdb', model='WDC WD100EFAX-68', serial='7PKNDX1C',
+                 size=9771050598, transport='sata', vendor='ATA',
+                 hctl='1:0:0:0', type='disk', fstype='btrfs', label='Data',
+                 uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
+                 root=False, partitions={})
+        ]]
+        # Second expected instance is where the nvme system disk is identified.
+        # As all serials are available via the lsblk we can avoid mocking
+        # get_device_serial()
+        # And given no bcache we can also avoid mocking
+        # get_bcache_device_type()
+        # Ensure we correctly mock our root_disk value away from file default
+        # of sda as we now have a root_disk on an nvme device.
+        self.mock_root_disk.return_value = 'nvme0n1'
+        # Iterate the test data sets for run_command running lsblk.
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            self.mock_run_command.return_value = (o, e, r)
+            # itemgetter(0) referenced the first item within our Disk
+            # collection by which to sort (key) ie name. N.B. 'name' failed.
+            expected.sort(key=operator.itemgetter(0))
+            returned = scan_disks(1048576, test_mode=True)
+            returned.sort(key=operator.itemgetter(0))
+            # TODO: Would be nice to have differences found shown.
+            if len(expected) == 2:  # no system disk only the 2 data disks
+                self.assertNotEqual(returned, expected,
+                                    msg='Nvme sys disk missing regression:\n '
+                                        'returned = ({}).\n '
+                                        'expected = ({}).'.format(returned,
+                                                                  expected))
+            if len(expected) == 3:
+                # assumed to be our correctly reported 1 x sys + 2 x data disks
+                self.assertEqual(returned, expected,
+                                 msg='Un-expected scan_disks() result:\n '
+                                     'returned = ({}).\n '
+                                     'expected = ({}).'.format(returned,
+                                                               expected))
