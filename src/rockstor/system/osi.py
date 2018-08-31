@@ -517,7 +517,7 @@ def def_kernel():
 
 def kernel_info(supported_version):
     uname = os.uname()
-    if (uname[2] != supported_version):
+    if uname[2] != supported_version and os.path.isfile(GRUBBY):
         e_msg = ('You are running an unsupported kernel(%s). Some features '
                  'may not work properly.' % uname[2])
         carg = '--set-default=/boot/vmlinuz-{}'.format(supported_version)
