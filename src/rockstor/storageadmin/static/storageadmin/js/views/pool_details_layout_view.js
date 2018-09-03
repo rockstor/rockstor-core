@@ -128,6 +128,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-resize-pool-info').html(
             this.resize_pool_info_template({
                 pool: this.pool.toJSON()
+
             })
         );
         this.$('ul.nav.nav-tabs').tabs('div.css-panes > div');
@@ -411,6 +412,36 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
             }
             // In all other cases return false.
             return false;
+        });
+
+        Handlebars.registerHelper('ioErrorStatsTableData', function (stats) {
+            // var _this = this;
+            var statsAsJson = asJSON(stats);
+            if (statsAsJson === false) {
+                var failMsg = '<td colspan="5">Device stats unsupported - try ' +
+                    '\'btrfs dev stats /mnt2/' + this.pool_name + '\'.</td>';
+                return new Handlebars.SafeString(failMsg);
+            }
+            var html = '';
+            var ioStatsHeaders = [
+                'write_io_errs',
+                'read_io_errs',
+                'flush_io_errs',
+                'corruption_errs',
+                'generation_errs'
+            ];
+            // We have a json of a disk's io_error_stats.
+            // Create consecutive <td> (table data) entries for each in order.
+            ioStatsHeaders.forEach(function(statsElement){
+                var value = statsAsJson[statsElement]
+                if (value === '0') {
+                    html += '<td>' + value + '</td>';
+                } else {
+                    html += '<td><strong><span style="color:darkred">' + value;
+                    html += '</span></strong></td>';
+                }
+            });
+            return new Handlebars.SafeString(html);
         });
 
         Handlebars.registerHelper('getPoolCreationDate', function(date) {

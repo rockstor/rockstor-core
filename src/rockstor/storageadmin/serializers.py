@@ -40,6 +40,7 @@ class DiskInfoSerializer(serializers.ModelSerializer):
     apm_level = serializers.CharField()
     temp_name = serializers.CharField()
     target_name = serializers.CharField()
+    io_error_stats = serializers.CharField()
 
     class Meta:
         model = Disk
@@ -53,6 +54,7 @@ class PoolInfoSerializer(serializers.ModelSerializer):
     is_mounted = serializers.BooleanField()
     quotas_enabled = serializers.BooleanField()
     has_missing_dev = serializers.BooleanField()
+    dev_stats_ok = serializers.BooleanField()
 
     class Meta:
         model = Pool

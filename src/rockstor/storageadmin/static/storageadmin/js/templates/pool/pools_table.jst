@@ -113,8 +113,11 @@
                     {{/each}}
                 {{/if}}
                 {{#if this.has_missing_dev}}
-                    <strong><span style="color:red">SOME MISSING</span></strong>
+                    <strong><span style="color:red">(SOME MISSING) </span></strong>
                 {{/if}}
+                {{#unless this.dev_stats_ok}}
+                    <strong><span style="color:red">(DEV ERRORS DETECTED)</span></strong>
+                {{/unless}}
             </td>
             <td>{{#if (isRoot this.role)}}
                     N/A

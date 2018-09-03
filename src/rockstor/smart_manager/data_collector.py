@@ -856,6 +856,7 @@ class SysinfoNamespace(RockstorIO):
         self.spawn(self.send_uptime, sid)
         self.spawn(self.shutdown_status, sid)
         self.spawn(self.pool_degraded_status, sid)
+        self.spawn(self.pool_dev_stats, sid)
 
     # Run on every disconnect
     def on_disconnect(self, sid):
@@ -1031,6 +1032,33 @@ class SysinfoNamespace(RockstorIO):
             self.emit('pool_degraded_status',
                       {
                           'key': 'sysinfo:pool_degraded_status',
+                          'data': data
+                      })
+
+            gevent.sleep(30)
+
+    def pool_dev_stats(self):
+
+        # Examples of data.message:
+        # "Pools found with device errors: (rock-pool)"
+        # "Pools found with device errors: (rock-pool, rock-pool-3)"
+        # TODO: Consider blending into the existing pool_degraded_status()
+        # TODO: to reduce overheads of looping through pools again.
+        # TODO: The combined emitter could be called pool_health_status().
+        while self.start:
+            data = {'status': 'OK'}
+            labels = []
+            for p in Pool.objects.all():
+                if not p.dev_stats_ok:
+                    labels.append(p.name)
+            if labels != []:
+                data['status'] = 'errors'
+                data['message'] = 'Pools found with device errors: '
+                data['message'] += '({})'.format(', '.join(labels))
+
+            self.emit('pool_dev_stats',
+                      {
+                          'key': 'sysinfo:pool_dev_stats',
                           'data': data
                       })
 

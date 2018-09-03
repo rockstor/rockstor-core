@@ -12,12 +12,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import json
 import unittest
 from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
                       share_id, device_scan, scrub_status,
                       degraded_pools_found, snapshot_idmap, get_property,
-                      parse_snap_details, shares_info, get_snap)
+                      parse_snap_details, shares_info, get_snap,
+                      dev_stats_zero, get_dev_io_error_stats)
 from mock import patch
 
 
@@ -1517,3 +1518,143 @@ class BTRFSTests(unittest.TestCase):
                              msg='Un-expected get_snap() result:\n '
                                  'returned = ({}).\n '
                                  'expected = ({}).'.format(returned, expected))
+
+    def test_dev_stats_zero(self):
+        """
+        Present various return codes from run_command() to test the function of
+        dev_stats_zero(). All non rc elements not currently relevant but may
+        serve future tests so included as is.
+        """
+        # run_command mock output set:
+        # legacy system pool
+        out = [['[/dev/vda3].write_io_errs    0',
+                '[/dev/vda3].read_io_errs     0',
+                '[/dev/vda3].flush_io_errs    0',
+                '[/dev/vda3].corruption_errs  0',
+                '[/dev/vda3].generation_errs  0',
+                '']]
+        err = [['']]
+        rc = [0]
+        expected_result = [True]  # rc = 0 is not errors found in results
+        # run_command mock output set:
+        out.append(['[/dev/vdb].write_io_errs    0',
+                    '[/dev/vdb].read_io_errs     0',
+                    '[/dev/vdb].flush_io_errs    0',
+                    '[/dev/vdb].corruption_errs  5',
+                    '[/dev/vdb].generation_errs  0',
+                    ''])
+        err.append([''])
+        rc.append(64)
+        expected_result.append(False)  # bit 6 set in rc means non zero errors.
+        # run_command mock output set:
+        # 3 open LUKS containers as members.
+        out.append([
+            '[/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e].write_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e].read_io_errs     0',  # noqa E501
+            '[/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e].flush_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e].corruption_errs  0',  # noqa E501
+            '[/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e].generation_errs  0',  # noqa E501
+            '[/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc].write_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc].read_io_errs     0',  # noqa E501
+            '[/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc].flush_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc].corruption_errs  0',  # noqa E501
+            '[/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc].generation_errs  0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].write_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].read_io_errs     0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].flush_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].corruption_errs  0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].generation_errs  0',  # noqa E501
+            ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(True)
+        # Cycle through the above run_command mock sets.
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            self.mock_run_command.return_value = (o, e, r)
+            returned = dev_stats_zero('arbitrary_unit_test_mount_point')
+            # print('each out = {}'.format(o))
+            # print('each expected = {}'.format(expected))
+            # print('each returned value = {}'.format(returned))
+            msg = ('Un-expected dev_stats_zero() result for rc = {}. \n '
+                   'returned = ({}).\n expected = ({}).'.format(r, returned,
+                                                                expected))
+            self.assertEqual(returned, expected, msg=msg)
+
+    def test_get_dev_io_error_stats(self):
+        """
+        Present various device io error stats and return codes to
+        get_dev_io_error_stats()
+        """
+        # legacy system pool device
+        #
+        out = [['[/dev/vda3].write_io_errs    0',
+                '[/dev/vda3].read_io_errs     0',
+                '[/dev/vda3].flush_io_errs    0',
+                '[/dev/vda3].corruption_errs  0',
+                '[/dev/vda3].generation_errs  0',
+                '']]
+        err = [['']]
+        rc = [0]
+        expected_result = [
+            ('{"generation_errs": "0", "corruption_errs": "0", '
+             '"read_io_errs": "0", "write_io_errs": "0", '
+             '"flush_io_errs": "0"}')
+        ]
+        # /dev/disk/by-id/dm-name-luks-a47f4950-3296-4504-b9a4-2dc75681a6ad
+        out.append([
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].write_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].read_io_errs     0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].flush_io_errs    0',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].corruption_errs  42',  # noqa E501
+            '[/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad].generation_errs  0',  # noqa E501
+            ''])
+        err.append([''])
+        rc.append(64)
+        expected_result.append(
+            ('{"generation_errs": "0", "corruption_errs": "42", '
+             '"read_io_errs": "0", "write_io_errs": "0", '
+             '"flush_io_errs": "0"}')
+        )
+        # a non mounted device:
+        out.append([''])
+        err.append([
+            "ERROR: '/dev/disk/by-id/virtio-serial-5' is not a mounted btrfs device",  # noqa E501
+            ''])
+        rc.append(1)
+        expected_result.append(None)
+        # errors found
+        out.append([
+            '[/dev/sdc].write_io_errs    204669',
+            '[/dev/sdc].read_io_errs     81232',
+            '[/dev/sdc].flush_io_errs    782',
+            '[/dev/sdc].corruption_errs  2985',
+            '[/dev/sdc].generation_errs  47',
+            ''])
+        err.append([''])
+        rc.append(64)
+        expected_result.append(
+            ('{"generation_errs": "47", "corruption_errs": "2985", '
+             '"read_io_errs": "81232", "write_io_errs": "204669", '
+             '"flush_io_errs": "782"}')
+        )
+        # Cycle through the above run_command mock sets.
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            self.mock_run_command.return_value = (o, e, r)
+            returned = get_dev_io_error_stats('arbitrary_unit_test_dev_name')
+            # As we are testing the default (json_format=True) output type we
+            # need to sort our returned and expected to allow for comparison.
+            # Convert to dict and back to json (with a key sort):
+            if returned is not None:
+                returned = json.dumps(json.loads(returned), sort_keys=True)
+            if expected is not None:
+                expected = json.dumps(json.loads(expected), sort_keys=True)
+            # print('each out = {}'.format(o))
+            # print('each expected = {}'.format(expected))
+            # print('each returned value = {}'.format(returned))
+            msg = ('Un-expected get_dev_io_error_stats() result: rc = {}. \n '
+                   'returned = ({}).\n expected = ({}).'.format(r, returned,
+                                                                expected))
+            if expected is None:
+                self.assertIsNone(returned, msg=msg)
+            else:
+                self.assertEqual(returned, expected, msg=msg)

@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import json
 import re
 import time
 import os
@@ -93,6 +93,63 @@ def add_pool(pool, disks):
                      'returned by %s with output: %s and error: %s.'
                      % (rc, cmd, out, err))
     return out, err, rc
+
+
+def dev_stats_zero(target):
+    """
+    Simple and fast wrapper around 'btrfs device stats -c target'
+    Intended as a quick boolean pool health check, ie do any devs have errors?
+    The command used requires a mounted pool (vol) and does not appear to wake
+    drive from a standby state.
+    Bit 6 (64 decimal) of return code is set when non zero errors are found.
+    :param target: Pool mount point or device name with path
+    :return: True if zero errors are reported, False otherwise.
+    """
+    cmd = [BTRFS, 'device', 'stats', '-c', target]
+    o, e, rc = run_command(cmd, throw=False)
+    # logger.debug('out = {} err = {} rc = {}'.format(o, e, rc))
+    if rc & 64:  # bitwise AND for Bit 6
+        return False
+    return True
+
+
+def get_dev_io_error_stats(target, json_format=True):
+    """
+    Wrapper / parser for 'btrfs device stats -c target' intended to populate
+    the disk model io_error_stats property: called from within try clause.
+    :param target: device with path eg: /dev/sda or /dev/disk/by-id/virtio-3333
+    :param json_format: Defaults to json format but can return dict.
+    :return: json or dict format of retrieved values or None if error or no
+    btrfs mount.
+    """
+    cmd = [BTRFS, 'device', 'stats', '-c', get_device_path(target)]
+    o, e, rc = run_command(cmd, throw=False)
+    stats = {'write_io_errs': '0',
+             'read_io_errs': '0',
+             'flush_io_errs': '0',
+             'corruption_errs': '0',
+             'generation_errs': '0'}
+    if rc == 0:  # we have low level confirmation of 0 errors so return dict.
+        # Avoids unnecessary parsing as we already know all errors are zero.
+        if not json_format:
+            return stats
+        return json.dumps(stats)
+    if rc == 1:
+        # Device not part of a mounted btrfs vol, or dev is unknown.
+        return None
+    for line in o:
+        fields = line.split('.')
+        # e.g. ['[/dev/vdb]', 'write_io_errs    0']
+        if len(fields) != 2:
+            continue  # Skip line as unknown and will fail following index.
+        sub_fields = fields[1].split()
+        # e.g. ['write_io_errs', '0']
+        if sub_fields[1] == '0':  # optimization.
+            continue  # We already have this in our stats template.
+        stats[sub_fields[0]] = sub_fields[1]  # ie {'write_io_errs': '42'}
+    if not json_format:
+        return stats
+    return json.dumps(stats)
 
 
 def is_pool_missing_dev(label):
