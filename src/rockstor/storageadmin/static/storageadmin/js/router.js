@@ -1064,6 +1064,23 @@ $(document).ready(function() {
         }
     };
 
+    var displayPoolDevStats = function (data) {
+        var html = '';
+        if (data.status === 'errors') {
+            html += '<i class="fa fa-warning fa-inverse" style="color: red;"> Pool Device Errors Alert </i>';
+            $('#pool-dev-stats').fadeOut(1500, function(){
+                $('#pool-dev-stats').attr('title', data.message);
+                $('#pool-dev-stats').html(html).fadeIn(1500);
+            });
+        } else {
+            $('#pool-dev-stats').fadeOut(1500, function() {
+                $('#pool-dev-stats').attr('title', '');
+                $('#pool-dev-stats').empty();
+            });
+        }
+    };
+
+
     var displayLoadAvg = function(data) {
         var n = parseInt(data);
         var mins = Math.floor(n / 60) % 60;
@@ -1179,6 +1196,7 @@ $(document).ready(function() {
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software_update');
     RockStorSocket.addListener(displayShutdownStatus, this, 'sysinfo:shutdown_status');
     RockStorSocket.addListener(displayPoolDegradedStatus, this, 'sysinfo:pool_degraded_status');
+    RockStorSocket.addListener(displayPoolDevStats, this, 'sysinfo:pool_dev_stats');
 
     //insert pagination partial helper functions here
     Handlebars.registerHelper('pagination', function() {

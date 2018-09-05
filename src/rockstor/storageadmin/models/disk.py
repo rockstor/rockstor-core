@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 from django.db import models
+from fs.btrfs import get_dev_io_error_stats
 from storageadmin.models import Pool
 from system.osi import get_disk_power_status, read_hdparm_setting, \
     get_disk_APM_level, get_dev_temp_name
@@ -26,6 +27,7 @@ from system.osi import get_disk_power_status, read_hdparm_setting, \
 class AttachedManager(models.Manager):
     """Manager subclass to return only attached disks"""
     use_for_related_fields = True
+
     def attached(self):
         # Return default queryset after excluding name="detached-*" items.
         # Alternative lookup type __regex=r'^detached-'
@@ -98,6 +100,14 @@ class Disk(models.Model):
     def apm_level(self, *args, **kwargs):
         try:
             return get_disk_APM_level(str(self.name))
+        except:
+            return None
+
+    @property
+    def io_error_stats(self, *args, **kwargs):
+        # json charfield format
+        try:
+            return get_dev_io_error_stats(str(self.name))
         except:
             return None
 

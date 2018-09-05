@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from django.conf import settings
 from fs.btrfs import pool_usage, usage_bound, \
-    are_quotas_enabled, is_pool_missing_dev
+    are_quotas_enabled, is_pool_missing_dev, dev_stats_zero
 from system.osi import mount_status
 
 RETURN_BOOLEAN = True
@@ -42,6 +42,7 @@ class Pool(models.Model):
     def __init__(self, *args, **kwargs):
         super(Pool, self).__init__(*args, **kwargs)
         self.update_missing_dev()
+        self.update_device_stats()
 
     def update_missing_dev(self, *args, **kwargs):
         # Establish an instance variable to track missing device status.
@@ -55,6 +56,23 @@ class Pool(models.Model):
     @property
     def has_missing_dev(self, *args, **kwargs):
         return self.missing_dev
+
+    def update_device_stats(self, *args, **kwargs):
+        # Establish an instance variable to represent non zero stats.
+        # Currently Boolean and may be updated during instance life by
+        # calling this method again or directly setting the field.
+        try:
+            if self.is_mounted:
+                mnt_pt = '%s%s' % (settings.MNT_PT, self.name)
+                self.dev_stats_zero = dev_stats_zero(mnt_pt)
+            else:
+                self.dev_stats_zero = True
+        except:
+            self.dev_stats_zero = True
+
+    @property
+    def dev_stats_ok(self, *args, **kwargs):
+        return self.dev_stats_zero
 
     @property
     def free(self, *args, **kwargs):
