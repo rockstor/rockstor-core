@@ -25,7 +25,8 @@ from cli.api_wrapper import APIWrapper
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, DContainerLink,
-                                 ContainerOption, DContainerEnv)
+                                 ContainerOption, DContainerEnv,
+                                 DContainerDevice)
 from fs.btrfs import mount_share
 from rockon_utils import container_status
 import logging
@@ -187,6 +188,15 @@ def vol_ops(container):
     return ops_list
 
 
+def device_ops(container):
+    device_list = []
+    for d in DContainerDevice.objects.filter(container=container):
+        # device_list.append(d.dev)
+        if len(d.val.strip()) > 0:
+            device_list.extend(['--device', '%s' % (d.val)])
+    return device_list
+
+
 def vol_owner_uid(container):
     # If there are volumes, return the uid of the owner of the first volume.
     vo = DVolume.objects.filter(container=container).first()
@@ -210,6 +220,8 @@ def generic_install(rockon):
         run_command([DOCKER, 'pull', c.dimage.name])
         cmd = list(DCMD2) + ['--name', c.name, ]
         cmd.extend(vol_ops(c))
+        # Add '--device' flag
+        cmd.extend(device_ops(c))
         if (c.uid is not None):
             uid = c.uid
             if (c.uid is -1):

@@ -145,6 +145,14 @@ class DContainerEnv(models.Model):
     description = models.CharField(max_length=2048, null=True)
     label = models.CharField(max_length=64, null=True)
 
+
+class DContainerDevice(models.Model):
+    container = models.ForeignKey(DContainer)
+    dev = models.CharField(max_length=1024, null=True)
+    val = models.CharField(max_length=1024, null=True)
+    description = models.CharField(max_length=2048, null=True)
+    label = models.CharField(max_length=64, null=True)
+
     class Meta:
-        unique_together = ('container', 'key')
+        unique_together = ('container', 'dev')
         app_label = 'storageadmin'
