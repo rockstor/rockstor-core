@@ -49,6 +49,7 @@ from rockon_volume import RockOnVolumeView  # noqa F401
 from rockon_port import RockOnPortView  # noqa F401
 from rockon_custom_config import RockOnCustomConfigView  # noqa F401
 from rockon_environment import RockOnEnvironmentView  # noqa F401
+from rockon_device import RockOnDeviceView  # noqa F401
 from disk_smart import DiskSMARTDetailView  # noqa F401
 from config_backup import (ConfigBackupListView, ConfigBackupDetailView,  # noqa F401
                            ConfigBackupUpload)  # noqa F401

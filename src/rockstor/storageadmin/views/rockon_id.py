@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import time
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort,
-                                 DCustomConfig, DContainerEnv)
+from storageadmin.models import (RockOn, DContainer, DVolume, DContainerDevice,
+                                 Share, DPort, DCustomConfig, DContainerEnv)
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -89,6 +89,7 @@ class RockOnIdView(rfc.GenericView):
                 self._pending_check(request)
                 share_map = request.data.get('shares', {})
                 port_map = request.data.get('ports', {})
+                dev_map = request.data.get('devices', {})
                 cc_map = request.data.get('cc', {})
                 env_map = request.data.get('environment', {})
                 containers = DContainer.objects.filter(rockon=rockon)
@@ -135,6 +136,15 @@ class RockOnIdView(rfc.GenericView):
                                 po.hostp = p
                                 po.save()
                                 break
+                    for d in dev_map.keys():
+                        if (not DContainerDevice.objects.filter(
+                                container=co, dev=d).exists()):
+                            e_msg = ('Invalid device variable '
+                                     '({}).').format(d)
+                            handle_exception(Exception(e_msg), request)
+                        cdo = DContainerDevice.objects.get(container=co, dev=d)
+                        cdo.val = dev_map[d]
+                        cdo.save()
                     for c in cc_map.keys():
                         if (not DCustomConfig.objects.filter(
                                 rockon=rockon, key=c).exists()):
