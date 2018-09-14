@@ -2031,13 +2031,16 @@ def hostid():
     two. A non-persistent uuid is also generated in this case.
 
     Observed motherboards with these fake non unique puuids:
+    - Examples of the first listed fake_puuids
     ASRock N3700-ITX
     ASRock C2550D4I
     ASRock J3455 ITX - Thanks to forum member adworacz for reporting this one.
+    - Examples of the second listed fake_puuids
+    ZOTAC 880G-ITX (880GITX-A-E) - Thanks to forum member mmmdonuts
     """
 
     fake_puuids = ('03000200-0400-0500-0006-000700080009',
-                   '00020003-0004-0005-0006-00070008000')
+                   '00020003-0004-0005-0006-000700080009')
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
             puuid = fo.readline().strip()
