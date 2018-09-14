@@ -716,21 +716,28 @@ RockonCustomChoice = RockstorWizardPage.extend({
 
 RockonDeviceChoice = RockonCustomChoice.extend({
     initialize: function() {
-        RockonCustomChoice.prototype.initialize.apply(this, arguments);
-        this.custom_config = this.model.get('devices');
+        this.template = window.JST.rockons_device_choice;
+        this.device_template = window.JST.rockons_device_form;
+        this.device_config = this.model.get('devices');
+        this.initHandlebarHelpers();
+        RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
     render: function() {
         RockstorWizardPage.prototype.render.apply(this, arguments);
-        this.$('#ph-cc-form').html(this.cc_template({
-            cc: this.custom_config.toJSON()
+        this.$('#ph-device-form').html(this.device_template({
+            device: this.device_config.toJSON()
         }));
-        this.cc_form = this.$('#custom-choice-form');
+        this.device_form = this.$('#device-choice-form');
+        this.$('#ph-device-form').html(this.device_template({
+            device: this.device_config.toJSON()
+        }));
+        this.device_form = this.$('#device-choice-form');
 
         // Add form validation
         var rules = {};
         var messages = {};
-        this.custom_config.each(function(device) {
+        this.device_config.each(function(device) {
             rules[device.id] = {
                 checkDevice: true,
                 required: false
@@ -742,7 +749,7 @@ RockonDeviceChoice = RockonCustomChoice.extend({
             return this.optional(element) || regExp.test(value);
         }, 'Please enter a valid absolute path.');
 
-        this.validator = this.cc_form.validate({
+        this.validator = this.device_form.validate({
             rules: rules,
             messages: messages
         });
@@ -750,12 +757,12 @@ RockonDeviceChoice = RockonCustomChoice.extend({
     },
 
     save: function() {
-        if (!this.cc_form.valid()) {
+        if (!this.device_form.valid()) {
             this.validator.showErrors();
             return $.Deferred().reject();
         }
         var dev_map = {};
-        var devices = this.custom_config.filter(function(cdev) {
+        var devices = this.device_config.filter(function(cdev) {
             dev_map[cdev.get('dev')] = this.$('#' + cdev.id).val();
             return cdev;
         }, this);
@@ -1112,6 +1119,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
             new_volumes: this.model.get('shares'),
             ports: this.model.get('ports').toJSON(),
             cc: this.model.get('custom_config').toJSON(),
+            device: this.model.get('devices').toJSON(),
             env: this.model.get('environment').toJSON(),
             rockon: this.model.get('rockon')
         }));
