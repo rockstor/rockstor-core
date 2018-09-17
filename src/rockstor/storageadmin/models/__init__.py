@@ -2,7 +2,7 @@
 Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
-RockStor is free software; you can redistribute it and/or modify
+RockStor is free software; you can redirstribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.

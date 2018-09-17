@@ -202,6 +202,7 @@ def envars(container):
         var_list.extend(['-e', '%s=%s' % (e.key, e.val)])
     return var_list
 
+
 def cargs(container):
     cargs_list = []
     for c in DContainerArgs.objects.filter(container=container):
@@ -209,6 +210,7 @@ def cargs(container):
         if (len(c.val.strip()) > 0):
             cargs_list.append(c.val)
     return cargs_list
+
 
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
