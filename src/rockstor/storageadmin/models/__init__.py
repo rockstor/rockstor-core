@@ -45,7 +45,7 @@ from pool_balance import PoolBalance  # noqa E501
 from tls_certificate import TLSCertificate  # noqa E501
 from rockon import (RockOn, DImage, DContainer, DPort, DVolume,  # noqa E501
                     ContainerOption, DCustomConfig, DContainerLink,  # noqa E501
-                    DContainerEnv)  # noqa E501
+                    DContainerEnv, DContainerArgs)  # noqa E501
 from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,  # noqa E501
                    SMARTErrorLogSummary, SMARTTestLog, SMARTTestLogDetail,  # noqa E501
                    SMARTIdentity, SMARTInfo)  # noqa E501

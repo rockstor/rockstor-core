@@ -24,7 +24,7 @@ from django_ztask.decorators import task
 from cli.api_wrapper import APIWrapper
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
-                                 DCustomConfig, DContainerLink,
+                                 DCustomConfig, DContainerLink, DContainerArgs,
                                  ContainerOption, DContainerEnv)
 from fs.btrfs import mount_share
 from rockon_utils import container_status
@@ -203,6 +203,15 @@ def envars(container):
     return var_list
 
 
+def cargs(container):
+    cargs_list = []
+    for c in DContainerArgs.objects.filter(container=container):
+        cargs_list.append(c.name)
+        if (len(c.val.strip()) > 0):
+            cargs_list.append(c.val)
+    return cargs_list
+
+
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
@@ -221,6 +230,7 @@ def generic_install(rockon):
         cmd.extend(container_ops(c))
         cmd.extend(envars(c))
         cmd.append(c.dimage.name)
+        cmd.extend(cargs(c))
         run_command(cmd)
 
 
