@@ -23,7 +23,8 @@ from django.db import transaction
 from smart_manager.models import Service
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
                                  ContainerOption, DCustomConfig,
-                                 DContainerLink, DContainerEnv)
+                                 DContainerLink, DContainerEnv,
+                                 DContainerDevice)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -290,7 +291,7 @@ class RockOnView(rfc.GenericView):
 
                 vo, created = DVolume.objects.get_or_create(
                     dest_dir=v, container=co, defaults=vo_defaults)
-                # If this db entry previously existed then update it's
+                # If this db entry previously existed then update its
                 # description and label to that found in our rock-on json
                 # This ensures changes made in repo json to the description and
                 # label's get updated in the local db.
@@ -302,6 +303,7 @@ class RockOnView(rfc.GenericView):
                 vo.save()
 
             self._update_env(co, c_d)
+            self._update_device(co, c_d)
             options = containers[c].get('opts', [])
             id_l = []
             for o in options:
@@ -367,6 +369,17 @@ class RockOnView(rfc.GenericView):
         for cco in DCustomConfig.objects.filter(rockon=ro):
             if (cco.key not in cc_d):
                 cco.delete()
+
+    def _update_device(self, co, c_d):
+        cd_d = c_d.get('devices', {})
+        for d in cd_d:
+            ccd_d = cd_d[d]
+            defaults = {'description': ccd_d['description'],
+                        'label': ccd_d['label'], }
+            cd, created = DContainerDevice.objects.get_or_create(
+                container=co, dev=d, defaults=defaults)
+            if (not created):
+                self._update_model(cd, defaults)
 
     def _update_env(self, co, c_d):
         cc_d = c_d.get('environment', {})

@@ -721,6 +721,26 @@ var RockOnPortCollection = RockStorPaginatedCollection.extend({
     }
 });
 
+var RockOnDevice = Backbone.Model.extend({
+    urlRoot: '/api/rockon/devices/' + this.rid
+});
+
+var RockOnDeviceCollection = RockStorPaginatedCollection.extend({
+    model: RockOnDevice,
+    initialize: function(models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
+    },
+    baseUrl: function() {
+        if (this.rid) {
+            return '/api/rockons/devices/' + this.rid;
+        }
+        return '/api/rockons/devices';
+    }
+});
+
 var RockOnCustomConfig = Backbone.Model.extend({
     urlRoot: '/api/rockon/customconfig/' + this.rid
 });

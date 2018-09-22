@@ -29,6 +29,13 @@
         <td>{{this.key}}</td>
     </tr>
 {{/each}}
+{{#each device}}
+    <tr>
+        <td>Device</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
+        <td>{{this.dev}}</td>
+    </tr>
+{{/each}}
 {{#each env}}
     <tr>
         <td>Env</td>

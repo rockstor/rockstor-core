@@ -435,6 +435,9 @@ RockonInstallWizardView = WizardView.extend({
         this.custom_config = new RockOnCustomConfigCollection(null, {
             rid: this.rockon.id
         });
+        this.devices = new RockOnDeviceCollection(null, {
+            rid: this.rockon.id
+        });
         this.environment = new RockOnEnvironmentCollection(null, {
             rid: this.rockon.id
         });
@@ -455,7 +458,7 @@ RockonInstallWizardView = WizardView.extend({
         this.ports.fetch({
             success: function() {
                 _this.model.set('ports', _this.ports);
-                _this.fetchCustomConfig();
+                _this.fetchDevices();
             }
         });
     },
@@ -466,6 +469,16 @@ RockonInstallWizardView = WizardView.extend({
             success: function() {
                 _this.model.set('custom_config', _this.custom_config);
                 _this.fetchEnvironment();
+            }
+        });
+    },
+
+    fetchDevices: function() {
+        var _this = this;
+        this.devices.fetch({
+            success: function() {
+                _this.model.set('devices', _this.devices);
+                _this.fetchCustomConfig();
             }
         });
     },
@@ -491,6 +504,9 @@ RockonInstallWizardView = WizardView.extend({
         }
         if (this.ports.length > 0) {
             this.pages.push(RockonPortChoice);
+        }
+        if (this.devices.length > 0) {
+            this.pages.push(RockonDeviceChoice);
         }
         if (this.environment.length > 0) {
             this.pages.push(RockonEnvironment);
@@ -698,6 +714,62 @@ RockonCustomChoice = RockstorWizardPage.extend({
     }
 });
 
+RockonDeviceChoice = RockonCustomChoice.extend({
+    initialize: function() {
+        this.template = window.JST.rockons_device_choice;
+        this.device_template = window.JST.rockons_device_form;
+        this.device_config = this.model.get('devices');
+        this.initHandlebarHelpers();
+        RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    },
+
+    render: function() {
+        RockstorWizardPage.prototype.render.apply(this, arguments);
+        this.$('#ph-device-form').html(this.device_template({
+            device: this.device_config.toJSON()
+        }));
+        this.device_form = this.$('#device-choice-form');
+        this.$('#ph-device-form').html(this.device_template({
+            device: this.device_config.toJSON()
+        }));
+        this.device_form = this.$('#device-choice-form');
+
+        // Add form validation
+        var rules = {};
+        var messages = {};
+        this.device_config.each(function(device) {
+            rules[device.id] = {
+                checkDevice: true,
+                required: false
+            };
+        });
+
+        $.validator.addMethod('checkDevice', function(value, element) {
+            var regExp = new RegExp(/^\/dev\/[A-Za-z0-9,-/ ]+$/);
+            return this.optional(element) || regExp.test(value);
+        }, 'Please enter a valid absolute path.');
+
+        this.validator = this.device_form.validate({
+            rules: rules,
+            messages: messages
+        });
+        return this;
+    },
+
+    save: function() {
+        if (!this.device_form.valid()) {
+            this.validator.showErrors();
+            return $.Deferred().reject();
+        }
+        var dev_map = {};
+        var devices = this.device_config.filter(function(cdev) {
+            dev_map[cdev.get('dev')] = this.$('#' + cdev.id).val();
+            return cdev;
+        }, this);
+        this.model.set('dev_map', dev_map);
+        return $.Deferred().resolve();
+    }
+});
 
 RockonEnvironment = RockonCustomChoice.extend({
     initialize: function() {
@@ -727,8 +799,10 @@ RockonInstallSummary = RockstorWizardPage.extend({
         this.share_map = this.model.get('share_map');
         this.port_map = this.model.get('port_map');
         this.cc_map = this.model.get('cc_map');
+        this.dev_map = this.model.get('dev_map');
         this.env_map = this.model.get('env_map');
         this.ports = this.model.get('ports');
+        this.devices = this.model.get('devices');
         this.environment = this.model.get('environment');
         this.cc = this.model.get('custom_config');
         this.rockon = this.model.get('rockon');
@@ -741,6 +815,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
             share_map: this.share_map,
             port_map: this.port_map,
             cc_map: this.cc_map,
+            dev_map: this.dev_map,
             env_map: this.env_map
         }));
         return this;
@@ -759,6 +834,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
                 'ports': this.port_map,
                 'shares': this.share_map,
                 'cc': this.cc_map,
+                'devices': this.dev_map,
                 'environment': this.env_map
             }),
             success: function() {
@@ -819,6 +895,9 @@ RockonSettingsWizardView = WizardView.extend({
         this.custom_config = new RockOnCustomConfigCollection(null, {
             rid: this.rockon.id
         });
+        this.devices = new RockOnDeviceCollection(null, {
+            rid: this.rockon.id
+        });
         this.environment = new RockOnEnvironmentCollection(null, {
             rid: this.rockon.id
         });
@@ -841,7 +920,7 @@ RockonSettingsWizardView = WizardView.extend({
         this.ports.fetch({
             success: function() {
                 _this.model.set('ports', _this.ports);
-                _this.fetchCustomConfig();
+                _this.fetchDevices();
             }
         });
     },
@@ -856,6 +935,16 @@ RockonSettingsWizardView = WizardView.extend({
         });
     },
 
+    fetchDevices: function() {
+        var _this = this;
+        this.ports.fetch({
+            success: function() {
+                _this.model.set('devices', _this.devices);
+                _this.fetchCustomConfig();
+            }
+        });
+    },
+    
     fetchEnvironment: function() {
         var _this = this;
         this.environment.fetch({
@@ -1030,6 +1119,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
             new_volumes: this.model.get('shares'),
             ports: this.model.get('ports').toJSON(),
             cc: this.model.get('custom_config').toJSON(),
+            device: this.model.get('devices').toJSON(),
             env: this.model.get('environment').toJSON(),
             rockon: this.model.get('rockon')
         }));

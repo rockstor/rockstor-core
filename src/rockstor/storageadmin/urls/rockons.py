@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls import patterns, url
 from storageadmin.views import (RockOnView, RockOnIdView, RockOnVolumeView,
                                 RockOnPortView, RockOnCustomConfigView,
-                                RockOnEnvironmentView)
+                                RockOnEnvironmentView, RockOnDeviceView)
 
 urlpatterns = patterns(
     '',
@@ -28,6 +28,7 @@ urlpatterns = patterns(
     url(r'^/ports/(?P<rid>\d+)$', RockOnPortView.as_view(), ),
     url(r'^/customconfig/(?P<rid>\d+)$', RockOnCustomConfigView.as_view(), ),
     url(r'^/environment/(?P<rid>\d+)$', RockOnEnvironmentView.as_view(), ),
+    url(r'^/devices/(?P<rid>\d+)$', RockOnDeviceView.as_view(), ),
     url(r'^/(?P<command>update)$', RockOnView.as_view(), ),
     url(r'^/(?P<rid>\d+)$', RockOnIdView.as_view(), ),
     url(r'^/(?P<rid>\d+)/(?P<command>install|uninstall|update|start|stop|state_update|status_update)$',  # noqa E501
