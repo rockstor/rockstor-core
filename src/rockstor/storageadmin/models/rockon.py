@@ -126,6 +126,15 @@ class ContainerOption(models.Model):
         app_label = 'storageadmin'
 
 
+class DContainerArgs(models.Model):
+    container = models.ForeignKey(DContainer)
+    name = models.CharField(max_length=1024)
+    val = models.CharField(max_length=1024, blank=True)
+
+    class Meta:
+        app_label = 'storageadmin'
+
+
 class DCustomConfig(models.Model):
     rockon = models.ForeignKey(RockOn)
     key = models.CharField(max_length=1024)

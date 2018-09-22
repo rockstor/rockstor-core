@@ -26,7 +26,7 @@ from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, DContainerLink,
                                  ContainerOption, DContainerEnv,
-                                 DContainerDevice)
+                                 DContainerDevice, DContainerArgs)
 from fs.btrfs import mount_share
 from rockon_utils import container_status
 import logging
@@ -206,6 +206,15 @@ def vol_owner_uid(container):
     return os.stat(share_mnt).st_uid
 
 
+def cargs(container):
+    cargs_list = []
+    for c in DContainerArgs.objects.filter(container=container):
+        cargs_list.append(c.name)
+        if (len(c.val.strip()) > 0):
+            cargs_list.append(c.val)
+    return cargs_list
+
+
 def envars(container):
     var_list = []
     for e in DContainerEnv.objects.filter(container=container):
@@ -233,6 +242,7 @@ def generic_install(rockon):
         cmd.extend(container_ops(c))
         cmd.extend(envars(c))
         cmd.append(c.dimage.name)
+        cmd.extend(cargs(c))
         run_command(cmd)
 
 

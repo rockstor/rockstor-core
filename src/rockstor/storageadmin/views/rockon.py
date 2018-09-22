@@ -24,7 +24,7 @@ from smart_manager.models import Service
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
                                  ContainerOption, DCustomConfig,
                                  DContainerLink, DContainerEnv,
-                                 DContainerDevice)
+                                 DContainerDevice, DContainerArgs)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -319,6 +319,22 @@ class RockOnView(rfc.GenericView):
             for oo in ContainerOption.objects.filter(container=co):
                 if (oo.id not in id_l):
                     oo.delete()
+
+            cmd_args = containers[c].get('cmd_arguments', [])
+            id_l = []
+            for ca in cmd_args:
+                # there are no unique constraints on this model, so we need
+                # this bandaid.
+                if (DContainerArgs.objects.filter(
+                        container=co, name=ca[0], val=ca[1]).count() > 1):
+                    DContainerArgs.objects.filter(
+                        container=co, name=ca[0], val=ca[1]).delete()
+                cao, created = DContainerArgs.objects.get_or_create(
+                    container=co, name=ca[0], val=ca[1])
+                id_l.append(cao.id)
+            for cao in DContainerArgs.objects.filter(container=co):
+                if (cao.id not in id_l):
+                    cao.delete()
 
         l_d = r_d.get('container_links', {})
         for cname in l_d:
