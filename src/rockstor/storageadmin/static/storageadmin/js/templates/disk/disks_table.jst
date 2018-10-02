@@ -21,8 +21,13 @@
     <tr>
       <td><a href="#disks/{{this.id}}"><i class="glyphicon glyphicon-hdd"></i>&nbsp;{{this.name}}</a>
         {{#if this.offline}}
-            <a href="#" class="delete" data-disk-id="{{this.id}}" title="Disk is unusable because it is detached.
-            Click to delete it from the system if it is not to be reattached." rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
+            {{#if this.pool_name}}
+                <i class="glyphicon glyphicon-map-marker" title="Drive is a detached member of a Rockstor managed Pool." rel="tooltip"></i>
+                <a href="#pools/{{this.pool}}"><i class="glyphicon glyphicon-exclamation-sign" title="Use linked Pool page Resize / ReRaid 'Remove disks' option if no reattachment is planned." rel="tooltip"></i></a>
+            {{else}}
+                <a href="#" class="delete" data-disk-id="{{this.id}}" title="Disk is unusable because it is detached.
+                Click to delete it from the system if it is not to be reattached." rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
+            {{/if}}
         {{else if (isRootDevice this.role)}}
               <i class="glyphicon glyphicon-registration-mark" title="Rockstor System Drive." rel="tooltip"></i>
         {{else if (isLuksContainer this.role)}}

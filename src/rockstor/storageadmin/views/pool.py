@@ -46,10 +46,19 @@ class PoolMixin(object):
 
     @staticmethod
     def _validate_disk(d, request):
+        # TODO: Consider moving this and related code to id based validation.
         try:
             return Disk.objects.get(name=d)
         except:
             e_msg = 'Disk with name ({}) does not exist.'.format(d)
+            handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    def _validate_disk_id(diskId, request):
+        try:
+            return Disk.objects.get(id=diskId)
+        except:
+            e_msg = 'Disk with id ({}) does not exist.'.format(diskId)
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -393,6 +402,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
         @pname: pool's name
         @command: 'add' - add a list of disks and hence expand the pool
                   'remove' - remove a list of disks and hence shrink the pool
+                  'remount' - remount the pool, to apply changed mount options
+                  'quotas' - request pool quota setting change
         """
         with self._handle_exception(request):
             try:
@@ -411,16 +422,31 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 return self._remount(request, pool)
 
             if (command == 'quotas'):
+                # There is a pending btrfs change that allows for quota state
+                # change on unmounted Volumes (pools).
                 return self._quotas(request, pool)
 
-            disks = [self._validate_disk(d, request) for d in
-                     request.data.get('disks', [])]
-            num_new_disks = len(disks)
+            if not pool.is_mounted:
+                e_msg = ('Pool member / raid edits require an active mount. '
+                         'Please see the "Maintenance required" section.')
+                handle_exception(Exception(e_msg), request)
+
+            if command == 'remove' and \
+                    request.data.get('disks', []) == ['missing']:
+                disks = []
+                logger.debug('Remove missing request skipping disk validation')
+            else:
+                disks = [self._validate_disk_id(diskId, request) for diskId in
+                         request.data.get('disks', [])]
+
+            num_disks_selected = len(disks)
             dnames = self._role_filter_disk_names(disks, request)
             new_raid = request.data.get('raid_level', pool.raid)
-            num_total_disks = (Disk.objects.filter(pool=pool).count() +
-                               num_new_disks)
+
             if (command == 'add'):
+                # Only attached disks can be selected during an add operation.
+                num_total_attached_disks = pool.disk_set.attached().count() \
+                                  + num_disks_selected
                 for d in disks:
                     if (d.pool is not None):
                         e_msg = ('Disk ({}) cannot be added to this pool ({}) '
@@ -441,17 +467,17 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'supported.').format(pool.raid, new_raid)
                     handle_exception(Exception(e_msg), request)
 
-                if (new_raid == 'raid10' and num_total_disks < 4):
+                if (new_raid == 'raid10' and num_total_attached_disks < 4):
                     e_msg = ('A minimum of 4 drives are required for the '
                              'raid level: raid10.')
                     handle_exception(Exception(e_msg), request)
 
-                if (new_raid == 'raid6' and num_total_disks < 3):
+                if (new_raid == 'raid6' and num_total_attached_disks < 3):
                     e_msg = ('A minimum of 3 drives are required for the '
                              'raid level: raid6.')
                     handle_exception(Exception(e_msg), request)
 
-                if (new_raid == 'raid5' and num_total_disks < 2):
+                if (new_raid == 'raid5' and num_total_attached_disks < 2):
                     e_msg = ('A minimum of 2 drives are required for the '
                              'raid level: raid5.')
                     handle_exception(Exception(e_msg), request)
@@ -464,10 +490,11 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'during a balance process.').format(pool.name)
                     handle_exception(Exception(e_msg), request)
 
-                resize_pool(pool, dnames)
+                # TODO: run resize_pool() as async task like start_balance()
+                resize_pool(pool, dnames)  # None if no action
+                force = False
                 # During dev add we also offer raid level change, if selected
                 # blanket apply '-f' to allow for reducing metadata integrity.
-                force = False
                 if new_raid != pool.raid:
                     force = True
                 tid = self._balance_start(pool, force=force, convert=new_raid)
@@ -485,38 +512,49 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     e_msg = ('Raid configuration cannot be changed while '
                              'removing disks.')
                     handle_exception(Exception(e_msg), request)
-                for d in disks:
+                detached_disks_selected = 0
+                for d in disks:  # to be removed
                     if (d.pool is None or d.pool != pool):
                         e_msg = ('Disk ({}) cannot be removed because it does '
                                  'not belong to this '
                                  'pool ({}).').format(d.name, pool.name)
                         handle_exception(Exception(e_msg), request)
-                remaining_disks = (Disk.objects.filter(pool=pool).count() -
-                                   num_new_disks)
+                    if re.match('detached-', d.name) is not None:
+                        detached_disks_selected += 1
+                if detached_disks_selected >= 3:
+                    # Artificial constraint but no current btrfs raid level yet
+                    # allows for > 2 dev detached and we have a mounted vol.
+                    e_msg = ('We currently only support removing two'
+                             'detached disks at a time.')
+                    handle_exception(Exception(e_msg), request)
+                attached_disks_selected = (
+                            num_disks_selected - detached_disks_selected)
+                remaining_attached_disks = (
+                            pool.disk_set.attached().count() - attached_disks_selected)
                 if (pool.raid == 'raid0'):
                     e_msg = ('Disks cannot be removed from a pool with this '
                              'raid ({}) configuration.').format(pool.raid)
                     handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid1' and remaining_disks < 2):
+                if (pool.raid == 'raid1' and remaining_attached_disks < 2):
                     e_msg = ('Disks cannot be removed from this pool '
                              'because its raid configuration (raid1) '
                              'requires a minimum of 2 disks.')
                     handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid10' and remaining_disks < 4):
+                if (pool.raid == 'raid10' and remaining_attached_disks < 4):
                     e_msg = ('Disks cannot be removed from this pool '
                              'because its raid configuration (raid10) '
                              'requires a minimum of 4 disks.')
                     handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid5' and remaining_disks < 2):
+                if (pool.raid == 'raid5' and remaining_attached_disks < 2):
                     e_msg = ('Disks cannot be removed from this pool because '
                              'its raid configuration (raid5) requires a '
                              'minimum of 2 disks.')
                     handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid6' and remaining_disks < 3):
+                if (pool.raid == 'raid6' and remaining_attached_disks < 3):
                     e_msg = ('Disks cannot be removed from this pool because '
                              'its raid configuration (raid6) requires a '
                              'minimum of 3 disks.')
@@ -533,10 +571,17 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'not supported.').format(dnames, size_cut, usage)
                     handle_exception(Exception(e_msg), request)
 
-                resize_pool(pool, dnames, add=False)
-                tid = self._balance_start(pool)
-                ps = PoolBalance(pool=pool, tid=tid)
-                ps.save()
+                # TODO: run resize_pool() as async task like start_balance(),
+                # particularly important on device delete as it initiates an
+                # internal volume balance which cannot be monitored by:
+                # btrfs balance status.
+                # See https://github.com/rockstor/rockstor-core/issues/1722
+                # Hence we need also to add a 'DIY' status / percentage
+                # reporting method.
+                resize_pool(pool, dnames, add=False)  # None if no action
+                # Unlike resize_pool() with add=True a delete has an implicit
+                # balance where the deleted disks contents are re-distributed
+                # across the remaining disks.
 
                 for d in disks:
                     d.pool = None

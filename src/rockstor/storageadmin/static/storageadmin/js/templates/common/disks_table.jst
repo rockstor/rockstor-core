@@ -22,7 +22,7 @@
       {{/if}}
     </td>
     <td>{{humanReadableSize this.size}}</td>
-    <td><input type="checkbox" name="diskname" id="{{this.name}}" value="{{this.name}}" class="diskname"></td>
+    <td><input type="checkbox" name="diskid" id="{{this.id}}" value='{"id": {{this.id}}, "name": "{{this.name}}"}' class="diskid"></td>
   {{/each}}
   </tbody>
 </table>

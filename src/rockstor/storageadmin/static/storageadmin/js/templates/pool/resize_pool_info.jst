@@ -7,6 +7,32 @@
     {{/unless}}
 </h3>
 
+{{#if pool.has_missing_dev}}
+    <h4><u>Maintenance required</u></h4>
+    {{#unless (isDegradedRw pool.mount_status)}}
+    Missing disk removal requires <strong>degraded,rw</strong> mount options.
+    {{/unless}}
+    {{#if pool.is_mounted}}
+        {{#if (isWritable pool.mount_status)}}
+            {{#if (isDegradedRw pool.mount_status)}}
+                <a href="#" class="js-delete-missing" data-pool-id="{{pool.id}}" title="If detached members listed use - Resize/ReRaid 'Remove disks' - instead." rel="tooltip">
+                <i class="glyphicon glyphicon-erase"></i> Delete a missing disk if pool has no detached members.</a><br>
+                <strong>Header "Pool Degraded Alert" persists during delete process (can take several hours).</strong><br>
+            {{else}}
+                Consider <strong>degraded,ro</strong> to refresh backups first.<br>
+            {{/if}}
+        {{else}}
+            Pool is read only (<strong>ro</strong>).<br> Refresh backups before using <strong>degraded,rw</strong>.
+        {{/if}}
+        Active 'degraded' option is sticky: once unset a reboot is required to deactivate it.<br>
+    {{else}}
+        Pool is currently (<strong>unmounted</strong>).<br>
+        Consider <strong>degraded,ro</strong> to refresh backups first.<br>
+    {{/if}}
+    Reload page to refresh active mount options.
+    <br><br>
+{{/if}}
+
 <i>Cumulative pool errors per device - 'btrfs dev stats -z /mnt2/{{pool.name}}'
     to reset.</i>
 
@@ -15,6 +41,7 @@
     <thead>
     <tr>
         <th scope="col" abbr="Name">Name</th>
+        <th scope="col" abbr="Temp Name">Temp Name</th>
         <th scope="col" abbr="Capacity">Capacity</th>
         <th scope="col" abbr="write_io_errs">Write I/O errors</th>
         <th scope="col" abbr="read_io_errs">Read I/O errors</th>
@@ -35,6 +62,9 @@
                title="Open LUKS Volume, click to review." rel="tooltip">
                 <i class="glyphicon glyphicon-eye-open"></i></a>
             {{/if}}
+        </td>
+        <td>
+            {{this.temp_name}}
         </td>
         <td>{{humanReadableSize this.size}}</td>
         {{ioErrorStatsTableData this.io_error_stats}}
@@ -58,6 +88,9 @@
                 <i class="glyphicon glyphicon-eye-open"></i></a>
             {{/if}}
         </td>
+        <td>
+            {{this.temp_name}}
+        </td>
         <td>{{humanReadableSize this.size}}</td>
         {{ioErrorStatsTableData this.io_error_stats}}
     </tr>
@@ -67,4 +100,5 @@
 </table>
 
 <a id="js-resize-pool" class="btn btn-primary" href="#">
-    <i class="glyphicon glyphicon-edit "></i> Resize Pool</a></br>
+    <i class="glyphicon glyphicon-edit "></i> Resize/ReRaid Pool</a></br>
+

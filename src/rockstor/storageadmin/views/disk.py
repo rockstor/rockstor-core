@@ -302,6 +302,10 @@ class DiskMixin(object):
             # First find pool association if any:
             if is_byid and d.fstype == 'btrfs':
                 # use the canonical reference from get_pool_info()
+                # TODO: The following breaks with btrfs in partition, needs:
+                # TODO: if d.parted then extract the dev from d.partitions that
+                # TODO: has value 'btrfs' and get it's byid_disk_name.
+                # TODO: Added in pr #1949 commit a608d18 released (3.9.2-32)
                 p_info = get_pool_info(byid_disk_name, d.root)
                 # The above call also enacts a pool auto labeling mechanism.
                 pool_name = p_info['label']

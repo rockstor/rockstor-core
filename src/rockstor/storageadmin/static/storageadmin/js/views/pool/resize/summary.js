@@ -31,20 +31,41 @@ PoolResizeSummary = RockstorWizardPage.extend({
         this.template = window.JST.pool_resize_summary;
         var choice = this.model.get('choice');
         var raidLevel = null;
-        var poolDisks = _.map(this.model.get('pool').get('disks'), function(disk) {
-            return disk.name;
+        var diskIdtoNameMap = new Map();
+        // Extract the selected disks ids and names.
+        var selectedDiskIds = [];
+        if (!_.isUndefined(this.model.get('diskIds'))) {
+            this.model.get('diskIds').forEach(function (diskInfo) {
+                var diskInfoAsObj = JSON.parse(diskInfo);
+                diskIdtoNameMap.set(diskInfoAsObj.id, diskInfoAsObj.name);
+                selectedDiskIds.push(diskInfoAsObj.id);
+            });
+        }
+        this.model.set('selectedDiskIds', selectedDiskIds);
+        var poolDiskIds = _.map(this.model.get('pool').get('disks'), function(disk) {
+            diskIdtoNameMap.set(disk.id, disk.name);
+            return disk.id;
         });
+        this.model.set('diskIdtoNameMap', diskIdtoNameMap)
         if (choice == 'add') {
             this.newRaidLevel = this.model.get('raidChange') ? this.model.get('raidLevel') :
                 this.model.get('pool').get('raid');
-            this.newDisks = _.union(poolDisks, this.model.get('diskNames'));
+            this.proposedDiskIds = _.union(poolDiskIds, selectedDiskIds);
         } else if (choice == 'remove') {
             this.newRaidLevel = this.model.get('pool').get('raid');
-            this.newDisks = _.difference(poolDisks, this.model.get('diskNames'));
+            this.proposedDiskIds = _.difference(poolDiskIds, selectedDiskIds);
         } else if (choice == 'raid') {
             this.newRaidLevel = this.model.get('raidLevel');
-            this.newDisks = _.union(poolDisks, this.model.get('diskNames'));
+            this.proposedDiskIds = _.union(poolDiskIds, selectedDiskIds);
         }
+        // Retrieve proposed disk names from proposedDiskIds
+        var proposedDisksByName = [];
+        this.proposedDiskIds.forEach(function(diskId) {
+            proposedDisksByName.push(diskIdtoNameMap.get(diskId))
+        });
+
+        this.newDisks = proposedDisksByName;
+
         RockstorWizardPage.prototype.initialize.apply(this, arguments);
         this.initHandlebarHelpers();
     },
@@ -74,7 +95,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
                 dataType: 'json',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    'disks': this.model.get('diskNames'),
+                    'disks': this.model.get('selectedDiskIds'),
                     'raid_level': raidLevel
                 }),
                 success: function() {
@@ -89,7 +110,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
                 dataType: 'json',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    'disks': this.model.get('diskNames'),
+                    'disks': this.model.get('selectedDiskIds'),
                     'raid_level': this.model.get('pool').get('raid')
                 }),
                 success: function() {
@@ -104,7 +125,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
                 dataType: 'json',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    'disks': this.model.get('diskNames'),
+                    'disks': this.model.get('selectedDiskIds'),
                     'raid_level': this.model.get('raidLevel')
                 }),
                 success: function() {
@@ -123,6 +144,8 @@ PoolResizeSummary = RockstorWizardPage.extend({
             }).join(',');
             return new Handlebars.SafeString(html);
         });
+
+        // potentially a display_diskSet_proposed handlebars helper
 
         Handlebars.registerHelper('display_breadCrumbs', function() {
             var html = '';
