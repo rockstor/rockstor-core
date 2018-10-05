@@ -68,8 +68,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     events: {
         'click #delete-pool': 'deletePool',
         'click #js-confirm-pool-delete': 'confirmPoolDelete',
+        'click .js-delete-missing': 'deleteMissingDisk',
         'click #js-resize-pool': 'resizePool',
-        'click #js-submit-resize': 'resizePoolSubmit',
+        'click #js-submit-resize': 'resizePoolSubmit', // proposed for removal
         'click #js-resize-cancel': 'resizePoolCancel'
     },
 
@@ -251,13 +252,45 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         });
     },
 
+    deleteMissingDisk: function(event) {
+        // essentially hard wired variant of resizePool for delete 'missing'
+        var _this = this;
+        if (event) event.preventDefault();
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var url = '/api/pools/' + _this.pool.get('id') + '/remove';
+        if (confirm('If any detached members are listed use the Resize/ReRaid button - "Remove disks" option instead. Click OK only if "(Some Missing)" and no "detached-..." appear in the Pool page Disks sub-section?')) {
+            var raid_level = _this.pool.get('raid');
+            var disk_names = ['missing'];
+            var delete_missing_msg = ('Delete missing is initiated (can take several hours), a progress report is currently unavailable. Balance attempts are blocked for this period.');
+            $.ajax({
+                url: url,
+                type: 'PUT',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    'disks': disk_names,
+                    'raid_level': raid_level
+                }),
+                success: function (collection, response, options) {
+                    _this.render();
+                    alert(delete_missing_msg);
+                },
+                error: function (request, status, error) {
+                    enableButton(button);
+                }
+            });
+        }
+    },
+
     resizePool: function(event) {
         event.preventDefault();
         var wizardView = new PoolResizeWizardView({
             model: new Backbone.Model({
                 pool: this.pool
             }),
-            title: 'Resize Pool / Change RAID level for ' + this.pool.get('name'),
+            title: 'Resize / Change RAID level for Pool ' + this.pool.get('name'),
             parent: this
         });
         $('.overlay-content', '#pool-resize-raid-overlay').html(wizardView.render().el);
@@ -265,6 +298,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     resizePoolSubmit: function(event) {
+        // proposed for removal
         event.preventDefault();
         var button = this.$('#js-submit-resize');
         if (buttonDisabled(button)) return false;
@@ -322,6 +356,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     resizePoolModalSubmit: function(event) {
+        // candidate for removal
         var _this = this;
         var raid_level = $('#raid_level').val();
         var disk_names = [];
@@ -458,6 +493,21 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
             }
             return false;
         });
+
+        Handlebars.registerHelper('isWritable', function(mount_status){
+            if (mount_status.includes("rw")) {
+                return true;
+            }
+            return false;
+        });
+
+        Handlebars.registerHelper('isDegradedRw', function(mount_status){
+            if (mount_status.includes("degraded") && mount_status.includes("rw")) {
+                return true;
+            }
+            return false;
+        });
+
         // Simple Boolean to Text converter for use with Pool.quotas_enabled.
         Handlebars.registerHelper('isEnabledDisabled', function (q_enabled) {
             if (q_enabled) {

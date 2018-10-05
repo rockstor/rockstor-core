@@ -29,7 +29,7 @@ PoolAddDisks = RockstorWizardPage.extend({
 
     events: {
         'click #checkAll': 'selectAllCheckboxes',
-        'click [class="diskname"]': 'clickCheckbox'
+        'click [class="diskid"]': 'clickCheckbox'
     },
 
     initialize: function () {
@@ -95,12 +95,12 @@ PoolAddDisks = RockstorWizardPage.extend({
             return $.Deferred().reject();
         }
         var _this = this;
-        var checked = this.$('.diskname:checked').length;
-        var diskNames = [];
-        this.$('.diskname:checked').each(function (i) {
-            diskNames.push($(this).val());
+        var checked = this.$('.diskid:checked').length;
+        var diskIds = [];
+        this.$('.diskid:checked').each(function (i) {
+            diskIds.push($(this).val());
         });
-        this.model.set('diskNames', diskNames);
+        this.model.set('diskIds', diskIds);
         if (this.model.get('raidChange')) {
             this.model.set('raidLevel', this.$('#raid-level').val());
         }

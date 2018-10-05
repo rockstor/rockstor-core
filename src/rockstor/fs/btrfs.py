@@ -230,6 +230,7 @@ def get_pool_info(disk, root_pool=False):
     o, e, rc = run_command(cmd)
     pool_info = {'disks': [], 'hasMissingDev': False, 'fullDevCount': 0,
                  'missingDevCount': 0}
+    # TODO: Move 'disks' to dictionary with (devid, size, used) tuple values
     full_dev_count = 0  # Number of devices in non degraded state.
     attached_dev_count = 0  # Number of currently attached devices.
     for l in o:
@@ -321,7 +322,7 @@ def resize_pool(pool, dev_list_byid, add=True):
     (when adding) or are already members of the pool (when deleting).
     If any device in the supplied dev_list fails this test then no command is
     executed and None is returned.
-    :param pool: btrfs pool name
+    :param pool: btrfs pool object
     :param dev_list_byid: list of devices to add/delete in by-id (without
         path).
     :param add: when true (default) or not specified then attempt to add
@@ -330,7 +331,17 @@ def resize_pool(pool, dev_list_byid, add=True):
     :return: Tuple of results from run_command(generated command) or None if
         the device member/pool sanity check fails.
     """
-    dev_list_byid = [get_device_path(d) for d in dev_list_byid]
+    if pool.has_missing_dev and not add:
+        if dev_list_byid == []:
+            dev_list_byid = ['missing']
+        else:
+            # list has at least a single element
+            # substiture 'missing' for any member matching 'detached-'
+            dev_list_byid = [
+                'missing' if re.match('detached-', dev) is not None else
+                get_device_path(dev) for dev in dev_list_byid]
+    else:
+        dev_list_byid = [get_device_path(dev) for dev in dev_list_byid]
     root_mnt_pt = mount_root(pool)
     cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
@@ -338,15 +349,17 @@ def resize_pool(pool, dev_list_byid, add=True):
         resize_flag = 'delete'
     resize_cmd = [BTRFS, 'device', resize_flag, ]
     # Until we verify that all devices are or are not already members of the
-    # given pools depending on if we are adding (default) or removing
-    # (add=False) those devices we set our resize flag to false.
+    # given pool, depending on if we are adding (default) or removing
+    # (add=False), we set our resize flag to false.
     resize = False
     for d in dev_list_byid:
-        if (((resize_flag == 'add' and (d not in cur_dev)) or
-                (resize_flag == 'delete' and (d in cur_dev)))):
+        if (resize_flag == 'add' and (d not in cur_dev)) or \
+                (resize_flag == 'delete' and ((d in cur_dev) or
+                                              d == 'missing')):
             resize = True  # Basic disk member of pool sanity check passed.
             resize_cmd.append(d)
     if (not resize):
+        logger.debug('Note: resize_pool() taking no action.')
         return None
     resize_cmd.append(root_mnt_pt)
     return run_command(resize_cmd)
