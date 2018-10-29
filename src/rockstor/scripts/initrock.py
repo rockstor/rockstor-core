@@ -344,6 +344,7 @@ def main():
         logging.debug('Progresql enabled')
         pg_data = '/var/lib/pgsql/data'
         if (os.path.isdir(pg_data)):
+            logger.debug('Deleting /var/lib/pgsql/data')
             shutil.rmtree('/var/lib/pgsql/data')
         logging.info('initializing Postgresql...')
         run_command(['/usr/bin/postgresql-setup', 'initdb'])
@@ -382,7 +383,13 @@ def main():
     logging.info('Running app database migrations...')
     migration_cmd = [DJANGO, 'migrate', '--noinput', ]
     fake_migration_cmd = migration_cmd + ['--fake']
+    fake_initial_migration_cmd = migration_cmd + ['--fake-initial']
     smartdb_opts = ['--database=smart_manager', 'smart_manager']
+
+    # Migrate Content types before individual apps
+    logger.debug('migrate (--fake-initial) contenttypes')
+    run_command(
+        fake_initial_migration_cmd + ['--database=default', 'contenttypes'])
 
     for app in ('storageadmin', 'smart_manager'):
         db = 'default'
@@ -397,11 +404,13 @@ def main():
                 break
         if not initial_faked:
             db_arg = '--database=%s' % db
+            logger.debug('migrate (--fake) db=({}) app=({}) 0001_initial'
+                         .format(db, app))
             run_command(fake_migration_cmd + [db_arg, app, '0001_initial'])
 
+    run_command(migration_cmd + ['auth'])
     run_command(migration_cmd + ['storageadmin'])
     run_command(migration_cmd + smartdb_opts)
-    run_command(migration_cmd + ['auth'])
     run_command(migration_cmd + ['django_ztask'])
     logging.info('Done')
     logging.info('Running prepdb...')
