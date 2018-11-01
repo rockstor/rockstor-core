@@ -569,6 +569,9 @@ class DisksWidgetNamespace(RockstorIO):
             stats_file_path = '/proc/diskstats'
             cur_stats = {}
             interval = 1
+            # TODO: Consider refactoring the following to use Disk.temp_name or
+            # TODO: building byid_disk_map from the same. Ideally we would have
+            # TODO: performance testing in place prior to this move.
             # Build a list of our db's disk names, now in by-id type format.
             disks = [d.name for d in Disk.objects.all()]
             # /proc/diskstats has lines of the following form:

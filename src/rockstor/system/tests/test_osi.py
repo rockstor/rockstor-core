@@ -16,7 +16,7 @@ import operator
 import unittest
 from mock import patch
 
-from system.osi import get_dev_byid_name, Disk, scan_disks
+from system.osi import get_dev_byid_name, Disk, scan_disks, get_byid_name_map
 
 
 class Pool(object):
@@ -1551,3 +1551,132 @@ class OSITests(unittest.TestCase):
                                      'returned = ({}).\n '
                                      'expected = ({}).'.format(returned,
                                                                expected))
+
+    def test_get_byid_name_map_prior_command_mock(self):
+        """
+        Test get_byid_name_map() for prior mapping between canonical
+        and by-id device name mapping.
+        Note that the 'new' variant of this behaviour, tested later, only
+        involved the change of the mocked run_command output.
+        """
+        # The following test data of 'ls -l' contains; sdd, sde, and sda3 with
+        # same length by-id mappings that are also their only mappings.
+        # This allows testing for returning the expected wwn-..., not the
+        # regression tested here of "scsi-... type name. As per
+        # get_dev_byid_name()'s reverse lexicographical return priority we
+        # would now expect the wwn-... type names if there are not others
+        # available and all available by-id are of the same length.
+        # Thanks to forum member juchong for submitting this command output.
+
+        out = [
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-HGST_HUH728080ALE600_2EKXANGP -> ../../sdb',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-VMware_Virtual_SATA_CDRW_Drive_00000000000000000001 -> ../../sr0',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68L0BN1_WD-WX11D6651995 -> ../../sdg',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68L0BN1_WD-WX31DB58YJF0 -> ../../sdh',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68MYMN1_WD-WX11DB4H8VJJ -> ../../sdf',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68MYMN1_WD-WX21DC42ELAT -> ../../sdc',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68MYMN1_WD-WXM1H84CXAUJ -> ../../sdi',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 scsi-35000cca252017870 -> ../../sdd',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 scsi-35000cca252017ef4 -> ../../sde',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636 -> ../../sda',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636-part1 -> ../../sda1',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636-part2 -> ../../sda2',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636-part3 -> ../../sda3',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x5000cca23bf728eb -> ../../sdb',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x5000cca252017870 -> ../../sdd',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x5000cca252017ef4 -> ../../sde',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee20b77be35 -> ../../sdf',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee20dd22144 -> ../../sdg',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee260e5c696 -> ../../sdi',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee26114d4cb -> ../../sdc',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee26293bbea -> ../../sdh',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636 -> ../../sda',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part1 -> ../../sda1',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part2 -> ../../sda2',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part3 -> ../../sda3',  # noqa E501
+        ]
+        err = ['']
+        rc = 0
+        expected = {
+            'sda1': 'scsi-36000c29df1181dd53db36b41b3582636-part1',
+            'sdf': 'ata-WDC_WD60EFRX-68MYMN1_WD-WX11DB4H8VJJ',
+            'sdd': 'scsi-35000cca252017870',
+            'sde': 'scsi-35000cca252017ef4',
+            'sr0': 'ata-VMware_Virtual_SATA_CDRW_Drive_00000000000000000001',
+            'sdg': 'ata-WDC_WD60EFRX-68L0BN1_WD-WX11D6651995',
+            'sda2': 'scsi-36000c29df1181dd53db36b41b3582636-part2',
+            'sda': 'scsi-36000c29df1181dd53db36b41b3582636',
+            'sdb': 'ata-HGST_HUH728080ALE600_2EKXANGP',
+            'sdc': 'ata-WDC_WD60EFRX-68MYMN1_WD-WX21DC42ELAT',
+            'sdh': 'ata-WDC_WD60EFRX-68L0BN1_WD-WX31DB58YJF0',
+            'sdi': 'ata-WDC_WD60EFRX-68MYMN1_WD-WXM1H84CXAUJ',
+            'sda3': 'scsi-36000c29df1181dd53db36b41b3582636-part3'}
+        self.mock_run_command.return_value = (out, err, rc)
+        returned = get_byid_name_map()
+        self.maxDiff = None
+        self.assertDictEqual(returned, expected)
+
+    def test_get_byid_name_map(self):
+        """
+        Test get_byid_name_map() for expected by-id device name mapping.
+        """
+        # The following test data of 'ls -lr' contains; sdd, sde, and sda3 with
+        # same length by-id mappings that are also their only mappings.
+        # This allows testing for returning the expected wwn-..., not the
+        # "scsi-... type name. As per get_dev_byid_name()'s revised reverse
+        # lexicographical return priority we would now expect the wwn-... type
+        # names if there are no others available and all available by-id are
+        # of the same length.
+        # This ls -lr output is derived from the ls -l output supplied by forum
+        # member juchong.
+
+        out = [
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part3 -> ../../sda3',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part2 -> ../../sda2',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part1 -> ../../sda1',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636 -> ../../sda',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee26293bbea -> ../../sdh',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee26114d4cb -> ../../sdc',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee260e5c696 -> ../../sdi',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee20dd22144 -> ../../sdg',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x50014ee20b77be35 -> ../../sdf',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x5000cca252017ef4 -> ../../sde',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x5000cca252017870 -> ../../sdd',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 wwn-0x5000cca23bf728eb -> ../../sdb',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636-part3 -> ../../sda3',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636-part2 -> ../../sda2',  # noqa E501
+            'lrwxrwxrwx 1 root root 10 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636-part1 -> ../../sda1',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 scsi-36000c29df1181dd53db36b41b3582636 -> ../../sda',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 scsi-35000cca252017ef4 -> ../../sde',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 scsi-35000cca252017870 -> ../../sdd',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68MYMN1_WD-WXM1H84CXAUJ -> ../../sdi',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68MYMN1_WD-WX21DC42ELAT -> ../../sdc',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68MYMN1_WD-WX11DB4H8VJJ -> ../../sdf',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68L0BN1_WD-WX31DB58YJF0 -> ../../sdh',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68L0BN1_WD-WX11D6651995 -> ../../sdg',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-VMware_Virtual_SATA_CDRW_Drive_00000000000000000001 -> ../../sr0',  # noqa E501
+            'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-HGST_HUH728080ALE600_2EKXANGP -> ../../sdb',  # noqa E501
+        ]
+        err = ['']
+        rc = 0
+        # The order of the following is unimportant as it's a dictionary but is
+        # preserved on the index to aid comparison with:
+        # test_get_byid_name_map_prior_command_mock()
+        expected = {
+            'sda1': 'wwn-0x6000c29df1181dd53db36b41b3582636-part1',
+            'sdf': 'ata-WDC_WD60EFRX-68MYMN1_WD-WX11DB4H8VJJ',
+            'sdd': 'wwn-0x5000cca252017870',
+            'sde': 'wwn-0x5000cca252017ef4',
+            'sr0': 'ata-VMware_Virtual_SATA_CDRW_Drive_00000000000000000001',
+            'sdg': 'ata-WDC_WD60EFRX-68L0BN1_WD-WX11D6651995',
+            'sda2': 'wwn-0x6000c29df1181dd53db36b41b3582636-part2',
+            'sda': 'wwn-0x6000c29df1181dd53db36b41b3582636',
+            'sdb': 'ata-HGST_HUH728080ALE600_2EKXANGP',
+            'sdc': 'ata-WDC_WD60EFRX-68MYMN1_WD-WX21DC42ELAT',
+            'sdh': 'ata-WDC_WD60EFRX-68L0BN1_WD-WX31DB58YJF0',
+            'sdi': 'ata-WDC_WD60EFRX-68MYMN1_WD-WXM1H84CXAUJ',
+            'sda3': 'wwn-0x6000c29df1181dd53db36b41b3582636-part3'}
+        self.mock_run_command.return_value = (out, err, rc)
+        returned = get_byid_name_map()
+        self.maxDiff = None
+        self.assertDictEqual(returned, expected)

@@ -1620,7 +1620,7 @@ def get_dev_byid_name(device_name, remove_path=False):
 
 
 def get_byid_name_map():
-    """Simple wrapper around 'ls -l /dev/disk/by-id' which returns a current
+    """Simple wrapper around 'ls -lr /dev/disk/by-id' which returns a current
     mapping of all attached by-id device names to their sdX counterparts. When
     multiple by-id names are found for the same sdX device then the longest is
     preferred, or when equal in length then the first listed is used. Intended
@@ -1636,7 +1636,7 @@ def get_byid_name_map():
     was encountered by run_command or no by-id type names were encountered.
     """
     byid_name_map = {}
-    out, err, rc = run_command([LS, '-l', '/dev/disk/by-id'],
+    out, err, rc = run_command([LS, '-lr', '/dev/disk/by-id'],
                                throw=True)
     if rc == 0:
         for each_line in out:
