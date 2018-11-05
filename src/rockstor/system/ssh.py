@@ -26,8 +26,8 @@ from django.conf import settings
 
 
 SSHD_CONFIG = '/etc/ssh/sshd_config'
-MKDIR = '/bin/mkdir'
-MOUNT = '/bin/mount'
+MKDIR = '/usr/bin/mkdir'
+MOUNT = '/usr/bin/mount'
 USERMOD = '/usr/sbin/usermod'
 SFTP_REGEX = 'Subsystem\s+sftp'
 SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'

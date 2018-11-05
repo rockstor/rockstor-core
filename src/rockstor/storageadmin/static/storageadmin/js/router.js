@@ -1026,6 +1026,11 @@ $(document).ready(function() {
         $loadavg.text('Linux: ' + data);
     };
 
+    var distroInfo = function(data) {
+        $('#distro-info').text(data.distro);
+        $('#distro-info').attr('title', data.version);
+    };
+
     var displayLocaleTime = function(data) {
 
         $('#local-time > span').text(data);
@@ -1189,6 +1194,7 @@ $(document).ready(function() {
 
 
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
+    RockStorSocket.addListener(distroInfo, this, 'sysinfo:distro_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
     RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
     RockStorSocket.addListener(displayYumUpdates, this, 'sysinfo:yum_updates');

@@ -1,0 +1,13 @@
+Files with a name pattern of: docker-distroid.service
+
+where distroid = distro.id()
+
+are currently hand copied from their distro docker package origin, usually:
+/usr/lib/systemd/system/docker.service
+
+src/rockstor/smart_manager/views/docker_service.py then stream edits them.
+
+See docker_service.py for pre-instantiation edit details.
+
+Auto edit is performed on Docker service enable event within Web-UI and
+attempts to honour all existing dockerd arguments.

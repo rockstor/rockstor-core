@@ -26,6 +26,10 @@ import time
 from datetime import (datetime, timedelta)
 import requests
 from django.conf import settings
+from system.exceptions import CommandException
+import logging
+
+logger = logging.getLogger(__name__)
 
 YUM = '/usr/bin/yum'
 RPM = '/usr/bin/rpm'
@@ -92,9 +96,20 @@ def current_version():
 
 
 def rpm_build_info(pkg):
-    version = None
+    version = 'Unknown Version'
     date = None
-    o, e, rc = run_command([YUM, 'info', 'installed', '-v', pkg])
+    try:
+        o, e, rc = run_command([YUM, 'info', 'installed', '-v', pkg])
+    except CommandException as e:
+        # Catch "No matching Packages to list" so we can return None, None.
+        emsg = 'Error: No matching Packages to list'
+        # By checking both the first error element and the second to last we
+        # catch one yum waiting for another to release yum lock.
+        if e.err[0] == emsg or e.err[-2] == emsg:
+            logger.info('No "rockstor" package found: source install?')
+            return version, date
+        # otherwise we raise an exception as normal.
+        raise e
     for l in o:
         if (re.match('Buildtime', l) is not None):
             # eg: "Buildtime   : Tue Dec  5 13:34:06 2017"
@@ -109,7 +124,7 @@ def rpm_build_info(pkg):
             version = l.strip().split()[2]
         if (re.match('Release ', l) is not None):
             version = '%s-%s' % (version, l.strip().split()[2])
-    return (version, date)
+    return version, date
 
 
 def switch_repo(subscription, on=True):
@@ -207,9 +222,14 @@ def update_run(subscription=None, yum_update=False):
     with open(npath, 'w') as atfo:
         if not yum_update:
             atfo.write('%s stop rockstor\n' % SYSTEMCTL)
+            # rockstor-pre stop ensures initrock re-run on next rockstor start
+            atfo.write('%s stop rockstor-pre\n' % SYSTEMCTL)
             atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n'
                        % settings.ROOT_DIR)
             atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
+            # account for moving from dev/source to package install:
+            atfo.write('%s --setopt=timeout=600 -y install rockstor\n' % YUM)
+            # the following rockstor start invokes rockstor-pre (initrock) also
             atfo.write('%s start rockstor\n' % SYSTEMCTL)
         else:
             atfo.write('%s --setopt=timeout=600 -y -x rock* update\n' % YUM)

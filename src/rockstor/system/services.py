@@ -24,8 +24,7 @@ from tempfile import mkstemp
 import os
 from shutil import move
 
-
-CHKCONFIG_BIN = '/sbin/chkconfig'
+CHKCONFIG_BIN = settings.CHKCONFIG_BIN
 AUTHCONFIG = '/usr/sbin/authconfig'
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'

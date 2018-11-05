@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from osi import run_command
 
-CHOWN = '/bin/chown'
-CHMOD = '/bin/chmod'
+CHOWN = '/usr/bin/chown'
+CHMOD = '/usr/bin/chmod'
 
 
 def chown(share, owner, group=None, recursive=False):

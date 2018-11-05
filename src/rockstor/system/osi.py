@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 CAT = '/usr/bin/cat'
 CHATTR = '/usr/bin/chattr'
-DD = '/bin/dd'
+DD = '/usr/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
 EXPORTFS = '/usr/sbin/exportfs'
 GRUBBY = '/usr/sbin/grubby'
@@ -50,15 +50,15 @@ HOSTID = '/usr/bin/hostid'
 HOSTNAMECTL = '/usr/bin/hostnamectl'
 LS = '/usr/bin/ls'
 LSBLK = '/usr/bin/lsblk'
-MKDIR = '/bin/mkdir'
-MOUNT = '/bin/mount'
+MKDIR = '/usr/bin/mkdir'
+MOUNT = '/usr/bin/mount'
 NMCLI = '/usr/bin/nmcli'
-RMDIR = '/bin/rmdir'
-SHUTDOWN = '/usr/sbin/shutdown'
+RMDIR = '/usr/bin/rmdir'
+SHUTDOWN = settings.SHUTDOWN
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SYSTEMD_ESCAPE = '/usr/bin/systemd-escape'
-UDEVADM = '/usr/sbin/udevadm'
-UMOUNT = '/bin/umount'
+UDEVADM = settings.UDEVADM
+UMOUNT = '/usr/bin/umount'
 WIPEFS = '/usr/sbin/wipefs'
 RTC_WAKE_FILE = '/sys/class/rtc/rtc0/wakealarm'
 RETURN_BOOLEAN = True
@@ -1151,13 +1151,32 @@ def get_virtio_disk_serial(device_name):
 def system_shutdown(delta='now'):
     # New delta param default to now used to pass a 2 min delay
     # for scheduled tasks reboot/shutdown
-    return run_command([SHUTDOWN, '-h', delta])
-
+    try:
+        cmd = [SHUTDOWN, '-h', delta]
+        o, e, rc = run_command(cmd)
+    except CommandException as e:
+        # Catch / log harmless -15 return code - command executes as expected.
+        if e.rc == -15:
+            logger.info('Ignoring rc=-15 from command ({}).'.format(cmd))
+            return e.out, e.err, e.rc
+        # otherwise we raise an exception as normal.
+        raise e
+    return o, e, rc
 
 def system_reboot(delta='now'):
     # New delta param default to now used to pass a 2 min delay
     # for scheduled tasks reboot/shutdown
-    return run_command([SHUTDOWN, '-r', delta])
+    try:
+        cmd = [SHUTDOWN, '-r', delta]
+        o, e, rc = run_command(cmd)
+    except CommandException as e:
+        # Catch / log harmless -15 return code - command executes as expected.
+        if e.rc == -15:
+            logger.info('Ignoring rc=-15 from command ({}).'.format(cmd))
+            return e.out, e.err, e.rc
+        # otherwise we raise an exception as normal.
+        raise e
+    return o, e, rc
 
 
 def system_suspend():

@@ -1,0 +1,35 @@
+[Unit]
+Description=Docker Application Container Engine
+Documentation=http://docs.docker.com
+After=network.target containerd.socket containerd.service lvm2-monitor.service SuSEfirewall2.service
+Requires=containerd.socket containerd.service
+
+[Service]
+EnvironmentFile=/etc/sysconfig/docker
+
+# While Docker has support for socket activation (-H fd://), this is not
+# enabled by default because enabling socket activation means that on boot your
+# containers won't start until someone tries to administer the Docker daemon.
+Type=notify
+ExecStart=/usr/bin/dockerd --containerd /run/containerd/containerd.sock --add-runtime oci=/usr/sbin/docker-runc $DOCKER_NETWORK_OPTIONS $DOCKER_OPTS
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+
+# Uncomment TasksMax if your systemd version supports it.
+# Only systemd 226 and above support this property.
+TasksMax=infinity
+
+# Set delegate yes so that systemd does not reset the cgroups of docker containers
+# Only systemd 218 and above support this property.
+Delegate=yes
+
+# This is not necessary because of how we set up containerd.
+#KillMode=process
+
+[Install]
+WantedBy=multi-user.target
