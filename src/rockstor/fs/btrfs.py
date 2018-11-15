@@ -932,11 +932,24 @@ def are_quotas_enabled(mnt_pt):
     Simple wrapper around 'btrfs qgroup show -f --raw mnt_pt' intended
     as a fast determiner of True / False status of quotas enabled
     :param mnt_pt: Mount point of btrfs filesystem
-    :return: True on rc = 0 False otherwise.
+    :return: True on rc = 0 and (err = '' or err = rescan recommended warning),
+    False otherwise.
     """
     o, e, rc = run_command([BTRFS, 'qgroup', 'show', '-f', '--raw', mnt_pt])
-    if rc == 0:
+    if rc == 0 and (e[0] == '' or e[0] == 'WARNING: qgroup data inconsistent, '
+                                          'rescan recommended'):
         return True
+    # Note on above e[0] clauses:
+    # Catch rare but observed rc == 0 when quotas disabled, e.g.:
+    # btrfs qgroup show -f --raw /mnt2/rock-pool
+    # WARNING: quota disabled, qgroup data may be out of date
+    # qgroupid         rfer         excl
+    # --------         ----         ----
+    # 0/5                 0            0
+    #
+    # echo $?
+    # 0
+    # We are called in a try except block: caller assumes False on Exception.
     return False
 
 
@@ -981,7 +994,7 @@ def qgroup_max(mnt_pt):
     try:
         o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt], log=True)
     except CommandException as e:
-        # disabled quotas will result in o = [''], rc = 1 and e[0] =
+        # disabled quotas can result in o = [''], rc = 1 and e[0] =
         emsg = "ERROR: can't list qgroups: quotas not enabled"
         # this is non fatal so we catch this specific error and info log it.
         if e.err[0] == emsg:
@@ -991,7 +1004,13 @@ def qgroup_max(mnt_pt):
             return -1
         # otherwise we raise an exception as normal.
         raise
-    # if no exception was raised find the max 2015/qgroup
+    # Catch quota disabled WARNING (no associated Exception) and info log.
+    if e[0] == "WARNING: quota disabled, qgroup data may be out of date":
+        logger.info('Mount Point: {} has Quotas disabled WARNING, skipping '
+                    'qgroup show.'.format(mnt_pt))
+        # and return our default res
+        return -1
+    # if no exception, and no caught WARNING, find the max 2015/qgroup
     res = 0
     for l in o:
         if (re.match('%s/' % QID, l) is not None):
@@ -1155,6 +1174,19 @@ def qgroup_assign(qid, pqid, mnt_pt):
         if e.err[0] == emsg:
             logger.info('Read-only fs ({}), skipping qgroup assign: '
                         'child ({}), parent ({}).'.format(mnt_pt, qid, pqid))
+            return e.out, e.err, e.rc
+        # Under some indeterminate quota states the following error occurs:
+        emsg2 = 'ERROR: unable to assign quota group: Invalid argument'
+        # This can results in a failed import if not caught and given quotas
+        # are non critical we catch and error log rather than hard failing.
+        # TODO: This is a broad error message and it's inclusion should be
+        # TODO: re-assessed after major btrfs version increases: post quotas
+        # TODO: considered more stable.
+        if e.err[0] == emsg2:
+            logger.error('"{}" received on fs ({}), skipping qgroup assign: '
+                         'child ({}), parent ({}). This may be related to an '
+                         'undetermined quota state.'.format(emsg2, mnt_pt,
+                                                            qid, pqid))
             return e.out, e.err, e.rc
         wmsg = 'WARNING: quotas may be inconsistent, rescan needed'
         if e.err[0] == wmsg:
