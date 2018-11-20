@@ -36,7 +36,7 @@ class UpdateSubscriptionListView(rfc.GenericView):
         return UpdateSubscription.objects.all()
 
     def _toggle_repos(self, on='stable', off='testing', password=None):
-        # toggle between testing and stabel repos
+        # toggle between testing and stable repos
         ncd = settings.UPDATE_CHANNELS[on]
         fcd = settings.UPDATE_CHANNELS[off]
         try:
