@@ -347,7 +347,17 @@ def main():
             logger.debug('Deleting /var/lib/pgsql/data')
             shutil.rmtree('/var/lib/pgsql/data')
         logging.info('initializing Postgresql...')
-        run_command(['/usr/bin/postgresql-setup', 'initdb'])
+        # Conditionally run this only if found (CentOS/RedHat script)
+        if os.path.isfile('/usr/bin/postgresql-setup'):
+            logger.debug('running postgresql-setup initdb')
+            # Legacy (CentOS) db init command
+            run_command(['/usr/bin/postgresql-setup', 'initdb'])
+        else:
+            ## In eg openSUSE run the generic initdb from postgresql##-server
+            if os.path.isfile('/usr/bin/initdb'):
+                logger.debug('running generic initdb on {}'.format(pg_data))
+                run_command(
+                    ['su', '-', 'postgres', '-c', '/usr/bin/initdb', pg_data])
         logging.info('Done.')
         run_command([SYSCTL, 'restart', 'postgresql'])
         run_command([SYSCTL, 'status', 'postgresql'])

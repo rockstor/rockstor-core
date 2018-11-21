@@ -29,7 +29,7 @@ from django.conf import settings
 TESTPARM = '/usr/bin/testparm'
 SMB_CONFIG = '/etc/samba/smb.conf'
 SYSTEMCTL = '/usr/bin/systemctl'
-CHMOD = '/bin/chmod'
+CHMOD = '/usr/bin/chmod'
 RS_SHARES_HEADER = '####BEGIN: Rockstor SAMBA CONFIG####'
 RS_SHARES_FOOTER = '####END: Rockstor SAMBA CONFIG####'
 RS_AD_HEADER = '####BEGIN: Rockstor ACTIVE DIRECTORY CONFIG####'

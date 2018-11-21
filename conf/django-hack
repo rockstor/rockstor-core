@@ -24,7 +24,7 @@ sys.path[0:0] = [
     join(base, 'eggs/oauthlib-1.0.1-py2.7.egg'),
     join(base, 'eggs/psutil-3.3.0-py2.7-linux-x86_64.egg'),
     join(base, 'eggs/psycogreen-1.0-py2.7.egg'),
-    join(base, 'eggs/psycopg2-2.6-py2.7-linux-x86_64.egg'),
+    join(base, 'eggs/psycopg2-2.7.4-py2.7-linux-x86_64.egg'),
     join(base, 'eggs/python_engineio-1.0.3-py2.7.egg'),
     join(base, 'eggs/python_socketio-1.6.0-py2.7.egg'),
     join(base, 'eggs/pytz-2014.3-py2.7.egg'),

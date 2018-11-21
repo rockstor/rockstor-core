@@ -34,12 +34,12 @@ system level helper methods to interact with the btrfs filesystem
 
 logger = logging.getLogger(__name__)
 
-MKFS_BTRFS = '/sbin/mkfs.btrfs'
-BTRFS = '/sbin/btrfs'
-MOUNT = '/bin/mount'
-UMOUNT = '/bin/umount'
+MKFS_BTRFS = '/usr/sbin/mkfs.btrfs'
+BTRFS = '/usr/sbin/btrfs'
+MOUNT = '/usr/bin/mount'
+UMOUNT = '/usr/bin/umount'
 DEFAULT_MNT_DIR = '/mnt2/'
-RMDIR = '/bin/rmdir'
+RMDIR = '/usr/bin/rmdir'
 QID = '2015'
 # The following model/db default setting is also used when quotas are disabled.
 PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']

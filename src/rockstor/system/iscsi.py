@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from osi import run_command
 
 TGTADM_BIN = '/usr/sbin/tgtadm'
-DD_BIN = '/bin/dd'
+DD_BIN = '/usr/bin/dd'
 
 
 def create_target_device(tid, tname):

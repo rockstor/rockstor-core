@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from osi import run_command
 
-TAR = '/bin/tar'
+TAR = '/usr/bin/tar'
 
 
 def archive_logs(outfile, log_dir):

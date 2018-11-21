@@ -51,6 +51,7 @@ from smart_manager.models import Service  # noqa E402
 from system.services import service_status  # noqa E402
 from cli.api_wrapper import APIWrapper  # noqa E402
 from system.pkg_mgmt import (update_check, yum_check)  # noqa E402
+import distro
 import logging  # noqa E402
 logger = logging.getLogger(__name__)
 
@@ -838,6 +839,7 @@ class SysinfoNamespace(RockstorIO):
 
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
+    os_distro_name = settings.OS_DISTRO_NAME
 
     # This function is run once on every connection
     def on_connect(self, sid, environ):
@@ -857,6 +859,7 @@ class SysinfoNamespace(RockstorIO):
         self.spawn(self.prune_logs, sid)
         self.spawn(self.send_localtime, sid)
         self.spawn(self.send_uptime, sid)
+        self.spawn(self.send_distroinfo, sid)
         self.spawn(self.shutdown_status, sid)
         self.spawn(self.pool_degraded_status, sid)
         self.spawn(self.pool_dev_stats, sid)
@@ -868,10 +871,17 @@ class SysinfoNamespace(RockstorIO):
         self.start = False
 
     def send_uptime(self):
-        # Seems redundant
+
         while self.start:
             self.emit('uptime', {'key': 'sysinfo:uptime', 'data': uptime()})
             gevent.sleep(60)
+
+    def send_distroinfo(self):
+        while self.start:
+            data = {'distro': self.os_distro_name, 'version': distro.version()}
+            self.emit('distro_info',
+                      {'key': 'sysinfo:distro_info', 'data': data})
+            gevent.sleep(600)
 
     def send_localtime(self):
 

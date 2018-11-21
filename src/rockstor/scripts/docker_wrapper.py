@@ -23,9 +23,23 @@ from storageadmin.models import Share
 
 DOCKERD = '/usr/bin/dockerd'
 
+ROCKSTOR_DOCKER_OPTS = [
+    '--log-driver=journald',
+    '--storage-driver', 'btrfs',
+    '--storage-opt', 'btrfs.min_space=1G']
+
 
 def main():
-    mnt_pt = sys.argv[1]
+    # We expect the last element of our argument list to be the mount point as
+    # docker_service.py formats it that way.:
+    mnt_pt = sys.argv[-1]
+    # N.B. sys.argv[0] is name of script itself and always present.
+    system_docker_opts = []
+    if len(sys.argv) > 2:
+        # We have at least 1 additional argument passed so extract it/them ie:
+        # [script-name, additional-arg, mount-point]
+        # we extract additional-arg (or it's plural counterpart) as a list.
+        system_docker_opts = sys.argv[1:-1]
     sname = mnt_pt.split('/')[-1]
     try:
         so = Share.objects.get(name=sname)
@@ -33,6 +47,6 @@ def main():
     except Exception as e:
         sys.exit('Failed to mount Docker root(%s). Exception: %s' %
                  (mnt_pt, e.__str__()))
-    run_command([DOCKERD, '--log-driver=journald', '--storage-driver',
-                 'btrfs', '--storage-opt', 'btrfs.min_space=1G', '--data-root',
-                 mnt_pt])
+    cmd = [DOCKERD] + ROCKSTOR_DOCKER_OPTS + system_docker_opts + \
+          ['--data-root', mnt_pt]
+    run_command(cmd)
