@@ -30,6 +30,8 @@ class PoolBalance(models.Model):
     start_time = models.DateTimeField(auto_now=True)
     end_time = models.DateTimeField(null=True)
     percent_done = models.IntegerField(default=0)
+    # Flag to denote internal auto initiated balance ie during dev delete.
+    internal = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'storageadmin'

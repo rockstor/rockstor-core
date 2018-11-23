@@ -21,7 +21,8 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import (enable_quota, mount_root,
-                      get_pool_info, pool_raid)
+                      get_pool_info, pool_raid, get_dev_pool_info,
+                      set_pool_label, get_devid_usage)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from share_helpers import (import_shares, import_snapshots)
@@ -82,7 +83,7 @@ class DiskMixin(object):
         serial_numbers_seen = []
         # Acquire a dictionary of crypttab entries, dev uuid as indexed.
         dev_uuids_in_crypttab = get_crypttab_entries()
-        # Acquire a dictionary of lsblk /dev names to /dev/disk/by-id names
+        # Acquire a dictionary of temp_names (no path) to /dev/disk/by-id names
         byid_name_map = get_byid_name_map()
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
@@ -121,7 +122,8 @@ class DiskMixin(object):
             do.save()  # make sure all updates are flushed to db
         # Our db now has no device name info: all dev names are place holders.
         # Iterate over attached drives to update the db's knowledge of them.
-        # Kernel dev names are unique so safe to overwrite our db unique name.
+        # Get temp_name (kernel dev names) to btrfs pool info for all attached.
+        dev_pool_info = get_dev_pool_info()
         for d in disks:
             # start with an empty disk object
             dob = None
@@ -131,7 +133,9 @@ class DiskMixin(object):
             disk_roles_identified = {}
             # Convert our transient but just scanned so current sda type name
             # to a more useful by-id type name as found in /dev/disk/by-id
-            byid_disk_name, is_byid = get_dev_byid_name(d.name, True)
+            # Note path is removed as we store, ideally, byid in Disk.name.
+            byid_disk_name, is_byid = get_dev_byid_name(d.name,
+                                                        remove_path=True)
             # If the db has an entry with this disk's serial number then
             # use this db entry and update the device name from our new scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
@@ -159,10 +163,14 @@ class DiskMixin(object):
             # non btrfs uuids to track filesystems or LUKS containers.
             # Leaving as is for now to avoid db changes.
             dob.btrfs_uuid = d.uuid
-            # If attached disk has an fs and it isn't btrfs
-            if (d.fstype is not None and d.fstype != 'btrfs'):
-                # blank any btrfs_uuid it may have had previously.
+            # If attached disk isn't btrfs:
+            if d.fstype != 'btrfs':
+                # blank any btrfs related info it may have had previously.
+                # Pool affiliation addressed later in this loop.
+                # TODO: Consider moving later 'else dob.pool = None' to here.
                 dob.btrfs_uuid = None
+                dob.devid = 0
+                dob.allocated = 0
             # ### BEGINNING OF ROLE FIELD UPDATE ###
             # Update the role field with scan_disks findings.
             # SCAN_DISKS_KNOWN_ROLES a list of scan_disks identifiable roles.
@@ -170,7 +178,8 @@ class DiskMixin(object):
             # N.B. We have a minor legacy issue in that prior to using json
             # format for the db role field we stored one of 2 strings.
             # If either of these 2 strings are found reset to db default of
-            # None
+            # None.
+            # TODO: Can be removed post openSUSE as then no legacy installs.
             if dob.role == 'isw_raid_member'\
                     or dob.role == 'linux_raid_member':
                 # These are the only legacy non json formatted roles used.
@@ -288,8 +297,8 @@ class DiskMixin(object):
                 # In the above we fail over to "" on failed index for now.
                 disk_roles_identified['partitions'] = byid_partitions
             # Now we join the previous non scan_disks identified roles dict
-            # with those we have identified from our fresh scan_disks() data
-            # and return the result to our db entry in json format.
+            # with those we have identified/updated from our fresh scan_disks()
+            # data and return the result to our db entry in json format.
             # Note that dict of {} isn't None
             if (non_scan_disks_roles != {}) or (disk_roles_identified != {}):
                 combined_roles = dict(non_scan_disks_roles,
@@ -297,22 +306,35 @@ class DiskMixin(object):
                 dob.role = json.dumps(combined_roles)
             else:
                 dob.role = None
-            # END OF ROLE FIELD UPDATE
-            # If our existing Pool db knows of this disk's pool:
-            # First find pool association if any:
-            if is_byid and d.fstype == 'btrfs':
-                # use the canonical reference from get_pool_info()
-                # TODO: The following breaks with btrfs in partition, needs:
-                # TODO: if d.parted then extract the dev from d.partitions that
-                # TODO: has value 'btrfs' and get it's byid_disk_name.
-                # TODO: Added in pr #1949 commit a608d18 released (3.9.2-32)
-                p_info = get_pool_info(byid_disk_name, d.root)
-                # The above call also enacts a pool auto labeling mechanism.
-                pool_name = p_info['label']
-            else:
-                # We fail over to the less robust disk label as no byid name.
-                pool_name = d.label
-            if Pool.objects.filter(name=pool_name).exists():
+            # ### END OF ROLE FIELD UPDATE ###
+            # Does our existing Pool db know of this disk's pool?
+            # Find pool association, if any, of the current disk:
+            pool_name = None  # Until we find otherwise.
+            if d.fstype == 'btrfs':
+                # Use canonical 'btrfs fi show' source via get_dev_pool_info()
+                dev_name = d.name
+                if d.partitions != {}:  # could have btrfs fs from a partition?
+                    # d.partitions={'/dev/vdc1': 'vfat', '/dev/vdc2': 'btrfs'}
+                    for partition, fs in d.partitions.iteritems():
+                        if fs == 'btrfs':  # We only allow one btrfs part / dev
+                            dev_name = partition
+                            break
+                p_info = dev_pool_info[dev_name]
+                pool_name = p_info.label
+                # TODO: First call we reset none pool label member count times!
+                # Corner case but room for efficiency improvement.
+                # Consider building a list of pools relabeled to address issue.
+                if pool_name == 'none':
+                    pool_name = set_pool_label(p_info.uuid, dev_name, d.root)
+                # Update our disk database entry with btrfs specific data.
+                dob.devid = p_info.devid
+                # For btrfs we override disk size with more relevant btrfs size
+                # which should also fix btrfs in partition size as whole disk.
+                dob.size = p_info.size
+                dob.allocated = p_info.allocated
+            # Quick 'not None' test first to avoid redundant lengthy db filter.
+            if pool_name is not None \
+                    and Pool.objects.filter(name=pool_name).exists():
                 # update the disk db object's pool field accordingly.
                 dob.pool = Pool.objects.get(name=pool_name)
                 # this is for backwards compatibility. root pools created
@@ -322,7 +344,7 @@ class DiskMixin(object):
                 if (d.root is True):
                     dob.pool.role = 'root'
                     dob.pool.save()
-            else:  # disk not member of db pool via get_pool_info() / d.label
+            else:  # disk not member of db pool via get_dev_pool_info()
                 dob.pool = None
             # If no db pool has yet been found for this disk and
             # the attached disk is our root disk (flagged by scan_disks):
@@ -340,8 +362,10 @@ class DiskMixin(object):
                     logger.debug('++++ Creating special system pool db entry.')
                     root_compression = 'no'
                     root_raid = pool_raid('/')['data']
+                    # scan_disks() has already acquired our fs uuid so inherit.
+                    # We have already established btrfs as the fs type.
                     p = Pool(name=pool_name, raid=root_raid, role='root',
-                             compression=root_compression)
+                             compression=root_compression, uuid=d.uuid)
                     p.save()
                     p.disk_set.add(dob)
                     # update disk db object to reflect special root pool status
@@ -349,15 +373,9 @@ class DiskMixin(object):
                     dob.save()
                     p.size = p.usage_bound()
                     enable_quota(p)
-                    # scan_disks() has already acquired our fs uuid so inherit.
-                    # We have already established btrfs as the fs type.
-                    p.uuid = d.uuid
                     p.save()
                 else:
-                    # Likely unlabeled pool and no by-id name for system disk
-                    # and given we rely on get_pool_info(), which takes by-id
-                    # names, to label unlabelled pools we bail out for now with
-                    # an error log message.
+                    # Likely unlabeled pool & auto label failed - system disk.
                     logger.error('Skipping system pool creation. Ensure the '
                                  'system disk has a unique serial.')
             # save our updated db disk object
@@ -398,6 +416,30 @@ class DiskMixin(object):
                 except Exception as e:
                     logger.exception(e)
                     do.smart_available = do.smart_enabled = False
+            else:  # We have offline / detached Disk db entries.
+                # Update detached disks previously know to a pool i.e. missing.
+                # After a reboot device name is lost and replaced by 'missing'
+                # so we compare via btrfs devid stored prior to detached state.
+                # N.B. potential flag mechanism to denote required reboot if
+                # missing device has non existent dev entry rather than missing
+                # otherwise remove missing / detached fails with:
+                # "no missing devices found to remove".
+                # Suspect this will be fixed in future btrfs variants.
+                if do.pool is not None and do.pool.is_mounted:
+                    mnt_pt = '{}{}'.format(settings.MNT_PT, do.pool.name)
+                    devid_usage = get_devid_usage(mnt_pt)
+                    if do.devid in devid_usage:
+                        dev_info = devid_usage[do.devid]
+                        do.size = dev_info.size
+                        do.allocated = dev_info.allocated
+                    else:
+                        # Our device has likely been removed from this pool as
+                        # it's devid no longer show up in it's associated pool.
+                        # Reset all btrfs related elements for disk db object:
+                        do.pool = None
+                        do.btrfs_uuid = None
+                        do.devid = 0  # db default and int flag for None.
+                        do.allocated = 0  # No devid_usage = no allocation.
             do.save()
         ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
@@ -640,6 +682,8 @@ class DiskDetailView(rfc.GenericView):
         # either way (partitioned or not) we have just wiped any btrfs so we
         # universally remove the btrfs_uuid.
         disk.btrfs_uuid = None
+        disk.devid = 0
+        disk.allocated = 0
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
@@ -672,9 +716,11 @@ class DiskDetailView(rfc.GenericView):
             raise Exception(e_msg)
         luks_format_disk(disk_name, passphrase)
         disk.parted = isPartition  # should be False by now.
-        # The following value may well be updated with a more informed truth
+        # The following values may well be updated with a more informed truth
         # from the next scan_disks() run via _update_disk_state()
         disk.btrfs_uuid = None
+        disk.devid = 0
+        disk.allocated = 0
         # Rather than await the next _update_disk_state() we populate our
         # LUKS container role.
         roles = {}
@@ -715,17 +761,26 @@ class DiskDetailView(rfc.GenericView):
             p_info = get_pool_info(disk_name)
             # Create our initial pool object, default to no compression.
             po = Pool(name=p_info['label'], raid="unknown",
-                      compression="no")
+                      compression="no", uuid=p_info['uuid'])
             # need to save it so disk objects get updated properly in the for
             # loop below.
             po.save()
+            # p_info['disks'] = by_id name indexed dict with named tuple values
             for device in p_info['disks']:
+                # Database uses base dev names in by-id format: acquire via;
                 disk_name, isPartition = \
                     self._reverse_role_filter_name(device, request)
+                # All bar system disk are stored in db as base byid name,
+                # a partition, if used, is then held in a redirect role.
+                # System's partition name is considered it's base name; but
+                # we don't have to import our system pool.
                 do = Disk.objects.get(name=disk_name)
                 do.pool = po
-                # update this disk's parted property
+                # Update this disk's parted, devid, and used properties.
                 do.parted = isPartition
+                do.devid = p_info['disks'][device].devid
+                do.size = p_info['disks'][device].size
+                do.allocated = p_info['disks'][device].allocated
                 if isPartition:
                     # ensure a redirect role to reach this partition; ie:
                     # "redirect": "virtio-serial-3-part2"
@@ -750,7 +805,7 @@ class DiskDetailView(rfc.GenericView):
                 import_snapshots(share)
             return Response(DiskInfoSerializer(disk).data)
         except Exception as e:
-            e_msg = ('Failed to import any pool on device id ({}). '
+            e_msg = ('Failed to import any pool on device db id ({}). '
                      'Error: ({}).').format(did, e.__str__())
             handle_exception(Exception(e_msg), request)
 

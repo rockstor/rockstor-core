@@ -26,9 +26,10 @@ from rest_framework.decorators import api_view
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
-from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
+from fs.btrfs import (add_pool, pool_usage, resize_pool_cmd, umount_root,
                       btrfs_uuid, mount_root, start_balance, usage_bound,
-                      remove_share, enable_quota, disable_quota, rescan_quotas)
+                      remove_share, enable_quota, disable_quota, rescan_quotas,
+                      start_resize_pool)
 from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -283,11 +284,44 @@ class PoolMixin(object):
             for t in Task.objects.all():
                 if (pickle.loads(t.args)[0] == mnt_pt):
                     tid = t.uuid
-            time.sleep(0.2)
+            time.sleep(0.2)  # 200 milliseconds
             count += 1
         logger.debug('balance tid = ({}).'.format(tid))
         return tid
 
+    def _resize_pool_start(self, pool, dnames, add=True):
+        """
+        Async initiator for resize_pool(pool, dnames, add=False) as when a
+        device is deleted it initiates a btrfs internal balance which is not
+        accessible to 'btrfs balance status' but is a balance nevertheless.
+        Based on _balance_start()
+        :param pool:  Pool object.
+        :param dnames: list of by-id device names without paths.
+        :param add: True if adding dnames, False if deleting (removing) dnames.
+        :return: 0 if
+        """
+        tid = 0
+        cmd = resize_pool_cmd(pool, dnames, add)
+        if cmd is None:
+            return tid
+        logger.info('Beginning device resize on pool ({}). '
+                    'Changed member devices:({}).'.format(pool.name, dnames))
+        if add:
+            # Mostly instantaneous so avoid complexity/overhead of django ztask
+            start_resize_pool(cmd)
+            return tid
+        # Device delete initiates long running internal balance: start async.
+        start_resize_pool.async(cmd)
+        # Try to find django-ztask id for (25*0.2) 5 seconds via cmd args match
+        count = 0
+        while tid == 0 and count < 25:
+            for t in Task.objects.all():
+                if pickle.loads(t.args)[0] == cmd:
+                    tid = t.uuid
+            time.sleep(0.2)  # 200 milliseconds
+            count += 1
+        logger.debug('Pool resize tid = ({}).'.format(tid))
+        return tid
 
 class PoolListView(PoolMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
@@ -490,13 +524,14 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'during a balance process.').format(pool.name)
                     handle_exception(Exception(e_msg), request)
 
-                # TODO: run resize_pool() as async task like start_balance()
-                resize_pool(pool, dnames)  # None if no action
+                # _resize_pool_start() add dev mode is quick so no async or tid
+                self._resize_pool_start(pool, dnames)
                 force = False
                 # During dev add we also offer raid level change, if selected
                 # blanket apply '-f' to allow for reducing metadata integrity.
                 if new_raid != pool.raid:
                     force = True
+                # Django-ztask initialization as balance is long running.
                 tid = self._balance_start(pool, force=force, convert=new_raid)
                 ps = PoolBalance(pool=pool, tid=tid)
                 ps.save()
@@ -563,7 +598,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
                 size_cut = 0
                 for d in disks:
-                    size_cut += d.size
+                    size_cut += d.allocated
                 if size_cut >= (pool.size - usage):
                     e_msg = ('Removing disks ({}) may shrink the pool by '
                              '{} KB, which is greater than available free '
@@ -571,21 +606,21 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'not supported.').format(dnames, size_cut, usage)
                     handle_exception(Exception(e_msg), request)
 
-                # TODO: run resize_pool() as async task like start_balance(),
-                # particularly important on device delete as it initiates an
-                # internal volume balance which cannot be monitored by:
-                # btrfs balance status.
-                # See https://github.com/rockstor/rockstor-core/issues/1722
-                # Hence we need also to add a 'DIY' status / percentage
-                # reporting method.
-                resize_pool(pool, dnames, add=False)  # None if no action
-                # Unlike resize_pool() with add=True a delete has an implicit
-                # balance where the deleted disks contents are re-distributed
-                # across the remaining disks.
+                # Unlike resize_pool_start() with add=True a remove has an
+                # implicit balance where the removed disks contents are
+                # re-distributed across the remaining pool members.
+                # This internal balance cannot currently be monitored by the
+                # usual 'btrfs balance status /mnt_pt' command. So we have to
+                # use our own mechanism to assess it's status.
+                # Django-ztask initialization:
+                tid = self._resize_pool_start(pool, dnames, add=False)
+                ps = PoolBalance(pool=pool, tid=tid, internal=True)
+                ps.save()
 
-                for d in disks:
-                    d.pool = None
-                    d.save()
+                # Setting disk.pool = None for all removed members is redundant
+                # as our next disk scan will re-find them until such time as
+                # our async task, and it's associated dev remove, has completed
+                # it's internal balance. This can take hours.
 
             else:
                 e_msg = 'Command ({}) is not supported.'.format(command)

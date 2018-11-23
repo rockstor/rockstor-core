@@ -53,7 +53,7 @@ def get_open_luks_volume_status(mapped_device_name, byid_name_map):
     /dev/disk/by-id/dm-name-
     luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e is active and is in use.
     :param mapped_device_name:  any mapped device name accepted by cryptsetup,
-    ie starting with "/dev/mapper/"
+    ie starting with "/dev/mapper/", path included or not, output unaffected.
     :return: dictionary of the stated commands output or {} upon a non zero
     return code from command execution.
     """

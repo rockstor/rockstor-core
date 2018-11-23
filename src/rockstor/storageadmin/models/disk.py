@@ -44,8 +44,14 @@ class Disk(models.Model):
     mostly derived from model and serial number.
     """
     name = models.CharField(max_length=128, unique=True)
-    """total size in KB"""
+    """btrfs devid 0 is place holder as real devids start from 1"""
+    devid = models.PositiveSmallIntegerField(default=0)  # 0 to 32767
+    """total size in KB. Zero if btrfs device detached/last stage of delete."""
     size = models.BigIntegerField(default=0)
+    """allocated in KB: ie per device 'used' in 'btrfs fi show' and total
+    listed per device in 'btrfs fi usage /mnt_pt'.
+    """
+    allocated = models.BigIntegerField(default=0)
     """true if disk went offline"""
     offline = models.BooleanField(default=False)
     """whether the disk is partitioned at the moment. relevent for root disks
