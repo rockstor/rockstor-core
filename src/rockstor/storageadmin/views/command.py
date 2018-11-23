@@ -23,9 +23,8 @@ from rest_framework.authentication import (BasicAuthentication,
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from storageadmin.views import DiskMixin
-from system.osi import (uptime, kernel_info, get_dev_byid_name,
-                        get_device_path)
-from fs.btrfs import (mount_share, mount_root, get_pool_info,
+from system.osi import (uptime, kernel_info, get_device_mapper_map)
+from fs.btrfs import (mount_share, mount_root, get_dev_pool_info,
                       pool_raid, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl
@@ -56,6 +55,10 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
     @staticmethod
     @transaction.atomic
     def _refresh_pool_state():
+        # Get map of dm-0 to /dev/mapper members ie luks-.. devices.
+        mapped_devs = get_device_mapper_map()
+        # Get temp_names (kernel names) to btrfs pool info for attached devs.
+        dev_pool_info = get_dev_pool_info()
         for p in Pool.objects.all():
             # If our pool has no disks, detached included, then delete it.
             # We leave pools with all detached members in place intentionally.
@@ -70,22 +73,22 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 continue
             try:
                 # Get and save what info we can prior to mount.
-                first_attached_dev = p.disk_set.attached().first()
-                is_root_pool = (p.role == 'root')
-                # Observe any redirect role by using target_name.
-                byid_disk_name, is_byid = get_dev_byid_name(
-                    get_device_path(first_attached_dev.target_name))
-                if is_byid:
-                    pool_info = get_pool_info(first_attached_dev.target_name,
-                                              is_root_pool)
-                    pool_name = pool_info['label']
-                else:
+                first_dev = p.disk_set.attached().first()
+                # Use target_name to account for redirect role.
+                if first_dev.target_name == first_dev.temp_name:
                     logger.error('Skipping pool ({}) mount as attached disk '
                                  '({}) has no by-id name (no serial # ?)'.
-                                 format(p.name,
-                                        first_attached_dev.target_name))
+                                 format(p.name, first_dev.target_name))
                     continue
-                p.name = pool_name
+                if first_dev.temp_name in mapped_devs:
+                    dev_tmp_name = '/dev/mapper/{}'.format(
+                        mapped_devs[first_dev.temp_name])
+                else:
+                    dev_tmp_name = '/dev/{}'.format(first_dev.temp_name)
+                # For now we call get_dev_pool_info() once for each pool.
+                pool_info = dev_pool_info[dev_tmp_name]
+                p.name = pool_info.label
+                p.uuid = pool_info.uuid
                 p.save()
                 mount_root(p)
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']

@@ -135,8 +135,8 @@ def scan_disks(min_size, test_mode=False):
     :param test_mode: Used by unit tests for deterministic 'fake-serial-' mode.
     :return: List containing drives of interest
     """
-    base_root_disk = root_disk()
-    cmd = [LSBLK, '-P', '-o',
+    base_root_disk = root_disk()  # /dev/sda if /dev/sda3, or md126 if md126p2
+    cmd = [LSBLK, '-P', '-p', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
     o, e, rc = run_command(cmd)
     dnames = {}  # Working dictionary of devices.
@@ -224,7 +224,7 @@ def scan_disks(min_size, test_mode=False):
             continue
         # ----- Now we are done with easy exclusions we begin classification.
         # If md device populate unused MODEL with basic member/raid summary.
-        if (re.match('md', dmap['NAME']) is not None):
+        if (re.match('/dev/md', dmap['NAME']) is not None):
             # cheap way to display our member drives
             dmap['MODEL'] = get_md_members(dmap['NAME'])
         # ------------ Start more complex classification -------------
@@ -375,7 +375,7 @@ def scan_disks(min_size, test_mode=False):
                 # a btrfs file system
                 # Regex to identify a partition on the base_root_disk.
                 # Root on 'sda3' gives base_root_disk 'sda'.
-                if re.match('sd|vd', dmap['NAME']) is not None:
+                if re.match('/dev/sd|/dev/vd', dmap['NAME']) is not None:
                     # eg 'sda' or 'vda' with >= one additional digit,
                     part_regex = base_root_disk + '\d+'
                 else:
@@ -823,6 +823,31 @@ def mount_status(mnt_pt, return_boolean=False):
     return 'unmounted'
 
 
+def dev_mount_point(dev_temp_name):
+    """
+    Parses /proc/mounts to return the first associated mount point for a given
+    device temp name (ie /dev/sda).
+    Note this is trivially different from mount_status() but intended initially
+    for use by set_pool_label.
+    :param dev_temp_name: /dev/sda3 or /dev/bcache0, or /dev/mapper/luks-...
+    :return: None if note device match found or first associated mount point.
+    """
+    with open('/proc/mounts') as pfo:
+        for each_line in pfo.readlines():
+            line_fields = each_line.split()
+            if len(line_fields) < 4:
+                # Avoid index issues as we expect >= 4 columns.
+                continue
+            if line_fields[0] in EXCLUDED_MOUNT_DEVS:
+                # Skip excluded/special mount devices ie sysfs, proc, etc.
+                continue
+            if line_fields[0] == dev_temp_name:
+                logger.debug('dev_mount_point returning {}'.format(line_fields[1]))
+                return line_fields[1]
+    logger.debug('dev_mount_point() returning None')
+    return None
+
+
 def remount(mnt_pt, mnt_options):
     if (is_mounted(mnt_pt)):
         run_command([MOUNT, '-o', 'remount,%s' % mnt_options, mnt_pt])
@@ -902,9 +927,10 @@ def root_disk():
     the returned value is sdc
     The assumption with non md devices is that the partition number will be a
     single character.
-    :return: sdX type device name (without path) where root is mounted.
+    :return: /dev/sdX type device name (with path) where root is mounted.
     """
     # TODO: Consider 'lsblk -no pkname devname' rather than parse and strip.
+    # -no pkname returns blank line with /dev/mapper/luks but no partitions.
     # -n = no headings, -o specify output (pkname = Parent Kernel Name)
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
@@ -915,11 +941,11 @@ def root_disk():
                     # Our root is on a mapped open LUKS container so we need
                     # not resolve the symlink, ie /dev/dm-0, as we loose info
                     # and lsblk's name output also uses the luks-<uuid> name.
-                    # So we return the name minus it's /dev/mapper/ component
+                    # So we return the name component
                     # as there are no partitions within these devices so it is
                     # it's own base device. N.B. we do not resolve to the
                     # parent device hosting the LUKS container itself.
-                    return fields[0][12:]
+                    return fields[0]
                 # resolve symbolic links to their targets.
                 disk = os.path.realpath(fields[0])
                 if (re.match('/dev/md', disk) is not None):
@@ -934,7 +960,7 @@ def root_disk():
                     # numbers after "md" end.  N.B. the following will also
                     # work if root is not in a partition ie on md126 directly.
                     end = re.search('\d+', disk).end()
-                    return disk[5:end]
+                    return disk[:end]
                 if (re.match('/dev/nvme', disk) is not None):
                     # We have an nvme device. These have the following naming
                     # conventions.
@@ -946,13 +972,13 @@ def root_disk():
                     # device itself as with the /dev/md parsing just in case,
                     # so look for the end of the base device name via 'n1'.
                     end = re.search('n1', disk).end()
-                    return disk[5:end]
-                # catch all that assumes we have eg /dev/sda3 and want "sda"
-                # so start from 6th char and remove the last char
-                # /dev/sda3 = sda
+                    return disk[:end]
+                # catch all that assumes we have eg /dev/sda3 and want /dev/sda
+                # remove the last char
+                # /dev/sda3 = /dev/sda
                 # TODO: consider changing to same method as in md devs above
                 # TODO: to cope with more than one numeric in name.
-                return disk[5:-1]
+                return disk[:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
            'root filesystem. Please re-install Rockstor properly.')
@@ -962,7 +988,7 @@ def root_disk():
 def get_md_members(device_name, test=None):
     """
     Returns the md members from a given device, if the given device is not an
-    md device or the udevadm info command returns a non 0 (error) then the an
+    md device or the udevadm info command returns a non 0 (error) then an
     empty string is returned.
     Example lines to parse from udevadmin:-
     E: MD_DEVICE_sda_DEV=/dev/sda
@@ -972,7 +998,7 @@ def get_md_members(device_name, test=None):
     Based on the get_disk_serial function.
     N.B. may be deprecated on scan_disks move to udevadmin, or integrated.
     Could consider parsing "mdadm --detail /dev/md1" instead
-    :param device_name: eg md126 or md0p2
+    :param device_name: eg /dev/md126 or /dev/md0p2
     :param test: if test is not None then it's contents is used in lieu of
     udevadm output.
     :return: String of all members listed in udevadm info --name=device_name
@@ -980,7 +1006,7 @@ def get_md_members(device_name, test=None):
     """
     line_fields = []
     # if non md device then return empty string
-    if re.match('md', device_name) is None:
+    if re.match('/dev/md', device_name) is None:
         return ''
     members_string = ''
     if test is None:
@@ -1039,7 +1065,7 @@ def get_disk_serial(device_name, device_type=None, test=None):
     --------- Additional personality added for md devices ie md0p1 or md126,
     these devices have no serial so we search for their MD_UUID and use that
     instead.
-    :param device_name: eg sda as per lsblk output used in scan_disks()
+    :param device_name: eg /dev/sda as per lsblk output used in scan_disks()
     :param device_type: the lsblk TYPE for the given device eg: disk, crypt.
     The equivalent to the output of lsblk -n -o TYPE device_name. Defaults to
     None as an indication that the caller cannot provide this info.
@@ -1054,7 +1080,6 @@ def get_disk_serial(device_name, device_type=None, test=None):
     # type indicates this then add the '/dev/mapper' path to device_name
     # Set search string / flag for dm personality if need be.
     if device_type == 'crypt':
-        device_name = '/dev/mapper/%s' % device_name
         # Assuming device mapped (DM) so without it's own serial.
         uuid_search_string = 'DM_UUID'
         # Note that we can't use "cryptsetup luksUUID <device>" as this is for
@@ -1064,7 +1089,7 @@ def get_disk_serial(device_name, device_type=None, test=None):
         # change that devices serial which in turn makes it appear as a
         # different device to Rockstor.
     # Set search string / flag for md personality if need be.
-    if re.match('md', device_name) is not None:
+    if re.match('/dev/md', device_name) is not None:
         uuid_search_string = 'MD_UUID'
     if test is None:
         out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
@@ -1277,10 +1302,11 @@ def get_bcache_device_type(device):
     Cache devices have a "cache_replacement_policy"
     The passed device will have already been identified as having:
     lsblk FSTYPE=bcache
-    :param device: as presented by lsblk output ie sdX type with no path
+    :param device: as presented by lsblk output ie /dev/sdX type with path
     :return: "bdev" for "backing device" or "cdev" for "cache device" or
     None ie neither indicator is found.
     """
+    device = device.split('/')[-1]  # strip off the path
     sys_path = ('/sys/block/%s/bcache/' % device)
     if os.path.isfile(sys_path + 'label'):
         return "bdev"
@@ -1557,7 +1583,7 @@ def get_dev_byid_name(device_name, remove_path=False):
     N.B. As the subsystem of the device is embedded in the by-id name a drive's
     by-id path will change if for example it is plugged in via usb rather than
     ata subsystem.
-    :param device_name: eg sda but can also be /dev/sda or even the by-id name
+    :param device_name: eg /dev/sda or even the by-id name (with path)
     but only if the full path is specified with the by-id type name.
     :param remove_path: flag request to strip the path from the returned device
     name, if an error occurred or no by-id type name was found then the path
@@ -1576,12 +1602,7 @@ def get_dev_byid_name(device_name, remove_path=False):
     byid_name = ''  # Should never be returned prior to reassignment.
     longest_byid_name_length = 0
     devlinks = []  # Doubles as a flag for DEVLINKS line found.
-    # Caveats for mapped devices that require paths for udevadm to work
-    # ie openLUKS containers are named eg luks-<uuid> but are not found by
-    # udevadmin via --name unless a /dev/mapper path is provided.
-    if re.match('luks-', str(device_name)) is not None:
-        device_name = '/dev/mapper/%s' % device_name
-    # Other special device name considerations can go here.
+    # Special device name considerations / pre-processing can go here.
     cmd = [UDEVADM, 'info', '--query=property', '--name', str(device_name)]
     out, err, rc = run_command(cmd, throw=False)
     if len(out) > 0 and rc == 0:
@@ -1682,6 +1703,33 @@ def get_byid_name_map():
                         # The current line's by-id name is longer so use it.
                         byid_name_map[line_fields[-1]] = line_fields[-5]
     return byid_name_map
+
+
+def get_device_mapper_map():
+    """
+    Simple wrapper around 'ls -lr /dev/mapper' akin to get_byid_name_map() but
+    without the assumption of multiple entries and with differing field count
+    expectations.
+    :return: dictionary indexed (keyed) by 'dm-0' type names with associated
+    /dev/mapper names as the values (path included), or an empty dictionary if
+    a non zero return code was encountered by run_command or no /dev/mapper
+    names found.
+    """
+    device_mapper_map = {}
+    out, err, rc = run_command([LS, '-lr', '/dev/mapper'], throw=True)
+    if rc == 0 and len(out) > 3:  # len 3 is only control char dev listed.
+        for each_line in out:
+            if each_line == '':
+                continue
+            # Split the line by spaces and '/' chars
+            line_fields = each_line.replace('/', ' ').split()
+            # Grab every dm-0 type name from the last field in the line and add
+            # it as a dictionary key with it's value as the mapped dir entry.
+            # Our full path is added as a convenience to our caller.
+            # {'dm-0': '/dev/mapper/luks-dd6589a6-14aa-4a5a-bcea-fe72e2dec333'}
+            if len(line_fields) == 12:
+                device_mapper_map[line_fields[-1]] = line_fields[-4]
+    return device_mapper_map
 
 
 def get_device_path(by_id):
@@ -1820,7 +1868,7 @@ def get_devname_old(device_name):
 
 def get_devname(device_name, addPath=False):
     """Intended as a light and quicker way to retrieve a device name with or
-    without path (default) from any legal udevadm --name parameter
+    without (default) path from any legal udevadm --name parameter
     Simple wrapper around a call to:
     udevadm info --query=name device_name
     Works with device_name of eg sda /dev/sda /dev/disk/by-id/ and /dev/disk/
@@ -1842,7 +1890,7 @@ def get_devname(device_name, addPath=False):
         if len(fields) == 1:
             # we have a single word output so return it with or without path
             if addPath:
-                return '/dev/%s' % fields[0]
+                return '/dev/{}'.format(fields[0])
             # return the word (device name ie sda) without added /dev/
             return fields[0]
     # a non one word reply was received on the first line from udevadm or

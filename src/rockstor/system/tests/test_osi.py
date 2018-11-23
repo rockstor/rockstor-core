@@ -43,10 +43,10 @@ class OSITests(unittest.TestCase):
         self.patch_os_path_isfile = patch('os.path.isfile')
         self.mock_os_path_isfile = self.patch_os_path_isfile.start()
 
-        # root_disk() default mock - return sda for sda3 '/' from /proc/mounts
+        # root_disk() default mock - return /dev/sda for /dev/sda3 '/'
         self.patch_root_disk = patch('system.osi.root_disk')
         self.mock_root_disk = self.patch_root_disk.start()
-        self.mock_root_disk.return_value = 'sda'
+        self.mock_root_disk.return_value = '/dev/sda'
 
     def tearDown(self):
         patch.stopall()
@@ -201,7 +201,10 @@ class OSITests(unittest.TestCase):
         expected_result.append(
             ('/dev/disk/by-id/scsi-SATA_QEMU_HARDDISK_QM00009', True))
         # Query on an openLUKS container (backed by bcache):
-        dev_name.append('luks-a47f4950-3296-4504-b9a4-2dc75681a6ad')
+        # N.B. legacy versions of get_dev_byid_name() would auto add
+        # /dev/mapper if dev name matched 'luks-' this was later removed in
+        # favour of generating the full path in scan_disks().
+        dev_name.append('/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad')
         remove_path.append(True)
         out.append([
             'DEVLINKS=/dev/disk/by-id/dm-name-luks-a47f4950-3296-4504-b9a4-2dc75681a6ad /dev/disk/by-id/dm-uuid-CRYPT-LUKS1-a47f495032964504b9a42dc75681a6ad-luks-a47f4950-3296-4504-b9a4-2dc75681a6ad /dev/disk/by-label/luks-pool-on-bcache /dev/disk/by-uuid/8ad02be6-fc5f-4342-bdd2-f992e7792a5b /dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad',  # noqa E501
@@ -379,35 +382,35 @@ class OSITests(unittest.TestCase):
         # Moc output for run_command with:
         # lsblk -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID  # noqa E501
         out = [[
-            'NAME="sdd" MODEL="QEMU HARDDISK   " SERIAL="bcache-cdev" SIZE="2G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="bcache" LABEL="" UUID="6efd5476-77a9-4f57-97a5-fa1a37d4338b"',  # noqa E501
-            'NAME="bcache0" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="3efb3830-fee1-4a9e-a5c6-ea456bfc269e"',  # noqa E501
-            'NAME="luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
-            'NAME="bcache16" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="a47f4950-3296-4504-b9a4-2dc75681a6ad"',  # noqa E501
-            'NAME="luks-a47f4950-3296-4504-b9a4-2dc75681a6ad" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
-            'NAME="sdb" MODEL="QEMU HARDDISK   " SERIAL="bcache-bdev-1" SIZE="2G" TRAN="sata" VENDOR="ATA     " HCTL="1:0:0:0" TYPE="disk" FSTYPE="bcache" LABEL="" UUID="c9ed805f-b141-4ce9-80c7-9f9e1f71195d"',  # noqa E501
-            'NAME="bcache0" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="3efb3830-fee1-4a9e-a5c6-ea456bfc269e"',  # noqa E501
-            'NAME="luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
-            'NAME="vdb" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="0x1af4" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="41cd2e3c-3bd6-49fc-9f42-20e368a66efc"',  # noqa E501
-            'NAME="luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
-            'NAME="sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="6:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdc" MODEL="QEMU HARDDISK   " SERIAL="bcache-bdev-2" SIZE="2G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="bcache" LABEL="" UUID="06754c95-4f78-4ffb-a243-5c85144d1833"',  # noqa E501
-            'NAME="bcache16" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="a47f4950-3296-4504-b9a4-2dc75681a6ad"',  # noqa E501
-            'NAME="luks-a47f4950-3296-4504-b9a4-2dc75681a6ad" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
-            'NAME="sda" MODEL="QEMU HARDDISK   " SERIAL="sys-drive-serial-num" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="0:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="c25eec5f-d4bd-4670-b756-e8b687562f6e"',  # noqa E501
-            'NAME="sda3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="a98f88c2-2031-4bd3-9124-2f9d8a77987c"',  # noqa E501
-            'NAME="sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="6b8e342c-6cd6-40e8-a134-db302fad3f20"',  # noqa E501
-            'NAME="vda" MODEL="" SERIAL="" SIZE="3G" TRAN="" VENDOR="0x1af4" HCTL="" TYPE="disk" FSTYPE="btrfs" LABEL="rock-pool" UUID="d7e5987d-9428-4b4a-9abb-f3d564e4c467"',  # noqa E501
+            'NAME="/dev/sdd" MODEL="QEMU HARDDISK   " SERIAL="bcache-cdev" SIZE="2G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="bcache" LABEL="" UUID="6efd5476-77a9-4f57-97a5-fa1a37d4338b"',  # noqa E501
+            'NAME="/dev/bcache0" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="3efb3830-fee1-4a9e-a5c6-ea456bfc269e"',  # noqa E501
+            'NAME="/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
+            'NAME="/dev/bcache16" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="a47f4950-3296-4504-b9a4-2dc75681a6ad"',  # noqa E501
+            'NAME="/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
+            'NAME="/dev/sdb" MODEL="QEMU HARDDISK   " SERIAL="bcache-bdev-1" SIZE="2G" TRAN="sata" VENDOR="ATA     " HCTL="1:0:0:0" TYPE="disk" FSTYPE="bcache" LABEL="" UUID="c9ed805f-b141-4ce9-80c7-9f9e1f71195d"',  # noqa E501
+            'NAME="/dev/bcache0" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="3efb3830-fee1-4a9e-a5c6-ea456bfc269e"',  # noqa E501
+            'NAME="/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
+            'NAME="/dev/vdb" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="0x1af4" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="41cd2e3c-3bd6-49fc-9f42-20e368a66efc"',  # noqa E501
+            'NAME="/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
+            'NAME="/dev/sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="6:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdc" MODEL="QEMU HARDDISK   " SERIAL="bcache-bdev-2" SIZE="2G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="bcache" LABEL="" UUID="06754c95-4f78-4ffb-a243-5c85144d1833"',  # noqa E501
+            'NAME="/dev/bcache16" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="crypto_LUKS" LABEL="" UUID="a47f4950-3296-4504-b9a4-2dc75681a6ad"',  # noqa E501
+            'NAME="/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="pool-on-mixed-luks" UUID="1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded"',  # noqa E501
+            'NAME="/dev/sda" MODEL="QEMU HARDDISK   " SERIAL="sys-drive-serial-num" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="0:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="c25eec5f-d4bd-4670-b756-e8b687562f6e"',  # noqa E501
+            'NAME="/dev/sda3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="a98f88c2-2031-4bd3-9124-2f9d8a77987c"',  # noqa E501
+            'NAME="/dev/sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="6b8e342c-6cd6-40e8-a134-db302fad3f20"',  # noqa E501
+            'NAME="/dev/vda" MODEL="" SERIAL="" SIZE="3G" TRAN="" VENDOR="0x1af4" HCTL="" TYPE="disk" FSTYPE="btrfs" LABEL="rock-pool" UUID="d7e5987d-9428-4b4a-9abb-f3d564e4c467"',  # noqa E501
             '']]
         err = [['']]
         rc = [0]
         expected_result = [[
-            Disk(name='vda', model=None, serial='serial-6', size=3145728,
+            Disk(name='/dev/vda', model=None, serial='serial-6', size=3145728,
                  transport=None, vendor='0x1af4', hctl=None, type='disk',
                  fstype='btrfs', label='rock-pool',
                  uuid='d7e5987d-9428-4b4a-9abb-f3d564e4c467', parted=False,
                  root=False, partitions={}),
-            Disk(name='bcache0', model=None,
+            Disk(name='/dev/bcache0', model=None,
                  serial='bcache-c9ed805f-b141-4ce9-80c7-9f9e1f71195d',
                  size=2097152, transport=None,
                  vendor=None, hctl=None,
@@ -416,18 +419,18 @@ class OSITests(unittest.TestCase):
                  uuid='3efb3830-fee1-4a9e-a5c6-ea456bfc269e',
                  parted=False, root=False,
                  partitions={}),
-            Disk(name='luks-a47f4950-3296-4504-b9a4-2dc75681a6ad', model=None,
+            Disk(name='/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad', model=None,  # noqa E501
                  serial='CRYPT-LUKS1-a47f495032964504b9a42dc75681a6ad-luks-a47f4950-3296-4504-b9a4-2dc75681a6ad',  # noqa E501
                  size=2097152, transport=None, vendor=None, hctl=None,
                  type='crypt', fstype='btrfs', label='pool-on-mixed-luks',
                  uuid='1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdd', model='QEMU HARDDISK', serial='bcache-cdev',
+            Disk(name='/dev/sdd', model='QEMU HARDDISK', serial='bcache-cdev',
                  size=2097152, transport='sata', vendor='ATA', hctl='3:0:0:0',
                  type='disk', fstype='bcachecdev', label=None,
                  uuid='6efd5476-77a9-4f57-97a5-fa1a37d4338b', parted=False,
                  root=False, partitions={}),
-            Disk(name='bcache16', model=None,
+            Disk(name='/dev/bcache16', model=None,
                  serial='bcache-06754c95-4f78-4ffb-a243-5c85144d1833',
                  size=2097152, transport=None,
                  vendor=None, hctl=None,
@@ -436,34 +439,34 @@ class OSITests(unittest.TestCase):
                  uuid='a47f4950-3296-4504-b9a4-2dc75681a6ad',
                  parted=False, root=False,
                  partitions={}),
-            Disk(name='luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e', model=None,
+            Disk(name='/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e', model=None,  # noqa E501
                  serial='CRYPT-LUKS1-3efb3830fee14a9ea5c6ea456bfc269e-luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e',  # noqa E501
                  size=2097152, transport=None, vendor=None, hctl=None,
                  type='crypt', fstype='btrfs', label='pool-on-mixed-luks',
                  uuid='1fdd4b41-fdd0-40c4-8ae6-7d6309b09ded', parted=False,
                  root=False, partitions={}),
-            Disk(name='vdb', model=None, serial='serial-5', size=2097152,
+            Disk(name='/dev/vdb', model=None, serial='serial-5', size=2097152,
                  transport=None, vendor='0x1af4', hctl=None, type='disk',
                  fstype='crypto_LUKS', label=None,
                  uuid='41cd2e3c-3bd6-49fc-9f42-20e368a66efc', parted=False,
                  root=False, partitions={}),
-            Disk(name='sda3', model='QEMU HARDDISK',
+            Disk(name='/dev/sda3', model='QEMU HARDDISK',
                  serial='sys-drive-serial-num',
                  size=7025459, transport='sata', vendor='ATA', hctl='0:0:0:0',
                  type='part', fstype='btrfs', label='rockstor_rockstor',
                  uuid='a98f88c2-2031-4bd3-9124-2f9d8a77987c', parted=True,
                  root=True, partitions={}),
-            Disk(name='sdb', model='QEMU HARDDISK', serial='bcache-bdev-1',
+            Disk(name='/dev/sdb', model='QEMU HARDDISK', serial='bcache-bdev-1',  # noqa E501
                  size=2097152, transport='sata', vendor='ATA', hctl='1:0:0:0',
                  type='disk', fstype='bcache', label=None,
                  uuid='c9ed805f-b141-4ce9-80c7-9f9e1f71195d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdc', model='QEMU HARDDISK', serial='bcache-bdev-2',
+            Disk(name='/dev/sdc', model='QEMU HARDDISK', serial='bcache-bdev-2',  # noqa E501
                  size=2097152, transport='sata', vendor='ATA', hctl='2:0:0:0',
                  type='disk', fstype='bcache', label=None,
                  uuid='06754c95-4f78-4ffb-a243-5c85144d1833', parted=False,
                  root=False, partitions={}),
-            Disk(name='luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc', model=None,
+            Disk(name='/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc', model=None,  # noqa E501
                  serial='CRYPT-LUKS1-41cd2e3c3bd649fc9f4220e368a66efc-luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc',  # noqa E501
                  size=2097152, transport=None, vendor=None, hctl=None,
                  type='crypt', fstype='btrfs', label='pool-on-mixed-luks',
@@ -479,13 +482,13 @@ class OSITests(unittest.TestCase):
             # Entries only requred here if lsblk test data has no serial info:
             # eg for bcache, LUKS, mdraid, and virtio type devices.
             s_map = {
-                'bcache0': 'bcache-c9ed805f-b141-4ce9-80c7-9f9e1f71195d',
-                'bcache16': 'bcache-06754c95-4f78-4ffb-a243-5c85144d1833',
-                'luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e': 'CRYPT-LUKS1-3efb3830fee14a9ea5c6ea456bfc269e-luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e',  # noqa E501
-                'luks-a47f4950-3296-4504-b9a4-2dc75681a6ad': 'CRYPT-LUKS1-a47f495032964504b9a42dc75681a6ad-luks-a47f4950-3296-4504-b9a4-2dc75681a6ad',  # noqa E501
-                'luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc': 'CRYPT-LUKS1-41cd2e3c3bd649fc9f4220e368a66efc-luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc',  # noqa E501
-                'vdb': 'serial-5',
-                'vda': 'serial-6'
+                '/dev/bcache0': 'bcache-c9ed805f-b141-4ce9-80c7-9f9e1f71195d',
+                '/dev/bcache16': 'bcache-06754c95-4f78-4ffb-a243-5c85144d1833',
+                '/dev/mapper/luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e': 'CRYPT-LUKS1-3efb3830fee14a9ea5c6ea456bfc269e-luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e',  # noqa E501
+                '/dev/mapper/luks-a47f4950-3296-4504-b9a4-2dc75681a6ad': 'CRYPT-LUKS1-a47f495032964504b9a42dc75681a6ad-luks-a47f4950-3296-4504-b9a4-2dc75681a6ad',  # noqa E501
+                '/dev/mapper/luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc': 'CRYPT-LUKS1-41cd2e3c3bd649fc9f4220e368a66efc-luks-41cd2e3c-3bd6-49fc-9f42-20e368a66efc',  # noqa E501
+                '/dev/vdb': 'serial-5',
+                '/dev/vda': 'serial-6'
             }
             # First argument in get_disk_serial() is device_name, key off this
             # for our dynamic mock return from s_map (serial map).
@@ -504,9 +507,9 @@ class OSITests(unittest.TestCase):
 
         def dyn_bcache_device_type(*args, **kwargs):
             bc_dev_map = {
-                'sdd': 'cdev',
-                'sdb': 'bdev',
-                'sdc': 'bdev'
+                '/dev/sdd': 'cdev',
+                '/dev/sdb': 'bdev',
+                '/dev/sdc': 'bdev'
             }
             if args[0] in bc_dev_map:
                 return bc_dev_map[args[0]]
@@ -517,7 +520,9 @@ class OSITests(unittest.TestCase):
         # Iterate the test data sets for run_command running lsblk.
         for o, e, r, expected in zip(out, err, rc, expected_result):
             self.mock_run_command.return_value = (o, e, r)
+            expected.sort(key=operator.itemgetter(0))
             returned = scan_disks(1048576)
+            returned.sort(key=operator.itemgetter(0))
             self.assertEqual(returned, expected,
                              msg='Un-expected scan_disks() result:\n '
                                  'returned = ({}).\n '
@@ -539,236 +544,236 @@ class OSITests(unittest.TestCase):
         # N.B. listed in the order returned by lsblk.
         # All base device (ie sda of sda3) have lsblk accessible serials.
         out = [[
-            'NAME="sdy" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2766c0" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:11:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdf" MODEL="PERC H710 " SERIAL="6848f690e936450021a4585b05e46fcc" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:5:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
-            'NAME="sdab" MODEL="ST91000640SS  " SERIAL="5000c50063041947" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:14:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdo" MODEL="HUC101212CSS600 " SERIAL="5000cca01d21bc10" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdw" MODEL="ST91000640SS  " SERIAL="5000c500630450a3" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:9:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdd" MODEL="PERC H710 " SERIAL="6848f690e9364500219f33b21773ea22" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:3:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
-            'NAME="sdm" MODEL="PERC H710 " SERIAL="6848f690e936450021acd1f30663b877" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:12:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
-            'NAME="sdu" MODEL="HUC101212CSS600 " SERIAL="5000cca01d273a24" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:7:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdai" MODEL="ST91000640SS  " SERIAL="5000c5006303ea0f" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:21:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdb" MODEL="PERC H710 " SERIAL="6848f690e9364500219f339b1610b547" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
-            'NAME="sdk" MODEL="PERC H710 " SERIAL="6848f690e936450021acd1e705b389c6" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:10:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
-            'NAME="sds" MODEL="HUC101212CSS600 " SERIAL="5000cca01d217968" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:5:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdag" MODEL="ST91000640SS  " SERIAL="5000c50062cbc1f3" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:19:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdi" MODEL="PERC H710 " SERIAL="6848f690e936450021a4586906bd9742" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:8:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
-            'NAME="sdq" MODEL="HUC101212CSS600 " SERIAL="5000cca01d29f384" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:3:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdae" MODEL="INTEL SSDSC2KW24" SERIAL="CVLT6153072G240CGN" SIZE="223.6G" TRAN="sas" VENDOR="ATA " HCTL="1:0:17:0" TYPE="disk" FSTYPE="btrfs" LABEL="INTEL_SSD" UUID="a504bf03-0299-4648-8a95-c91aba291de8"',  # noqa E501
-            'NAME="sdz" MODEL="ST91000640SS  " SERIAL="5000c5006304544b" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:12:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdg" MODEL="PERC H710 " SERIAL="6848f690e936450021ed61830ae57fbf" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:6:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
-            'NAME="sdac" MODEL="ST91000640SS  " SERIAL="5000c500630249cb" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:15:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdx" MODEL="ST91000640SS  " SERIAL="5000c50063044387" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:10:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sde" MODEL="PERC H710 " SERIAL="6848f690e9364500219f33bb17fe7d7b" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:4:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
-            'NAME="sdaa" MODEL="ST91000640SS  " SERIAL="5000c50063044363" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:13:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdn" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2144ac" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdv" MODEL="HUC101212CSS600 " SERIAL="5000cca01d21893c" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:8:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdaj" MODEL="INTEL SSDSC2KW24" SERIAL="CVLT6181019S240CGN" SIZE="223.6G" TRAN="sas" VENDOR="ATA " HCTL="1:0:22:0" TYPE="disk" FSTYPE="btrfs" LABEL="INTEL_SSD" UUID="a504bf03-0299-4648-8a95-c91aba291de8"',  # noqa E501
-            'NAME="sdc" MODEL="PERC H710 " SERIAL="6848f690e936450021ed614a077c1b44" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:2:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
-            'NAME="sdl" MODEL="PERC H710 " SERIAL="6848f690e936450021a4525005828671" SIZE="4.6T" TRAN="" VENDOR="DELL  " HCTL="0:2:11:0" TYPE="disk" FSTYPE="btrfs" LABEL="5TBWDGREEN" UUID="a37956a8-a175-4906-82c1-bf843132da1a"',  # noqa E501
-            'NAME="sdt" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2af91c" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:6:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdah" MODEL="ST91000640SS  " SERIAL="5000c50062cb366f" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:20:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sda" MODEL="PERC H710 " SERIAL="6848f690e936450018b7c3a11330997b" SIZE="278.9G" TRAN="" VENDOR="DELL  " HCTL="0:2:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda2" MODEL="" SERIAL="" SIZE="13.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="a34b82d0-c342-41e0-a58d-4f0a0027829d"',  # noqa E501
-            'NAME="sda3" MODEL="" SERIAL="" SIZE="264.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="7f7acdd7-493e-4bb5-b801-b7b7dc289535"',  # noqa E501
-            'NAME="sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="5d2848ff-ae8f-4c2f-b825-90621076acc1"',  # noqa E501
-            'NAME="sdj" MODEL="PERC H710 " SERIAL="6848f690e936450021a45f9904046a2f" SIZE="2.7T" TRAN="" VENDOR="DELL  " HCTL="0:2:9:0" TYPE="disk" FSTYPE="btrfs" LABEL="VMWARE_MECH_ARRAY" UUID="e6d13c0b-825f-4b43-81b6-7eb2b791b1c3"',  # noqa E501
-            'NAME="sdr" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2188e0" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:4:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdaf" MODEL="ST91000640SS  " SERIAL="5000c500630425df" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:18:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdh" MODEL="PERC H710 " SERIAL="6848f690e9364500219f33d919c7488a" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:7:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
-            'NAME="sdp" MODEL="HUC101212CSS600 " SERIAL="5000cca01d21885c" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:2:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
-            'NAME="sdad" MODEL="INTEL SSDSC2KW24" SERIAL="CVLT618101SE240CGN" SIZE="223.6G" TRAN="sas" VENDOR="ATA " HCTL="1:0:16:0" TYPE="disk" FSTYPE="btrfs" LABEL="INTEL_SSD" UUID="a504bf03-0299-4648-8a95-c91aba291de8"',  # noqa E501
+            'NAME="/dev/sdy" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2766c0" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:11:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdf" MODEL="PERC H710 " SERIAL="6848f690e936450021a4585b05e46fcc" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:5:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
+            'NAME="/dev/sdab" MODEL="ST91000640SS  " SERIAL="5000c50063041947" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:14:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdo" MODEL="HUC101212CSS600 " SERIAL="5000cca01d21bc10" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdw" MODEL="ST91000640SS  " SERIAL="5000c500630450a3" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:9:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdd" MODEL="PERC H710 " SERIAL="6848f690e9364500219f33b21773ea22" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:3:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
+            'NAME="/dev/sdm" MODEL="PERC H710 " SERIAL="6848f690e936450021acd1f30663b877" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:12:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
+            'NAME="/dev/sdu" MODEL="HUC101212CSS600 " SERIAL="5000cca01d273a24" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:7:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdai" MODEL="ST91000640SS  " SERIAL="5000c5006303ea0f" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:21:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdb" MODEL="PERC H710 " SERIAL="6848f690e9364500219f339b1610b547" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
+            'NAME="/dev/sdk" MODEL="PERC H710 " SERIAL="6848f690e936450021acd1e705b389c6" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:10:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
+            'NAME="/dev/sds" MODEL="HUC101212CSS600 " SERIAL="5000cca01d217968" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:5:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdag" MODEL="ST91000640SS  " SERIAL="5000c50062cbc1f3" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:19:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdi" MODEL="PERC H710 " SERIAL="6848f690e936450021a4586906bd9742" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:8:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
+            'NAME="/dev/sdq" MODEL="HUC101212CSS600 " SERIAL="5000cca01d29f384" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:3:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdae" MODEL="INTEL SSDSC2KW24" SERIAL="CVLT6153072G240CGN" SIZE="223.6G" TRAN="sas" VENDOR="ATA " HCTL="1:0:17:0" TYPE="disk" FSTYPE="btrfs" LABEL="INTEL_SSD" UUID="a504bf03-0299-4648-8a95-c91aba291de8"',  # noqa E501
+            'NAME="/dev/sdz" MODEL="ST91000640SS  " SERIAL="5000c5006304544b" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:12:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdg" MODEL="PERC H710 " SERIAL="6848f690e936450021ed61830ae57fbf" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:6:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
+            'NAME="/dev/sdac" MODEL="ST91000640SS  " SERIAL="5000c500630249cb" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:15:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdx" MODEL="ST91000640SS  " SERIAL="5000c50063044387" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:10:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sde" MODEL="PERC H710 " SERIAL="6848f690e9364500219f33bb17fe7d7b" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:4:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
+            'NAME="/dev/sdaa" MODEL="ST91000640SS  " SERIAL="5000c50063044363" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:13:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdn" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2144ac" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdv" MODEL="HUC101212CSS600 " SERIAL="5000cca01d21893c" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:8:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdaj" MODEL="INTEL SSDSC2KW24" SERIAL="CVLT6181019S240CGN" SIZE="223.6G" TRAN="sas" VENDOR="ATA " HCTL="1:0:22:0" TYPE="disk" FSTYPE="btrfs" LABEL="INTEL_SSD" UUID="a504bf03-0299-4648-8a95-c91aba291de8"',  # noqa E501
+            'NAME="/dev/sdc" MODEL="PERC H710 " SERIAL="6848f690e936450021ed614a077c1b44" SIZE="7.3T" TRAN="" VENDOR="DELL  " HCTL="0:2:2:0" TYPE="disk" FSTYPE="btrfs" LABEL="BIGDATA" UUID="cb15142f-9d1e-4cb2-9b1f-adda3af6555f"',  # noqa E501
+            'NAME="/dev/sdl" MODEL="PERC H710 " SERIAL="6848f690e936450021a4525005828671" SIZE="4.6T" TRAN="" VENDOR="DELL  " HCTL="0:2:11:0" TYPE="disk" FSTYPE="btrfs" LABEL="5TBWDGREEN" UUID="a37956a8-a175-4906-82c1-bf843132da1a"',  # noqa E501
+            'NAME="/dev/sdt" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2af91c" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:6:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdah" MODEL="ST91000640SS  " SERIAL="5000c50062cb366f" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:20:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sda" MODEL="PERC H710 " SERIAL="6848f690e936450018b7c3a11330997b" SIZE="278.9G" TRAN="" VENDOR="DELL  " HCTL="0:2:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda2" MODEL="" SERIAL="" SIZE="13.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="a34b82d0-c342-41e0-a58d-4f0a0027829d"',  # noqa E501
+            'NAME="/dev/sda3" MODEL="" SERIAL="" SIZE="264.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="7f7acdd7-493e-4bb5-b801-b7b7dc289535"',  # noqa E501
+            'NAME="/dev/sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="5d2848ff-ae8f-4c2f-b825-90621076acc1"',  # noqa E501
+            'NAME="/dev/sdj" MODEL="PERC H710 " SERIAL="6848f690e936450021a45f9904046a2f" SIZE="2.7T" TRAN="" VENDOR="DELL  " HCTL="0:2:9:0" TYPE="disk" FSTYPE="btrfs" LABEL="VMWARE_MECH_ARRAY" UUID="e6d13c0b-825f-4b43-81b6-7eb2b791b1c3"',  # noqa E501
+            'NAME="/dev/sdr" MODEL="HUC101212CSS600 " SERIAL="5000cca01d2188e0" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:4:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdaf" MODEL="ST91000640SS  " SERIAL="5000c500630425df" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:18:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdh" MODEL="PERC H710 " SERIAL="6848f690e9364500219f33d919c7488a" SIZE="558.4G" TRAN="" VENDOR="DELL  " HCTL="0:2:7:0" TYPE="disk" FSTYPE="btrfs" LABEL="Test" UUID="612f1fc2-dfa8-4940-a1ad-e11c893b32ca"',  # noqa E501
+            'NAME="/dev/sdp" MODEL="HUC101212CSS600 " SERIAL="5000cca01d21885c" SIZE="1.1T" TRAN="sas" VENDOR="HGST  " HCTL="1:0:2:0" TYPE="disk" FSTYPE="btrfs" LABEL="MD1220-DAS" UUID="12d76eb6-7aad-46ba-863e-d9c51e8e6f2d"',  # noqa E501
+            'NAME="/dev/sdad" MODEL="INTEL SSDSC2KW24" SERIAL="CVLT618101SE240CGN" SIZE="223.6G" TRAN="sas" VENDOR="ATA " HCTL="1:0:16:0" TYPE="disk" FSTYPE="btrfs" LABEL="INTEL_SSD" UUID="a504bf03-0299-4648-8a95-c91aba291de8"',  # noqa E501
             ''
         ]]
         err = [['']]
         rc = [0]
         expected_result = [[
-            Disk(name='sda3', model='PERC H710',
+            Disk(name='/dev/sda3', model='PERC H710',
                  serial='6848f690e936450018b7c3a11330997b', size=277558067,
                  transport=None, vendor='DELL', hctl='0:2:0:0', type='part',
                  fstype='btrfs', label='rockstor_rockstor',
                  uuid='7f7acdd7-493e-4bb5-b801-b7b7dc289535', parted=True,
                  root=True, partitions={}),
-            Disk(name='sdt', model='HUC101212CSS600',
+            Disk(name='/dev/sdt', model='HUC101212CSS600',
                  serial='5000cca01d2af91c',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:6:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdu', model='HUC101212CSS600',
+            Disk(name='/dev/sdu', model='HUC101212CSS600',
                  serial='5000cca01d273a24',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:7:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdv', model='HUC101212CSS600',
+            Disk(name='/dev/sdv', model='HUC101212CSS600',
                  serial='5000cca01d21893c',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:8:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdw', model='ST91000640SS', serial='5000c500630450a3',
+            Disk(name='/dev/sdw', model='ST91000640SS', serial='5000c500630450a3',  # noqa E501
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:9:0',
                  type='disk', fstype='btrfs', label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdp', model='HUC101212CSS600',
+            Disk(name='/dev/sdp', model='HUC101212CSS600',
                  serial='5000cca01d21885c',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:2:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdq', model='HUC101212CSS600',
+            Disk(name='/dev/sdq', model='HUC101212CSS600',
                  serial='5000cca01d29f384',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:3:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdr', model='HUC101212CSS600',
+            Disk(name='/dev/sdr', model='HUC101212CSS600',
                  serial='5000cca01d2188e0',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:4:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sds', model='HUC101212CSS600',
+            Disk(name='/dev/sds', model='HUC101212CSS600',
                  serial='5000cca01d217968',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:5:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdx', model='ST91000640SS', serial='5000c50063044387',
+            Disk(name='/dev/sdx', model='ST91000640SS', serial='5000c50063044387',  # noqa E501
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:10:0', type='disk', fstype='btrfs', label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdy', model='HUC101212CSS600',
+            Disk(name='/dev/sdy', model='HUC101212CSS600',
                  serial='5000cca01d2766c0',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:11:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdz', model='ST91000640SS', serial='5000c5006304544b',
+            Disk(name='/dev/sdz', model='ST91000640SS', serial='5000c5006304544b',  # noqa E501
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:12:0', type='disk', fstype='btrfs', label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdd', model='PERC H710',
+            Disk(name='/dev/sdd', model='PERC H710',
                  serial='6848f690e9364500219f33b21773ea22', size=585524838,
                  transport=None, vendor='DELL', hctl='0:2:3:0', type='disk',
                  fstype='btrfs', label='Test',
                  uuid='612f1fc2-dfa8-4940-a1ad-e11c893b32ca', parted=False,
                  root=False, partitions={}),
-            Disk(name='sde', model='PERC H710',
+            Disk(name='/dev/sde', model='PERC H710',
                  serial='6848f690e9364500219f33bb17fe7d7b', size=585524838,
                  transport=None, vendor='DELL', hctl='0:2:4:0', type='disk',
                  fstype='btrfs', label='Test',
                  uuid='612f1fc2-dfa8-4940-a1ad-e11c893b32ca', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdf', model='PERC H710',
+            Disk(name='/dev/sdf', model='PERC H710',
                  serial='6848f690e936450021a4585b05e46fcc', size=7838315315,
                  transport=None, vendor='DELL', hctl='0:2:5:0', type='disk',
                  fstype='btrfs', label='BIGDATA',
                  uuid='cb15142f-9d1e-4cb2-9b1f-adda3af6555f', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdg', model='PERC H710',
+            Disk(name='/dev/sdg', model='PERC H710',
                  serial='6848f690e936450021ed61830ae57fbf', size=7838315315,
                  transport=None, vendor='DELL', hctl='0:2:6:0', type='disk',
                  fstype='btrfs', label='BIGDATA',
                  uuid='cb15142f-9d1e-4cb2-9b1f-adda3af6555f', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdb', model='PERC H710',
+            Disk(name='/dev/sdb', model='PERC H710',
                  serial='6848f690e9364500219f339b1610b547', size=585524838,
                  transport=None, vendor='DELL', hctl='0:2:1:0', type='disk',
                  fstype='btrfs', label='Test',
                  uuid='612f1fc2-dfa8-4940-a1ad-e11c893b32ca', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdc', model='PERC H710',
+            Disk(name='/dev/sdc', model='PERC H710',
                  serial='6848f690e936450021ed614a077c1b44', size=7838315315,
                  transport=None, vendor='DELL', hctl='0:2:2:0', type='disk',
                  fstype='btrfs', label='BIGDATA',
                  uuid='cb15142f-9d1e-4cb2-9b1f-adda3af6555f', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdl', model='PERC H710',
+            Disk(name='/dev/sdl', model='PERC H710',
                  serial='6848f690e936450021a4525005828671', size=4939212390,
                  transport=None, vendor='DELL', hctl='0:2:11:0',
                  type='disk', fstype='btrfs', label='5TBWDGREEN',
                  uuid='a37956a8-a175-4906-82c1-bf843132da1a', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdm', model='PERC H710',
+            Disk(name='/dev/sdm', model='PERC H710',
                  serial='6848f690e936450021acd1f30663b877', size=7838315315,
                  transport=None, vendor='DELL', hctl='0:2:12:0',
                  type='disk', fstype='btrfs', label='BIGDATA',
                  uuid='cb15142f-9d1e-4cb2-9b1f-adda3af6555f', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdn', model='HUC101212CSS600',
+            Disk(name='/dev/sdn', model='HUC101212CSS600',
                  serial='5000cca01d2144ac',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:0:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdo', model='HUC101212CSS600',
+            Disk(name='/dev/sdo', model='HUC101212CSS600',
                  serial='5000cca01d21bc10',
                  size=1181116006, transport='sas', vendor='HGST',
                  hctl='1:0:1:0',
                  type='disk', fstype='btrfs', label='MD1220-DAS',
                  uuid='12d76eb6-7aad-46ba-863e-d9c51e8e6f2d', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdh', model='PERC H710',
+            Disk(name='/dev/sdh', model='PERC H710',
                  serial='6848f690e9364500219f33d919c7488a', size=585524838,
                  transport=None, vendor='DELL', hctl='0:2:7:0', type='disk',
                  fstype='btrfs', label='Test',
                  uuid='612f1fc2-dfa8-4940-a1ad-e11c893b32ca', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdi', model='PERC H710',
+            Disk(name='/dev/sdi', model='PERC H710',
                  serial='6848f690e936450021a4586906bd9742', size=7838315315,
                  transport=None, vendor='DELL', hctl='0:2:8:0', type='disk',
                  fstype='btrfs', label='BIGDATA',
                  uuid='cb15142f-9d1e-4cb2-9b1f-adda3af6555f', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdj', model='PERC H710',
+            Disk(name='/dev/sdj', model='PERC H710',
                  serial='6848f690e936450021a45f9904046a2f', size=2899102924,
                  transport=None, vendor='DELL', hctl='0:2:9:0', type='disk',
                  fstype='btrfs', label='VMWARE_MECH_ARRAY',
                  uuid='e6d13c0b-825f-4b43-81b6-7eb2b791b1c3', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdk', model='PERC H710',
+            Disk(name='/dev/sdk', model='PERC H710',
                  serial='6848f690e936450021acd1e705b389c6', size=7838315315,
                  transport=None, vendor='DELL', hctl='0:2:10:0',
                  type='disk', fstype='btrfs', label='BIGDATA',
                  uuid='cb15142f-9d1e-4cb2-9b1f-adda3af6555f', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdaf', model='ST91000640SS',
+            Disk(name='/dev/sdaf', model='ST91000640SS',
                  serial='5000c500630425df',
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:18:0', type='disk', fstype='btrfs',
                  label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdag', model='ST91000640SS',
+            Disk(name='/dev/sdag', model='ST91000640SS',
                  serial='5000c50062cbc1f3',
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:19:0', type='disk', fstype='btrfs',
                  label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdad', model='INTEL SSDSC2KW24',
+            Disk(name='/dev/sdad', model='INTEL SSDSC2KW24',
                  serial='CVLT618101SE240CGN',
                  size=234461593, transport='sas', vendor='ATA',
                  hctl='1:0:16:0', type='disk', fstype='btrfs',
                  label='INTEL_SSD',
                  uuid='a504bf03-0299-4648-8a95-c91aba291de8', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdae', model='INTEL SSDSC2KW24',
+            Disk(name='/dev/sdae', model='INTEL SSDSC2KW24',
                  serial='CVLT6153072G240CGN',
                  size=234461593, transport='sas', vendor='ATA',
                  hctl='1:0:17:0',
@@ -777,42 +782,42 @@ class OSITests(unittest.TestCase):
                  root=False, partitions={}),
             # N.B. we have sdab with serial=None, suspected due to first listed
             # matching base root device name of sda (sda3).
-            Disk(name='sdab', model='ST91000640SS',
+            Disk(name='/dev/sdab', model='ST91000640SS',
                  serial='5000c50063041947',
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:14:0', type='disk', fstype='btrfs',
                  label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdac', model='ST91000640SS',
+            Disk(name='/dev/sdac', model='ST91000640SS',
                  serial='5000c500630249cb',
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:15:0', type='disk', fstype='btrfs',
                  label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdaa', model='ST91000640SS',
+            Disk(name='/dev/sdaa', model='ST91000640SS',
                  serial='5000c50063044363',
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:13:0', type='disk', fstype='btrfs',
                  label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdaj', model='INTEL SSDSC2KW24',
+            Disk(name='/dev/sdaj', model='INTEL SSDSC2KW24',
                  serial='CVLT6181019S240CGN',
                  size=234461593, transport='sas', vendor='ATA',
                  hctl='1:0:22:0', type='disk', fstype='btrfs',
                  label='INTEL_SSD',
                  uuid='a504bf03-0299-4648-8a95-c91aba291de8', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdah', model='ST91000640SS',
+            Disk(name='/dev/sdah', model='ST91000640SS',
                  serial='5000c50062cb366f',
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:20:0', type='disk', fstype='btrfs',
                  label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdai', model='ST91000640SS',
+            Disk(name='/dev/sdai', model='ST91000640SS',
                  serial='5000c5006303ea0f',
                  size=976748544, transport='sas', vendor='SEAGATE',
                  hctl='1:0:21:0', type='disk', fstype='btrfs',
@@ -830,10 +835,8 @@ class OSITests(unittest.TestCase):
             returned = scan_disks(1048576, test_mode=True)
             # TODO: Would be nice to have differences found shown.
             #
-            # TODO: Test could also be more flexible / robust if we are
-            # insensitive to order, ie sort both returned and expected
-            # expected.sort(key=operator.itemgetter(0))
-            # returned.sort(key=operator.itemgetter(0))
+            expected.sort(key=operator.itemgetter(0))
+            returned.sort(key=operator.itemgetter(0))
             self.assertEqual(returned, expected,
                              msg='Un-expected scan_disks() result:\n '
                                  'returned = ({}).\n '
@@ -856,18 +859,18 @@ class OSITests(unittest.TestCase):
         devices: without this the issue does not present.
         """
         out = [[
-            'NAME="sdab" MODEL="ST91000640SS  " SERIAL="5000c50063041947" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:14:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sdai" MODEL="ST91000640SS  " SERIAL="5000c5006303ea0f" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:21:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
-            'NAME="sda" MODEL="PERC H710 " SERIAL="6848f690e936450018b7c3a11330997b" SIZE="278.9G" TRAN="" VENDOR="DELL  " HCTL="0:2:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda2" MODEL="" SERIAL="" SIZE="13.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="a34b82d0-c342-41e0-a58d-4f0a0027829d"',  # noqa E501
-            'NAME="sda3" MODEL="" SERIAL="" SIZE="264.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="7f7acdd7-493e-4bb5-b801-b7b7dc289535"',  # noqa E501
-            'NAME="sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="5d2848ff-ae8f-4c2f-b825-90621076acc1"',  # noqa E501
+            'NAME="/dev/sdab" MODEL="ST91000640SS  " SERIAL="5000c50063041947" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:14:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sdai" MODEL="ST91000640SS  " SERIAL="5000c5006303ea0f" SIZE="931.5G" TRAN="sas" VENDOR="SEAGATE " HCTL="1:0:21:0" TYPE="disk" FSTYPE="btrfs" LABEL="SCRATCH" UUID="a90e6787-1c45-46d6-a2ba-41017a17c1d5"',  # noqa E501
+            'NAME="/dev/sda" MODEL="PERC H710 " SERIAL="6848f690e936450018b7c3a11330997b" SIZE="278.9G" TRAN="" VENDOR="DELL  " HCTL="0:2:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda2" MODEL="" SERIAL="" SIZE="13.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="a34b82d0-c342-41e0-a58d-4f0a0027829d"',  # noqa E501
+            'NAME="/dev/sda3" MODEL="" SERIAL="" SIZE="264.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="7f7acdd7-493e-4bb5-b801-b7b7dc289535"',  # noqa E501
+            'NAME="/dev/sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="5d2848ff-ae8f-4c2f-b825-90621076acc1"',  # noqa E501
             ''
         ]]
         err = [['']]
         rc = [0]
         expected_result = [[
-            Disk(name='sda3', model='PERC H710',
+            Disk(name='/dev/sda3', model='PERC H710',
                  serial='6848f690e936450018b7c3a11330997b', size=277558067,
                  transport=None, vendor='DELL', hctl='0:2:0:0', type='part',
                  fstype='btrfs', label='rockstor_rockstor',
@@ -875,13 +878,13 @@ class OSITests(unittest.TestCase):
                  root=True, partitions={}),
             # N.B. we have sdab with serial=None, suspected due to first listed
             # matching base root device name of sda (sda3).
-            Disk(name='sdab', model=None, serial=None, size=976748544,
+            Disk(name='/dev/sdab', model=None, serial=None, size=976748544,
                  transport=None, vendor=None, hctl=None, type='disk',
                  fstype='btrfs', label='SCRATCH',
                  uuid='a90e6787-1c45-46d6-a2ba-41017a17c1d5', parted=False,
                  root=True, partitions={}),
             # Subsequent sda[a-z] device receives 'fake-serial-'
-            Disk(name='sdai', model=None,
+            Disk(name='/dev/sdai', model=None,
                  serial='fake-serial-',
                  size=976748544, transport=None, vendor=None, hctl=None,
                  type='disk', fstype='btrfs', label='SCRATCH',
@@ -919,40 +922,40 @@ class OSITests(unittest.TestCase):
         # Rockstor sees this install as system on hole disk dev (open luks dev)
         # ie the system btrfs volume is on whole disk not within a partition.
         out = [[
-            'NAME="sdb" MODEL="QEMU HARDDISK   " SERIAL="2" SIZE="5G" TRAN="sata" VENDOR="ATA     " HCTL="5:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="rock-pool" UUID="50b66542-9a19-4403-b5a0-cd22412d9ae9"',  # noqa E501
-            'NAME="sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00005" SIZE="1024M" TRAN="sata" VENDOR="QEMU    " HCTL="2:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdc" MODEL="QEMU HARDDISK   " SERIAL="QM00013" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdc2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="crypto_LUKS" LABEL="" UUID="3efae1ba-dbdf-4102-8bdc-e607e3448a7d"',  # noqa E501
-            'NAME="luks-3efae1ba-dbdf-4102-8bdc-e607e3448a7d" MODEL="" SERIAL="" SIZE="818M" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="swap" LABEL="" UUID="1ef3c0a9-73b6-4271-a618-8fe4e580edac"',  # noqa E501
-            'NAME="sdc3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="crypto_LUKS" LABEL="" UUID="315111a6-8d37-447a-8dbf-0c9026abc456"',  # noqa E501
-            'NAME="luks-315111a6-8d37-447a-8dbf-0c9026abc456" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="d763b614-5eb3-45ac-8ac6-8f5aa5d0b74d"',  # noqa E501
-            'NAME="sdc1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="bcd91aba-6f2d-441b-9f31-804ac094befe"',  # noqa E501
-            'NAME="sda" MODEL="QEMU HARDDISK   " SERIAL="1" SIZE="5G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="rock-pool" UUID="50b66542-9a19-4403-b5a0-cd22412d9ae9"',  # noqa E501
+            'NAME="/dev/sdb" MODEL="QEMU HARDDISK   " SERIAL="2" SIZE="5G" TRAN="sata" VENDOR="ATA     " HCTL="5:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="rock-pool" UUID="50b66542-9a19-4403-b5a0-cd22412d9ae9"',  # noqa E501
+            'NAME="/dev/sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00005" SIZE="1024M" TRAN="sata" VENDOR="QEMU    " HCTL="2:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdc" MODEL="QEMU HARDDISK   " SERIAL="QM00013" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdc2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="crypto_LUKS" LABEL="" UUID="3efae1ba-dbdf-4102-8bdc-e607e3448a7d"',  # noqa E501
+            'NAME="/dev/mapper/luks-3efae1ba-dbdf-4102-8bdc-e607e3448a7d" MODEL="" SERIAL="" SIZE="818M" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="swap" LABEL="" UUID="1ef3c0a9-73b6-4271-a618-8fe4e580edac"',  # noqa E501
+            'NAME="/dev/sdc3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="crypto_LUKS" LABEL="" UUID="315111a6-8d37-447a-8dbf-0c9026abc456"',  # noqa E501
+            'NAME="/dev/mapper/luks-315111a6-8d37-447a-8dbf-0c9026abc456" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="crypt" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="d763b614-5eb3-45ac-8ac6-8f5aa5d0b74d"',  # noqa E501
+            'NAME="/dev/sdc1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="bcd91aba-6f2d-441b-9f31-804ac094befe"',  # noqa E501
+            'NAME="/dev/sda" MODEL="QEMU HARDDISK   " SERIAL="1" SIZE="5G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="rock-pool" UUID="50b66542-9a19-4403-b5a0-cd22412d9ae9"',  # noqa E501
             '']]
         err = [['']]
         rc = [0]
         expected_result = [[
-            Disk(name='luks-315111a6-8d37-447a-8dbf-0c9026abc456', model=None,
+            Disk(name='/dev/mapper/luks-315111a6-8d37-447a-8dbf-0c9026abc456', model=None,  # noqa E501
                  serial='CRYPT-LUKS1-315111a68d37447a8dbf0c9026abc456-luks-315111a6-8d37-447a-8dbf-0c9026abc456',  # noqa E501
                  size=7025459, transport=None, vendor=None, hctl=None,
                  type='crypt', fstype='btrfs', label='rockstor_rockstor',
                  uuid='d763b614-5eb3-45ac-8ac6-8f5aa5d0b74d', parted=False,
                  root=True, partitions={}),
-            Disk(name='sda', model='QEMU HARDDISK', serial='1', size=5242880,
+            Disk(name='/dev/sda', model='QEMU HARDDISK', serial='1', size=5242880,  # noqa E501
                  transport='sata', vendor='ATA', hctl='3:0:0:0', type='disk',
                  fstype='btrfs', label='rock-pool',
                  uuid='50b66542-9a19-4403-b5a0-cd22412d9ae9', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdb', model='QEMU HARDDISK', serial='2', size=5242880,
+            Disk(name='/dev/sdb', model='QEMU HARDDISK', serial='2', size=5242880,  # noqa E501
                  transport='sata', vendor='ATA', hctl='5:0:0:0', type='disk',
                  fstype='btrfs', label='rock-pool',
                  uuid='50b66542-9a19-4403-b5a0-cd22412d9ae9', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdc', model='QEMU HARDDISK', serial='QM00013',
+            Disk(name='/dev/sdc', model='QEMU HARDDISK', serial='QM00013',
                  size=8388608, transport='sata', vendor='ATA', hctl='6:0:0:0',
                  type='disk', fstype='crypto_LUKS', label=None,
                  uuid='315111a6-8d37-447a-8dbf-0c9026abc456', parted=True,
-                 root=False, partitions={'sdc3': 'crypto_LUKS'})
+                 root=False, partitions={'/dev/sdc3': 'crypto_LUKS'})
         ]]
 
         # Establish dynamic mock behaviour for get_disk_serial()
@@ -964,7 +967,7 @@ class OSITests(unittest.TestCase):
             # Entries only requred here if lsblk test data has no serial info:
             # eg for bcache, LUKS, mdraid, and virtio type devices.
             s_map = {
-                'luks-315111a6-8d37-447a-8dbf-0c9026abc456': 'CRYPT-LUKS1-315111a68d37447a8dbf0c9026abc456-luks-315111a6-8d37-447a-8dbf-0c9026abc456'  # noqa E501
+                '/dev/mapper/luks-315111a6-8d37-447a-8dbf-0c9026abc456': 'CRYPT-LUKS1-315111a68d37447a8dbf0c9026abc456-luks-315111a6-8d37-447a-8dbf-0c9026abc456'  # noqa E501
             }
             # First argument in get_disk_serial() is device_name, key off this
             # for our dynamic mock return from s_map (serial map).
@@ -980,7 +983,7 @@ class OSITests(unittest.TestCase):
         #
         # Ensure we correctly mock our root_disk value away from file default
         # of sda as we now have a root_disk on luks:
-        self.mock_root_disk.return_value = 'luks-315111a6-8d37-447a-8dbf-0c9026abc456'  # noqa E501
+        self.mock_root_disk.return_value = '/dev/mapper/luks-315111a6-8d37-447a-8dbf-0c9026abc456'  # noqa E501
 
         for o, e, r, expected in zip(out, err, rc, expected_result):
             self.mock_run_command.return_value = (o, e, r)
@@ -1031,23 +1034,23 @@ class OSITests(unittest.TestCase):
         root on sda, ie 'Regex to identify a partition on the base_root_disk.'
         """
         out = [[
-            'NAME="sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda" MODEL="QEMU HARDDISK   " SERIAL="QM00005" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="aaf61037-23b1-4c3b-81ca-6d07f3ed922d"',  # noqa E501
-            'NAME="sda3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="355f53a4-24e1-465e-95f3-7c422898f542"',  # noqa E501
-            'NAME="sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="04ce9f16-a0a0-4db8-8719-1083a0d4f381"',  # noqa E501
-            'NAME="vda" MODEL="" SERIAL="" SIZE="8G" TRAN="" VENDOR="0x1af4" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="vda2" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="btrfs-in-partition" UUID="55284332-af66-4ca0-9647-99d9afbe0ec5"',  # noqa E501
-            'NAME="vda1" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="8F05-D915"',  # noqa E501
+            'NAME="/dev/sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda" MODEL="QEMU HARDDISK   " SERIAL="QM00005" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="aaf61037-23b1-4c3b-81ca-6d07f3ed922d"',  # noqa E501
+            'NAME="/dev/sda3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="355f53a4-24e1-465e-95f3-7c422898f542"',  # noqa E501
+            'NAME="/dev/sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="04ce9f16-a0a0-4db8-8719-1083a0d4f381"',  # noqa E501
+            'NAME="/dev/vda" MODEL="" SERIAL="" SIZE="8G" TRAN="" VENDOR="0x1af4" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/vda2" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="btrfs-in-partition" UUID="55284332-af66-4ca0-9647-99d9afbe0ec5"',  # noqa E501
+            'NAME="/dev/vda1" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="8F05-D915"',  # noqa E501
             ''], [
-            'NAME="sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda" MODEL="QEMU HARDDISK   " SERIAL="QM00005" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="aaf61037-23b1-4c3b-81ca-6d07f3ed922d"',  # noqa E501
-            'NAME="sda3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="355f53a4-24e1-465e-95f3-7c422898f542"',  # noqa E501
-            'NAME="sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="04ce9f16-a0a0-4db8-8719-1083a0d4f381"',  # noqa E501
-            'NAME="sdap" MODEL="QEMU HARDDISK   " SERIAL="42nd-scsi" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdap2" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="btrfs-in-partition" UUID="55284332-af66-4ca0-9647-99d9afbe0ec5"',  # noqa E501
-            'NAME="sdap1" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="8F05-D915"',  # noqa E501
+            'NAME="/dev/sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="1024M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda" MODEL="QEMU HARDDISK   " SERIAL="QM00005" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda2" MODEL="" SERIAL="" SIZE="820M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="aaf61037-23b1-4c3b-81ca-6d07f3ed922d"',  # noqa E501
+            'NAME="/dev/sda3" MODEL="" SERIAL="" SIZE="6.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="355f53a4-24e1-465e-95f3-7c422898f542"',  # noqa E501
+            'NAME="/dev/sda1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="04ce9f16-a0a0-4db8-8719-1083a0d4f381"',  # noqa E501
+            'NAME="/dev/sdap" MODEL="QEMU HARDDISK   " SERIAL="42nd-scsi" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdap2" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="btrfs-in-partition" UUID="55284332-af66-4ca0-9647-99d9afbe0ec5"',  # noqa E501
+            'NAME="/dev/sdap1" MODEL="" SERIAL="" SIZE="4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="8F05-D915"',  # noqa E501
             ''
         ]]
         err = [['']]
@@ -1057,24 +1060,26 @@ class OSITests(unittest.TestCase):
         rc.append(0)
         expected_result = [[
             # Note partitions entry within vda, consistent with cli prep.
-            Disk(name='vda', model=None, serial='serial-1', size=4194304,
+            Disk(name='/dev/vda', model=None, serial='serial-1', size=4194304,
                  transport=None, vendor='0x1af4', hctl=None, type='disk',
                  fstype='btrfs', label='btrfs-in-partition',
                  uuid='55284332-af66-4ca0-9647-99d9afbe0ec5', parted=True,
-                 root=False, partitions={'vda1': 'vfat', 'vda2': 'btrfs'}),
-            Disk(name='sda3', model='QEMU HARDDISK', serial='QM00005',
+                 root=False,
+                 partitions={'/dev/vda1': 'vfat', '/dev/vda2': 'btrfs'}),
+            Disk(name='/dev/sda3', model='QEMU HARDDISK', serial='QM00005',
                  size=7025459, transport='sata', vendor='ATA', hctl='2:0:0:0',
                  type='part', fstype='btrfs', label='rockstor_rockstor',
                  uuid='355f53a4-24e1-465e-95f3-7c422898f542', parted=True,
                  root=True, partitions={})
         ], [
             # Note sdap (42nd disk) hand crafted from above vda entry
-            Disk(name='sdap', model='QEMU HARDDISK', serial='42nd-scsi',
+            Disk(name='/dev/sdap', model='QEMU HARDDISK', serial='42nd-scsi',
                  size=4194304, transport='sata', vendor='ATA', hctl='3:0:0:0',
                  type='disk', fstype='btrfs', label='btrfs-in-partition',
                  uuid='55284332-af66-4ca0-9647-99d9afbe0ec5', parted=True,
-                 root=False, partitions={'sdap1': 'vfat', 'sdap2': 'btrfs'}),
-            Disk(name='sda3', model='QEMU HARDDISK', serial='QM00005',
+                 root=False,
+                 partitions={'/dev/sdap1': 'vfat', '/dev/sdap2': 'btrfs'}),
+            Disk(name='/dev/sda3', model='QEMU HARDDISK', serial='QM00005',
                  size=7025459, transport='sata', vendor='ATA', hctl='2:0:0:0',
                  type='part', fstype='btrfs', label='rockstor_rockstor',
                  uuid='355f53a4-24e1-465e-95f3-7c422898f542', parted=True,
@@ -1090,7 +1095,7 @@ class OSITests(unittest.TestCase):
             # Entries only requred here if lsblk test data has no serial info:
             # eg for bcache, LUKS, mdraid, and virtio type devices.
             s_map = {
-                'vda': 'serial-1'
+                '/dev/vda': 'serial-1'
             }
             # First argument in get_disk_serial() is device_name, key off this
             # for our dynamic mock return from s_map (serial map).
@@ -1145,43 +1150,43 @@ class OSITests(unittest.TestCase):
 
         """
         out = [[
-            'NAME="sdb" MODEL="QEMU HARDDISK   " SERIAL="md-serial-2" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdb2" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:boot" UUID="fc9fc706-e831-6b14-591e-0bc5bb008681"',  # noqa E501
-            'NAME="md126" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="ext4" LABEL="" UUID="9df7d0f5-d109-4e84-a0f0-03a0cf0c03ad"',  # noqa E501
-            'NAME="sdb3" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:swap" UUID="9ed64a0b-10d2-72f9-4120-0f662c5b5d66"',  # noqa E501
-            'NAME="md125" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="swap" LABEL="" UUID="1234d230-0aca-4b1d-9a10-c66744464d12"',  # noqa E501
-            'NAME="sdb1" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:root" UUID="183a555f-3a90-3f7d-0726-b4109a1d78ba"',  # noqa E501
-            'NAME="md127" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="59800daa-fdfd-493f-837d-18e9b46bbb46"',  # noqa E501
-            'NAME="sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="791M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="iso9660" LABEL="Rockstor 3 x86_64" UUID="2017-07-02-03-11-01-00"',  # noqa E501
-            'NAME="sda" MODEL="QEMU HARDDISK   " SERIAL="md-serial-1" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sda2" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:boot" UUID="fc9fc706-e831-6b14-591e-0bc5bb008681"',  # noqa E501
-            'NAME="md126" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="ext4" LABEL="" UUID="9df7d0f5-d109-4e84-a0f0-03a0cf0c03ad"',  # noqa E501
-            'NAME="sda3" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:swap" UUID="9ed64a0b-10d2-72f9-4120-0f662c5b5d66"',  # noqa E501
-            'NAME="md125" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="swap" LABEL="" UUID="1234d230-0aca-4b1d-9a10-c66744464d12"',  # noqa E501
-            'NAME="sda1" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:root" UUID="183a555f-3a90-3f7d-0726-b4109a1d78ba"',  # noqa E501
-            'NAME="md127" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="59800daa-fdfd-493f-837d-18e9b46bbb46"',  # noqa E501
+            'NAME="/dev/sdb" MODEL="QEMU HARDDISK   " SERIAL="md-serial-2" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdb2" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:boot" UUID="fc9fc706-e831-6b14-591e-0bc5bb008681"',  # noqa E501
+            'NAME="/dev/md126" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="ext4" LABEL="" UUID="9df7d0f5-d109-4e84-a0f0-03a0cf0c03ad"',  # noqa E501
+            'NAME="/dev/sdb3" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:swap" UUID="9ed64a0b-10d2-72f9-4120-0f662c5b5d66"',  # noqa E501
+            'NAME="/dev/md125" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="swap" LABEL="" UUID="1234d230-0aca-4b1d-9a10-c66744464d12"',  # noqa E501
+            'NAME="/dev/sdb1" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:root" UUID="183a555f-3a90-3f7d-0726-b4109a1d78ba"',  # noqa E501
+            'NAME="/dev/md127" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="59800daa-fdfd-493f-837d-18e9b46bbb46"',  # noqa E501
+            'NAME="/dev/sr0" MODEL="QEMU DVD-ROM    " SERIAL="QM00001" SIZE="791M" TRAN="ata" VENDOR="QEMU    " HCTL="0:0:0:0" TYPE="rom" FSTYPE="iso9660" LABEL="Rockstor 3 x86_64" UUID="2017-07-02-03-11-01-00"',  # noqa E501
+            'NAME="/dev/sda" MODEL="QEMU HARDDISK   " SERIAL="md-serial-1" SIZE="8G" TRAN="sata" VENDOR="ATA     " HCTL="2:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sda2" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:boot" UUID="fc9fc706-e831-6b14-591e-0bc5bb008681"',  # noqa E501
+            'NAME="/dev/md126" MODEL="" SERIAL="" SIZE="954M" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="ext4" LABEL="" UUID="9df7d0f5-d109-4e84-a0f0-03a0cf0c03ad"',  # noqa E501
+            'NAME="/dev/sda3" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:swap" UUID="9ed64a0b-10d2-72f9-4120-0f662c5b5d66"',  # noqa E501
+            'NAME="/dev/md125" MODEL="" SERIAL="" SIZE="1.4G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="swap" LABEL="" UUID="1234d230-0aca-4b1d-9a10-c66744464d12"',  # noqa E501
+            'NAME="/dev/sda1" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="linux_raid_member" LABEL="rockstor:root" UUID="183a555f-3a90-3f7d-0726-b4109a1d78ba"',  # noqa E501
+            'NAME="/dev/md127" MODEL="" SERIAL="" SIZE="5.7G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="59800daa-fdfd-493f-837d-18e9b46bbb46"',  # noqa E501
             '']]
         err = [['']]
         rc = [0]
         expected_result = [[
-            Disk(name='md127', model='[2] md-serial-1[0] md-serial-2[1] raid1',
+            Disk(name='/dev/md127', model='[2] md-serial-1[0] md-serial-2[1] raid1',  # noqa E501
                  serial='183a555f:3a903f7d:0726b410:9a1d78ba', size=5976883,
                  transport=None, vendor=None, hctl=None, type='raid1',
                  fstype='btrfs', label='rockstor_rockstor',
                  uuid='59800daa-fdfd-493f-837d-18e9b46bbb46', parted=False,
                  root=True, partitions={}),
-            Disk(name='sda', model='QEMU HARDDISK', serial='md-serial-1',
+            Disk(name='/dev/sda', model='QEMU HARDDISK', serial='md-serial-1',
                  size=8388608, transport='sata', vendor='ATA', hctl='2:0:0:0',
                  type='disk', fstype='linux_raid_member', label=None,
                  uuid=None, parted=True, root=False,
-                 partitions={'sda3': 'linux_raid_member',
-                             'sda1': 'linux_raid_member'}),
-            Disk(name='sdb', model='QEMU HARDDISK', serial='md-serial-2',
+                 partitions={'/dev/sda3': 'linux_raid_member',
+                             '/dev/sda1': 'linux_raid_member'}),
+            Disk(name='/dev/sdb', model='QEMU HARDDISK', serial='md-serial-2',
                  size=8388608, transport='sata', vendor='ATA', hctl='3:0:0:0',
                  type='disk', fstype='linux_raid_member', label=None,
                  uuid=None, parted=True, root=False,
-                 partitions={'sdb3': 'linux_raid_member',
-                             'sdb1': 'linux_raid_member'})
+                 partitions={'/dev/sdb3': 'linux_raid_member',
+                             '/dev/sdb1': 'linux_raid_member'})
         ]]
         # No LUKS or bcache mocking necessary as none in test data.
         # Establish dynamic mock behaviour for get_disk_serial()
@@ -1193,9 +1198,9 @@ class OSITests(unittest.TestCase):
             # Entries only requred here if lsblk test data has no serial info:
             # eg for bcache, LUKS, mdraid, and virtio type devices.
             s_map = {
-                'md125': 'fc9fc706:e8316b14:591e0bc5:bb008681',
-                'md126': '9ed64a0b:10d272f9:41200f66:2c5b5d66',
-                'md127': '183a555f:3a903f7d:0726b410:9a1d78ba'
+                '/dev/md125': 'fc9fc706:e8316b14:591e0bc5:bb008681',
+                '/dev/md126': '9ed64a0b:10d272f9:41200f66:2c5b5d66',
+                '/dev/md127': '183a555f:3a903f7d:0726b410:9a1d78ba'
             }
             # First argument in get_disk_serial() is device_name, key off this
             # for our dynamic mock return from s_map (serial map).
@@ -1209,7 +1214,7 @@ class OSITests(unittest.TestCase):
         self.mock_dyn_get_disk_serial.side_effect = dyn_disk_serial_return
         # Ensure we correctly mock our root_disk value away from file default
         # of sda as we now have a root_disk on md device.
-        self.mock_root_disk.return_value = 'md127'
+        self.mock_root_disk.return_value = '/dev/md127'
         # As we have an mdraid device of interest (the system disk) it's model
         # info field is used to present basic info on it's members serials:
         # We mock this as otherwise our wide scope run_command() mock breaks
@@ -1260,39 +1265,39 @@ class OSITests(unittest.TestCase):
 
         """
         out = [[
-            'NAME="sdb" MODEL="TOSHIBA MK1652GS" SERIAL="Z8A9CAZUT" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="1:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
-            'NAME="md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
-            'NAME="md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
-            'NAME="sdc" MODEL="SAMSUNG HM160HI " SERIAL="S1WWJ9BZ408430" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
-            'NAME="md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
-            'NAME="md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
-            'NAME="sda" MODEL="WDC WD3200AAKS-7" SERIAL="WD-WMAV20342011" SIZE="298.1G" TRAN="sata" VENDOR="ATA     " HCTL="0:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdb" MODEL="TOSHIBA MK1652GS" SERIAL="Z8A9CAZUT" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="1:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
+            'NAME="/dev/md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
+            'NAME="/dev/md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
+            'NAME="/dev/sdc" MODEL="SAMSUNG HM160HI " SERIAL="S1WWJ9BZ408430" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
+            'NAME="/dev/md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
+            'NAME="/dev/md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
+            'NAME="/dev/sda" MODEL="WDC WD3200AAKS-7" SERIAL="WD-WMAV20342011" SIZE="298.1G" TRAN="sata" VENDOR="ATA     " HCTL="0:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
             '']]
         err = [['']]
         rc = [0]
         expected_result = [[
-            Disk(name='md126p3',
+            Disk(name='/dev/md126p3',
                  model='[2] Z8A9CAZUT[0] S1WWJ9BZ408430[1] raid1',
                  serial='a300e6b0:5d69eee6:98a2354a:0ba1e1eb', size=153721241,
                  transport=None, vendor=None, hctl=None, type='md',
                  fstype='btrfs', label='rockstor_rockstor00',
                  uuid='1c59b842-5d08-4472-a731-c593ab0bff93', parted=True,
                  root=True, partitions={}),
-            Disk(name='sda', model='WDC WD3200AAKS-7',
+            Disk(name='/dev/sda', model='WDC WD3200AAKS-7',
                  serial='WD-WMAV20342011', size=312580505, transport='sata',
                  vendor='ATA', hctl='0:0:0:0', type='disk', fstype=None,
                  label=None, uuid=None, parted=False, root=False,
                  partitions={}),
-            Disk(name='sdb', model='TOSHIBA MK1652GS', serial='Z8A9CAZUT',
+            Disk(name='/dev/sdb', model='TOSHIBA MK1652GS', serial='Z8A9CAZUT',
                  size=156342681, transport='sata', vendor='ATA',
                  hctl='1:0:0:0', type='disk', fstype='isw_raid_member',
                  label=None, uuid=None, parted=False, root=False,
                  partitions={}),
-            Disk(name='sdc', model='SAMSUNG HM160HI', serial='S1WWJ9BZ408430',
+            Disk(name='/dev/sdc', model='SAMSUNG HM160HI', serial='S1WWJ9BZ408430',  # noqa E501
                  size=156342681, transport='sata', vendor='ATA',
                  hctl='3:0:0:0', type='disk', fstype='isw_raid_member',
                  label=None, uuid=None, parted=False, root=False,
@@ -1311,9 +1316,9 @@ class OSITests(unittest.TestCase):
             # Note in the following our md126p3 partition has the same serial
             # as it's base device.
             s_map = {
-                'md126': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
-                'md126p3': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
-                'md127': 'a88a8eda:1e459751:3341ad9b:fe3031a0'
+                '/dev/md126': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
+                '/dev/md126p3': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
+                '/dev/md127': 'a88a8eda:1e459751:3341ad9b:fe3031a0'
             }
             # First argument in get_disk_serial() is device_name, key off this
             # for our dynamic mock return from s_map (serial map).
@@ -1327,7 +1332,7 @@ class OSITests(unittest.TestCase):
         self.mock_dyn_get_disk_serial.side_effect = dyn_disk_serial_return
         # Ensure we correctly mock our root_disk value away from file default
         # of sda as we now have a root_disk on md device.
-        self.mock_root_disk.return_value = 'md126'
+        self.mock_root_disk.return_value = '/dev/md126'
         # As we have an mdraid device of interest (the system disk) it's model
         # info field is used to present basic info on it's members serials:
         # We mock this as otherwise our wide scope run_command() mock breaks
@@ -1372,47 +1377,47 @@ class OSITests(unittest.TestCase):
         """
         # Out and expected_results have sda stripped for simplicity.
         out = [[
-            'NAME="sdd" MODEL="Extreme         " SERIAL="AA010312161642210668" SIZE="29.2G" TRAN="usb" VENDOR="SanDisk " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdd2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="422cc263-788e-4a74-a127-99695c380a2c"',  # noqa E501
-            'NAME="sdd3" MODEL="" SERIAL="" SIZE="26.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="d030d7ee-4c85-4317-96bf-6ff766fec9ef"',  # noqa E501
-            'NAME="sdd1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="35c11bd3-bba1-4869-8a51-1e6bfaec15a2"',  # noqa E501
-            'NAME="sdb" MODEL="TOSHIBA MK1652GS" SERIAL="Z8A9CAZUT" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="1:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
-            'NAME="md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
-            'NAME="md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
-            'NAME="sdc" MODEL="SAMSUNG HM160HI " SERIAL="S1WWJ9BZ408430" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
-            'NAME="md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
-            'NAME="md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
+            'NAME="/dev/sdd" MODEL="Extreme         " SERIAL="AA010312161642210668" SIZE="29.2G" TRAN="usb" VENDOR="SanDisk " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdd2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="422cc263-788e-4a74-a127-99695c380a2c"',  # noqa E501
+            'NAME="/dev/sdd3" MODEL="" SERIAL="" SIZE="26.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor" UUID="d030d7ee-4c85-4317-96bf-6ff766fec9ef"',  # noqa E501
+            'NAME="/dev/sdd1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="35c11bd3-bba1-4869-8a51-1e6bfaec15a2"',  # noqa E501
+            'NAME="/dev/sdb" MODEL="TOSHIBA MK1652GS" SERIAL="Z8A9CAZUT" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="1:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
+            'NAME="/dev/md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
+            'NAME="/dev/md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
+            'NAME="/dev/sdc" MODEL="SAMSUNG HM160HI " SERIAL="S1WWJ9BZ408430" SIZE="149.1G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="isw_raid_member" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126" MODEL="" SERIAL="" SIZE="149G" TRAN="" VENDOR="" HCTL="" TYPE="raid1" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/md126p3" MODEL="" SERIAL="" SIZE="146.6G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="1c59b842-5d08-4472-a731-c593ab0bff93"',  # noqa E501
+            'NAME="/dev/md126p1" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="ext4" LABEL="" UUID="40e4a91f-6b08-4ea0-b0d1-e43d145558b3"',  # noqa E501
+            'NAME="/dev/md126p2" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="md" FSTYPE="swap" LABEL="" UUID="43d2f3dc-38cd-49ef-9e18-be35297c1412"',  # noqa E501
             '']]
         err = [['']]
         rc = [0]
         expected_result = [[
-            Disk(name='sdc', model='SAMSUNG HM160HI', serial='S1WWJ9BZ408430',
+            Disk(name='/dev/sdc', model='SAMSUNG HM160HI', serial='S1WWJ9BZ408430',  # noqa E501
                  size=156342681, transport='sata', vendor='ATA',
                  hctl='3:0:0:0', type='disk', fstype='isw_raid_member',
                  label=None, uuid=None, parted=False, root=False,
                  partitions={}),
-            Disk(name='sdb', model='TOSHIBA MK1652GS', serial='Z8A9CAZUT',
+            Disk(name='/dev/sdb', model='TOSHIBA MK1652GS', serial='Z8A9CAZUT',
                  size=156342681, transport='sata', vendor='ATA',
                  hctl='1:0:0:0', type='disk', fstype='isw_raid_member',
                  label=None, uuid=None, parted=False, root=False,
                  partitions={}),
-            Disk(name='sdd3', model='Extreme', serial='AA010312161642210668',
+            Disk(name='/dev/sdd3', model='Extreme', serial='AA010312161642210668',  # noqa E501
                  size=27996979, transport='usb', vendor='SanDisk',
                  hctl='6:0:0:0', type='part', fstype='btrfs',
                  label='rockstor_rockstor',
                  uuid='d030d7ee-4c85-4317-96bf-6ff766fec9ef', parted=True,
                  root=True, partitions={}),
-            Disk(name='md126',
+            Disk(name='/dev/md126',
                  model='[2] Z8A9CAZUT[0] S1WWJ9BZ408430[1] raid1',
                  serial='a300e6b0:5d69eee6:98a2354a:0ba1e1eb', size=153721241,
                  transport=None, vendor=None, hctl=None, type='raid1',
                  fstype='btrfs', label='rockstor_rockstor00',
                  uuid='1c59b842-5d08-4472-a731-c593ab0bff93', parted=True,
-                 root=False, partitions={'md126p3': 'btrfs'})
+                 root=False, partitions={'/dev/md126p3': 'btrfs'})
         ]]
 
         # No LUKS or bcache mocking necessary as none in test data.
@@ -1427,9 +1432,9 @@ class OSITests(unittest.TestCase):
             # Note in the following our md126p3 partition has the same serial
             # as it's base device.
             s_map = {
-                'md126': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
-                'md126p3': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
-                'md127': 'a88a8eda:1e459751:3341ad9b:fe3031a0'
+                '/dev/md126': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
+                '/dev/md126p3': 'a300e6b0:5d69eee6:98a2354a:0ba1e1eb',
+                '/dev/md127': 'a88a8eda:1e459751:3341ad9b:fe3031a0'
             }
             # First argument in get_disk_serial() is device_name, key off this
             # for our dynamic mock return from s_map (serial map).
@@ -1442,7 +1447,7 @@ class OSITests(unittest.TestCase):
                 return 'missing-mock-serial-data-for-dev-{}'.format(args[0])
         self.mock_dyn_get_disk_serial.side_effect = dyn_disk_serial_return
         # Ensure we correctly mock our root_disk value away from file default.
-        self.mock_root_disk.return_value = 'sdd'
+        self.mock_root_disk.return_value = '/dev/sdd'
         # As we have an mdraid device of interest (the data disk) it's model
         # info field is used to present basic info on it's members serials:
         # We mock this as otherwise our wide scope run_command() mock breaks
@@ -1477,13 +1482,13 @@ class OSITests(unittest.TestCase):
         # Test data based on 2 data drives (sdb, sdb) and an nvme system drive
         # /dev/nvme0n1 as the base device.
         out = [[
-            'NAME="sdb" MODEL="WDC WD100EFAX-68" SERIAL="7PKNDX1C" SIZE="9.1T" TRAN="sata" VENDOR="ATA " HCTL="1:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="Data" UUID="d2f76ce6-85fd-4615-b4f8-77e1b6a69c60"',  # noqa E501
-            'NAME="sda" MODEL="WDC WD100EFAX-68" SERIAL="7PKP0MNC" SIZE="9.1T" TRAN="sata" VENDOR="ATA " HCTL="0:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="Data" UUID="d2f76ce6-85fd-4615-b4f8-77e1b6a69c60"',  # noqa E501
-            'NAME="nvme0n1" MODEL="INTEL SSDPEKKW128G7 " SERIAL="BTPY72910KCW128A" SIZE="119.2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="nvme0n1p3" MODEL="" SERIAL="" SIZE="7.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="d33115d8-3d8c-4f65-b560-8ebf72d08fbc"',  # noqa E501
-            'NAME="nvme0n1p1" MODEL="" SERIAL="" SIZE="200M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="53DC-1323"',  # noqa E501
-            'NAME="nvme0n1p4" MODEL="" SERIAL="" SIZE="110.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="4a05477f-cd4a-4614-b264-d029d98928ab"',  # noqa E501
-            'NAME="nvme0n1p2" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="497a9eda-a655-4fc4-bad8-2d9aa8661980"',  # noqa E501
+            'NAME="/dev/sdb" MODEL="WDC WD100EFAX-68" SERIAL="7PKNDX1C" SIZE="9.1T" TRAN="sata" VENDOR="ATA " HCTL="1:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="Data" UUID="d2f76ce6-85fd-4615-b4f8-77e1b6a69c60"',  # noqa E501
+            'NAME="/dev/sda" MODEL="WDC WD100EFAX-68" SERIAL="7PKP0MNC" SIZE="9.1T" TRAN="sata" VENDOR="ATA " HCTL="0:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="Data" UUID="d2f76ce6-85fd-4615-b4f8-77e1b6a69c60"',  # noqa E501
+            'NAME="/dev/nvme0n1" MODEL="INTEL SSDPEKKW128G7 " SERIAL="BTPY72910KCW128A" SIZE="119.2G" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/nvme0n1p3" MODEL="" SERIAL="" SIZE="7.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="" UUID="d33115d8-3d8c-4f65-b560-8ebf72d08fbc"',  # noqa E501
+            'NAME="/dev/nvme0n1p1" MODEL="" SERIAL="" SIZE="200M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="" UUID="53DC-1323"',  # noqa E501
+            'NAME="/dev/nvme0n1p4" MODEL="" SERIAL="" SIZE="110.8G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="rockstor_rockstor00" UUID="4a05477f-cd4a-4614-b264-d029d98928ab"',  # noqa E501
+            'NAME="/dev/nvme0n1p2" MODEL="" SERIAL="" SIZE="500M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="ext4" LABEL="" UUID="497a9eda-a655-4fc4-bad8-2d9aa8661980"',  # noqa E501
             '']]
         err = [['']]
         rc = [0]
@@ -1493,29 +1498,29 @@ class OSITests(unittest.TestCase):
         rc.append(0)
         # Setup expected results
         expected_result = [[
-            Disk(name='sda', model='WDC WD100EFAX-68', serial='7PKP0MNC',
+            Disk(name='/dev/sda', model='WDC WD100EFAX-68', serial='7PKP0MNC',
                  size=9771050598, transport='sata', vendor='ATA',
                  hctl='0:0:0:0', type='disk', fstype='btrfs', label='Data',
                  uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdb', model='WDC WD100EFAX-68', serial='7PKNDX1C',
+            Disk(name='/dev/sdb', model='WDC WD100EFAX-68', serial='7PKNDX1C',
                  size=9771050598, transport='sata', vendor='ATA',
                  hctl='1:0:0:0', type='disk', fstype='btrfs', label='Data',
                  uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
                  root=False, partitions={})
         ], [
-            Disk(name='nvme0n1p4', model='INTEL SSDPEKKW128G7',
+            Disk(name='/dev/nvme0n1p4', model='INTEL SSDPEKKW128G7',
                  serial='BTPY72910KCW128A', size=116182220, transport=None,
                  vendor=None, hctl=None, type='part', fstype='btrfs',
                  label='rockstor_rockstor00',
                  uuid='4a05477f-cd4a-4614-b264-d029d98928ab', parted=True,
                  root=True, partitions={}),
-            Disk(name='sda', model='WDC WD100EFAX-68', serial='7PKP0MNC',
+            Disk(name='/dev/sda', model='WDC WD100EFAX-68', serial='7PKP0MNC',
                  size=9771050598, transport='sata', vendor='ATA',
                  hctl='0:0:0:0', type='disk', fstype='btrfs', label='Data',
                  uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
                  root=False, partitions={}),
-            Disk(name='sdb', model='WDC WD100EFAX-68', serial='7PKNDX1C',
+            Disk(name='/dev/sdb', model='WDC WD100EFAX-68', serial='7PKNDX1C',
                  size=9771050598, transport='sata', vendor='ATA',
                  hctl='1:0:0:0', type='disk', fstype='btrfs', label='Data',
                  uuid='d2f76ce6-85fd-4615-b4f8-77e1b6a69c60', parted=False,
@@ -1528,7 +1533,7 @@ class OSITests(unittest.TestCase):
         # get_bcache_device_type()
         # Ensure we correctly mock our root_disk value away from file default
         # of sda as we now have a root_disk on an nvme device.
-        self.mock_root_disk.return_value = 'nvme0n1'
+        self.mock_root_disk.return_value = '/dev/nvme0n1'
         # Iterate the test data sets for run_command running lsblk.
         for o, e, r, expected in zip(out, err, rc, expected_result):
             self.mock_run_command.return_value = (o, e, r)

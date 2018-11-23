@@ -115,11 +115,31 @@ PoolRebalanceTableModule = RockstorModuleView.extend({
                 html += '<td>' + poolrebalance.get('id') + '</td>';
                 html += '<td>' + poolrebalance.get('status') + '</td>';
                 html += '<td>';
+                internal_balance = poolrebalance.get('internal');
+                percent_done = poolrebalance.get('percent_done')
+                if (internal_balance) {
+                    html += 'Disk Removal'
+                } else {
+                    html += 'Regular'
+                }
+                html += '</td>';
+                html += '<td>';
                 if (poolrebalance.get('start_time')) {
                     html += moment(poolrebalance.get('start_time')).format(RS_DATE_FORMAT);
                 }
                 html += '</td>';
-                html += '<td>' + poolrebalance.get('percent_done') + '</td>';
+                // html += '<td>';
+                // if (poolrebalance.get('end_time')) {
+                //     html += moment(poolrebalance.get('end_time')).format(RS_DATE_FORMAT);
+                // }
+                // html += '</td>';
+                html += '<td>';
+                if (percent_done != 100 && internal_balance) {
+                    html += 'unavailable';
+                } else {
+                    html += percent_done;
+                }
+                html + '</td>';
                 html += '<td>';
                 if (poolrebalance.get('message') != null) {
                     html += poolrebalance.get('message');
