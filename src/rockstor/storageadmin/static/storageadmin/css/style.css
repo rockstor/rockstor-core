@@ -1248,6 +1248,16 @@ form { margin: 0px; }
     margin-bottom: 12px;
 }
 
+.input-btn {
+    display: inline !important;
+    width: 70% !important;
+}
+
+#field1 {
+    display: inline !important;
+    width: 83% !important;
+}
+
 input[type="checkbox"].inline {
   margin-top: 0px;
 }

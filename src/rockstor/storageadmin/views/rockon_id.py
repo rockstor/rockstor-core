@@ -20,7 +20,8 @@ import time
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DContainer, DVolume, DContainerDevice,
-                                 Share, DPort, DCustomConfig, DContainerEnv)
+                                 Share, DPort, DCustomConfig, DContainerEnv,
+                                 DContainerLabel)
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -195,31 +196,42 @@ class RockOnIdView(rfc.GenericView):
                              'try again.').format(rockon.name)
                     handle_exception(Exception(e_msg), request)
                 share_map = request.data.get('shares')
-                for co in DContainer.objects.filter(rockon=rockon):
-                    for s in share_map.keys():
-                        sname = share_map[s]
-                        if (not Share.objects.filter(name=sname).exists()):
-                            e_msg = 'Invalid share ({}).'.format(sname)
-                            handle_exception(Exception(e_msg), request)
-                        so = Share.objects.get(name=sname)
-                        if (DVolume.objects.filter(
-                                container=co, share=so).exists()):
-                            e_msg = ('Share ({}) is already assigned to '
-                                     'this rock-on.').format(sname)
-                            handle_exception(Exception(e_msg), request)
-                        if (DVolume.objects.filter(
-                                container=co, dest_dir=s).exists()):
-                            e_msg = ('Directory ({}) is already mapped for '
-                                     'this rock-on.').format(s)
-                            handle_exception(Exception(e_msg), request)
-                        if (not s.startswith('/')):
-                            e_msg = ('Invalid directory ({}). Must provide an '
-                                     'absolute path. Eg: '
-                                     '(/data/media).').format(s)
-                            handle_exception(Exception(e_msg), request)
-                        do = DVolume(container=co, share=so, uservol=True,
-                                     dest_dir=s)
-                        do.save()
+                label_map = request.data.get('labels')
+                if bool(share_map):
+                    for co in DContainer.objects.filter(rockon=rockon):
+                        for s in share_map.keys():
+                            sname = share_map[s]
+                            if (not Share.objects.filter(name=sname).exists()):
+                                e_msg = 'Invalid share ({}).'.format(sname)
+                                handle_exception(Exception(e_msg), request)
+                            so = Share.objects.get(name=sname)
+                            if (DVolume.objects.filter(
+                                    container=co, share=so).exists()):
+                                e_msg = ('Share ({}) is already assigned to '
+                                         'this rock-on.').format(sname)
+                                handle_exception(Exception(e_msg), request)
+                            if (DVolume.objects.filter(
+                                    container=co, dest_dir=s).exists()):
+                                e_msg = ('Directory ({}) is already mapped for '
+                                         'this rock-on.').format(s)
+                                handle_exception(Exception(e_msg), request)
+                            if (not s.startswith('/')):
+                                e_msg = ('Invalid directory ({}). Must provide an '
+                                         'absolute path. Eg: '
+                                         '(/data/media).').format(s)
+                                handle_exception(Exception(e_msg), request)
+                            do = DVolume(container=co, share=so, uservol=True,
+                                         dest_dir=s)
+                            do.save()
+                if bool(label_map):
+                    for co in DContainer.objects.filter(rockon=rockon):
+                        for c in label_map.keys():
+                            cname = label_map[c]
+                            coname = co.name
+                            if(cname != coname):
+                                continue
+                            lo = DContainerLabel(container=co, key=cname, val=c)
+                            lo.save()
                 rockon.state = 'pending_update'
                 rockon.save()
                 update.async(rockon.id)

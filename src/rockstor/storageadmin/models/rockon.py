@@ -165,3 +165,13 @@ class DContainerDevice(models.Model):
     class Meta:
         unique_together = ('container', 'dev')
         app_label = 'storageadmin'
+
+
+class DContainerLabel(models.Model):
+    container = models.ForeignKey(DContainer)
+    key = models.CharField(max_length=1024, null=True)
+    val = models.CharField(max_length=1024, null=True)
+
+    class Meta:
+        unique_together = ('container', 'val')
+        app_label = 'storageadmin'
