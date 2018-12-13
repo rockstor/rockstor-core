@@ -183,6 +183,7 @@ class RockOnIdView(rfc.GenericView):
                 rockon.save()
                 for co in DContainer.objects.filter(rockon=rockon):
                     DVolume.objects.filter(container=co, uservol=True).delete()
+                    DContainerLabel.objects.filter(container=co).delete()
             elif (command == 'update'):
                 self._pending_check(request)
                 if (rockon.state != 'installed'):
