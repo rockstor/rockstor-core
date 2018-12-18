@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import json
 from django.db import models
 
-
 # This is the key abstraction for network configuration that is user
 # configurable in Rockstor.  user can add, delete or modify connections which
 # results in CRUD ops on this model and also on other models linked to this
@@ -86,6 +85,8 @@ class NetworkConnection(models.Model):
             return "team"
         if self.bondconnection_set.count() > 0:
             return "bond"
+        if self.bridgeconnection_set.count() > 0:
+            return "bridge"
         return None
 
     @property
@@ -111,6 +112,66 @@ class NetworkConnection(models.Model):
             pass
         finally:
             return profile
+
+    @property
+    def docker_name(self):
+        dname = None
+        if self.bridgeconnection_set.count() > 0:
+            brco = self.bridgeconnection_set.first()
+            dname = brco.docker_name
+        return dname
+
+    @property
+    def user_dnet(self):
+        """
+        Returns True if the docker network is a rocknet (defined by the user).
+        Used by rockons.js to list available rocknets available for connection.
+        :return: Boolean
+        """
+        user_dnet = None
+        if self.bridgeconnection_set.count() > 0:
+            brco = self.bridgeconnection_set.first()
+            user_dnet = brco.usercon
+            if user_dnet:
+                user_dnet = True
+        return user_dnet
+
+    @property
+    def docker_options(self):
+        """
+        Gather all connection's settings in a dict to be displayed in the UI connection form
+        needed to edit an existing docker network connection.
+        :return:
+        """
+        docker_options = {}
+        if self.bridgeconnection_set.count() > 0:
+            brco = self.bridgeconnection_set.first()
+            connected_containers = []
+            if brco.dcontainernetwork_set.filter(connection=brco.id).count() > 0:
+                for i in range(
+                    brco.dcontainernetwork_set.filter(connection=brco.id).count()
+                ):
+                    cname = (
+                        brco.dcontainernetwork_set.filter(connection=brco.id)
+                        .order_by("id")[i]
+                        .container_name
+                    )
+                    rname = (
+                        brco.dcontainernetwork_set.filter(connection=brco.id)
+                        .order_by("id")[i]
+                        .container.rockon.name
+                    )
+                    connected_containers.append("{} ({})".format(cname, rname))
+            docker_options["aux_address"] = brco.aux_address
+            docker_options["dgateway"] = brco.dgateway
+            docker_options["host_binding"] = brco.host_binding
+            docker_options["icc"] = brco.icc
+            docker_options["internal"] = brco.internal
+            docker_options["ip_masquerade"] = brco.ip_masquerade
+            docker_options["ip_range"] = brco.ip_range
+            docker_options["subnet"] = brco.subnet
+            docker_options["containers"] = connected_containers
+        return docker_options
 
     class Meta:
         app_label = "storageadmin"
@@ -140,6 +201,17 @@ class NetworkDevice(models.Model):
         if self.connection is None:
             return None
         return self.connection.name
+
+    @property
+    def dev_name(self):
+        """
+        Return the user-friendly docker_name as device name for bridge connections
+        to be displayed in the network widget on the dashboard.
+        :return:
+        """
+        if (self.dtype == "bridge") and (self.connection is not None):
+            return self.connection.docker_name
+        return self.name
 
     class Meta:
         app_label = "storageadmin"
@@ -174,6 +246,23 @@ class BondConnection(models.Model):
     # at the NM level it's not json like in team config, but we could convert
     # it for consistency.
     config = models.CharField(max_length=2048, null=True)
+
+    class Meta:
+        app_label = "storageadmin"
+
+
+class BridgeConnection(models.Model):
+    connection = models.ForeignKey(NetworkConnection, null=True)
+    docker_name = models.CharField(max_length=64, null=True)
+    usercon = models.BooleanField(default=False)
+    aux_address = models.CharField(max_length=2048, null=True)
+    dgateway = models.CharField(max_length=64, null=True)
+    host_binding = models.CharField(max_length=64, null=True)
+    icc = models.BooleanField(default=False)
+    internal = models.BooleanField(default=False)
+    ip_masquerade = models.BooleanField(default=False)
+    ip_range = models.CharField(max_length=64, null=True)
+    subnet = models.CharField(max_length=64, null=True)
 
     class Meta:
         app_label = "storageadmin"

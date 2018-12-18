@@ -19,9 +19,21 @@
     <tr>
         <td>Port</td>
         <td>{{this.hostp}}</td>
-        <td>{{this.containerp}}</td>
+        <td>{{this.containerp}}{{isPublished this.id this.publish}}</td>
+        <!--<td>{{this.containerp}}{{isPublished this.id}}</td>-->
     </tr>
 {{/each}}
+{{#if new_cnets}}
+    {{display_newCnets}}
+{{else}}
+{{#each rocknets}}
+    <tr>
+        <td>Network</td>
+        <td>{{this.container_name}}</td>
+        <td>{{this.docker_name}}</td>
+    </tr>
+{{/each}}
+{{/if}}
 {{#each cc}}
     <tr>
         <td>Custom</td>

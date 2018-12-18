@@ -27,6 +27,7 @@ from storageadmin.views import (
     RockOnDeviceView,
     RockOnContainerView,
     RockOnLabelView,
+    RockOnNetworkView,
 )
 
 urlpatterns = patterns(
@@ -39,6 +40,7 @@ urlpatterns = patterns(
     url(r"^/environment/(?P<rid>\d+)$", RockOnEnvironmentView.as_view(),),
     url(r"^/devices/(?P<rid>\d+)$", RockOnDeviceView.as_view(),),
     url(r"^/labels/(?P<rid>\d+)$", RockOnLabelView.as_view(),),
+    url(r"^/networks/(?P<rid>\d+)$", RockOnNetworkView.as_view(),),
     url(r"^/(?P<command>update)$", RockOnView.as_view(),),
     url(r"^/(?P<rid>\d+)$", RockOnIdView.as_view(),),
     url(

@@ -64,7 +64,7 @@ NetworkConnectionView = RockstorLayoutView.extend({
         $(this.el).append(this.template({
             connection: connection,
             devices: this.devices.toJSON(),
-            ctypes: ['ethernet', 'team', 'bond'],
+            ctypes: ['ethernet', 'team', 'bond', 'docker'],
             teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp'],
             bondProfiles: ['balance-rr', 'active-backup', 'balance-xor', 'broadcast',
                 '802.3ad', 'balance-tlb', 'balance-alb'
@@ -73,13 +73,28 @@ NetworkConnectionView = RockstorLayoutView.extend({
 
         if (this.connection) {
             this.renderCTypeOptionalFields();
+            this.renderMethodOptionalFields();
         }
+
+        $.validator.addMethod('isAlphanumeric', function(value, element) {
+            var regExp = new RegExp(/^[A-Za-z0-9]+$/);
+            return this.optional(element) || regExp.test(value);
+        }, 'The connection name can only contain alphanumeric characters.')
+
+        $.validator.addMethod('isNotExcluded', function(value, element) {
+            var excluded = ['host', 'bridge', 'null'];
+            return this.optional(element) || excluded.indexOf(value) === -1;
+        }, 'This connection name is reserved for system use.')
 
         this.validator = this.$('#new-connection-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-                name: 'required',
+                name: {
+                    required: true,
+                    isAlphanumeric: true,
+                    isNotExcluded: true
+                },
                 ipaddr: {
                     required: {
                         depends: function(element) {
@@ -120,6 +135,9 @@ NetworkConnectionView = RockstorLayoutView.extend({
                 disableButton(cancelButton);
                 var data = _this.$('#new-connection-form').getJSON();
                 var conn = _this.connection;
+                if (conn) {
+                var data = $.extend(data, {'docker_name':conn.get('docker_name')});
+                }
                 if (!_this.connection) {
                     conn = new NetworkConnection();
                 }
@@ -184,15 +202,63 @@ NetworkConnectionView = RockstorLayoutView.extend({
             placement: 'right',
             title: 'Enter a value in [1500-9000] range. Defaults to 1500.'
         });
+        this.$('#aux_address').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Comma-separated list of auxiliary IPv4 addresses used by Network driver ("my-router=192.168.1.5"). This can prove useful to reserve IP addresses already attributed on the network.'
+        });
+        this.$('#dgateway').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'IP address of your gateway.'
+        });
+        this.$('#ip_range').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Enter an IP range in CIDR notation (172.28.5.0/24).'
+        });
+        this.$('#subnet').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Enter a subnet value in CIDR notation (172.28.0.0/16).'
+        });
+        this.$('#host_binding').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Enter a default IP address when binding container ports (172.23.0.1).'
+        });
+        this.$('#internal').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Restrict external access to the network.'
+        });
+        this.$('#ip_masquerade').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Enable IP masquerading.'
+        });
+        this.$('#icc').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Enable or Disable Inter-Containers Connectivity.'
+        });
+
     },
 
     // hide fields when selected method is auto
     renderMethodOptionalFields: function() {
         var selection = this.$('#method').val();
+        var ctype = this.$('#ctype').val();
         if (selection == 'auto') {
-            $('#methodOptionalFields').hide();
+            $('#methodOptionalFields, #methodOptionalFieldsDocker').hide();
         } else {
-            $('#methodOptionalFields').show();
+            if (ctype == 'docker') {
+                $('#methodOptionalFields').hide();
+                $('#methodOptionalFieldsDocker').show();
+            } else {
+                $('#methodOptionalFields').show();
+                $('#methodOptionalFieldsDocker').hide();
+            }
         }
     },
 
@@ -206,12 +272,14 @@ NetworkConnectionView = RockstorLayoutView.extend({
             $('#teamProfiles, #multiDevice').show();
             $('#bondProfiles, #singleDevice').hide();
         } else if (selection == 'ethernet') {
-            $('#teamProfiles, #multiDevice #bondProfiles').hide();
+            $('#teamProfiles, #multiDevice, #bondProfiles').hide();
             $('#singleDevice').show();
-        } else {
-            //bond
+        } else if (selection == 'bond') {
             $('#teamProfiles, #singleDevice').hide();
             $('#bondProfiles, #multiDevice').show();
+        } else if (selection == 'docker') {
+        //    show docker-specific config options
+            $('#teamProfiles, #singleDevice, #bondProfiles, #multiDevice').hide();
         }
     },
 
@@ -219,7 +287,8 @@ NetworkConnectionView = RockstorLayoutView.extend({
         var _this = this;
         Handlebars.registerHelper('selectedCtype', function(ctype) {
             var html = '';
-            if (ctype == _this.connection.get('ctype')) {
+            if ((ctype == _this.connection.get('ctype')) ||
+            ((ctype == 'docker') && (_this.connection.get('ctype') == 'bridge'))) {
                 html = 'selected="selected"';
             }
             return new Handlebars.SafeString(html);

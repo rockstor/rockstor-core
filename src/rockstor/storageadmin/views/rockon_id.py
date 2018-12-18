@@ -21,9 +21,6 @@ import time
 
 from django.db import transaction
 from rest_framework.response import Response
-
-import rest_framework_custom as rfc
-from rockon_helpers import docker_status, start, stop, install, uninstall, update
 from storageadmin.models import (
     RockOn,
     DContainer,
@@ -33,16 +30,23 @@ from storageadmin.models import (
     DPort,
     DCustomConfig,
     DContainerEnv,
+    DContainerLink,
     DContainerLabel,
+    DContainerNetwork,
+    BridgeConnection,
 )
 from storageadmin.serializers import RockOnSerializer
+import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
+from rockon_helpers import start, stop, install, uninstall, update
 from system.services import superctl
+from system.docker import docker_status, dnet_create, dnet_disconnect, dnet_remove
+from storageadmin.views.network import NetworkMixin
 
 logger = logging.getLogger(__name__)
 
 
-class RockOnIdView(rfc.GenericView):
+class RockOnIdView(rfc.GenericView, NetworkMixin):
     serializer_class = RockOnSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -204,6 +208,13 @@ class RockOnIdView(rfc.GenericView):
                 for co in DContainer.objects.filter(rockon=rockon):
                     DVolume.objects.filter(container=co, uservol=True).delete()
                     DContainerLabel.objects.filter(container=co).delete()
+                    DContainerNetwork.objects.filter(container=co).delete()
+                    for lo in DContainerLink.objects.filter(destination=co):
+                        dnet_remove(network=lo.name)
+                    # Reset all ports to a published state (if any)
+                    for po in DPort.objects.filter(container=co):
+                        po.publish = True
+                        po.save()
             elif command == "update":
                 self._pending_check(request)
                 if rockon.state != "installed":
@@ -220,6 +231,12 @@ class RockOnIdView(rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
                 share_map = request.data.get("shares")
                 label_map = request.data.get("labels")
+                ports_publish = request.data.get("edit_ports")
+                cnets_map = request.data.get("cnets")
+                update_mode = request.data.get("update_mode")
+                live = False
+                if request.data.get("update_mode") == "live":
+                    live = True
                 if bool(share_map):
                     for co in DContainer.objects.filter(rockon=rockon):
                         for s in share_map.keys():
@@ -261,9 +278,37 @@ class RockOnIdView(rfc.GenericView):
                                 continue
                             lo = DContainerLabel(container=co, key=cname, val=c)
                             lo.save()
+                if (update_mode == "normal") and bool(ports_publish):
+                    for p in ports_publish.keys():
+                        po = DPort.objects.get(id=p)
+                        pub = ports_publish[p]
+                        po.publish = True
+                        if pub == "unchecked":
+                            po.publish = False
+                        po.save()
+                if bool(update_mode):
+                    # Reset all existing rocknets
+                    for co in DContainer.objects.filter(rockon=rockon):
+                        for cno in DContainerNetwork.objects.filter(container=co.id):
+                            dnet_disconnect(co.name, cno.connection.docker_name)
+                        DContainerNetwork.objects.filter(container=co).delete()
+                    # Create new one(s)
+                    if bool(cnets_map):
+                        for c in cnets_map.keys():
+                            # Create new entries for updated rocknets settings
+                            for net in cnets_map[c]:
+                                if not BridgeConnection.objects.filter(
+                                    docker_name=net
+                                ).exists():
+                                    dnet_create(network=net)
+                                    self._refresh_connections()
+                                brco = BridgeConnection.objects.get(docker_name=net)
+                                co = DContainer.objects.get(rockon=rockon, name=c)
+                                cno = DContainerNetwork(container=co, connection=brco)
+                                cno.save()
                 rockon.state = "pending_update"
                 rockon.save()
-                update.async(rockon.id)
+                update.async(rockon.id, live=live)
             elif command == "stop":
                 stop.async(rockon.id)
                 rockon.status = "pending_stop"

@@ -90,6 +90,6 @@ class DisksConsole(BaseConsole):
     def help_wipe(self):
         snps = "Wipe the partition table of a disk"
         params = {
-            "disk_name": "Name of the disk to be wiped of it's data",
+            "disk_name": "Name of the disk to be wiped of its data",
         }
         self.print_help(snps, "wipe", args=("disk_name",), params=params)

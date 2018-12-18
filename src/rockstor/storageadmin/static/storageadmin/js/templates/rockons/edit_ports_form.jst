@@ -1,0 +1,66 @@
+<div class="row">
+    <div class="col-md-10">
+        <div class="alert alert-warning">
+            <p>
+                You can choose to unpublish any port currently exported by this rock-on. Be aware,
+                however, that this is likely to interfere with its proper function, so change these settings
+                only if you know what it implies.
+            </p>
+        </div>
+        <form id="edit-ports-form" name="ports-form" class="form-horizontal">
+            <table class="table table-condensed table-bordered table-hover table-striped tablesorter">
+                <thead>
+                <tr>
+                    <th>Container</th>
+                    <th>Description</th>
+                    <th>Host &nbsp<i class="fa fa-info-circle fa-lg" title="Port number on the host" rel="tooltip"></i></th>
+                    <th>Mapped Port&nbsp;&nbsp<i class="fa fa-info-circle fa-lg"
+                                                 title="Port number mapped on the container" rel="tooltip"></i></th>
+                    <th>Publish&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Publish / Unpublish port"
+                                             rel="tooltip"></i></th>
+                </tr>
+                </thead>
+                {{#each ports}}
+                <tr>
+                    <td>{{this.container_name}}</td>
+                    <td>{{this.label}}</td>
+                    <td>{{this.hostp}}</td>
+                    <td>{{this.containerp}}</td>
+                    <td><input class="checkbox-inline ports-group" type="checkbox" id="{{this.id}}" name="{{this.id}}" {{#if
+                               this.publish}}checked{{/if}}>{{#if this.uiport}}&nbsp<i
+                            class="glyphicon glyphicon-exclamation-sign"
+                            title="This port is used to access the Rock-on's webUI. If you unpublish it, you won't be able to access it directly."
+                            rel="tooltip"></i>{{/if}}
+                    </td>
+                </tr>
+                {{/each}}
+            </table>
+                {{#unless ports}}
+                    <div class="alert alert-success">
+                        <p>This rock-on does not have any port exposed to modify.</p>
+                    </div>
+                {{/unless}}
+        </form>
+        <h3>Rocknets (optional)&nbsp;<a href="http://rockstor.com/docs/" target="_blank"
+                                        title="See Rockstor's documentation" rel="tooltip"><i
+                class="glyphicon glyphicon-question-sign"></i></a></h3>
+        <p>Select one or more rocknet(s) to join for each container of this rock-on:</p>
+        <div class="form-box">
+            <form id="join-networks" name="aform" class="form-horizontal">
+                {{#each containers}}
+                <div class="form-group">
+                    <label class="col-sm-3 control-label" for="containers">Container: {{name}}</label>
+                    <div class="controls col-sm-8">
+                        <select class="form-control" id="{{name}}" name="{{name}}" size="20"
+                                data-placeholder="select networks" multiple="multiple">
+                            {{#each ../user_dnets}}
+                            <option value="{{docker_name}}">{{docker_name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                </div>
+                {{/each}}
+            </form>
+        </div>
+    </div>
+</div>
