@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
+import stat
 from tempfile import mkstemp
 from osi import run_command
 from services import systemctl
@@ -27,6 +28,7 @@ from datetime import (datetime, timedelta)
 import requests
 from django.conf import settings
 from system.exceptions import CommandException
+import distro
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ YUM = '/usr/bin/yum'
 RPM = '/usr/bin/rpm'
 SYSTEMCTL = '/usr/bin/systemctl'
 AT = '/usr/bin/at'
-YCFILE = '/etc/yum/yum-cron.conf'
+YCFILE = '/etc/yum/yum-cron.conf'  # Doesn't exist in openSUSE
 
 
 def install_pkg(name):
@@ -128,7 +130,19 @@ def rpm_build_info(pkg):
 
 
 def switch_repo(subscription, on=True):
-    yum_file = '/etc/yum.repos.d/Rockstor-%s.repo' % subscription.name
+    repos_dir = '/etc/yum.repos.d'
+    yum_file = '{}/Rockstor-{}.repo'.format(repos_dir, subscription.name)
+    # Historically our base subscription url denotes our CentOS rpm repo.
+    subscription_distro_url = subscription.url
+    distro_id = distro.id()
+    if distro_id == 'opensuse-leap':
+        subscription_distro_url += '/leap/{}'.format(distro.version())
+    elif distro_id == 'opensuse-tumbleweed':
+        subscription_distro_url += '/tumbleweed'
+    # Check if dir /etc/yum.repos.d exists and if not create.
+    if not os.path.isdir(repos_dir):
+        # Can use os.makedirs(path) if intermediate levels also don't exist.
+        os.mkdir(repos_dir, )
     if (on):
         with open(yum_file, 'w') as rfo:
             rfo.write('[Rockstor-%s]\n' % subscription.name)
@@ -136,15 +150,16 @@ def switch_repo(subscription, on=True):
             if (subscription.password is not None):
                 rfo.write('baseurl=http://%s:%s@%s\n' %
                           (subscription.appliance.uuid, subscription.password,
-                           subscription.url))
+                           subscription_distro_url))
             else:
-                rfo.write('baseurl=http://%s\n' % subscription.url)
+                rfo.write('baseurl=http://%s\n' % subscription_distro_url)
             rfo.write('enabled=1\n')
             rfo.write('gpgcheck=1\n')
             rfo.write('gpgkey=file://%sconf/ROCKSTOR-GPG-KEY\n'
                       % settings.ROOT_DIR)
-            rfo.write('metadata_expire=1m\n')
-        os.chmod(yum_file, 600)
+            rfo.write('metadata_expire=1h\n')
+        # Set file to rw- --- --- (600) via stat constants.
+        os.chmod(yum_file, stat.S_IRUSR | stat.S_IWUSR)
     else:
         if (os.path.exists(yum_file)):
             os.remove(yum_file)
@@ -176,11 +191,27 @@ def update_check(subscription=None):
 
     pkg = 'rockstor'
     version, date = rpm_build_info(pkg)
-    o, e, rc = run_command([YUM, 'changelog', date, pkg])
+    if date is None:
+        # None date signifies no rpm installed so list all changelog entries.
+        date = 'all'
     log = False
     available = False
     new_version = None
     updates = []
+    try:
+        o, e, rc = run_command([YUM, 'changelog', date, pkg])
+    except CommandException as e:
+        # Catch as yet unconfigured repos ie Leap 15.1: error log accordingly.
+        # Avoids breaking current version display and update channel selection.
+        emsg = 'Error\\: Cannot retrieve repository metadata \\(repomd.xml\\)'
+        if re.match(emsg, e.err[-2]) is not None:
+            logger.error('Rockstor repo for distro.id ({}) version ({}) may '
+                         'not exist: pending or deprecated.\nReceived: ({}).'
+                         .format(distro.id(), distro.version(), e.err))
+            new_version = version  # Explicitly set (flag) for code clarity.
+            return version, new_version, updates
+        # otherwise we raise an exception as normal.
+        raise e
     for l in o:
         if (re.search('Available Packages', l) is not None):
             available = True
@@ -206,7 +237,7 @@ def update_check(subscription=None):
                     if (re.search('rockstor.x86_64', l) is not None):
                         new_version = l.strip().split()[3].split(':')[1]
 
-    return (version, new_version, updates)
+    return version, new_version, updates
 
 
 def update_run(subscription=None, yum_update=False):
