@@ -1034,10 +1034,10 @@ RockonSettingsWizardView = WizardView.extend({
             } else {
                 if (this.rockon.get('status') == 'started') {
                     var _this = this;
-                    this.$('#next-page').click(function() {
+                    this.$('.wizard-btn').click(function() {
                         //disabling the button so that the backbone event is not triggered after the alert click.
-                        _this.$('#next-page').prop('disabled', true);
-                        alert('Rock-on must be turned off to add storage.');
+                        _this.$('.wizard-btn').prop('disabled', true);
+                        alert('Rock-on must be turned off to change its settings.');
                     });
                 }
             }
