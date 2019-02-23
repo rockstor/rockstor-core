@@ -173,14 +173,23 @@ var ImageCollection = RockStorPaginatedCollection.extend({
 });
 
 var Container = Backbone.Model.extend({
-    url: function() {
-        return '/api/rockons/';
-    }
+    urlRoot: '/api/rockons/docker/containers/' + this.rid
 });
 
 var ContainerCollection = RockStorPaginatedCollection.extend({
-    model: Image,
-    baseUrl: '/api/rockons/docker/containers'
+    model: Container,
+    initialize: function(models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
+    },
+    baseUrl: function() {
+        if (this.rid) {
+            return '/api/rockons/docker/containers/' + this.rid;
+        }
+        return '/api/rockons/docker/containers';
+    }
 });
 
 var Snapshot = Backbone.Model.extend({
@@ -738,6 +747,26 @@ var RockOnDeviceCollection = RockStorPaginatedCollection.extend({
             return '/api/rockons/devices/' + this.rid;
         }
         return '/api/rockons/devices';
+    }
+});
+
+var RockOnLabel = Backbone.Model.extend({
+    urlRoot: '/api/rockon/labels/' + this.rid
+});
+
+var RockOnLabelCollection = RockStorPaginatedCollection.extend({
+    model: RockOnLabel,
+    initialize: function(models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
+    },
+    baseUrl: function() {
+        if (this.rid) {
+            return '/api/rockons/labels/' + this.rid;
+        }
+        return '/api/rockons/labels';
     }
 });
 

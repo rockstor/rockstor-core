@@ -882,8 +882,15 @@ RockonInfoView = WizardView.extend({
 });
 
 RockonSettingsWizardView = WizardView.extend({
+    events: {
+        'click #next-page': 'nextPage',
+        'click #prev-page': 'prevPage',
+        'click #add-label': 'addLabels'
+    },
+
     initialize: function() {
         WizardView.prototype.initialize.apply(this, arguments);
+        this.template = window.JST.rockons_wizard_summary;
         this.pages = [RockonSettingsSummary, ];
         this.rockon = this.model.get('rockon');
         this.volumes = new RockOnVolumeCollection(null, {
@@ -901,8 +908,18 @@ RockonSettingsWizardView = WizardView.extend({
         this.environment = new RockOnEnvironmentCollection(null, {
             rid: this.rockon.id
         });
+        this.labels = new RockOnLabelCollection(null, {
+            rid: this.rockon.id
+        });
+        this.containers = new ContainerCollection(null, {
+            rid: this.rockon.id
+        });
+
         this.shares = {};
         this.model.set('shares', this.shares);
+        this.new_labels = {};
+        this.model.set('new_labels', this.new_labels);
+        this.evAgg.bind('addLabels', this.addLabels, this);
     },
 
     fetchVolumes: function() {
@@ -925,6 +942,16 @@ RockonSettingsWizardView = WizardView.extend({
         });
     },
 
+    fetchDevices: function() {
+        var _this = this;
+        this.devices.fetch({
+            success: function() {
+                _this.model.set('devices', _this.devices);
+                _this.fetchCustomConfig();
+            }
+        });
+    },
+
     fetchCustomConfig: function() {
         var _this = this;
         this.custom_config.fetch({
@@ -935,24 +962,42 @@ RockonSettingsWizardView = WizardView.extend({
         });
     },
 
-    fetchDevices: function() {
-        var _this = this;
-        this.ports.fetch({
-            success: function() {
-                _this.model.set('devices', _this.devices);
-                _this.fetchCustomConfig();
-            }
-        });
-    },
-    
     fetchEnvironment: function() {
         var _this = this;
         this.environment.fetch({
             success: function() {
                 _this.model.set('environment', _this.environment);
+                _this.fetchContainers();
+            }
+        });
+    },
+
+    fetchContainers: function() {
+        var _this = this;
+        this.containers.fetch({
+            success: function() {
+                _this.model.set('containers', _this.containers);
+                _this.fetchLabels();
+            }
+        });
+    },
+
+    fetchLabels: function() {
+        var _this = this;
+        this.labels.fetch({
+            success: function() {
+                _this.model.set('labels', _this.labels);
                 _this.addPages();
             }
         });
+    },
+
+    addLabels: function() {
+        this.pages[1] = RockonAddLabel;
+        this.pages[2] = RockonSettingsSummary;
+        this.pages[3] = RockonSettingsComplete;
+        WizardView.prototype.render.apply(this, arguments);
+        return this;
     },
 
     render: function() {
@@ -981,16 +1026,18 @@ RockonSettingsWizardView = WizardView.extend({
     modifyButtonText: function() {
         if (this.currentPageNum == 0) {
             this.$('#prev-page').hide();
+            this.$('#add-label').html('Add Label');
+            this.$('#add-label').css({'display': 'inline'});
             this.$('#next-page').html('Add Storage');
             if (!this.rockon.get('volume_add_support')) {
                 this.$('#next-page').hide();
             } else {
                 if (this.rockon.get('status') == 'started') {
                     var _this = this;
-                    this.$('#next-page').click(function() {
+                    this.$('.wizard-btn').click(function() {
                         //disabling the button so that the backbone event is not triggered after the alert click.
-                        _this.$('#next-page').prop('disabled', true);
-                        alert('Rock-on must be turned off to add storage.');
+                        _this.$('.wizard-btn').prop('disabled', true);
+                        alert('Rock-on must be turned off to change its settings.');
                     });
                 }
             }
@@ -999,9 +1046,11 @@ RockonSettingsWizardView = WizardView.extend({
             this.$('#next-page').html('Next');
         } else if (this.currentPageNum == (this.pages.length - 1)) {
             this.$('#prev-page').show();
+            this.$('#add-label').hide();
             this.$('#next-page').html('Submit');
         } else {
             this.$('#prev-page').show();
+            this.$('#add-label').hide();
             this.$('#next-page').html('Next');
             this.$('#ph-wizard-buttons').show();
         }
@@ -1080,8 +1129,128 @@ RockonAddShare = RockstorWizardPage.extend({
         this.model.set('shares', this.share_map);
         return $.Deferred().resolve();
     }
+});
 
+RockonAddLabel = RockstorWizardPage.extend({
+    initialize: function() {
+        this.template = window.JST.rockons_add_labels;
+        this.sub_template = window.JST.rockons_add_labels_form;
+        this.rockon = this.model.get('rockon');
+        this.containers = new ContainerCollection(null, {
+            rid: this.rockon.id
+        });
+        this.containers.setPageSize(100);
+        this.count = 1;
+        this.maxlabels = 10; // Define maximum numbers of labels
+        RockstorWizardPage.prototype.initialize.apply(this, arguments);
+        this.containers.on('reset', this.renderContainers, this);
+    },
 
+    events: {
+        'click #b1': 'addField',
+        'click .remove-me': 'removeField'
+    },
+
+    addField: function(event) {
+        event.preventDefault();
+        var count = this.count;
+        if (count < this.maxlabels) {
+            count++;
+            this.count = count;
+            var nbox = '<div id="label-box' + count +'" class="form-group">' +
+                '<label class="col-sm-3 control-label" for="labels">Label:  <span class="required">*</span></label>' +
+                '<div class="controls col-sm-5">' +
+                '<input class="form-control input-btn" name="labels[]" id="field' + count +'" placeholder="Enter another label" type="text" />' +
+                '<button id="remove_' + count + '" class="btn btn-danger remove-me">-</button>' +
+                '<button id="b1" class="btn" type="button">+</button>' +
+                '</div>' +
+                '<i class="fa fa-info-circle fa-lg" title="Enter the desired label in the following form: mycustomlabel"></i>' +
+                '</div>';
+            var newbox = $(nbox);
+            $('.label-box-new').append(newbox);
+        } else {
+            alert('Maximum number of labels reached.');
+        }
+    },
+
+    removeField: function(event) {
+        event.preventDefault();
+        var count = this.count;
+        $(event.currentTarget).parent('div').parent('div').remove();
+        count--;
+        this.count = count;
+        return this;
+    },
+
+    render: function() {
+        RockstorWizardPage.prototype.render.apply(this, arguments);
+        this.containers.fetch();
+        return this;
+    },
+
+    fetchContainers: function() {
+        var _this = this;
+        this.containers.fetch({
+            success: function() {
+                _this.model.set('containers', _this.containers);
+            }
+        });
+        return this;
+    },
+
+    renderContainers: function() {
+        this.containers_map = this.model.get('containers');
+        this.used_containers = [];
+        var _this = this;
+        for (var c in this.containers_map) {
+            this.used_containers.push(c);
+        }
+        this.filtered_containers = this.containers.filter(function(container) {
+            if (_this.used_containers.indexOf(container.get('name')) == -1) {
+                return container;
+            }
+        }, this);
+        this.$('#ph-add-labels-form').html(this.sub_template({
+            containers: this.filtered_containers.map(function(c) {
+                return c.toJSON();
+            })
+        }));
+        this.container_form = this.$('#container-select-form');
+        this.validator = this.container_form.validate({
+            rules: {
+                'container': 'required',
+                'labels[]': 'required'
+            },
+            messages: {
+                'container': 'Please select a container',
+                'labels[]': 'Please enter a label'
+            }
+        });
+        // Ensure previous page is correct
+        if (this.rockon.get('volume_add_support')) {
+            this.parent.pages[1] = RockonAddShare;
+        } else {
+        this.parent.pages[1] = RockonAddLabel;
+        }
+        return this;
+    },
+
+    save: function() {
+        if (!this.container_form.valid()) {
+            this.validator.showErrors();
+            return $.Deferred().reject();
+        }
+        var field_data = $('input[name^=labels]').map(function(idx, elem) {
+            return $(elem).val();
+        }).get();
+        var new_labels = {};
+        field_data.forEach(function(prop) {
+            new_labels[prop] = this.$('#container').val();
+        });
+        this.new_labels = new_labels;
+        this.model.set('new_labels', this.new_labels);
+        return $.Deferred().resolve();
+    }
 });
 
 RockonInfoSummary = RockstorWizardPage.extend({
@@ -1099,7 +1268,6 @@ RockonInfoSummary = RockstorWizardPage.extend({
         }));
         return this;
     }
-
 });
 
 RockonSettingsSummary = RockstorWizardPage.extend({
@@ -1121,19 +1289,46 @@ RockonSettingsSummary = RockstorWizardPage.extend({
             cc: this.model.get('custom_config').toJSON(),
             device: this.model.get('devices').toJSON(),
             env: this.model.get('environment').toJSON(),
+            labels: this.model.get('labels').toJSON(),
+            new_labels: this.model.get('new_labels'),
             rockon: this.model.get('rockon')
         }));
+        // Ensure previous page is correct
+        if (!$.isEmptyObject(this.model.get('new_labels'))) {
+            this.parent.pages[1] = RockonAddLabel;
+        } else {
+            if (this.rockon.get('volume_add_support')) {
+                this.parent.pages[1] = RockonAddShare;
+            } else {
+                this.parent.pages[1] = RockonAddLabel;
+            }
+        }
         return this;
     },
-    //@todo: remove this helper after finding out where new volumes is being used.
+
     initHandlebarHelpers: function() {
         Handlebars.registerHelper('display_newVolumes', function() {
+            // Display newly-defined shares and their corresponding mapping
+            // for confimation before submit in settings_summary_table.jst
             var html = '';
             for (share in this.new_volumes) {
                 html += '<tr>';
                 html += '<td>Share</td>';
                 html += '<td>' + this.new_volumes[share] + '</td>';
                 html += '<td>' + share + '</td>';
+                html += '</tr>';
+            }
+            return new Handlebars.SafeString(html);
+        });
+        Handlebars.registerHelper('display_newLabels', function() {
+            // Display newly-defined labels and their corresponding container
+            // for confimation before submit in settings_summary_table.jst
+            var html = '';
+            for (new_label in this.new_labels) {
+                html += '<tr>';
+                html += '<td>Label</td>';
+                html += '<td>' + this.new_labels[new_label] + '</td>';
+                html += '<td>' + new_label + '</td>';
                 html += '</tr>';
             }
             return new Handlebars.SafeString(html);
@@ -1146,6 +1341,7 @@ RockonSettingsComplete = RockstorWizardPage.extend({
         this.template = window.JST.rockons_update_complete;
         this.rockon = this.model.get('rockon');
         this.shares = this.model.get('shares');
+        this.new_labels = this.model.get('new_labels');
         RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
@@ -1166,7 +1362,8 @@ RockonSettingsComplete = RockstorWizardPage.extend({
             dataType: 'json',
             contentType: 'application/json',
             data: JSON.stringify({
-                'shares': this.shares
+                'shares': this.shares,
+                'labels': this.new_labels
             }),
             success: function() {}
         });
