@@ -1241,7 +1241,9 @@ RockonAddLabel = RockstorWizardPage.extend({
             return $.Deferred().reject();
         }
         var field_data = $('input[name^=labels]').map(function(idx, elem) {
-            return $(elem).val();
+            if ($(elem).val() != "") {
+                return $(elem).val();
+            }
         }).get();
         var new_labels = {};
         field_data.forEach(function(prop) {
