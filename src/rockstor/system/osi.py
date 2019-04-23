@@ -2056,10 +2056,13 @@ def hostid():
     ASRock J3455 ITX - Thanks to forum member adworacz for reporting this one.
     - Examples of the second listed fake_puuids
     ZOTAC 880G-ITX (880GITX-A-E) - Thanks to forum member mmmdonuts
+    - Examples of the third listed fake_puuids
+    GIADA N70E-DR - Thanks to forum member hammerite
     """
 
     fake_puuids = ('03000200-0400-0500-0006-000700080009',
-                   '00020003-0004-0005-0006-000700080009')
+                   '00020003-0004-0005-0006-000700080009',
+                   '5C4606FA-192F-453A-B299-7B088C63BB9B')
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
             puuid = fo.readline().strip()
