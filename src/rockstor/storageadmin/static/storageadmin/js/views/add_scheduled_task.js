@@ -259,10 +259,10 @@ AddScheduledTaskView = RockstorLayoutView.extend({
             }));
             this.rendergentleSelect('rtc_hour');
             this.rendergentleSelect('rtc_minute');
-            if (this.taskDefId == null && taskType == 'suspend') {
+            /*  if (this.taskDefId == null && taskType == 'suspend') {
                 this.$('#wakeup').click()
                                  .prop('disabled', true);
-            }
+            }*/
             if (this.taskDefId != null && this.taskDef.wakeup()) {
                 this.$('#rtc_hour').val(this.taskDef.rtc_hour()).gentleSelect('update');
                 this.$('#rtc_minute').val(this.taskDef.rtc_minute()).gentleSelect('update');
