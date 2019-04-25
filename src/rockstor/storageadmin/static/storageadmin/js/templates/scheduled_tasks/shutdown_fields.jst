@@ -1,5 +1,57 @@
+<div class="form-group">
 {{#if taskDefIdNull}}
-<div class="form-inline">
+    <div class="">
+{{else}}
+    <div class="col-sm-offset-4 col-sm-6">
+{{/if}}
+        <div class="checkbox" style="clear: both">
+			<label>
+				<input type="checkbox" id="ip_scan" name="meta.ip_scan" title="Enable ping scan to stay online if one of the specified devices is still online"> Enable IP scan?
+            </label>
+		</div>
+{{#if taskDefIdNull}}
+        <div id="ip_scan_container" style="display: none;">
+            <div class="row">
+                <div class="col-sm-8">
+                    <label class="control-label" for="pool">Devices to scan</label>
+                    <input type="text" class="form-control" id="ip_scan_addresses" name="ip_scan_addresses" pattern="[a-zA-Z0-9,\.\-\s]*" title="Hostname or IP address, separated by comma" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <label class="control-label" for="pool">Time between scans in seconds</label>
+                    <input type="number" class="form-control" id="ip_scan_interval" name="ip_scan_interval" min="1" max="86400" step="1" value="60" />
+                </div>
+                <div class="col-sm-4">
+                    <label class="control-label" for="pool">Scan iterations</label>
+                    <input type="number" class="form-control" id="ip_scan_iterations" name="ip_scan_iterations" min="1" step="1" value="3" />
+                </div>
+            </div>
+        </div>
+{{else}}
+<div id="ip_scan_container" style="display: none;">
+    <div class="row">
+        <div class="col-sm-12">
+            <label class="control-label" for="pool">Devices to scan</label>
+            <input type="text" class="form-control" id="ip_scan_addresses" name="ip_scan_addresses" pattern="[a-zA-Z0-9,\.\-\s]*" title="Hostname or IP address, separated by comma" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <label class="control-label" for="pool">Time between scans in seconds</label>
+            <input type="number" class="form-control" id="ip_scan_interval" name="ip_scan_interval" min="1" max="86400" step="1" value="60" />
+        </div>
+        <div class="col-sm-6">
+            <label class="control-label" for="pool">Scan iterations</label>
+            <input type="number" class="form-control" id="ip_scan_iterations" name="ip_scan_iterations" min="1" step="1" value="3" />
+        </div>
+    </div>
+</div>
+{{/if}}
+	</div>
+</div>
+{{#if taskDefIdNull}}
+<div class="form-group">
     <div class="checkbox-inline" style="clear: both">
         <label>
             <input type="checkbox" id="wakeup" name="meta.wakeup" title="Enable RTC wake up to schedule system power on after shutdown"> Enable System RTC wake up?
@@ -7,17 +59,17 @@
     </div>
 {{else}}
 <div class="form-group">
-	<div class="col-sm-offset-4 col-sm-8">
+	<div class="col-sm-offset-4 col-sm-6">
 		<div class="checkbox-inline" style="clear: both">
 			<label>
-				<input class="checkbox" type="checkbox" id="wakeup" name="meta.wakeup" title="Enable RTC wake up to schedule system power on after shutdown"> Enable System RTC wake up? 
+				<input class="checkbox" type="checkbox" id="wakeup" name="meta.wakeup" title="Enable RTC wake up to schedule system power on after shutdown"> Enable System RTC wake up?
 			</label>
 		</div>
 {{/if}}
     <span id="rtc_container" style="display: none;">
         <select class="form-control" id="rtc_hour" name="meta.rtc_hour" >
             {{ time_select 'rtc_hour'}}
-        </select> : 
+        </select> :
         <select class="form-control" id="rtc_minute" name="meta.rtc_minute">
             {{ time_select 'rtc_minute'}}
         </select>

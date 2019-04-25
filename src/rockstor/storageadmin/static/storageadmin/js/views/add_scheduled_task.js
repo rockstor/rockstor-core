@@ -29,7 +29,8 @@ AddScheduledTaskView = RockstorLayoutView.extend({
     events: {
         'click #js-cancel': 'cancel',
         'change #task_type': 'renderOptionalFields',
-        'click #wakeup': 'switchRtcFields'
+        'click #wakeup': 'switchRtcFields',
+        'click #ip_scan': 'switchIpScan'
     },
 
     initialize: function() {
@@ -307,7 +308,11 @@ AddScheduledTaskView = RockstorLayoutView.extend({
     switchRtcFields: function () {
         // Adding some animation, on enable rtc wake up
         // checked true/false toggle rtc clock fields
-        this.$('#rtc_container').fadeToggle(500);
+        this.$('#rtc_container').fadeToggle(200);
+    },
+
+    switchIpScan: function () {
+        this.$('#ip_scan_container').fadeToggle(200);
     },
 
     initHandlebarHelpers: function(){
