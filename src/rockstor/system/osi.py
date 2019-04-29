@@ -35,9 +35,7 @@ from django.conf import settings
 
 from exceptions import CommandException, NonBTRFSRootException
 
-
 logger = logging.getLogger(__name__)
-
 
 CAT = '/usr/bin/cat'
 CHATTR = '/usr/bin/chattr'
@@ -61,6 +59,7 @@ UDEVADM = settings.UDEVADM
 UMOUNT = '/usr/bin/umount'
 WIPEFS = '/usr/sbin/wipefs'
 RTC_WAKE_FILE = '/sys/class/rtc/rtc0/wakealarm'
+PING = '/usr/bin/ping'
 RETURN_BOOLEAN = True
 EXCLUDED_MOUNT_DEVS = ['sysfs', 'proc', 'devtmpfs', 'securityfs', 'tmpfs',
                        'devpts', 'cgroup', 'pstore', 'configfs', 'systemd-1',
@@ -175,7 +174,7 @@ def scan_disks(min_size, test_mode=False):
                 val_iter = True
                 i = i + 2
             elif (val_iter and sl[i] == '"' and
-                    (i == (len(sl) - 1) or sl[i + 1] == ' ')):
+                  (i == (len(sl) - 1) or sl[i + 1] == ' ')):
                 val_iter = False
                 name_iter = True
                 i = i + 2
@@ -668,7 +667,7 @@ def convert_netmask(bits):
     # convert netmask bits into ip representation
     bits = int(bits)
     mask = 0
-    for i in range(32-bits, 32):
+    for i in range(32 - bits, 32):
         mask |= (1 << i)
     return inet_ntoa(pack('>I', mask))
 
@@ -747,11 +746,11 @@ def get_net_config(all=False, name=None):
         config = {}
         for i in range(len(o)):
             if (re.match('GENERAL.DEVICE:', o[i]) is not None and
-                re.match('GENERAL.TYPE:', o[i + 1]) is not None and
+                    re.match('GENERAL.TYPE:', o[i + 1]) is not None and
                     o[i + 1].strip().split(':')[1] == 'ethernet'):
                 dname = o[i].strip().split(':')[1]
-                mac = o[i+2].strip().split('GENERAL.HWADDR:')[1]
-                name = o[i+5].strip().split('GENERAL.CONNECTION:')[1]
+                mac = o[i + 2].strip().split('GENERAL.HWADDR:')[1]
+                name = o[i + 5].strip().split('GENERAL.CONNECTION:')[1]
                 config[dname] = {'dname': dname,
                                  'mac': mac,
                                  'name': name,
@@ -1163,6 +1162,7 @@ def system_shutdown(delta='now'):
         raise e
     return o, e, rc
 
+
 def system_reboot(delta='now'):
     # New delta param default to now used to pass a 2 min delay
     # for scheduled tasks reboot/shutdown
@@ -1201,6 +1201,30 @@ def set_system_rtc_wake(wakeup_epoch):
     with open(RTC_WAKE_FILE, 'w') as rtc:
         rtc.write('%d' % int(wakeup_epoch))
     return None
+
+
+def is_network_device_responding(address):
+    """
+    Small function that sends ICMP echo requests to a given network device,
+    either using the hostname or IP address.
+    :param address: the hostname or IP address of the device to be pinged
+    :return: true if the device is responding, false if not
+    """
+    # because of -c 3, three requests will be sent
+    output, error, return_code = run_command([PING, '-c 3 -q', address], log=False, throw=False)
+    # The ping command will always return 0 if at least one request has been answered,
+    # 1, if no request has been answered and another error code if the hostname is not known.
+    # The corresponding error message is 'ping: <device name>: Name or service not known'.
+    if return_code == 0:
+        return True
+    elif return_code == 1 or \
+            next((s for s in output if '0 received' in s), None) or \
+            next((s for s in error if 'ping: ' + str(address) in s), None):
+        return False
+    logger.debug('Ping command unexpectedly exited with return code ' + str(return_code))
+    if len(error):
+        logger.debug(error[0])
+    return False
 
 
 def md5sum(fpath):
