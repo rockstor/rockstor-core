@@ -6,7 +6,7 @@
 {{/if}}
         <div class="checkbox" style="clear: both">
 			<label>
-				<input type="checkbox" id="ping_scan" name="meta.ping_scan" title="Enable ping scan to stay online if one of the specified devices is still online"> Enable IP scan?
+				<input type="checkbox" id="ping_scan" name="meta.ping_scan" title="Enable device scan to let Rockstor stay online if one of the specified devices is still online"> Enable device scan?
             </label>
 		</div>
 {{#if taskDefIdNull}}
@@ -19,12 +19,12 @@
             </div>
             <div class="row">
                 <div class="col-sm-4">
-                    <label class="control-label" for="pool">Time between scans in seconds</label>
-                    <input type="number" class="form-control" id="ping_scan_interval" name="meta.ping_scan_interval" min="1" max="86400" step="1" value="60" />
-                </div>
-                <div class="col-sm-4">
                     <label class="control-label" for="pool">Scan iterations</label>
                     <input type="number" class="form-control" id="ping_scan_iterations" name="meta.ping_scan_iterations" min="1" step="1" value="3" />
+                </div>
+                <div class="col-sm-4">
+                    <label class="control-label" for="pool">Time between scans</label>
+                    <input type="number" class="form-control" id="ping_scan_interval" name="meta.ping_scan_interval" min="5" max="86400" step="1" value="60" title="Time in seconds" />
                 </div>
             </div>
         </div>
@@ -38,12 +38,12 @@
     </div>
     <div class="row">
         <div class="col-sm-6">
-            <label class="control-label" for="pool">Time between scans in seconds</label>
-            <input type="number" class="form-control" id="ping_scan_interval" name="meta.ping_scan_interval" min="1" max="86400" step="1" value="60" />
-        </div>
-        <div class="col-sm-6">
             <label class="control-label" for="pool">Scan iterations</label>
             <input type="number" class="form-control" id="ping_scan_iterations" name="meta.ping_scan_iterations" min="1" step="1" value="3" />
+        </div>
+        <div class="col-sm-6">
+            <label class="control-label" for="pool">Time between scans</label>
+            <input type="number" class="form-control" id="ping_scan_interval" name="meta.ping_scan_interval" min="5" max="86400" step="1" value="60" title="Time in seconds" />
         </div>
     </div>
 </div>
