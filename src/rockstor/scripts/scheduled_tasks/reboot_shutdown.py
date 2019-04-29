@@ -59,7 +59,7 @@ def run_conditions_met(meta):
             interval = float(meta['ping_scan_interval']) if float(meta['ping_scan_interval']) >= 5 else 5.0
             iterations = int(meta['ping_scan_iterations']) if int(meta['ping_scan_iterations']) >= 1 else 1
 
-            logger.debug('Pinging devices...' + str(interval) + ', ' + str(iterations))
+            logger.debug('Pinging devices: '+str(addresses))
             for i in range(iterations):
                 if not all_devices_offline(addresses):
                     logger.debug('At least one pinged device is still online')
