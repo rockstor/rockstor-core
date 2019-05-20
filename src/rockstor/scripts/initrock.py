@@ -357,7 +357,7 @@ def main():
             if os.path.isfile('/usr/bin/initdb'):
                 logger.debug('running generic initdb on {}'.format(pg_data))
                 run_command(
-                    ['su', '-', 'postgres', '-c', '/usr/bin/initdb', pg_data])
+                    ['su', '-', 'postgres', '-c', '/usr/bin/initdb -D {}'.format(pg_data)])
         logging.info('Done.')
         run_command([SYSCTL, 'restart', 'postgresql'])
         run_command([SYSCTL, 'status', 'postgresql'])
