@@ -76,8 +76,11 @@ class DockerServiceView(BaseServiceDetailView):
             distro_id = distro.id()  # for Leap 15 <--> Tumbleweed moves.
             if distro_id not in KNOWN_DISTRO_IDS:
                 distro_id = 'generic'
-            # TODO: Consider sourcing /usr/lib/systemd/system/docker.service
-            inf = '{}/docker-{}.service'.format(settings.CONFROOT, distro_id)
+            # If openSUSE, source conf file from docker package itself
+            if re.match('opensuse', distro_id) is not None:
+                inf = '/usr/lib/systemd/system/docker.service'
+            else:
+                inf = '{}/docker-{}.service'.format(settings.CONFROOT, distro_id)
             outf = '/etc/systemd/system/docker.service'
             with open(inf) as ino, open(outf, 'w') as outo:
                 for l in ino.readlines():
