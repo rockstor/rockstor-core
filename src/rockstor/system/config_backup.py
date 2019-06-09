@@ -36,10 +36,10 @@ def backup_config():
     model_list = []
     for a in models:
         for m in models[a]:
-            model_list.append('%s.%s' % (a, m))
-    logger.debug('model list = %s' % model_list)
+            model_list.append('{}.{}'.format(a, m))
+    logger.debug('model list = {}'.format(model_list))
 
-    filename = ('backup-%s.json' % datetime.now().strftime('%Y-%m-%d-%H%M%S'))
+    filename = ('backup-{}.json'.format(datetime.now().strftime('%Y-%m-%d-%H%M%S')))
     cb_dir = ConfigBackup.cb_dir()
 
     if (not os.path.isdir(cb_dir)):
@@ -51,7 +51,7 @@ def backup_config():
         call_command('dumpdata', database='smart_manager', *model_list,
                      stdout=dfo)
     run_command(['/usr/bin/gzip', fp])
-    gz_name = ('%s.gz' % filename)
+    gz_name = ('{}.gz'.format(filename))
     fp = os.path.join(cb_dir, gz_name)
     size = os.stat(fp).st_size
     cbo = ConfigBackup(filename=gz_name, md5sum=md5sum(fp), size=size)

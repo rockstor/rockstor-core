@@ -82,8 +82,10 @@ def restore_samba_exports(ml):
         if (m['model'] == 'storageadmin.sambashare'):
             exports.append(m['fields'])
     for e in exports:
-        e['shares'] = [e['path'].split('/')[-1], ]
-        generic_post('%s/samba' % BASE_URL, e)
+        # e['shares'] = [e['path'].split('/')[-1], ]
+        e['shares'] = '{}'.format(e['share'])
+        logger.debug('Trigger Samba share creation with e = {}'.format(e))
+        generic_post('{}/samba'.format(BASE_URL), e)
     logger.debug('Finished restoring Samba exports.')
 
 
