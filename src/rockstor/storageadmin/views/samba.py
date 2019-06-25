@@ -128,12 +128,15 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
 
     @transaction.atomic
     def post(self, request):
+        logger.debug('SambaListView request is = {}'.format(request.data))
         if ('shares' not in request.data):
             e_msg = 'Must provide share names.'
             handle_exception(Exception(e_msg), request)
         shares = [self._validate_share(request, s) for s in
                   request.data['shares']]
         options = self._validate_input(request)
+        logger.debug('shares is = {}'.format(shares))
+        logger.debug('options is = {}'.format(options))
         custom_config = options['custom_config']
         del(options['custom_config'])
         for share in shares:
@@ -143,7 +146,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
         with self._handle_exception(request):
             for share in shares:
-                mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+                mnt_pt = ('{}{}'.format(settings.MNT_PT, share.name))
                 options['share'] = share
                 options['path'] = mnt_pt
                 smb_share = SambaShare(**options)

@@ -84,8 +84,8 @@ def restore_samba_exports(ml):
     for e in exports:
         e['shares'] = []
         e['shares'].append(e['share'])
-        logger.debug('Trigger Samba share creation with e = {}'.format(e))
-        generic_post('{}/samba'.format(BASE_URL), e)
+    logger.debug('Trigger Samba share creation with e = {}'.format(exports))
+    generic_post('{}/samba'.format(BASE_URL), exports)
     logger.debug('Finished restoring Samba exports.')
 
 
