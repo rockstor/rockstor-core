@@ -129,16 +129,32 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         logger.debug('SambaListView request is = {}'.format(request.data))
+        if isinstance(request.data, list):
+            for se in request.data:
+                logger.debug('restore samba_share with {}'.format(se))
+                smb_share = self.create_samba_share(se)
+        else:
+            smb_share = self.create_samba_share(request)
+        refresh_smb_config(list(SambaShare.objects.all()))
+        self._restart_samba()
+        return Response(SambaShareSerializer(smb_share).data)
+
+    def create_samba_share(self, request):
         if ('shares' not in request.data):
             e_msg = 'Must provide share names.'
             handle_exception(Exception(e_msg), request)
         shares = [self._validate_share(request, s) for s in
                   request.data['shares']]
+        # # Account for multiple exports to process
+        # if len(request.data['comment']) > 1:
+        #     logger.debug('request has more than one export: {}'.format(len(request.data['comment'])))
+        #     options = self._validate_input(request)
+        # else:
         options = self._validate_input(request)
         logger.debug('shares is = {}'.format(shares))
         logger.debug('options is = {}'.format(options))
         custom_config = options['custom_config']
-        del(options['custom_config'])
+        del (options['custom_config'])
         for share in shares:
             if (SambaShare.objects.filter(share=share).exists()):
                 e_msg = ('Share ({}) is already exported via '
@@ -162,9 +178,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                 if (admin_users is None):
                     admin_users = []
                 self._set_admin_users(admin_users, smb_share)
-            refresh_smb_config(list(SambaShare.objects.all()))
-            self._restart_samba()
-            return Response(SambaShareSerializer(smb_share).data)
+        return smb_share
 
 
 class SambaDetailView(SambaMixin, rfc.GenericView):
