@@ -53,7 +53,7 @@ class SambaMixin(object):
             restart_samba(hard=True)
 
     @classmethod
-    def _validate_input(cls, request, smbo=None):
+    def _validate_input(cls, rdata, smbo=None):
         options = {}
         def_opts = cls.DEF_OPTS
         if (smbo is not None):
@@ -64,40 +64,40 @@ class SambaMixin(object):
             def_opts['read_only'] = smbo.read_only
             def_opts['shadow_copy'] = smbo.shadow_copy
 
-        options['comment'] = request.data.get('comment', def_opts['comment'])
-        options['browsable'] = request.data.get('browsable',
-                                                def_opts['browsable'])
+        options['comment'] = rdata.get('comment', def_opts['comment'])
+        options['browsable'] = rdata.get('browsable',
+                                              def_opts['browsable'])
 
-        options['custom_config'] = request.data.get('custom_config', [])
+        options['custom_config'] = rdata.get('custom_config', [])
         if (type(options['custom_config']) != list):
             e_msg = 'Custom config must be a list of strings.'
-            handle_exception(Exception(e_msg), request)
+            handle_exception(Exception(e_msg), rdata)
         if (options['browsable'] not in cls.BOOL_OPTS):
             e_msg = ('Invalid choice for browsable. Possible '
                      'choices are yes or no.')
-            handle_exception(Exception(e_msg), request)
-        options['guest_ok'] = request.data.get('guest_ok',
-                                               def_opts['guest_ok'])
+            handle_exception(Exception(e_msg), rdata)
+        options['guest_ok'] = rdata.get('guest_ok',
+                                             def_opts['guest_ok'])
         if (options['guest_ok'] not in cls.BOOL_OPTS):
             e_msg = ('Invalid choice for guest_ok. Possible '
                      'options are yes or no.')
-            handle_exception(Exception(e_msg), request)
-        options['read_only'] = request.data.get('read_only',
-                                                def_opts['read_only'])
+            handle_exception(Exception(e_msg), rdata)
+        options['read_only'] = rdata.get('read_only',
+                                              def_opts['read_only'])
         if (options['read_only'] not in cls.BOOL_OPTS):
             e_msg = ('Invalid choice for read_only. Possible '
                      'options are yes or no.')
-            handle_exception(Exception(e_msg), request)
-        options['shadow_copy'] = request.data.get('shadow_copy',
-                                                  def_opts['shadow_copy'])
+            handle_exception(Exception(e_msg), rdata)
+        options['shadow_copy'] = rdata.get('shadow_copy',
+                                                def_opts['shadow_copy'])
         if (options['shadow_copy']):
-            options['snapshot_prefix'] = request.data.get(
+            options['snapshot_prefix'] = rdata.get(
                 'snapshot_prefix', def_opts['snapshot_prefix'])
             if (options['snapshot_prefix'] is None or
                     len(options['snapshot_prefix'].strip()) == 0):
                 e_msg = ('Invalid choice for snapshot_prefix. It must be a '
                          'valid non-empty string.')
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), rdata)
 
         return options
 
@@ -134,23 +134,18 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                 logger.debug('restore samba_share with {}'.format(se))
                 smb_share = self.create_samba_share(se)
         else:
-            smb_share = self.create_samba_share(request)
+            smb_share = self.create_samba_share(request.data)
         refresh_smb_config(list(SambaShare.objects.all()))
         self._restart_samba()
         return Response(SambaShareSerializer(smb_share).data)
 
-    def create_samba_share(self, request):
-        if ('shares' not in request.data):
+    def create_samba_share(self, rdata):
+        if ('shares' not in rdata):
             e_msg = 'Must provide share names.'
-            handle_exception(Exception(e_msg), request)
-        shares = [self._validate_share(request, s) for s in
-                  request.data['shares']]
-        # # Account for multiple exports to process
-        # if len(request.data['comment']) > 1:
-        #     logger.debug('request has more than one export: {}'.format(len(request.data['comment'])))
-        #     options = self._validate_input(request)
-        # else:
-        options = self._validate_input(request)
+            handle_exception(Exception(e_msg), rdata)
+        shares = [self._validate_share(rdata, s) for s in
+                  rdata['shares']]
+        options = self._validate_input(rdata)
         logger.debug('shares is = {}'.format(shares))
         logger.debug('options is = {}'.format(options))
         custom_config = options['custom_config']
@@ -159,8 +154,8 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
             if (SambaShare.objects.filter(share=share).exists()):
                 e_msg = ('Share ({}) is already exported via '
                          'Samba.').format(share.name)
-                handle_exception(Exception(e_msg), request)
-        with self._handle_exception(request):
+                handle_exception(Exception(e_msg), rdata)
+        with self._handle_exception(rdata):
             for share in shares:
                 mnt_pt = ('{}{}'.format(settings.MNT_PT, share.name))
                 options['share'] = share
@@ -174,7 +169,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                 if not share.is_mounted:
                     mount_share(share, mnt_pt)
 
-                admin_users = request.data.get('admin_users', [])
+                admin_users = rdata.get('admin_users', [])
                 if (admin_users is None):
                     admin_users = []
                 self._set_admin_users(admin_users, smb_share)
