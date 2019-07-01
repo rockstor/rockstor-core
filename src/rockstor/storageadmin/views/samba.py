@@ -213,7 +213,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                          'does not exist.').format(smb_id)
                 handle_exception(Exception(e_msg), request)
 
-            options = self._validate_input(request, smbo=smbo)
+            options = self._validate_input(request.data, smbo=smbo)
             custom_config = options['custom_config']
             del(options['custom_config'])
             smbo.__dict__.update(**options)
