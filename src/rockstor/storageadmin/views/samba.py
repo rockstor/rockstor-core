@@ -150,13 +150,15 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
         logger.debug('options is = {}'.format(options))
         custom_config = options['custom_config']
         del (options['custom_config'])
-        for share in shares:
-            if (SambaShare.objects.filter(share=share).exists()):
-                e_msg = ('Share ({}) is already exported via '
-                         'Samba.').format(share.name)
-                handle_exception(Exception(e_msg), rdata)
         with self._handle_exception(rdata):
             for share in shares:
+                if (SambaShare.objects.filter(share=share).exists()):
+                    e_msg = ('Share ({}) is already exported via '
+                             'Samba.').format(share.name)
+                    logger.error(e_msg)
+                    smb_share = SambaShare.objects.get(share=share)
+                    # handle_exception(Exception(e_msg), rdata)
+                    continue
                 mnt_pt = ('{}{}'.format(settings.MNT_PT, share.name))
                 options['share'] = share
                 options['path'] = mnt_pt
