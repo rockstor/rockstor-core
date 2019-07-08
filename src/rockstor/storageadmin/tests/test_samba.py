@@ -20,6 +20,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
 
+from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Pool, Share, SambaCustomConfig, SambaShare
 from storageadmin.tests.test_api import APITestMixin
 
@@ -117,6 +118,73 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
                          msg="Un-expected _validate_input() result:\n "
                              "returned = ({}).\n "
                              "expected = ({}).".format(returned, expected_result))
+
+
+    def test_validate_input_error(self):
+        """
+        Test that _validate_input raises Exceptions when input data contain error(s).
+        The following cases are tested below:
+        1. wrong 'custom_config' information
+        2. wrong 'browsable' information
+        3. wrong 'guest_ok' information
+        4. wrong 'read_only' information
+        5. wrong 'shadow_copy' information
+        """
+        data = {'read_only': 'no',
+                'comment': 'Samba-Export',
+                'admin_users': ['test'],
+                'browsable': 'yes',
+                'custom_config': 'not-a-list',
+                'snapshot_prefix': '',
+                'shares': ['9', '10'],
+                'shadow_copy': False,
+                'guest_ok': 'no'}
+        with self.assertRaises(RockStorAPIException):
+            self._validate_input(rdata=data)
+        data = {'read_only': 'no',
+                'comment': 'Samba-Export',
+                'admin_users': ['test'],
+                'browsable': 'maybe',
+                'custom_config': [],
+                'snapshot_prefix': '',
+                'shares': ['9', '10'],
+                'shadow_copy': False,
+                'guest_ok': 'no'}
+        with self.assertRaises(RockStorAPIException):
+            self._validate_input(rdata=data)
+        data = {'read_only': 'no',
+                'comment': 'Samba-Export',
+                'admin_users': ['test'],
+                'browsable': 'yes',
+                'custom_config': [],
+                'snapshot_prefix': '',
+                'shares': ['9', '10'],
+                'shadow_copy': False,
+                'guest_ok': 'maybe'}
+        with self.assertRaises(RockStorAPIException):
+            self._validate_input(rdata=data)
+        data = {'read_only': 'maybe',
+                'comment': 'Samba-Export',
+                'admin_users': ['test'],
+                'browsable': 'yes',
+                'custom_config': [],
+                'snapshot_prefix': '',
+                'shares': ['9', '10'],
+                'shadow_copy': False,
+                'guest_ok': 'no'}
+        with self.assertRaises(RockStorAPIException):
+            self._validate_input(rdata=data)
+        data = {'read_only': 'no',
+                'comment': 'Samba-Export',
+                'admin_users': ['test'],
+                'browsable': 'yes',
+                'custom_config': [],
+                'snapshot_prefix': '',
+                'shares': ['9', '10'],
+                'shadow_copy': True,
+                'guest_ok': 'no'}
+        with self.assertRaises(RockStorAPIException):
+            self._validate_input(rdata=data)
 
 
     def test_get(self):
