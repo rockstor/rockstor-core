@@ -23,8 +23,9 @@ from mock import patch
 from storageadmin.models import Pool, Share, SambaCustomConfig, SambaShare
 from storageadmin.tests.test_api import APITestMixin
 
+from storageadmin.views.samba import SambaListView
 
-class SambaTests(APITestMixin, APITestCase):
+class SambaTests(APITestMixin, APITestCase, SambaListView):
     # fixture with:
     # share-smb - SMB exported with defaults: (comment "Samba-Export")
     # {'browsable': 'yes', 'guest_ok': 'no', 'read_only': 'no'}
@@ -72,6 +73,35 @@ class SambaTests(APITestMixin, APITestCase):
     @classmethod
     def tearDownClass(cls):
         super(SambaTests, cls).tearDownClass()
+
+    def test_validate_input(self):
+        """
+        Test that _validate_input() returns a valid dict when:
+        1. all input data are filled and valid
+        2. no input data are specified (should return default options)
+        """
+        data = {'read_only': 'no',
+                'comment': 'Samba-Export',
+                'admin_users': ['test'],
+                'browsable': 'yes',
+                'custom_config': [],
+                'snapshot_prefix': '',
+                'shares': ['9', '10'],
+                'shadow_copy': False,
+                'guest_ok': 'no'}
+        expected_result = {'comment': 'Samba-Export',
+                           'read_only': 'no',
+                           'browsable': 'yes',
+                           'custom_config': [],
+                           'guest_ok': 'no',
+                           'shadow_copy': False}
+        returned = self._validate_input(rdata=data)
+        self.assertEqual(returned,
+                         expected_result,
+                         msg="Un-expected _validate_input() result:\n "
+                             "returned = ({}).\n "
+                             "expected = ({}).".format(returned, expected_result))
+
 
     def test_get(self):
         """
