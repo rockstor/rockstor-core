@@ -80,6 +80,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         1. all input data are filled and valid
         2. no input data are specified (should return default options)
         """
+        # 1. all input data are filled and valid
         data = {'read_only': 'no',
                 'comment': 'Samba-Export',
                 'admin_users': ['test'],
@@ -90,6 +91,21 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
                 'shadow_copy': False,
                 'guest_ok': 'no'}
         expected_result = {'comment': 'Samba-Export',
+                           'read_only': 'no',
+                           'browsable': 'yes',
+                           'custom_config': [],
+                           'guest_ok': 'no',
+                           'shadow_copy': False}
+        returned = self._validate_input(rdata=data)
+        self.assertEqual(returned,
+                         expected_result,
+                         msg="Un-expected _validate_input() result:\n "
+                             "returned = ({}).\n "
+                             "expected = ({}).".format(returned, expected_result))
+
+        # 2. no input data are specified (should return default options)
+        data = {}
+        expected_result = {'comment': 'samba export',
                            'read_only': 'no',
                            'browsable': 'yes',
                            'custom_config': [],
