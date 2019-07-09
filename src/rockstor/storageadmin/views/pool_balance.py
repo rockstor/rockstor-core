@@ -23,7 +23,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import (Pool, PoolBalance)
 import rest_framework_custom as rfc
-from fs.btrfs import balance_status
+from fs.btrfs import balance_status, balance_status_internal
 from pool import PoolMixin
 
 import logging
@@ -69,7 +69,10 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                 return ps
         # Get the current status of balance on this pool, irrespective of
         # a running balance task, ie command line intervention.
-        cur_status = balance_status(pool)
+        if ps.internal:
+            cur_status = balance_status_internal(pool)
+        else:
+            cur_status = balance_status(pool)
         previous_status = ps.status
         # TODO: future "Balance Cancel" button should call us to have these
         # TODO: values updated in the db table ready for display later.
@@ -81,6 +84,13 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                 'cancelled at %s%% complete' % ps.percent_done
             # and retain prior percent finished value
             cur_status['percent_done'] = ps.percent_done
+        if previous_status == 'failed' \
+                and cur_status['status'] == 'finished':
+            # override current status as 'failed'
+            cur_status['status'] = 'failed'
+            # and retain prior percent finished value
+            cur_status['percent_done'] = ps.percent_done
+
         if previous_status != 'finished' and previous_status != 'cancelled':
             # update the last pool balance status with current status info.
             PoolBalance.objects.filter(id=ps.id).update(**cur_status)

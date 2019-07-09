@@ -6,6 +6,17 @@
 </div>
 <br>
 <div class="alert alert-success">
-  <h4>Resize initiated - disk addition or raid change entails a subsequent Rockstor visible balance which may take several hours. Check status in the Balances tab. Disk delete progress is currently unmonitored.</h4>
+  <h4>Resize initiated - the associated balance can take several hours to complete and usually negatively impacts system performance.
+    <br>Check the Balances tab for status. A page refresh will be required.
+  </h4>
+</div>
+<div class="alert alert-warning">
+  <h4>
+    <strong>Expect reduced Web-UI responsiveness until this balance has finished.</strong>
+    <br>Removed disks will have progressively smaller Allocated GB until they are finally removed.
+    <br>Please note: a detached disk removal can fail with status ending:
+    <br><i>"... no missing devices found to remove"</i>
+    <br> If you encounter this error see the <u>Maintenance required</u> section for guidance then try again after a reboot.
+  </h4>
 </div>
 

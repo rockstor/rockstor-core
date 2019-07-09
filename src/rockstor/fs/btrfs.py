@@ -15,13 +15,14 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+import collections
 import json
 import re
 import time
 import os
 from system.osi import run_command, create_tmp_dir, is_share_mounted, \
     is_mounted, get_dev_byid_name, convert_to_kib, toggle_path_rw, \
-    get_device_path
+    get_device_path, dev_mount_point
 from system.exceptions import (CommandException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
@@ -55,6 +56,15 @@ ROOT_SUBVOL_EXCLUDE = ['root', '@', '@/root', 'tmp', '@/tmp', 'var', '@/var',
                        '@/.snapshots']
 # Note in the above we have a non symmetrical exclusions entry of '@/.snapshots
 # this is to help distinguish our .snapshots from snapper's rollback subvol.
+
+# tuple subclass for devices from a btrfs view.
+Dev = collections.namedtuple('Dev', 'temp_name is_byid devid size allocated')
+# Named Tuple for Device Pool Info.
+DevPoolInfo = collections.namedtuple('DevPoolInfo',
+                                     'devid size allocated uuid label')
+# Named Tuple for btrfs device usage info.
+DevUsageInfo = collections.namedtuple('DevUsageInfo', 'temp_name size '
+                                                      'allocated')
 
 
 def add_pool(pool, disks):
@@ -206,12 +216,92 @@ def degraded_pools_found():
     return degraded_pool_count
 
 
-def get_pool_info(disk, root_pool=False):
+def set_pool_label(label, dev_temp_name, root_pool=False):
+    """
+    Wrapper around 'btrfs fi label dev|mnt_pt' initially intended to auto label
+    pools (btrfs vols) that have 'none' as label since a label is assumed.
+    Could server as more general purpose once we have pool re-naming.
+    :param dev_temp_name: full_dev_path
+    :param label: Desired label: overridden if root_pool = True.
+    :param root_pool: Boolean indicator of system root ('/') pool.
+    :return: new label if successful or None if command exception.
+    """
+    # we override accessor and label for the system pool.
+    if root_pool:
+        # root_pool already mounted so we must use mount point.
+        accessor = '/'
+        label = settings.SYS_VOL_LABEL
+    else:  # adapt to mounted or unmounted non system root pools:
+        mount_point = dev_mount_point(dev_temp_name)
+        if mount_point is not None:
+            accessor = mount_point
+        else:
+            accessor = dev_temp_name
+    # This requirement limits importing ro pools with no label.
+    cmd = [BTRFS, 'fi', 'label', accessor, label]
+    # Consider udevadm trigger on this device as label changed.
+    try:
+        logger.debug('Attempting auto pool label for ({}).'.format(accessor))
+        o, e, rc = run_command(cmd, log=True)
+    except CommandException as e:
+        logger.error('Pool label attempt on {} to {} failed with '
+                     'error: {}'.format(accessor, label, e.err))
+        return None
+    return label
+
+
+def get_dev_pool_info():
+    """
+    Variant of get_pool_info() intended for low level use where a system wide
+    view is required with temp_name indexing. Used as a replacement for
+    get_pool_info in _update_disk_state() and _refresh_pool_state() to allow
+    for one call to acquire all pool info system wide. Pool counterpart to
+    osi.py's scan_disks(). Note that there is likely much duplication within
+    the returned structure but we provide fast / light lookup for each device
+    member thereafter via it's own named tuple.
+    :return sys_pool_info: dict indexed by temp_name with DevPoolInfo values.
+    """
+    cmd = [BTRFS, 'fi', 'show', '--raw']
+    o, e, rc = run_command(cmd)
+    # Label: 'rockstor_rockstor'  uuid: be5d2c5a-cc86-4c9a-96da-0a2add43f079
+    #         Total devices 1 FS bytes used 2444705792
+    #         devid    1 size 14935916544 used 3825205248 path /dev/sda3
+    #
+    # Label: 'rock-pool'  uuid: be4814da-a054-4ffe-82e7-b40ec33e4343
+    #         Total devices 5 FS bytes used 3913490432
+    #         devid   17 size 5368709120 used 1073741824 path /dev/sdb
+    #         devid   18 size 5368709120 used 2415919104 path /dev/sdd
+    sys_pool_info = {}
+    uuid = None  # Every pool has one.
+    label = 'none'  # What is shown when there is no label on a pool.
+    devid = 0  # Real ones start at 1 so this can be a flag of sorts.
+    for line in o:
+        if line == '':
+            continue
+        fields = line.strip().split()
+        if fields[0] == 'Label:':  # Pool header: set uuid and label
+            label = fields[1].strip("'")  # single quotes present when != none
+            uuid = fields[3]
+        elif fields[0] == 'Total':
+            continue
+        elif fields[0] == 'devid':
+            devid = int(fields[1])
+            size = int(fields[3]) / 1024  # Bytes to KB
+            allocated = int(fields[5]) / 1024  # Bytes to KB
+            temp_name = fields[-1]
+            dp_info = DevPoolInfo(devid=devid, size=size, allocated=allocated,
+                                  uuid=uuid, label=label)
+            sys_pool_info[temp_name] = dp_info
+    # logger.debug('get_dev_pool_info() returning {}'.format(sys_pool_info))
+    return sys_pool_info
+
+
+def get_pool_info(disk):
     """
     Extracts pool information by running btrfs fi show <disk> and collates
     the results in a property keyed dictionary The disks ('disks' key) names
     found are translated to the by-id type (/dev/disk/by-id) so that their
-    counterparts in the db's Disk.name field can be found.
+    counterparts in the db's Disk.name field can be found. No path is stored.
     N.B. devices without serial may have no by-id counterpart.
     Enforces a non 'none' label by substituting the uuid if label = none.
     Used by CommandView()._refresh_pool_state() and
@@ -220,45 +310,42 @@ def get_pool_info(disk, root_pool=False):
     :param root_pool: Boolean flag to signify root_pool enquiry mode.
     :return: a dictionary with keys of 'disks', 'label', 'uuid',
     'hasMissingDev', 'fullDevCount', and 'missingDevCount'.
-    'disks' keys a list of devices, while 'label' and 'uuid' keys are
-    for strings. 'hasMissingDev' is Boolean and defaults to False.
-    'fullDevCount' is taken from the "Total devices" line.
+    'disks' keys a dict of Dev named tuples index by their by-id names, while
+    'label' and 'uuid' keys are for strings. 'hasMissingDev' is Boolean and
+    defaults to False. 'fullDevCount' is taken from the "Total devices" line.
     'missingDevCount' is derived from fullDevCount - attached devs count.
     """
     dpath = get_device_path(disk)
-    cmd = [BTRFS, 'fi', 'show', dpath]
+    cmd = [BTRFS, 'fi', 'show', '--raw', dpath]
     o, e, rc = run_command(cmd)
-    pool_info = {'disks': [], 'hasMissingDev': False, 'fullDevCount': 0,
+    # Label: 'rockstor_rockstor'  uuid: be5d2c5a-cc86-4c9a-96da-0a2add43f079
+    #         Total devices 1 FS bytes used 2465906688
+    #         devid    1 size 14935916544 used 5406457856 path /dev/sda3
+    pool_info = {'disks': {}, 'hasMissingDev': False, 'fullDevCount': 0,
                  'missingDevCount': 0}
-    # TODO: Move 'disks' to dictionary with (devid, size, used) tuple values
     full_dev_count = 0  # Number of devices in non degraded state.
     attached_dev_count = 0  # Number of currently attached devices.
     for l in o:
         if re.match('Label', l) is not None:
             fields = l.split()
             pool_info['uuid'] = fields[3]
-            label = fields[1].strip("'")
-            if label == 'none':
-                # Vol/pool has no label.
-                if root_pool:
-                    # root_pool already mounted so we must use mount point.
-                    accessor = '/'
-                    label = settings.SYS_VOL_LABEL
-                else:
-                    # Non root pools without label are assumed to be unmounted.
-                    accessor = dpath
-                    label = pool_info['uuid']
-                # This requirement limits importing ro pools with no label.
-                run_command([BTRFS, 'fi', 'label', accessor, label])
-                # Consider udevadm trigger on this device as label changed.
-            pool_info['label'] = label
+            pool_info['label'] = fields[1].strip("'")
         elif re.match('\tdevid', l) is not None:
-            # We have a line starting wth <tab>devid, extract the dev name.
-            # We convert this into the db Disk.name by-id format so that our
+            # We have a line starting with <tab>devid, extract the temp_name,
+            # devid, is_byid, size, and used. Collect in a named tuple.
+            # We convert name into the db Disk.name by-id format so that our
             # caller can locate a drive and update it's pool field reference.
             attached_dev_count += 1
-            dev_byid, is_byid = get_dev_byid_name(l.split()[-1], True)
-            pool_info['disks'].append(dev_byid)
+            # Express device info line as a list of line elements.
+            fields = l.split()
+            temp_name = fields[-1]
+            dev_byid, is_byid = get_dev_byid_name(temp_name, remove_path=True)
+            devid = fields[1]
+            size = int(fields[3]) / 1024  # Bytes to KB
+            allocated = int(fields[5]) / 1024  # Bytes to KB
+            dev_info = Dev(temp_name=temp_name, is_byid=is_byid, devid=devid,
+                           size=size, allocated=allocated)
+            pool_info['disks'][dev_byid] = dev_info
         elif re.match('\tTotal devices', l) is not None:
             fields = l.split()
             full_dev_count = int(fields[2])
@@ -266,6 +353,7 @@ def get_pool_info(disk, root_pool=False):
             pool_info['hasMissingDev'] = True
     pool_info['fullDevCount'] = full_dev_count
     pool_info['missingDevCount'] = full_dev_count - attached_dev_count
+    # logger.debug('get_pool_info() returning {}'.format(pool_info))
     return pool_info
 
 
@@ -312,24 +400,20 @@ def cur_devices(mnt_pt):
     return dev_list_byid
 
 
-def resize_pool(pool, dev_list_byid, add=True):
+def resize_pool_cmd(pool, dev_list_byid, add=True):
     """
-    Acts on a given pool and list of device names by generating and then
-    executing the appropriate:-
-    "btrfs <device list> add(default)/delete root_mnt_pt(pool)"
-    command, or returning None if a disk member sanity check fails ie if
-    all the supplied devices are either not already a member of the pool
-    (when adding) or are already members of the pool (when deleting).
-    If any device in the supplied dev_list fails this test then no command is
-    executed and None is returned.
+    Given a pool and list of device names, returns the appropriate cmd of type:
+    "btrfs <device list> add(default)/delete root_mnt_pt(pool)", or returns
+    None if a disk member sanity check fails: ie if all the supplied devices
+    are either, not pool members (when deleting) or are already pool members
+    (when adding). If any device in the supplied dev_list fails this test then
+    no command is generated and None is returned.
     :param pool: btrfs pool object
-    :param dev_list_byid: list of devices to add/delete in by-id (without
-        path).
-    :param add: when true (default) or not specified then attempt to add
-        dev_list devices to pool, or when specified as True attempt to delete
+    :param dev_list_byid: by-id device list to add/delete (without paths).
+    :param add: when true (default) or not specified then 'device add'
+        dev_list devices to pool, when specified as True 'device delete'
         dev_list devices from pool.
-    :return: Tuple of results from run_command(generated command) or None if
-        the device member/pool sanity check fails.
+    :return: appropriate btrfs command, or None if member sanity checks failed.
     """
     if pool.has_missing_dev and not add:
         if dev_list_byid == []:
@@ -345,24 +429,27 @@ def resize_pool(pool, dev_list_byid, add=True):
     root_mnt_pt = mount_root(pool)
     cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
-    if (not add):
+    if not add:
         resize_flag = 'delete'
     resize_cmd = [BTRFS, 'device', resize_flag, ]
     # Until we verify that all devices are or are not already members of the
     # given pool, depending on if we are adding (default) or removing
     # (add=False), we set our resize flag to false.
     resize = False
+    # TODO: This test looks to pass if only one member passes. Revisit.
+    # TODO: But we are after a fail if only one member fails.
     for d in dev_list_byid:
         if (resize_flag == 'add' and (d not in cur_dev)) or \
                 (resize_flag == 'delete' and ((d in cur_dev) or
                                               d == 'missing')):
             resize = True  # Basic disk member of pool sanity check passed.
             resize_cmd.append(d)
-    if (not resize):
-        logger.debug('Note: resize_pool() taking no action.')
+    if not resize:
+        logger.debug('Resize pool - member sanity check failed. '
+                     'Retuning None as btrfs add/delete command.')
         return None
     resize_cmd.append(root_mnt_pt)
-    return run_command(resize_cmd)
+    return resize_cmd
 
 
 def mount_root(pool):
@@ -1505,6 +1592,21 @@ def scrub_status(pool):
             stats[fields[0]] = int(fields[1])
     return stats
 
+@task()
+def start_resize_pool(cmd):
+    """
+    Note for device add, which is almost instantaneous, we are currently called
+    without the async function extension (start_resize_pool.async()) which
+    bypasses our @task() decorator and we are then called directly.
+
+    From https://github.com/dmgctrl/django-ztask we have:
+    "It is a recommended best practice that instead of passing a Django model
+    object to a task, you instead pass along the model's
+    ID or primary key, and re-get the object in the task function."
+    :param cmd: btrfs dev add/delete command in run_command() format (ie list).
+    """
+    logger.debug('Resize pool command ({}).'.format(cmd))
+    run_command(cmd)
 
 @task()
 def start_balance(mnt_pt, force=False, convert=None):
@@ -1573,6 +1675,99 @@ def balance_status(pool):
         elif (re.match('No balance', out[0]) is not None):
             stats['status'] = 'finished'
             stats['percent_done'] = 100
+    return stats
+
+
+def get_devid_usage(mnt_pt):
+    """
+    Extracts device usage information for a given mount point; includes
+    detached devices where devid is preserved but device name is replaced by
+    'missing': where there can be multiple 'missing' entries.
+    Wraps 'btrfs device usage -b mnt_pt'.
+    Used by _update_disk_state() to retrieve detached disk size/allocated info.
+    :return: btrfs devid indexed dict with DevUsageInfo values
+    """
+    ALLOCATION_TYPES = ['Data', 'Metadata', 'System']
+    devid_usage_info = {}
+    cmd = [BTRFS, 'device', 'usage', '-b', mnt_pt]
+    o, e, rc = run_command(cmd)
+    devid = None  # None allows for fast comparison for flag use.
+    temp_name = 'missing'
+    size = 0
+    allocated = 0
+    for line in o:
+        if line == '':
+            continue
+        fields = line.replace(',', ' ').split()
+        if fields[1] == 'slack:':
+            continue  # We are not interested currently so skip for speed.
+        if fields[1] == 'ID:':  # New device section: set devid index
+            devid = int(fields[2])
+            temp_name = fields[0]
+        elif fields[1] == 'size:':
+            size = int(fields[2]) / 1024  # Bytes to KB
+        elif fields[0] in ALLOCATION_TYPES:
+            allocated += int(fields[2]) / 1024  # Bytes to KB
+        elif fields[0] == 'Unallocated:':
+            # End of a legitimate device entry so record our tally so far:
+            devid_usage_info[devid] = DevUsageInfo(temp_name=temp_name,
+                                                   size=size,
+                                                   allocated=allocated)
+            allocated = 0  # Reset our per device tally prior to next entry.
+    # logger.debug('get_devid_usage() returning {}.'.format(devid_usage_info))
+    return devid_usage_info
+
+
+def balance_status_internal(pool):
+    """
+    As internal balance events, such as are initiated by btrfs dev remove, are
+    not reported by 'btrfs balance status', we have to devise our own system;
+    at least until these events, which can last hours, are surfaced otherwise.
+    Here we parse the output of 'btrfs dev usage -b mnt_pt' and look for a
+    negative unallocated value. This negative value progressively approaches
+    zero where upon the task is complete and the associated device disappears:
+    having had all of it's data removed.
+    Note that when more than one disk is removed btrfs internally does one at
+    a time so we need only find a single instance irrespective.
+
+    Until we get a better option this function serves a minimal subset of the
+    functions provided for regular balances by balance_status(pool) but for
+    'internal' balances (our name) that are auto initiated on disk removal.
+    A future enhancement could be to ascertain partial percent done, which may
+    be viable by resourcing get_devid_usage(); but since a device size can be
+    zero, for a detached device, and allocated approaches zero while negative
+    unallocated does the same this may be tricky as we have no start state
+    datum: leaving only a whole pool analysis - indicated disks but then the
+    serial nature of removal hampers this approach.
+    :param pool: Pool db object.
+    :return: dictionary containing parsed info about the balance status,
+    ie indexed by 'status' and 'percent_done'.
+    """
+    stats = {'status': 'unknown', }
+    try:
+        mnt_pt = mount_root(pool)
+    except Exception as e:
+        logger.error('Exception while refreshing internal balance status for'
+                     'Pool({}). Returning '
+                     '"unknown": {}'.format(pool.name, e.__str__()))
+        return stats
+    cmd = [BTRFS, 'dev', 'usage', '-b', mnt_pt]
+    o, err, rc = run_command(cmd, throw=False)
+    unallocated = None
+    for line in o:
+        if line == '':
+            continue
+        fields = line.replace(',', ' ').split()
+        if fields[0] == 'Unallocated:':
+            unallocated = int(fields[1])
+            if unallocated < 0:
+                stats['status'] = 'running'
+                break
+    if unallocated >= 0:
+        # We have not 'tell' so report a finished balance as there is no
+        # evidence of one happening.
+        stats['status'] = 'finished'
+        stats['percent_done'] = 100
     return stats
 
 
