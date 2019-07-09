@@ -42,7 +42,9 @@
     <tr>
         <th scope="col" abbr="Name">Name</th>
         <th scope="col" abbr="Temp Name">Temp Name</th>
+        <th scope="col" abbr="Btrfs DevID">Btrfs DevID</th>
         <th scope="col" abbr="Capacity">Capacity</th>
+        <th scope="col" abbr="Allocated (%)">Allocated (%)</th>
         <th scope="col" abbr="write_io_errs">Write I/O errors</th>
         <th scope="col" abbr="read_io_errs">Read I/O errors</th>
         <th scope="col" abbr="flush_io_errs">Flush I/O errors</th>
@@ -66,7 +68,11 @@
         <td>
             {{this.temp_name}}
         </td>
+        <td>
+            {{btrfsDevID this.devid}}
+        </td>
         <td>{{humanReadableSize this.size}}</td>
+        <td>{{humanReadableAllocatedPercent this.allocated this.size}}</td>
         {{ioErrorStatsTableData this.io_error_stats}}
     </tr>
     {{/each}}
@@ -91,7 +97,11 @@
         <td>
             {{this.temp_name}}
         </td>
+        <td>
+            {{btrfsDevID this.devid}}
+        </td>
         <td>{{humanReadableSize this.size}}</td>
+        <td>{{humanReadableAllocatedPercent this.allocated this.size}}</td>
         {{ioErrorStatsTableData this.io_error_stats}}
     </tr>
     {{/each}}

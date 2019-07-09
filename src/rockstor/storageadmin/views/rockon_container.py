@@ -16,22 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.db import models
-from storageadmin.models import Pool
+from storageadmin.models import (RockOn, DContainer)
+from storageadmin.serializers import RockOnContainerSerializer
+import rest_framework_custom as rfc
+from storageadmin.util import handle_exception
 
 
-class PoolBalance(models.Model):
+class RockOnContainerView(rfc.GenericView):
+    serializer_class = RockOnContainerSerializer
 
-    pool = models.ForeignKey(Pool)
-    status = models.CharField(max_length=10, default='started')
-    # django ztask uuid
-    tid = models.CharField(max_length=36, null=True)
-    message = models.CharField(max_length=1024, null=True)
-    start_time = models.DateTimeField(auto_now=True)
-    end_time = models.DateTimeField(null=True)
-    percent_done = models.IntegerField(default=0)
-    # Flag to denote internal auto initiated balance ie during dev delete.
-    internal = models.BooleanField(default=False)
+    def get_queryset(self, *args, **kwargs):
+        try:
+            rockon = RockOn.objects.get(id=self.kwargs['rid'])
+        except:
+            e_msg = 'Rock-on ({}) does not exist.'.format(self.kwargs['rid'])
+            handle_exception(Exception(e_msg), self.request)
 
-    class Meta:
-        app_label = 'storageadmin'
+        containers = DContainer.objects.filter(rockon=rockon)
+        return containers.order_by('id')

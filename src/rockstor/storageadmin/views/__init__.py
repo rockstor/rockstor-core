@@ -45,11 +45,13 @@ from pool_balance import PoolBalanceView  # noqa F401
 from tls_certificate import TLSCertificateView  # noqa F401
 from rockon import RockOnView  # noqa F401
 from rockon_id import RockOnIdView  # noqa F401
+from rockon_container import RockOnContainerView  # noqa F401
 from rockon_volume import RockOnVolumeView  # noqa F401
 from rockon_port import RockOnPortView  # noqa F401
 from rockon_custom_config import RockOnCustomConfigView  # noqa F401
 from rockon_environment import RockOnEnvironmentView  # noqa F401
 from rockon_device import RockOnDeviceView  # noqa F401
+from rockon_labels import RockOnLabelView  # noqa F401
 from disk_smart import DiskSMARTDetailView  # noqa F401
 from config_backup import (ConfigBackupListView, ConfigBackupDetailView,  # noqa F401
                            ConfigBackupUpload)  # noqa F401

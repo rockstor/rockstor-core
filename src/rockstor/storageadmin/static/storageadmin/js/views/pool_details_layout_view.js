@@ -263,7 +263,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         if (confirm('If any detached members are listed use the Resize/ReRaid button - "Remove disks" option instead. Click OK only if "(Some Missing)" and no "detached-..." appear in the Pool page Disks sub-section?')) {
             var raid_level = _this.pool.get('raid');
             var disk_names = ['missing'];
-            var delete_missing_msg = ('Delete missing is initiated (can take several hours), a progress report is currently unavailable. Balance attempts are blocked for this period.');
+            var delete_missing_msg = ('Delete missing initiated - associated balance can take several hours and negatively impact system performance. Check Balances tab for status.');
             $.ajax({
                 url: url,
                 type: 'PUT',
@@ -485,6 +485,29 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
         Handlebars.registerHelper('humanReadableSize', function(size) {
             return humanize.filesize(size * 1024);
+        });
+
+        Handlebars.registerHelper('humanReadableAllocatedPercent', function(allocated, size) {
+            var html = '';
+            html += humanize.filesize(allocated * 1024);
+            // One decimal place of % = 1 GB per TB = normal allocation unit.
+            if (size == 0) {
+                // we likely have a disk delete/removal in operation or a
+                // missing / detached device so flag.
+                html += '<strong><span style="color:darkred"> Missing or removal in progress </span></strong>'
+            } else {
+                html += ' <strong>(' + ((allocated / size) * 100).toFixed(1) + '%)</strong>'
+
+            }
+            return new Handlebars.SafeString(html);
+        });
+
+        Handlebars.registerHelper('btrfsDevID', function(devid){
+            if (devid !== 0) {
+                return devid
+            }
+            var html = '<strong><span style="color:darkred"> Page refresh required </span></strong>';
+            return new Handlebars.SafeString(html)
         });
 
         Handlebars.registerHelper('isRoot', function(role){

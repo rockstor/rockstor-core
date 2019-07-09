@@ -73,7 +73,7 @@ def trim_support(disk):
         run_command([YUM, 'install', '-y', 'hdparm'])
         logging.info('Installed hdparm successfully')
 
-    o, e, rc = run_command(['hdparm', '-I', '/dev/%s' % disk])
+    o, e, rc = run_command(['hdparm', '-I', '{}'.format(disk)])
     for l in o:
         if (re.search('Data Set Management TRIM supported', l) is not None):
             logging.debug('TRIM supported. info: %s' % l)
@@ -84,7 +84,7 @@ def trim_support(disk):
 
 def is_flash(disk):
     flash = False
-    o, e, rc = run_command(['udevadm', 'info', '--path=/sys/block/%s' % disk])
+    o, e, rc = run_command(['udevadm', 'info', '--name', disk])
     for l in o:
         if (re.search('ID_BUS=', l) is not None):
             if (l.strip().split()[1].split('=')[1] != 'usb'):
@@ -98,6 +98,8 @@ def is_flash(disk):
     # /sys/block/disk/queue/rotational is not reliable, but if [deadline] is in
     # /sys/block/disk/queue/scheduler, it's fair to assume flash
     logging.debug('Checking if scheduler is set to [deadline] for %s' % disk)
+    disk = disk.split('/')[-1]  # strip off the path
+    # Note that the following may fail for sys on luks dev.
     with open('/sys/block/%s/queue/scheduler' % disk) as sfo:
         for l in sfo.readlines():
             if (re.search('\[deadline\]', l) is not None):

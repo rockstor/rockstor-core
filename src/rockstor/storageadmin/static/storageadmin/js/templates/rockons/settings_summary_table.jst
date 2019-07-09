@@ -43,5 +43,12 @@
         <td>{{this.key}}</td>
     </tr>
 {{/each}}
-
+{{#each labels}}
+    <tr>
+        <td>Label</td>
+        <td>{{this.key}}</td>
+        <td>{{this.val}}</td>
+    </tr>
+{{/each}}
+{{display_newLabels}}
 </table>
