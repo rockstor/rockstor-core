@@ -58,8 +58,8 @@ def rockon_status(name):
 
 
 def rm_container(name):
-    o, e, rc = run_command([DOCKER, 'stop', name], throw=False)
-    o, e, rc = run_command([DOCKER, 'rm', name], throw=False)
+    o, e, rc = run_command([DOCKER, 'stop', name], throw=False, log=True)
+    o, e, rc = run_command([DOCKER, 'rm', name], throw=False, log=True)
     return logger.debug(('Attempted to remove a container ({}). Out: {} '
                         'Err: {} rc: {}.').format(name, o, e, rc))
 
@@ -75,7 +75,7 @@ def generic_start(rockon):
     try:
         for c in DContainer.objects.filter(
                 rockon=rockon).order_by('launch_order'):
-            run_command([DOCKER, 'start', c.name])
+            run_command([DOCKER, 'start', c.name], log=True)
     except Exception as e:
         logger.error(('Exception while starting the '
                      'rockon ({}).').format(rockon.name))
@@ -98,7 +98,7 @@ def generic_stop(rockon):
     try:
         for c in DContainer.objects.filter(
                 rockon=rockon).order_by('-launch_order'):
-            run_command([DOCKER, 'stop', c.name])
+            run_command([DOCKER, 'stop', c.name], log=True)
     except Exception as e:
         logger.debug(('Exception while stopping the '
                      'rockon ({}).').format(rockon.name))
@@ -235,7 +235,8 @@ def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
         # pull image explicitly so we get updates on re-installs.
-        run_command([DOCKER, 'pull', c.dimage.name])
+        image_name_plus_tag = c.dimage.name + ':' + c.dimage.tag
+        run_command([DOCKER, 'pull', image_name_plus_tag], log=True)
         cmd = list(DCMD2) + ['--name', c.name, ]
         cmd.extend(vol_ops(c))
         # Add '--device' flag
@@ -251,35 +252,47 @@ def generic_install(rockon):
         cmd.extend(container_ops(c))
         cmd.extend(envars(c))
         cmd.extend(labels_ops(c))
-        cmd.append(c.dimage.name)
+        cmd.append(image_name_plus_tag)
         cmd.extend(cargs(c))
-        run_command(cmd)
+        run_command(cmd, log=True)
 
 
 def openvpn_install(rockon):
+    """
+    Custom config for the openvpn Rock-on install.
+    :param rockon:
+    :return:
+    """
     # volume container
     vol_co = DContainer.objects.get(rockon=rockon, launch_order=1)
     volc_cmd = list(DCMD) + ['--name', vol_co.name, ]
     volc_cmd.extend(container_ops(vol_co))
-    volc_cmd.append(vol_co.dimage.name)
-    run_command(volc_cmd)
+    image_name_plus_tag = vol_co.dimage.name + ':' + vol_co.dimage.tag
+    volc_cmd.append(image_name_plus_tag)
+    run_command(volc_cmd, log=True)
     # initialize vol container data
     cco = DCustomConfig.objects.get(rockon=rockon)
     oc = DContainer.objects.get(rockon=rockon, launch_order=2)
     dinit_cmd = list(DCMD) + ['--rm', ]
     dinit_cmd.extend(container_ops(oc))
-    dinit_cmd.extend([oc.dimage.name, 'ovpn_genconfig', '-u',
+    image_name_plus_tag = oc.dimage.name + ':' + oc.dimage.tag
+    dinit_cmd.extend([image_name_plus_tag, 'ovpn_genconfig', '-u',
                       'udp://%s' % cco.val, ])
-    run_command(dinit_cmd)
+    run_command(dinit_cmd, log=True)
     # start the server
     server_cmd = list(DCMD2) + ['--name', oc.name, ]
     server_cmd.extend(container_ops(oc))
     server_cmd.extend(port_ops(oc))
     server_cmd.append(oc.dimage.name)
-    run_command(server_cmd)
+    run_command(server_cmd, log=True)
 
 
 def owncloud_install(rockon):
+    """
+    Custom config for the owncloud Rock-on install.
+    :param rockon:
+    :return:
+    """
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
         cmd = list(DCMD2) + ['--name', c.name, ]
@@ -302,7 +315,8 @@ def owncloud_install(rockon):
                         '-e', 'HTTPS_ENABLED=true'])
             cmd.extend(['-e', 'DB_USER=%s' % db_user, '-e',
                         'DB_PASS=%s' % db_pw, ])
-        cmd.append(c.dimage.name)
+        image_name_plus_tag = c.dimage.name + ':' + c.dimage.tag
+        cmd.append(image_name_plus_tag)
         logger.debug('Docker cmd = ({}).'.format(cmd))
         run_command(cmd)
         if (c.dimage.name == 'postgres'):
