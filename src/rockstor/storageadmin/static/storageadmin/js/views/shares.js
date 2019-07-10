@@ -78,8 +78,8 @@ SharesView = RockstorLayoutView.extend({
         var customs = {
             columnDefs: [
                 { type: 'file-size', targets: 1 },
-                { type: 'file-size', targets: 3 },
-                { type: 'file-size', targets: 4 }
+                { type: 'file-size', targets: 2 },
+                { type: 'file-size', targets: 3 }
             ]
         };
 

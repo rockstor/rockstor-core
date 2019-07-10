@@ -93,8 +93,8 @@ SnapshotsView = SnapshotsCommonView.extend({
 
         var customs = {
             columnDefs: [
-                { type: 'file-size', targets: 6 },
-                { type: 'file-size', targets: 7 }
+                { type: 'file-size', targets: 2 },
+                { type: 'file-size', targets: 3 }
             ]
         };
 
