@@ -151,7 +151,7 @@ class DiskTests(APITestMixin, APITestCase):
 
         url = ('{}/2/btrfs-disk-import'.format(self.BASE_URL))
         response = self.client.post(url, data=None, format='json')
-        e_msg = "Failed to import any pool on device id ({}). " \
+        e_msg = "Failed to import any pool on device db id ({}). " \
                 "Error: ({}).".format(self.temp_disk.id, mock_e_msg)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR)

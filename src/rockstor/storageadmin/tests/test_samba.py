@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2019 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,50 +26,51 @@ from storageadmin.tests.test_api import APITestMixin
 
 from storageadmin.views.samba import SambaListView
 
+
 class SambaTests(APITestMixin, APITestCase, SambaListView):
     # fixture with:
     # share-smb - SMB exported with defaults: (comment "Samba-Export")
     # {'browsable': 'yes', 'guest_ok': 'no', 'read_only': 'no'}
     # share2 - no SMB export
     # fixtures = ['fix3.json']
-    fixtures = ['test_smb.json']
-    BASE_URL = '/api/samba'
+    fixtures = ["test_smb.json"]
+    BASE_URL = "/api/samba"
 
     @classmethod
     def setUpClass(cls):
         super(SambaTests, cls).setUpClass()
 
         # post mocks
-        cls.patch_mount_share = patch('storageadmin.views.samba.mount_share')
+        cls.patch_mount_share = patch("storageadmin.views.samba.mount_share")
         cls.mock_mount_share = cls.patch_mount_share.start()
 
         # mock Share model's mount_status utility
         # True = Share is mounted, False = Share unmounted
-        cls.patch_mount_status = patch('system.osi.mount_status')
+        cls.patch_mount_status = patch("system.osi.mount_status")
         cls.mock_mount_status = cls.patch_mount_status.start()
         cls.mock_mount_status.return_value = True
 
-        cls.patch_status = patch('storageadmin.views.samba.status')
+        cls.patch_status = patch("storageadmin.views.samba.status")
         cls.mock_status = cls.patch_status.start()
-        cls.mock_status.return_value = 'out', 'err', 0
+        cls.mock_status.return_value = "out", "err", 0
 
-        cls.patch_restart_samba = patch('storageadmin.views.samba.'
-                                        'restart_samba')
+        cls.patch_restart_samba = patch("storageadmin.views.samba." "restart_samba")
         cls.mock_status = cls.patch_restart_samba.start()
 
-        cls.patch_refresh_smb_config = patch('storageadmin.views.samba.'
-                                             'refresh_smb_config')
+        cls.patch_refresh_smb_config = patch(
+            "storageadmin.views.samba." "refresh_smb_config"
+        )
         cls.mock_refresh_smb_config = cls.patch_refresh_smb_config.start()
-        cls.mock_refresh_smb_config.return_value = 'smbconfig'
+        cls.mock_refresh_smb_config.return_value = "smbconfig"
 
         # all values as per fixture
-        cls.temp_pool = Pool(id=11, name='rock-pool', size=5242880)
-        cls.temp_share_smb = Share(id=23, name='share-smb', pool=cls.temp_pool)
+        cls.temp_pool = Pool(id=11, name="rock-pool", size=5242880)
+        cls.temp_share_smb = Share(id=23, name="share-smb", pool=cls.temp_pool)
         cls.temp_sambashare = SambaShare(id=1, share=cls.temp_share_smb)
         # cls.temp_smb_custom_config = \
         #     SambaCustomConfig(id=1, smb_share=cls.temp_sambashare)
 
-        cls.temp_share2 = Share(id=24, name='share2', pool=cls.temp_pool)
+        cls.temp_share2 = Share(id=24, name="share2", pool=cls.temp_pool)
 
     @classmethod
     def tearDownClass(cls):
@@ -82,110 +83,184 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         2. no input data are specified (should return default options)
         """
         # 1. all input data are filled and valid
-        data = {'read_only': 'no',
-                'comment': 'Samba-Export',
-                'admin_users': ['test'],
-                'browsable': 'yes',
-                'custom_config': [],
-                'snapshot_prefix': '',
-                'shares': ['9', '10'],
-                'shadow_copy': False,
-                'guest_ok': 'no'}
-        expected_result = {'comment': 'Samba-Export',
-                           'read_only': 'no',
-                           'browsable': 'yes',
-                           'custom_config': [],
-                           'guest_ok': 'no',
-                           'shadow_copy': False}
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": ["test"],
+            "browsable": "yes",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["9", "10"],
+            "shadow_copy": False,
+            "guest_ok": "no",
+        }
+        expected_result = {
+            "comment": "Samba-Export",
+            "read_only": "no",
+            "browsable": "yes",
+            "custom_config": [],
+            "guest_ok": "no",
+            "shadow_copy": False,
+        }
         returned = self._validate_input(rdata=data)
-        self.assertEqual(returned,
-                         expected_result,
-                         msg="Un-expected _validate_input() result:\n "
-                             "returned = ({}).\n "
-                             "expected = ({}).".format(returned, expected_result))
+        self.assertEqual(
+            returned,
+            expected_result,
+            msg="Un-expected _validate_input() result:\n "
+            "returned = ({}).\n "
+            "expected = ({}).".format(returned, expected_result),
+        )
 
         # 2. no input data are specified (should return default options)
         data = {}
-        expected_result = {'comment': 'samba export',
-                           'read_only': 'no',
-                           'browsable': 'yes',
-                           'custom_config': [],
-                           'guest_ok': 'no',
-                           'shadow_copy': False}
+        expected_result = {
+            "comment": "samba export",
+            "read_only": "no",
+            "browsable": "yes",
+            "custom_config": [],
+            "guest_ok": "no",
+            "shadow_copy": False,
+        }
         returned = self._validate_input(rdata=data)
-        self.assertEqual(returned,
-                         expected_result,
-                         msg="Un-expected _validate_input() result:\n "
-                             "returned = ({}).\n "
-                             "expected = ({}).".format(returned, expected_result))
-
+        self.assertEqual(
+            returned,
+            expected_result,
+            msg="Un-expected _validate_input() result:\n "
+            "returned = ({}).\n "
+            "expected = ({}).".format(returned, expected_result),
+        )
 
     def test_validate_input_error(self):
         """
         Test that _validate_input raises Exceptions when input data contain error(s).
         The following cases are tested below:
-        1. wrong 'custom_config' information
-        2. wrong 'browsable' information
-        3. wrong 'guest_ok' information
-        4. wrong 'read_only' information
-        5. wrong 'shadow_copy' information
+        1. invalid 'custom_config' information
+        2. invalid 'browsable' information
+        3. invalid 'guest_ok' information
+        4. invalid 'read_only' information
+        5. invalid 'shadow_copy' information
         """
-        data = {'read_only': 'no',
-                'comment': 'Samba-Export',
-                'admin_users': ['test'],
-                'browsable': 'yes',
-                'custom_config': 'not-a-list',
-                'snapshot_prefix': '',
-                'shares': ['9', '10'],
-                'shadow_copy': False,
-                'guest_ok': 'no'}
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": ["test"],
+            "browsable": "yes",
+            "custom_config": "not-a-list",
+            "snapshot_prefix": "",
+            "shares": ["9", "10"],
+            "shadow_copy": False,
+            "guest_ok": "no",
+        }
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
-        data = {'read_only': 'no',
-                'comment': 'Samba-Export',
-                'admin_users': ['test'],
-                'browsable': 'maybe',
-                'custom_config': [],
-                'snapshot_prefix': '',
-                'shares': ['9', '10'],
-                'shadow_copy': False,
-                'guest_ok': 'no'}
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": ["test"],
+            "browsable": "maybe",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["9", "10"],
+            "shadow_copy": False,
+            "guest_ok": "no",
+        }
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
-        data = {'read_only': 'no',
-                'comment': 'Samba-Export',
-                'admin_users': ['test'],
-                'browsable': 'yes',
-                'custom_config': [],
-                'snapshot_prefix': '',
-                'shares': ['9', '10'],
-                'shadow_copy': False,
-                'guest_ok': 'maybe'}
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": ["test"],
+            "browsable": "yes",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["9", "10"],
+            "shadow_copy": False,
+            "guest_ok": "maybe",
+        }
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
-        data = {'read_only': 'maybe',
-                'comment': 'Samba-Export',
-                'admin_users': ['test'],
-                'browsable': 'yes',
-                'custom_config': [],
-                'snapshot_prefix': '',
-                'shares': ['9', '10'],
-                'shadow_copy': False,
-                'guest_ok': 'no'}
+        data = {
+            "read_only": "maybe",
+            "comment": "Samba-Export",
+            "admin_users": ["test"],
+            "browsable": "yes",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["9", "10"],
+            "shadow_copy": False,
+            "guest_ok": "no",
+        }
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
-        data = {'read_only': 'no',
-                'comment': 'Samba-Export',
-                'admin_users': ['test'],
-                'browsable': 'yes',
-                'custom_config': [],
-                'snapshot_prefix': '',
-                'shares': ['9', '10'],
-                'shadow_copy': True,
-                'guest_ok': 'no'}
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": ["test"],
+            "browsable": "yes",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["9", "10"],
+            "shadow_copy": True,
+            "guest_ok": "no",
+        }
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
 
+    # @mock.patch('storageadmin.views.share.Share')
+    # @mock.patch.object(SambaShare, 'save')
+    def test_create_samba_share(self):
+        """
+        Test that create_samba_share() returns a correct SambaShare object
+        when all conditions are valid.
+        """
+        self.patch_validate_share = patch("storageadmin.views.samba.ShareMixin._validate_share")
+        self.mock_validate_share = self.patch_validate_share.start()
+        self.mock_validate_share.return_value = self.temp_share_smb
+
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": [],
+            "browsable": "yes",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["23"],
+            "shadow_copy": False,
+            "guest_ok": "no",
+        }
+        # options = {
+        #     'comment': 'Samba-Export',
+        #     'read_only': 'no',
+        #     'browsable': 'yes',
+        #     'share': self.temp_share_smb,
+        #     'guest_ok': 'no',
+        #     'shadow_copy': False,
+        #     'path': '/mnt2/share-smb'
+        # }
+
+        # expected_result = SambaShare(**options)
+        expected_result = self.temp_sambashare
+        returned = self.create_samba_share(data)
+        self.assertEqual(
+            returned,
+            expected_result,
+            msg="Un-expected create_samba_share() result:\n "
+            "returned = ({} with id {}).\n "
+            "expected = ({} with id {}).".format(returned, returned.id, expected_result, expected_result.id),
+        )
+
+
+    def test_create_samba_share_noshare(self):
+        """
+        Test that create_samba_share() raises an exception
+        when no share is given.
+        """
+
+    def test_create_samba_share_existingexport(self):
+        """
+        Test that create_samba_share() raises an exception
+        when the given share is already exported via Samba.
+        """
 
     def test_get(self):
         """
@@ -202,9 +277,8 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         #                  msg=response)
 
         # get sambashare with non-existant id
-        response = self.client.get('{}/5'.format(self.BASE_URL))
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND,
-                         msg=response)
+        response = self.client.get("{}/5".format(self.BASE_URL))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
 
     def test_post_requests_1(self):
         """
@@ -213,12 +287,14 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         """
 
         # create samba export with no share names
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', }
+        data = {"browsable": "yes", "guest_ok": "yes", "read_only": "yes"}
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Must provide share names.'
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Must provide share names."
         self.assertEqual(response.data[0], e_msg)
 
     def test_post_requests_2(self):
@@ -227,51 +303,69 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         """
 
         # create samba with invalid browsable, guest_ok, read_only choices
-        data = {'shares': (24,), 'browsable': 'Y', 'guest_ok': 'yes',
-                'read_only': 'yes'}
+        data = {
+            "shares": (24,),
+            "browsable": "Y",
+            "guest_ok": "yes",
+            "read_only": "yes",
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = ('Invalid choice for browsable. Possible choices '
-                 'are yes or no.')
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Invalid choice for browsable. Possible choices " "are yes or no."
         self.assertEqual(response.data[0], e_msg)
 
-        data = {'shares': (24,), 'browsable': 'yes', 'guest_ok': 'Y',
-                'read_only': 'yes'}
+        data = {
+            "shares": (24,),
+            "browsable": "yes",
+            "guest_ok": "Y",
+            "read_only": "yes",
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = ('Invalid choice for guest_ok. Possible options are '
-                 'yes or no.')
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Invalid choice for guest_ok. Possible options are " "yes or no."
         self.assertEqual(response.data[0], e_msg)
 
-        data = {'shares': (24,), 'browsable': 'yes', 'guest_ok': 'yes',
-                'read_only': 'Y'}
+        data = {
+            "shares": (24,),
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "Y",
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = ('Invalid choice for read_only. Possible options '
-                 'are yes or no.')
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Invalid choice for read_only. Possible options " "are yes or no."
         self.assertEqual(response.data[0], e_msg)
 
         # create samba export
         # we use share id 24 (share2) as not yet smb exported.
-        data = {'shares': (24, ), 'browsable': 'yes', 'guest_ok': 'yes',
-                'read_only': 'yes', 'admin_users': ('admin', ),
-                'custom_config': ('CONFIG', 'XYZ')}
+        data = {
+            "shares": (24,),
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "yes",
+            "admin_users": ("admin",),
+            "custom_config": ("CONFIG", "XYZ"),
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-        smb_id = response.data['id']
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        smb_id = response.data["id"]
 
         # test get of detailed view for the smb_id
-        response = self.client.get('{}/{}'.format(self.BASE_URL, smb_id))
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-        self.assertEqual(response.data['id'], smb_id)
+        response = self.client.get("{}/{}".format(self.BASE_URL, smb_id))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data["id"], smb_id)
 
         # # TODO: Needs multiple share instances mocked
         # # create samba exports for multiple(3) shares at once
@@ -283,21 +377,31 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         #                  status.HTTP_200_OK, msg=response.data)
 
         # create samba export with no admin users
-        data = {'shares': ('share5', ), 'browsable': 'yes', 'guest_ok': 'yes',
-                'read_only': 'yes', 'custom_config': ('CONFIG', 'XYZ')}
+        data = {
+            "shares": ("share5",),
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "yes",
+            "custom_config": ("CONFIG", "XYZ"),
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # create samba export with the share that has already been exported
         # above
-        data = {'shares': (24, ), 'browsable': 'no', 'guest_ok': 'yes',
-                'read_only': 'yes'}
+        data = {
+            "shares": (24,),
+            "browsable": "no",
+            "guest_ok": "yes",
+            "read_only": "yes",
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Share (share2) is already exported via Samba.'
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Share (share2) is already exported via Samba."
         self.assertEqual(response.data[0], e_msg)
 
     def test_put_requests_1(self):
@@ -307,18 +411,22 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
 
         # edit samba that does not exist
         smb_id = 99999
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',
-                'admin_users': 'usr'}
-        response = self.client.put('{}/{}'.format(self.BASE_URL, smb_id),
-                                   data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Samba export for the id ({}) does not exist.'.format(smb_id)
+        data = {
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "yes",
+            "admin_users": "usr",
+        }
+        response = self.client.put("{}/{}".format(self.BASE_URL, smb_id), data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Samba export for the id ({}) does not exist.".format(smb_id)
         self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch('storageadmin.views.samba.SambaShare')
-
+    @mock.patch("storageadmin.views.samba.SambaShare")
     def test_put_requests_2(self, mock_sambashare):
         """
         1. Edit samba that does not exists
@@ -329,14 +437,19 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
 
         # edit samba with invalid custom config
         smb_id = 1
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',
-                'custom_config': 'CONFIGXYZ'}
-        response = self.client.put('{}/{}'.format(self.BASE_URL, smb_id),
-                                   data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Custom config must be a list of strings.'
+        data = {
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "yes",
+            "custom_config": "CONFIGXYZ",
+        }
+        response = self.client.put("{}/{}".format(self.BASE_URL, smb_id), data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Custom config must be a list of strings."
         self.assertEqual(response.data[0], e_msg)
 
         # test mount_share exception case
@@ -347,14 +460,15 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         self.mock_mount_status.return_value = False
 
         smb_id = 1
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', }
-        self.mock_mount_share.side_effect = KeyError('error')
-        response = self.client.put('{}/{}'.format(self.BASE_URL, smb_id),
-                                   data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Failed to mount share (share-smb) due to a low level error.'
+        data = {"browsable": "yes", "guest_ok": "yes", "read_only": "yes"}
+        self.mock_mount_share.side_effect = KeyError("error")
+        response = self.client.put("{}/{}".format(self.BASE_URL, smb_id), data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Failed to mount share (share-smb) due to a low level error."
         self.assertEqual(response.data[0], e_msg)
         # Return share mock mounted_state to mounted
         self.mock_mount_status.return_value = True
@@ -362,31 +476,38 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         # happy path
         smb_id = 1
         self.mock_mount_share.side_effect = None
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',
-                'admin_users': ('admin', ), 'custom_config': ('CONFIG', 'XYZ')}
-        response = self.client.put('{}/{}'.format(self.BASE_URL, smb_id),
-                                   data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        data = {
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "yes",
+            "admin_users": ("admin",),
+            "custom_config": ("CONFIG", "XYZ"),
+        }
+        response = self.client.put("{}/{}".format(self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # edit samba export with admin user other than admin
         smb_id = 1
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',
-                'admin_users': ('admin2', ), 'custom_config': ('CONFIG',
-                                                               'XYZ')}
-        response = self.client.put('{}/{}'.format(self.BASE_URL, smb_id),
-                                   data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        data = {
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "yes",
+            "admin_users": ("admin2",),
+            "custom_config": ("CONFIG", "XYZ"),
+        }
+        response = self.client.put("{}/{}".format(self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # edit samba export passing no admin users
         smb_id = 1
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',
-                'custom_config': ('CONFIG', 'XYZ')}
-        response = self.client.put('{}/{}'.format(self.BASE_URL, smb_id),
-                                   data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        data = {
+            "browsable": "yes",
+            "guest_ok": "yes",
+            "read_only": "yes",
+            "custom_config": ("CONFIG", "XYZ"),
+        }
+        response = self.client.put("{}/{}".format(self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_delete_requests_1(self):
         """
@@ -394,14 +515,16 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         """
         # Delete samba that does nor exists
         smb_id = 99999
-        response = self.client.delete('{}/{}'.format(self.BASE_URL, smb_id))
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Samba export for the id ({}) does not exist.'.format(smb_id)
+        response = self.client.delete("{}/{}".format(self.BASE_URL, smb_id))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Samba export for the id ({}) does not exist.".format(smb_id)
         self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch('storageadmin.views.samba.SambaShare')
+    @mock.patch("storageadmin.views.samba.SambaShare")
     def test_delete_requests_2(self, mock_sambashare):
         """
         . Delete samba
@@ -412,6 +535,5 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
 
         # happy path
         smb_id = 1
-        response = self.client.delete('{}/{}'.format(self.BASE_URL, smb_id))
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        response = self.client.delete("{}/{}".format(self.BASE_URL, smb_id))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
