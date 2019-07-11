@@ -206,16 +206,17 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
 
-    # @mock.patch('storageadmin.views.share.Share')
-    # @mock.patch.object(SambaShare, 'save')
-    def test_create_samba_share(self):
+
+    @mock.patch('storageadmin.views.samba.ShareMixin._validate_share')
+    def test_create_samba_share(self, mock_validate_share):
         """
         Test that create_samba_share() returns a correct SambaShare object
         when all conditions are valid.
         """
-        self.patch_validate_share = patch("storageadmin.views.samba.ShareMixin._validate_share")
-        self.mock_validate_share = self.patch_validate_share.start()
-        self.mock_validate_share.return_value = self.temp_share_smb
+        # self.patch_validate_share = patch("storageadmin.views.samba.ShareMixin._validate_share")
+        # self.mock_validate_share = self.patch_validate_share.start()
+        # self.mock_validate_share.return_value = self.temp_share_smb
+        mock_validate_share.return_value = self.temp_share_smb
 
         data = {
             "read_only": "no",
@@ -228,17 +229,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "shadow_copy": False,
             "guest_ok": "no",
         }
-        # options = {
-        #     'comment': 'Samba-Export',
-        #     'read_only': 'no',
-        #     'browsable': 'yes',
-        #     'share': self.temp_share_smb,
-        #     'guest_ok': 'no',
-        #     'shadow_copy': False,
-        #     'path': '/mnt2/share-smb'
-        # }
-
-        # expected_result = SambaShare(**options)
         expected_result = self.temp_sambashare
         returned = self.create_samba_share(data)
         self.assertEqual(
@@ -250,11 +240,25 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         )
 
 
-    def test_create_samba_share_noshare(self):
+    def test_create_samba_share_incorrect_share(self):
         """
         Test that create_samba_share() raises an exception
-        when no share is given.
+        when a non-existing share is provided.
         """
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": [],
+            "browsable": "yes",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["32"],
+            "shadow_copy": False,
+            "guest_ok": "no",
+        }
+        with self.assertRaises(RockStorAPIException):
+            self.create_samba_share(rdata=data)
+
 
     def test_create_samba_share_existingexport(self):
         """
