@@ -24,7 +24,7 @@ from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Pool, Share, SambaCustomConfig, SambaShare
 from storageadmin.tests.test_api import APITestMixin
 
-from storageadmin.views.samba import SambaListView
+from storageadmin.views.samba import SambaListView, logger
 
 
 class SambaTests(APITestMixin, APITestCase, SambaListView):
@@ -206,8 +206,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
 
-
-    @mock.patch('storageadmin.views.samba.ShareMixin._validate_share')
+    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
     def test_create_samba_share(self, mock_validate_share):
         """
         Test that create_samba_share() returns a correct SambaShare object
@@ -236,9 +235,10 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             expected_result,
             msg="Un-expected create_samba_share() result:\n "
             "returned = ({} with id {}).\n "
-            "expected = ({} with id {}).".format(returned, returned.id, expected_result, expected_result.id),
+            "expected = ({} with id {}).".format(
+                returned, returned.id, expected_result, expected_result.id
+            ),
         )
-
 
     def test_create_samba_share_incorrect_share(self):
         """
@@ -259,12 +259,38 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         with self.assertRaises(RockStorAPIException):
             self.create_samba_share(rdata=data)
 
-
-    def test_create_samba_share_existingexport(self):
+    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
+    @mock.patch("storageadmin.views.samba.SambaShare.objects")
+    @mock.patch("storageadmin.views.samba.logger")
+    def test_create_samba_share_existing_export(
+        self, mock_validate_share, mock_sambashare, mock_logger
+    ):
         """
-        Test that create_samba_share() raises an exception
+        Test that create_samba_share() logs the appropriate error
         when the given share is already exported via Samba.
         """
+        mock_validate_share.return_value = self.temp_share_smb
+        mock_sambashare.filter.return_value = mock_sambashare
+        mock_sambashare.exists.return_value = True
+
+        data = {
+            "read_only": "no",
+            "comment": "Samba-Export",
+            "admin_users": [],
+            "browsable": "yes",
+            "custom_config": [],
+            "snapshot_prefix": "",
+            "shares": ["23"],
+            "shadow_copy": False,
+            "guest_ok": "no",
+        }
+        e_msg = ("Share ({}) is already exported via " "Samba.").format(
+            self.temp_share_smb.name
+        )
+        self.create_samba_share(rdata=data)
+        mock_logger.error.assert_called()
+        # mock_logger.error.assert_called_with(e_msg)
+
 
     def test_get(self):
         """
