@@ -21,7 +21,7 @@ from rest_framework.test import APITestCase
 from mock import patch
 
 from storageadmin.exceptions import RockStorAPIException
-from storageadmin.models import Pool, Share, SambaCustomConfig, SambaShare
+from storageadmin.models import Pool, Share, SambaCustomConfig, SambaShare, User
 from storageadmin.tests.test_api import APITestMixin
 
 from storageadmin.views.samba import SambaListView, logger
@@ -291,8 +291,8 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         mock_logger.error.assert_called()
         # mock_logger.error.assert_called_with(e_msg)
 
-
-    def test_get(self):
+    @mock.patch('storageadmin.views.samba.SambaShare')
+    def test_get(self, mock_sambashare):
         """
         Test GET request
         1. Get base URL
@@ -309,6 +309,13 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         # get sambashare with non-existant id
         response = self.client.get("{}/5".format(self.BASE_URL))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
+
+        # test get of detailed view for a valid smb_id
+        mock_sambashare.objects.get.return_value = self.temp_sambashare
+        smb_id = mock_sambashare.id
+        response = self.client.get("{}/{}".format(self.BASE_URL, smb_id))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data["id"], smb_id)
 
     def test_post_requests_1(self):
         """
@@ -327,14 +334,20 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         e_msg = "Must provide share names."
         self.assertEqual(response.data[0], e_msg)
 
-    def test_post_requests_2(self):
+    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
+    # @mock.patch("storageadmin.views.share.Share")
+    # @mock.patch("storageadmin.views.samba.SambaShare.objects")
+    # @mock.patch("storageadmin.views.samba.SambaShare")
+    @mock.patch("storageadmin.views.samba.User")
+    def test_post_requests_2(self, mock_user, mock_validate_share):
         """
          . Create a samba export for the share that has already been exported
         """
+        mock_validate_share.return_value = self.temp_share_smb
 
         # create samba with invalid browsable, guest_ok, read_only choices
         data = {
-            "shares": (24,),
+            "shares": ["23"],
             "browsable": "Y",
             "guest_ok": "yes",
             "read_only": "yes",
@@ -349,7 +362,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         self.assertEqual(response.data[0], e_msg)
 
         data = {
-            "shares": (24,),
+            "shares": ["23"],
             "browsable": "yes",
             "guest_ok": "Y",
             "read_only": "yes",
@@ -364,7 +377,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         self.assertEqual(response.data[0], e_msg)
 
         data = {
-            "shares": (24,),
+            "shares": ["23"],
             "browsable": "yes",
             "guest_ok": "yes",
             "read_only": "Y",
@@ -381,21 +394,39 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         # create samba export
         # we use share id 24 (share2) as not yet smb exported.
         data = {
-            "shares": (24,),
+            "shares": ["24"],
             "browsable": "yes",
             "guest_ok": "yes",
             "read_only": "yes",
             "admin_users": ("admin",),
             "custom_config": ("CONFIG", "XYZ"),
         }
+        mock_validate_share.return_value = self.temp_share2
+        # mock_share.return_value = self.temp_share2
+        # self.temp_sambashare2 = SambaShare(id=2, share=self.temp_share2)
+        # mock_sambashare.return_value = self.temp_sambashare
+        # mock_sambashareobj.filter.return_value = mock_sambashareobj
+        # mock_sambashareobj.exists.return_value = False
+        # mock_sambashare.objects.filter.return_value.exists.return_value = False
+        mock_user.objects.get.side_effects = None
+        temp_user = User.objects.create(username='admin', uid=1, gid=1, admin=False,
+                         user=self.user)
+        mock_user.objects.get.return_value = temp_user
+
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        smb_id = response.data["id"]
+        print("test VALID Samba Export completed")
 
-        # test get of detailed view for the smb_id
-        response = self.client.get("{}/{}".format(self.BASE_URL, smb_id))
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data["id"], smb_id)
+        ## The test below may better belong to test_get() above, so move it there.
+        # smb_id = response.data["id"]
+        # print("response.data is {}".format(response.data))
+        #
+        # # test get of detailed view for the smb_id
+        # # First, save the SambaShare as created above (with id = 1)
+        # mock_sambashare.objects.get.return_value = self.temp_sambashare
+        # response = self.client.get("{}/{}".format(self.BASE_URL, smb_id))
+        # self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        # self.assertEqual(response.data["id"], smb_id)
 
         # # TODO: Needs multiple share instances mocked
         # # create samba exports for multiple(3) shares at once
@@ -406,9 +437,35 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         # self.assertEqual(response.status_code,
         #                  status.HTTP_200_OK, msg=response.data)
 
+        ## post() does not raise exception in this condition anymore, but rather
+        ## logs an error as "Share (share.name) is already exported via Samba".
+        # # create samba export with the share that has already been exported above
+        # data = {
+        #     "shares": ["24"],
+        #     "browsable": "no",
+        #     "guest_ok": "yes",
+        #     "read_only": "yes",
+        # }
+        # response = self.client.post(self.BASE_URL, data=data)
+        # self.assertEqual(
+        #     response.status_code,
+        #     status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     msg=response.data,
+        # )
+        # e_msg = "Share (share2) is already exported via Samba."
+        # self.assertEqual(response.data[0], e_msg)
+
+    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
+    def test_post_requests_no_admin(self, mock_validate_share):
+        """
+        Test a valid post request creating a samba export
+        when no admin user is specified
+        """
+        mock_validate_share.return_value = self.temp_share_smb
+
         # create samba export with no admin users
         data = {
-            "shares": ("share5",),
+            "shares": ["24"],
             "browsable": "yes",
             "guest_ok": "yes",
             "read_only": "yes",
@@ -417,22 +474,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
-        # create samba export with the share that has already been exported
-        # above
-        data = {
-            "shares": (24,),
-            "browsable": "no",
-            "guest_ok": "yes",
-            "read_only": "yes",
-        }
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            msg=response.data,
-        )
-        e_msg = "Share (share2) is already exported via Samba."
-        self.assertEqual(response.data[0], e_msg)
 
     def test_put_requests_1(self):
         """

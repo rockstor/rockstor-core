@@ -104,23 +104,31 @@ class SambaMixin(object):
     @staticmethod
     def _set_admin_users(admin_users, smb_share):
         for au in admin_users:
+            logger.debug("admin_users 'au' is {}".format(au))
             try:
                 auo = User.objects.get(username=au)
+                logger.debug("'auo' is {}".format(auo.username))
             except User.DoesNotExist:
+                logger.debug("User.DoesNotExist exception was observed")
                 # check if the user is a system user, then create a temp user
                 # object.
                 try:
                     system_user = pwd.getpwnam(au)
+                    logger.debug("system_user is {}".format(system_user))
                     auo = User(username=au, uid=system_user.pw_uid,
                                gid=system_user.pw_gid, admin=False)
+                    logger.debug("auo is {} with username {}".format(auo, auo.username))
                     auo.save()
                 except KeyError:
+                    logger.debug("KeyError was observed")
                     # raise the outer exception as it's more meaningful to the
                     # user.
                     raise Exception('Requested admin user(%s) does '
                                     'not exist.' % au)
             finally:
+                logger.debug("FINAL auo is {} with username {}".format(auo, auo.username))
                 auo.smb_shares.add(smb_share)
+                logger.debug("_set_admin_users() completed successfully")
 
 
 class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
@@ -162,6 +170,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                 mnt_pt = ('{}{}'.format(settings.MNT_PT, share.name))
                 options['share'] = share
                 options['path'] = mnt_pt
+                logger.debug("FINAL options are {}".format(options))
                 smb_share = SambaShare(**options)
                 smb_share.save()
                 for cc in custom_config:
