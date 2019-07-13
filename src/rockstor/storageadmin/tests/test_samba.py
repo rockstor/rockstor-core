@@ -284,7 +284,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "shadow_copy": False,
             "guest_ok": "no",
         }
-        e_msg = ("Share ({}) is already exported via " "Samba.").format(
+        e_msg = ("Share ({}) is already exported via Samba.").format(
             self.temp_share_smb.name
         )
         self.create_samba_share(rdata=data)
@@ -296,26 +296,38 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         """
         Test GET request
         1. Get base URL
-        2. Get request with id
+        2. Get request with valid id
+        """
+        self.get_base(self.BASE_URL)
+
+        # Create mock SambaShare
+        # smb_id = self.temp_sambashare.id
+        # Some conflict exists from a previous mock_sambashare, so set smb_id manually
+        smb_id = 1
+        # print("smb_id is {}".format(smb_id))
+        mock_sambashare.objects.get.return_value = self.temp_sambashare
+
+        # test get of detailed view for a valid smb_id
+        response = self.client.get("{}/{}".format(self.BASE_URL, smb_id))
+        print("response is {}".format(response))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data["id"], smb_id)
+
+    def test_get_non_existent(self):
+        """
+        Test GET request
+        1. Get base URL
+        2. Get request with invalid id
         """
         # get base URL
         self.get_base(self.BASE_URL)
-
         # # get sambashare with id
         # response = self.client.get('{}/1'.format(self.BASE_URL))
         # self.assertEqual(response.status_code, status.HTTP_200_OK,
         #                  msg=response)
-
-        # get sambashare with non-existant id
+        # get sambashare with non-existent id
         response = self.client.get("{}/5".format(self.BASE_URL))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
-
-        # test get of detailed view for a valid smb_id
-        mock_sambashare.objects.get.return_value = self.temp_sambashare
-        smb_id = mock_sambashare.id
-        response = self.client.get("{}/{}".format(self.BASE_URL, smb_id))
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data["id"], smb_id)
 
     def test_post_requests_1(self):
         """
