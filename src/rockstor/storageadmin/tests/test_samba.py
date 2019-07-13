@@ -309,7 +309,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
 
         # test get of detailed view for a valid smb_id
         response = self.client.get("{}/{}".format(self.BASE_URL, smb_id))
-        print("response is {}".format(response))
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data["id"], smb_id)
 
@@ -427,7 +426,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
 
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        print("test VALID Samba Export completed")
 
         ## The test below may better belong to test_get() above, so move it there.
         # smb_id = response.data["id"]
