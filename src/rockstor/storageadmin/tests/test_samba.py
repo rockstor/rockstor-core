@@ -212,9 +212,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         Test that create_samba_share() returns a correct SambaShare object
         when all conditions are valid.
         """
-        # self.patch_validate_share = patch("storageadmin.views.samba.ShareMixin._validate_share")
-        # self.mock_validate_share = self.patch_validate_share.start()
-        # self.mock_validate_share.return_value = self.temp_share_smb
         mock_validate_share.return_value = self.temp_share_smb
 
         data = {
@@ -284,9 +281,9 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "shadow_copy": False,
             "guest_ok": "no",
         }
-        e_msg = ("Share ({}) is already exported via Samba.").format(
-            self.temp_share_smb.name
-        )
+        # e_msg = ("Share ({}) is already exported via Samba.").format(
+        #     self.temp_share_smb.name
+        # )
         self.create_samba_share(rdata=data)
         mock_logger.error.assert_called()
         # mock_logger.error.assert_called_with(e_msg)
@@ -346,9 +343,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         self.assertEqual(response.data[0], e_msg)
 
     @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
-    # @mock.patch("storageadmin.views.share.Share")
-    # @mock.patch("storageadmin.views.samba.SambaShare.objects")
-    # @mock.patch("storageadmin.views.samba.SambaShare")
     @mock.patch("storageadmin.views.samba.User")
     def test_post_requests_2(self, mock_user, mock_validate_share):
         """
@@ -413,12 +407,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "custom_config": ("CONFIG", "XYZ"),
         }
         mock_validate_share.return_value = self.temp_share2
-        # mock_share.return_value = self.temp_share2
-        # self.temp_sambashare2 = SambaShare(id=2, share=self.temp_share2)
-        # mock_sambashare.return_value = self.temp_sambashare
-        # mock_sambashareobj.filter.return_value = mock_sambashareobj
-        # mock_sambashareobj.exists.return_value = False
-        # mock_sambashare.objects.filter.return_value.exists.return_value = False
         mock_user.objects.get.side_effects = None
         temp_user = User.objects.create(username='admin', uid=1, gid=1, admin=False,
                          user=self.user)
@@ -609,7 +597,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
     def test_delete_requests_2(self, mock_sambashare):
         """
         . Delete samba
-
         """
 
         mock_sambashare.objects.get.return_value = self.temp_sambashare

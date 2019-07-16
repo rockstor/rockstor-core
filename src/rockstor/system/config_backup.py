@@ -37,7 +37,6 @@ def backup_config():
     for a in models:
         for m in models[a]:
             model_list.append('{}.{}'.format(a, m))
-    logger.debug('model list = {}'.format(model_list))
 
     filename = ('backup-{}.json'.format(datetime.now().strftime('%Y-%m-%d-%H%M%S')))
     cb_dir = ConfigBackup.cb_dir()
