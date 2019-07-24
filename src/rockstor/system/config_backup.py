@@ -19,7 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
 from datetime import datetime
+
 from django.core.management import call_command
+
 from storageadmin.models import ConfigBackup
 from system.osi import run_command, md5sum
 
@@ -27,6 +29,12 @@ logger = logging.getLogger(__name__)
 
 
 def backup_config():
+    models = {'storageadmin':
+              ['user', 'group', 'sambashare', 'sambacustomconfig',
+               'netatalkshare', 'nfsexport',
+               'nfsexportgroup', 'advancednfsexport', ],
+              'smart_manager':
+              ['service', 'taskdefinition', ], }
     models = {
         "storageadmin": [
             "user",
@@ -38,7 +46,10 @@ def backup_config():
             "nfsexportgroup",
             "advancednfsexport",
         ],
-        "smart_manager": ["service"],
+        "smart_manager": [
+            "service",
+            "taskdefinition"
+        ],
     }
     model_list = []
     for a in models:
