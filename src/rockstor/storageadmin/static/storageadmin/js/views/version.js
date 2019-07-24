@@ -239,28 +239,40 @@ VersionView = RockstorLayoutView.extend({
         var contributors = [];
 
         for (var i = 0; i < logArray.length; i++) {
-            var hashIndex = logArray[i].indexOf('#');
-            var atRateIndex = logArray[i].indexOf('@');
-            issues[i] = logArray[i].substring(hashIndex + 1, atRateIndex - 1);
-            var namesNum = logArray[i].indexOf('@') + 1;
-            changeDescription[i] = logArray[i].substring(0, hashIndex - 1);
-            nextString[i] = logArray[i].substring(namesNum, logArray[i].length);
-            contributors[i] = nextString[i].split(' @');
+            if (logArray[i] == '' || logArray[i].substring(0, 1) == '*') {
+                // Preserve empty lines and package version entries 'as is'
+                // and Bold for section emphasis.
+                changeDescription[i] = logArray[i]
+            } else {
+                var hashIndex = logArray[i].indexOf('#');
+                var atRateIndex = logArray[i].indexOf('@');
+                issues[i] = logArray[i].substring(hashIndex + 1, atRateIndex - 1);
+                var namesNum = logArray[i].indexOf('@') + 1;
+                changeDescription[i] = logArray[i].substring(0, hashIndex - 1);
+                nextString[i] = logArray[i].substring(namesNum, logArray[i].length);
+                contributors[i] = nextString[i].split(' @');
+            }
         }
         for (var k = 0; k < changeDescription.length; k++) {
             var cl = changeDescription[k];
-            cl += '<a href="https://github.com/rockstor/rockstor-core/issues/';
-            cl += issues[k];
-            cl += '" target="_blank"> #';
-            cl += issues[k];
-            cl += '</a>';
-
-            for (var j = 0; j < contributors[k].length; j++) {
-                cl += '<a href="https://github.com/';
-                cl += contributors[k][j];
-                cl += '" target="_blank"> @';
-                cl += contributors[k][j];
+            // Don't process package version lines for issue and contributor
+            if (cl == '' || cl.substring(0, 1) == '*') {
+                cl = '<strong>' + cl + '</strong>'
+            } else {
+                cl += '<a href="https://github.com/rockstor/rockstor-core/issues/';
+                cl += issues[k];
+                cl += '" target="_blank"> #';
+                cl += issues[k];
                 cl += '</a>';
+                if (typeof contributors[k] !== 'undefined') {
+                    for (var j = 0; j < contributors[k].length; j++) {
+                        cl += '<a href="https://github.com/';
+                        cl += contributors[k][j];
+                        cl += '" target="_blank"> @';
+                        cl += contributors[k][j];
+                        cl += '</a>';
+                    }
+                }
             }
             changeLogArray.push(new Handlebars.SafeString(cl));
         }
