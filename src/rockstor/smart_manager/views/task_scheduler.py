@@ -16,17 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from smart_manager.models import TaskDefinition
-from storageadmin.models import (Pool, Share, EmailClient)
-from smart_manager.serializers import TaskDefinitionSerializer
-from django.db import transaction
-from django.conf import settings
 import json
-from rest_framework.response import Response
-from storageadmin.util import handle_exception
-import rest_framework_custom as rfc
-
 import logging
+
+from django.conf import settings
+from django.db import transaction
+from rest_framework.response import Response
+
+import rest_framework_custom as rfc
+from smart_manager.models import TaskDefinition
+from smart_manager.serializers import TaskDefinitionSerializer
+from storageadmin.models import (Pool, Share, EmailClient)
+from storageadmin.util import handle_exception
+
 logger = logging.getLogger(__name__)
 
 
@@ -134,6 +136,7 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
+            logger.debug('Create TASKS with rdata = {}'.format(request.data))
             name = request.data['name']
             if (TaskDefinition.objects.filter(name=name).exists()):
                 msg = ('Another task exists with the same name(%s). Choose '
@@ -148,6 +151,15 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
             crontab, crontabwindow, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
             enabled = self._validate_enabled(request)
+            logger.debug('''\
+            Create NEW TASK with the following params
+                         name = {}
+                         task_type = {}
+                         crontab = {}
+                         crontabwindow = {}
+                         enabled = {}
+                         json_meta = {}\
+                         '''.format(name, task_type, crontab, crontabwindow, enabled, json_meta))
 
             td = TaskDefinition(name=name, task_type=task_type,
                                 crontab=crontab, crontabwindow=crontabwindow,

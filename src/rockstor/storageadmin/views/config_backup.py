@@ -16,22 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
-from rest_framework.response import Response
-from django.db import transaction
-from django.conf import settings
-from storageadmin.models import ConfigBackup
-from storageadmin.serializers import ConfigBackupSerializer
-from storageadmin.util import handle_exception
-import rest_framework_custom as rfc
-from system.osi import md5sum
-from system.config_backup import backup_config
-from rest_framework.parsers import FileUploadParser, MultiPartParser
-from django_ztask.decorators import task
-from cli.rest_util import api_call
 import gzip
 import json
 import logging
+import os
+
+from django.conf import settings
+from django.db import transaction
+from django_ztask.decorators import task
+from rest_framework.parsers import FileUploadParser, MultiPartParser
+from rest_framework.response import Response
+
+import rest_framework_custom as rfc
+from cli.rest_util import api_call
+from storageadmin.models import ConfigBackup
+from storageadmin.serializers import ConfigBackupSerializer
+from storageadmin.util import handle_exception
+from system.config_backup import backup_config
+from system.osi import md5sum
+
 logger = logging.getLogger(__name__)
 BASE_URL = 'https://localhost/api'
 
@@ -142,6 +145,42 @@ def restore_services(ml):
     logger.debug('Finished restoring services.')
 
 
+def restore_scheduled_tasks(ml):
+    logger.debug('Started restoring scheduled tasks.')
+    # Need the following info:
+    #     name
+    #     task_type
+    #     crontab
+    #     crontabwindow
+    #     meta
+    #     enabled
+
+    tasks = []
+    for m in ml:
+        if (m['model'] == 'smart_manager.taskdefinition'):
+            # tasksdef.append(m['fields'])
+            name = m['fields']['name']
+            task_type = m['fields']['task_type']
+            crontab = m['fields']['crontab']
+            crontabwindow = m['fields']['crontabwindow']
+            enabled = m['fields']['enabled']
+            json_meta = m['fields']['json_meta']
+            if (json_meta is not None):
+                jmeta = json.loads(json_meta)
+            taskdef = {}
+            taskdef['name'] = name
+            taskdef['task_type'] = task_type
+            taskdef['crontab'] = crontab
+            taskdef['crontabwindow'] = crontabwindow
+            taskdef['enabled'] = enabled
+            taskdef['meta'] = jmeta
+            tasks.append(taskdef)
+    logger.debug('tasks = ({}).'.format(tasks))
+    for t in tasks:
+        generic_post('{}/sm/tasks/'.format(BASE_URL), t)
+    logger.debug('Finished restoring scheduled tasks.')
+
+
 @task()
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
@@ -150,6 +189,8 @@ def restore_config(cbid):
     lines = gfo.readlines()
     sa_ml = json.loads(lines[0])
     sm_ml = json.loads(lines[1])
+    logger.debug('sa_ml is {}'.format(sa_ml))
+    logger.debug('sm_ml is {}'.format(sm_ml))
     gfo.close()
     restore_users_groups(sa_ml)
     restore_samba_exports(sa_ml)
@@ -159,7 +200,7 @@ def restore_config(cbid):
     # restore_dashboard(ml)
     # restore_appliances(ml)
     # restore_network(sa_ml)
-    # restore_scheduled_tasks(ml)
+    restore_scheduled_tasks(sm_ml)
     # restore_rockons(ml)
 
 
