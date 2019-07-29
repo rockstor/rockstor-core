@@ -1,0 +1,185 @@
+[
+  {
+    "fields": {
+      "config": null,
+      "display_name": "Replication",
+      "name": "replication"
+    },
+    "model": "smart_manager.service",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "config": "{}",
+      "display_name": "Samba",
+      "name": "smb"
+    },
+    "model": "smart_manager.service",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "NFS",
+      "name": "nfs"
+    },
+    "model": "smart_manager.service",
+    "pk": 3
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "NTP",
+      "name": "ntpd"
+    },
+    "model": "smart_manager.service",
+    "pk": 5
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "NIS",
+      "name": "nis"
+    },
+    "model": "smart_manager.service",
+    "pk": 6
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "LDAP",
+      "name": "ldap"
+    },
+    "model": "smart_manager.service",
+    "pk": 7
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "SFTP",
+      "name": "sftp"
+    },
+    "model": "smart_manager.service",
+    "pk": 8
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "Rockstor",
+      "name": "rockstor"
+    },
+    "model": "smart_manager.service",
+    "pk": 9
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "S.M.A.R.T",
+      "name": "smartd"
+    },
+    "model": "smart_manager.service",
+    "pk": 10
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "Active Directory",
+      "name": "active-directory"
+    },
+    "model": "smart_manager.service",
+    "pk": 11
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "NUT-UPS",
+      "name": "nut"
+    },
+    "model": "smart_manager.service",
+    "pk": 12
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "SNMP",
+      "name": "snmpd"
+    },
+    "model": "smart_manager.service",
+    "pk": 13
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "Rock-on",
+      "name": "docker"
+    },
+    "model": "smart_manager.service",
+    "pk": 14
+  },
+  {
+    "fields": {
+      "config": "{\"detach\": false, \"css\": \"white-on-black\", \"shelltype\": \"LOGIN\"}",
+      "display_name": "Shell In A Box",
+      "name": "shellinaboxd"
+    },
+    "model": "smart_manager.service",
+    "pk": 15
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "AFP",
+      "name": "netatalk"
+    },
+    "model": "smart_manager.service",
+    "pk": 16
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "ZTaskd",
+      "name": "ztask-daemon"
+    },
+    "model": "smart_manager.service",
+    "pk": 17
+  },
+  {
+    "fields": {
+      "config": null,
+      "display_name": "Bootstrap",
+      "name": "rockstor-bootstrap"
+    },
+    "model": "smart_manager.service",
+    "pk": 18
+  },
+  {
+    "fields": {
+      "task_type": "scrub",
+      "name": "scurb-testpool01",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 * * 5",
+      "json_meta": "{\"pool_name\": \"test_pool\", \"pool\": \"3\"}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 10
+  },
+  {
+    "pk": 1,
+    "model": "auth.user",
+    "fields": {
+      "username": "admin",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_superuser": false,
+      "is_staff": false,
+      "last_login": "2014-11-05T14:19:15.421Z",
+      "groups": [],
+      "user_permissions": [],
+      "password": "pbkdf2_sha256$12000$bIlTp3bZu4if$HhIMeQVPN/0NJz0NtrVj7ib8h+xHZkUT/md5DaPlq6A=",
+      "email": "",
+      "date_joined": "2014-11-05T14:19:13.535Z"
+    }
+  }
+]
