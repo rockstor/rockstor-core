@@ -1,0 +1,62 @@
+[
+  {
+    "fields": {
+      "task_type": "scrub",
+      "name": "scurb-testpool01",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 * * 5",
+      "json_meta": "{\"pool_name\": \"test_pool\", \"pool\": \"3\"}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 10
+  },
+  {
+    "fields": {
+      "task_type": "snapshot",
+      "name": "snap-test",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 * * *",
+      "json_meta": "{\"writable\": true, \"visible\": true, \"prefix\": \"snaptest\", \"share\": \"4\", \"max_count\": \"4\"}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 15
+  },
+  {
+    "fields": {
+      "task_type": "reboot",
+      "name": "sys_reboot",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 1 * *",
+      "json_meta": "{}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 16
+  },
+  {
+    "fields": {
+      "task_type": "shutdown",
+      "name": "sys_shutdown",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 1 1 *",
+      "json_meta": "{\"wakeup\": false, \"rtc_hour\": 0, \"rtc_minute\": 0}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 17
+  },
+  {
+    "fields": {
+      "task_type": "suspend",
+      "name": "sys_suspend",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "0 * * * *",
+      "json_meta": "{\"wakeup\": true, \"rtc_hour\": 0, \"rtc_minute\": 0}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 18
+  }
+]

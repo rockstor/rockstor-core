@@ -22,7 +22,8 @@ from rest_framework.test import APITestCase
 
 class TaskSchedulerTests(APITestCase):
     multi_db = True
-    fixtures = ["scheduled_tasks.json"]
+    # fixtures = ["scheduled_tasks.json"]
+    fixtures = ["scheduled_tasks2.json", "scheduled_tasks3.json"]
     BASE_URL = "/api/sm/tasks"
 
     def session_login(self):
@@ -43,4 +44,74 @@ class TaskSchedulerTests(APITestCase):
         response = self.client.get('{}/100'.format(self.BASE_URL))
         self.assertEqual(response.status_code, status.HTTP_200_OK,
                          msg=response)
+
+    def test_post_valid(self):
+        """
+        Test valid POST request
+        """
+        datalist = [{
+            'task_type': 'scrub',
+            'name': 'scrubtest',
+            'enabled': False,
+            'crontab': '42 3 * * 5',
+            'meta': {'pool': '3'},
+            'crontabwindow': '*-*-*-*-*-*'
+        }, {
+            'task_type': 'snapshot',
+            'name': 'snapshot_test',
+            'enabled': False,
+            'crontab': '42 3 * * 5',
+            'meta': {"writable": True, "visible": True, "prefix": "snaptest", "share": "4", "max_count": "4"},
+            'crontabwindow': '*-*-*-*-*-*'
+        }, {
+            'task_type': 'reboot',
+            'name': 'sys_reboot_test',
+            'enabled': False,
+            'crontab': '42 3 * * 5',
+            'meta': {},
+            'crontabwindow': '*-*-*-*-*-*'
+        }, {
+            'task_type': 'shutdown',
+            'name': 'sys_shutdown_test',
+            'enabled': False,
+            'crontab': '42 3 * * 5',
+            'meta': {"wakeup": False, "rtc_hour": "0", "rtc_minute": "0"},
+            'crontabwindow': '*-*-*-*-*-*'
+        }, {
+            'task_type': 'suspend',
+            'name': 'sys_suspend_test',
+            'enabled': False,
+            'crontab': '42 3 * * 5',
+            'meta': {"wakeup": True, "rtc_hour": "0", "rtc_minute": "0"},
+            'crontabwindow': '*-*-*-*-*-*'
+        }]
+        # data = {
+        #     'task_type': 'scrub',
+        #     'name': 'scrubtest',
+        #     'enabled': False,
+        #     'crontab': '42 3 * * 5',
+        #     'meta': {'pool': '3'},
+        #     'crontabwindow': '*-*-*-*-*-*'
+        #     }
+
+        self.session_login()
+        for data in datalist:
+            response = self.client.post('{}/'.format(self.BASE_URL), data=data)
+            self.assertEqual(response.status_code,
+                             status.HTTP_200_OK,
+                             msg=response.content)
+
+    def test_post_name_exists(self):
+        """
+        Test invalid POST request when a task with the same name already exists.
+        It should return an exception.
+        """
+        pass
+
+    def test_post_invalid_type(self):
+        """
+        Test invalid POST request when a task type is incorrect.
+        It should return an exception.
+        """
+        pass
 
