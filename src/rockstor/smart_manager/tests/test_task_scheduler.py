@@ -126,5 +126,17 @@ class TaskSchedulerTests(APITestCase):
         Test invalid POST request when a task type is incorrect.
         It should return an exception.
         """
-        pass
+        data = {
+            'task_type': 'unsupported_type',
+            'name': 'test_scrub',
+            'enabled': False,
+            'crontab': '42 3 * * 5',
+            'meta': {'pool': '3'},
+            'crontabwindow': '*-*-*-*-*-*'
+        }
 
+        self.session_login()
+        response = self.client.post('{}/'.format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
