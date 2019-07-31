@@ -22,8 +22,7 @@ from rest_framework.test import APITestCase
 
 class TaskSchedulerTests(APITestCase):
     multi_db = True
-    # fixtures = ["scheduled_tasks.json"]
-    fixtures = ["scheduled_tasks2.json", "scheduled_tasks3.json"]
+    fixtures = ["scheduled_tasks.json"]
     BASE_URL = "/api/sm/tasks"
 
     def session_login(self):
@@ -95,15 +94,6 @@ class TaskSchedulerTests(APITestCase):
                 "crontabwindow": "*-*-*-*-*-*",
             },
         ]
-        # data = {
-        #     'task_type': 'scrub',
-        #     'name': 'scrubtest',
-        #     'enabled': False,
-        #     'crontab': '42 3 * * 5',
-        #     'meta': {'pool': '3'},
-        #     'crontabwindow': '*-*-*-*-*-*'
-        #     }
-
         self.session_login()
         for data in datalist:
             response = self.client.post("{}/".format(self.BASE_URL), data=data)
