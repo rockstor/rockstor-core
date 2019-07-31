@@ -106,7 +106,20 @@ class TaskSchedulerTests(APITestCase):
         Test invalid POST request when a task with the same name already exists.
         It should return an exception.
         """
-        pass
+        data = {
+            'task_type': 'scrub',
+            'name': 'scurb-testpool01',
+            'enabled': False,
+            'crontab': '42 3 * * 5',
+            'meta': {'pool': '3'},
+            'crontabwindow': '*-*-*-*-*-*'
+            }
+
+        self.session_login()
+        response = self.client.post('{}/'.format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
 
     def test_post_invalid_type(self):
         """
