@@ -136,31 +136,20 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            logger.debug('Create TASKS with rdata = {}'.format(request.data))
             name = request.data['name']
             if (TaskDefinition.objects.filter(name=name).exists()):
-                msg = ('Another task exists with the same name(%s). Choose '
-                       'a different name' % name)
+                msg = ('Another task exists with the same name({}). Choose '
+                       'a different name'.format(name))
                 handle_exception(Exception(msg), request)
 
             task_type = request.data['task_type']
             if (task_type not in self.valid_tasks):
-                e_msg = ('Unknown task type: %s cannot be scheduled' % name)
+                e_msg = ('Unknown task type: {} cannot be scheduled'.format(name))
                 handle_exception(Exception(e_msg), request)
 
             crontab, crontabwindow, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
             enabled = self._validate_enabled(request)
-            logger.debug('''\
-            Create NEW TASK with the following params
-                         name = {}
-                         task_type = {}
-                         crontab = {}
-                         crontabwindow = {}
-                         enabled = {}
-                         json_meta = {}\
-                         '''.format(name, task_type, crontab, crontabwindow, enabled, json_meta))
-
             td = TaskDefinition(name=name, task_type=task_type,
                                 crontab=crontab, crontabwindow=crontabwindow,
                                 json_meta=json_meta, enabled=enabled)
