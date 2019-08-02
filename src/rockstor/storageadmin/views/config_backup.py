@@ -183,7 +183,6 @@ def restore_scheduled_tasks(ml):
                 "meta": jmeta,
             }
             tasks.append(taskdef)
-    logger.debug("tasks = ({}).".format(tasks))
     for t in tasks:
         generic_post("{}/sm/tasks/".format(BASE_URL), t)
     logger.debug("Finished restoring scheduled tasks.")
