@@ -266,7 +266,7 @@ SFTP_MNT_ROOT = '/mnt3/'
 
 # System volume label when no btrfs volume label is set as per default openSUSE
 # install: ie 'btrfs fi show' gives 'Label: none'
-SYS_VOL_LABEL = 'system'
+SYS_VOL_LABEL = 'ROOT'
 
 TAP_DIR = '${django-settings-conf:taplib}'
 TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
