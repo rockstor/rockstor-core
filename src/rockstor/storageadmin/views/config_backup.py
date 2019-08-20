@@ -401,6 +401,47 @@ def get_sname(ml, share_id):
     return sname
 
 
+def restore_rockons(ml):
+    """
+    Parses and filter the model list input (ml) to gather all the information
+    required to install a rock-on. The result is then sent to the rockon API.
+    Notably, we need to filter out only the information from rock-ons that
+    were installed at the time of the backup. We will thus get the following:
+    - rock-on name and its primary key
+    - custom_config: need everything
+    - container(s): need only its id.
+    - volume(s): need everything
+    - ports: need everything
+    - options: need everything
+    - link(s): need everything
+    - args: need everything
+    - device(s): need everything
+    - environment variable(s): need everything
+    - label(s) (may need refactoring of rockon_id update() process so that it can
+        be triggered from here as well): need everything
+
+    :param ml:
+    :return:
+    """
+    logger.debug('Started restoring rock-ons.')
+    rockons = {}
+    rids = []
+    for m in ml:
+        if (m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed'):
+            rname = m['fields']['name']
+            rids.append(m['pk'])
+    for rid in rids:
+        for m in ml:
+            if m['model'] == 'storageadmin.dcontainer' and m['fields']['rockon'] is rid:
+                cname = m['fields']['name']
+                cid = m['pk']
+
+    logger.debug('rockons = ({}).'.format(rockons))
+    for r in rockons:
+        generic_post('{}/rockons/{}/install'.format(BASE_URL, r['rid'), r)
+    logger.debug('Finished restoring rock-ons.')
+
+
 @task()
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
