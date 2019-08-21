@@ -464,8 +464,15 @@ def restore_rockons(ml):
                     rockons[rid]['ports'].update({hostp: containerp})
 
             # get devices
-            # get cc
+            rockons[rid]['devices'] = {}
+            for m in ml:
+                if m['model'] == 'storageadmin.dcontainerdevice' and m['fields']['container'] is cid:
+                    dev = m['fields']['dev']
+                    val = m['fields']['val']
+                    rockons[rid]['devices'].update({dev: val})
+
             # get environment
+            # get cc
 
 
     logger.debug('rockons = ({}).'.format(rockons))
