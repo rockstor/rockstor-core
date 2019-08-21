@@ -433,10 +433,14 @@ def restore_rockons(ml):
     """
     logger.debug('Started restoring rock-ons.')
     rockons = {}
+    # Filter rock-on that were installed in the backup
     for m in ml:
-        if (m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed'):
-            rockons[m['pk']] = {}
-            rockons[m['pk']]['rname'] = m['fields']['name']
+        if m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed':
+            rname = m['fields']['name']
+            if not RockOn.objects.filter(name=rname, state='installed').exists():
+                rockons[m['pk']] = {}
+                rockons[m['pk']]['rname'] = m['fields']['name']
+
     for rid in rockons:
         rockons[rid]['containers'] = []
         rockons[rid]['shares'] = {}
@@ -488,7 +492,7 @@ def restore_rockons(ml):
 
     logger.debug('rockons = ({}).'.format(rockons))
     for r in rockons:
-        generic_post('{}/rockons/{}/install'.format(BASE_URL, r['rid']), r)
+        generic_post('{}/rockons/{}/install'.format(BASE_URL, r), rockons[r])
     logger.debug('Finished restoring rock-ons.')
 
 
