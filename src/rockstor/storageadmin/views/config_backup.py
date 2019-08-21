@@ -248,7 +248,9 @@ def restore_rockons(ml):
         if m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed':
             rname = m['fields']['name']
             if not RockOn.objects.filter(name=rname, state='installed').exists():
+                ro = RockOn.objects.get(name=rname)
                 rockons[m['pk']] = {}
+                rockons[m['pk']]['new_rid'] = ro.id
                 rockons[m['pk']]['rname'] = m['fields']['name']
 
     for rid in rockons:
@@ -302,7 +304,7 @@ def restore_rockons(ml):
 
     logger.debug('rockons = ({}).'.format(rockons))
     for r in rockons:
-        generic_post('{}/rockons/{}/install'.format(BASE_URL, r), rockons[r])
+        generic_post('{}/rockons/{}/install'.format(BASE_URL, rockons[r]['new_rid']), rockons[r])
     logger.debug('Finished restoring rock-ons.')
 
 
