@@ -243,21 +243,24 @@ def restore_rockons(ml):
     """
     logger.debug('Started restoring rock-ons.')
     rockons = {}
-    rids = []
     for m in ml:
         if (m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed'):
             rockons[m['pk']] = {}
             rockons[m['pk']]['rname'] = m['fields']['name']
     for rid in rockons:
-        # Get container(s) id(s)
         rockons[rid]['containers'] = []
+        rockons[rid]['shares'] = {}
+        rockons[rid]['ports'] = {}
+        rockons[rid]['devices'] = {}
+        rockons[rid]['environment'] = {}
+        rockons[rid]['cc'] = {}
+        # Get container(s) id(s)
         for m in ml:
             if m['model'] == 'storageadmin.dcontainer' and m['fields']['rockon'] is rid:
                 rockons[rid]['containers'].append(m['pk'])
         # For each container_id:
         for cid in rockons[rid].get('containers'):
             # get shares
-            rockons[rid]['shares'] = {}
             for m in ml:
                 if m['model'] == 'storageadmin.dvolume' and m['fields']['container'] is cid:
                     share_id = m['fields']['share']
@@ -266,7 +269,6 @@ def restore_rockons(ml):
                     rockons[rid]['shares'].update({sname: dest_dir})
 
             # get ports
-            rockons[rid]['ports'] = {}
             for m in ml:
                 if m['model'] == 'storageadmin.dport' and m['fields']['container'] is cid:
                     hostp = m['fields']['hostp']
@@ -274,7 +276,6 @@ def restore_rockons(ml):
                     rockons[rid]['ports'].update({hostp: containerp})
 
             # get devices
-            rockons[rid]['devices'] = {}
             for m in ml:
                 if m['model'] == 'storageadmin.dcontainerdevice' and m['fields']['container'] is cid:
                     dev = m['fields']['dev']
@@ -282,8 +283,18 @@ def restore_rockons(ml):
                     rockons[rid]['devices'].update({dev: val})
 
             # get environment
-            # get cc
+            for m in ml:
+                if m['model'] == 'storageadmin.dcontainerenv' and m['fields']['container'] is cid:
+                    key = m['fields']['key']
+                    val = m['fields']['val']
+                    rockons[rid]['environment'].update({key: val})
 
+        # get cc
+        for m in ml:
+            if m['model'] == 'storageadmin.dcustomconfig' and m['fields']['rockon'] is rid:
+                key = m['fields']['key']
+                val = m['fields']['val']
+                rockons[rid]['cc'].update({key: val})
 
     logger.debug('rockons = ({}).'.format(rockons))
     for r in rockons:
