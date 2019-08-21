@@ -419,6 +419,14 @@ def restore_rockons(ml):
     - environment variable(s): need everything
     - label(s) (may need refactoring of rockon_id update() process so that it can
         be triggered from here as well): need everything
+        
+    For a given rock-on, the final request should follow the syntax below:
+    {
+    'environment': {'GID': '1000', 'UID': '1000', 'GIDLIST': '1000'},
+    'devices': {'VAAPI': ''},
+    'ports': {'8096': 8096, '8920': 8920},
+    'shares': {'emby-media': '/media', 'emby-conf': '/config'}
+    }
 
     :param ml:
     :return:
@@ -428,18 +436,49 @@ def restore_rockons(ml):
     rids = []
     for m in ml:
         if (m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed'):
-            rname = m['fields']['name']
-            rids.append(m['pk'])
-    for rid in rids:
+            rockons[m['pk']] = {}
+            rockons[m['pk']]['rname'] = m['fields']['name']
+    for rid in rockons:
+        # Get container(s) id(s)
+        rockons[rid]['containers'] = []
         for m in ml:
             if m['model'] == 'storageadmin.dcontainer' and m['fields']['rockon'] is rid:
-                cname = m['fields']['name']
-                cid = m['pk']
+                rockons[rid]['containers'].append(m['pk'])
+        # For each container_id:
+        for cid in rockons[rid].get('containers'):
+            # get shares
+            rockons[rid]['shares'] = {}
+            for m in ml:
+                if m['model'] == 'storageadmin.dvolume' and m['fields']['container'] is cid:
+                    share_id = m['fields']['share']
+                    sname = get_sname(ml, share_id)
+                    dest_dir = m['fields']['dest_dir']
+                    rockons[rid]['shares'].update({sname: dest_dir})
+
+            # get ports
+            rockons[rid]['ports'] = {}
+            for m in ml:
+                if m['model'] == 'storageadmin.dport' and m['fields']['container'] is cid:
+                    hostp = m['fields']['hostp']
+                    containerp = m['fields']['containerp']
+                    rockons[rid]['ports'].update({hostp: containerp})
+
+            # get devices
+            # get cc
+            # get environment
+
 
     logger.debug('rockons = ({}).'.format(rockons))
     for r in rockons:
-        generic_post('{}/rockons/{}/install'.format(BASE_URL, r['rid'), r)
+        generic_post('{}/rockons/{}/install'.format(BASE_URL, r['rid']), r)
     logger.debug('Finished restoring rock-ons.')
+
+
+def get_sname(ml, share_id):
+    for m in ml:
+        if m['model'] == 'storageadmin.share' and m['pk'] is share_id:
+            sname = m['fields']['name']
+    return sname
 
 
 @task()
