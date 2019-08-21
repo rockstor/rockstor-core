@@ -30,7 +30,7 @@ from rest_framework.response import Response
 import rest_framework_custom as rfc
 from cli.rest_util import api_call
 from smart_manager.models.service import Service, ServiceStatus
-from storageadmin.models import ConfigBackup
+from storageadmin.models import ConfigBackup, RockOn
 from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
 from system.config_backup import backup_config
@@ -243,10 +243,14 @@ def restore_rockons(ml):
     """
     logger.debug('Started restoring rock-ons.')
     rockons = {}
+    # Filter rock-on that were installed in the backup
     for m in ml:
-        if (m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed'):
-            rockons[m['pk']] = {}
-            rockons[m['pk']]['rname'] = m['fields']['name']
+        if m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed':
+            rname = m['fields']['name']
+            if not RockOn.objects.filter(name=rname, state='installed').exists():
+                rockons[m['pk']] = {}
+                rockons[m['pk']]['rname'] = m['fields']['name']
+
     for rid in rockons:
         rockons[rid]['containers'] = []
         rockons[rid]['shares'] = {}
@@ -298,7 +302,7 @@ def restore_rockons(ml):
 
     logger.debug('rockons = ({}).'.format(rockons))
     for r in rockons:
-        generic_post('{}/rockons/{}/install'.format(BASE_URL, r['rid']), r)
+        generic_post('{}/rockons/{}/install'.format(BASE_URL, r), rockons[r])
     logger.debug('Finished restoring rock-ons.')
 
 
@@ -327,7 +331,7 @@ def restore_config(cbid):
     # restore_appliances(ml)
     # restore_network(sa_ml)
     restore_scheduled_tasks(sm_ml)
-    # restore_rockons(ml)
+    restore_rockons(sa_ml)
 
 
 class ConfigBackupMixin(object):
