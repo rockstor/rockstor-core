@@ -222,9 +222,6 @@ def restore_rockons(ml):
     - container(s): need only its id.
     - volume(s): need everything
     - ports: need everything
-    - options: need everything
-    - link(s): need everything
-    - args: need everything
     - device(s): need everything
     - environment variable(s): need everything
     - label(s) (may need refactoring of rockon_id update() process so that it can
@@ -268,7 +265,8 @@ def restore_rockons(ml):
         for cid in rockons[rid].get('containers'):
             # get shares
             for m in ml:
-                if m['model'] == 'storageadmin.dvolume' and m['fields']['container'] is cid:
+                if m['model'] == 'storageadmin.dvolume' and m['fields']['container'] is cid and \
+                        not m['fields']['uservol']:
                     share_id = m['fields']['share']
                     sname = get_sname(ml, share_id)
                     dest_dir = m['fields']['dest_dir']
