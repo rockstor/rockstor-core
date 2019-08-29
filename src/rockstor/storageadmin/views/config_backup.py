@@ -258,9 +258,6 @@ def restore_rockons(ml):
                 restore_install_rockon(rid, rockons, command='stop')
                 # Start update
                 restore_install_rockon(rid, rockons, command='update')
-
-        for r in rockons:
-            restore_install_rockon(r, rockons)
     logger.debug('Finished restoring rock-ons.')
 
 
