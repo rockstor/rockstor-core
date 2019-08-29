@@ -416,7 +416,7 @@ def restore_rockons(ml):
     - environment variable(s): need everything
     - label(s) (may need refactoring of rockon_id update() process so that it can
         be triggered from here as well): need everything
-        
+
     For a given rock-on, the final request should follow the syntax below:
     {
     'environment': {'GID': '1000', 'UID': '1000', 'GIDLIST': '1000'},
@@ -430,55 +430,118 @@ def restore_rockons(ml):
     """
     logger.debug('Started restoring rock-ons.')
     rockons = validate_rockons(ml)
+    logger.debug('rockons = ({}).'.format(rockons))
     if len(rockons) > 0:
         for rid in rockons:
-            rockons[rid]['containers'] = []
-            rockons[rid]['shares'] = {}
-            rockons[rid]['ports'] = {}
-            rockons[rid]['devices'] = {}
-            rockons[rid]['environment'] = {}
-            rockons[rid]['cc'] = {}
-            # Get container(s) id(s)
-            for m in ml:
-                if m['model'] == 'storageadmin.dcontainer' and m['fields']['rockon'] is rid:
-                    rockons[rid]['containers'].append(m['pk'])
-            # For each container_id:
-            for cid in rockons[rid].get('containers'):
-                # get shares
-                update_rockon_shares(cid, ml, rid, rockons)
+            # Get config for initial install
+            validate_install_config(ml, rid, rockons)
+            # Install
+            restore_install_rockon(rid, rockons, command='install')
 
-                # get ports
-                for m in ml:
-                    if m['model'] == 'storageadmin.dport' and m['fields']['container'] is cid:
-                        hostp = m['fields']['hostp']
-                        containerp = m['fields']['containerp']
-                        rockons[rid]['ports'].update({hostp: containerp})
+            # Get config for post-install update
+            validate_update_config(ml, rid, rockons)
+            # Update
+            if bool(rockons[rid]['shares']) or \
+                bool(rockons[rid]['labels']):
+                # docker stop
+                restore_install_rockon(rid, rockons, command='stop')
+                # Start update
+                restore_install_rockon(rid, rockons, command='update')
 
-                # get devices
-                for m in ml:
-                    if m['model'] == 'storageadmin.dcontainerdevice' and m['fields']['container'] is cid:
-                        dev = m['fields']['dev']
-                        val = m['fields']['val']
-                        rockons[rid]['devices'].update({dev: val})
-
-                # get environment
-                for m in ml:
-                    if m['model'] == 'storageadmin.dcontainerenv' and m['fields']['container'] is cid:
-                        key = m['fields']['key']
-                        val = m['fields']['val']
-                        rockons[rid]['environment'].update({key: val})
-
-            # get cc
-            for m in ml:
-                if m['model'] == 'storageadmin.dcustomconfig' and m['fields']['rockon'] is rid:
-                    key = m['fields']['key']
-                    val = m['fields']['val']
-                    rockons[rid]['cc'].update({key: val})
-
-    logger.debug('rockons = ({}).'.format(rockons))
-    for r in rockons:
-        generic_post('{}/rockons/{}/install'.format(BASE_URL, rockons[r]['new_rid']), rockons[r])
+        for r in rockons:
+            restore_install_rockon(r, rockons)
     logger.debug('Finished restoring rock-ons.')
+
+
+def restore_install_rockon(rid, rockons, command):
+    cur_wait = 0
+    while RockOn.objects.filter(state__contains='pending').exists():
+        logger.debug("Another rock-on is in transition, so let's try again in 2 secs.")
+        # logger.debug("Another rock-on is in transition, so let's wait.")
+        # rockon_install_complete.wait()
+        # thread = threading.Thread(target=time.sleep, args=(2,))
+        # thread.start()
+        sleep(2)
+        cur_wait += 2
+        if cur_wait > 10:
+            logger.error('Waited too long for the previous rock-on to install...'
+                         'Stop trying to install the rock-on ({})'.format(rockons[rid]['rname']))
+            break
+        # thread.join()
+
+    logger.debug('Send POST command ({}) to rockons api for rockon {}'.format(command, rockons[rid]['rname']))
+    generic_post('{}/rockons/{}/{}'.format(BASE_URL, rockons[rid]['new_rid'], command), rockons[rid])
+
+
+def validate_install_config(ml, rid, rockons):
+    rockons[rid]['containers'] = []
+    rockons[rid]['shares'] = {}
+    rockons[rid]['ports'] = {}
+    rockons[rid]['devices'] = {}
+    rockons[rid]['environment'] = {}
+    rockons[rid]['cc'] = {}
+    # Get container(s) id(s)
+    for m in ml:
+        if m['model'] == 'storageadmin.dcontainer' and m['fields']['rockon'] is rid:
+            rockons[rid]['containers'].append(m['pk'])
+    # For each container_id:
+    for cid in rockons[rid].get('containers'):
+        # get shares
+        update_rockon_shares(cid, ml, rid, rockons)
+
+        # get ports
+        for m in ml:
+            if m['model'] == 'storageadmin.dport' and m['fields']['container'] is cid:
+                hostp = m['fields']['hostp']
+                containerp = m['fields']['containerp']
+                rockons[rid]['ports'].update({hostp: containerp})
+
+        # get devices
+        for m in ml:
+            if m['model'] == 'storageadmin.dcontainerdevice' and m['fields']['container'] is cid:
+                dev = m['fields']['dev']
+                val = m['fields']['val']
+                rockons[rid]['devices'].update({dev: val})
+
+        # get environment
+        for m in ml:
+            if m['model'] == 'storageadmin.dcontainerenv' and m['fields']['container'] is cid:
+                key = m['fields']['key']
+                val = m['fields']['val']
+                rockons[rid]['environment'].update({key: val})
+    # get cc
+    for m in ml:
+        if m['model'] == 'storageadmin.dcustomconfig' and m['fields']['rockon'] is rid:
+            key = m['fields']['key']
+            val = m['fields']['val']
+            rockons[rid]['cc'].update({key: val})
+
+
+def validate_update_config(ml, rid, rockons):
+    """
+    Get config for the rock-on update procedure.
+    Final request data should be in the form:
+    {u'labels': {u'testlabel01': u'alpinesingle', u'testlabel02': u'alpinesingle'}, u'shares': {}}
+
+    :param ml:
+    :param rid:
+    :param rockons:
+    :return:
+    """
+    # Reset both 'shares' AND 'labels' to empty dicts
+    rockons[rid]['shares'] = {}
+    rockons[rid]['labels'] = {}
+    # For each container_id:
+    for cid in rockons[rid].get('containers'):
+        # get shares
+        update_rockon_shares(cid, ml, rid, rockons, uservol=True)
+
+        # get labels
+        for m in ml:
+            if m['model'] == 'storageadmin.dcontainerlabel' and m['fields']['container'] is cid:
+                label = m['fields']['val']
+                cname = m['fields']['key']
+                rockons[rid]['labels'].update({label: cname})
 
 
 def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
