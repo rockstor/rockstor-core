@@ -434,11 +434,13 @@ def restore_rockons(ml):
     if len(rockons) > 0:
         for rid in rockons:
             # Get config for initial install
+            logger.debug('Get install config for rockon {}'.format(rockons[rid]['rname']))
             validate_install_config(ml, rid, rockons)
             # Install
             restore_install_rockon(rid, rockons, command='install')
 
             # Get config for post-install update
+            logger.debug('Get update config for rockon {}'.format(rockons[rid]['rname']))
             validate_update_config(ml, rid, rockons)
             # Update
             if bool(rockons[rid]['shares']) or \
@@ -451,11 +453,11 @@ def restore_rockons(ml):
 
 
 def restore_install_rockon(rid, rockons, command):
+    logger.debug('Start {} procedure for rockon {}'.format(command, rockons[rid]['rname']))
     cur_wait = 0
     while RockOn.objects.filter(state__contains='pending').exists():
         logger.debug("Another rock-on is in transition, so let's try again in 2 secs.")
         # logger.debug("Another rock-on is in transition, so let's wait.")
-        # rockon_install_complete.wait()
         # thread = threading.Thread(target=time.sleep, args=(2,))
         # thread.start()
         sleep(2)
