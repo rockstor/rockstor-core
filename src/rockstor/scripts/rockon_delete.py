@@ -19,9 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
+
 from storageadmin.models import (RockOn, DContainer)
 from system.osi import run_command
-
 
 DOCKER = '/usr/bin/docker'
 
@@ -44,9 +44,11 @@ def delete_rockon():
         # We don't throw any exceptions because we want to ensure metadata is
         # deleted for sure. It would be nice to fully delete containers and
         # images, but that's not a hard requirement.
-        run_command([DOCKER, 'stop', c.name], throw=False)
-        run_command([DOCKER, 'rm', c.name], throw=False)
-        run_command([DOCKER, 'rmi', c.dimage.name], throw=False)
+        run_command([DOCKER, 'stop', c.name], throw=False, log=True)
+        run_command([DOCKER, 'rm', c.name], throw=False, log=True)
+        # Get image name with tag information
+        img_plus_tag = '{}:{}'.format(c.dimage.name, c.dimage.tag)
+        run_command([DOCKER, 'rmi', img_plus_tag], throw=False, log=True)
 
     ro.delete()
     print('Rock-On(%s) metadata in the db is deleted' % name)
