@@ -101,7 +101,7 @@ class NetworkMixin(object):
     @classmethod
     @transaction.atomic
     def _refresh_connections(cls):
-        cmap = network.connections()
+        cmap = network.get_con_config(network.get_con_list())
         defer_master_updates = []
         for nco in NetworkConnection.objects.all():
             if (nco.uuid not in cmap):
@@ -145,7 +145,7 @@ class NetworkMixin(object):
     @staticmethod
     @transaction.atomic
     def _refresh_devices():
-        dmap = network.devices()
+        dmap = network.get_dev_config(network.get_dev_list())
 
         def update_connection(dconfig):
             if ('connection' in dconfig):
