@@ -225,6 +225,7 @@ def update_check(subscription=None):
             if (len(l.strip()) == 0):
                 log = False
         if (re.match('\* ', l) is not None):
+            updates.append(l)
             log = True
     if (new_version is None):
         new_version = version
