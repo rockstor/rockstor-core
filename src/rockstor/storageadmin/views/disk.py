@@ -324,7 +324,8 @@ class DiskMixin(object):
                 # TODO: First call we reset none pool label member count times!
                 # Corner case but room for efficiency improvement.
                 # Consider building a list of pools relabeled to address issue.
-                if pool_name == 'none':
+                # N.B. 'system' for early source to rpm installs - openSUSE
+                if pool_name == 'none' or pool_name == 'system':
                     pool_name = set_pool_label(p_info.uuid, dev_name, d.root)
                 # Update our disk database entry with btrfs specific data.
                 dob.devid = p_info.devid
