@@ -1211,19 +1211,20 @@ def is_network_device_responding(address):
     :return: true if the device is responding, false if not
     """
     # because of -c 3, three requests will be sent
-    output, error, return_code = run_command([PING, '-c 3 -q', address], log=False, throw=False)
+    cmd = [PING, '-c', 3, '-q', address]
+    o, e, rc = run_command(cmd, log=True, throw=False)
     # The ping command will always return 0 if at least one request has been answered,
     # 1, if no request has been answered and another error code if the hostname is not known.
     # The corresponding error message is 'ping: <device name>: Name or service not known'.
-    if return_code == 0:
+    if rc == 0:
         return True
-    elif return_code == 1 or \
-            next((s for s in output if '0 received' in s), None) or \
-            next((s for s in error if 'ping: ' + str(address) in s), None):
+    elif rc == 1 or \
+            next((s for s in o if '0 received' in s), None) or \
+            next((s for s in e if 'ping: {}'.format(address) in s), None):
         return False
-    logger.debug('Ping command unexpectedly exited with return code ' + str(return_code))
-    if len(error):
-        logger.debug(error[0])
+    logger.debug('Ping command unexpectedly exited with return code {}'.format(return_code))
+    if len(e):
+        logger.debug(e[0])
     return False
 
 

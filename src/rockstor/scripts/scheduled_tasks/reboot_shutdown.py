@@ -40,7 +40,7 @@ def validate_shutdown_meta(meta):
 
 def all_devices_offline(addresses):
     for address in addresses:
-        logger.debug('Pinging ' + address + '...')
+        logger.debug('Pinging {}...'.format(address))
         if is_network_device_responding(address):
             return False
     return True
@@ -59,7 +59,7 @@ def run_conditions_met(meta):
             interval = float(meta['ping_scan_interval']) if float(meta['ping_scan_interval']) >= 5 else 5.0
             iterations = int(meta['ping_scan_iterations']) if int(meta['ping_scan_iterations']) >= 1 else 1
 
-            logger.debug('Pinging devices: '+str(addresses))
+            logger.debug('Pinging devices: {}'.format(addresses))
             for i in range(iterations):
                 if not all_devices_offline(addresses):
                     logger.debug('At least one pinged device is still online')
@@ -68,7 +68,7 @@ def run_conditions_met(meta):
                     # don't sleep after last scan
                     if (i+1) >= iterations:
                         break
-                    logger.debug('No device answered, trying again in ' + str(interval) + ' seconds')
+                    logger.debug('No device answered, trying again in {} seconds.'.format(interval))
                     # simply sleep as done in pool_scrub.py
                     time.sleep(interval)
 
