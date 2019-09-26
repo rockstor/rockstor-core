@@ -29,12 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 def backup_config():
-    models = {'storageadmin':
-              ['user', 'group', 'sambashare', 'sambacustomconfig',
-               'netatalkshare', 'nfsexport',
-               'nfsexportgroup', 'advancednfsexport', ],
-              'smart_manager':
-              ['service', 'taskdefinition', ], }
     models = {
         "storageadmin": [
             "user",
