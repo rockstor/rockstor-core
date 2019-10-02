@@ -39,7 +39,7 @@ from django.conf import settings
 from django.db import transaction
 from share_helpers import (sftp_snap_toggle, import_shares, import_snapshots)
 from rest_framework_custom.oauth_wrapper import RockstorOAuth2Authentication
-from system.pkg_mgmt import (auto_update, current_version, update_check,
+from system.pkg_mgmt import (auto_update, current_version, rockstor_pkg_update_check,
                              update_run, auto_update_status)
 from nfs_exports import NFSExportMixin
 import logging
@@ -222,7 +222,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                                                               status='active')
                     except UpdateSubscription.DoesNotExist:
                         pass
-                return Response(update_check(subscription=subo))
+                return Response(rockstor_pkg_update_check(subscription=subo))
             except Exception as e:
                 e_msg = ('Unable to check update due to a system error: '
                          '({}).').format(e.__str__())
@@ -238,7 +238,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 if request.auth is None:
                     update_run()
                 else:
-                    update_run(yum_update=True)
+                    update_run(update_all_other=True)
                 return Response('Done')
             except Exception as e:
                 e_msg = ('Update failed due to this exception: '
