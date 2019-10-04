@@ -130,7 +130,7 @@ def install(rid):
         logger.exception(e)
         new_state = 'install_failed'
     finally:
-        logger.name('Set rock-on {} state to {}'.format(rid, new_state))
+        logger.debug('Set rock-on {} state to {}'.format(rid, new_state))
         url = ('rockons/%d/state_update' % rid)
         return aw.api_call(url, data={'new_state': new_state, },
                            calltype='post', save_error=False)
