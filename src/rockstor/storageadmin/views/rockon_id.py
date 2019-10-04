@@ -16,20 +16,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import logging
 import time
-from rest_framework.response import Response
+
 from django.db import transaction
+from rest_framework.response import Response
+
+import rest_framework_custom as rfc
+from rockon_helpers import (docker_status, start, stop, install, uninstall,
+                            update)
 from storageadmin.models import (RockOn, DContainer, DVolume, DContainerDevice,
                                  Share, DPort, DCustomConfig, DContainerEnv,
                                  DContainerLabel)
 from storageadmin.serializers import RockOnSerializer
-import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
-from rockon_helpers import (docker_status, start, stop, install, uninstall,
-                            update)
 from system.services import superctl
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -88,6 +90,7 @@ class RockOnIdView(rfc.GenericView):
 
             if (command == 'install'):
                 self._pending_check(request)
+                logger.debug('rdata is = {}'.format(request.data))
                 share_map = request.data.get('shares', {})
                 port_map = request.data.get('ports', {})
                 dev_map = request.data.get('devices', {})
@@ -186,6 +189,7 @@ class RockOnIdView(rfc.GenericView):
                     DContainerLabel.objects.filter(container=co).delete()
             elif (command == 'update'):
                 self._pending_check(request)
+                logger.debug('UPDATE.rdata is = {}'.format(request.data))
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on ({}) is not currently installed. Cannot '
                              'update it.').format(rockon.name)
