@@ -437,7 +437,8 @@ def restore_rockons(ml):
             logger.debug('Get install config for rockon {}'.format(rockons[rid]['rname']))
             validate_install_config(ml, rid, rockons)
             # Install
-            restore_install_rockon(rid, rockons, command='install')
+            rockon_transition_checker(rid, rockons)
+            restore_install_rockon.async(rid, rockons, command='install')
 
             # Get config for post-install update
             logger.debug('Get update config for rockon {}'.format(rockons[rid]['rname']))
@@ -446,28 +447,42 @@ def restore_rockons(ml):
             if bool(rockons[rid]['shares']) or \
                 bool(rockons[rid]['labels']):
                 # docker stop
-                restore_install_rockon(rid, rockons, command='stop')
+                rockon_transition_checker(rid, rockons)
+                restore_install_rockon.async(rid, rockons, command='stop')
                 # Start update
-                restore_install_rockon(rid, rockons, command='update')
+                rockon_transition_checker(rid, rockons)
+                restore_install_rockon.async(rid, rockons, command='update')
     logger.debug('Finished restoring rock-ons.')
 
 
-def restore_install_rockon(rid, rockons, command):
-    logger.debug('Start {} procedure for rockon {}'.format(command, rockons[rid]['rname']))
+def rockon_transition_checker(rid, rockons):
     cur_wait = 0
     while RockOn.objects.filter(state__contains='pending').exists():
-        logger.debug("Another rock-on is in transition, so let's try again in 2 secs.")
-        # logger.debug("Another rock-on is in transition, so let's wait.")
-        # thread = threading.Thread(target=time.sleep, args=(2,))
-        # thread.start()
+        logger.debug("Another rock-on is in transition, so let's wait.")
         sleep(2)
         cur_wait += 2
-        if cur_wait > 10:
+        if cur_wait > 30:
             logger.error('Waited too long for the previous rock-on to install...'
                          'Stop trying to install the rock-on ({})'.format(rockons[rid]['rname']))
-            break
-        # thread.join()
+        break
 
+
+@task()
+def restore_install_rockon(rid, rockons, command):
+    logger.debug('Start {} procedure for rockon {}'.format(command, rockons[rid]['rname']))
+    # cur_wait = 0
+    # while RockOn.objects.filter(state__contains='pending').exists():
+    #     logger.debug("Another rock-on is in transition, so let's try again in 2 secs.")
+    #     # logger.debug("Another rock-on is in transition, so let's wait.")
+    #     # thread = threading.Thread(target=time.sleep, args=(2,))
+    #     # thread.start()
+    #     sleep(2)
+    #     cur_wait += 2
+    #     if cur_wait > 10:
+    #         logger.error('Waited too long for the previous rock-on to install...'
+    #                      'Stop trying to install the rock-on ({})'.format(rockons[rid]['rname']))
+    #         break
+    #     # thread.join()
     logger.debug('Send POST command ({}) to rockons api for rockon {}'.format(command, rockons[rid]['rname']))
     generic_post('{}/rockons/{}/{}'.format(BASE_URL, rockons[rid]['new_rid'], command), rockons[rid])
 
