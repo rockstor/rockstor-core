@@ -248,7 +248,7 @@ def restore_rockons(ml):
             logger.debug('Get install config for rockon {}'.format(rockons[rid]['rname']))
             validate_install_config(ml, rid, rockons)
             # Install
-            rockon_transition_checker(rid, rockons)
+            rockon_transition_checker.async(rid, rockons)
             restore_install_rockon.async(rid, rockons, command='install')
 
             # Get config for post-install update
@@ -258,14 +258,15 @@ def restore_rockons(ml):
             if bool(rockons[rid]['shares']) or \
                 bool(rockons[rid]['labels']):
                 # docker stop
-                rockon_transition_checker(rid, rockons)
+                rockon_transition_checker.async(rid, rockons)
                 restore_install_rockon.async(rid, rockons, command='stop')
                 # Start update
-                rockon_transition_checker(rid, rockons)
+                rockon_transition_checker.async(rid, rockons)
                 restore_install_rockon.async(rid, rockons, command='update')
     logger.debug('Finished restoring rock-ons.')
 
 
+@task()
 def rockon_transition_checker(rid, rockons):
     cur_wait = 0
     while RockOn.objects.filter(state__contains='pending').exists():
