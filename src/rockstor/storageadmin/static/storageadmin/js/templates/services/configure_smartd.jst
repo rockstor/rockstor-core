@@ -1,6 +1,6 @@
 <script>
     /*
-    * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+    * Copyright (c) 2012-2019 RockStor, Inc. <http://rockstor.com>
     * This file is part of RockStor.
     *
     * RockStor is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@
                 <form class="form-horizontal" id="smartd-form" name="aform">
                     <div class="messages"></div>
                     <div class="form-group">
-                        <label class="col-sm-4 control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
+                        <label class="col-sm-4 control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in <em>smartd.conf</em></label>
                         <div class="col-sm-8">
                             {{#if config.custom_config}}
                             <textarea class="form-control" id="smartd_config" name="custom_config" rows="10">{{config.custom_config}}</textarea> {{else}}
