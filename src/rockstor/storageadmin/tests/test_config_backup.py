@@ -55,7 +55,7 @@ class ConfigBackupTests(APITestMixin, APITestCase):
                          status.HTTP_200_OK, msg=response.data)
 
     # TODO: 'module' object has no attribute 'views'
-    # when attempting to mock uploaded file content.
+    #     when attempting to mock uploaded file content.
     # @mock.patch(storageadmin.views.config_backup.ConfigBackup)
     # def test_config_upload_file(self, mock_config_backup):
     #
@@ -72,7 +72,7 @@ class ConfigBackupTests(APITestMixin, APITestCase):
     #                                    content_type="application/zip")
     #
     #     # TODO: We also need to setup a content_type='text/plain' to test
-    #     # failure when file is not a zip file.
+    #     #     failure when file is not a zip file.
     #
     #     # override "config_backup = models.FileField" in super
     #     class MockConfigBackup(ConfigBackup):
