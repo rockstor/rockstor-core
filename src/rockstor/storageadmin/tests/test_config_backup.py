@@ -12,13 +12,9 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-import mock
-from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-import storageadmin
-from storageadmin.models import ConfigBackup
 from storageadmin.tests.test_api import APITestMixin
 
 
@@ -93,3 +89,26 @@ class ConfigBackupTests(APITestMixin, APITestCase):
     #     self.assertEqual(response.status_code,
     #                      status.HTTP_200_OK, msg=response.data)
 
+    def test_get_sname(self):
+        pass
+
+    def test_get_sname_invalid(self):
+        pass
+
+    def test_validate_rockons(self):
+        pass
+
+    def test_validate_rockons_invalid(self):
+        pass
+
+    def test_update_rockon_shares(self):
+        pass
+
+    def test_update_rockon_shares_invalid(self):
+        pass
+
+    def test_validate_install_config(self):
+        pass
+
+    def test_validate_install_config_invalid(self):
+        pass
