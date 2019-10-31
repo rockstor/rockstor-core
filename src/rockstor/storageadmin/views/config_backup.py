@@ -381,6 +381,14 @@ def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
 
 
 def validate_rockons(ml):
+    """
+    takes a list of models from a backup and retuns a list of names of the rockons
+    that were installed as identified by their status of 'installed'. Notably,
+    a rockon name is returned only if a rock-on with the same name is not
+    currently installed on the machine.
+    :param ml: dictionary
+    :return: string
+    """
     rockons = {}
     # Filter rock-on that were installed in the backup
     for m in ml:
@@ -395,6 +403,13 @@ def validate_rockons(ml):
 
 
 def get_sname(ml, share_id):
+    """
+    Takes a share ID and a database backup list of models and returns the
+    name of the share.
+    :param ml:
+    :param share_id:
+    :return:
+    """
     for m in ml:
         if m['model'] == 'storageadmin.share' and m['pk'] is share_id:
             sname = m['fields']['name']
