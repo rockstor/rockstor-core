@@ -216,8 +216,8 @@ def restore_rockons(ml):
     """
     Parses and filter the model list input (ml) to gather all the information
     required to install a rock-on. The result is then sent to the rockon API.
-    Notably, we need to filter out only the information from rock-ons that
-    were installed at the time of the backup. We will thus get the following:
+    Notably, we need to filter the input and keep only the information from rock-ons
+    that were installed at the time of the backup. We will thus get the following:
     - rock-on name and its primary key
     - custom_config: need everything
     - container(s): need only its id.
@@ -236,7 +236,7 @@ def restore_rockons(ml):
     'shares': {'emby-media': '/media', 'emby-conf': '/config'}
     }
 
-    :param ml:
+    :param ml: dict of models present in the config backup
     :return:
     """
     logger.debug('Started restoring rock-ons.')
@@ -300,6 +300,15 @@ def restore_install_rockon(rid, rockons, command):
 
 
 def validate_install_config(ml, rid, rockons):
+    """
+    Given a dict of list of models from a config backup, this method builds a dict of the
+    parameters to install a rock-on identified by its ID. These parameters are the container(s),
+    share(s), port(s), device(s), environment variable(s), and custom_configuration.
+    :param ml: dict of models present in the config backup
+    :param rid: rockon ID
+    :param rockons: parent dict of rock-ons to be updated
+    :return: the same dict updated with the installation parameters present in config backup
+    """
     rockons[rid]['containers'] = []
     rockons[rid]['shares'] = {}
     rockons[rid]['ports'] = {}
@@ -348,11 +357,10 @@ def validate_update_config(ml, rid, rockons):
     Get config for the rock-on update procedure.
     Final request data should be in the form:
     {u'labels': {u'testlabel01': u'alpinesingle', u'testlabel02': u'alpinesingle'}, u'shares': {}}
-
-    :param ml:
-    :param rid:
-    :param rockons:
-    :return:
+    :param ml: dict of models present in the config backup
+    :param rid: ID of a rock-on
+    :param rockons: dict of rock-ons parameters to be updated
+    :return: the same dict of rock-ons parameters updated with post-install customization options
     """
     # Reset both 'shares' AND 'labels' to empty dicts
     rockons[rid]['shares'] = {}
@@ -371,6 +379,16 @@ def validate_update_config(ml, rid, rockons):
 
 
 def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
+    """
+    Builds a dictionary with share_name:volume mapping for a given container id (cid)
+    of a given rock-on (rid) as present in a config backup (ml).
+    :param cid: ID of a container
+    :param ml: dict of models present in the config backup
+    :param rid: ID of a rock-on
+    :param rockons: dict of rock-ons paramaters to be updated
+    :param uservol: boolean
+    :return: the same dict of rock-ons parameters updated with share:volume mappings
+    """
     for m in ml:
         if m['model'] == 'storageadmin.dvolume' and m['fields']['container'] is cid and \
                 m['fields']['uservol'] is uservol:
@@ -386,8 +404,8 @@ def validate_rockons(ml):
     that were installed as identified by their status of 'installed'. Notably,
     a rockon name is returned only if a rock-on with the same name is not
     currently installed on the machine.
-    :param ml: dictionary
-    :return: string
+    :param ml: dict of models from the config backup
+    :return: dict of rock-ons names to be restored
     """
     rockons = {}
     # Filter rock-on that were installed in the backup
@@ -406,9 +424,9 @@ def get_sname(ml, share_id):
     """
     Takes a share ID and a database backup list of models and returns the
     name of the share.
-    :param ml:
-    :param share_id:
-    :return:
+    :param ml: dict of models from the config backup
+    :param share_id: number ID of the share whose name is sought
+    :return: string of the share name
     """
     for m in ml:
         if m['model'] == 'storageadmin.share' and m['pk'] is share_id:
