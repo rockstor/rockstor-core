@@ -16,6 +16,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from storageadmin.tests.test_api import APITestMixin
+from storageadmin.views.config_backup import get_sname
 
 
 class ConfigBackupTests(APITestMixin, APITestCase):
@@ -340,7 +341,20 @@ class ConfigBackupTests(APITestMixin, APITestCase):
     #                      status.HTTP_200_OK, msg=response.data)
 
     def test_get_sname(self):
-        pass
+        range_pks = range(1,17,1)
+        expected_snames = ['home', 'test_share01', 'test_share02', 'test_share03', 'test_share04', 'test_share05',
+                           'test_share06', 'test_share07', 'test_share08', 'test_share09', 'test_share11',
+                           'test_share10', 'rockons_root', 'emby-conf', 'emby-media', 'next-main']
+
+        for pk, sname in zip(range_pks, expected_snames):
+            returned = get_sname(self.sa_ml, pk)
+            self.assertEqual(
+                returned,
+                sname,
+                msg="Un-expected get_sname() result:\n "
+                "returned = {}.\n "
+                "expected = {}.".format(returned, sname),
+            )
 
     def test_get_sname_invalid(self):
         pass
