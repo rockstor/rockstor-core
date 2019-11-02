@@ -400,7 +400,7 @@ def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
 
 def validate_rockons(ml):
     """
-    takes a list of models from a backup and retuns a list of names of the rockons
+    Takes a list of models from a backup and retuns a list of names of the rockons
     that were installed as identified by their status of 'installed'. Notably,
     a rockon name is returned only if a rock-on with the same name is not
     currently installed on the machine.

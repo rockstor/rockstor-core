@@ -15,12 +15,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from storageadmin.models import RockOn
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.views.config_backup import get_sname
 
 
 class ConfigBackupTests(APITestMixin, APITestCase):
-    fixtures = ['fix2.json']
+    fixtures = [
+        'fix2.json'
+        # 'test_config_backup_rockons.json'
+        ]
     BASE_URL = '/api/config-backup'
     sa_ml = [{'fields':
                   {'status': 'stopped', 'website': 'https://hub.docker.com/r/linuxserver/mariadb/',
@@ -277,6 +281,12 @@ class ConfigBackupTests(APITestMixin, APITestCase):
     def setUpClass(cls):
         super(ConfigBackupTests, cls).setUpClass()
 
+        # Create RockOn objects as per fixture
+        cls.rockon_alpine_single = RockOn(id=73, name="Alpine With AddStorage Single")
+        cls.rockon_mariadb = RockOn(id=58, name="MariaDB")
+        cls.rockon_alpine_2ports = RockOn(id=75, name="Alpine With AddStorage 2Ports")
+        cls.rockon_emby = RockOn(id=74, name="Emby server")
+
         # TODO: may need to mock os.path.isfile
 
     @classmethod
@@ -359,13 +369,49 @@ class ConfigBackupTests(APITestMixin, APITestCase):
     def test_get_sname_invalid(self):
         pass
 
-    def test_validate_rockons(self):
-        pass
+    #@mock.patch("storageadmin.views.config_backup.RockOn.objects")
+    # def test_validate_rockons(self):
+    #     # mock_rockon.filter.return_value = mock_rockon
+    #     # mock_rockon.exists.return_value = False
+    #     expected = {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73},
+    #                 58: {'rname': 'MariaDB', 'new_rid': 58},
+    #                 75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75},
+    #                 74: {'rname': 'Emby server', 'new_rid': 74}}
+    #
+    #     returned = validate_rockons(self.sa_ml)
+    #     self.assertEqual(
+    #         returned,
+    #         expected,
+    #         msg="Un-expected validate_rockons() result:\n "
+    #             "returned = {}.\n "
+    #             "expected = {}.".format(returned, expected),
+    #     )
 
     def test_validate_rockons_invalid(self):
         pass
 
     def test_update_rockon_shares(self):
+        # rids = [73, 58, 75, 74]
+        rockons_boilerplate = {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78]},
+                               58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62]},
+                               75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81]},
+                               74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79]}}
+
+        cid = [78]
+        rid = [73]
+        expected_rockons = [{73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78]},
+                             58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62]},
+                             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81]},
+                             74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79]}}
+                            ]
+
+
+
+
+        for rid in rockons:
+            for cid in rockons[rid].get('containers'):
+                update_rockon_shares(cid, sa_ml, rid, rockons)
+
         pass
 
     def test_update_rockon_shares_invalid(self):
