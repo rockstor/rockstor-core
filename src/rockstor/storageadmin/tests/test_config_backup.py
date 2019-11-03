@@ -17,7 +17,8 @@ from rest_framework.test import APITestCase
 
 from storageadmin.models import RockOn
 from storageadmin.tests.test_api import APITestMixin
-from storageadmin.views.config_backup import get_sname, update_rockon_shares
+from storageadmin.views.config_backup import get_sname, update_rockon_shares, \
+    validate_install_config
 
 
 class ConfigBackupTests(APITestMixin, APITestCase):
@@ -454,7 +455,52 @@ class ConfigBackupTests(APITestMixin, APITestCase):
             )
 
     def test_validate_install_config(self):
-        pass
+        rid = [73]
+        out = [{73: {'rname': 'Alpine With AddStorage Single', 'cc': {}, 'devices': {}, 'new_rid': 73,
+                     'environment': {}, 'shares': {}, 'ports': {}, 'containers': [78]},
+                58: {'rname': 'MariaDB', 'new_rid': 58}, 75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75},
+                74: {'rname': 'Emby server', 'new_rid': 74}}
+               ]
 
-    def test_validate_install_config_invalid(self):
-        pass
+        rid.append(58)
+        out.append({73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73},
+                    58: {'rname': 'MariaDB', 'cc': {}, 'devices': {}, 'new_rid': 58,
+                         'environment': {'MYSQL_ROOT_PASSWORD': 'PASSWORD', 'PUID': '1000', 'PGID': '1000'},
+                         'shares': {'test_share02': '/config'}, 'ports': {3306: 3306}, 'containers': [62]},
+                    75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75},
+                    74: {'rname': 'Emby server', 'new_rid': 74}}
+                   )
+
+        rid.append(75)
+        out.append(
+            {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73},
+             58: {'rname': 'MariaDB', 'new_rid': 58},
+             75: {'rname': 'Alpine With AddStorage 2Ports', 'cc': {}, 'devices': {}, 'new_rid': 75, 'environment': {},
+                  'shares': {}, 'ports': {9001: 9000, 9100: 9100}, 'containers': [80, 81]},
+             74: {'rname': 'Emby server', 'new_rid': 74}}
+            )
+
+        rid.append(74)
+        out.append(
+            {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73},
+             58: {'rname': 'MariaDB', 'new_rid': 58},
+             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75},
+             74: {'rname': 'Emby server', 'cc': {}, 'devices': {'VAAPI': ''}, 'new_rid': 74,
+                  'environment': {'GID': '1000', 'UID': '1000', 'GIDLIST': '100'},
+                  'shares': {'emby-media': '/media', 'emby-conf': '/config'}, 'ports': {8096: 8096, 8920: 8920},
+                  'containers': [79]}}
+            )
+
+        for r,o in zip(rid, out):
+            rockons = {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73},
+                       58: {'rname': 'MariaDB', 'new_rid': 58},
+                       75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75},
+                       74: {'rname': 'Emby server', 'new_rid': 74}}
+            validate_install_config(self.sa_ml, r, rockons)
+            self.assertEqual(
+                rockons,
+                o,
+                msg="Un-expected update_rockon_shares() result:\n "
+                "returned = {}.\n "
+                "expected = {}.".format(rockons, o),
+            )
