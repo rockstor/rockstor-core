@@ -17,7 +17,7 @@ from rest_framework.test import APITestCase
 
 from storageadmin.models import RockOn
 from storageadmin.tests.test_api import APITestMixin
-from storageadmin.views.config_backup import get_sname
+from storageadmin.views.config_backup import get_sname, update_rockon_shares
 
 
 class ConfigBackupTests(APITestMixin, APITestCase):
@@ -391,31 +391,67 @@ class ConfigBackupTests(APITestMixin, APITestCase):
         pass
 
     def test_update_rockon_shares(self):
-        # rids = [73, 58, 75, 74]
-        rockons_boilerplate = {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78]},
-                               58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62]},
-                               75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81]},
-                               74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79]}}
-
         cid = [78]
         rid = [73]
-        expected_rockons = [{73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78]},
-                             58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62]},
-                             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81]},
-                             74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79]}}
-                            ]
+        expected_rockons = [
+            {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78], 'shares': {}},
+             58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62], 'shares': {}},
+             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81], 'shares': {}},
+             74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79], 'shares': {}}}
+            ]
 
+        cid.append(62)
+        rid.append(58)
+        expected_rockons.append(
+            {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78], 'shares': {}},
+             58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62], 'shares': {'test_share02': '/config'}},
+             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81], 'shares': {}},
+             74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79], 'shares': {}}}
+        )
 
+        cid.append(80)
+        rid.append(75)
+        expected_rockons.append(
+            {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78], 'shares': {}},
+             58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62], 'shares': {}},
+             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81], 'shares': {}},
+             74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79], 'shares': {}}}
+        )
 
+        cid.append(81)
+        rid.append(75)
+        expected_rockons.append(
+            {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78], 'shares': {}},
+             58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62], 'shares': {}},
+             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81], 'shares': {}},
+             74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79], 'shares': {}}}
+        )
 
-        for rid in rockons:
-            for cid in rockons[rid].get('containers'):
-                update_rockon_shares(cid, sa_ml, rid, rockons)
+        cid.append(79)
+        rid.append(74)
+        expected_rockons.append(
+            {73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78], 'shares': {}},
+             58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62], 'shares': {}},
+             75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81], 'shares': {}},
+             74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79],
+                  'shares': {'emby-media': '/media', 'emby-conf': '/config'}}}
+        )
 
-        pass
-
-    def test_update_rockon_shares_invalid(self):
-        pass
+        for c, r, out in zip(cid, rid, expected_rockons):
+            rockons = {
+                73: {'rname': 'Alpine With AddStorage Single', 'new_rid': 73, 'containers': [78], 'shares': {}},
+                58: {'rname': 'MariaDB', 'new_rid': 58, 'containers': [62], 'shares': {}},
+                75: {'rname': 'Alpine With AddStorage 2Ports', 'new_rid': 75, 'containers': [80, 81], 'shares': {}},
+                74: {'rname': 'Emby server', 'new_rid': 74, 'containers': [79], 'shares': {}}}
+            expected = out
+            update_rockon_shares(c, self.sa_ml, r, rockons)
+            self.assertEqual(
+                rockons,
+                expected,
+                msg="Un-expected update_rockon_shares() result:\n "
+                "returned = {}.\n "
+                "expected = {}.".format(rockons, expected),
+            )
 
     def test_validate_install_config(self):
         pass
