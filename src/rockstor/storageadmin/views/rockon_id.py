@@ -205,7 +205,8 @@ class RockOnIdView(rfc.GenericView):
                 if bool(share_map):
                     for co in DContainer.objects.filter(rockon=rockon):
                         for s in share_map.keys():
-                            sname = share_map[s]
+                            sname = s
+                            dest_dir = share_map[s]
                             if (not Share.objects.filter(name=sname).exists()):
                                 e_msg = 'Invalid share ({}).'.format(sname)
                                 handle_exception(Exception(e_msg), request)
@@ -216,17 +217,17 @@ class RockOnIdView(rfc.GenericView):
                                          'this rock-on.').format(sname)
                                 handle_exception(Exception(e_msg), request)
                             if (DVolume.objects.filter(
-                                    container=co, dest_dir=s).exists()):
+                                    container=co, dest_dir=dest_dir).exists()):
                                 e_msg = ('Directory ({}) is already mapped for '
-                                         'this rock-on.').format(s)
+                                         'this rock-on.').format(dest_dir)
                                 handle_exception(Exception(e_msg), request)
-                            if (not s.startswith('/')):
+                            if (not dest_dir.startswith('/')):
                                 e_msg = ('Invalid directory ({}). Must provide an '
                                          'absolute path. Eg: '
-                                         '(/data/media).').format(s)
+                                         '(/data/media).').format(dest_dir)
                                 handle_exception(Exception(e_msg), request)
                             do = DVolume(container=co, share=so, uservol=True,
-                                         dest_dir=s)
+                                         dest_dir=dest_dir)
                             do.save()
                 if bool(label_map):
                     for co in DContainer.objects.filter(rockon=rockon):

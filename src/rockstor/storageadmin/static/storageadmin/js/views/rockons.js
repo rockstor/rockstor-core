@@ -1125,7 +1125,8 @@ RockonAddShare = RockstorWizardPage.extend({
             return $.Deferred().reject();
         }
         this.share_map = this.model.get('shares');
-        this.share_map[this.$('#volume').val()] = this.$('#share').val();
+        // this.share_map[this.$('#volume').val()] = this.$('#share').val();
+        this.share_map[this.$('#share').val()] = this.$('#volume').val();
         this.model.set('shares', this.share_map);
         return $.Deferred().resolve();
     }
@@ -1316,8 +1317,8 @@ RockonSettingsSummary = RockstorWizardPage.extend({
             for (share in this.new_volumes) {
                 html += '<tr>';
                 html += '<td>Share</td>';
-                html += '<td>' + this.new_volumes[share] + '</td>';
                 html += '<td>' + share + '</td>';
+                html += '<td>' + this.new_volumes[share] + '</td>';
                 html += '</tr>';
             }
             return new Handlebars.SafeString(html);
