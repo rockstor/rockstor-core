@@ -395,7 +395,10 @@ def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
             share_id = m['fields']['share']
             sname = get_sname(ml, share_id)
             dest_dir = m['fields']['dest_dir']
-            rockons[rid]['shares'].update({sname: dest_dir})
+            if not uservol:
+                rockons[rid]['shares'].update({sname: dest_dir})
+            else:
+                rockons[rid]['shares'].update({dest_dir: sname})
 
 
 def validate_rockons(ml):
