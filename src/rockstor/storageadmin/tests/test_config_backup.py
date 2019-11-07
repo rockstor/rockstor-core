@@ -12,9 +12,11 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+import mock
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from storageadmin.models import ConfigBackup
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.views.config_backup import (
     get_sname,
@@ -890,19 +892,26 @@ class ConfigBackupTests(APITestMixin, APITestCase):
     def tearDownClass(cls):
         super(ConfigBackupTests, cls).tearDownClass()
 
-    def test_valid_requests(self):
+    @mock.patch(
+        "storageadmin.views.config_backup.ConfigBackupDetailView._validate_input"
+    )
+    def test_valid_requests(self, mock_validate_input):
         # happy path POST
         response = self.client.post(self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
+        temp_configbackup = ConfigBackup(
+            id=999, filename="backup-2019-11-07-110208.json.gz"
+        )
+        mock_validate_input.return_value = temp_configbackup
         # Happy path POST with restore command test restore .... backup with
         # id=1 is created when above post api call is made
         data = {"command": "restore"}
-        response = self.client.post("%s/1" % self.BASE_URL, data=data)
+        response = self.client.post("{}/999".format(self.BASE_URL), data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Happy path DELETE
-        response = self.client.delete("%s/1" % self.BASE_URL)
+        response = self.client.delete("{}/999".format(self.BASE_URL))
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     # TODO: 'module' object has no attribute 'views'
