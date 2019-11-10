@@ -46,14 +46,12 @@
                     <div class="messages"></div>
                     <div class="form-group">
                         <div class="row">
-                            <label class="control-label col-md-4" for="task_name">Task name<span class="required"> *</span></label>
-                            <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
-                        </div>
-                        <div class="row">
                             <div class="col-sm-4">
+                                <label class="control-label" for="task_name">Task name<span class="required"> *</span></label>
                                 <input class="form-control col-md-4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
                             </div>
                             <div class="col-sm-4">
+                                <label class="control-label" for="task_type">Task type<span class="required"> *</span></label>
                                 <select class="form-control" id="task_type" name="task_type">
                                 {{#each taskTypes}}
                                     <option value="{{this.name}}">{{this.description}}</option>

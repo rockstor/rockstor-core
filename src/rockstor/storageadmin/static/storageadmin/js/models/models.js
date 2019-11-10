@@ -582,6 +582,30 @@ var TaskDef = Backbone.Model.extend({
             return JSON.parse(this.get('json_meta')).rtc_minute;
         }
         return 0;
+    },
+    ping_scan: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).ping_scan;
+        }
+        return false;
+    },
+    ping_scan_addresses: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).ping_scan_addresses;
+        }
+        return '';
+    },
+    ping_scan_interval: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).ping_scan_interval;
+        }
+        return 0;
+    },
+    ping_scan_iterations: function () {
+        if (this.get('json_meta') != null) {
+            return JSON.parse(this.get('json_meta')).ping_scan_iterations;
+        }
+        return 0;
     }
 
 });

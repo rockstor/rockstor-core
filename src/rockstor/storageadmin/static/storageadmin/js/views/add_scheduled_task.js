@@ -29,7 +29,8 @@ AddScheduledTaskView = RockstorLayoutView.extend({
     events: {
         'click #js-cancel': 'cancel',
         'change #task_type': 'renderOptionalFields',
-        'click #wakeup': 'switchRtcFields'
+        'click #wakeup': 'switchRtcFields',
+        'click #ping_scan': 'switchPingScanFields'
     },
 
     initialize: function() {
@@ -101,7 +102,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 
         // Define taskObj fields having booleans (html checked checkboxes)
         // requiring conversion to string value checked
-            var bool_fields = ['visible', 'writable', 'enabled', 'wakeup'];
+            var bool_fields = ['visible', 'writable', 'enabled', 'wakeup', 'ping_scan'];
 
         // Loop over taskObj and build Partials like taskObj.key so
         // we just have to move fro {{taskObj.field_name}} to
@@ -152,21 +153,21 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                 share: {
                     required: {
                         depends: function(element) {
-                            return (_this.$('#task_type').val() == 'snapshot');
+                            return (_this.$('#task_type').val() === 'snapshot');
                         }
                     }
                 },
                 'meta.share_name': {
                     required: {
                         depends: function(element) {
-                            return (_this.$('#task_type').val() == 'snapshot');
+                            return (_this.$('#task_type').val() === 'snapshot');
                         }
                     }
                 },
                 'meta.prefix': {
                     required: {
                         depends: function(element) {
-                            return (_this.$('#task_type').val() == 'snapshot');
+                            return (_this.$('#task_type').val() === 'snapshot');
                         }
                     }
                 },
@@ -175,7 +176,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                     min: 1,
                     required: {
                         depends: function(element) {
-                            return (_this.$('#task_type').val() == 'snapshot');
+                            return (_this.$('#task_type').val() === 'snapshot');
                         },
 
                     }
@@ -183,14 +184,39 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                 pool: {
                     required: {
                         depends: function(element) {
-                            return (_this.$('#task_type').val() == 'scrub');
+                            return (_this.$('#task_type').val() === 'scrub');
                         }
                     }
                 },
                 'meta.pool_name': {
                     required: {
                         depends: function(element) {
-                            return (_this.$('#task_type').val() == 'scrub');
+                            return (_this.$('#task_type').val() === 'scrub');
+                        }
+                    }
+                },
+                'meta.ping_scan_addresses': {
+                    required: {
+                        depends: function (element) {
+                            return ((_this.$('#task_type').val() === 'shutdown') || (_this.$('#task_type').val() === 'suspend'))
+                        }
+                    }
+                },
+                'meta.ping_scan_interval': {
+                    number: true,
+                    min: 5,
+                    required: {
+                        depends: function (element) {
+                            return ((_this.$('#task_type').val() === 'shutdown') || (_this.$('#task_type').val() === 'suspend'))
+                        }
+                    }
+                },
+                'meta.ping_scan_iterations': {
+                    number: true,
+                    min: 1,
+                    required: {
+                        depends: function (element) {
+                            return ((_this.$('#task_type').val() === 'shutdown') || (_this.$('#task_type').val() === 'suspend'))
                         }
                     }
                 }
@@ -236,7 +262,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         } else {
             taskType = this.taskDef.get('task_type');
         }
-        if (taskType == 'snapshot') {
+        if (taskType === 'snapshot') {
             this.$('#optional-fields').html(this.snapshotFieldsTemplate({
                 shares: this.shares.toJSON(),
                 taskDef: this.taskDef,
@@ -244,14 +270,14 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                 taskDefIdNull: this.taskDefIdNull,
                 taskMaxCount: this.taskMaxCount,
             }));
-        } else if (taskType == 'scrub') {
+        } else if (taskType === 'scrub') {
             this.$('#optional-fields').html(this.scrubFieldsTemplate({
                 pools: this.pools.toJSON(),
                 taskDef: this.taskDef,
                 taskDefId: this.taskDefId,
                 taskDefIdNull: this.taskDefIdNull,
             }));
-        } else if (taskType == 'shutdown' || taskType == 'suspend') {
+        } else if (taskType === 'shutdown' || taskType === 'suspend') {
             this.$('#optional-fields').html(this.shutdownFieldsTemplate({
                 taskDef: this.taskDef,
                 taskDefId: this.taskDefId,
@@ -259,20 +285,26 @@ AddScheduledTaskView = RockstorLayoutView.extend({
             }));
             this.rendergentleSelect('rtc_hour');
             this.rendergentleSelect('rtc_minute');
-            if (this.taskDefId == null && taskType == 'suspend') {
+            /*  if (this.taskDefId == null && taskType == 'suspend') {
                 this.$('#wakeup').click()
                                  .prop('disabled', true);
-            }
+            }*/
             if (this.taskDefId != null && this.taskDef.wakeup()) {
                 this.$('#rtc_hour').val(this.taskDef.rtc_hour()).gentleSelect('update');
                 this.$('#rtc_minute').val(this.taskDef.rtc_minute()).gentleSelect('update');
                 this.$('#wakeup').click();
             }
+            if (this.taskDefId != null && this.taskDef.ping_scan()) {
+                this.$('#ping_scan_addresses').val(this.taskDef.ping_scan_addresses());
+                this.$('#ping_scan_interval').val(this.taskDef.ping_scan_interval());
+                this.$('#ping_scan_iterations').val(this.taskDef.ping_scan_iterations());
+                this.$('#ping_scan').click();
+            }
         } else {
             this.$('#optional-fields').empty();
         }
         // Render warning about rtc wakeup to be checked
-        if (taskType == 'shutdown' || taskType == 'suspend') {
+        if (taskType === 'shutdown' || taskType === 'suspend') {
             var html = '';
             html += '<div class="alert alert-warning">';
             html += 'Please check and test your system RTC WAKEUP capabilities before setting a suspend/shutdown task</div>';
@@ -288,7 +320,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 
     // Render rtc wake clock selects adding gentleSelect beautifier
     rendergentleSelect: function(field_name) {
-        if (field_name == 'rtc_hour') {
+        if (field_name === 'rtc_hour') {
             itemwidth = 20;
             columns = 2;
             title = 'Wake up Time: Hour';
@@ -307,7 +339,11 @@ AddScheduledTaskView = RockstorLayoutView.extend({
     switchRtcFields: function () {
         // Adding some animation, on enable rtc wake up
         // checked true/false toggle rtc clock fields
-        this.$('#rtc_container').fadeToggle(500);
+        this.$('#rtc_container').fadeToggle(200);
+    },
+
+    switchPingScanFields: function () {
+        this.$('#ping_scan_container').fadeToggle(200);
     },
 
     initHandlebarHelpers: function(){
@@ -316,9 +352,9 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         Handlebars.registerHelper('time_select', function(field_name) {
             var html = '';
             var time_iterator;
-            if (field_name == 'rtc_hour') {
+            if (field_name === 'rtc_hour') {
                 time_iterator = 24;
-            } else if (field_name == 'rtc_minute') {
+            } else if (field_name === 'rtc_minute') {
                 time_iterator = 60;
             }
             for (var i = 0; i < time_iterator; i++) {
