@@ -70,7 +70,7 @@ def auto_update(enable=True):
                 tfo.write(line)
     if not updated:
         raise Exception(
-            "apply_updates directive missing in {}, assuming its "
+            "apply_updates directive missing in {}, assuming it "
             "is corrupt. No change made.".format(YCFILE)
         )
     shutil.move(npath, YCFILE)
