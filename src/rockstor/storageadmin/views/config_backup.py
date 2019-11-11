@@ -415,7 +415,8 @@ def validate_rockons(ml):
     for m in ml:
         if m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed':
             rname = m['fields']['name']
-            if not RockOn.objects.filter(name=rname, state='installed').exists():
+            if not RockOn.objects.filter(name=rname, state='installed').exists() and \
+                    RockOn.objects.filter(name=rname).exists():
                 ro = RockOn.objects.get(name=rname)
                 rockons[m['pk']] = {}
                 rockons[m['pk']]['new_rid'] = ro.id
