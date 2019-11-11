@@ -1,0 +1,168 @@
+[
+  {
+    "fields": {
+      "username": "admin",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_superuser": false,
+      "is_staff": false,
+      "last_login": "2014-11-05T14:19:15.421Z",
+      "groups": [],
+      "user_permissions": [],
+      "password": "pbkdf2_sha256$12000$bIlTp3bZu4if$HhIMeQVPN/0NJz0NtrVj7ib8h+xHZkUT/md5DaPlq6A=",
+      "email": "",
+      "date_joined": "2014-11-05T14:19:13.535Z"
+    },
+    "model": "auth.user",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "pqgroup_rusage": 16,
+      "group": "root",
+      "name": "home",
+      "perms": "755",
+      "pqgroup": "2015/1",
+      "eusage": 16,
+      "uuid": null,
+      "pqgroup_eusage": 16,
+      "compression_algo": null,
+      "owner": "root",
+      "replica": false,
+      "qgroup": "0/257",
+      "toc": "2019-07-30T17:27:39.474Z",
+      "subvol_name": "home",
+      "rusage": 16,
+      "pool": 1,
+      "size": 7035904
+    },
+    "model": "storageadmin.share",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "pqgroup_rusage": 16,
+      "group": "root",
+      "name": "test_share01",
+      "perms": "755",
+      "pqgroup": "2015/34",
+      "eusage": 16,
+      "uuid": null,
+      "pqgroup_eusage": 16,
+      "compression_algo": null,
+      "owner": "root",
+      "replica": false,
+      "qgroup": "0/257",
+      "toc": "2019-07-30T17:27:39.715Z",
+      "subvol_name": "test_share01",
+      "rusage": 16,
+      "pool": 3,
+      "size": 5242880
+    },
+    "model": "storageadmin.share",
+    "pk": 4
+  },
+  {
+    "fields": {
+      "raid": "single",
+      "compression": "no",
+      "uuid": "cc05c31d-6a89-47cd-bbba-c8f4419d9a9b",
+      "name": "rockstor_rockstor",
+      "mnt_options": null,
+      "role": "root",
+      "toc": "2019-07-30T17:27:39.257Z",
+      "size": 7035904
+    },
+    "model": "storageadmin.pool",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "raid": "single",
+      "compression": "no",
+      "uuid": "56395eae-ab39-4649-85d4-072847eb56a2",
+      "name": "main_pool",
+      "mnt_options": null,
+      "role": null,
+      "toc": "2019-07-30T17:27:39.276Z",
+      "size": 5242880
+    },
+    "model": "storageadmin.pool",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "raid": "single",
+      "compression": "no",
+      "uuid": "ceba82ad-f7a5-404e-87cf-1c74aabb48ed",
+      "name": "test_pool",
+      "mnt_options": null,
+      "role": null,
+      "toc": "2019-07-30T17:27:39.298Z",
+      "size": 5242880
+    },
+    "model": "storageadmin.pool",
+    "pk": 3
+  },
+  {
+    "fields": {
+      "task_type": "scrub",
+      "name": "scurb-testpool01",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 * * 5",
+      "json_meta": "{\"pool_name\": \"test_pool\", \"pool\": \"3\"}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 10
+  },
+  {
+    "fields": {
+      "task_type": "snapshot",
+      "name": "snap-test",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 * * *",
+      "json_meta": "{\"writable\": true, \"visible\": true, \"prefix\": \"snaptest\", \"share\": \"4\", \"max_count\": \"4\"}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 15
+  },
+  {
+    "fields": {
+      "task_type": "reboot",
+      "name": "sys_reboot",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 1 * *",
+      "json_meta": "{}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 16
+  },
+  {
+    "fields": {
+      "task_type": "shutdown",
+      "name": "sys_shutdown",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "42 3 1 1 *",
+      "json_meta": "{\"wakeup\": false, \"rtc_hour\": 0, \"rtc_minute\": 0}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 17
+  },
+  {
+    "fields": {
+      "task_type": "suspend",
+      "name": "sys_suspend",
+      "enabled": false,
+      "crontabwindow": "*-*-*-*-*-*",
+      "crontab": "0 * * * *",
+      "json_meta": "{\"wakeup\": true, \"rtc_hour\": 0, \"rtc_minute\": 0}"
+    },
+    "model": "smart_manager.taskdefinition",
+    "pk": 18
+  }
+]

@@ -16,17 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from smart_manager.models import TaskDefinition
-from storageadmin.models import (Pool, Share, EmailClient)
-from smart_manager.serializers import TaskDefinitionSerializer
-from django.db import transaction
-from django.conf import settings
 import json
-from rest_framework.response import Response
-from storageadmin.util import handle_exception
-import rest_framework_custom as rfc
-
 import logging
+
+from django.conf import settings
+from django.db import transaction
+from rest_framework.response import Response
+
+import rest_framework_custom as rfc
+from smart_manager.models import TaskDefinition
+from smart_manager.serializers import TaskDefinitionSerializer
+from storageadmin.models import (Pool, Share, EmailClient)
+from storageadmin.util import handle_exception
+
 logger = logging.getLogger(__name__)
 
 
@@ -136,19 +138,18 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
         with self._handle_exception(request):
             name = request.data['name']
             if (TaskDefinition.objects.filter(name=name).exists()):
-                msg = ('Another task exists with the same name(%s). Choose '
-                       'a different name' % name)
+                msg = ('Another task exists with the same name({}). Choose '
+                       'a different name'.format(name))
                 handle_exception(Exception(msg), request)
 
             task_type = request.data['task_type']
             if (task_type not in self.valid_tasks):
-                e_msg = ('Unknown task type: %s cannot be scheduled' % name)
+                e_msg = ('Unknown task type: {} cannot be scheduled'.format(name))
                 handle_exception(Exception(e_msg), request)
 
             crontab, crontabwindow, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
             enabled = self._validate_enabled(request)
-
             td = TaskDefinition(name=name, task_type=task_type,
                                 crontab=crontab, crontabwindow=crontabwindow,
                                 json_meta=json_meta, enabled=enabled)
