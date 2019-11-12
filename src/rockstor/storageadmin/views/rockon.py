@@ -195,9 +195,9 @@ class RockOnView(rfc.GenericView):
                     co.dimage.delete()
             if (co is None):
                 co = DContainer(name=c, rockon=ro)
-            defaults = {'tag': c_d.get('tag', 'latest'),
-                        'repo': 'na', }
+            defaults = {'repo': 'na', }
             io, created = DImage.objects.get_or_create(name=c_d['image'],
+                                                       tag=c_d.get('tag', 'latest'),
                                                        defaults=defaults)
             co.dimage = io
             co.launch_order = c_d['launch_order']
