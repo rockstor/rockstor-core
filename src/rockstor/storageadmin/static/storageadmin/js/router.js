@@ -1124,7 +1124,7 @@ $(document).ready(function() {
         }
     };
 
-    var yum_updating = false; //global var to check if yum is updating
+    var yum_updating = false; //global var to check if yum/zypper are updating
     var displayYumUpdates = function(data) {
         if (typeof data.yum_updating != 'undefined' && !data.yum_updating) {
             console.log('closing');
@@ -1133,7 +1133,7 @@ $(document).ready(function() {
         }
         if (data.yum_updates && !yum_updating) {
             $('#yum-msg').fadeIn(0);
-            $('#yum-msg a').html('<i class="fa fa-rss" title="Available Yum Updates"></i>');
+            $('#yum-msg a').html('<i class="fa fa-rss" title="Updates available"></i>');
             if ($('#yum_panels').is(':empty')) {
                 _.each(data.packages, function(pkg) {
                     var html = '';
@@ -1162,13 +1162,13 @@ $(document).ready(function() {
     };
 
     $('#yum-run').click(function(event) {
-        var run_update = confirm('Do you want to procede with yum updates?');
+        var run_update = confirm('Do you want to proceed with these updates?');
         if (run_update) {
             RockStorSocket.sysinfo.emit('runyum');
             $('#yum_modal').modal('hide');
             yum_updating = true;
             $('#yum_panels').empty();
-            $('#yum-msg a').html('<i class="fa fa-rss" title="Yum is updating all packages"></i>');
+            $('#yum-msg a').html('<i class="fa fa-rss" title="Updating all packages"></i>');
         }
     });
 
