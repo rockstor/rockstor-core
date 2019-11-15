@@ -29,6 +29,7 @@ from rest_framework.response import Response
 
 import rest_framework_custom as rfc
 from cli.rest_util import api_call
+from smart_manager.models.service import Service, ServiceStatus
 from storageadmin.models import ConfigBackup
 from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
@@ -138,13 +139,35 @@ def restore_services(ml):
         if m["model"] == "smart_manager.service":
             name = m["fields"]["name"]
             config = m["fields"]["config"]
+            pkid = m["pk"]
             if config is not None:
                 config = json.loads(config)
-                services[name] = {"config": config}
-    logger.debug("services = ({}).".format(services))
+                services[name] = {
+                    "conf": {"config": config},
+                    "id": pkid
+                }
     for s in services:
-        generic_post("%s/sm/services/%s/config" % (BASE_URL, s), services[s])
+        generic_post("{}/sm/services/{}/config".format(BASE_URL, s), services[s]["conf"])
+        # Turn the service ON if it is ON in backup AND currently OFF
+        so = Service.objects.get(name=s)
+        if validate_service_status(ml, services[s]["id"]) and not \
+                ServiceStatus.objects.get(service_id=so.id).status:
+            generic_post("{}/sm/services/{}/start".format(BASE_URL, s), {})
     logger.debug("Finished restoring services.")
+
+
+def validate_service_status(ml, pkid):
+    """
+    Parses a model list (ml) and returns True if the service identified by
+    its id (pkid) was ON in the config backup.
+    :param ml: dict of models list
+    :param pkid: int
+    :return: True
+    """
+    for m in ml:
+        if m["model"] == 'smart_manager.servicestatus' and \
+            m["fields"]["service"] is pkid:
+            return m["fields"]["status"]
 
 
 def restore_scheduled_tasks(ml):
