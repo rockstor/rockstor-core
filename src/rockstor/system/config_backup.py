@@ -52,6 +52,7 @@ def backup_config():
             'dcontainerlink',
             'dcontainerargs',
             'dcontainerdevice',
+            "share",
         ],
         "smart_manager": [
             "service",
