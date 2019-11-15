@@ -410,6 +410,10 @@ def validate_rockons(ml):
     :param ml: dict of models from the config backup
     :return: dict of rock-ons names to be restored
     """
+    # Update all rock-ons-related db information
+    generic_post('{}/rockons/update'.format(BASE_URL), {})
+    logger.debug('Done updating DB info')
+
     rockons = {}
     # Filter rock-on that were installed in the backup
     for m in ml:

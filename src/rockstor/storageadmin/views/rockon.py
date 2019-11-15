@@ -16,10 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import json
+import logging
 import os
+import pickle
+import re
+
 import requests
-from rest_framework.response import Response
+from django.conf import settings
 from django.db import transaction
+from django_ztask.models import Task
+from rest_framework.response import Response
+
+import rest_framework_custom as rfc
+from rockon_helpers import (docker_status, rockon_status)
 from smart_manager.models import Service
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
                                  ContainerOption, DCustomConfig,
@@ -27,14 +37,7 @@ from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
                                  DContainerDevice, DContainerArgs)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
-import rest_framework_custom as rfc
-from rockon_helpers import (docker_status, rockon_status)
-from django_ztask.models import Task
-from django.conf import settings
-import pickle
-import re
-import json
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -97,6 +100,7 @@ class RockOnView(rfc.GenericView):
     def post(self, request, command=None):
         with self._handle_exception(request):
             if (command == 'update'):
+                logger.debug('Update Rock-ons info in database')
                 rockons = self._get_available()
                 # Delete metadata for apps no longer in metastores.
                 self._delete_deprecated(rockons)
