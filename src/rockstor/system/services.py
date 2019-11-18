@@ -16,13 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
-from django.conf import settings
-from osi import run_command
-import shutil
-from tempfile import mkstemp
 import os
+import re
+import shutil
 from shutil import move
+from tempfile import mkstemp
+
+from django.conf import settings
+
+from osi import run_command
 
 CHKCONFIG_BIN = settings.CHKCONFIG_BIN
 AUTHCONFIG = '/usr/sbin/authconfig'
@@ -60,7 +62,7 @@ def chkconfig(service_name, switch):
 
 
 def systemctl(service_name, switch):
-    return run_command([SYSTEMCTL_BIN, switch, service_name])
+    return run_command([SYSTEMCTL_BIN, switch, service_name], log=True)
 
 
 def set_autostart(service, switch):
