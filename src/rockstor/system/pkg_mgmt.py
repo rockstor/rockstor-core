@@ -104,6 +104,7 @@ def current_version():
 def rpm_build_info(pkg):
     version = "Unknown Version"
     date = None
+    distro_id = distro.id()
     try:
         o, e, rc = run_command([YUM, "info", "installed", "-v", pkg])
     except CommandException as e:
@@ -118,11 +119,17 @@ def rpm_build_info(pkg):
         raise e
     for l in o:
         if re.match("Buildtime", l) is not None:
-            # eg: "Buildtime   : Tue Dec  5 13:34:06 2017"
-            # we return 2017-Dec-06
+            # Legacy Rockstor (using original yum):
+            #     "Buildtime   : Tue Dec  5 13:34:06 2017"
+            # openSUSE Rocsktor (using dnf-yum):
+            #     "Buildtime    : Fri 29 Nov 2019 18:34:43 GMT"
+            # we return 2017-Dec-06 or 2019-Nov-29
             # Note the one day on from retrieved Buildtime with zero padding.
             dfields = l.strip().split()
-            dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
+            if distro_id == "rockstor":  # CentOS based Rockstor conditional
+                dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
+            else:  # Assuming we are openSUSE variant and so using dnf-yum
+                dstr = dfields[5] + " " + dfields[4] + " " + dfields[3]
             bdate = datetime.strptime(dstr, "%Y %b %d")
             bdate += timedelta(days=1)
             date = bdate.strftime("%Y-%b-%d")
