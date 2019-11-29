@@ -104,10 +104,12 @@ def current_version():
 def rpm_build_info(pkg):
     version = "Unknown Version"
     date = None
+    distro_id = distro.id()
     try:
         o, e, rc = run_command([YUM, "info", "installed", "-v", pkg])
     except CommandException as e:
-        # Catch "No matching Packages to list" so we can return None, None.
+        # Catch "No matching Packages to list" so we can return:
+        # "Unknown Version", None
         emsg = "Error: No matching Packages to list"
         # By checking both the first error element and the second to last we
         # catch one yum waiting for another to release yum lock.
@@ -118,11 +120,17 @@ def rpm_build_info(pkg):
         raise e
     for l in o:
         if re.match("Buildtime", l) is not None:
-            # eg: "Buildtime   : Tue Dec  5 13:34:06 2017"
-            # we return 2017-Dec-06
+            # Legacy Rockstor (using original yum):
+            #     "Buildtime   : Tue Dec  5 13:34:06 2017"
+            # openSUSE Rocsktor (using dnf-yum):
+            #     "Buildtime    : Fri 29 Nov 2019 18:34:43 GMT"
+            # we return 2017-Dec-06 or 2019-Nov-29
             # Note the one day on from retrieved Buildtime with zero padding.
             dfields = l.strip().split()
-            dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
+            if distro_id == "rockstor":  # CentOS based Rockstor conditional
+                dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
+            else:  # Assuming we are openSUSE variant and so using dnf-yum
+                dstr = dfields[5] + " " + dfields[4] + " " + dfields[3]
             bdate = datetime.strptime(dstr, "%Y %b %d")
             bdate += timedelta(days=1)
             date = bdate.strftime("%Y-%b-%d")
@@ -244,6 +252,8 @@ def repo_status(subscription):
 
 
 def rockstor_pkg_update_check(subscription=None):
+    distro_id = distro.id()
+    machine_arch = platform.machine()
     if subscription is not None:
         switch_repo(subscription)
     pkg = "rockstor"
@@ -255,17 +265,26 @@ def rockstor_pkg_update_check(subscription=None):
     available = False
     new_version = None
     updates = []
+    if distro_id == "rockstor":
+        changelog_cmd = [YUM, "changelog", date, pkg]
+    else:  # We are assuming openSUSE with dnf-yum specific options
+        if date != "all":
+            changelog_cmd = [YUM, "changelog", "--since", date, pkg]
+        else:
+            # Here we list the default number of changelog entries:
+            # defaults to last 8 releases but states "Listing all changelogs"
+            changelog_cmd = [YUM, "changelog", pkg]
     try:
-        o, e, rc = run_command([YUM, "changelog", date, pkg])
+        o, e, rc = run_command(changelog_cmd)
     except CommandException as e:
-        # Catch as yet unconfigured repos ie Leap 15.1: error log accordingly.
+        # Catch as yet unconfigured repos ie openSUSE Stable error log accordingly.
         # Avoids breaking current version display and update channel selection.
         emsg = "Error\\: Cannot retrieve repository metadata \\(repomd.xml\\)"
         if re.match(emsg, e.err[-2]) is not None:
             logger.error(
                 "Rockstor repo for distro.id ({}) version ({}) may "
                 "not exist: pending or deprecated.\nReceived: ({}).".format(
-                    distro.id(), distro.version(), e.err
+                    distro_id, distro.version(), e.err
                 )
             )
             new_version = version  # Explicitly set (flag) for code clarity.
@@ -273,15 +292,30 @@ def rockstor_pkg_update_check(subscription=None):
         # otherwise we raise an exception as normal.
         raise e
     for l in o:
-        if re.search("Available Packages", l) is not None:
+        # We have possible targets of:
+        # "Listing changelogs since 2019-11-29" - legacy yum and dnf-yum
+        # "Listing all changelogs" - legacy yum and dnf-yum with no --count=#
+        # "Listing # latest changelogs" - dnf-yum with a --count=# options
+        if re.match("Listing", l) is not None:
             available = True
         if not available:
             continue
-        if new_version is None and (re.match("rockstor-", l) is not None):
+        if new_version is None:
             machine_arch = platform.machine()
-            new_version = (
-                l.split()[0].split("rockstor-")[1].split(".{}".format(machine_arch))[0]
-            )
+            if re.match("rockstor-", l) is not None:  # legacy yum
+                # eg: "rockstor-3.9.2-51.2089.x86_64"
+                new_version = (
+                    l.split()[0]
+                    .split("rockstor-")[1]
+                    .split(".{}".format(machine_arch))[0]
+                )
+            if re.match("Changelogs for rockstor-", l) is not None:  # dnf-yum
+                # eg: "Changelogs for rockstor-3.9.2-51.2089.x86_64"
+                new_version = (
+                    l.split()[2]
+                    .split("rockstor-")[1]
+                    .split(".{}".format(machine_arch))[0]
+                )
         if log is True:
             updates.append(l)
             if len(l.strip()) == 0:
@@ -290,16 +324,40 @@ def rockstor_pkg_update_check(subscription=None):
             updates.append(l)
             log = True
     if new_version is None:
-        new_version = version
-        # do a second check which is valid for updates without changelog
+        logger.debug("No changelog found: trying yum update for info.")
+        # Do a second check which is valid for updates without changelog
         # updates. eg: same day updates, testing updates.
-        o, e, rc = run_command([YUM, "update", pkg, "--assumeno"], throw=False)
-        if rc == 1:
-            for l in o:
-                if re.search("will be an update", l) is not None:
-                    if re.search("rockstor.x86_64", l) is not None:
-                        new_version = l.strip().split()[3].split(":")[1]
+        new_version = pkg_latest_available(pkg, machine_arch, distro_id)
+        if new_version is None:
+            new_version = version
     return version, new_version, updates
+
+
+def pkg_latest_available(pkg_name, arch, distro_id):
+    """
+    Simple wrapper around "yum update pkg_name --assumeno" to retrieve
+    latest version available from "Version" column
+    :return:
+    """
+    new_version = None
+    # TODO: We might use "zypper se -s --match-exact rockstor" and parse first
+    #  line with rockstor in second column but unit test will be defunct.
+    #  Advantage: works with no rockstor version installed, no so dnf-yum
+    o, e, rc = run_command([YUM, "update", pkg_name, "--assumeno"], throw=False)
+    if rc == 1:
+        for l in o:
+            if distro_id == "rockstor":
+                # Legacy Yum appropriate parsing, all info on one line.
+                # "Package rockstor.x86_64 0:3.9.2-51.2089 will be an update"
+                if re.search("will be an update", l) is not None:
+                    if re.search("rockstor.{}".format(arch), l) is not None:
+                        new_version = l.strip().split()[3].split(":")[1]
+            else:  # We are assuming openSUSE with dnf-yum output format
+                # dnf-yum output line of interest; when presented:
+                #  " rockstor   x86_64   3.9.2-51.2089   localrepo   15 M"
+                if re.match(" rockstor", l) is not None:
+                    new_version = l.strip().split()[2]
+    return new_version
 
 
 def update_run(subscription=None, update_all_other=False):
