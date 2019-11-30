@@ -42,6 +42,7 @@ def backup_config():
         ],
         "smart_manager": [
             "service",
+            "servicestatus",
             "taskdefinition"
         ],
     }
