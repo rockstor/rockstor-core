@@ -290,15 +290,34 @@ def rockstor_pkg_update_check(subscription=None):
         # otherwise we raise an exception as normal.
         raise e
     for l in o:
-        if re.search("Available Packages", l) is not None:
+        # We have possible targets of:
+        # "Listing changelogs since 2019-11-29" - legacy yum and dnf-yum
+        # "Listing all changelogs" - legacy yum and dnf-yum with no --count=#
+        # "Listing # latest changelogs" - dnf-yum with a --count=# options
+        if re.search("Listing", l) is not None:
             available = True
         if not available:
             continue
-        if new_version is None and (re.match("rockstor-", l) is not None):
+        if new_version is None:
             machine_arch = platform.machine()
-            new_version = (
-                l.split()[0].split("rockstor-")[1].split(".{}".format(machine_arch))[0]
+            if re.match("rockstor-", l) is not None:  # legacy yum
+                # eg: "rockstor-3.9.2-51.2089.x86_64"
+                new_version = (
+                    l.split()[0]
+                    .split("rockstor-")[1]
+                    .split(".{}".format(machine_arch))[0]
+                )
+            if re.match("Changelogs for rockstor-", l) is not None:  # dnf-yum
+                # eg: "Changelogs for rockstor-3.9.2-51.2089.x86_64"
+                new_version = (
+                    l.split()[2]
+                    .split("rockstor-")[1]
+                    .split(".{}".format(machine_arch))[0]
+                )
+            logger.debug(
+                "New rockstor version in YUM changelog of {}".format(new_version)
             )
+
         if log is True:
             updates.append(l)
             if len(l.strip()) == 0:
