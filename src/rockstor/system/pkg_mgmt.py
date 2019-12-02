@@ -251,6 +251,7 @@ def repo_status(subscription):
 
 
 def rockstor_pkg_update_check(subscription=None):
+    distro_id = distro.id()
     if subscription is not None:
         switch_repo(subscription)
     pkg = "rockstor"
@@ -262,8 +263,17 @@ def rockstor_pkg_update_check(subscription=None):
     available = False
     new_version = None
     updates = []
+    if distro_id == "rockstor":
+        changelog_cmd = [YUM, "changelog", date, pkg]
+    else:  # We are assuming openSUSE with dnf-yum specific options
+        if date != "all":
+            changelog_cmd = [YUM, "changelog", "--since", date, pkg]
+        else:
+            # Here we list the default number of changelog entries:
+            # defaults to last 8 releases but states "Listing all changelogs"
+            changelog_cmd = [YUM, "changelog", pkg]
     try:
-        o, e, rc = run_command([YUM, "changelog", date, pkg])
+        o, e, rc = run_command(changelog_cmd)
     except CommandException as e:
         # Catch as yet unconfigured repos ie Leap 15.1: error log accordingly.
         # Avoids breaking current version display and update channel selection.
