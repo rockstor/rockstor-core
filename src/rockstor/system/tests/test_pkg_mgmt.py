@@ -339,6 +339,12 @@ class SystemPackageTests(unittest.TestCase):
             )
 
     def test_rpm_build_info(self):
+        """
+        rpm_build_info strips out and concatenates Version and Release info for the
+        rockstor package. This is returned along with a standardised date format for
+        the Buildtime which is also parse out. N.B. the build time has 1 day added
+        to it for historical reasons.
+        """
         # legacy rockstor/CentOS YUM:
         dist_id = ["rockstor"]
         out = [
