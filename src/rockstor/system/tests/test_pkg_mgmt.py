@@ -15,7 +15,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from mock import patch
 
-from system.pkg_mgmt import pkg_update_check, pkg_changelog, zypper_repos_list
+from system.pkg_mgmt import (
+    pkg_update_check,
+    pkg_changelog,
+    zypper_repos_list,
+    rpm_build_info,
+)
 
 
 class SystemPackageTests(unittest.TestCase):
@@ -328,6 +333,135 @@ class SystemPackageTests(unittest.TestCase):
                 returned,
                 expected,
                 msg="Un-expected zypper_repos_list() result:\n "
+                "returned = ({}).\n "
+                "expected = ({}).".format(returned, expected),
+            )
+
+    def test_rpm_build_info(self):
+        # legacy rockstor/CentOS YUM:
+        dist_id = ["rockstor"]
+        out = [
+            [
+                'Loading "changelog" plugin',
+                'Loading "fastestmirror" plugin',
+                "Config time: 0.010",
+                "Yum version: 3.4.3",
+                "rpmdb time: 0.000",
+                "Installed Packages",
+                "Name        : rockstor",
+                "Arch        : x86_64",
+                "Version     : 3.9.2",
+                "Release     : 50.2093",
+                "Size        : 85 M",
+                "Repo        : installed",
+                "From repo   : localrepo",
+                "Committer   : Philip Guyton <philip@yewtreeapps.com>",
+                "Committime  : Wed Nov 13 04:00:00 2019",
+                "Buildtime   : Fri Nov 29 14:03:17 2019",
+                "Install time: Sun Dec  1 07:23:38 2019",
+                "Installed by: root <root>",
+                "Changed by  : System <unset>",
+                "Summary     : Btrfs Network Attached Storage (NAS) Appliance.",
+                "URL         : http://rockstor.com/",
+                "License     : GPL",
+                "Description : Software raid, snapshot capable NAS solution with built-in file",
+                "            : integrity protection. Allows for file sharing between network",
+                "            : attached devices.",
+                "",
+                "",
+            ]
+        ]
+        err = [[""]]
+        rc = [0]
+        expected_results = [("3.9.2-50.2093", "2019-Nov-30")]
+        # Leap15.1 dnf-yum
+        dist_id.append("opensuse-leap")
+        out.append(
+            [
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
+                "DNF version: 4.2.6",
+                "cachedir: /var/cache/dnf",
+                "Waiting for process with pid 30565 to finish.",
+                "No module defaults found",
+                "Installed Packages",
+                "Name         : rockstor",
+                "Version      : 3.9.2",
+                "Release      : 50.2093",
+                "Architecture : x86_64",
+                "Size         : 82 M",
+                "Source       : rockstor-3.9.2-50.2093.src.rpm",
+                "Repository   : @System",
+                "Packager     : None",
+                "Buildtime    : Sat 30 Nov 2019 11:50:41 AM GMT",
+                "Install time : Sun 01 Dec 2019 03:23:03 PM GMT",
+                "Summary      : Btrfs Network Attached Storage (NAS) Appliance.",
+                "URL          : http://rockstor.com/",
+                "License      : GPL",
+                "Description  : Software raid, snapshot capable NAS solution with built-in file",
+                "             : integrity protection. Allows for file sharing between network",
+                "             : attached devices.",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_results.append(("3.9.2-50.2093", "2019-Dec-01"))
+        # Tumbleweed dnf-yum
+        dist_id.append("opensuse-tumbleweed")
+        out.append(
+            [
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
+                "DNF version: 4.2.6",
+                "cachedir: /var/cache/dnf",
+                "No module defaults found",
+                "Installed Packages",
+                "Name         : rockstor",
+                "Version      : 3.9.2",
+                "Release      : 50.2093",
+                "Architecture : x86_64",
+                "Size         : 84 M",
+                "Source       : rockstor-3.9.2-50.2093.src.rpm",
+                "Repository   : @System",
+                "Packager     : None",
+                "Buildtime    : Fri 29 Nov 2019 10:03:53 PM GMT",
+                "Install time : Sun 01 Dec 2019 03:23:33 PM GMT",
+                "Summary      : Btrfs Network Attached Storage (NAS) Appliance.",
+                "URL          : http://rockstor.com/",
+                "License      : GPL",
+                "Description  : Software raid, snapshot capable NAS solution with built-in file",
+                "             : integrity protection. Allows for file sharing between network",
+                "             : attached devices.",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_results.append(("3.9.2-50.2093", "2019-Nov-30"))
+        # Source install where we key from the error message:
+        dist_id.append("opensuse-tumbleweed")
+        out.append(
+            [
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
+                "DNF version: 4.2.6",
+                "cachedir: /var/cache/dnf",
+                "No module defaults found",
+                "",
+            ]
+        )
+        err.append(["Error: No matching Packages to list", ""])
+        rc.append(1)
+        expected_results.append(("Unknown Version", None))
+
+        for o, e, r, expected, distro in zip(out, err, rc, expected_results, dist_id):
+            self.mock_run_command.return_value = (o, e, r)
+            self.mock_distro.id.return_value = distro
+            returned = rpm_build_info("rockstor")
+            self.assertEqual(
+                returned,
+                expected,
+                msg="Un-expected rpm_build_info() result:\n "
                 "returned = ({}).\n "
                 "expected = ({}).".format(returned, expected),
             )
