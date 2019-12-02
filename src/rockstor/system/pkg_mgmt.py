@@ -282,7 +282,7 @@ def rockstor_pkg_update_check(subscription=None):
             logger.error(
                 "Rockstor repo for distro.id ({}) version ({}) may "
                 "not exist: pending or deprecated.\nReceived: ({}).".format(
-                    distro.id(), distro.version(), e.err
+                    distro_id, distro.version(), e.err
                 )
             )
             new_version = version  # Explicitly set (flag) for code clarity.
