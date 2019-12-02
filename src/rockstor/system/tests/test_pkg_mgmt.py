@@ -20,6 +20,7 @@ from system.pkg_mgmt import (
     pkg_changelog,
     zypper_repos_list,
     rpm_build_info,
+    pkg_latest_available,
 )
 
 
@@ -462,6 +463,161 @@ class SystemPackageTests(unittest.TestCase):
                 returned,
                 expected,
                 msg="Un-expected rpm_build_info() result:\n "
+                "returned = ({}).\n "
+                "expected = ({}).".format(returned, expected),
+            )
+
+    def test_pkg_latest_available(self):
+        """
+        This procedure was extracted from a fail through position at the end
+        of rockstor_pkg_update_check() to enable discrete testing.
+        Note that at time of extraction it was not believed to work as intended
+        with dnf-yum.
+        :return:
+        """
+        # CentOS Legacy yum - rockstor rpm installed with update available.
+        # another process holding the rpm db (not relevant currently)
+        arch = "x86_64"
+        dist_id = ["rockstor"]
+        out = [
+            [
+                "Loaded plugins: changelog, fastestmirror",
+                "Loading mirror speeds from cached hostfile",
+                " * base: mirrors.melbourne.co.uk",
+                " * epel: mirrors.coreix.net",
+                " * extras: mozart.ee.ic.ac.uk",
+                " * updates: mirrors.coreix.net",
+                "Resolving Dependencies",
+                "--> Running transaction check",
+                "---> Package rockstor.x86_64 0:3.9.2-50.2093 will be updated",
+                "---> Package rockstor.x86_64 0:3.9.2-51.2089 will be an update",  # This is the parsed in legacy YUM
+                "--> Finished Dependency Resolution",
+                "",
+                "Dependencies Resolved",
+                "",
+                "================================================================================",
+                " Package          Arch           Version                Repository         Size",
+                "================================================================================",
+                "Updating:",
+                " rockstor         x86_64         3.9.2-51.2089          localrepo          17 M",
+                "",
+                "Transaction Summary",
+                "================================================================================",
+                "Upgrade  1 Package",
+                "",
+                "Total download size: 17 M",
+                "Exiting on user command",
+                "Your transaction was saved, rerun it with:",
+                " yum load-transaction /tmp/yum_save_tx.2019-12-02.10-37.0b42CF.yumtx",
+                "",
+            ]
+        ]
+        err = [
+            [
+                "Existing lock /var/run/yum.pid: another copy is running as pid 18540.",
+                "Another app is currently holding the yum lock; waiting for it to exit...",
+                "  The other application is: yum",
+                "    Memory :  35 M RSS (712 MB VSZ)",
+                "    Started: Mon Dec  2 10:37:13 2019 - 00:01 ago",
+                "    State  : Sleeping, pid: 18540",
+                "Another app is currently holding the yum lock; waiting for it to exit...",
+                "  The other application is: yum",
+                "    Memory :  35 M RSS (712 MB VSZ)",
+                "    Started: Mon Dec  2 10:37:13 2019 - 00:03 ago",
+                "    State  : Sleeping, pid: 18540",
+                "",
+            ]
+        ]
+        rc = [1]
+        expected_result = ["3.9.2-51.2089"]
+        # CentOS Legacy yum - rockstor rpm installed with update available.
+        # no rpm db lock in place
+        dist_id.append("rockstor")
+        out.append(
+            [
+                "Loaded plugins: changelog, fastestmirror",
+                "Loading mirror speeds from cached hostfile",
+                " * base: mirrors.melbourne.co.uk",
+                " * epel: mirrors.coreix.net",
+                " * extras: mozart.ee.ic.ac.uk",
+                " * updates: mozart.ee.ic.ac.uk",
+                "Resolving Dependencies",
+                "--> Running transaction check",
+                "---> Package rockstor.x86_64 0:3.9.2-50.2093 will be updated",
+                "---> Package rockstor.x86_64 0:3.9.2-51.2089 will be an update",
+                "--> Finished Dependency Resolution",
+                "",
+                "Dependencies Resolved",
+                "",
+                "================================================================================",
+                " Package          Arch           Version                Repository         Size",
+                "================================================================================",
+                "Updating:",
+                " rockstor         x86_64         3.9.2-51.2089          localrepo          17 M",
+                "",
+                "Transaction Summary",
+                "================================================================================",
+                "Upgrade  1 Package",
+                "",
+                "Total download size: 17 M",
+                "Exiting on user command",
+                "Your transaction was saved, rerun it with:",
+                " yum load-transaction /tmp/yum_save_tx.2019-12-02.10-47.uHJM6L.yumtx",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(1)
+        expected_result.append("3.9.2-51.2089")
+        # Tumblweed dnf-yum - no rockstor rpm installed but one available.
+        dist_id.append("opensuse-tumbleweed")
+        out.append(
+            [
+                "Local Repository                                2.9 MB/s | 3.0 kB     00:00    ",
+                "No match for argument: rockstor",
+                "",
+            ]
+        )
+        err.append(
+            [
+                "Package rockstor available, but not installed.",
+                "Error: No packages marked for upgrade.",
+                "",
+            ]
+        )
+        rc.append(1)
+        expected_result.append(None)
+        # Leap15.1 dnf-yum - rockstor package installed with update available:
+        dist_id.append("opensuse-leap")
+        out.append(
+            [
+                "Last metadata expiration check: 0:00:10 ago on Mon 02 Dec 2019 06:22:10 PM GMT.",
+                "Dependencies resolved.",
+                "================================================================================",
+                " Package          Architecture   Version                Repository         Size",
+                "================================================================================",
+                "Upgrading:",
+                " rockstor         x86_64         3.9.2-51.2089          localrepo          15 M",
+                "",
+                "Transaction Summary",
+                "================================================================================",
+                "Upgrade  1 Package",
+                "",
+                "Total size: 15 M",
+                "",
+            ]
+        )
+        err.append(["Operation aborted.", ""])
+        rc.append(1)
+        expected_result.append("3.9.2-51.2089")
+
+        for o, e, r, expected, distro in zip(out, err, rc, expected_result, dist_id):
+            self.mock_run_command.return_value = (o, e, r)
+            returned = pkg_latest_available("rockstor", arch, distro)
+            self.assertEqual(
+                returned,
+                expected,
+                msg="Un-expected pkg_latest_available('rockstor') result:\n "
                 "returned = ({}).\n "
                 "expected = ({}).".format(returned, expected),
             )
