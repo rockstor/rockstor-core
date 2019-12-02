@@ -108,7 +108,8 @@ def rpm_build_info(pkg):
     try:
         o, e, rc = run_command([YUM, "info", "installed", "-v", pkg])
     except CommandException as e:
-        # Catch "No matching Packages to list" so we can return None, None.
+        # Catch "No matching Packages to list" so we can return:
+        # "Unknown Version", None
         emsg = "Error: No matching Packages to list"
         # By checking both the first error element and the second to last we
         # catch one yum waiting for another to release yum lock.
@@ -275,7 +276,7 @@ def rockstor_pkg_update_check(subscription=None):
     try:
         o, e, rc = run_command(changelog_cmd)
     except CommandException as e:
-        # Catch as yet unconfigured repos ie Leap 15.1: error log accordingly.
+        # Catch as yet unconfigured repos ie openSUSE Stable error log accordingly.
         # Avoids breaking current version display and update channel selection.
         emsg = "Error\\: Cannot retrieve repository metadata \\(repomd.xml\\)"
         if re.match(emsg, e.err[-2]) is not None:
