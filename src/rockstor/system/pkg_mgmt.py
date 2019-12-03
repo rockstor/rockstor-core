@@ -296,7 +296,7 @@ def rockstor_pkg_update_check(subscription=None):
         # "Listing changelogs since 2019-11-29" - legacy yum and dnf-yum
         # "Listing all changelogs" - legacy yum and dnf-yum with no --count=#
         # "Listing # latest changelogs" - dnf-yum with a --count=# options
-        if re.search("Listing", l) is not None:
+        if re.match("Listing", l) is not None:
             available = True
         if not available:
             continue
