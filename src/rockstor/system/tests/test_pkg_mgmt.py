@@ -15,7 +15,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from mock import patch
 
-from system.pkg_mgmt import pkg_update_check, pkg_changelog, zypper_repos_list
+from system.pkg_mgmt import (
+    pkg_update_check,
+    pkg_changelog,
+    zypper_repos_list,
+    rpm_build_info,
+    pkg_latest_available,
+)
 
 
 class SystemPackageTests(unittest.TestCase):
@@ -328,6 +334,296 @@ class SystemPackageTests(unittest.TestCase):
                 returned,
                 expected,
                 msg="Un-expected zypper_repos_list() result:\n "
+                "returned = ({}).\n "
+                "expected = ({}).".format(returned, expected),
+            )
+
+    def test_rpm_build_info(self):
+        """
+        rpm_build_info strips out and concatenates Version and Release info for the
+        rockstor package. This is returned along with a standardised date format for
+        the Buildtime which is also parse out. N.B. the build time has 1 day added
+        to it for historical reasons.
+        """
+        # legacy rockstor/CentOS YUM:
+        dist_id = ["rockstor"]
+        out = [
+            [
+                'Loading "changelog" plugin',
+                'Loading "fastestmirror" plugin',
+                "Config time: 0.010",
+                "Yum version: 3.4.3",
+                "rpmdb time: 0.000",
+                "Installed Packages",
+                "Name        : rockstor",
+                "Arch        : x86_64",
+                "Version     : 3.9.2",
+                "Release     : 50.2093",
+                "Size        : 85 M",
+                "Repo        : installed",
+                "From repo   : localrepo",
+                "Committer   : Philip Guyton <philip@yewtreeapps.com>",
+                "Committime  : Wed Nov 13 04:00:00 2019",
+                "Buildtime   : Fri Nov 29 14:03:17 2019",
+                "Install time: Sun Dec  1 07:23:38 2019",
+                "Installed by: root <root>",
+                "Changed by  : System <unset>",
+                "Summary     : Btrfs Network Attached Storage (NAS) Appliance.",
+                "URL         : http://rockstor.com/",
+                "License     : GPL",
+                "Description : Software raid, snapshot capable NAS solution with built-in file",
+                "            : integrity protection. Allows for file sharing between network",
+                "            : attached devices.",
+                "",
+                "",
+            ]
+        ]
+        err = [[""]]
+        rc = [0]
+        expected_results = [("3.9.2-50.2093", "2019-Nov-30")]
+        # Leap15.1 dnf-yum
+        dist_id.append("opensuse-leap")
+        out.append(
+            [
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
+                "DNF version: 4.2.6",
+                "cachedir: /var/cache/dnf",
+                "Waiting for process with pid 30565 to finish.",
+                "No module defaults found",
+                "Installed Packages",
+                "Name         : rockstor",
+                "Version      : 3.9.2",
+                "Release      : 50.2093",
+                "Architecture : x86_64",
+                "Size         : 82 M",
+                "Source       : rockstor-3.9.2-50.2093.src.rpm",
+                "Repository   : @System",
+                "Packager     : None",
+                "Buildtime    : Sat 30 Nov 2019 11:50:41 AM GMT",
+                "Install time : Sun 01 Dec 2019 03:23:03 PM GMT",
+                "Summary      : Btrfs Network Attached Storage (NAS) Appliance.",
+                "URL          : http://rockstor.com/",
+                "License      : GPL",
+                "Description  : Software raid, snapshot capable NAS solution with built-in file",
+                "             : integrity protection. Allows for file sharing between network",
+                "             : attached devices.",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_results.append(("3.9.2-50.2093", "2019-Dec-01"))
+        # Tumbleweed dnf-yum
+        dist_id.append("opensuse-tumbleweed")
+        out.append(
+            [
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
+                "DNF version: 4.2.6",
+                "cachedir: /var/cache/dnf",
+                "No module defaults found",
+                "Installed Packages",
+                "Name         : rockstor",
+                "Version      : 3.9.2",
+                "Release      : 50.2093",
+                "Architecture : x86_64",
+                "Size         : 84 M",
+                "Source       : rockstor-3.9.2-50.2093.src.rpm",
+                "Repository   : @System",
+                "Packager     : None",
+                "Buildtime    : Fri 29 Nov 2019 10:03:53 PM GMT",
+                "Install time : Sun 01 Dec 2019 03:23:33 PM GMT",
+                "Summary      : Btrfs Network Attached Storage (NAS) Appliance.",
+                "URL          : http://rockstor.com/",
+                "License      : GPL",
+                "Description  : Software raid, snapshot capable NAS solution with built-in file",
+                "             : integrity protection. Allows for file sharing between network",
+                "             : attached devices.",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_results.append(("3.9.2-50.2093", "2019-Nov-30"))
+        # Source install where we key from the error message:
+        dist_id.append("opensuse-tumbleweed")
+        out.append(
+            [
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
+                "DNF version: 4.2.6",
+                "cachedir: /var/cache/dnf",
+                "No module defaults found",
+                "",
+            ]
+        )
+        err.append(["Error: No matching Packages to list", ""])
+        rc.append(1)
+        expected_results.append(("Unknown Version", None))
+
+        for o, e, r, expected, distro in zip(out, err, rc, expected_results, dist_id):
+            self.mock_run_command.return_value = (o, e, r)
+            self.mock_distro.id.return_value = distro
+            returned = rpm_build_info("rockstor")
+            self.assertEqual(
+                returned,
+                expected,
+                msg="Un-expected rpm_build_info() result:\n "
+                "returned = ({}).\n "
+                "expected = ({}).".format(returned, expected),
+            )
+
+    def test_pkg_latest_available(self):
+        """
+        This procedure was extracted from a fail through position at the end
+        of rockstor_pkg_update_check() to enable discrete testing.
+        Note that at time of extraction it was not believed to work as intended
+        with dnf-yum.
+        :return:
+        """
+        # CentOS Legacy yum - rockstor rpm installed with update available.
+        # another process holding the rpm db (not relevant currently)
+        arch = "x86_64"
+        dist_id = ["rockstor"]
+        out = [
+            [
+                "Loaded plugins: changelog, fastestmirror",
+                "Loading mirror speeds from cached hostfile",
+                " * base: mirrors.melbourne.co.uk",
+                " * epel: mirrors.coreix.net",
+                " * extras: mozart.ee.ic.ac.uk",
+                " * updates: mirrors.coreix.net",
+                "Resolving Dependencies",
+                "--> Running transaction check",
+                "---> Package rockstor.x86_64 0:3.9.2-50.2093 will be updated",
+                "---> Package rockstor.x86_64 0:3.9.2-51.2089 will be an update",  # This is the parsed in legacy YUM
+                "--> Finished Dependency Resolution",
+                "",
+                "Dependencies Resolved",
+                "",
+                "================================================================================",
+                " Package          Arch           Version                Repository         Size",
+                "================================================================================",
+                "Updating:",
+                " rockstor         x86_64         3.9.2-51.2089          localrepo          17 M",
+                "",
+                "Transaction Summary",
+                "================================================================================",
+                "Upgrade  1 Package",
+                "",
+                "Total download size: 17 M",
+                "Exiting on user command",
+                "Your transaction was saved, rerun it with:",
+                " yum load-transaction /tmp/yum_save_tx.2019-12-02.10-37.0b42CF.yumtx",
+                "",
+            ]
+        ]
+        err = [
+            [
+                "Existing lock /var/run/yum.pid: another copy is running as pid 18540.",
+                "Another app is currently holding the yum lock; waiting for it to exit...",
+                "  The other application is: yum",
+                "    Memory :  35 M RSS (712 MB VSZ)",
+                "    Started: Mon Dec  2 10:37:13 2019 - 00:01 ago",
+                "    State  : Sleeping, pid: 18540",
+                "Another app is currently holding the yum lock; waiting for it to exit...",
+                "  The other application is: yum",
+                "    Memory :  35 M RSS (712 MB VSZ)",
+                "    Started: Mon Dec  2 10:37:13 2019 - 00:03 ago",
+                "    State  : Sleeping, pid: 18540",
+                "",
+            ]
+        ]
+        rc = [1]
+        expected_result = ["3.9.2-51.2089"]
+        # CentOS Legacy yum - rockstor rpm installed with update available.
+        # no rpm db lock in place
+        dist_id.append("rockstor")
+        out.append(
+            [
+                "Loaded plugins: changelog, fastestmirror",
+                "Loading mirror speeds from cached hostfile",
+                " * base: mirrors.melbourne.co.uk",
+                " * epel: mirrors.coreix.net",
+                " * extras: mozart.ee.ic.ac.uk",
+                " * updates: mozart.ee.ic.ac.uk",
+                "Resolving Dependencies",
+                "--> Running transaction check",
+                "---> Package rockstor.x86_64 0:3.9.2-50.2093 will be updated",
+                "---> Package rockstor.x86_64 0:3.9.2-51.2089 will be an update",
+                "--> Finished Dependency Resolution",
+                "",
+                "Dependencies Resolved",
+                "",
+                "================================================================================",
+                " Package          Arch           Version                Repository         Size",
+                "================================================================================",
+                "Updating:",
+                " rockstor         x86_64         3.9.2-51.2089          localrepo          17 M",
+                "",
+                "Transaction Summary",
+                "================================================================================",
+                "Upgrade  1 Package",
+                "",
+                "Total download size: 17 M",
+                "Exiting on user command",
+                "Your transaction was saved, rerun it with:",
+                " yum load-transaction /tmp/yum_save_tx.2019-12-02.10-47.uHJM6L.yumtx",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(1)
+        expected_result.append("3.9.2-51.2089")
+        # Tumblweed dnf-yum - no rockstor rpm installed but one available.
+        dist_id.append("opensuse-tumbleweed")
+        out.append(
+            [
+                "Local Repository                                2.9 MB/s | 3.0 kB     00:00    ",
+                "No match for argument: rockstor",
+                "",
+            ]
+        )
+        err.append(
+            [
+                "Package rockstor available, but not installed.",
+                "Error: No packages marked for upgrade.",
+                "",
+            ]
+        )
+        rc.append(1)
+        expected_result.append(None)
+        # Leap15.1 dnf-yum - rockstor package installed with update available:
+        dist_id.append("opensuse-leap")
+        out.append(
+            [
+                "Last metadata expiration check: 0:00:10 ago on Mon 02 Dec 2019 06:22:10 PM GMT.",
+                "Dependencies resolved.",
+                "================================================================================",
+                " Package          Architecture   Version                Repository         Size",
+                "================================================================================",
+                "Upgrading:",
+                " rockstor         x86_64         3.9.2-51.2089          localrepo          15 M",
+                "",
+                "Transaction Summary",
+                "================================================================================",
+                "Upgrade  1 Package",
+                "",
+                "Total size: 15 M",
+                "",
+            ]
+        )
+        err.append(["Operation aborted.", ""])
+        rc.append(1)
+        expected_result.append("3.9.2-51.2089")
+
+        for o, e, r, expected, distro in zip(out, err, rc, expected_result, dist_id):
+            self.mock_run_command.return_value = (o, e, r)
+            returned = pkg_latest_available("rockstor", arch, distro)
+            self.assertEqual(
+                returned,
+                expected,
+                msg="Un-expected pkg_latest_available('rockstor') result:\n "
                 "returned = ({}).\n "
                 "expected = ({}).".format(returned, expected),
             )
