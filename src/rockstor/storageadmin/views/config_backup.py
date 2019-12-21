@@ -339,17 +339,15 @@ def validate_install_config(ml, rid, rockons):
                 rockons[rid]['devices'].update({dev: val})
 
         # get environment
-        for m in ml:
-            if m['model'] == 'storageadmin.dcontainerenv' and m['fields']['container'] is cid:
-                key = m['fields']['key']
-                val = m['fields']['val']
-                rockons[rid]['environment'].update({key: val})
+        update_rockon_env(cid, ml, rid, rockons)
     # get cc
     for m in ml:
         if m['model'] == 'storageadmin.dcustomconfig' and m['fields']['rockon'] is rid:
             key = m['fields']['key']
             val = m['fields']['val']
             rockons[rid]['cc'].update({key: val})
+
+
 
 
 def validate_update_config(ml, rid, rockons):
@@ -376,6 +374,20 @@ def validate_update_config(ml, rid, rockons):
                 label = m['fields']['val']
                 cname = m['fields']['key']
                 rockons[rid]['labels'].update({label: cname})
+
+
+def update_rockon_env(cid, ml, rid, rockons):
+    """
+    Builds a dictionary with env_key:value for a given container id (cid)
+    of a given rock-on (rid) as present in a config backup (ml).
+    """
+    # todo: When the env variable is PUID or PGID, try fetching value by name with
+    #     current system in case an update is needed.
+    for m in ml:
+        if m['model'] == 'storageadmin.dcontainerenv' and m['fields']['container'] is cid:
+            key = m['fields']['key']
+            val = m['fields']['val']
+            rockons[rid]['environment'].update({key: val})
 
 
 def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
