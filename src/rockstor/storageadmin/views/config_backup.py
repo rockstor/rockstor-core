@@ -45,7 +45,7 @@ def generic_post(url, payload):
     headers = {"content-type": "application/json"}
     try:
         api_call(url, data=payload, calltype="post", headers=headers, save_error=False)
-        logger.debug(
+        logger.info(
             "Successfully created resource: {}. Payload: {}".format(url, payload)
         )
     except Exception as e:
@@ -57,7 +57,7 @@ def generic_post(url, payload):
 
 
 def restore_users_groups(ml):
-    logger.debug("Started restoring users and groups.")
+    logger.info("Started restoring users and groups.")
     users = []
     groups = []
     # Dictionary to map group pk to group name. Used to re-establishes user
@@ -79,11 +79,11 @@ def restore_users_groups(ml):
         # users are created with default(rockstor) password
         u["password"] = "rockstor"
         generic_post("%s/users" % BASE_URL, u)
-    logger.debug("Finished restoring users and groups.")
+    logger.info("Finished restoring users and groups.")
 
 
 def restore_samba_exports(ml):
-    logger.debug("Started restoring Samba exports.")
+    logger.info("Started restoring Samba exports.")
     exports = []
     for m in ml:
         if m["model"] == "storageadmin.sambashare":
@@ -95,22 +95,22 @@ def restore_samba_exports(ml):
 
 
 def restore_afp_exports(ml):
-    logger.debug("Started restoring AFP exports.")
+    logger.info("Started restoring AFP exports.")
     exports = []
     for m in ml:
         if m["model"] == "storageadmin.netatalkshare":
             exports.append(m["fields"])
     if len(exports) > 0:
-        logger.debug("Starting Netatalk service")
+        logger.info("Starting Netatalk service")
         generic_post("%s/sm/services/netatalk/start" % BASE_URL, {})
     for e in exports:
         e["shares"] = [e["path"].split("/")[-1]]
         generic_post("%s/netatalk" % BASE_URL, e)
-    logger.debug("Finished restoring AFP exports.")
+    logger.info("Finished restoring AFP exports.")
 
 
 def restore_nfs_exports(ml):
-    logger.debug("Started restoring NFS exports.")
+    logger.info("Started restoring NFS exports.")
     exports = []
     export_groups = {}
     adv_exports = {"entries": []}
@@ -124,17 +124,17 @@ def restore_nfs_exports(ml):
             adv_exports["entries"].append(m["fields"]["export_str"])
     for e in exports:
         if len(e["mount"].split("/")) != 3:
-            logger.debug("skipping nfs export with mount: %s" % e["mount"])
+            logger.info("skipping nfs export with mount: %s" % e["mount"])
             continue
         e["shares"] = [e["mount"].split("/")[2]]
         payload = dict(export_groups[e["export_group"]], **e)
         generic_post("%s/nfs-exports" % BASE_URL, payload)
     generic_post("%s/adv-nfs-exports" % BASE_URL, adv_exports)
-    logger.debug("Finished restoring NFS exports.")
+    logger.info("Finished restoring NFS exports.")
 
 
 def restore_services(ml):
-    logger.debug("Started restoring services.")
+    logger.info("Started restoring services.")
     services = {}
     for m in ml:
         if m["model"] == "smart_manager.service":
@@ -154,7 +154,7 @@ def restore_services(ml):
         if validate_service_status(ml, services[s]["id"]) and not \
                 ServiceStatus.objects.get(service_id=so.id).status:
             generic_post("{}/sm/services/{}/start".format(BASE_URL, s), {})
-    logger.debug("Finished restoring services.")
+    logger.info("Finished restoring services.")
 
 
 def validate_service_status(ml, pkid):
@@ -186,7 +186,7 @@ def restore_scheduled_tasks(ml):
         - enabled
     :param ml: list of smart_manager models of interest as parsed by restore_config()
     """
-    logger.debug("Started restoring scheduled tasks.")
+    logger.info("Started restoring scheduled tasks.")
     tasks = []
     for m in ml:
         if m["model"] == "smart_manager.taskdefinition":
@@ -209,7 +209,7 @@ def restore_scheduled_tasks(ml):
             tasks.append(taskdef)
     for t in tasks:
         generic_post("{}/sm/tasks/".format(BASE_URL), t)
-    logger.debug("Finished restoring scheduled tasks.")
+    logger.info("Finished restoring scheduled tasks.")
 
 
 def restore_rockons(ml):
@@ -239,20 +239,18 @@ def restore_rockons(ml):
     :param ml: dict of models present in the config backup
     :return:
     """
-    logger.debug('Started restoring rock-ons.')
+    logger.info('Started restoring rock-ons.')
     rockons = validate_rockons(ml)
-    logger.debug('rockons = ({}).'.format(rockons))
+    logger.info('The following rock-ons will be resotred: ({}).'.format(rockons))
     if len(rockons) > 0:
         for rid in rockons:
             # Get config for initial install
-            logger.debug('Get install config for rockon {}'.format(rockons[rid]['rname']))
             validate_install_config(ml, rid, rockons)
             # Install
             rockon_transition_checker.async(rid, rockons)
             restore_install_rockon.async(rid, rockons, command='install')
 
             # Get config for post-install update
-            logger.debug('Get update config for rockon {}'.format(rockons[rid]['rname']))
             validate_update_config(ml, rid, rockons)
             # Update
             if bool(rockons[rid]['shares']) or \
@@ -263,14 +261,13 @@ def restore_rockons(ml):
                 # Start update
                 rockon_transition_checker.async(rid, rockons)
                 restore_install_rockon.async(rid, rockons, command='update')
-    logger.debug('Finished restoring rock-ons.')
+    logger.info('Finished restoring rock-ons.')
 
 
 @task()
 def rockon_transition_checker(rid, rockons):
     cur_wait = 0
     while RockOn.objects.filter(state__contains='pending').exists():
-        logger.debug("Another rock-on is in transition, so let's wait.")
         sleep(2)
         cur_wait += 2
         if cur_wait > 30:
@@ -281,7 +278,6 @@ def rockon_transition_checker(rid, rockons):
 
 @task()
 def restore_install_rockon(rid, rockons, command):
-    logger.debug('Start {} procedure for rockon {}'.format(command, rockons[rid]['rname']))
     # cur_wait = 0
     # while RockOn.objects.filter(state__contains='pending').exists():
     #     logger.debug("Another rock-on is in transition, so let's try again in 2 secs.")
@@ -295,13 +291,13 @@ def restore_install_rockon(rid, rockons, command):
     #                      'Stop trying to install the rock-on ({})'.format(rockons[rid]['rname']))
     #         break
     #     # thread.join()
-    logger.debug('Send POST command ({}) to rockons api for rockon {}'.format(command, rockons[rid]['rname']))
+    logger.info('Send {} command to the rock-ons api for the following rock-on {}'.format(command, rockons[rid]['rname']))
     generic_post('{}/rockons/{}/{}'.format(BASE_URL, rockons[rid]['new_rid'], command), rockons[rid])
 
 
 def validate_install_config(ml, rid, rockons):
     """
-    Given a dict of list of models from a config backup, this method builds a dict of the
+    Given a dict of list of models from a config backup, this function builds a dict of the
     parameters to install a rock-on identified by its ID. These parameters are the container(s),
     share(s), port(s), device(s), environment variable(s), and custom_configuration.
     :param ml: dict of models present in the config backup
@@ -346,8 +342,6 @@ def validate_install_config(ml, rid, rockons):
             key = m['fields']['key']
             val = m['fields']['val']
             rockons[rid]['cc'].update({key: val})
-
-
 
 
 def validate_update_config(ml, rid, rockons):
@@ -424,7 +418,6 @@ def validate_rockons(ml):
     """
     # Update all rock-ons-related db information
     generic_post('{}/rockons/update'.format(BASE_URL), {})
-    logger.debug('Done updating DB info')
 
     rockons = {}
     # Filter rock-on that were installed in the backup
