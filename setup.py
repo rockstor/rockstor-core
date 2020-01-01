@@ -84,6 +84,7 @@ setup(
         'requests == 1.1.0',
         'six == 1.10.0',
         'distro',
+        'django-braces == 1.13.0',  # 1.14.0 (30 Dec 2019) needs Django 1.11.0+
     ]
 
 )
