@@ -124,7 +124,7 @@ $(document).ready(function(){
   {{#is_sub_active defaultSub}}
   <div class="alert alert-success" id="contrib-alert">
     <h4>We are happy to make this update available to you. Please support us by
-      <a id="donateYes" href="#version"> Donating</a> or making a <a href="http://shop.rockstor.com" target="_blank"> Purchase</a></h4>
+      <a id="showDonateModal" href="#">Donating</a> or making a <a href="http://shop.rockstor.com" target="_blank"> Purchase</a></h4>
   </div>
   {{/is_sub_active}}
   <a id="update" class="btn btn-primary" title="start update">Start Update</a>
@@ -173,16 +173,6 @@ $(document).ready(function(){
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-
-<form id="contrib-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"i style="display:none">
-  <input type="hidden" name="cmd" value="_xclick" />
-  <input type="hidden" name="business" value="WUDA5UNJXDCZ8" />
-  <input type="hidden" name="currency_code" value="USD" />
-  <input type="hidden" name="item_name" value="Support Rockstor development" />
-  <input type="hidden" name="amount" value="10" />
-  <input type="hidden" name="cn" value="Note to Rockstor developers" />
-  <input type="hidden" name="no_shipping" value="1" />
-</form>
 
 <div id="activate-stable" class="modal fade">
   <div class="modal-dialog">
