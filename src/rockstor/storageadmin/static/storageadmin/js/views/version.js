@@ -27,7 +27,7 @@
 VersionView = RockstorLayoutView.extend({
     events: {
         'click #update': 'update',
-        'click #donateYes': 'donateYes',
+        'click #showDonateModal': 'showDonateModal',
         'click #autoUpdateSwitch': 'autoUpdateSwitch',
         'click #enableAuto': 'enableAutoUpdate',
         'click #disableAuto': 'disableAutoUpdate',
@@ -120,10 +120,8 @@ VersionView = RockstorLayoutView.extend({
         });
     },
 
-    donateYes: function() {
-        var contrib = 0;
-        this.$('input[name="amount"]').val(contrib);
-        this.$('#contrib-form').submit();
+    showDonateModal: function() {
+        $('#donate-modal').modal('show');
     },
 
     update: function() {

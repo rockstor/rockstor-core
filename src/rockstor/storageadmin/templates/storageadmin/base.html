@@ -251,43 +251,37 @@
   </div>
 
   <div class="modal fade" id="donate-modal">
-      <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h3 id="donate-modal-label">Thank you! for supporting Rockstor development</h3>
-      </div>
-      <div class="modal-body">
-        <div class="radio">
-          <label>
-        <input type="radio" name="contrib" id="contrib10" value="10" checked>$10
-          </label>
-        <div class="radio">
-          <label>
-        <input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
-          </label>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"
+                  aria-label="Close"><span aria-hidden="true">&times;</span>
+          </button>
+          <h2 id="donate-modal-label">Please consider donating to help support
+            Rockstor's development</h2>
         </div>
-        <div class="radio">
-          <label>
-        <input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
-          </label>
-        </div>
-        <div class="radio">
-          <label>
-        <input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50 (Free Rockstor USB drive)
-          </label>
-        </div>
-        <div class="radio">
-          <label>
-        <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
-          </label>
-        </div>
-        &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
-        <br><br>
-        <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
-      </div>
-    </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
+        <div class="modal-body">
+          <h5 id="donate-modal-subtitle">Our Open Source development is
+            dependant upon update channel subscriptions and donations.</h5>
+          <form id="inner-contrib-form"
+                action="https://www.paypal.com/cgi-bin/webscr" method="post"
+                target="_blank" style="text-align: center;">
+            <input type="hidden" name="cmd" value="_s-xclick"/>
+            <input type="hidden" name="hosted_button_id"
+                   value="P72VDTYULUZTC"/>
+            <input type="image"
+                   src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif"
+                   border="0" name="paypal_donate_button"
+                   id="paypal_donate_button"
+                   title="PayPal - The safer, easier way to pay online!"
+                   alt="Donate with PayPal button"/>
+            <!--      <img alt="" border="0" src="https://www.paypal.com/en_GB/i/scr/pixel.gif"-->
+            <!--           width="1" height="1"/>-->
+          </form>
+              <em>Upon clicking the above button, you will be redirected to our donation handler PayPal.</em>
+        </div><!-- /.model-body -->
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
 
 
@@ -295,15 +289,6 @@
       {% csrf_token %}
   </form>
 
-  <form id="contrib-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"i style="display:none">
-      <input type="hidden" name="cmd" value="_xclick" />
-      <input type="hidden" name="business" value="WUDA5UNJXDCZ8" />
-      <input type="hidden" name="currency_code" value="USD" />
-      <input type="hidden" name="item_name" value="Support Rockstor development" />
-      <input type="hidden" name="amount" value="10" />
-      <input type="hidden" name="cn" value="Note to Rockstor developers" />
-      <input type="hidden" name="no_shipping" value="1" />
-  </form>
 
     <script src="/static/js/lib/bootstrap.js"></script>
     <script type="text/javascript">

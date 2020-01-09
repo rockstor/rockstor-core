@@ -988,7 +988,7 @@ $(document).ready(function() {
         }
     });
 
-    // donate button handler
+    // donate menu item handler
     $('#donate_nav').click(function(event) {
         if (event) {
             event.preventDefault();
@@ -996,23 +996,8 @@ $(document).ready(function() {
         $('#donate-modal').modal('show');
     });
 
-    $('#donate-modal #contrib-custom').click(function(e) {
-        $('#donate-modal #custom-amount').css('display', 'inline');
-    });
-    $('#donate-modal .contrib-other').click(function(e) {
-        $('#donate-modal #custom-amount').css('display', 'none');
-    });
-
-    $('#donate-modal #donateYes').click(function(event) {
-        contrib = $('#donate-modal input[type="radio"][name="contrib"]:checked').val();
-        if (contrib == 'custom') {
-            contrib = $('#custom-amount').val();
-        }
-        if (_.isNull(contrib) || _.isEmpty(contrib) || isNaN(contrib)) {
-            contrib = 0; // set contrib to 0, let user input the number on paypal
-        }
-        $('#contrib-form input[name="amount"]').val(contrib);
-        $('#contrib-form').submit();
+    // donate modal paypal donate button handler
+    $('#donate-modal #paypal_donate_button').click(function(event) {
         $('#donate-modal').modal('hide');
     });
 
