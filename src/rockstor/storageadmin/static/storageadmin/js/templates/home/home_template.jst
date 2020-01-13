@@ -31,36 +31,43 @@
   </div>
 </div>
 
-
+<!-- One off first login message -->
 <div class="modal fade" id="update-version-modal">
-  <div class="modal-dialog">
+  <div class="modal-dialog justify-content-center">
     <div class="modal-content">
-      <div class="modal-body">
-	<h3 id="update-version-modal-label">Thanks for installing Rockstor. We recommend updating to the latest version.</h3>
-	<br>
-	<h4>Would you like to update now?</h4>
-	<br>
+      <div class="modal-body" >
+        <h2 id="update-version-modal-label">Welcome to the Rockstor Web User Interface (Web-UI)</h2>
+        <h3> Activating a Rockstor package
+          <a href="http://rockstor.com/docs/update-channels/update_channels.html" target="_blank">Update Channel</a>
+          and updating is recommended. All pending system updates will be included.
+          <em> Please be patient, this can take some time.</em></h3>
+        <h4><em>Our Open Source development is dependant upon update channel subscriptions and donations.</em></h4>
+        <h4>Would you like to update now?</h4>
+        <br>
       </div>
       <div class="modal-footer">
-	<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No, Thanks</button>
-	<a id="updateYes" class="btn btn-primary" title="Update">Update Now</a>
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No, Thanks</button>
+        <a id="updateYes" class="btn btn-primary" title="Update">Update Now</a>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div>
 
+<!-- Displayed upon visiting the Dashboard if no Update Channel is selected -->
 <div class="modal fade" id="update-channel-modal">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-body">
-	<h3 id="update-channel-modal-label">Stable updates are not activated.</h3>
-	<br>
-	<h4>We recommend activating Stable updates unless you wish to run cutting edge code and actively test Rockstor. By purchasing Stable subscription, you are providing the crucial support we need. So Thanks in advance!</h4>
-	<br>
+        <h2 id="update-channel-modal-label">Please select a Rockstor package <a href="http://rockstor.com/docs/update-channels/update_channels.html" target="_blank">Update Channel</a></h2>
+        <h3>- Stable updates: recommended for production use (paid).
+          <br>
+          - Testing updates: for development / actively testing latest code (free).</h3>
+        <h4><em>Our Open Source development is dependant upon update channel subscriptions and donations.</em></h4>
+        <br>
       </div>
       <div class="modal-footer">
-	<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No, Thanks</button>
-	<a id="activate" class="btn btn-primary" title="Update">I'll activate</a>
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No, Thanks</button>
+        <a id="activate" class="btn btn-primary" title="Update">I'll activate</a>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

@@ -1012,7 +1012,7 @@ $(document).ready(function() {
     };
 
     var distroInfo = function(data) {
-        $('#distro-info').text(data.distro);
+        $('#distro-info').text("Uses " + data.distro);
         $('#distro-info').attr('title', data.version);
     };
 
