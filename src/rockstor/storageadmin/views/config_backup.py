@@ -241,7 +241,7 @@ def restore_rockons(ml):
     """
     logger.info('Started restoring rock-ons.')
     rockons = validate_rockons(ml)
-    logger.info('The following rock-ons will be resotred: ({}).'.format(rockons))
+    logger.info('The following rock-ons will be restored: {}.'.format(rockons))
     if len(rockons) > 0:
         for rid in rockons:
             # Get config for initial install
@@ -278,7 +278,7 @@ def rockon_transition_checker(rid, rockons):
 
 @task()
 def restore_install_rockon(rid, rockons, command):
-    logger.info('Send {} command to the rock-ons api for the following rock-on {}'.format(command, rockons[rid]['rname']))
+    logger.info('Send {} command to the rock-ons api for the following rock-on: {}'.format(command, rockons[rid]['rname']))
     generic_post('{}/rockons/{}/{}'.format(BASE_URL, rockons[rid]['new_rid'], command), rockons[rid])
 
 

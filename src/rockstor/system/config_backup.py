@@ -39,7 +39,6 @@ def backup_config():
             "nfsexport",
             "nfsexportgroup",
             "advancednfsexport",
-            'dashboardconfig',
             'rockon',
             'dcontainer',
             'dcustomconfig',
