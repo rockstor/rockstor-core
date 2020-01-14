@@ -10,12 +10,15 @@ $(document).ready(function(){
     {{#is_sub_active defaultSub}}
     <div class="alert alert-danger">
       <p>
-	Testing updates are activated. These are cutting edge updates that should
-	be applied only after careful consideration. When an update is released,
-	read the changelog and proceed with caution.
+        <a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a>
+        are <strong>activated</strong>. These are cutting edge updates that should
+        be applied only after careful consideration. When an update is released,
+        read the changelog and proceed with caution.
       </p>
       <p>
-	Alternatively, Stable updates are generally recommended as shown below.
+        Alternatively,
+        <a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a>
+        are generally recommended as shown below.
       </p>
     </div>
     {{/is_sub_active}}
@@ -23,11 +26,12 @@ $(document).ready(function(){
     {{#no_sub_active}}
     <div class="alert alert-success">
       <p>
-	You can receive software updates from one of the two update channels as
-	shown in the below table. Please activate a channel that is appropriate
-	for your needs. Stable updates are generally recommended, unless you want
-	to actively test Rockstor. If you have questions, email
-	support@rockstor.com
+        Rockstor package
+        <a href="http://rockstor.com/docs/update-channels/update_channels.html" target="_blank"> update channels. </a>
+        Please activate appropriately for your needs.
+        <br>- <strong>Stable updates</strong>: recommended for production use (paid).
+        <br>- <strong>Testing updates</strong>: for development / actively testing latest code (free).
+        <br>See our <a href="https://forum.rockstor.com/" target="_blank">friendly forum</a> for advise.
       </p>
     </div>
     {{/no_sub_active}}
@@ -38,15 +42,15 @@ $(document).ready(function(){
       <thead>
 	<tr class="active">
           <th>Feature</th>
-          <th>Stable Updates</th>
-          <th>Testing Updates</th>
+          <th><a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a></th>
+          <th><a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a></th>
 	</tr>
       </thead>
       <tbody>
 	<tr>
           <td>Update Frequency</td>
-          <td>3-4 Weeks</td>
-          <td>2-3 days</td>
+          <td>1-2 Months</td>
+          <td>1-2 Weeks</td>
 	</tr>
 	<tr>
           <td>Priority of bug fixes</td>
@@ -150,8 +154,11 @@ $(document).ready(function(){
   <div id="updateInfo" class="alert alert-success">
     <p></p>
     <p>
-      Stable updates are activated. While it's not recommended, if you are
-      absolutely sure, Testing updates can be activated by clicking <a id="testing-modal"> here.</a>
+      <a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a>
+      are <strong>activated</strong>. While it's not recommended, if you are
+      absolutely sure,
+      <a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a>
+      can be activated by clicking <a id="testing-modal"> here.</a>
     </p>
   </div>
   {{/is_sub_active}}
@@ -188,8 +195,8 @@ $(document).ready(function(){
 	  <li>Purchase the Activation code by clicking <a href="http://shop.rockstor.com/products/stable-release-channel-subscription#applianceid={{applianceId}}" target="_blank">here.</a>
 	  <li>The Activation code will be sent to you via e-mail.</li>
 	  <li>Come back to this screen and enter the Activation code.</li>
-	  <li>Enjoy Stable updates. Thanks for supporting Rockstor!</li>
 	</ol>
+        Thanks for helping to support Rockstor's development.
 	<form id="activate-stable-form" name="aform" class="form-horizontal">
 	  <div class="form-group">
 	    <label class="col-sm-4 control-label" for="activation-code">Activation Code <span class="required">*</span></label>
@@ -201,7 +208,11 @@ $(document).ready(function(){
 	      {{/if}}
 	    </div>
 	  </div>
-	  <p style="color:'#eb6841'">UUID for reference: {{applianceId}}</p>
+	  <p style="color:green">Current Appliance ID: {{applianceId}}</p>
+    <br>
+    Note our complementary self service <a href="https://appman.rockstor.com/" target="_blank">Appliance ID manager</a> <strong>Appman</strong>.
+    <br>
+    The above 'Current Appliance ID' should match that within Appman for this computer.
 	  <div class="modal-footer">
   	    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
   	    <a id="activateStable" class="btn btn-primary" title="Activate">Activate</a>
@@ -222,14 +233,14 @@ $(document).ready(function(){
       <div class="modal-body">
 	<p>
 	  Testing updates are high frequency updates that are released just
-	  after testing in development environment as opposed to Stable updates
+	  after development environment testing, as opposed to Stable updates
 	  that are released only after significant testing and qualification
-	  process. Because of this, Testing updates are cutting edge that are
+	  processes. Because of this, Testing updates are higher risk and are
 	  generally not recommended.
 	</p>
 	<p>
 	  Whenever an update is released, read the changelog and decide to
-	  update or not after careful consideration.
+	  update or not only after careful consideration.
 	</p>
       	<p>Are you sure?</p>
       </div>
