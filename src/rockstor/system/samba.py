@@ -74,7 +74,7 @@ def rockstor_smb_config(fo, exports):
             fo.write('    veto files = /.%s*/\n' % e.snapshot_prefix)
         for cco in SambaCustomConfig.objects.filter(smb_share=e):
             if (cco.custom_config.strip()):
-                    fo.write('    %s\n' % cco.custom_config)
+                fo.write('    %s\n' % cco.custom_config)
     fo.write('%s\n' % RS_SHARES_FOOTER)
 
 
@@ -180,7 +180,9 @@ def update_global_config(smb_config=None, ad_config=None):
 
 
 def get_global_config():
-    config = {}
+    # start with config as None so it will return null elsewhere
+    # if no fields are added to it.
+    config = None
     with open(SMB_CONFIG) as sfo:
         global_section = False
         global_custom_section = False
@@ -201,9 +203,9 @@ def get_global_config():
             # we ignore lines outside [global], empty lines, or
             # commends(starting with # or ;)
             if ((not global_section or
-                not global_custom_section or
-                len(l.strip()) == 0 or
-                re.match('#', l) is not None or
+                 not global_custom_section or
+                 len(l.strip()) == 0 or
+                 re.match('#', l) is not None or
                  re.match(';', l) is not None)):
                 continue
             if (global_section and re.match('\[', l) is not None):
@@ -212,7 +214,13 @@ def get_global_config():
             fields = l.strip().split(' = ')
             if len(fields) < 2:
                 continue
+            # reset config to a usable dictionary since we're about to add
+            # something to it
+            if(config is None):
+                config = {}
             config[fields[0].strip()] = fields[1].strip()
+    # return our config variable, which is either None, or a dictionary with
+    # fields inside of it
     return config
 
 
