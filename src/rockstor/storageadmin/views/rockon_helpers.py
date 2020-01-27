@@ -16,21 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import logging
 import os
 import time
-from system.osi import run_command
+
 from django.conf import settings
 from django_ztask.decorators import task
+
 from cli.api_wrapper import APIWrapper
-from system.services import service_status
+from fs.btrfs import mount_share
+from rockon_utils import container_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, DContainerLink,
                                  ContainerOption, DContainerEnv,
                                  DContainerDevice, DContainerArgs,
                                  DContainerLabel)
-from fs.btrfs import mount_share
-from rockon_utils import container_status
-import logging
+from system.osi import run_command
+from system.services import service_status
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
@@ -128,6 +130,7 @@ def install(rid):
         logger.exception(e)
         new_state = 'install_failed'
     finally:
+        logger.debug('Set rock-on {} state to {}'.format(rid, new_state))
         url = ('rockons/%d/state_update' % rid)
         return aw.api_call(url, data={'new_state': new_state, },
                            calltype='post', save_error=False)
