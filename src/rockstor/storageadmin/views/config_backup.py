@@ -35,7 +35,7 @@ from storageadmin.models import ConfigBackup, RockOn
 from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
 from system.config_backup import backup_config
-from system.osi import md5sum
+from system.osi import md5sum, run_command
 
 logger = logging.getLogger(__name__)
 BASE_URL = "https://localhost/api"
@@ -462,8 +462,50 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         for cbo in ConfigBackup.objects.all():
             fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
+
             if not os.path.isfile(fp):
                 cbo.delete()
+
+            try:
+                with gzip.open(fp, "rb") as f:
+                    f.read()
+            except IOError as e:
+                logger.exception(e)
+                logger.info(
+                    "The file {} is not gzipped, so compress it now.".format(
+                        cbo.filename
+                    )
+                )
+
+                try:
+                    o, err, rc = run_command(["/usr/bin/gzip", fp], log=True)
+                except Exception as e:
+                    # gzip returns rc == 2 if the destination file already exists
+                    # so let's return an explicit error message to the user for this case
+                    if e.rc == 2:
+                        e_msg = (
+                            "A destination file for the config backup file with the same "
+                            "name ({}) already exists. Please remove it and try again.".format(
+                                fp
+                            )
+                        )
+                        # Delete file from system
+                        run_command(["/bin/rm", "-f", fp], log=True)
+                    else:
+                        e_msg = (
+                            "The backup config file ({}) couldn't be gzipped.\n"
+                            "Reload the page to refresh the list of backups".format(fp)
+                        )
+                    cbo.delete()
+                    handle_exception(Exception(e_msg), self.request)
+
+                gz_name = "{}.gz".format(cbo.filename)
+                cbo.filename = gz_name
+                fp = os.path.join(ConfigBackup.cb_dir(), cbo.filename)
+                cbo.md5sum = md5sum(fp)
+                cbo.size = os.stat(fp).st_size
+                cbo.save()
+
             fp_md5sum = md5sum(fp)
             if fp_md5sum != cbo.md5sum:
                 logger.error(
@@ -516,9 +558,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
         try:
             return ConfigBackup.objects.get(id=backup_id)
         except ConfigBackup.DoesNotExist:
-            e_msg = ("Config backup for the id ({}) does not exist.").format(
-                backup_id
-            )
+            e_msg = ("Config backup for the id ({}) does not exist.").format(backup_id)
             handle_exception(Exception(e_msg), request)
 
 
