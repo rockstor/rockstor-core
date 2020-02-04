@@ -25,24 +25,24 @@
         {{#if isEmailNull}}
         <div class="controls">
 	  <div class="alert alert-warning">
-	    <p>Rockstor can push notifications to you via e-mail. We recommend
-	      creating a separate dedicated e-mail account for this purpose.
-	      Rockstor will login to this e-mail account and use it to send
-	      notifications to another specified e-mail address, such as your
+	    <p>Rockstor can push notifications to you via email. We recommend
+	      creating a separate dedicated email account for this purpose.
+	      Rockstor will login to this email account and use it to send
+	      notifications to another specified email address, such as your
 	      personal gmail account.</p>
 	  </div>
-      	<button type="Submit" id="Add-email-address" class="btn btn-primary" title="Add an e-mail account to be used for sending notifications.">Add an E-mail account</button>
+      	<button type="Submit" id="Add-email-address" class="btn btn-primary" title="Add an email account to be used for sending notifications.">Add an E-mail account</button>
         {{else}}
 	<div class="alert alert-warning">
-	  <p>Rockstor uses the credentials below to send e-mail notifications. Any
+	  <p>Rockstor uses the credentials below to send email notifications. Any
 	    system information sent to the root user results in a
 	    notification. Rockstor assumes/uses the <b>Sender</b> account and from
-	    that account sends e-mails to the <b>Receiver</b>
-	    email address. The <b>Sender</b> e-mail account password is stored in
+	    that account sends emails to the <b>Receiver</b>
+	    email address. The <b>Sender</b> email account password is stored in
 	    <code>/etc/postfix/sasl_passwd</code> which has restricted
 	    permissions. However, we strongly recommend against using a personal
-	    or important e-mail account for the <b>Sender</b>. On the other
-	    hand the <b>Receiver</b> e-mail address can be anything you have
+	    or important email account for the <b>Sender</b>. On the other
+	    hand the <b>Receiver</b> email address can be anything you have
 	    access to and is simply the recipient of the notifications.
 	  </p>
 
@@ -69,7 +69,7 @@
 	      <td>{{email.port}}</td>
               <td>
                 <a href="#" class="email-delete" id="email-delete" rel="tooltip" title="Delete email"><i class="glyphicon glyphicon-trash"></i></a>
-		<a href="#" class="send-test-message" id="send-test-message" rel="tooltip" title="Send a test e-mail"><i class="glyphicon glyphicon-send"></i></a>
+		<a href="#" class="send-test-message" id="send-test-message" rel="tooltip" title="Send a test email"><i class="glyphicon glyphicon-send"></i></a>
               </td>
             </tr>
           </tbody>
@@ -86,10 +86,10 @@
     <div class="modal-content">
       <div class="modal-header">
 	<button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-	<h3 id="myModalLabel">Test e-mail sent successfully.</h3>
+	<h3 id="myModalLabel">Test email sent successfully.</h3>
       </div>
       <div class="modal-body">
-	<p>Test e-mail has been successfully queued to postfix. Your mail from <code>{{email.sender}}</code> to <code>{{email.receiver}}</code> could take up to several minutes to arrive. If you do not receive it, check <code>/var/log/maillog</code> for clues. You may want to verify the input, delete and add the E-mail account again.</p>
+	<p>Test email has been successfully queued to postfix. Your mail from <code>{{email.sender}}</code> to <code>{{email.receiver}}</code> could take up to several minutes to arrive. If you do not receive it, check <code>/var/log/maillog</code> for clues. You may want to verify the input, delete and add the E-mail account again.</p>
       </div>
     </div>
   </div>
