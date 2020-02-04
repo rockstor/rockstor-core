@@ -17,7 +17,7 @@
     <div class="messages"></div>
     <!-- Content -->
     {{#if collectionNotEmpty}}
-      <table id="afp-exports-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of afp exports">
+      <table id="afp-exports-table" class="table table-bordered table-striped share-table data-table" width="100%" summary="List of AFP exports">
         <thead>
           <tr>
             <th scope="col" abbr="Share name">Share</th>
@@ -39,11 +39,11 @@
         </tbody>
       </table>
       {{else}}
-      <table id="afp-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" width="100%" summary="List of afp exports">
+      <table id="afp-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" width="100%" summary="List of AFP exports">
         <tbody>
           <tr>
             <td colspan="5">
-              <h4>No afp exports have been created</h4>
+              <h4>No AFP exports have been created</h4>
             </td>
           </tr>
         </tbody>
@@ -51,9 +51,9 @@
     {{/if}}
 
     {{#if sharesNotEmpty}}
-      <a href="#add-afp-share" id="add-afp-share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add afp Export</a>
+      <a href="#add-afp-share" id="add-afp-share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add AFP Export</a>
     {{else}}
-      <a href="#add-afp-share" id="add-afp-share" class="btn btn-primary disabled" title="No shares available to export through afp"><i class="glyphicon glyphicon-edit "></i> Add afp Export</a>
+      <a href="#add-afp-share" id="add-afp-share" class="btn btn-primary disabled" title="No shares available to export through AFP"><i class="glyphicon glyphicon-edit "></i> Add AFP Export</a>
     {{/if}}
   </div>
 </div>
