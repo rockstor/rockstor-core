@@ -131,8 +131,8 @@ class EmailClientView(rfc.GenericView):
 
                 if (command == 'send-test-email'):
                     if (EmailClient.objects.count() == 0):
-                        e_msg = ('E-mail account must be setup before a '
-                                 'test e-mail can be sent.')
+                        e_msg = ('Email account must be setup before a '
+                                 'test email can be sent.')
                         handle_exception(Exception(e_msg), request)
 
                     eco = EmailClient.objects.all()[0]
