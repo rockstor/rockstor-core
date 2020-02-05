@@ -5210,10 +5210,10 @@
 {
     "fields": {
         "rockon": 6,
-        "label": "Admin email",
+        "label": "Admin e-mail",
         "val": null,
         "key": "admin-email",
-        "description": "Email address of the forum administrator. Eg: suman@rockstor.com"
+        "description": "E-mail address of the forum administrator. Eg: suman@rockstor.com"
     },
     "model": "storageadmin.dcustomconfig",
     "pk": 1
@@ -5235,7 +5235,7 @@
         "label": "SMTP server",
         "val": null,
         "key": "smtp-address",
-        "description": "SMTP server address to use to send emails to forum members. Eg: smtp.gmail.com"
+        "description": "SMTP server address to use to send e-mails to forum members. Eg: smtp.gmail.com"
     },
     "model": "storageadmin.dcustomconfig",
     "pk": 3
@@ -5268,7 +5268,7 @@
         "label": "SMTP password",
         "val": null,
         "key": "smtp-password",
-        "description": "Password for the above email address"
+        "description": "Password for the above e-mail address"
     },
     "model": "storageadmin.dcustomconfig",
     "pk": 6

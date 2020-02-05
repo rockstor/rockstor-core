@@ -85,7 +85,7 @@ class EmailTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
         e_msg = ('E-mail account must be setup before a '
-                 'test email can be sent.')
+                 'test e-mail can be sent.')
         self.assertEqual(response.data[0], e_msg)
 
         # happy path
