@@ -33,7 +33,10 @@ logger = logging.getLogger(__name__)
 class ServiceMixin(object):
 
     def _save_config(self, service, config):
-        service.config = json.dumps(config)
+        if config is not None:
+            service.config = json.dumps(config)
+        else:
+            service.config = None
         return service.save()
 
     def _get_config(self, service):
