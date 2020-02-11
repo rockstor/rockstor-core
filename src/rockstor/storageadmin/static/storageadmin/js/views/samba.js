@@ -104,10 +104,16 @@ SambaView = RockstorLayoutView.extend({
     },
 
     switchStatus: function(event, state) {
-        if (state) {
-            this.startService();
+        if (!this.service.get('config')) {
+            app_router.navigate('services/smb/edit', {
+                trigger: true,
+            });
         } else {
-            this.stopService();
+            if (state) {
+                this.startService();
+            } else {
+                this.stopService();
+            }
         }
     },
 
