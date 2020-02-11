@@ -43,7 +43,7 @@ class Disk(models.Model):
     in turn are symlinks to sda, sdb etc.  eg ata-QEMU_HARDDISK_QM00005 ie
     mostly derived from model and serial number.
     """
-    name = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=192, unique=True)
     """btrfs devid 0 is place holder as real devids start from 1"""
     devid = models.PositiveSmallIntegerField(default=0)  # 0 to 32767
     """total size in KB. Zero if btrfs device detached/last stage of delete."""
