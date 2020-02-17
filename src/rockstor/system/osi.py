@@ -72,6 +72,16 @@ Disk = collections.namedtuple('Disk',
 
 
 def inplace_replace(of, nf, regex, nl):
+    """
+    Replaces or adds (if regex[i] not found) the line matchin regex[i] while
+    otherwise copying the contents of of to nf
+    :param of: Original File path - Usually of a system configuration file.
+    :param nf: New File path - Usually of a secure temporary file setup by caller.
+    :param regex: Regex tuple - by which we find the target lines.
+    :param nl: New Line - tuple to replaced or be added to end of New File
+    :return:
+    """
+    # N.B. this procedure is currently only used in system/nis.py
     with open(of) as afo, open(nf, 'w') as tfo:
         replaced = [False, ] * len(regex)
         for l in afo.readlines():
@@ -88,6 +98,26 @@ def inplace_replace(of, nf, regex, nl):
             if (not replaced[i]):
                 tfo.write(nl[i])
 
+
+def replace_line_if_found(Original_file, new_file, regex, replacement_line):
+    """
+    Replaces regex identified line if found, otherwise does straight content copy.
+    N.B. replacement line will have \n added.
+    :param Original_file: : Original File path - Usually of a system configuration file.
+    :param new_file:  New File path - Usually of a secure temporary file setup by caller.
+    :param regex:  Regex tuple - by which we find the target lines.
+    :param replacement_line:  New Line - tuple to replaced or be added to end of New File
+    :return: True if found and replaced, otherwise false.
+    """
+    found_and_replaced = False
+    with open(Original_file) as mfo, open(new_file, "w") as tfo:
+        for line in mfo.readlines():
+            if re.match(regex, line) is not None:
+                tfo.write("{}\n".format(replacement_line))
+                found_and_replaced = True
+            else:
+                tfo.write(line)
+    return found_and_replaced
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, stdin=subprocess.PIPE, throw=True,
