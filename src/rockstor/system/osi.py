@@ -1360,7 +1360,7 @@ def is_network_device_responding(address):
     ):
         return False
     logger.debug(
-        "Ping command unexpectedly exited with return code {}".format(return_code)
+        "Ping command unexpectedly exited with return code {}".format(rc)
     )
     if len(e):
         logger.debug(e[0])
