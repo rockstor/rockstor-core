@@ -39,6 +39,7 @@ class SambaShare(models.Model):
     guest_ok = models.CharField(max_length=3, choices=BOOLEAN_CHOICES,
                                 default=NO)
     shadow_copy = models.BooleanField(default=False)
+    time_machine = models.BooleanField(default=False)
     snapshot_prefix = models.CharField(max_length=128, null=True)
 
     def admin_users(self):

@@ -16,20 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import logging
 import pwd
-from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from django.db import transaction
+
 from django.conf import settings
+from django.db import transaction
+from rest_framework.exceptions import NotFound
+from rest_framework.response import Response
+
+import rest_framework_custom as rfc
+from fs.btrfs import mount_share
+from share import ShareMixin
 from storageadmin.models import SambaShare, User, SambaCustomConfig
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
-import rest_framework_custom as rfc
-from share import ShareMixin
-from system.samba import refresh_smb_config, status, restart_samba
-from fs.btrfs import mount_share
-
-import logging
+from system.samba import refresh_smb_config, status, restart_samba, refresh_smb_discovery
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ class SambaMixin(object):
         "custom_config": None,
         "shadow_copy": False,
         "snapshot_prefix": None,
+        "time_machine": False,
     }
     BOOL_OPTS = ("yes", "no")
 
@@ -64,6 +66,7 @@ class SambaMixin(object):
             def_opts["guest_ok"] = smbo.guest_ok
             def_opts["read_only"] = smbo.read_only
             def_opts["shadow_copy"] = smbo.shadow_copy
+            def_opts["time_machine"] = smbo.time_machine
 
         options["comment"] = rdata.get("comment", def_opts["comment"])
         options["browsable"] = rdata.get("browsable", def_opts["browsable"])
@@ -97,6 +100,11 @@ class SambaMixin(object):
                     "valid non-empty string."
                 )
                 handle_exception(Exception(e_msg), rdata)
+        options["time_machine"] = rdata.get("time_machine", def_opts["time_machine"])
+        logger.debug("time_machine is = {}".format(options["time_machine"]))
+        if not isinstance(options["time_machine"], bool):
+            e_msg = "Invalid choice for time_machine. Possible options are True or False."
+            handle_exception(Exception(e_msg), rdata)
 
         return options
 
@@ -136,6 +144,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
         else:
             smb_share = self.create_samba_share(request.data)
         refresh_smb_config(list(SambaShare.objects.all()))
+        refresh_smb_discovery(list(SambaShare.objects.all()))
         self._restart_samba()
         return Response(SambaShareSerializer(smb_share).data)
 
@@ -196,6 +205,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
 
         with self._handle_exception(request):
             refresh_smb_config(list(SambaShare.objects.all()))
+            refresh_smb_discovery(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response()
 
@@ -245,5 +255,6 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                             handle_exception(Exception(e_msg), request)
 
             refresh_smb_config(list(SambaShare.objects.all()))
+            refresh_smb_discovery(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response(SambaShareSerializer(smbo).data)

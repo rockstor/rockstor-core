@@ -24,20 +24,21 @@ from tempfile import mkstemp
 from django.conf import settings
 
 from osi import run_command
-from services import service_status
+from services import service_status, define_avahi_service
 from storageadmin.models import SambaCustomConfig
 
-TESTPARM = "/usr/bin/testparm"
-SMB_CONFIG = "/etc/samba/smb.conf"
-SYSTEMCTL = "/usr/bin/systemctl"
-CHMOD = "/usr/bin/chmod"
-RS_SHARES_HEADER = "####BEGIN: Rockstor SAMBA CONFIG####"
-RS_SHARES_FOOTER = "####END: Rockstor SAMBA CONFIG####"
-RS_AD_HEADER = "####BEGIN: Rockstor ACTIVE DIRECTORY CONFIG####"
-RS_AD_FOOTER = "####END: Rockstor ACTIVE DIRECTORY CONFIG####"
-RS_CUSTOM_HEADER = "####BEGIN: Rockstor SAMBA GLOBAL CUSTOM####"
-RS_CUSTOM_FOOTER = "####END: Rockstor SAMBA GLOBAL CUSTOM####"
-
+TESTPARM = '/usr/bin/testparm'
+AVAHID = settings.AVAHID_BIN
+SMB_CONFIG = '/etc/samba/smb.conf'
+TM_CONFIG = '/etc/avahi/services/timemachine.service'
+SYSTEMCTL = '/usr/bin/systemctl'
+CHMOD = '/usr/bin/chmod'
+RS_SHARES_HEADER = '####BEGIN: Rockstor SAMBA CONFIG####'
+RS_SHARES_FOOTER = '####END: Rockstor SAMBA CONFIG####'
+RS_AD_HEADER = '####BEGIN: Rockstor ACTIVE DIRECTORY CONFIG####'
+RS_AD_FOOTER = '####END: Rockstor ACTIVE DIRECTORY CONFIG####'
+RS_CUSTOM_HEADER = '####BEGIN: Rockstor SAMBA GLOBAL CUSTOM####'
+RS_CUSTOM_FOOTER = '####END: Rockstor SAMBA GLOBAL CUSTOM####'
 
 def test_parm(config="/etc/samba/smb.conf"):
     cmd = [TESTPARM, "-s", config]
@@ -76,6 +77,17 @@ def rockstor_smb_config(fo, exports):
             fo.write("    shadow:localtime = yes\n")
             fo.write("    vfs objects = shadow_copy2\n")
             fo.write("    veto files = /.%s*/\n" % e.snapshot_prefix)
+        elif (e.time_machine):
+            fo.write('    vfs objects = catia fruit streams_xattr\n')
+            fo.write('    fruit:timemachine = yes\n')
+            fo.write('    fruit:metadata = stream\n')
+            fo.write('    fruit:veto_appledouble = no\n')
+            fo.write('    fruit:posix_rename = no\n')
+            fo.write('    fruit:wipe_intentionally_left_blank_rfork = yes\n')
+            fo.write('    fruit:delete_empty_adfiles = yes\n')
+            fo.write('    fruit:encoding = private\n')
+            fo.write('    fruit:locking = none\n')
+            fo.write('    fruit:resource = file\n')
         for cco in SambaCustomConfig.objects.filter(smb_share=e):
             if cco.custom_config.strip():
                 fo.write("    %s\n" % cco.custom_config)
@@ -241,6 +253,30 @@ def restart_samba(hard=False):
         mode = "restart"
     run_command([SYSTEMCTL, mode, "smb"], log=True)
     return run_command([SYSTEMCTL, mode, "nmb"], log=True)
+
+
+def refresh_smb_discovery(exports):
+    """
+    This function is designed to identify the list of shares
+    (if any), that need to be advertised through avahi. These
+    will correspond to all Time Machine-enabled shares. It
+    then sends them to be included in the timemachine.service
+    avahi file.
+    :param exports:
+    :return:
+    """
+    # Get names of SambaShares with time_machine enabled
+    tm_exports = [e.share.name for e in exports if e.time_machine]
+
+    # Clean existing one if exists
+    if os.path.isfile(TM_CONFIG):
+        os.remove(TM_CONFIG)
+
+    if len(tm_exports) > 0:
+        define_avahi_service("timemachine", share_names=tm_exports)
+
+    # Reload avahi config / or restart it
+    run_command([AVAHID, '--reload', ], log=True)
 
 
 def update_samba_discovery():

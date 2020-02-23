@@ -28,7 +28,9 @@ AddSambaExportView = RockstorLayoutView.extend({
     events: {
         'click #cancel': 'cancel',
         'click #shadow-copy-info': 'shadowCopyInfo',
-        'click #shadow_copy': 'toggleSnapPrefix'
+        'click #time-machine-info': 'TimeMachineInfo',
+        'click #shadow_copy': 'toggleSnapPrefix',
+        'click .mutually-exclusive': 'disableBoxes'
     },
 
     initialize: function() {
@@ -95,12 +97,14 @@ AddSambaExportView = RockstorLayoutView.extend({
         var configList = '',
             smbShareName,
             smbShadowCopy,
+            smbTimeMachine,
             smbComment,
             smbSnapPrefix = '';
         if (this.sShares != null) {
             var config = this.sShares.get('custom_config');
             smbShareName = this.sShares.get('share');
             smbShadowCopy = this.sShares.get('shadow_copy');
+            smbTimeMachine = this.sShares.get('time_machine');
             smbComment = this.sShares.get('comment');
             smbSnapPrefix = this.sShares.get('snapshot_prefix');
 
@@ -120,6 +124,7 @@ AddSambaExportView = RockstorLayoutView.extend({
             smbShare: this.sShares,
             smbShareName: smbShareName,
             smbShareShadowCopy: smbShadowCopy,
+            smbShareTimeMachine: smbTimeMachine,
             smbShareComment: smbComment,
             smbShareSnapPrefix: smbSnapPrefix,
             smbSnapshotPrefixRule: smbSnapshotPrefixBool,
@@ -208,12 +213,32 @@ AddSambaExportView = RockstorLayoutView.extend({
         $('#shadow-copy-info-modal').modal('show');
     },
 
+    TimeMachineInfo: function(event) {
+        event.preventDefault();
+        $('#time-machine-info-modal').modal({
+            keyboard: false,
+            show: false,
+            backdrop: 'static'
+        });
+        $('#time-machine-info-modal').modal('show');
+    },
+
     toggleSnapPrefix: function() {
         var cbox = this.$('#shadow_copy');
         if (cbox.prop('checked')) {
             this.$('#snapprefix-ph').css('visibility', 'visible');
         } else {
             this.$('#snapprefix-ph').css('visibility', 'hidden');
+        }
+    },
+
+    disableBoxes: function() {
+        if (this.$('#shadow_copy').attr('checked')) {
+            this.$('#time_machine').attr('disabled', true);
+        } else if (this.$('#time_machine').attr('checked')) {
+            this.$('#shadow_copy').attr('disabled', true);
+        } else {
+            this.$('.mutually-exclusive').attr('disabled', false);
         }
     },
 

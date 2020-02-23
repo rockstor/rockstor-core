@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 import shutil
-from shutil import move
+import stat
 from tempfile import mkstemp
 
 from django.conf import settings
@@ -97,7 +97,7 @@ def set_autostart(service, switch):
                     tfo.write(line)
             else:
                 tfo.write(line)
-    move(npath, SUPERVISORD_CONF)
+    shutil.move(npath, SUPERVISORD_CONF)
 
 
 def superctl(service, switch):
@@ -262,5 +262,79 @@ def update_nginx(ip, port):
                 tfo.write(lines[i])
             if (http_server is True and lines[i].strip() == '}'):
                 http_server = False
-    move(npath, conf)
+    shutil.move(npath, conf)
     superctl('nginx', 'restart')
+
+
+def define_avahi_service(service_name, share_names=None):
+    """
+    First define parameters to be written to the static service
+    file and then organizes writing them to file using subfunctions.
+    :param service_name: name of the avahi service. Will be used as
+    the name of the service file.
+    :param share_names: list of the names of the shares to advertise
+    :return:
+    """
+    dest_file = "/etc/avahi/services/{}.service".format(service_name)
+
+    # Define parameters
+    avahi_service = []
+    if service_name == "timemachine":
+        txt_records = ["sys=waMa=0,adVF=0x100"]
+        for s in range(len(share_names)):
+            txt_records.append("dk{}=adVN={},adVF=0x82".format(s, share_names[s]))
+        avahi_service.append({"type": "_smb._tcp", "port": "445"})
+        avahi_service.append({"type": "_adisk._tcp", "txt-record": txt_records})
+
+    # Write to file
+    fh, npath = mkstemp()
+    with open(npath, 'w') as tfo:
+        write_avahi_headers(tfo)
+        for s in avahi_service:
+            write_avahi_service(tfo, **s)
+        write_avahi_footer(tfo)
+    # Set file to rw- r-- r-- (644) via stat constants.
+    os.chmod(npath, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    shutil.move(npath, dest_file)
+
+
+def write_avahi_headers(tfo):
+    """
+    Simply write the headers for an avahi static service file.
+    :param tfo:
+    :return:
+    """
+    tfo.write("<?xml version=\"1.0\" standalone='no'?>\n")
+    tfo.write("<!DOCTYPE service-group SYSTEM \"avahi-service.dtd\">\n")
+    tfo.write("<service-group>\n")
+    tfo.write(" <name replace-wildcards=\"yes\">%h</name>\n")
+
+
+def write_avahi_footer(tfo):
+    """
+    Simply write the footer for an avahi static service file.
+    :param tfo:
+    :return:
+    """
+    tfo.write("</service-group>\n")
+
+
+def write_avahi_service(tfo, **kwargs):
+    """
+    Writes the full <service> section of an avahi static service file.
+    Each kwarg must follow the key: value syntax that will be used
+    as key: value for the given xml key.
+    When the same xml key needs to be used with multiple values, one
+    must use a list of values for this given key.
+    :param tfo:
+    :param kwargs:
+    :return:
+    """
+    tfo.write(" <service>\n")
+    for k, v in kwargs.items():
+        if isinstance(v, list):
+            for v2 in v:
+                tfo.write("   <{}>{}</{}>\n".format(k, v2, k))
+        else:
+            tfo.write("   <{}>{}</{}>\n".format(k, v, k))
+    tfo.write(" </service>\n")
