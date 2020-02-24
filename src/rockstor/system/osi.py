@@ -37,84 +37,140 @@ from exceptions import CommandException, NonBTRFSRootException
 
 logger = logging.getLogger(__name__)
 
-CAT = '/usr/bin/cat'
-CHATTR = '/usr/bin/chattr'
-DD = '/usr/bin/dd'
-DEFAULT_MNT_DIR = '/mnt2/'
-EXPORTFS = '/usr/sbin/exportfs'
-GRUBBY = '/usr/sbin/grubby'
-HDPARM = '/usr/sbin/hdparm'
-HOSTID = '/usr/bin/hostid'
-HOSTNAMECTL = '/usr/bin/hostnamectl'
-LS = '/usr/bin/ls'
-LSBLK = '/usr/bin/lsblk'
-MKDIR = '/usr/bin/mkdir'
-MOUNT = '/usr/bin/mount'
-NMCLI = '/usr/bin/nmcli'
-RMDIR = '/usr/bin/rmdir'
+CAT = "/usr/bin/cat"
+CHATTR = "/usr/bin/chattr"
+DD = "/usr/bin/dd"
+DEFAULT_MNT_DIR = "/mnt2/"
+EXPORTFS = "/usr/sbin/exportfs"
+GRUBBY = "/usr/sbin/grubby"
+HDPARM = "/usr/sbin/hdparm"
+HOSTID = "/usr/bin/hostid"
+HOSTNAMECTL = "/usr/bin/hostnamectl"
+LS = "/usr/bin/ls"
+LSBLK = "/usr/bin/lsblk"
+MKDIR = "/usr/bin/mkdir"
+MOUNT = "/usr/bin/mount"
+NMCLI = "/usr/bin/nmcli"
+RMDIR = "/usr/bin/rmdir"
 SHUTDOWN = settings.SHUTDOWN
-SYSTEMCTL_BIN = '/usr/bin/systemctl'
-SYSTEMD_ESCAPE = '/usr/bin/systemd-escape'
+SYSTEMCTL_BIN = "/usr/bin/systemctl"
+SYSTEMD_ESCAPE = "/usr/bin/systemd-escape"
 UDEVADM = settings.UDEVADM
-UMOUNT = '/usr/bin/umount'
-WIPEFS = '/usr/sbin/wipefs'
-RTC_WAKE_FILE = '/sys/class/rtc/rtc0/wakealarm'
-PING = '/usr/bin/ping'
+UMOUNT = "/usr/bin/umount"
+WIPEFS = "/usr/sbin/wipefs"
+RTC_WAKE_FILE = "/sys/class/rtc/rtc0/wakealarm"
+PING = "/usr/bin/ping"
 RETURN_BOOLEAN = True
-EXCLUDED_MOUNT_DEVS = ['sysfs', 'proc', 'devtmpfs', 'securityfs', 'tmpfs',
-                       'devpts', 'cgroup', 'pstore', 'configfs', 'systemd-1',
-                       'mqueue', 'debugfs', 'hugetlbfs', 'nfsd', 'sunrpc']
+EXCLUDED_MOUNT_DEVS = [
+    "sysfs",
+    "proc",
+    "devtmpfs",
+    "securityfs",
+    "tmpfs",
+    "devpts",
+    "cgroup",
+    "pstore",
+    "configfs",
+    "systemd-1",
+    "mqueue",
+    "debugfs",
+    "hugetlbfs",
+    "nfsd",
+    "sunrpc",
+]
 
-Disk = collections.namedtuple('Disk',
-                              'name model serial size transport vendor '
-                              'hctl type fstype label uuid parted root '
-                              'partitions')
+Disk = collections.namedtuple(
+    "Disk",
+    "name model serial size transport vendor "
+    "hctl type fstype label uuid parted root "
+    "partitions",
+)
 
 
 def inplace_replace(of, nf, regex, nl):
-    with open(of) as afo, open(nf, 'w') as tfo:
-        replaced = [False, ] * len(regex)
+    """
+    Replaces or adds (if regex[i] not found) the line matchin regex[i] while
+    otherwise copying the contents of of to nf
+    :param of: Original File path - Usually of a system configuration file.
+    :param nf: New File path - Usually of a secure temporary file setup by caller.
+    :param regex: Regex tuple - by which we find the target lines.
+    :param nl: New Line - tuple to replaced or be added to end of New File
+    :return:
+    """
+    # N.B. this procedure is currently only used in system/nis.py
+    with open(of) as afo, open(nf, "w") as tfo:
+        replaced = [False] * len(regex)
         for l in afo.readlines():
             ireplace = False
             for i in range(0, len(regex)):
-                if (re.match(regex[i], l) is not None):
+                if re.match(regex[i], l) is not None:
                     tfo.write(nl[i])
                     replaced[i] = True
                     ireplace = True
                     break
-            if (not ireplace):
+            if not ireplace:
                 tfo.write(l)
         for i in range(0, len(replaced)):
-            if (not replaced[i]):
+            if not replaced[i]:
                 tfo.write(nl[i])
 
 
-def run_command(cmd, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, stdin=subprocess.PIPE, throw=True,
-                log=False, input=None):
+def replace_line_if_found(Original_file, new_file, regex, replacement_line):
+    """
+    Replaces regex identified line if found, otherwise does straight content copy.
+    N.B. replacement line will have \n added.
+    :param Original_file: : Original File path - Usually of a system configuration file.
+    :param new_file:  New File path - Usually of a secure temporary file setup by caller.
+    :param regex:  Regex tuple - by which we find the target lines.
+    :param replacement_line:  New Line - tuple to replaced or be added to end of New File
+    :return: True if found and replaced, otherwise false.
+    """
+    found_and_replaced = False
+    with open(Original_file) as mfo, open(new_file, "w") as tfo:
+        for line in mfo.readlines():
+            if re.match(regex, line) is not None:
+                tfo.write("{}\n".format(replacement_line))
+                found_and_replaced = True
+            else:
+                tfo.write(line)
+    return found_and_replaced
+
+
+def run_command(
+    cmd,
+    shell=False,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    stdin=subprocess.PIPE,
+    throw=True,
+    log=False,
+    input=None,
+):
     try:
         # We force run_command to always use en_US
         # to avoid issues on date and number formats
         # on not Anglo-Saxon systems (ex. it, es, fr, de, etc)
         fake_env = dict(os.environ)
-        fake_env['LANG'] = 'en_US.UTF-8'
+        fake_env["LANG"] = "en_US.UTF-8"
         cmd = map(str, cmd)
         if log:
-            logger.debug('Running command: {}'.format(' '.join(cmd)))
-        p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr,
-                             stdin=stdin, env=fake_env)
+            logger.debug("Running command: {}".format(" ".join(cmd)))
+        p = subprocess.Popen(
+            cmd, shell=shell, stdout=stdout, stderr=stderr, stdin=stdin, env=fake_env
+        )
         out, err = p.communicate(input=input)
-        out = out.split('\n')
-        err = err.split('\n')
+        out = out.split("\n")
+        err = err.split("\n")
         rc = p.returncode
     except Exception as e:
-        raise Exception(
-            'Exception while running command({}): {}'.format(cmd, e))
+        raise Exception("Exception while running command({}): {}".format(cmd, e))
 
     if rc != 0:
         if log:
-            e_msg = ('non-zero code({0}) returned by command: {1}. output: '
-                     '{2} error: {3}'.format(rc, cmd, out, err))
+            e_msg = (
+                "non-zero code({0}) returned by command: {1}. output: "
+                "{2} error: {3}".format(rc, cmd, out, err)
+            )
             logger.error(e_msg)
         if throw:
             raise CommandException(cmd, out, err, rc)
@@ -135,8 +191,13 @@ def scan_disks(min_size, test_mode=False):
     :return: List containing drives of interest
     """
     base_root_disk = root_disk()  # /dev/sda if /dev/sda3, or md126 if md126p2
-    cmd = [LSBLK, '-P', '-p', '-o',
-           'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
+    cmd = [
+        LSBLK,
+        "-P",
+        "-p",
+        "-o",
+        "NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID",
+    ]
     o, e, rc = run_command(cmd)
     dnames = {}  # Working dictionary of devices.
     disks = []  # List derived from the final working dictionary of devices.
@@ -152,7 +213,7 @@ def scan_disks(min_size, test_mode=False):
     device_names_seen = []  # List tally of devices seen during this scan
     for line in o:
         # skip processing of all lines that don't begin with "NAME"
-        if (re.match('NAME', line) is None):
+        if re.match("NAME", line) is None:
             continue
         # setup our line / dev name dependant variables
         # easy read categorization flags, all False until found otherwise.
@@ -160,8 +221,8 @@ def scan_disks(min_size, test_mode=False):
         is_partition = is_btrfs = False
         dmap = {}  # to hold line info from lsblk output eg NAME: sda
         # line parser variables
-        cur_name = ''
-        cur_val = ''
+        cur_name = ""
+        cur_val = ""
         name_iter = True
         val_iter = False
         sl = line.strip()
@@ -169,48 +230,47 @@ def scan_disks(min_size, test_mode=False):
         while i < len(sl):
             # We iterate over the line to parse it's information char by char
             # keeping track of name or value and adding the char accordingly
-            if (name_iter and sl[i] == '=' and sl[i + 1] == '"'):
+            if name_iter and sl[i] == "=" and sl[i + 1] == '"':
                 name_iter = False
                 val_iter = True
                 i = i + 2
-            elif (val_iter and sl[i] == '"' and
-                  (i == (len(sl) - 1) or sl[i + 1] == ' ')):
+            elif val_iter and sl[i] == '"' and (i == (len(sl) - 1) or sl[i + 1] == " "):
                 val_iter = False
                 name_iter = True
                 i = i + 2
                 dmap[cur_name.strip()] = cur_val.strip()
-                cur_name = ''
-                cur_val = ''
-            elif (name_iter):
+                cur_name = ""
+                cur_val = ""
+            elif name_iter:
                 cur_name = cur_name + sl[i]
                 i = i + 1
-            elif (val_iter):
+            elif val_iter:
                 cur_val = cur_val + sl[i]
                 i = i + 1
             else:
-                raise Exception('Failed to parse lsblk output: %s' % sl)
+                raise Exception("Failed to parse lsblk output: %s" % sl)
         # md devices, such as mdadmin software raid and some hardware raid
         # block devices show up in lsblk's output multiple times with identical
         # info.  Given we only need one copy of this info we remove duplicate
         # device name entries, also offers more sane output to views/disk.py
         # where name will be used as the index
-        if (dmap['NAME'] in device_names_seen):
+        if dmap["NAME"] in device_names_seen:
             continue
-        device_names_seen.append(dmap['NAME'])
+        device_names_seen.append(dmap["NAME"])
         # We are not interested in CD / DVD rom devices so skip to next device
-        if (dmap['TYPE'] == 'rom'):
+        if dmap["TYPE"] == "rom":
             continue
         # We are not interested in swap partitions or devices so skip further
         # processing and move to next device.
         # N.B. this also facilitates a simpler mechanism of classification.
-        if (dmap['FSTYPE'] == 'swap'):
+        if dmap["FSTYPE"] == "swap":
             continue
         # convert size into KB
-        size_str = dmap['SIZE']
-        if (size_str[-1] == 'G'):
-            dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024)
-        elif (size_str[-1] == 'T'):
-            dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
+        size_str = dmap["SIZE"]
+        if size_str[-1] == "G":
+            dmap["SIZE"] = int(float(size_str[:-1]) * 1024 * 1024)
+        elif size_str[-1] == "T":
+            dmap["SIZE"] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
         else:
             # Move to next line if we don't understand the size as GB or TB
             # Note that this may cause an entry to be ignored if formatting
@@ -219,15 +279,15 @@ def scan_disks(min_size, test_mode=False):
             # swap but if swap was in GB and above min_size then it could
             # show up when not in a partition (the previous caveat clause).
             continue
-        if (dmap['SIZE'] < min_size):
+        if dmap["SIZE"] < min_size:
             continue
         # ----- Now we are done with easy exclusions we begin classification.
         # If md device populate unused MODEL with basic member/raid summary.
-        if (re.match('/dev/md', dmap['NAME']) is not None):
+        if re.match("/dev/md", dmap["NAME"]) is not None:
             # cheap way to display our member drives
-            dmap['MODEL'] = get_md_members(dmap['NAME'])
+            dmap["MODEL"] = get_md_members(dmap["NAME"])
         # ------------ Start more complex classification -------------
-        if (dmap['NAME'] == base_root_disk):  # as returned by root_disk()
+        if dmap["NAME"] == base_root_disk:  # as returned by root_disk()
             # We are looking at the system drive that hosts, either
             # directly or as a partition, the / mount point.
             # Given lsblk doesn't return serial, model, transport, vendor, hctl
@@ -235,18 +295,18 @@ def scan_disks(min_size, test_mode=False):
             # looking at the root drive directly, rather than the / partition.
             # N.B. assumption is lsblk first displays devices then partitions,
             # this is the observed behaviour so far.
-            root_serial = dmap['SERIAL']
-            root_model = dmap['MODEL']
-            root_transport = dmap['TRAN']
-            root_vendor = dmap['VENDOR']
-            root_hctl = dmap['HCTL']
+            root_serial = dmap["SERIAL"]
+            root_model = dmap["MODEL"]
+            root_transport = dmap["TRAN"]
+            root_vendor = dmap["VENDOR"]
+            root_hctl = dmap["HCTL"]
             # Set readability flag as base_dev identified.
             is_root_disk = True  # root as returned by root_disk()
             # And until we find a partition on this root disk we will label it
             # as our root, this then allows for non partitioned root devices
             # such as mdraid installs where root is directly on eg /dev/md126.
             # N.B. this assumes base devs are listed before their partitions.
-            dmap['root'] = True
+            dmap["root"] = True
         # Normal partitions are of type 'part', md partitions are of type 'md'
         # normal disks are of type 'disk' md devices are of type eg 'raid1'.
         # Disk members of eg intel bios raid md devices
@@ -255,24 +315,24 @@ def scan_disks(min_size, test_mode=False):
         # partitions and devices.
         # ----- Begin readability variables assignment:
         # - is this a partition, regular or md type.
-        if (dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md'):
+        if dmap["TYPE"] == "part" or dmap["TYPE"] == "md":
             is_partition = True
         # - is filesystem of type btrfs
-        if (dmap['FSTYPE'] == 'btrfs'):
+        if dmap["FSTYPE"] == "btrfs":
             is_btrfs = True
         # End readability variables assignment
 
         if is_partition:
-            dmap['parted'] = True
+            dmap["parted"] = True
             # We don't account for partitions within partitions, but making
             # an empty dict here simplifies conditionals as always a dict then.
-            dmap['partitions'] = {}
+            dmap["partitions"] = {}
             # Search our working dictionary of already scanned devices by name
             # We are assuming base devices are listed first and if of interest
             # we have recorded it and can now back port it's partitioned
             # status.
             for dname in dnames.keys():
-                if (re.match(dname, dmap['NAME']) is not None):
+                if re.match(dname, dmap["NAME"]) is not None:
                     # Our device name has a base device entry of interest
                     # saved: ie we have scanned and saved sdb but looking at
                     # sdb3 now.  Given we have found a partition on an existing
@@ -295,8 +355,9 @@ def scan_disks(min_size, test_mode=False):
                     # FSTYPE="linux_raid_member"
                     # Add the same treatment for partitions hosting LUKS
                     # containers.
-                    if dmap['FSTYPE'] == 'linux_raid_member' \
-                            and (dnames[dname][8] is None):
+                    if dmap["FSTYPE"] == "linux_raid_member" and (
+                        dnames[dname][8] is None
+                    ):
                         # N.B. 9th item (index 8) in dname = FSTYPE We are a
                         # partition that is an mdraid raid member so backport
                         # this info to our base device ie sda1 raid member so
@@ -307,9 +368,8 @@ def scan_disks(min_size, test_mode=False):
                         # only need to have one partition identified as an
                         # mdraid member to classify the entire device (the base
                         # device) as a raid member, at least in part.
-                        dnames[dname][8] = dmap['FSTYPE']
-                    if dmap['FSTYPE'] == 'crypto_LUKS' \
-                            and (dnames[dname][8] is None):
+                        dnames[dname][8] = dmap["FSTYPE"]
+                    if dmap["FSTYPE"] == "crypto_LUKS" and (dnames[dname][8] is None):
                         # As per mdraid we backport to the base device LUKS
                         # containers that live in partitions as the base device
                         # will have an FSTYPE="" and as per mdraid we classify
@@ -320,9 +380,9 @@ def scan_disks(min_size, test_mode=False):
                         # against fstype information loss on the base device.
                         # Please see mdraid partition treatment for additional
                         # comments on index number used.
-                        dnames[dname][8] = dmap['FSTYPE']
+                        dnames[dname][8] = dmap["FSTYPE"]
                         # and uuid backport
-                        dnames[dname][10] = dmap['UUID']
+                        dnames[dname][10] = dmap["UUID"]
                     # Akin to back porting a partitions FSTYPE to it's base
                     # device, as with 'linux_raid_member' above, we can do the
                     # same for btrfs if found in a partition.
@@ -335,17 +395,17 @@ def scan_disks(min_size, test_mode=False):
                         # We are a btrfs partition where the base device has no
                         # fstype entry: backport: fstype, label, uuid & size.
                         # fstype backport
-                        dnames[dname][8] = dmap['FSTYPE']
+                        dnames[dname][8] = dmap["FSTYPE"]
                         # label backport is at index 9
-                        dnames[dname][9] = dmap['LABEL']
+                        dnames[dname][9] = dmap["LABEL"]
                         # and uuid backport
-                        dnames[dname][10] = dmap['UUID']
+                        dnames[dname][10] = dmap["UUID"]
                         # and size backport
-                        dnames[dname][3] = dmap['SIZE']
+                        dnames[dname][3] = dmap["SIZE"]
                     # Build a dictionary of the partitions we find.
                     # Back port our current name as a partition entry in our
                     # base devices 'partitions' dictionary 14th item (index 13)
-                    dnames[dname][13][dmap['NAME']] = dmap['FSTYPE']
+                    dnames[dname][13][dmap["NAME"]] = dmap["FSTYPE"]
                     # This dict is intended for use later in roles such as
                     # import / export devices or external backup drives so
                     # that the role config mechanism can offer up the known
@@ -356,43 +416,42 @@ def scan_disks(min_size, test_mode=False):
                     # and underlying disk management simpler.
         else:
             # We are not a partition so record this.
-            dmap['parted'] = False
+            dmap["parted"] = False
             # As we are not a partition it is assumed that we might hold a
             # partition so start an empty partition dictionary for this.
             # N.B. This assumes base devices are listed before their partitions
-            dmap['partitions'] = {}
+            dmap["partitions"] = {}
             # This dict will be populated when we find our partitions and back
             # port their names and fstype (as values).
-        if ((not is_root_disk and not is_partition) or
-                is_btrfs):
+        if (not is_root_disk and not is_partition) or is_btrfs:
             # We have a non system disk that is not a partition
             # or
             # We have a device that is btrfs formatted
             # Or we may just be a non system disk without partitions.
-            dmap['root'] = is_root_disk
+            dmap["root"] = is_root_disk
             if is_btrfs:
                 # a btrfs file system
                 # Regex to identify a partition on the base_root_disk.
                 # Root on 'sda3' gives base_root_disk 'sda'.
-                if re.match('/dev/sd|/dev/vd', dmap['NAME']) is not None:
+                if re.match("/dev/sd|/dev/vd", dmap["NAME"]) is not None:
                     # eg 'sda' or 'vda' with >= one additional digit,
-                    part_regex = base_root_disk + '\d+'
+                    part_regex = base_root_disk + "\d+"
                 else:
                     # md126 or nvme0n1 with 'p' + >= one additional digit eg:
                     # md126p3 or nvme0n1p4; also mmcblk0p2 for base mmcblk0.
-                    part_regex = base_root_disk + 'p\d+'
-                if re.match(part_regex, dmap['NAME']) is not None:
-                    logger.debug('--- Inheriting base_root_disk info ---')
+                    part_regex = base_root_disk + "p\d+"
+                if re.match(part_regex, dmap["NAME"]) is not None:
+                    logger.debug("--- Inheriting base_root_disk info ---")
                     # We are assuming that a partition with a btrfs fs on is
                     # our root if it's name begins with our base system disk
                     # name. Now add the properties we stashed when looking at
                     # the base root disk rather than the root partition we see
                     # here.
-                    dmap['SERIAL'] = root_serial
-                    dmap['MODEL'] = root_model
-                    dmap['TRAN'] = root_transport
-                    dmap['VENDOR'] = root_vendor
-                    dmap['HCTL'] = root_hctl
+                    dmap["SERIAL"] = root_serial
+                    dmap["MODEL"] = root_model
+                    dmap["TRAN"] = root_transport
+                    dmap["VENDOR"] = root_vendor
+                    dmap["HCTL"] = root_hctl
                     # As we have found root to be on a partition we can now un
                     # flag the base device as having been root prior to finding
                     # this partition on that base_root_disk N.B. Assumes base
@@ -408,7 +467,7 @@ def scan_disks(min_size, test_mode=False):
                     # And update this device as real root
                     # Note we may be looking at the base_root_disk or one of
                     # it's partitions there after.
-                    dmap['root'] = True
+                    dmap["root"] = True
                 else:
                     # We have a non system disk btrfs filesystem.
                     # Ie we are a whole disk or a partition with btrfs on but
@@ -417,35 +476,35 @@ def scan_disks(min_size, test_mode=False):
                     # import.
                     # Ignore / skip this btrfs device if it's a partition
                     if is_partition:
-                        logger.debug('-- Skipping non root btrfs partition -')
+                        logger.debug("-- Skipping non root btrfs partition -")
                         continue
             # No more continues so the device we have is to be passed to our db
             # entry system views/disk.py ie _update_disk_state()
             # Do final tidy of data in dmap and ready for entry in dnames dict.
             # db needs unique serial so provide one where there is none found.
             # First try harder with udev if lsblk failed on serial retrieval.
-            if (dmap['SERIAL'] == '' or always_use_udev_serial):
+            if dmap["SERIAL"] == "" or always_use_udev_serial:
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices and md devices so try specialized function.
-                dmap['SERIAL'] = get_disk_serial(dmap['NAME'], dmap['TYPE'])
+                dmap["SERIAL"] = get_disk_serial(dmap["NAME"], dmap["TYPE"])
             # Now try specialized serial propagation methods:
             # Bcache virtual block devices get their backing devices uuid
             # We propagate the uuid for a bcache backing device to it's virtual
             # counterpart device for use as a serial number.
             # Note however that we are only interested in the 'backing device'
             # type of bcache as it has the counterpart virtual block device.
-            if (dmap['FSTYPE'] == 'bcache'):
-                bcache_dev_type = get_bcache_device_type(dmap['NAME'])
-                if bcache_dev_type == 'bdev':
-                    bdev_uuid = dmap['UUID']
+            if dmap["FSTYPE"] == "bcache":
+                bcache_dev_type = get_bcache_device_type(dmap["NAME"])
+                if bcache_dev_type == "bdev":
+                    bdev_uuid = dmap["UUID"]
                     # We set out bdev_flag to inform the next device
                     # interpretation.
                     bdev_flag = True
-                elif bcache_dev_type == 'cdev':
+                elif bcache_dev_type == "cdev":
                     # We have a bcache caching device, not a backing device.
                     # Change fstype as an indicator to _update_disk_state()
                     # role system. N.B. fstype bcachecdev is fictitious.
-                    dmap['FSTYPE'] = 'bcachecdev'
+                    dmap["FSTYPE"] = "bcachecdev"
             else:
                 # we are a non bcache bdev but we might be the virtual device
                 # if we are listed directly after a bcache bdev.
@@ -455,17 +514,17 @@ def scan_disks(min_size, test_mode=False):
                     # bdev. We are listed directly after a bcache bdev but
                     # could still be any device. As no cheap distinguishing
                     # properties we for now rely on device name:
-                    if re.match('bcache', dmap['NAME']) is not None:
+                    if re.match("bcache", dmap["NAME"]) is not None:
                         # We avoid overwriting any serial just in case, normal
                         # bcache virtual devices have no serial reported by
                         # lsblk but future lsblk versions may change this.
-                        if dmap['SERIAL'] == '':
+                        if dmap["SERIAL"] == "":
                             # transfer our stashed bdev uuid as a serial.
-                            dmap['SERIAL'] = 'bcache-%s' % bdev_uuid
+                            dmap["SERIAL"] = "bcache-%s" % bdev_uuid
                 # reset the bdev_flag as we are only interested in devices
                 # listed directly after a bdev anyway.
                 bdev_flag = False
-            if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials_seen)):
+            if dmap["SERIAL"] == "" or (dmap["SERIAL"] in serials_seen):
                 # No serial number still or its a repeat. Overwrite drive
                 # serial entry in dmap with fake-serial- + uuid4 See
                 # disk/disks_table.jst for a use of this flag mechanism.
@@ -473,23 +532,32 @@ def scan_disks(min_size, test_mode=False):
                 # robust as it can itself produce duplicate serial numbers.
                 if test_mode:
                     # required for reproducible output for repeatable tests
-                    dmap['SERIAL'] = 'fake-serial-'
+                    dmap["SERIAL"] = "fake-serial-"
                 else:
                     # 12 chars (fake-serial-) + 36 chars (uuid4) = 48 chars
-                    dmap['SERIAL'] = 'fake-serial-' + str(uuid.uuid4())
-            serials_seen.append(dmap['SERIAL'])
+                    dmap["SERIAL"] = "fake-serial-" + str(uuid.uuid4())
+            serials_seen.append(dmap["SERIAL"])
             # replace all dmap values of '' with None.
             for key in dmap.keys():
-                if (dmap[key] == ''):
+                if dmap[key] == "":
                     dmap[key] = None
             # transfer our device info as now parsed in dmap to the dnames dict
-            dnames[dmap['NAME']] = [dmap['NAME'], dmap['MODEL'],
-                                    dmap['SERIAL'], dmap['SIZE'],
-                                    dmap['TRAN'], dmap['VENDOR'],
-                                    dmap['HCTL'], dmap['TYPE'],
-                                    dmap['FSTYPE'], dmap['LABEL'],
-                                    dmap['UUID'], dmap['parted'],
-                                    dmap['root'], dmap['partitions'], ]
+            dnames[dmap["NAME"]] = [
+                dmap["NAME"],
+                dmap["MODEL"],
+                dmap["SERIAL"],
+                dmap["SIZE"],
+                dmap["TRAN"],
+                dmap["VENDOR"],
+                dmap["HCTL"],
+                dmap["TYPE"],
+                dmap["FSTYPE"],
+                dmap["LABEL"],
+                dmap["UUID"],
+                dmap["parted"],
+                dmap["root"],
+                dmap["partitions"],
+            ]
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
@@ -498,7 +566,7 @@ def scan_disks(min_size, test_mode=False):
 
 
 def uptime():
-    with open('/proc/uptime') as ufo:
+    with open("/proc/uptime") as ufo:
         # TODO: check on readline here as reads a character at a time
         # TODO: xreadlines() reads one line at a time.
         return int(float(ufo.readline().split()[0]))
@@ -506,10 +574,10 @@ def uptime():
 
 def def_kernel():
     kernel = None
-    o, e, rc = run_command([GRUBBY, '--default-kernel'], throw=False)
-    if (len(o) > 0):
-        k_fields = o[0].split('/boot/vmlinuz-')
-        if (len(k_fields) == 2):
+    o, e, rc = run_command([GRUBBY, "--default-kernel"], throw=False)
+    if len(o) > 0:
+        k_fields = o[0].split("/boot/vmlinuz-")
+        if len(k_fields) == 2:
             kernel = k_fields[1]
     return kernel
 
@@ -517,20 +585,24 @@ def def_kernel():
 def kernel_info(supported_version):
     uname = os.uname()
     if uname[2] != supported_version and os.path.isfile(GRUBBY):
-        e_msg = ('You are running an unsupported kernel(%s). Some features '
-                 'may not work properly.' % uname[2])
-        carg = '--set-default=/boot/vmlinuz-{}'.format(supported_version)
+        e_msg = (
+            "You are running an unsupported kernel(%s). Some features "
+            "may not work properly." % uname[2]
+        )
+        carg = "--set-default=/boot/vmlinuz-{}".format(supported_version)
         run_command([GRUBBY, carg])
-        e_msg = ('%s Please reboot and the system will '
-                 'automatically boot using the supported kernel(%s)' %
-                 (e_msg, supported_version))
+        e_msg = (
+            "%s Please reboot and the system will "
+            "automatically boot using the supported kernel(%s)"
+            % (e_msg, supported_version)
+        )
         raise Exception(e_msg)
     return uname[2]
 
 
 def create_tmp_dir(dirname):
     # TODO: suggest name change to create_dir
-    return run_command([MKDIR, '-p', dirname])
+    return run_command([MKDIR, "-p", dirname])
 
 
 def rm_tmp_dir(dirname):
@@ -539,9 +611,9 @@ def rm_tmp_dir(dirname):
 
 
 def toggle_path_rw(path, rw=True):
-    attr = '-i'
+    attr = "-i"
     if not rw:
-        attr = '+i'
+        attr = "+i"
     return run_command([CHATTR, attr, path])
 
 
@@ -549,25 +621,25 @@ def nfs4_mount_teardown(export_pt):
     """
     reverse of setup. cleanup when there are no more exports
     """
-    if (is_mounted(export_pt)):
-        run_command([UMOUNT, '-l', export_pt])
+    if is_mounted(export_pt):
+        run_command([UMOUNT, "-l", export_pt])
         for i in range(10):
-            if (not is_mounted(export_pt)):
+            if not is_mounted(export_pt):
                 toggle_path_rw(export_pt, rw=True)
                 return run_command([RMDIR, export_pt])
             time.sleep(1)
-        run_command([UMOUNT, '-f', export_pt])
-    if (os.path.exists(export_pt)):
+        run_command([UMOUNT, "-f", export_pt])
+    if os.path.exists(export_pt):
         toggle_path_rw(export_pt, rw=True)
         run_command([RMDIR, export_pt])
     return True
 
 
 def bind_mount(mnt_pt, export_pt):
-    if (not is_mounted(export_pt)):
-        run_command([MKDIR, '-p', export_pt])
+    if not is_mounted(export_pt):
+        run_command([MKDIR, "-p", export_pt])
         toggle_path_rw(export_pt, rw=False)
-        return run_command([MOUNT, '--bind', mnt_pt, export_pt])
+        return run_command([MOUNT, "--bind", mnt_pt, export_pt])
     return True
 
 
@@ -583,83 +655,107 @@ def refresh_nfs_exports(exports):
     if 'clients' is an empty list, then unmount and cleanup.
     """
     fo, npath = mkstemp()
-    with open(npath, 'w') as efo:
+    with open(npath, "w") as efo:
         shares = []
         for e in exports.keys():
-            if (len(exports[e]) == 0):
+            if len(exports[e]) == 0:
                 #  do share tear down at the end, only snaps here
-                if (len(e.split('/')) == 4):
+                if len(e.split("/")) == 4:
                     nfs4_mount_teardown(e)
                 else:
                     shares.append(e)
                 continue
 
-            if (not is_mounted(e)):
-                bind_mount(exports[e][0]['mnt_pt'], e)
-            client_str = ''
+            if not is_mounted(e):
+                bind_mount(exports[e][0]["mnt_pt"], e)
+            client_str = ""
             admin_host = None
             for c in exports[e]:
-                run_command([EXPORTFS, '-i', '-o', c['option_list'],
-                             '%s:%s' % (c['client_str'], e)])
-                client_str = ('%s%s(%s) ' % (client_str, c['client_str'],
-                                             c['option_list']))
-                if ('admin_host' in c):
-                    admin_host = c['admin_host']
-            if (admin_host is not None):
-                run_command([EXPORTFS, '-i', '-o', 'rw,no_root_squash',
-                             '%s:%s' % (admin_host, e)])
-                client_str = ('%s %s(rw,no_root_squash)' % (client_str,
-                                                            admin_host))
-            export_str = ('%s %s\n' % (e, client_str))
+                run_command(
+                    [
+                        EXPORTFS,
+                        "-i",
+                        "-o",
+                        c["option_list"],
+                        "%s:%s" % (c["client_str"], e),
+                    ]
+                )
+                client_str = "%s%s(%s) " % (
+                    client_str,
+                    c["client_str"],
+                    c["option_list"],
+                )
+                if "admin_host" in c:
+                    admin_host = c["admin_host"]
+            if admin_host is not None:
+                run_command(
+                    [
+                        EXPORTFS,
+                        "-i",
+                        "-o",
+                        "rw,no_root_squash",
+                        "%s:%s" % (admin_host, e),
+                    ]
+                )
+                client_str = "%s %s(rw,no_root_squash)" % (client_str, admin_host)
+            export_str = "%s %s\n" % (e, client_str)
             efo.write(export_str)
         for s in shares:
             nfs4_mount_teardown(s)
-    shutil.move(npath, '/etc/exports')
-    return run_command([EXPORTFS, '-ra'])
+    shutil.move(npath, "/etc/exports")
+    return run_command([EXPORTFS, "-ra"])
 
 
-def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
-                          netmask=None, autoconnect='yes', gateway=None,
-                          dns_servers=None):
+def config_network_device(
+    name,
+    dtype="ethernet",
+    method="auto",
+    ipaddr=None,
+    netmask=None,
+    autoconnect="yes",
+    gateway=None,
+    dns_servers=None,
+):
     # 1. delete any existing connections that are using the given device.
-    show_cmd = [NMCLI, 'c', 'show']
+    show_cmd = [NMCLI, "c", "show"]
     o, e, rc = run_command(show_cmd)
     for l in o:
         fields = l.strip().split()
-        if (len(fields) > 3 and fields[-1] == name):
+        if len(fields) > 3 and fields[-1] == name:
             # fields[-3] is the uuid of the connection
-            run_command([NMCLI, 'c', 'delete', fields[-3]])
+            run_command([NMCLI, "c", "delete", fields[-3]])
     # 2. Add a new connection
-    add_cmd = [NMCLI, 'c', 'add', 'type', dtype, 'con-name', name, 'ifname',
-               name]
-    if (method == 'manual'):
-        add_cmd.extend(['ip4', '%s/%s' % (ipaddr, netmask)])
-    if (gateway is not None and len(gateway.strip()) > 0):
-        add_cmd.extend(['gw4', gateway])
+    add_cmd = [NMCLI, "c", "add", "type", dtype, "con-name", name, "ifname", name]
+    if method == "manual":
+        add_cmd.extend(["ip4", "%s/%s" % (ipaddr, netmask)])
+    if gateway is not None and len(gateway.strip()) > 0:
+        add_cmd.extend(["gw4", gateway])
     run_command(add_cmd)
     # 3. modify with extra options like dns servers
-    if (method == 'manual'):
-        mod_cmd = [NMCLI, 'c', 'mod', name, ]
-        if (dns_servers is not None and len(dns_servers.strip()) > 0):
-            mod_cmd.extend(['ipv4.dns', dns_servers])
-        if (autoconnect == 'no'):
-            mod_cmd.extend(['connection.autoconnect', 'no'])
-        if (len(mod_cmd) > 4):
+    if method == "manual":
+        mod_cmd = [NMCLI, "c", "mod", name]
+        if dns_servers is not None and len(dns_servers.strip()) > 0:
+            mod_cmd.extend(["ipv4.dns", dns_servers])
+        if autoconnect == "no":
+            mod_cmd.extend(["connection.autoconnect", "no"])
+        if len(mod_cmd) > 4:
             run_command(mod_cmd)
-    run_command([NMCLI, 'c', 'up', name])
+    run_command([NMCLI, "c", "up", name])
     # wait for the interface to be activated
     num_attempts = 0
     while True:
-        state = get_net_config(name)[name].get('state', None)
-        if (state != 'activated'):
+        state = get_net_config(name)[name].get("state", None)
+        if state != "activated":
             time.sleep(1)
             num_attempts += 1
         else:
             break
-        if (num_attempts > 30):
-            msg = ('Waited %s seconds for connection(%s) state to '
-                   'be activated but it has not. Giving up. current state: %s'
-                   % (num_attempts, name, state))
+        if num_attempts > 30:
+            msg = (
+                "Waited %s seconds for connection(%s) state to "
+                "be activated but it has not. Giving up. current state: %s"
+                % (num_attempts, name, state)
+            )
             raise Exception(msg)
 
 
@@ -668,114 +764,117 @@ def convert_netmask(bits):
     bits = int(bits)
     mask = 0
     for i in range(32 - bits, 32):
-        mask |= (1 << i)
-    return inet_ntoa(pack('>I', mask))
+        mask |= 1 << i
+    return inet_ntoa(pack(">I", mask))
 
 
 def net_config_helper(name):
     config = {}
-    o, e, rc = run_command([NMCLI, '-t', 'c', 'show', name], throw=False)
-    if (rc == 10):
+    o, e, rc = run_command([NMCLI, "-t", "c", "show", name], throw=False)
+    if rc == 10:
         return config
     for l in o:
         l = l.strip()
-        if ('method' in config):
-            if (config['method'] == 'auto'):
+        if "method" in config:
+            if config["method"] == "auto":
                 # dhcp
-                if (re.match('DHCP4.OPTION.*ip_address = .+', l) is not None):
-                    config['ipaddr'] = l.split('= ')[1]
-                elif (re.match('DHCP4.OPTION.*:domain_name_servers = .+', l) is
-                      not None):
-                    config['dns_servers'] = l.split('= ')[1]
-                elif (re.match('DHCP4.OPTION.*:subnet_mask = .+', l) is
-                      not None):
-                    config['netmask'] = l.split('= ')[1]
-                elif (re.match('IP4.GATEWAY:.+', l) is not None):
-                    config['gateway'] = l.split(':')[1]
+                if re.match("DHCP4.OPTION.*ip_address = .+", l) is not None:
+                    config["ipaddr"] = l.split("= ")[1]
+                elif re.match("DHCP4.OPTION.*:domain_name_servers = .+", l) is not None:
+                    config["dns_servers"] = l.split("= ")[1]
+                elif re.match("DHCP4.OPTION.*:subnet_mask = .+", l) is not None:
+                    config["netmask"] = l.split("= ")[1]
+                elif re.match("IP4.GATEWAY:.+", l) is not None:
+                    config["gateway"] = l.split(":")[1]
 
-            elif (config['method'] == 'manual'):
+            elif config["method"] == "manual":
                 # manual
-                if (re.match('IP4.ADDRESS', l) is not None):
-                    kv_split = l.split(':')
-                    if (len(kv_split) > 1):
-                        vsplit = kv_split[1].split('/')
-                    if (len(vsplit) > 0):
-                        config['ipaddr'] = vsplit[0]
-                    if (len(vsplit) > 1):
-                        config['netmask'] = convert_netmask(vsplit[1])
-                elif (re.match('ipv4.dns:.+', l) is not None):
-                    config['dns_servers'] = l.split(':')[1]
-                elif (re.match('ipv4.gateway:.+', l) is not None):
-                    config['gateway'] = l.split(':')[1]
+                if re.match("IP4.ADDRESS", l) is not None:
+                    kv_split = l.split(":")
+                    if len(kv_split) > 1:
+                        vsplit = kv_split[1].split("/")
+                    if len(vsplit) > 0:
+                        config["ipaddr"] = vsplit[0]
+                    if len(vsplit) > 1:
+                        config["netmask"] = convert_netmask(vsplit[1])
+                elif re.match("ipv4.dns:.+", l) is not None:
+                    config["dns_servers"] = l.split(":")[1]
+                elif re.match("ipv4.gateway:.+", l) is not None:
+                    config["gateway"] = l.split(":")[1]
 
             else:
-                raise Exception('Unknown ipv4.method(%s). ' % config['method'])
+                raise Exception("Unknown ipv4.method(%s). " % config["method"])
 
-        if (re.match('connection.interface-name:', l) is not None):
-            config['name'] = l.split(':')[1]
-        elif (re.match('connection.autoconnect:', l) is not None):
-            config['autoconnect'] = l.split(':')[1]
-        elif (re.match('ipv4.method:.+', l) is not None):
-            config['method'] = l.split(':')[1]
+        if re.match("connection.interface-name:", l) is not None:
+            config["name"] = l.split(":")[1]
+        elif re.match("connection.autoconnect:", l) is not None:
+            config["autoconnect"] = l.split(":")[1]
+        elif re.match("ipv4.method:.+", l) is not None:
+            config["method"] = l.split(":")[1]
 
-        if (re.match('GENERAL.DEVICES:.+', l) is not None):
-            config['dname'] = l.split(':')[1]
-        elif (re.match('connection.type:.+', l) is not None):
-            config['ctype'] = l.split(':')[1]
-        elif (re.match('GENERAL.STATE:.+', l) is not None):
-            config['state'] = l.split(':')[1]
+        if re.match("GENERAL.DEVICES:.+", l) is not None:
+            config["dname"] = l.split(":")[1]
+        elif re.match("connection.type:.+", l) is not None:
+            config["ctype"] = l.split(":")[1]
+        elif re.match("GENERAL.STATE:.+", l) is not None:
+            config["state"] = l.split(":")[1]
 
-    if ('dname' in config):
-        o, e, rc = run_command([NMCLI, '-t', '-f', 'all', 'd', 'show',
-                                config['dname'], ])
+    if "dname" in config:
+        o, e, rc = run_command([NMCLI, "-t", "-f", "all", "d", "show", config["dname"]])
         for l in o:
             l = l.strip()
-            if (re.match('GENERAL.TYPE:.+', l) is not None):
-                config['dtype'] = l.split(':')[1]
-            elif (re.match('GENERAL.HWADDR:.+', l) is not None):
-                config['mac'] = l.split('GENERAL.HWADDR:')[1]
-            elif (re.match('CAPABILITIES.SPEED:.+', l) is not None):
-                config['dspeed'] = l.split(':')[1]
+            if re.match("GENERAL.TYPE:.+", l) is not None:
+                config["dtype"] = l.split(":")[1]
+            elif re.match("GENERAL.HWADDR:.+", l) is not None:
+                config["mac"] = l.split("GENERAL.HWADDR:")[1]
+            elif re.match("CAPABILITIES.SPEED:.+", l) is not None:
+                config["dspeed"] = l.split(":")[1]
 
     return config
 
 
 def get_net_config(all=False, name=None):
-    if (all):
-        o, e, rc = run_command([NMCLI, '-t', 'd', 'show'])
+    if all:
+        o, e, rc = run_command([NMCLI, "-t", "d", "show"])
         config = {}
         for i in range(len(o)):
-            if (re.match('GENERAL.DEVICE:', o[i]) is not None and
-                    re.match('GENERAL.TYPE:', o[i + 1]) is not None and
-                    o[i + 1].strip().split(':')[1] == 'ethernet'):
-                dname = o[i].strip().split(':')[1]
-                mac = o[i + 2].strip().split('GENERAL.HWADDR:')[1]
-                name = o[i + 5].strip().split('GENERAL.CONNECTION:')[1]
-                config[dname] = {'dname': dname,
-                                 'mac': mac,
-                                 'name': name,
-                                 'dtype': 'ethernet', }
+            if (
+                re.match("GENERAL.DEVICE:", o[i]) is not None
+                and re.match("GENERAL.TYPE:", o[i + 1]) is not None
+                and o[i + 1].strip().split(":")[1] == "ethernet"
+            ):
+                dname = o[i].strip().split(":")[1]
+                mac = o[i + 2].strip().split("GENERAL.HWADDR:")[1]
+                name = o[i + 5].strip().split("GENERAL.CONNECTION:")[1]
+                config[dname] = {
+                    "dname": dname,
+                    "mac": mac,
+                    "name": name,
+                    "dtype": "ethernet",
+                }
         for device in config:
-            config[device].update(net_config_helper(config[device]['name']))
-            if (config[device]['name'] == '--'):
-                config[device]['name'] = device
+            config[device].update(net_config_helper(config[device]["name"]))
+            if config[device]["name"] == "--":
+                config[device]["name"] = device
         return config
-    return {name: net_config_helper(name), }
+    return {name: net_config_helper(name)}
 
 
 def update_issue(ipaddr):
-    msg = ("\n\nYou can go to RockStor's webui by pointing your web browser"
-           " to https://%s\n\n" % ipaddr)
-    with open('/etc/issue', 'w') as ifo:
+    msg = (
+        "\n\nYou can go to RockStor's webui by pointing your web browser"
+        " to https://%s\n\n" % ipaddr
+    )
+    with open("/etc/issue", "w") as ifo:
         ifo.write(msg)
 
 
 def sethostname(hostname):
-    return run_command([HOSTNAMECTL, 'set-hostname', hostname])
+    return run_command([HOSTNAMECTL, "set-hostname", hostname])
 
 
 def gethostname():
-    o, e, rc = run_command([HOSTNAMECTL, '--static'])
+    o, e, rc = run_command([HOSTNAMECTL, "--static"])
     return o[0]
 
 
@@ -803,7 +902,7 @@ def mount_status(mnt_pt, return_boolean=False):
     If return_boolean=False (default) then a string is returned of the current
     mount options, or 'unmounted' if no relevant /proc/mounts entry was found.
     """
-    with open('/proc/mounts') as pfo:
+    with open("/proc/mounts") as pfo:
         for each_line in pfo.readlines():
             line_fields = each_line.split()
             if len(line_fields) < 4:
@@ -819,7 +918,7 @@ def mount_status(mnt_pt, return_boolean=False):
                 return line_fields[3]
     if return_boolean:
         return False
-    return 'unmounted'
+    return "unmounted"
 
 
 def dev_mount_point(dev_temp_name):
@@ -831,7 +930,7 @@ def dev_mount_point(dev_temp_name):
     :param dev_temp_name: /dev/sda3 or /dev/bcache0, or /dev/mapper/luks-...
     :return: None if note device match found or first associated mount point.
     """
-    with open('/proc/mounts') as pfo:
+    with open("/proc/mounts") as pfo:
         for each_line in pfo.readlines():
             line_fields = each_line.split()
             if len(line_fields) < 4:
@@ -841,15 +940,15 @@ def dev_mount_point(dev_temp_name):
                 # Skip excluded/special mount devices ie sysfs, proc, etc.
                 continue
             if line_fields[0] == dev_temp_name:
-                logger.debug('dev_mount_point returning {}'.format(line_fields[1]))
+                logger.debug("dev_mount_point returning {}".format(line_fields[1]))
                 return line_fields[1]
-    logger.debug('dev_mount_point() returning None')
+    logger.debug("dev_mount_point() returning None")
     return None
 
 
 def remount(mnt_pt, mnt_options):
-    if (is_mounted(mnt_pt)):
-        run_command([MOUNT, '-o', 'remount,%s' % mnt_options, mnt_pt])
+    if is_mounted(mnt_pt):
+        run_command([MOUNT, "-o", "remount,%s" % mnt_options, mnt_pt])
     return True
 
 
@@ -861,7 +960,7 @@ def wipe_disk(disk_byid):
     locally generated wipefs command.
     """
     disk_byid_withpath = get_device_path(disk_byid)
-    return run_command([WIPEFS, '-a', disk_byid_withpath])
+    return run_command([WIPEFS, "-a", disk_byid_withpath])
 
 
 def blink_disk(disk_byid, total_exec, read, sleep):
@@ -876,13 +975,19 @@ def blink_disk(disk_byid, total_exec, read, sleep):
     :param sleep: light off time.
     :return: None.
     """
-    dd_cmd = [DD, 'if=%s' % get_device_path(disk_byid), 'of=/dev/null',
-              'bs=512', 'conv=noerror']
-    p = subprocess.Popen(dd_cmd, shell=False, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    dd_cmd = [
+        DD,
+        "if=%s" % get_device_path(disk_byid),
+        "of=/dev/null",
+        "bs=512",
+        "conv=noerror",
+    ]
+    p = subprocess.Popen(
+        dd_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     total_elapsed_time = 0
-    while (total_elapsed_time < total_exec):
-        if (p.poll() is not None):
+    while total_elapsed_time < total_exec:
+        if p.poll() is not None:
             return None
         time.sleep(read)
         p.send_signal(signal.SIGSTOP)
@@ -904,17 +1009,18 @@ def convert_to_kib(size):
     KiB's or zero if units in size are found to 'B'
     """
     suffix_map = {
-        'KiB': 1,
-        'MiB': 1024,
-        'GiB': 1024 * 1024,
-        'TiB': 1024 * 1024 * 1024,
-        'PiB': 1024 * 1024 * 1024 * 1024, }
+        "KiB": 1,
+        "MiB": 1024,
+        "GiB": 1024 * 1024,
+        "TiB": 1024 * 1024 * 1024,
+        "PiB": 1024 * 1024 * 1024 * 1024,
+    }
     suffix = size[-3:]
     num = size[:-3]
-    if (suffix not in suffix_map):
-        if (size[-1] == 'B'):
+    if suffix not in suffix_map:
+        if size[-1] == "B":
             return 0
-        raise Exception('Unknown suffix(%s) while converting to KiB' % suffix)
+        raise Exception("Unknown suffix(%s) while converting to KiB" % suffix)
     return int(float(num) * suffix_map[suffix])
 
 
@@ -931,12 +1037,12 @@ def root_disk():
     # TODO: Consider 'lsblk -no pkname devname' rather than parse and strip.
     # -no pkname returns blank line with /dev/mapper/luks but no partitions.
     # -n = no headings, -o specify output (pkname = Parent Kernel Name)
-    with open('/proc/mounts') as fo:
+    with open("/proc/mounts") as fo:
         for line in fo.readlines():
             fields = line.split()
-            if (fields[1] == '/' and fields[2] == 'btrfs'):
+            if fields[1] == "/" and fields[2] == "btrfs":
                 # We have found our '/' and it's of fs type btrfs
-                if (re.match('/dev/mapper/luks-', fields[0]) is not None):
+                if re.match("/dev/mapper/luks-", fields[0]) is not None:
                     # Our root is on a mapped open LUKS container so we need
                     # not resolve the symlink, ie /dev/dm-0, as we loose info
                     # and lsblk's name output also uses the luks-<uuid> name.
@@ -947,7 +1053,7 @@ def root_disk():
                     return fields[0]
                 # resolve symbolic links to their targets.
                 disk = os.path.realpath(fields[0])
-                if (re.match('/dev/md', disk) is not None):
+                if re.match("/dev/md", disk) is not None:
                     # We have an Multi Device naming scheme which is a little
                     # different ie 3rd partition = md126p3 on the md126 device,
                     # or md0p3 as third partition on md0 device.  As md devs
@@ -958,9 +1064,9 @@ def root_disk():
                     # device name without the partition.  Search for where the
                     # numbers after "md" end.  N.B. the following will also
                     # work if root is not in a partition ie on md126 directly.
-                    end = re.search('\d+', disk).end()
+                    end = re.search("\d+", disk).end()
                     return disk[:end]
-                if (re.match('/dev/nvme', disk) is not None):
+                if re.match("/dev/nvme", disk) is not None:
                     # We have an nvme device. These have the following naming
                     # conventions.
                     # Base device examples: nvme0n1 or nvme1n1
@@ -970,7 +1076,7 @@ def root_disk():
                     # We need to also account for a root install on the base
                     # device itself as with the /dev/md parsing just in case,
                     # so look for the end of the base device name via 'n1'.
-                    end = re.search('n1', disk).end()
+                    end = re.search("n1", disk).end()
                     return disk[:end]
                 # catch all that assumes we have eg /dev/sda3 and want /dev/sda
                 # remove the last char
@@ -978,9 +1084,11 @@ def root_disk():
                 # TODO: consider changing to same method as in md devs above
                 # TODO: to cope with more than one numeric in name.
                 return disk[:-1]
-    msg = ('root filesystem is not BTRFS. During Rockstor installation, '
-           'you must select BTRFS instead of LVM and other options for '
-           'root filesystem. Please re-install Rockstor properly.')
+    msg = (
+        "root filesystem is not BTRFS. During Rockstor installation, "
+        "you must select BTRFS instead of LVM and other options for "
+        "root filesystem. Please re-install Rockstor properly."
+    )
     raise NonBTRFSRootException(msg)
 
 
@@ -1005,38 +1113,39 @@ def get_md_members(device_name, test=None):
     """
     line_fields = []
     # if non md device then return empty string
-    if re.match('/dev/md', device_name) is None:
-        return ''
-    members_string = ''
+    if re.match("/dev/md", device_name) is None:
+        return ""
+    members_string = ""
     if test is None:
-        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
-                                   throw=False)
+        out, err, rc = run_command(
+            [UDEVADM, "info", "--name=" + device_name], throw=False
+        )
     else:
         # test mode so process test instead of udevadmin output
         out = test
         rc = 0
     if rc != 0:  # if return code is an error return empty string
-        return ''
+        return ""
     # search output of udevadmin to find all current md members.
     for line in out:
-        if line == '':
+        if line == "":
             continue
         # nonlocal line_fields
-        line_fields = line.strip().replace('=', ' ').split()
+        line_fields = line.strip().replace("=", " ").split()
         # fast replace of '=' with space so split() can divide all fields
         # example original line "E: ID_SERIAL_SHORT=S1D5NSAF111111K"
         # less than 3 fields are of no use so just in case:-
         if len(line_fields) < 3:
             continue
         # catch the lines that begin with MD_DEVICE or MD_LEVEL
-        if (re.match('MD_DEVICE|MD_LEVEL', line_fields[1]) is not None):
+        if re.match("MD_DEVICE|MD_LEVEL", line_fields[1]) is not None:
             # add this entries value (3rd column) to our string
             if len(line_fields[2]) == 1:
                 # Surround single digits with square brackets ie the number of
                 # members and the member index (assumes max 9 md members)
-                members_string += '[' + line_fields[2] + '] '
+                members_string += "[" + line_fields[2] + "] "
             else:
-                if re.match('/dev', line_fields[2]) is not None:
+                if re.match("/dev", line_fields[2]) is not None:
                     # TODO: get_disk_serial can benefit from a device type
                     # TODO: consider calling lsblk -n -o 'TYPE' device_name
                     # TODO: may then allow for /dev/mapper raid members.
@@ -1072,15 +1181,15 @@ def get_disk_serial(device_name, device_type=None, test=None):
     return of the udevadm info --name=device_name command output
     :return: 12345678901234567890 or empty string if no serial was retrieved.
     """
-    serial_num = ''
-    uuid_search_string = ''
+    serial_num = ""
+    uuid_search_string = ""
     line_fields = []
     # udevadm requires the full path for Device Mapped (DM) disks so if our
     # type indicates this then add the '/dev/mapper' path to device_name
     # Set search string / flag for dm personality if need be.
-    if device_type == 'crypt':
+    if device_type == "crypt":
         # Assuming device mapped (DM) so without it's own serial.
-        uuid_search_string = 'DM_UUID'
+        uuid_search_string = "DM_UUID"
         # Note that we can't use "cryptsetup luksUUID <device>" as this is for
         # use with the container, not the consequent mapped virtual device of
         # the open container. Default udev rules include the virtual device
@@ -1088,22 +1197,23 @@ def get_disk_serial(device_name, device_type=None, test=None):
         # change that devices serial which in turn makes it appear as a
         # different device to Rockstor.
     # Set search string / flag for md personality if need be.
-    if re.match('/dev/md', device_name) is not None:
-        uuid_search_string = 'MD_UUID'
+    if re.match("/dev/md", device_name) is not None:
+        uuid_search_string = "MD_UUID"
     if test is None:
-        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
-                                   throw=False)
+        out, err, rc = run_command(
+            [UDEVADM, "info", "--name=" + device_name], throw=False
+        )
     else:
         # test mode so process test instead of udevadmin output
         out = test
         rc = 0
     if rc != 0:  # if return code is an error return empty string
-        return ''
+        return ""
     for line in out:
-        if line == '':
+        if line == "":
             continue
         # nonlocal line_fields
-        line_fields = line.strip().replace('=', ' ').split()
+        line_fields = line.strip().replace("=", " ").split()
         # fast replace of '=' with space so split() can divide all fields
         # example original line "E: ID_SERIAL_SHORT=S1D5NSAF111111K"
         # less than 3 fields are of no use so just in case:-
@@ -1111,7 +1221,7 @@ def get_disk_serial(device_name, device_type=None, test=None):
             continue
         # For md & dm devices, look for MD_UUID or DM_UUID respectively and use
         # as substitute for no hw serial.
-        if uuid_search_string != '':
+        if uuid_search_string != "":
             # md or dm device so search for the appropriate uuid string
             if line_fields[1] == uuid_search_string:
                 # TODO: in the case of DM_UUID consider extracting only the
@@ -1122,21 +1232,21 @@ def get_disk_serial(device_name, device_type=None, test=None):
             else:  # we are md / dm device but haven't found our UUID line
                 # move to next line of output and skip serial cascade search
                 continue
-        if line_fields[1] == 'ID_SCSI_SERIAL':
+        if line_fields[1] == "ID_SCSI_SERIAL":
             # we have an instance of SCSI_SERIAL being more reliably unique
             # when present than SERIAL_SHORT or SERIAL so overwrite whatever
             # we have and look no further by breaking out of the search loop
             serial_num = line_fields[2]
             break
-        elif line_fields[1] == 'ID_SERIAL_SHORT':
+        elif line_fields[1] == "ID_SERIAL_SHORT":
             # SERIAL_SHORT is better than SERIAL so just overwrite whatever we
             # have so far with SERIAL_SHORT
             serial_num = line_fields[2]
         else:
-            if line_fields[1] == 'ID_SERIAL':
+            if line_fields[1] == "ID_SERIAL":
                 # SERIAL is sometimes our only option but only use it if we
                 # have found nothing else.
-                if serial_num == '':
+                if serial_num == "":
                     serial_num = line_fields[2]
     # should return one of the following in order of priority
     # SCSI_SERIAL, SERIAL_SHORT, SERIAL
@@ -1163,41 +1273,41 @@ def get_virtio_disk_serial(device_name):
     This process may not deal well with spaces in the serial number
     but VMM does not allow this.
     """
-    dev_path = ('/sys/block/%s/serial' % device_name)
+    dev_path = "/sys/block/%s/serial" % device_name
     out, err, rc = run_command([CAT, dev_path], throw=False)
-    if (rc != 0):
-        return ''
+    if rc != 0:
+        return ""
     # our out list has one element that is the serial number, like
     # ['11111111111111111111']
     return out[0]
 
 
-def system_shutdown(delta='now'):
+def system_shutdown(delta="now"):
     # New delta param default to now used to pass a 2 min delay
     # for scheduled tasks reboot/shutdown
     try:
-        cmd = [SHUTDOWN, '-h', delta]
+        cmd = [SHUTDOWN, "-h", delta]
         o, e, rc = run_command(cmd)
     except CommandException as e:
         # Catch / log harmless -15 return code - command executes as expected.
         if e.rc == -15:
-            logger.info('Ignoring rc=-15 from command ({}).'.format(cmd))
+            logger.info("Ignoring rc=-15 from command ({}).".format(cmd))
             return e.out, e.err, e.rc
         # otherwise we raise an exception as normal.
         raise e
     return o, e, rc
 
 
-def system_reboot(delta='now'):
+def system_reboot(delta="now"):
     # New delta param default to now used to pass a 2 min delay
     # for scheduled tasks reboot/shutdown
     try:
-        cmd = [SHUTDOWN, '-r', delta]
+        cmd = [SHUTDOWN, "-r", delta]
         o, e, rc = run_command(cmd)
     except CommandException as e:
         # Catch / log harmless -15 return code - command executes as expected.
         if e.rc == -15:
-            logger.info('Ignoring rc=-15 from command ({}).'.format(cmd))
+            logger.info("Ignoring rc=-15 from command ({}).".format(cmd))
             return e.out, e.err, e.rc
         # otherwise we raise an exception as normal.
         raise e
@@ -1208,14 +1318,14 @@ def system_suspend():
     # This function perform system suspend to RAM via systemctl
     # while reboot and shutdown, both via shutdown command, can be delayed
     # systemctl suspend miss this option
-    return run_command([SYSTEMCTL_BIN, 'suspend'])
+    return run_command([SYSTEMCTL_BIN, "suspend"])
 
 
 def clean_system_rtc_wake():
     # Every time we write to rtc alarm file this get locked and
     # we have to clean it with a 0 before writing another epoch
-    with open(RTC_WAKE_FILE, 'w') as rtc:
-        rtc.write('%d' % 0)
+    with open(RTC_WAKE_FILE, "w") as rtc:
+        rtc.write("%d" % 0)
 
 
 def set_system_rtc_wake(wakeup_epoch):
@@ -1223,8 +1333,8 @@ def set_system_rtc_wake(wakeup_epoch):
     # and set right epoch time to rtc alarm file.
     # Epoch wake up time evaluated on every shutdown scheduled task
     clean_system_rtc_wake()
-    with open(RTC_WAKE_FILE, 'w') as rtc:
-        rtc.write('%d' % int(wakeup_epoch))
+    with open(RTC_WAKE_FILE, "w") as rtc:
+        rtc.write("%d" % int(wakeup_epoch))
     return None
 
 
@@ -1236,18 +1346,22 @@ def is_network_device_responding(address):
     :return: true if the device is responding, false if not
     """
     # because of -c 3, three requests will be sent
-    cmd = [PING, '-c', 3, '-q', address]
+    cmd = [PING, "-c", 3, "-q", address]
     o, e, rc = run_command(cmd, log=True, throw=False)
     # The ping command will always return 0 if at least one request has been answered,
     # 1, if no request has been answered and another error code if the hostname is not known.
     # The corresponding error message is 'ping: <device name>: Name or service not known'.
     if rc == 0:
         return True
-    elif rc == 1 or \
-            next((s for s in o if '0 received' in s), None) or \
-            next((s for s in e if 'ping: {}'.format(address) in s), None):
+    elif (
+        rc == 1
+        or next((s for s in o if "0 received" in s), None)
+        or next((s for s in e if "ping: {}".format(address) in s), None)
+    ):
         return False
-    logger.debug('Ping command unexpectedly exited with return code {}'.format(return_code))
+    logger.debug(
+        "Ping command unexpectedly exited with return code {}".format(rc)
+    )
     if len(e):
         logger.debug(e[0])
     return False
@@ -1255,7 +1369,7 @@ def is_network_device_responding(address):
 
 def md5sum(fpath):
     # return the md5sum of the given file
-    if (not os.path.isfile(fpath)):
+    if not os.path.isfile(fpath):
         return None
     md5 = hashlib.md5()
     with open(fpath) as tfo:
@@ -1302,13 +1416,13 @@ def get_base_device_byid(dev_byid, test_mode=False):
     of path status of passed dev_byid.
     """
     # split by by-id section delimiter '-'
-    name_fields = dev_byid.split('-')
-    if len(name_fields) > 2 and re.match('part', name_fields[-1]):
+    name_fields = dev_byid.split("-")
+    if len(name_fields) > 2 and re.match("part", name_fields[-1]):
         # The passed device has at least 3 fields ie bus, uniqueid, partname
         # eg: busname-model_serial_or_uniqueid-part3 The passed device name has
         # a -part* ending so process it away by re-joining all elements except
         # the last from our previous split('-').
-        base_dev_byid = '-'.join(name_fields[:-1])
+        base_dev_byid = "-".join(name_fields[:-1])
     else:
         # our passed device name had no -part* ending so return unaltered.
         base_dev_byid = dev_byid
@@ -1331,11 +1445,11 @@ def get_bcache_device_type(device):
     :return: "bdev" for "backing device" or "cdev" for "cache device" or
     None ie neither indicator is found.
     """
-    device = device.split('/')[-1]  # strip off the path
-    sys_path = ('/sys/block/%s/bcache/' % device)
-    if os.path.isfile(sys_path + 'label'):
+    device = device.split("/")[-1]  # strip off the path
+    sys_path = "/sys/block/%s/bcache/" % device
+    if os.path.isfile(sys_path + "label"):
         return "bdev"
-    if os.path.isfile(sys_path + 'cache_replacement_policy'):
+    if os.path.isfile(sys_path + "cache_replacement_policy"):
         return "cdev"
     return None
 
@@ -1359,11 +1473,11 @@ def get_base_device(device, test_mode=False):
     ie device = sda3 the base_dev = /dev/sda or [''] if no lsblk entry was
     found to match.
     """
-    base_dev = ['', ]
+    base_dev = [""]
     if not test_mode:
         out, e, rc = run_command([LSBLK])
     else:
-        out, e, rc = run_command([CAT, '/root/smartdumps/lsblk.out'])
+        out, e, rc = run_command([CAT, "/root/smartdumps/lsblk.out"])
     # now examine the output from lsblk line by line
     for line in out:
         line_fields = line.split()
@@ -1372,7 +1486,7 @@ def get_base_device(device, test_mode=False):
             continue
         if re.match(line_fields[0], device):
             # We have found a device string match to our device so record it.
-            base_dev[0] = '/dev/' + line_fields[0]
+            base_dev[0] = "/dev/" + line_fields[0]
             break
     # Return base_dev ie [''] or first character matches to line start in
     # lsblk.
@@ -1403,9 +1517,10 @@ def is_rotational(device_name, test=None):
     # zero. Needs more research on actual drive readings for these 2 values.
     rotational = False  # until we find otherwise
     if test is None:
-        out, err, rc = run_command([UDEVADM, 'info', '--query=property',
-                                    '--name=' + '%s' % device_name],
-                                   throw=False)
+        out, err, rc = run_command(
+            [UDEVADM, "info", "--query=property", "--name=" + "%s" % device_name],
+            throw=False,
+        )
     else:
         # test mode so process test instead of udevadmin output
         out = test
@@ -1414,23 +1529,23 @@ def is_rotational(device_name, test=None):
         return False
     # search output of udevadm to find signs of rotational media
     for line in out:
-        if line == '':
+        if line == "":
             continue
         # nonlocal line_fields
-        line_fields = line.strip().split('=')
+        line_fields = line.strip().split("=")
         # example original line "ID_ATA_FEATURE_SET_AAM=1"
         # less than 2 fields are of no use so just in case:-
         if len(line_fields) < 2:
             continue
-        if line_fields[0] == 'ID_ATA_ROTATION_RATE_RPM':
+        if line_fields[0] == "ID_ATA_ROTATION_RATE_RPM":
             # we have a rotation rate entry
-            if line_fields[1] != '0':
+            if line_fields[1] != "0":
                 # non zero rotation so flag and look no further
                 rotational = True
                 break
-        if line_fields[0] == 'ID_ATA_FEATURE_SET_AAM_CURRENT_VALUE':
+        if line_fields[0] == "ID_ATA_FEATURE_SET_AAM_CURRENT_VALUE":
             # we have an Automatic Acoustic Managment entry
-            if line_fields[1] != '0':
+            if line_fields[1] != "0":
                 # a non zero AAM entry so flag and look no further
                 rotational = True
                 break
@@ -1460,17 +1575,18 @@ def get_disk_power_status(dev_byid):
     # hdparm -C -q /dev/sda
     # drive state is:  active/idle
     out, err, rc = run_command(
-        [HDPARM, '-C', '-q', get_device_path(dev_byid)], throw=False)
+        [HDPARM, "-C", "-q", get_device_path(dev_byid)], throw=False
+    )
     if len(err) != 1:
         # In some instances an error can be returned even with rc=0.
         # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
-        return 'unknown'  # don't trust any results in this instance
+        return "unknown"  # don't trust any results in this instance
     if len(out) > 0:
         fields = out[0].split()
         # our line of interest has 4 fields when split by spaces, see above.
-        if (len(fields) == 4):
+        if len(fields) == 4:
             return fields[3]
-    return 'unknown'
+    return "unknown"
 
 
 def get_disk_APM_level(dev_byid):
@@ -1495,7 +1611,8 @@ def get_disk_APM_level(dev_byid):
     #  APM_level<tab>= off
     #  APM_level<tab>= not supported
     out, err, rc = run_command(
-        [HDPARM, '-B', '-q', get_device_path(dev_byid)], throw=False)
+        [HDPARM, "-B", "-q", get_device_path(dev_byid)], throw=False
+    )
     if len(err) != 1:
         # In some instances an error can be returned even with rc=0.
         # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
@@ -1503,16 +1620,17 @@ def get_disk_APM_level(dev_byid):
     if len(out) > 0:
         fields = out[0].split()
         # our line of interest has 3 fields when split by spaces, see above.
-        if (len(fields) == 3):
+        if len(fields) == 3:
             level = fields[2]
-            if level == 'off':
+            if level == "off":
                 return 255
             return level
     return 0
 
 
-def set_disk_spindown(dev_byid, spindown_time, apm_value,
-                      spindown_message='no comment'):
+def set_disk_spindown(
+    dev_byid, spindown_time, apm_value, spindown_message="no comment"
+):
     """
     Takes a value to be used with hdparm -S to set disk spindown time for the
     device specified.
@@ -1543,8 +1661,10 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
     # being their spin down times are addressed as regular disks are.  Don't
     # spin down non rotational devices, skip all and return True.
     if is_rotational(dev_byid_withpath) is not True:
-        logger.info('Skipping hdparm settings: device %s '
-                    'not confirmed as rotational' % dev_byid)
+        logger.info(
+            "Skipping hdparm settings: device %s "
+            "not confirmed as rotational" % dev_byid
+        )
         return False
     # Execute the -B hdparm command first as if it fails we can then not
     # include it in the final command in systemd as it will trip the whole
@@ -1555,9 +1675,8 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
     # Do nothing with testing -B options if the value supplied is out of range.
     # Also skip if we have received the remove entry flag of spindown_time = -1
     if (apm_value > 0 and apm_value < 256) and spindown_time != -1:
-        apm_switch_list = ['-q', '-B%s' % apm_value]
-        hdparm_command = [HDPARM] + apm_switch_list + ['%s' %
-                                                       dev_byid_withpath]
+        apm_switch_list = ["-q", "-B%s" % apm_value]
+        hdparm_command = [HDPARM] + apm_switch_list + ["%s" % dev_byid_withpath]
         # Try running this -B only hdparm to see if it will run without
         # error or non zero return code.
         out, err, rc = run_command(hdparm_command, throw=False)
@@ -1565,24 +1684,27 @@ def set_disk_spindown(dev_byid, spindown_time, apm_value,
             # if execution of the -B switch ran OK then add to switch list
             switch_list += apm_switch_list
         else:
-            logger.error('non zero return code or error from hdparm '
-                         'command %s with error %s and return code %s'
-                         % (hdparm_command, err, rc))
+            logger.error(
+                "non zero return code or error from hdparm "
+                "command %s with error %s and return code %s"
+                % (hdparm_command, err, rc)
+            )
     # setup -S hdparm command
-    standby_switch_list = ['-q', '-S%s' % spindown_time]
-    hdparm_command = [HDPARM] + standby_switch_list + ['%s' %
-                                                       dev_byid_withpath]
+    standby_switch_list = ["-q", "-S%s" % spindown_time]
+    hdparm_command = [HDPARM] + standby_switch_list + ["%s" % dev_byid_withpath]
     # Only run the command if we haven't received the spindown_time of -1
     # as this is our 'remove config' flag.
     if spindown_time != -1:
         out, err, rc = run_command(hdparm_command, throw=False)
         if rc != 0:
-            logger.error('non zero return code from hdparm command %s with '
-                         'error %s and return code %s' %
-                         (hdparm_command, err, rc))
+            logger.error(
+                "non zero return code from hdparm command %s with "
+                "error %s and return code %s" % (hdparm_command, err, rc)
+            )
             return False
-    hdparm_command = [HDPARM] + switch_list + standby_switch_list + [
-        '%s' % dev_byid_withpath]
+    hdparm_command = (
+        [HDPARM] + switch_list + standby_switch_list + ["%s" % dev_byid_withpath]
+    )
     # hdparm ran without issues or we are about to remove this devices setting
     # so attempt to edit rockstor-hdparm.service with the same entry
     if update_hdparm_service(hdparm_command, spindown_message) is not True:
@@ -1624,36 +1746,35 @@ def get_dev_byid_name(device_name, remove_path=False):
     is_byid = False
     # Until we find a by-id type name we will be returning device_name
     return_name = device_name
-    byid_name = ''  # Should never be returned prior to reassignment.
+    byid_name = ""  # Should never be returned prior to reassignment.
     longest_byid_name_length = 0
     devlinks = []  # Doubles as a flag for DEVLINKS line found.
     # Special device name considerations / pre-processing can go here.
-    cmd = [UDEVADM, 'info', '--query=property', '--name', str(device_name)]
+    cmd = [UDEVADM, "info", "--query=property", "--name", str(device_name)]
     out, err, rc = run_command(cmd, throw=False)
     if len(out) > 0 and rc == 0:
         # The output has at least one line and our udevadm executed OK.
         # Some systemd/udev configs don't have DEVLINKS as the first line.
         for line in out:
-            if re.match('DEVLINKS', line) is not None:
+            if re.match("DEVLINKS", line) is not None:
                 # convert 'DEVLINKS=devpath devpath devpath' to list of paths
-                devlinks = line.replace('=', ' ').split()[1:]
+                devlinks = line.replace("=", " ").split()[1:]
                 break
         else:  # for loop else
-            logger.debug('No DEVLINKS line from command ({}).'.format(cmd))
+            logger.debug("No DEVLINKS line from command ({}).".format(cmd))
         if len(devlinks) > 0:
             # We have at least 1 devlink.
             # Sort to ensure deterministic behaviour with equal length members.
             devlinks.sort(reverse=True)
             for devname in devlinks:
                 # check if device name is by-id type
-                if re.match('/dev/disk/by-id', devname) is not None:
+                if re.match("/dev/disk/by-id", devname) is not None:
                     is_byid = True
                     # for openLUKS dm mapper device use dm-name-<dev-name>
                     # as we can most easily use this format for working
                     # from lsblk device name to by-id name via dm-name-
                     # patch on the front.
-                    if re.match('/dev/disk/by-id/dm-name-',
-                                devname) is not None:
+                    if re.match("/dev/disk/by-id/dm-name-", devname) is not None:
                         # we have our dm-name match so assign it
                         byid_name = devname
                         break
@@ -1663,9 +1784,10 @@ def get_dev_byid_name(device_name, remove_path=False):
                         longest_byid_name_length = dev_name_length
                         # save the longest by-id type name so far.
                         byid_name = devname
-    if err == ['device node not found', '']:
-        logger.error('Device ({}) not found by '
-                     'command ({})'.format(device_name, cmd))
+    if err == ["device node not found", ""]:
+        logger.error(
+            "Device ({}) not found by " "command ({})".format(device_name, cmd)
+        )
     if is_byid:
         # Return the longest by-id name found in the DEVLINKS line
         # or the first if multiple by-id names were of equal length.
@@ -1677,7 +1799,7 @@ def get_dev_byid_name(device_name, remove_path=False):
         # Strip the path from the beginning of our return_name.
         # For use in Disk.name db field for example.
         # Split return_name by path delimiter char '/' into it's fields.
-        return_name_fields = return_name.split('/')
+        return_name_fields = return_name.split("/")
         if len(return_name_fields) > 1:
             # Original device_name has path delimiters in: assume it has a path
             return_name = return_name_fields[-1]
@@ -1701,12 +1823,11 @@ def get_byid_name_map():
     was encountered by run_command or no by-id type names were encountered.
     """
     byid_name_map = {}
-    out, err, rc = run_command([LS, '-lr', '/dev/disk/by-id'],
-                               throw=True)
+    out, err, rc = run_command([LS, "-lr", "/dev/disk/by-id"], throw=True)
     if rc == 0:
         for each_line in out:
             # Split the line by spaces and '/' chars
-            line_fields = each_line.replace('/', ' ').split()
+            line_fields = each_line.replace("/", " ").split()
             # Grab every sda type name from the last field in the line and add
             # it as a dictionary key with it's value as the by-id type name so
             # we can index by sda type name and retrieve the by-id. As there
@@ -1723,8 +1844,7 @@ def get_byid_name_map():
                 else:
                     # We already have a record of this device so check if the
                     # current line's by-id name is longer.
-                    if len(line_fields[-5]) > len(
-                            byid_name_map[line_fields[-1]]):
+                    if len(line_fields[-5]) > len(byid_name_map[line_fields[-1]]):
                         # The current line's by-id name is longer so use it.
                         byid_name_map[line_fields[-1]] = line_fields[-5]
     return byid_name_map
@@ -1741,13 +1861,13 @@ def get_device_mapper_map():
     names found.
     """
     device_mapper_map = {}
-    out, err, rc = run_command([LS, '-lr', '/dev/mapper'], throw=True)
+    out, err, rc = run_command([LS, "-lr", "/dev/mapper"], throw=True)
     if rc == 0 and len(out) > 3:  # len 3 is only control char dev listed.
         for each_line in out:
-            if each_line == '':
+            if each_line == "":
                 continue
             # Split the line by spaces and '/' chars
-            line_fields = each_line.replace('/', ' ').split()
+            line_fields = each_line.replace("/", " ").split()
             # Grab every dm-0 type name from the last field in the line and add
             # it as a dictionary key with it's value as the mapped dir entry.
             # Our full path is added as a convenience to our caller.
@@ -1768,7 +1888,7 @@ def get_device_path(by_id):
     not there. See https://github.com/rockstor/rockstor-core/pull/1704 for
     some discussion of this topic.
     """
-    return '/dev/disk/by-id/%s' % by_id
+    return "/dev/disk/by-id/%s" % by_id
 
 
 def get_whole_dev_uuid(dev_byid):
@@ -1787,16 +1907,17 @@ def get_whole_dev_uuid(dev_byid):
     6ca7a3eb-7c40-4f9e-925c-b109d68040dd vdf
     which is quicker and more versatile than
     """
-    dev_uuid = ''
+    dev_uuid = ""
     dev_byid_withpath = get_device_path(dev_byid)
-    out, err, rc = run_command([LSBLK, '-n', '-o', 'uuid', dev_byid_withpath],
-                               throw=False)
+    out, err, rc = run_command(
+        [LSBLK, "-n", "-o", "uuid", dev_byid_withpath], throw=False
+    )
     if rc != 0:
         return dev_uuid
     if len(out) > 0:
         # we have at least a single line of output and rc = 0
         # rapid rudimentary check on uuid formatting:
-        if len(out[0].split('-')) > 1:
+        if len(out[0].split("-")) > 1:
             # we have at least a vfat uuid format ie 315A-5CBA so use it:
             dev_uuid = out[0]
     return dev_uuid
@@ -1814,12 +1935,11 @@ def get_uuid_name_map():
     found (unlikely).
     """
     uuid_name_map = {}
-    out, err, rc = run_command([LS, '-l', '/dev/disk/by-uuid'],
-                               throw=True)
+    out, err, rc = run_command([LS, "-l", "/dev/disk/by-uuid"], throw=True)
     if rc == 0:
         for each_line in out:
             # Split the line by spaces and '/' chars
-            line_fields = each_line.replace('/', ' ').split()
+            line_fields = each_line.replace("/", " ").split()
             # Grab every sda type name from the last field in the line and add
             # it as a dictionary key with it's value as the by-uuid name so
             # we can index by sda type name and retrieve the uuid.
@@ -1852,7 +1972,7 @@ def get_dev_temp_name(dev_byid):
     """
     dev_byid_withpath = get_device_path(dev_byid)
     try:
-        temp_name = os.readlink(dev_byid_withpath).split('/')[-1]
+        temp_name = os.readlink(dev_byid_withpath).split("/")[-1]
     except OSError:
         # the device name given may not have a listing in /dev/disk/by-id
         return dev_byid
@@ -1876,15 +1996,15 @@ def get_devname_old(device_name):
     DEVNAME found
     """
     out, err, rc = run_command(
-        [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
-        throw=False)
+        [UDEVADM, "info", "--query=property", "--name", str(device_name)], throw=False
+    )
     if len(out) > 1:
         # the output has at least two lines
         # split the second line by the '=' char
-        fields = out[1].split('=')
+        fields = out[1].split("=")
         if len(fields) > 1:
             # we have at least 2 fields in this line
-            if fields[0] == 'DEVNAME':
+            if fields[0] == "DEVNAME":
                 # return the first value directly after DEVNAME
                 return fields[1]
     # if no DEVNAME value found or an error occurred.
@@ -1907,15 +2027,15 @@ def get_devname(device_name, addPath=False):
     "Unknown device, .."
     """
     out, err, rc = run_command(
-        [UDEVADM, 'info', '--query=name', '--name', str(device_name)],
-        throw=False)
+        [UDEVADM, "info", "--query=name", "--name", str(device_name)], throw=False
+    )
     if len(out) > 0:
         # we have at least a single line of output
         fields = out[0].split()
         if len(fields) == 1:
             # we have a single word output so return it with or without path
             if addPath:
-                return '/dev/{}'.format(fields[0])
+                return "/dev/{}".format(fields[0])
             # return the word (device name ie sda) without added /dev/
             return fields[0]
     # a non one word reply was received on the first line from udevadm or
@@ -1939,14 +2059,15 @@ def update_hdparm_service(hdparm_command_list, comment):
     clear_line_count = 0
     remove_entry = False
     # Establish our systemd_template, needed when no previous config exists.
-    service = 'rockstor-hdparm.service'
-    systemd_template = ('%s/%s' % (settings.CONFROOT, service))
-    systemd_target = ('/etc/systemd/system/%s' % service)
+    service = "rockstor-hdparm.service"
+    systemd_template = "%s/%s" % (settings.CONFROOT, service)
+    systemd_target = "/etc/systemd/system/%s" % service
     # Check for the existence of this systemd template file.
     if not os.path.isfile(systemd_template):
         # We have no template file so log the error and return False.
-        logger.error('Skipping hdparm settings: no %s '
-                     'template file found.' % systemd_template)
+        logger.error(
+            "Skipping hdparm settings: no %s " "template file found." % systemd_template
+        )
         return False
     # Get the line count of our systemd_template, for use in recognizing when
     # we have removed all existing config entries.
@@ -1955,7 +2076,7 @@ def update_hdparm_service(hdparm_command_list, comment):
     # get our by-id device name by extracting the last hdparm list item
     device_name_byid = hdparm_command_list[-1]
     # look four our flag of a -1 value for the -S parameter
-    if hdparm_command_list[-2] == '-S-1':
+    if hdparm_command_list[-2] == "-S-1":
         # When a user selects "Remove config" our -S value = -1, set flag.
         remove_entry = True
     # first create a temp file to use as our output until we are done editing.
@@ -1970,7 +2091,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         infile = systemd_template
         update = False
     # Create our proposed temporary file based on the source file plus edits.
-    with open(infile) as ino, open(npath, 'w') as outo:
+    with open(infile) as ino, open(npath, "w") as outo:
         for line in ino.readlines():  # readlines reads whole file in one go.
             if do_edit and edit_done and clear_line_count != 2:
                 # We must have just edited an entry so we need to skip
@@ -1980,7 +2101,7 @@ def update_hdparm_service(hdparm_command_list, comment):
                 # reset our do_edit flag and continue
                 do_edit = False
                 continue
-            if (re.match('ExecStart=', line) is not None) and not edit_done:
+            if (re.match("ExecStart=", line) is not None) and not edit_done:
                 # we have found a line beginning with "ExecStart="
                 if update:
                     if device_name_byid == line.split()[-1]:
@@ -1989,7 +2110,7 @@ def update_hdparm_service(hdparm_command_list, comment):
                 else:  # no update and ExecStart found so set edit flag
                     do_edit = True
             # process all lines with the following
-            if line == '\n':  # empty line, or rather just a newline char
+            if line == "\n":  # empty line, or rather just a newline char
                 clear_line_count += 1
             if clear_line_count == 2 and not edit_done:
                 # we are looking at our second empty line and haven't yet
@@ -2001,9 +2122,8 @@ def update_hdparm_service(hdparm_command_list, comment):
                 # When remove_entry = True our writes are skipped which equates
                 # to an removal or in the case of a new addition, nothing added
                 if not remove_entry:
-                    outo.write(
-                        'ExecStart=' + ' '.join(hdparm_command_list) + '\n')
-                    outo.write('# %s' % comment + '\n')
+                    outo.write("ExecStart=" + " ".join(hdparm_command_list) + "\n")
+                    outo.write("# %s" % comment + "\n")
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
             if not (do_edit and edit_done and clear_line_count != 2):
@@ -2025,7 +2145,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         # our proposed systemd file is the same length as our template and so
         # contains no ExecStart lines so we disable the rockstor-hdparm
         # service.
-        out, err, rc = run_command([SYSTEMCTL_BIN, 'disable', service])
+        out, err, rc = run_command([SYSTEMCTL_BIN, "disable", service])
         if rc != 0:
             return False
         # and remove our rockstor-hdparm.service file as it's absence indicates
@@ -2040,14 +2160,15 @@ def update_hdparm_service(hdparm_command_list, comment):
         # updating it.  There is an assumption here that !=
         # systemd_template_linecount = greater than. Should be so.
         shutil.move(npath, systemd_target)
-        os.chmod(systemd_target, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
-                 stat.S_IROTH)
+        os.chmod(
+            systemd_target, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
+        )
     if update is not True and tempfile_length > systemd_template_line_count:
         # This is a fresh systemd instance so enable it but only if our line
         # count (ie entries) is greater than the template file's line count.
         # N.B. can't use systemctrl wrapper as then circular dependency ie:-
         # return systemctl('rockstor-hdparm', 'enable')
-        out, err, rc = run_command([SYSTEMCTL_BIN, 'enable', service])
+        out, err, rc = run_command([SYSTEMCTL_BIN, "enable", service])
         if rc != 0:
             return False
     return True
@@ -2065,34 +2186,36 @@ def read_hdparm_setting(dev_byid):
     # TODO: candidate for move to system/hdparm
     if dev_byid is None:
         return None
-    infile = '/etc/systemd/system/rockstor-hdparm.service'
+    infile = "/etc/systemd/system/rockstor-hdparm.service"
     if not os.path.isfile(infile):
         return None
     dev_byid_withpath = get_device_path(dev_byid)
     dev_byid_found = False
     with open(infile) as ino:
         for line in ino.readlines():
-            if line == '\n':
+            if line == "\n":
                 # skip empty lines
                 continue
             line_fields = line.split()
             if dev_byid_found:
                 # we have already matched ExecStart line ending with dev_byid
                 # so now look for a non empty (>= 2) comment line following it.
-                if line_fields[0] == '#' and len(line_fields) >= 2:
+                if line_fields[0] == "#" and len(line_fields) >= 2:
                     # we have a comment after our target device entry so return
                     # that comment minus the #
-                    return ' '.join(line_fields[1:])
+                    return " ".join(line_fields[1:])
                 else:
                     # no comment found directly after target dev so return None
                     return None
-            if line_fields[0] == '#' or len(line_fields) < 4:
+            if line_fields[0] == "#" or len(line_fields) < 4:
                 # Skip comment lines not directly after our target dev_byid.
                 # Also no device line will be of interest if below 4, this way
                 # we don't do slow re.match on non candidates.
                 continue
-            if re.match('ExecStart', line_fields[0]) \
-                    and line_fields[-1] == dev_byid_withpath:
+            if (
+                re.match("ExecStart", line_fields[0])
+                and line_fields[-1] == dev_byid_withpath
+            ):
                 # Found a line beginning with ExecStart and ending in dev_byid.
                 dev_byid_found = True
     return None
@@ -2107,7 +2230,7 @@ def enter_standby(dev_byid):
     :return: None or out, err, rc of command
     """
     # TODO: candidate for move to system/hdparm
-    hdparm_command = [HDPARM, '-q', '-y', get_device_path(dev_byid)]
+    hdparm_command = [HDPARM, "-q", "-y", get_device_path(dev_byid)]
     return run_command(hdparm_command)
 
 
@@ -2133,17 +2256,19 @@ def hostid():
     GIADA N70E-DR - Thanks to forum member hammerite
     """
 
-    fake_puuids = ('03000200-0400-0500-0006-000700080009',
-                   '00020003-0004-0005-0006-000700080009',
-                   '5C4606FA-192F-453A-B299-7B088C63BB9B')
+    fake_puuids = (
+        "03000200-0400-0500-0006-000700080009",
+        "00020003-0004-0005-0006-000700080009",
+        "5C4606FA-192F-453A-B299-7B088C63BB9B",
+    )
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
             puuid = fo.readline().strip()
-            if (puuid in fake_puuids):
+            if puuid in fake_puuids:
                 raise CommandException
             return puuid
     except:
-        return '%s-%s' % (run_command([HOSTID])[0][0], str(uuid.uuid4()))
+        return "%s-%s" % (run_command([HOSTID])[0][0], str(uuid.uuid4()))
 
 
 def trigger_udev_update():
@@ -2153,7 +2278,7 @@ def trigger_udev_update():
     This function is a simple wrapper to call the above command via run_command
     :return: o, e, rc as returned by run_command
     """
-    return run_command([UDEVADM, 'trigger'])
+    return run_command([UDEVADM, "trigger"])
 
 
 def trigger_systemd_update():
@@ -2171,10 +2296,10 @@ def trigger_systemd_update():
     updated to freshly represent the new state of the associated config files.
     :return: o, e, rc as returned by run_command
     """
-    return run_command([SYSTEMCTL_BIN, 'daemon-reload'])
+    return run_command([SYSTEMCTL_BIN, "daemon-reload"])
 
 
-def systemd_name_escape(original_sting, template=''):
+def systemd_name_escape(original_sting, template=""):
     """Wrapper around systemd-escape unit name pre-processor. Used to escape
     stings ready for use as systemd unit or service names. Eg (shortened):
     passed sting = 'luks-5037b320-95d6-4c74-94e7'
@@ -2203,14 +2328,14 @@ def systemd_name_escape(original_sting, template=''):
     # temp --template bug workaround version:
     out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
     if rc == 0 and len(out) > 0:
-        if template == '':
+        if template == "":
             return out[0]
         else:
-            dot_index = template.find('.')
+            dot_index = template.find(".")
             if dot_index == -1:
-                return ''
+                return ""
             # Put our command output into our template at position dot_index.
             out = template[:dot_index] + out[0] + template[dot_index:]
             return out
     else:
-        return ''
+        return ""
