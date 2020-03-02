@@ -234,6 +234,29 @@ def require_postgres(logging):
     return logging.info('systemd daemon reloaded')
 
 
+def establish_shellinaboxd_service(logging):
+    """
+    Normalise on shellinaboxd as service name for shellinabox package.
+    The https://download.opensuse.org/repositories/shells shellinabox package
+    ( https://build.opensuse.org/package/show/shells/shellinabox ) uses a
+    systemd service name of shellinabox.
+    If we find no shellinaboxd service file and there exists a shellinabox one
+    create a copy to enable us to normalise on shellinaboxd and avoid carrying
+    another package just to implement this service name change as we are
+    heavily invested in the shellinaboxd service name.
+    :param logging: handle to logger.
+    :return: logger handle.
+    """
+    logging.info("Normalising on shellinaboxd service file")
+    required_sysd_name = "/usr/lib/systemd/system/shellinaboxd.service"
+    opensuse_sysd_name = "/usr/lib/systemd/system/shellinabox.service"
+    if os.path.exists(required_sysd_name):
+        return logging.info("- shellinaboxd.service already exists")
+    if os.path.exists(opensuse_sysd_name):
+        shutil.copyfile(opensuse_sysd_name, required_sysd_name)
+        run_command([SYSCTL, "daemon-reload"])
+        return logging.info("- established shellinaboxd.service file")
+
 def enable_rockstor_service(logging):
     rs_dest = '/etc/systemd/system/rockstor.service'
     rs_src = '%s/conf/rockstor.service' % BASE_DIR
@@ -436,6 +459,7 @@ def main():
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     init_update_issue(logging)
 
+    establish_shellinaboxd_service(logging)
     enable_rockstor_service(logging)
     enable_bootstrap_service(logging)
 

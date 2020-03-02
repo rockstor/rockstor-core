@@ -1,7 +1,0 @@
-# Shell In A Box configured by Rockstor
-
-USER=root
-GROUP=root
-CERTDIR=/var/lib/shellinabox
-PORT=4200
-OPTS="--no-beep --localhost-only --disable-ssl -s /:LOGIN --css white-on-black.css
