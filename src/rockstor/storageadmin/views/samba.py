@@ -30,7 +30,12 @@ from share import ShareMixin
 from storageadmin.models import SambaShare, User, SambaCustomConfig
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
-from system.samba import refresh_smb_config, status, restart_samba, refresh_smb_discovery
+from system.samba import (
+    refresh_smb_config,
+    status,
+    restart_samba,
+    refresh_smb_discovery,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +108,9 @@ class SambaMixin(object):
         options["time_machine"] = rdata.get("time_machine", def_opts["time_machine"])
         logger.debug("time_machine is = {}".format(options["time_machine"]))
         if not isinstance(options["time_machine"], bool):
-            e_msg = "Invalid choice for time_machine. Possible options are True or False."
+            e_msg = (
+                "Invalid choice for time_machine. Possible options are True or False."
+            )
             handle_exception(Exception(e_msg), rdata)
 
         return options
@@ -128,7 +135,7 @@ class SambaMixin(object):
                 except KeyError:
                     # raise the outer exception as it's more meaningful to the
                     # user.
-                    raise Exception("Requested admin user(%s) does not exist." % au)
+                    raise Exception("Requested admin user({}) does not exist.".format(au))
             finally:
                 auo.smb_shares.add(smb_share)
 
@@ -215,9 +222,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
             try:
                 smbo = SambaShare.objects.get(id=smb_id)
             except:
-                e_msg = ("Samba export for the id ({}) does not exist.").format(
-                    smb_id
-                )
+                e_msg = ("Samba export for the id ({}) does not exist.").format(smb_id)
                 handle_exception(Exception(e_msg), request)
 
             options = self._validate_input(request.data, smbo=smbo)
