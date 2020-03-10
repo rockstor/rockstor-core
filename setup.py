@@ -81,7 +81,7 @@ setup(
         'python-socketio == 1.6.0',
         'pytz == 2014.3',
         'pyzmq == 15.0.0',
-        'requests == 1.1.0',
+        'requests == 2.20.0',
         'six == 1.14.0',  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
         'distro',
         'django-braces == 1.13.0',  # 1.14.0 (30 Dec 2019) needs Django 1.11.0+
