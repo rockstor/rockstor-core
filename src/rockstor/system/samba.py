@@ -28,7 +28,6 @@ from services import service_status, define_avahi_service
 from storageadmin.models import SambaCustomConfig
 
 TESTPARM = "/usr/bin/testparm"
-AVAHID = settings.AVAHID_BIN
 SMB_CONFIG = "/etc/samba/smb.conf"
 TM_CONFIG = "/etc/avahi/services/timemachine.service"
 SYSTEMCTL = "/usr/bin/systemctl"
@@ -279,7 +278,7 @@ def refresh_smb_discovery(exports):
         define_avahi_service("timemachine", share_names=tm_exports)
 
     # Reload avahi config / or restart it
-    run_command([AVAHID, "--reload", ], log=True)
+    run_command([SYSTEMCTL, "restart", "avahi-daemon"], log=True)
 
 
 def update_samba_discovery():

@@ -428,7 +428,6 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 UDEVADM = subprocess.check_output(["which", "udevadm"]).rstrip()
 SHUTDOWN = subprocess.check_output(["which", "shutdown"]).rstrip()
 CHKCONFIG_BIN = subprocess.check_output(["which", "chkconfig"]).rstrip()
-AVAHID_BIN = subprocess.check_output(["which", "avahi-daemon"]).rstrip()
 
 # Establish our OS base id, name, and version:
 # Use id for code path decisions. Others are for Web-UI display purposes.

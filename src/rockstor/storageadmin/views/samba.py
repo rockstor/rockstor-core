@@ -106,7 +106,6 @@ class SambaMixin(object):
                 )
                 handle_exception(Exception(e_msg), rdata)
         options["time_machine"] = rdata.get("time_machine", def_opts["time_machine"])
-        logger.debug("time_machine is = {}".format(options["time_machine"]))
         if not isinstance(options["time_machine"], bool):
             e_msg = (
                 "Invalid choice for time_machine. Possible options are True or False."
