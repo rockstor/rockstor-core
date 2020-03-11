@@ -70,15 +70,24 @@
                title="Comment string to associate with the new share">
           </div>
         </div>
-
+        <div class="form-group">
+             <div class="col-sm-4"></div>
+        <div class="col-sm-4">
+          <input type="checkbox" class="mutually-exclusive" name="time_machine"
+                 {{#if smbShareTimeMachine}}
+                 checked="true"
+                 {{/if}}
+          id="time_machine">    Is this export for Time Machine? &nbsp;&nbsp;<a id="time-machine-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
+        </div>
+          </div> <!-- closing form group -->
       <div class="form-group">
              <div class="col-sm-4"></div>
         <div class="col-sm-4">
-          <input type="checkbox" name="shadow_copy"
+          <input type="checkbox" class="mutually-exclusive" name="shadow_copy"
                  {{#if smbSnapshotPrefixRule}}
                  checked="true"
                  {{/if}}
-          id="shadow_copy">Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
+          id="shadow_copy">    Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
         </div>
           </div> <!-- closing form group -->
           <div class="form-group"
@@ -140,6 +149,27 @@
     Snapshots. Read our <a href="http://rockstor.com/docs"
                            target="_blank">documentation</a> for more information.
   </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="time-machine-info-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 id="myModalLabel">Time Machine</h4>
+      </div>
+      <div class="modal-body">
+        <div class="messages"></div>
+        <p>
+          This feature is needed if the Share is to be used for Time Machine backup from Mac
+            OS X clients. By enabling this feature, you can browse older versions of files
+            from Mac OS X. You can read technical details on
+            <a href="https://en.wikipedia.org/wiki/Time_Machine_(macOS)" target="_blank">Wikipedia</a>
+             or <a href="https://support.apple.com/en-us/HT201250" target="_blank">Apple's documentation</a>.
+        </p>
       </div>
     </div>
   </div>

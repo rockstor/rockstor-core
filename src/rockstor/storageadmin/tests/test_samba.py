@@ -16,15 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import mock
+from mock import patch
 from rest_framework import status
 from rest_framework.test import APITestCase
-from mock import patch
 
 from storageadmin.exceptions import RockStorAPIException
-from storageadmin.models import Pool, Share, SambaCustomConfig, SambaShare, User
+from storageadmin.models import Pool, Share, SambaShare, User
 from storageadmin.tests.test_api import APITestMixin
-
-from storageadmin.views.samba import SambaListView, logger
+from storageadmin.views.samba import SambaListView
 
 
 class SambaTests(APITestMixin, APITestCase, SambaListView):
@@ -92,12 +91,14 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "snapshot_prefix": "",
             "shares": ["9", "10"],
             "shadow_copy": False,
+            "time_machine": True,
             "guest_ok": "no",
         }
         expected_result = {
             "comment": "Samba-Export",
             "read_only": "no",
             "browsable": "yes",
+            "time_machine": True,
             "custom_config": [],
             "guest_ok": "no",
             "shadow_copy": False,
@@ -117,6 +118,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "comment": "samba export",
             "read_only": "no",
             "browsable": "yes",
+            "time_machine": False,
             "custom_config": [],
             "guest_ok": "no",
             "shadow_copy": False,
