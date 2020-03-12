@@ -75,7 +75,7 @@ setup(
         'gevent == 1.1.2',
         'gevent-websocket == 0.9.5',
         'mock == 1.0.1',
-        'psutil == 3.3.0',
+        'psutil == 5.6.6',
         'psycogreen == 1.0',
         'psycopg2 == 2.7.4',
         'python-socketio == 1.6.0',
