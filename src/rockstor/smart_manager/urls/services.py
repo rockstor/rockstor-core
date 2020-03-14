@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from smart_manager.views import (
-    AFPServiceView,
     ActiveDirectoryServiceView,
     BaseServiceView,
     BootstrapServiceView,
@@ -47,9 +46,6 @@ urlpatterns = patterns(
     '',
     # Services
     url(r'^$', BaseServiceView.as_view()),
-    url(r'^netatalk$', AFPServiceView.as_view()),
-    url(r'^netatalk/(?P<command>%s)$' % command_regex,
-        AFPServiceView.as_view()),
     url(r'^nis$', NISServiceView.as_view()),
     url(r'^nis/(?P<command>%s)$' % command_regex, NISServiceView.as_view()),
     url(r'^smb$', SambaServiceView.as_view()),

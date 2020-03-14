@@ -94,21 +94,6 @@ def restore_samba_exports(ml):
     generic_post('{}/samba'.format(BASE_URL), exports)
 
 
-def restore_afp_exports(ml):
-    logger.info("Started restoring AFP exports.")
-    exports = []
-    for m in ml:
-        if m["model"] == "storageadmin.netatalkshare":
-            exports.append(m["fields"])
-    if len(exports) > 0:
-        logger.info("Starting Netatalk service")
-        generic_post("%s/sm/services/netatalk/start" % BASE_URL, {})
-    for e in exports:
-        e["shares"] = [e["path"].split("/")[-1]]
-        generic_post("%s/netatalk" % BASE_URL, e)
-    logger.info("Finished restoring AFP exports.")
-
-
 def restore_nfs_exports(ml):
     logger.info("Started restoring NFS exports.")
     exports = []
@@ -445,7 +430,6 @@ def restore_config(cbid):
     restore_users_groups(sa_ml)
     restore_samba_exports(sa_ml)
     restore_nfs_exports(sa_ml)
-    restore_afp_exports(sa_ml)
     restore_services(sm_ml)
     # restore_dashboard(ml)
     # restore_appliances(ml)
@@ -547,7 +531,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
                 # 4. Service configs
                 # 5. Appliances?
                 # 6. Scheduled Tasks
-                # 7. SFTP, AFP
+                # 7. SFTP
                 logger.debug("restore starting...")
                 restore_config.async(cbo.id)
                 logger.debug("restore submitted...")

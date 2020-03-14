@@ -22,7 +22,6 @@ from storageadmin.models import Setup
 
 def register_services():
     services = {
-        "AFP": "netatalk",
         "NFS": "nfs",
         "Samba": "smb",
         "NIS": "nis",

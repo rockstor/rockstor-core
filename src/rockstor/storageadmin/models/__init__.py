@@ -40,7 +40,6 @@ from sftp import SFTP  # noqa E501
 from plugin import Plugin  # noqa E501
 from adv_nfs_exports import AdvancedNFSExport  # noqa E501
 from oauth_app import OauthApp  # noqa E501
-from netatalk_share import NetatalkShare  # noqa E501
 from pool_balance import PoolBalance  # noqa E501
 from tls_certificate import TLSCertificate  # noqa E501
 from rockon import (RockOn, DImage, DContainer, DPort, DVolume,  # noqa E501

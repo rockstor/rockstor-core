@@ -45,7 +45,6 @@ from receive_trail import (ReceiveTrailListView, ReceiveTrailDetailView)  # noqa
 from ts_service import TaskSchedulerServiceView  # noqa E501
 from dc_service import DataCollectorServiceView  # noqa E501
 from sm_service import ServiceMonitorView  # noqa E501
-from afp_service import AFPServiceView  # noqa E501
 from snmp_service import SNMPServiceView  # noqa E501
 from docker_service import DockerServiceView  # noqa E501
 from smartd_service import SMARTDServiceView  # noqa E501

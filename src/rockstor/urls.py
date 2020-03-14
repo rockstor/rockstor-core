@@ -22,7 +22,6 @@ from storageadmin.views import (SetupUserView, LoginView, DashboardConfigView,
                                 NFSExportGroupDetailView, SambaListView,
                                 SambaDetailView, SFTPListView, SFTPDetailView,
                                 AdvancedNFSExportView, OauthAppView,
-                                NetatalkListView, NetatalkDetailView,
                                 TLSCertificateView, SnapshotView,
                                 ConfigBackupListView, ConfigBackupDetailView,
                                 ConfigBackupUpload, EmailClientView)
@@ -88,9 +87,6 @@ urlpatterns = patterns(
         SambaDetailView.as_view()),
     url(r'^api/sftp$', SFTPListView.as_view()),
     url(r'^api/sftp/(?P<id>\d+)$', SFTPDetailView.as_view()),
-    url(r'^api/netatalk$', NetatalkListView.as_view()),
-    url(r'^api/netatalk/(?P<afp_id>\d+)$',
-        NetatalkDetailView.as_view()),
     # Dashboard config
     url(r'^api/dashboardconfig$',
         DashboardConfigView.as_view()),

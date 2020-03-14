@@ -35,7 +35,6 @@ def backup_config():
             "group",
             "sambashare",
             "sambacustomconfig",
-            "netatalkshare",
             "nfsexport",
             "nfsexportgroup",
             "advancednfsexport",

@@ -34,7 +34,6 @@ SUPERCTL_BIN = "%s/bin/supervisorctl" % settings.ROOT_DIR
 SUPERVISORD_CONF = "%s/etc/supervisord.conf" % settings.ROOT_DIR
 NET = "/usr/bin/net"
 WBINFO = "/usr/bin/wbinfo"
-AFP_CONFIG = "/etc/netatalk/afp.conf"
 
 
 def init_service_op(service_name, command, throw=True):
@@ -55,7 +54,6 @@ def init_service_op(service_name, command, throw=True):
         "rpcbind",
         "ntpd",
         "nslcd",
-        "netatalk",
         "snmpd",
         "docker",
         "smartd",
@@ -223,37 +221,6 @@ def toggle_auth_service(service, command, config=None):
     else:
         return None
     return run_command(ac_cmd)
-
-
-def rockstor_afp_config(fo, afpl):
-    fo.write(";####BEGIN: Rockstor AFP CONFIG####\n")
-    for c in afpl:
-        vol_size = int(c.vol_size / 1024)
-        fo.write("[{}]\n".format(c.description))
-        fo.write("  path = {}\n".format(c.path))
-        fo.write("  time machine = {}\n".format(c.time_machine))
-        fo.write("  vol size limit = {}\n\n".format(vol_size))
-    fo.write(";####END: Rockstor AFP CONFIG####\n")
-
-
-def refresh_afp_config(afpl):
-    fo, npath = mkstemp()
-    with open(AFP_CONFIG) as afo, open(npath, "w") as tfo:
-        rockstor_section = False
-        tfo.write("; Netatalk 3.x configuration file\n\n")
-        tfo.write("[Global]\n")
-        tfo.write("mimic model = RackMac\n")
-        tfo.write("uam list = uams_dhx.so,uams_dhx2.so\n")
-        tfo.write("save password = no\n\n")
-        for line in afo.readlines():
-            if re.match(";####BEGIN: Rockstor AFP CONFIG####", line) is not None:
-                rockstor_section = True
-                rockstor_afp_config(tfo, afpl)
-                break
-        if rockstor_section is False:
-            rockstor_afp_config(tfo, afpl)
-    shutil.move(npath, AFP_CONFIG)
-    os.chmod(AFP_CONFIG, 644)
 
 
 def update_nginx(ip, port):
