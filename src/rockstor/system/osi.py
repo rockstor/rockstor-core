@@ -2254,12 +2254,21 @@ def hostid():
     ZOTAC 880G-ITX (880GITX-A-E) - Thanks to forum member mmmdonuts
     - Examples of the third listed fake_puuids
     GIADA N70E-DR - Thanks to forum member hammerite
+    - Examples of the fourth listed fake_puuids
+    HP / HPE ProLiant MicroServer Gen8 - Thanks to David via support email
+    - Examples of the fifth listed fake_puuids
+    Unknown: reported by Appman
+    - Examples of the sixth listed fake_puuids
+    Unknown: reported by Appman
     """
 
     fake_puuids = (
         "03000200-0400-0500-0006-000700080009",
         "00020003-0004-0005-0006-000700080009",
         "5C4606FA-192F-453A-B299-7B088C63BB9B",
+        "31393138-3538-5A43-3135-353130323750",
+        "00000000-0000-0000-0807-060504030201",
+        "00000000-2093bfe3-e53b-4fc3-9cb1-9217ea6228c7",
     )
     try:
         with open("/sys/class/dmi/id/product_uuid") as fo:
