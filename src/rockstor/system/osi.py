@@ -248,7 +248,7 @@ def scan_disks(min_size, test_mode=False):
                 cur_val = cur_val + sl[i]
                 i = i + 1
             else:
-                raise Exception("Failed to parse lsblk output: %s" % sl)
+                raise Exception("Failed to parse lsblk output: {}".format(sl))
         # md devices, such as mdadmin software raid and some hardware raid
         # block devices show up in lsblk's output multiple times with identical
         # info.  Given we only need one copy of this info we remove duplicate
@@ -520,7 +520,7 @@ def scan_disks(min_size, test_mode=False):
                         # lsblk but future lsblk versions may change this.
                         if dmap["SERIAL"] == "":
                             # transfer our stashed bdev uuid as a serial.
-                            dmap["SERIAL"] = "bcache-%s" % bdev_uuid
+                            dmap["SERIAL"] = "bcache-{}".format(bdev_uuid)
                 # reset the bdev_flag as we are only interested in devices
                 # listed directly after a bdev anyway.
                 bdev_flag = False
@@ -561,7 +561,7 @@ def scan_disks(min_size, test_mode=False):
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
-        # logger.debug('disks item = %s ', Disk(*dnames[d]))
+        # logger.debug('disks item = {} '.format(Disk(*dnames[d])))
     return disks
 
 
@@ -586,15 +586,16 @@ def kernel_info(supported_version):
     uname = os.uname()
     if uname[2] != supported_version and os.path.isfile(GRUBBY):
         e_msg = (
-            "You are running an unsupported kernel(%s). Some features "
-            "may not work properly." % uname[2]
+            "You are running an unsupported kernel({}). Some features "
+            "may not work properly.".format(uname[2])
         )
         carg = "--set-default=/boot/vmlinuz-{}".format(supported_version)
         run_command([GRUBBY, carg])
         e_msg = (
-            "%s Please reboot and the system will "
-            "automatically boot using the supported kernel(%s)"
-            % (e_msg, supported_version)
+            "{} Please reboot and the system will "
+            "automatically boot using the supported kernel({})".format(
+                e_msg, supported_version
+            )
         )
         raise Exception(e_msg)
     return uname[2]
@@ -677,13 +678,11 @@ def refresh_nfs_exports(exports):
                         "-i",
                         "-o",
                         c["option_list"],
-                        "%s:%s" % (c["client_str"], e),
+                        "{}:{}".format(c["client_str"], e),
                     ]
                 )
-                client_str = "%s%s(%s) " % (
-                    client_str,
-                    c["client_str"],
-                    c["option_list"],
+                client_str = "{}{}({}) ".format(
+                    client_str, c["client_str"], c["option_list"]
                 )
                 if "admin_host" in c:
                     admin_host = c["admin_host"]
@@ -694,11 +693,11 @@ def refresh_nfs_exports(exports):
                         "-i",
                         "-o",
                         "rw,no_root_squash",
-                        "%s:%s" % (admin_host, e),
+                        "{}:{}".format(admin_host, e),
                     ]
                 )
-                client_str = "%s %s(rw,no_root_squash)" % (client_str, admin_host)
-            export_str = "%s %s\n" % (e, client_str)
+                client_str = "{} {}(rw,no_root_squash)".format(client_str, admin_host)
+            export_str = "{} {}\n".format(e, client_str)
             efo.write(export_str)
         for s in shares:
             nfs4_mount_teardown(s)
@@ -727,7 +726,7 @@ def config_network_device(
     # 2. Add a new connection
     add_cmd = [NMCLI, "c", "add", "type", dtype, "con-name", name, "ifname", name]
     if method == "manual":
-        add_cmd.extend(["ip4", "%s/%s" % (ipaddr, netmask)])
+        add_cmd.extend(["ip4", "{}/{}".format(ipaddr, netmask)])
     if gateway is not None and len(gateway.strip()) > 0:
         add_cmd.extend(["gw4", gateway])
     run_command(add_cmd)
@@ -752,9 +751,10 @@ def config_network_device(
             break
         if num_attempts > 30:
             msg = (
-                "Waited %s seconds for connection(%s) state to "
-                "be activated but it has not. Giving up. current state: %s"
-                % (num_attempts, name, state)
+                "Waited {} seconds for connection({}) state to "
+                "be activated but it has not. Giving up. current state: {}".format(
+                    num_attempts, name, state
+                )
             )
             raise Exception(msg)
 
@@ -803,7 +803,7 @@ def net_config_helper(name):
                     config["gateway"] = l.split(":")[1]
 
             else:
-                raise Exception("Unknown ipv4.method(%s). " % config["method"])
+                raise Exception("Unknown ipv4.method({}). ".format(config["method"]))
 
         if re.match("connection.interface-name:", l) is not None:
             config["name"] = l.split(":")[1]
@@ -862,8 +862,8 @@ def get_net_config(all=False, name=None):
 
 def update_issue(ipaddr):
     msg = (
-        "\n\nYou can go to RockStor's webui by pointing your web browser"
-        " to https://%s\n\n" % ipaddr
+        "\n\nYou can go to RockStor's Web-UI by pointing your web browser"
+        " to https://{}\n\n".format(ipaddr)
     )
     with open("/etc/issue", "w") as ifo:
         ifo.write(msg)
@@ -948,7 +948,7 @@ def dev_mount_point(dev_temp_name):
 
 def remount(mnt_pt, mnt_options):
     if is_mounted(mnt_pt):
-        run_command([MOUNT, "-o", "remount,%s" % mnt_options, mnt_pt])
+        run_command([MOUNT, "-o", "remount,{}".format(mnt_options), mnt_pt])
     return True
 
 
@@ -977,7 +977,7 @@ def blink_disk(disk_byid, total_exec, read, sleep):
     """
     dd_cmd = [
         DD,
-        "if=%s" % get_device_path(disk_byid),
+        "if={}".format(get_device_path(disk_byid)),
         "of=/dev/null",
         "bs=512",
         "conv=noerror",
@@ -1020,7 +1020,7 @@ def convert_to_kib(size):
     if suffix not in suffix_map:
         if size[-1] == "B":
             return 0
-        raise Exception("Unknown suffix(%s) while converting to KiB" % suffix)
+        raise Exception("Unknown suffix({}) while converting to KiB".format(suffix))
     return int(float(num) * suffix_map[suffix])
 
 
@@ -1273,7 +1273,7 @@ def get_virtio_disk_serial(device_name):
     This process may not deal well with spaces in the serial number
     but VMM does not allow this.
     """
-    dev_path = "/sys/block/%s/serial" % device_name
+    dev_path = "/sys/block/{}/serial".format(device_name)
     out, err, rc = run_command([CAT, dev_path], throw=False)
     if rc != 0:
         return ""
@@ -1325,7 +1325,8 @@ def clean_system_rtc_wake():
     # Every time we write to rtc alarm file this get locked and
     # we have to clean it with a 0 before writing another epoch
     with open(RTC_WAKE_FILE, "w") as rtc:
-        rtc.write("%d" % 0)
+        # TODO: Test the following as: 'rtc.write("0")' may also work.
+        rtc.write("{}".format(0))
 
 
 def set_system_rtc_wake(wakeup_epoch):
@@ -1334,7 +1335,7 @@ def set_system_rtc_wake(wakeup_epoch):
     # Epoch wake up time evaluated on every shutdown scheduled task
     clean_system_rtc_wake()
     with open(RTC_WAKE_FILE, "w") as rtc:
-        rtc.write("%d" % int(wakeup_epoch))
+        rtc.write("{}".format(int(wakeup_epoch)))
     return None
 
 
@@ -1359,9 +1360,7 @@ def is_network_device_responding(address):
         or next((s for s in e if "ping: {}".format(address) in s), None)
     ):
         return False
-    logger.debug(
-        "Ping command unexpectedly exited with return code {}".format(rc)
-    )
+    logger.debug("Ping command unexpectedly exited with return code {}".format(rc))
     if len(e):
         logger.debug(e[0])
     return False
@@ -1446,7 +1445,7 @@ def get_bcache_device_type(device):
     None ie neither indicator is found.
     """
     device = device.split("/")[-1]  # strip off the path
-    sys_path = "/sys/block/%s/bcache/" % device
+    sys_path = "/sys/block/{}/bcache/".format(device)
     if os.path.isfile(sys_path + "label"):
         return "bdev"
     if os.path.isfile(sys_path + "cache_replacement_policy"):
@@ -1518,7 +1517,7 @@ def is_rotational(device_name, test=None):
     rotational = False  # until we find otherwise
     if test is None:
         out, err, rc = run_command(
-            [UDEVADM, "info", "--query=property", "--name=" + "%s" % device_name],
+            [UDEVADM, "info", "--query=property", "--name=" + "{}".format(device_name)],
             throw=False,
         )
     else:
@@ -1662,8 +1661,8 @@ def set_disk_spindown(
     # spin down non rotational devices, skip all and return True.
     if is_rotational(dev_byid_withpath) is not True:
         logger.info(
-            "Skipping hdparm settings: device %s "
-            "not confirmed as rotational" % dev_byid
+            "Skipping hdparm settings: device {} "
+            "not confirmed as rotational".format(dev_byid)
         )
         return False
     # Execute the -B hdparm command first as if it fails we can then not
@@ -1675,8 +1674,8 @@ def set_disk_spindown(
     # Do nothing with testing -B options if the value supplied is out of range.
     # Also skip if we have received the remove entry flag of spindown_time = -1
     if (apm_value > 0 and apm_value < 256) and spindown_time != -1:
-        apm_switch_list = ["-q", "-B%s" % apm_value]
-        hdparm_command = [HDPARM] + apm_switch_list + ["%s" % dev_byid_withpath]
+        apm_switch_list = ["-q", "-B{}".format(apm_value)]
+        hdparm_command = [HDPARM] + apm_switch_list + ["{}".format(dev_byid_withpath)]
         # Try running this -B only hdparm to see if it will run without
         # error or non zero return code.
         out, err, rc = run_command(hdparm_command, throw=False)
@@ -1686,24 +1685,25 @@ def set_disk_spindown(
         else:
             logger.error(
                 "non zero return code or error from hdparm "
-                "command %s with error %s and return code %s"
-                % (hdparm_command, err, rc)
+                "command {} with error {} and return code {}".format(
+                    hdparm_command, err, rc
+                )
             )
     # setup -S hdparm command
-    standby_switch_list = ["-q", "-S%s" % spindown_time]
-    hdparm_command = [HDPARM] + standby_switch_list + ["%s" % dev_byid_withpath]
+    standby_switch_list = ["-q", "-S{}".format(spindown_time)]
+    hdparm_command = [HDPARM] + standby_switch_list + ["{}".format(dev_byid_withpath)]
     # Only run the command if we haven't received the spindown_time of -1
     # as this is our 'remove config' flag.
     if spindown_time != -1:
         out, err, rc = run_command(hdparm_command, throw=False)
         if rc != 0:
             logger.error(
-                "non zero return code from hdparm command %s with "
-                "error %s and return code %s" % (hdparm_command, err, rc)
+                "non zero return code from hdparm command {} with "
+                "error {} and return code {}".format(hdparm_command, err, rc)
             )
             return False
     hdparm_command = (
-        [HDPARM] + switch_list + standby_switch_list + ["%s" % dev_byid_withpath]
+        [HDPARM] + switch_list + standby_switch_list + ["{}".format(dev_byid_withpath)]
     )
     # hdparm ran without issues or we are about to remove this devices setting
     # so attempt to edit rockstor-hdparm.service with the same entry
@@ -1888,7 +1888,7 @@ def get_device_path(by_id):
     not there. See https://github.com/rockstor/rockstor-core/pull/1704 for
     some discussion of this topic.
     """
-    return "/dev/disk/by-id/%s" % by_id
+    return "/dev/disk/by-id/{}".format(by_id)
 
 
 def get_whole_dev_uuid(dev_byid):
@@ -2060,13 +2060,15 @@ def update_hdparm_service(hdparm_command_list, comment):
     remove_entry = False
     # Establish our systemd_template, needed when no previous config exists.
     service = "rockstor-hdparm.service"
-    systemd_template = "%s/%s" % (settings.CONFROOT, service)
-    systemd_target = "/etc/systemd/system/%s" % service
+    systemd_template = "{}/{}".format(settings.CONFROOT, service)
+    systemd_target = "/etc/systemd/system/{}".format(service)
     # Check for the existence of this systemd template file.
     if not os.path.isfile(systemd_template):
         # We have no template file so log the error and return False.
         logger.error(
-            "Skipping hdparm settings: no %s " "template file found." % systemd_template
+            "Skipping hdparm settings: no {} template file found.".format(
+                systemd_template
+            )
         )
         return False
     # Get the line count of our systemd_template, for use in recognizing when
@@ -2123,7 +2125,7 @@ def update_hdparm_service(hdparm_command_list, comment):
                 # to an removal or in the case of a new addition, nothing added
                 if not remove_entry:
                     outo.write("ExecStart=" + " ".join(hdparm_command_list) + "\n")
-                    outo.write("# %s" % comment + "\n")
+                    outo.write("# {}".format(comment) + "\n")
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
             if not (do_edit and edit_done and clear_line_count != 2):
@@ -2277,7 +2279,7 @@ def hostid():
                 raise CommandException
             return puuid
     except:
-        return "%s-%s" % (run_command([HOSTID])[0][0], str(uuid.uuid4()))
+        return "{}-{}".format(run_command([HOSTID])[0][0], str(uuid.uuid4()))
 
 
 def trigger_udev_update():
@@ -2328,7 +2330,7 @@ def systemd_name_escape(original_sting, template=""):
     #     out, err, rc = run_command([SYSTEMD_ESCAPE, original_sting])
     # else:
     #     out, err, rc = run_command(
-    #         [SYSTEMD_ESCAPE, '--template=%s' % template, original_sting])
+    #         [SYSTEMD_ESCAPE, '--template={}'.format(template), original_sting])
     # if rc == 0 and len(out) > 0:
     #     return out[0]
     # else:
