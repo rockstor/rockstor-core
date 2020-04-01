@@ -645,16 +645,6 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
 });
 
 
-var AFP = Backbone.Model.extend({
-    urlRoot: '/api/netatalk'
-});
-
-var AFPCollection = RockStorPaginatedCollection.extend({
-    model: AFP,
-    baseUrl: '/api/netatalk'
-});
-
-
 var ReplicaReceive = Backbone.Model.extend({
     urlRoot: '/api/sm/replicareceives'
 });

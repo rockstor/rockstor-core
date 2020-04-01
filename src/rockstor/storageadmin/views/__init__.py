@@ -39,7 +39,6 @@ from share_command import ShareCommandView  # noqa F401
 from samba import (SambaListView, SambaDetailView)  # noqa F401
 from sftp import (SFTPListView, SFTPDetailView)  # noqa F401
 from oauth_app import OauthAppView  # noqa F401
-from netatalk import (NetatalkListView, NetatalkDetailView)  # noqa F401
 from group import (GroupListView, GroupDetailView)  # noqa F401
 from pool_balance import PoolBalanceView  # noqa F401
 from tls_certificate import TLSCertificateView  # noqa F401

@@ -96,9 +96,6 @@ var AppRouter = Backbone.Router.extend({
         'version': 'showVersion',
         'sftp': 'showSFTP',
         'add-sftp-share': 'addSFTPShare',
-        'afp': 'showAFP',
-        'add-afp-share': 'addAFPShare',
-        'afp/edit/:afpShareId': 'editAFPShare',
         'rockons': 'showRockons',
         'shell': 'showShell',
         'images': 'showImages',
@@ -672,32 +669,6 @@ var AppRouter = Backbone.Router.extend({
         this.renderSidebar('storage', 'sftp');
         this.cleanup();
         this.currentLayout = new AddSFTPShareView();
-        $('#maincontent').empty();
-        $('#maincontent').append(this.currentLayout.render().el);
-    },
-
-    showAFP: function() {
-        this.renderSidebar('storage', 'afp');
-        this.cleanup();
-        this.currentLayout = new AFPView();
-        $('#maincontent').empty();
-        $('#maincontent').append(this.currentLayout.render().el);
-    },
-
-    addAFPShare: function() {
-        this.renderSidebar('storage', 'afp');
-        this.cleanup();
-        this.currentLayout = new AddAFPShareView();
-        $('#maincontent').empty();
-        $('#maincontent').append(this.currentLayout.render().el);
-    },
-
-    editAFPShare: function(afpShareId) {
-        this.renderSidebar('storage', 'afp');
-        this.cleanup();
-        this.currentLayout = new AddAFPShareView({
-            afpShareId: afpShareId
-        });
         $('#maincontent').empty();
         $('#maincontent').append(this.currentLayout.render().el);
     },
