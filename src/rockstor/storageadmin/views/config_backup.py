@@ -20,6 +20,8 @@ import gzip
 import json
 import logging
 import os
+import string
+import random  # Post Python3 move, replace random with: openid.cryptutil randomString
 from time import sleep
 
 from django.conf import settings
@@ -45,6 +47,11 @@ def generic_post(url, payload):
     headers = {"content-type": "application/json"}
     try:
         api_call(url, data=payload, calltype="post", headers=headers, save_error=False)
+        # Remove "password" indexed items from our dict payload to avoid logging them.
+        if isinstance(payload, dict):
+            payload.pop("password", None)
+        else:
+            logger.info("Non Dictionary payload")
         logger.info(
             "Successfully created resource: {}. Payload: {}".format(url, payload)
         )
@@ -54,6 +61,16 @@ def generic_post(url, payload):
             "Payload: {}. Exception: {}. "
             "Moving on.".format(url, payload, e.__str__())
         )
+
+
+def random_pass(length):
+    """
+    Generate a random password for use during user restore.
+    Please see notes in import section on planned 'random' function improvements.
+    :return: Random string request characters long.
+    """
+    all_chars = string.ascii_letters + string.digits + string.punctuation
+    return "".join((random.choice(all_chars)) for _ in range(length))
 
 
 def restore_users_groups(ml):
@@ -72,13 +89,13 @@ def restore_users_groups(ml):
 
     # order is important, first create all the groups and then users.
     for g in groups:
-        generic_post("%s/groups" % BASE_URL, g)
+        generic_post("{}/groups".format(BASE_URL), g)
     for u in users:
         # Replace user record 'group' field pk value with resolved group name.
         u["group"] = groupname_from_pk[u["group"]]
-        # users are created with default(rockstor) password
-        u["password"] = "rockstor"
-        generic_post("%s/users" % BASE_URL, u)
+        # users are created with a random password
+        u["password"] = random_pass(128)
+        generic_post("{}/users".format(BASE_URL), u)
     logger.info("Finished restoring users and groups.")
 
 
@@ -89,9 +106,9 @@ def restore_samba_exports(ml):
         if m["model"] == "storageadmin.sambashare":
             exports.append(m["fields"])
     for e in exports:
-        e['shares'] = []
-        e['shares'].append(e['share'])
-    generic_post('{}/samba'.format(BASE_URL), exports)
+        e["shares"] = []
+        e["shares"].append(e["share"])
+    generic_post("{}/samba".format(BASE_URL), exports)
 
 
 def restore_nfs_exports(ml):
@@ -109,12 +126,12 @@ def restore_nfs_exports(ml):
             adv_exports["entries"].append(m["fields"]["export_str"])
     for e in exports:
         if len(e["mount"].split("/")) != 3:
-            logger.info("skipping nfs export with mount: %s" % e["mount"])
+            logger.info("skipping nfs export with mount: {}".format(e["mount"]))
             continue
         e["shares"] = [e["mount"].split("/")[2]]
         payload = dict(export_groups[e["export_group"]], **e)
-        generic_post("%s/nfs-exports" % BASE_URL, payload)
-    generic_post("%s/adv-nfs-exports" % BASE_URL, adv_exports)
+        generic_post("{}/nfs-exports".format(BASE_URL), payload)
+    generic_post("{}/adv-nfs-exports".format(BASE_URL), adv_exports)
     logger.info("Finished restoring NFS exports.")
 
 
@@ -128,16 +145,17 @@ def restore_services(ml):
             pkid = m["pk"]
             if config is not None:
                 config = json.loads(config)
-                services[name] = {
-                    "conf": {"config": config},
-                    "id": pkid
-                }
+                services[name] = {"conf": {"config": config}, "id": pkid}
     for s in services:
-        generic_post("{}/sm/services/{}/config".format(BASE_URL, s), services[s]["conf"])
+        generic_post(
+            "{}/sm/services/{}/config".format(BASE_URL, s), services[s]["conf"]
+        )
         # Turn the service ON if it is ON in backup AND currently OFF
         so = Service.objects.get(name=s)
-        if validate_service_status(ml, services[s]["id"]) and not \
-                ServiceStatus.objects.get(service_id=so.id).status:
+        if (
+            validate_service_status(ml, services[s]["id"])
+            and not ServiceStatus.objects.get(service_id=so.id).status
+        ):
             generic_post("{}/sm/services/{}/start".format(BASE_URL, s), {})
     logger.info("Finished restoring services.")
 
@@ -151,8 +169,10 @@ def validate_service_status(ml, pkid):
     :return: True
     """
     for m in ml:
-        if m["model"] == 'smart_manager.servicestatus' and \
-            m["fields"]["service"] is pkid:
+        if (
+            m["model"] == "smart_manager.servicestatus"
+            and m["fields"]["service"] is pkid
+        ):
             return m["fields"]["status"]
 
 
@@ -224,47 +244,55 @@ def restore_rockons(ml):
     :param ml: dict of models present in the config backup
     :return:
     """
-    logger.info('Started restoring rock-ons.')
+    logger.info("Started restoring rock-ons.")
     rockons = validate_rockons(ml)
-    logger.info('The following rock-ons will be restored: {}.'.format(rockons))
+    logger.info("The following rock-ons will be restored: {}.".format(rockons))
     if len(rockons) > 0:
         for rid in rockons:
             # Get config for initial install
             validate_install_config(ml, rid, rockons)
             # Install
             rockon_transition_checker.async(rid, rockons)
-            restore_install_rockon.async(rid, rockons, command='install')
+            restore_install_rockon.async(rid, rockons, command="install")
 
             # Get config for post-install update
             validate_update_config(ml, rid, rockons)
             # Update
-            if bool(rockons[rid]['shares']) or \
-                bool(rockons[rid]['labels']):
+            if bool(rockons[rid]["shares"]) or bool(rockons[rid]["labels"]):
                 # docker stop
                 rockon_transition_checker.async(rid, rockons)
-                restore_install_rockon.async(rid, rockons, command='stop')
+                restore_install_rockon.async(rid, rockons, command="stop")
                 # Start update
                 rockon_transition_checker.async(rid, rockons)
-                restore_install_rockon.async(rid, rockons, command='update')
-    logger.info('Finished restoring rock-ons.')
+                restore_install_rockon.async(rid, rockons, command="update")
+    logger.info("Finished restoring rock-ons.")
 
 
 @task()
 def rockon_transition_checker(rid, rockons):
     cur_wait = 0
-    while RockOn.objects.filter(state__contains='pending').exists():
+    while RockOn.objects.filter(state__contains="pending").exists():
         sleep(2)
         cur_wait += 2
         if cur_wait > 30:
-            logger.error('Waited too long for the previous rock-on to install...'
-                         'Stop trying to install the rock-on ({})'.format(rockons[rid]['rname']))
+            logger.error(
+                "Waited too long for the previous rock-on to install..."
+                "Stop trying to install the rock-on ({})".format(rockons[rid]["rname"])
+            )
         break
 
 
 @task()
 def restore_install_rockon(rid, rockons, command):
-    logger.info('Send {} command to the rock-ons api for the following rock-on: {}'.format(command, rockons[rid]['rname']))
-    generic_post('{}/rockons/{}/{}'.format(BASE_URL, rockons[rid]['new_rid'], command), rockons[rid])
+    logger.info(
+        "Send {} command to the rock-ons api for the following rock-on: {}".format(
+            command, rockons[rid]["rname"]
+        )
+    )
+    generic_post(
+        "{}/rockons/{}/{}".format(BASE_URL, rockons[rid]["new_rid"], command),
+        rockons[rid],
+    )
 
 
 def validate_install_config(ml, rid, rockons):
@@ -277,43 +305,46 @@ def validate_install_config(ml, rid, rockons):
     :param rockons: parent dict of rock-ons to be updated
     :return: the same dict updated with the installation parameters present in config backup
     """
-    rockons[rid]['containers'] = []
-    rockons[rid]['shares'] = {}
-    rockons[rid]['ports'] = {}
-    rockons[rid]['devices'] = {}
-    rockons[rid]['environment'] = {}
-    rockons[rid]['cc'] = {}
+    rockons[rid]["containers"] = []
+    rockons[rid]["shares"] = {}
+    rockons[rid]["ports"] = {}
+    rockons[rid]["devices"] = {}
+    rockons[rid]["environment"] = {}
+    rockons[rid]["cc"] = {}
     # Get container(s) id(s)
     for m in ml:
-        if m['model'] == 'storageadmin.dcontainer' and m['fields']['rockon'] is rid:
-            rockons[rid]['containers'].append(m['pk'])
+        if m["model"] == "storageadmin.dcontainer" and m["fields"]["rockon"] is rid:
+            rockons[rid]["containers"].append(m["pk"])
     # For each container_id:
-    for cid in rockons[rid].get('containers'):
+    for cid in rockons[rid].get("containers"):
         # get shares
         update_rockon_shares(cid, ml, rid, rockons)
 
         # get ports
         for m in ml:
-            if m['model'] == 'storageadmin.dport' and m['fields']['container'] is cid:
-                hostp = m['fields']['hostp']
-                containerp = m['fields']['containerp']
-                rockons[rid]['ports'].update({hostp: containerp})
+            if m["model"] == "storageadmin.dport" and m["fields"]["container"] is cid:
+                hostp = m["fields"]["hostp"]
+                containerp = m["fields"]["containerp"]
+                rockons[rid]["ports"].update({hostp: containerp})
 
         # get devices
         for m in ml:
-            if m['model'] == 'storageadmin.dcontainerdevice' and m['fields']['container'] is cid:
-                dev = m['fields']['dev']
-                val = m['fields']['val']
-                rockons[rid]['devices'].update({dev: val})
+            if (
+                m["model"] == "storageadmin.dcontainerdevice"
+                and m["fields"]["container"] is cid
+            ):
+                dev = m["fields"]["dev"]
+                val = m["fields"]["val"]
+                rockons[rid]["devices"].update({dev: val})
 
         # get environment
         update_rockon_env(cid, ml, rid, rockons)
     # get cc
     for m in ml:
-        if m['model'] == 'storageadmin.dcustomconfig' and m['fields']['rockon'] is rid:
-            key = m['fields']['key']
-            val = m['fields']['val']
-            rockons[rid]['cc'].update({key: val})
+        if m["model"] == "storageadmin.dcustomconfig" and m["fields"]["rockon"] is rid:
+            key = m["fields"]["key"]
+            val = m["fields"]["val"]
+            rockons[rid]["cc"].update({key: val})
 
 
 def validate_update_config(ml, rid, rockons):
@@ -327,19 +358,22 @@ def validate_update_config(ml, rid, rockons):
     :return: the same dict of rock-ons parameters updated with post-install customization options
     """
     # Reset both 'shares' AND 'labels' to empty dicts
-    rockons[rid]['shares'] = {}
-    rockons[rid]['labels'] = {}
+    rockons[rid]["shares"] = {}
+    rockons[rid]["labels"] = {}
     # For each container_id:
-    for cid in rockons[rid].get('containers'):
+    for cid in rockons[rid].get("containers"):
         # get shares
         update_rockon_shares(cid, ml, rid, rockons, uservol=True)
 
         # get labels
         for m in ml:
-            if m['model'] == 'storageadmin.dcontainerlabel' and m['fields']['container'] is cid:
-                label = m['fields']['val']
-                cname = m['fields']['key']
-                rockons[rid]['labels'].update({label: cname})
+            if (
+                m["model"] == "storageadmin.dcontainerlabel"
+                and m["fields"]["container"] is cid
+            ):
+                label = m["fields"]["val"]
+                cname = m["fields"]["key"]
+                rockons[rid]["labels"].update({label: cname})
 
 
 def update_rockon_env(cid, ml, rid, rockons):
@@ -350,10 +384,13 @@ def update_rockon_env(cid, ml, rid, rockons):
     # todo: When the env variable is PUID or PGID, try fetching value by name with
     #     current system in case an update is needed.
     for m in ml:
-        if m['model'] == 'storageadmin.dcontainerenv' and m['fields']['container'] is cid:
-            key = m['fields']['key']
-            val = m['fields']['val']
-            rockons[rid]['environment'].update({key: val})
+        if (
+            m["model"] == "storageadmin.dcontainerenv"
+            and m["fields"]["container"] is cid
+        ):
+            key = m["fields"]["key"]
+            val = m["fields"]["val"]
+            rockons[rid]["environment"].update({key: val})
 
 
 def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
@@ -368,15 +405,18 @@ def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
     :return: the same dict of rock-ons parameters updated with share:volume mappings
     """
     for m in ml:
-        if m['model'] == 'storageadmin.dvolume' and m['fields']['container'] is cid and \
-                m['fields']['uservol'] is uservol:
-            share_id = m['fields']['share']
+        if (
+            m["model"] == "storageadmin.dvolume"
+            and m["fields"]["container"] is cid
+            and m["fields"]["uservol"] is uservol
+        ):
+            share_id = m["fields"]["share"]
             sname = get_sname(ml, share_id)
-            dest_dir = m['fields']['dest_dir']
+            dest_dir = m["fields"]["dest_dir"]
             if not uservol:
-                rockons[rid]['shares'].update({sname: dest_dir})
+                rockons[rid]["shares"].update({sname: dest_dir})
             else:
-                rockons[rid]['shares'].update({dest_dir: sname})
+                rockons[rid]["shares"].update({dest_dir: sname})
 
 
 def validate_rockons(ml):
@@ -389,19 +429,21 @@ def validate_rockons(ml):
     :return: dict of rock-ons names to be restored
     """
     # Update all rock-ons-related db information
-    generic_post('{}/rockons/update'.format(BASE_URL), {})
+    generic_post("{}/rockons/update".format(BASE_URL), {})
 
     rockons = {}
     # Filter rock-on that were installed in the backup
     for m in ml:
-        if m['model'] == 'storageadmin.rockon' and m['fields']['state'] == 'installed':
-            rname = m['fields']['name']
-            if not RockOn.objects.filter(name=rname, state='installed').exists() and \
-                    RockOn.objects.filter(name=rname).exists():
+        if m["model"] == "storageadmin.rockon" and m["fields"]["state"] == "installed":
+            rname = m["fields"]["name"]
+            if (
+                not RockOn.objects.filter(name=rname, state="installed").exists()
+                and RockOn.objects.filter(name=rname).exists()
+            ):
                 ro = RockOn.objects.get(name=rname)
-                rockons[m['pk']] = {}
-                rockons[m['pk']]['new_rid'] = ro.id
-                rockons[m['pk']]['rname'] = m['fields']['name']
+                rockons[m["pk"]] = {}
+                rockons[m["pk"]]["new_rid"] = ro.id
+                rockons[m["pk"]]["rname"] = m["fields"]["name"]
     return rockons
 
 
@@ -414,9 +456,10 @@ def get_sname(ml, share_id):
     :return: string of the share name
     """
     for m in ml:
-        if m['model'] == 'storageadmin.share' and m['pk'] is share_id:
-            sname = m['fields']['name']
+        if m["model"] == "storageadmin.share" and m["pk"] is share_id:
+            sname = m["fields"]["name"]
     return sname
+
 
 @task()
 def restore_config(cbid):
