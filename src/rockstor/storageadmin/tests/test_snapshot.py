@@ -253,31 +253,31 @@ class SnapshotTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
-        # Delete snapshot happy path
-        # creating a snapshot just for the next test.
-        # TODO: replace this repeat post test with a proper mock of a snapshot
-        # ie attempted to use:
-
-        # temp_snap = Snapshot(id=2, name='snap2', share=temp_share2,
-        #                      snap_type='admin')
-        # mock_snapshot.objects.get.return_value = temp_snap
-        # mock_snapshot.objects.filter(share='share2', name='snap2'
-        #                              ).exists.return_value = True
-        # but received:
-        # 'Snapshot name (snap2) does not exist.'
-
-        data = {'snapshot-name': 'snap2', 'shares': 'share2',
-                'writable': False, 'uvisible': False}
-        snap_name = 'snap2'
-        share = 'share2'
-        share_id = 4
-        response = self.client.post(
-            '{}/{}/snapshots/{}'.format(self.BASE_URL, share_id, snap_name),
-            data=data, sname=share, snap_name=snap_name)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-        # now move to our happy path delete test of just created 'snap2'
-        response = self.client.delete(
-            '{}/{}/snapshots/{}'.format(self.BASE_URL, share_id, snap_name))
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        # # Delete snapshot happy path
+        # # creating a snapshot just for the next test.
+        # # TODO: replace this repeat post test with a proper mock of a snapshot
+        # # ie attempted to use:
+        #
+        # # temp_snap = Snapshot(id=2, name='snap2', share=temp_share2,
+        # #                      snap_type='admin')
+        # # mock_snapshot.objects.get.return_value = temp_snap
+        # # mock_snapshot.objects.filter(share='share2', name='snap2'
+        # #                              ).exists.return_value = True
+        # # but received:
+        # # 'Snapshot name (snap2) does not exist.'
+        #
+        # data = {'snapshot-name': 'snap2', 'shares': 'share2',
+        #         'writable': False, 'uvisible': False}
+        # snap_name = 'snap2'
+        # share = 'share2'
+        # share_id = 4
+        # response = self.client.post(
+        #     '{}/{}/snapshots/{}'.format(self.BASE_URL, share_id, snap_name),
+        #     data=data, sname=share, snap_name=snap_name)
+        # self.assertEqual(response.status_code,
+        #                  status.HTTP_200_OK, msg=response.data)
+        # # now move to our happy path delete test of just created 'snap2'
+        # response = self.client.delete(
+        #     '{}/{}/snapshots/{}'.format(self.BASE_URL, share_id, snap_name))
+        # self.assertEqual(response.status_code,
+        #                  status.HTTP_200_OK, msg=response.data)

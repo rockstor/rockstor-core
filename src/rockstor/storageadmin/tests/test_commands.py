@@ -29,7 +29,7 @@ class CommandTests(APITestMixin, APITestCase):
         super(CommandTests, cls).setUpClass()
 
         cls.patch_get_pool_info = patch(
-            'storageadmin.views.command.get_pool_info')
+            'fs.btrfs.get_pool_info')
         cls.mock_get_pool_info = cls.patch_get_pool_info.start()
         cls.mock_get_pool_info.return_value = {'disks': [], 'label': 'pool2'}
 
@@ -52,7 +52,7 @@ class CommandTests(APITestMixin, APITestCase):
         cls.mock_update_run = cls.patch_update_run.start()
 
         cls.patch_update_check = patch(
-            'storageadmin.views.command.update_check')
+            'storageadmin.views.command.rockstor_pkg_update_check')
         cls.mock_update_check = cls.patch_update_check.start()
         cls.mock_update_check.return_value = 1, 1, 1
 

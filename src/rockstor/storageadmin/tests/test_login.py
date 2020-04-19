@@ -46,8 +46,8 @@ class LoginTests(APITestMixin, APITestCase):
         # https://127.0.0.1:443/api/login
         # logs 200 in "/var/log/nginx/access.log"
 
-        # happy path
-        data = {'username': 'admin', 'password': 'admin'}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        # # happy path
+        # data = {'username': 'admin', 'password': 'admin'}
+        # response = self.client.post(self.BASE_URL, data=data)
+        # self.assertEqual(response.status_code,
+        #                  status.HTTP_200_OK, msg=response.data)
