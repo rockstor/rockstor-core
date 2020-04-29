@@ -144,9 +144,18 @@ PoolScrubTableModule = RockstorModuleView.extend({
                 html += '<td>';
                 if (poolscrub.get('end_time')) {
                     html += moment(poolscrub.get('end_time')).format(RS_DATE_FORMAT);
+                } else if (poolscrub.get('rate')) {
+                    html += 'ETA: ' + moment(poolscrub.get('eta')).format(RS_DATE_FORMAT);
                 }
                 html += '</td>';
                 html += '<td>' + humanize.filesize(poolscrub.get('kb_scrubbed') * 1024) + '</td>';
+                html += '<td>';
+                if (poolscrub.get('rate')) {
+                    html += poolscrub.get('rate');
+                } else {
+                    html += 'N/A';
+                }
+                html += '</td>';
                 html += '</tr>';
             });
 

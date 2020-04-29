@@ -84,6 +84,8 @@ ScrubDetailsView = RockstorLayoutView.extend({
             var elements = {"id": "ID",
                 "start_time": "Start Time",
                 "end_time": "End Time",
+                "eta": "ETA",
+                "rate": "Scrub Rate",
                 "kb_scrubbed": "Data Scrubbed",
                 "data_extents_scrubbed": "Data Extents Scrubbed",
                 "tree_extents_scrubbed": "Tree Extents Scrubbed",
@@ -114,7 +116,7 @@ ScrubDetailsView = RockstorLayoutView.extend({
                         html += 'Not available'
                     }
                     html += '</td>';
-                } else if (item == 'start_time' || item == 'end_time') {
+                } else if (item == 'start_time' || item == 'end_time' || item == 'eta') {
                     html += '<td>';
                     if (this.scrubDetails.get(item)) {
                         html += moment(this.scrubDetails.get(item)).format(RS_DATE_FORMAT);
