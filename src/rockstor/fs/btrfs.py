@@ -1559,10 +1559,12 @@ def scrub_status(pool):
         statOffset = 1
         durOffset = 1
         fieldOffset = 2
+        haltOffset = -3
     else:
         statOffset = 2
         durOffset = 3
         fieldOffset = 4
+        haltOffset = -1
     out, err, rc = run_command([BTRFS, 'scrub', 'status', '-R', mnt_pt])
     if err != [''] and len(err) > 0:
         if err[0] == "WARNING: failed to read status: Connection reset by " \
@@ -1574,7 +1576,7 @@ def scrub_status(pool):
             stats['status'] = 'halted'
             # extract the duration from towards the end of the first line eg:
             # "... 2017, interrupted after 00:00:09, not running"
-            dfields = out[durOffset].split()[-1].strip(',').split(':')
+            dfields = out[durOffset].split()[haltOffset].strip(',').split(':')
             stats['duration'] = ((int(dfields[0]) * 60 * 60) +
                                  (int(dfields[1]) * 60) + int(dfields[2]))
         elif re.search('running', out[statOffset]) is not None:
