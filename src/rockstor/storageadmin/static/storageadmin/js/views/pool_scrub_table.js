@@ -144,7 +144,7 @@ PoolScrubTableModule = RockstorModuleView.extend({
                 html += '<td>';
                 if (poolscrub.get('end_time')) {
                     html += moment(poolscrub.get('end_time')).format(RS_DATE_FORMAT);
-                } else if (poolscrub.get('rate')) {
+                } else if (poolscrub.get('eta')) {
                     html += 'ETA: ' + moment(poolscrub.get('eta')).format(RS_DATE_FORMAT);
                 }
                 html += '</td>';

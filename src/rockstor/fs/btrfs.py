@@ -20,7 +20,6 @@ import json
 import re
 import time
 import os
-import shutil
 from system.osi import run_command, create_tmp_dir, is_share_mounted, \
     is_mounted, get_dev_byid_name, convert_to_kib, toggle_path_rw, \
     get_device_path, dev_mount_point
