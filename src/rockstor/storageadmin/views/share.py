@@ -186,7 +186,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             # The following pool.save() was informed by test_share.py
             pool.save()
             s.save()
-            if pqid is not PQGROUP_DEFAULT:
+            if pqid != PQGROUP_DEFAULT:
                 update_quota(pool, pqid, size * 1024)
                 share_pqgroup_assign(pqid, s)
             mnt_pt = '%s%s' % (settings.MNT_PT, sname)
@@ -239,7 +239,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                         # if quotas were disabled or pqgroup non-existent.
                         share.pqgroup = qgroup_create(share.pool)
                         share.save()
-                    if share.pqgroup is not PQGROUP_DEFAULT:
+                    if share.pqgroup != PQGROUP_DEFAULT:
                         # Only update quota and assign if now non default as
                         # default can also indicate Read-only fs at this point.
                         update_quota(share.pool, share.pqgroup,

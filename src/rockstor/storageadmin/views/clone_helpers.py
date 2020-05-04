@@ -133,7 +133,7 @@ def create_clone(share, new_name, request, logger, snapshot=None):
         new_share = Share(pool=share.pool, qgroup=qgroup_id, pqgroup=pqid,
                           name=new_name, size=share.size, subvol_name=new_name)
         new_share.save()
-        if pqid is not PQGROUP_DEFAULT:
+        if pqid != PQGROUP_DEFAULT:
             update_quota(new_share.pool, pqid, new_share.size * 1024)
             share_pqgroup_assign(pqid, new_share)
         # Mount our new clone share.

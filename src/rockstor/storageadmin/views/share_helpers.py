@@ -114,7 +114,7 @@ def import_shares(pool, request):
                     logger.debug('#### replacing void, non-existent, or '
                                  'duplicate pqgroup.')
                     pqgroup = qgroup_create(pool)
-                    if pqgroup is not PQGROUP_DEFAULT:
+                    if pqgroup != PQGROUP_DEFAULT:
                         update_quota(pool, pqgroup, share.size * 1024)
                         share_pqgroup_assign(pqgroup, share)
                 else:
@@ -188,7 +188,7 @@ def import_shares(pool, request):
                              'as share and setting replica flag.')
             qid = shares_in_pool[s_in_pool]
             pqid = qgroup_create(pool)
-            if pqid is not PQGROUP_DEFAULT:
+            if pqid != PQGROUP_DEFAULT:
                 update_quota(pool, pqid, pool.size * 1024)
                 pool_mnt_pt = '{}{}'.format(settings.MNT_PT, pool.name)
                 qgroup_assign(qid, pqid, pool_mnt_pt)
