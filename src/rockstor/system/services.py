@@ -47,7 +47,7 @@ def init_service_op(service_name, command, throw=True):
     :return: out err rc
     """
     supported_services = (
-        "nfs",
+        "nfs-server",
         "smb",
         "sshd",
         "ypbind",
@@ -137,7 +137,7 @@ def service_status(service_name, config=None):
         if service_name == "nis":
             return init_service_op("ypbind", "status", throw=False)
         else:
-            return init_service_op("nfs", "status", throw=False)
+            return init_service_op("nfs-server", "status", throw=False)
     elif service_name == "ldap":
         return init_service_op("nslcd", "status", throw=False)
     elif service_name == "sftp":
