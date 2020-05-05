@@ -28,6 +28,8 @@ from pool_scrub import PoolScrub
 from django_ztask.decorators import task
 from django.conf import settings
 import logging
+from datetime import datetime
+from pkg_resources import parse_version
 
 """
 system level helper methods to interact with the btrfs filesystem
@@ -1549,6 +1551,19 @@ def scrub_status(pool):
     """
     stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool)
+    out3, err3, rc3 = run_command([BTRFS, 'version'])
+    btrfsProgsVers = out3[0].strip().split()[1]
+    # Based on version of btrfs progs, set the offset to parse properly
+    if parse_version(btrfsProgsVers) < parse_version("v5.1.2"):
+        statOffset = 1
+        durOffset = 1
+        fieldOffset = 2
+        haltOffset = -3
+    else:
+        statOffset = 2
+        durOffset = 3
+        fieldOffset = 4
+        haltOffset = -1
     out, err, rc = run_command([BTRFS, 'scrub', 'status', '-R', mnt_pt])
     if err != [''] and len(err) > 0:
         if err[0] == "WARNING: failed to read status: Connection reset by " \
@@ -1556,40 +1571,57 @@ def scrub_status(pool):
             stats['status'] = 'conn-reset'
             return stats
     if len(out) > 1:
-        if re.search('interrupted', out[1]) is not None:
+        if re.search('interrupted', out[statOffset]) is not None:
             stats['status'] = 'halted'
             # extract the duration from towards the end of the first line eg:
             # "... 2017, interrupted after 00:00:09, not running"
-            dfields = out[1].split()[-3].strip(',').split(':')
+            dfields = out[durOffset].split()[haltOffset].strip(',').split(':')
             stats['duration'] = ((int(dfields[0]) * 60 * 60) +
                                  (int(dfields[1]) * 60) + int(dfields[2]))
-        elif re.search('running', out[1]) is not None:
+        elif re.search('running', out[statOffset]) is not None:
             stats['status'] = 'running'
-        elif re.search('finished', out[1]) is not None:
+        elif re.search('finished', out[statOffset]) is not None:
             stats['status'] = 'finished'
             # extract the duration from the end of the first line eg:
             # "... 2017 and finished after 00:00:16"
-            dfields = out[1].split()[-1].split(':')
+            dfields = out[durOffset].split()[-1].split(':')
             stats['duration'] = ((int(dfields[0]) * 60 * 60) +
                                  (int(dfields[1]) * 60) + int(dfields[2]))
-        elif re.search('aborted', out[1]) is not None:
+        elif re.search('aborted', out[statOffset]) is not None:
             stats['status'] = 'cancelled'
             # extract the duration from the end of the first line eg:
             # "... 2017 and was aborted after 00:04:56"
             # TODO: we have code duplication here re finished clause above.
-            dfields = out[1].split()[-1].split(':')
+            dfields = out[durOffset].split()[-1].split(':')
             stats['duration'] = ((int(dfields[0]) * 60 * 60) +
                                  (int(dfields[1]) * 60) + int(dfields[2]))
         else:
             return stats
     else:  # we have an unknown status as out is 0 or 1 lines long.
         return stats
-    for l in out[2:-1]:
+    for l in out[fieldOffset:-1]:
         fields = l.strip().split(': ')
         if fields[0] == 'data_bytes_scrubbed':
             stats['kb_scrubbed'] = int(fields[1]) / 1024
         else:
             stats[fields[0]] = int(fields[1])
+    # If we are on the newer version of btrfs-progs, pull additional stats
+    if parse_version(btrfsProgsVers) >= parse_version("v5.1.2"):
+        out2, err2, rc2 = run_command([BTRFS, 'scrub', 'status', mnt_pt])
+        if re.search('running', out2[2]) is not None:
+            # time_left
+            fields2 = out2[4].split()[-1].split(':')
+            stats['time_left'] = ((int(fields2[0]) * 60 * 60) + (int(fields2[1]) * 60) + int(fields2[2]))
+            # eta
+            fields3 = out2[5].strip().split(': ')
+            dateFormat = "%a %b %d %H:%M:%S %Y"
+            stats['eta'] = datetime.strptime(fields3[1].strip(), dateFormat)
+            # rate
+            fields4 = out2[8].strip().split(': ')
+            stats['rate'] = fields4[1].strip()
+        else:
+            fields5 = out2[5].strip().split(': ')
+            stats['rate'] = fields5[1].strip()
     return stats
 
 @task()
