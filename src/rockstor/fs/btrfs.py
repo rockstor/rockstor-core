@@ -1091,6 +1091,13 @@ def qgroup_max(mnt_pt):
                         'show.'.format(mnt_pt))
             # and return our default res
             return -1
+        # confused/indeterminate quota state:
+        emsg2 = "ERROR: cannot find the qgroup"
+        # this is non fatal so treat as disabled and advise. Avoids blocking imports.
+        if re.match(emsg2, e.err[0]) is not None:
+            logger.info("Mount Point: {} has indeterminate quota status, skipping "
+                        "qgroup show.\nTry 'btrfs qgroup disable {}'.".format(mnt_pt, mnt_pt))
+            return -1
         # otherwise we raise an exception as normal.
         raise
     # Catch quota disabled WARNING (no associated Exception) and info log.
@@ -1111,7 +1118,7 @@ def qgroup_max(mnt_pt):
 
 def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
     """
-    When passed only a pool an attempt will be made to ascertain if quotas is
+    When passed only a pool an attempt will be made to ascertain if quotas are
     enabled, if not '-1/-1' is returned as a flag to indicate this state.
     If quotas are enabled then the highest available quota of the form
     2015/n is selected and created, if possible (Read-only caveat).
@@ -1277,6 +1284,14 @@ def qgroup_assign(qid, pqid, mnt_pt):
                          'undetermined quota state.'.format(emsg2, mnt_pt,
                                                             qid, pqid))
             return e.out, e.err, e.rc
+        # N.B. we catch known errors and log to avoid blocking share imports.
+        # Newer btrfs schedules it's own quota rescans and with serialized quote changes
+        # these can overlap so we catch, log, and move on to avoid blocking imports.
+        rescan_sched_out = "Quota data changed, rescan scheduled"
+        rescan_sched_err = "ERROR: quota rescan failed: Operation now in progress"
+        if e.err[0] == rescan_sched_err:
+            self_rescan_error = "--- WARNING: auto quota rescan overlap \n({})".format(rescan_sched_err)
+            return logger.info(rescan_sched_out + "\n" + self_rescan_error)
         wmsg = 'WARNING: quotas may be inconsistent, rescan needed'
         if e.err[0] == wmsg:
             # schedule a rescan if one is not currently running.
@@ -1396,6 +1411,7 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     Note: 2015/* rfer and excl sizes are always equal so to compute
     current real size we can indistinctly use one of them.
     """
+    # Here we depend on fail through throw=False if quotas are disabled/indeterminate
     cmd = [BTRFS, 'qgroup', 'show', volume_dir]
     out, err, rc = run_command(cmd, log=True, throw=False)
     volume_id_sizes = [0, 0]
