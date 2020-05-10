@@ -18,15 +18,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from django.conf import settings
-from fs.btrfs import pool_usage, usage_bound, \
-    are_quotas_enabled, is_pool_missing_dev, dev_stats_zero
+from fs.btrfs import (
+    pool_usage,
+    usage_bound,
+    are_quotas_enabled,
+    is_pool_missing_dev,
+    dev_stats_zero,
+)
 from system.osi import mount_status
 
 RETURN_BOOLEAN = True
 
 
 class Pool(models.Model):
-    """Name of the pool"""
+    # Name of the pool
     name = models.CharField(max_length=4096, unique=True)
     """uuid given automatically by the client"""
     uuid = models.CharField(max_length=100, null=True)
@@ -102,9 +107,10 @@ class Pool(models.Model):
         return 0
 
     def usage_bound(self):
-        disk_sizes = [int(size) for size in self.disk_set
-                      .values_list('size', flat=True)
-                      .order_by('-size')]
+        disk_sizes = [
+            int(size)
+            for size in self.disk_set.values_list("size", flat=True).order_by("-size")
+        ]
         return usage_bound(disk_sizes, len(disk_sizes), self.raid)
 
     @property
@@ -132,4 +138,4 @@ class Pool(models.Model):
             return False
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
