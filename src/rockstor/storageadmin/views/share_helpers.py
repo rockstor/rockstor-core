@@ -42,7 +42,7 @@ PQGROUP_DEFAULT = settings.MODEL_DEFS['pqgroup']
 def helper_mount_share(share, mnt_pt=None):
     if not share.is_mounted:
         if mnt_pt is None:
-            mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+            mnt_pt = ('{}{}'.format(settings.MNT_PT, share.name))
         mount_share(share, mnt_pt)
 
 
@@ -56,7 +56,7 @@ def validate_share(sname, request):
 
 def sftp_snap_toggle(share, mount=True):
     for snap in Snapshot.objects.filter(share=share, uvisible=True):
-        mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT,
+        mnt_pt = ('{}/{}/{}/.{}'.format(settings.SFTP_MNT_ROOT,
                                     share.owner, share.name,
                                     snap.name))
         if (mount and not is_mounted(mnt_pt)):
@@ -69,7 +69,7 @@ def toggle_sftp_visibility(share, snap_name, snap_qgroup, on=True):
     if (not SFTP.objects.filter(share=share).exists()):
         return
 
-    mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT, share.owner,
+    mnt_pt = ('{}/{}/{}/.{}'.format(settings.SFTP_MNT_ROOT, share.owner,
                                 share.name, snap_name))
     if (on):
         if (not is_mounted(mnt_pt)):
@@ -200,7 +200,7 @@ def import_shares(pool, request):
                         replica=replica)
             nso.save()
             update_shareusage_db(s_in_pool, rusage, eusage)
-            mount_share(nso, '%s%s' % (settings.MNT_PT, s_in_pool))
+            mount_share(nso, '{}{}'.format(settings.MNT_PT, s_in_pool))
 
 
 def import_snapshots(share):

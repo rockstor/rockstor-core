@@ -67,9 +67,9 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 continue
             # Log if no attached members are found, ie all devs are detached.
             if p.disk_set.attached().count() == 0:
-                logger.error('Skipping Pool (%s) mount as there '
-                             'are no attached devices. Moving on.' %
-                             p.name)
+                logger.error('Skipping Pool ({}) mount as there '
+                             'are no attached devices. Moving on.'.format(p.name)
+                             )
                 continue
             try:
                 # Get and save what info we can prior to mount.
@@ -98,8 +98,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 p.save()
             except Exception as e:
                 logger.error('Exception while refreshing state for '
-                             'Pool(%s). Moving on: %s' %
-                             (p.name, e.__str__()))
+                             'Pool({}). Moving on: {}'.format(p.name, e.__str__()))
                 logger.exception(e)
 
     @transaction.atomic
@@ -130,7 +129,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     continue
                 try:
                     if not share.is_mounted:
-                        mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+                        # System mounted shares i.e. home will already be mounted.
+                        mnt_pt = ('{}{}'.format(settings.MNT_PT, share.name))
                         mount_share(share, mnt_pt)
                 except Exception as e:
                     e_msg = ('Exception while mounting a share ({}) during '

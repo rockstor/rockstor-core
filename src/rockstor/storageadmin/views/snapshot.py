@@ -121,7 +121,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             writable = False
         add_snap(share, snap_name, writable)
         snap_id = share_id(share.pool, snap_name)
-        qgroup_id = ('0/%s' % snap_id)
+        qgroup_id = ('0/{}'.format(snap_id))
         if share.pqgroup != settings.MODEL_DEFS['pqgroup']:
             qgroup_assign(qgroup_id, share.pqgroup, share.pool.mnt_pt)
         snap_size, eusage = volume_usage(share.pool, qgroup_id)

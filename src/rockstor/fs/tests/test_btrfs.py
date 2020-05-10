@@ -160,7 +160,7 @@ class BTRFSTests(unittest.TestCase):
             # assert get_pool_raid_level returns what we expect.
             self.assertEqual(pool_raid(mount_point), expected_result,
                              msg='get_pool_raid_level() miss identified raid '
-                                 'level %s' % raid_level)
+                                 'level {}'.format(raid_level))
 
     def test_is_subvol_exists(self):
         mount_point = '/mnt2/test-pool/test-share'
