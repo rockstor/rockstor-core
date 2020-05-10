@@ -694,6 +694,7 @@ def shares_info(pool):
             return {}
         raise
     snap_idmap = snapshot_idmap(pool_mnt_pt)
+    default_id = default_subvolid()
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', pool_mnt_pt])
     shares_d = {}
     share_ids = []
@@ -711,7 +712,6 @@ def shares_info(pool):
             # Vol/subvol auto mounted if no subvol/subvolid options are used.
             # Skipped to surface it's subvols as we only surface one layer.
             # Relevant to system rollback by booting from snapshots.
-            default_id = default_subvolid()
             if fields[-1] in ROOT_SUBVOL_EXCLUDE or fields[1] == default_id:
                 logger.debug('Skipping excluded subvol: name=({}).'.format(
                     fields[-1]))
@@ -727,7 +727,8 @@ def shares_info(pool):
         if parent_id in share_ids:
             # subvol of subvol. add it so child subvols can also be ignored.
             share_ids.append(vol_id)
-        elif parent_id in snap_idmap:
+        elif parent_id in snap_idmap and not parent_id == default_id:
+            # Boot to snapshot root pools are themselves a snapshot.
             # snapshot/subvol of snapshot.
             # add it so child subvols can also be ignored.
             snap_idmap[vol_id] = fields[-1].replace('@/', '', 1)
