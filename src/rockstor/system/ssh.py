@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from shutil import move
+from shutil import move, copy
 from tempfile import mkstemp
 from services import systemctl
 from system.osi import run_command
@@ -113,19 +113,56 @@ def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable='rw'):
 
 def rsync_for_sftp(chroot_loc):
     user = chroot_loc.split('/')[-1]
-    run_command([MKDIR, '-p', ('%s/bin' % chroot_loc)])
-    run_command([MKDIR, '-p', ('%s/usr/bin' % chroot_loc)])
-    run_command([MKDIR, '-p', ('%s/lib64' % chroot_loc)])
+    run_command([MKDIR, '-p', '{}/bin'.format(chroot_loc)], log=True)
+    run_command([MKDIR, '-p', '{}/usr/bin'.format(chroot_loc)], log=True)
+    run_command([MKDIR, '-p', '{}/lib64'.format(chroot_loc)], log=True)
+    run_command([MKDIR, '-p', '{}/usr/lib64'.format(chroot_loc)], log=True)
 
-    import shutil
-    shutil.copy('/bin/bash', ('%s/bin' % chroot_loc))
-    shutil.copy('/usr/bin/rsync', ('%s/usr/bin' % chroot_loc))
-    libs = ('ld-linux-x86-64.so.2', 'libacl.so.1', 'libattr.so.1',
-            'libc.so.6', 'libdl.so.2', 'libpopt.so.0', 'libtinfo.so.5',)
-    for l in libs:
-        shutil.copy('/lib64/%s' % l,
-                    ('%s/lib64' % chroot_loc))
-    run_command([USERMOD, '-s', '/bin/bash', user])
+    copy('/bin/bash', '{}/bin'.format(chroot_loc))
+    copy('/usr/bin/rsync', '{}/usr/bin'.format(chroot_loc))
+
+    libs_d = {
+        "rockstor": [
+            '/lib64/ld-linux-x86-64.so.2',
+            '/lib64/libacl.so.1',
+            '/lib64/libattr.so.1',
+            '/lib64/libc.so.6',
+            '/lib64/libdl.so.2',
+            '/lib64/libpopt.so.0',
+            '/lib64/libtinfo.so.5',
+        ],
+        "opensuse-leap": [
+            "/lib64/libacl.so.1",
+            "/lib64/libz.so.1",
+            "/usr/lib64/libpopt.so.0",
+            "/usr/lib64/libslp.so.1",
+            "/lib64/libc.so.6",
+            "/lib64/libattr.so.1",
+            "/usr/lib64/libcrypto.so.1.1",
+            "/lib64/libpthread.so.0",
+            "/lib64/ld-linux-x86-64.so.2",
+            "/lib64/libdl.so.2",
+            "/lib64/libreadline.so.7",
+            "/lib64/libtinfo.so.6",
+        ],
+        "opensuse-tumbleweed": [
+            "/lib64/libc.so.6",
+            "/usr/lib64/libacl.so.1",
+            "/lib64/libz.so.1",
+            "/usr/lib64/libpopt.so.0",
+            "/usr/lib64/libslp.so.1",
+            "/lib64/ld-linux-x86-64.so.2",
+            "/usr/lib64/libcrypto.so.1.1",
+            "/lib64/libpthread.so.0",
+            "/lib64/libdl.so.2",
+            "/lib64/libreadline.so.8",
+            "/lib64/libtinfo.so.6",
+        ]
+    }
+
+    for l in libs_d[settings.OS_DISTRO_ID]:
+        copy(l, "{}{}".format(chroot_loc, l))
+    run_command([USERMOD, '-s', '/bin/bash', user], log=True)
 
 
 def is_pub_key(key):
