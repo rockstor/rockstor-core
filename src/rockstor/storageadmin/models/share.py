@@ -57,6 +57,26 @@ class Share(models.Model):
     pqgroup_rusage = models.BigIntegerField(default=0)
     pqgroup_eusage = models.BigIntegerField(default=0)
 
+    def __init__(self, *args, **kwargs):
+        super(Share, self).__init__(*args, **kwargs)
+        self.update_mnt_pt_var()
+
+    def update_mnt_pt_var(self, *args, **kwargs):
+        # Establish an instance variable of our mnt_pt. Primarily, at least initially,
+        # this serves as a mechanism by which we can 'special case' our ROOT/system
+        # pool shares, the natively (fstab) mounted of those (home) is not mounted by
+        # us and so lives in "/" + pool name (with some @/ fudging). Where as rockstor
+        # created shares are mount
+        # mounted (or it's boot to snapshot instance) at "/".
+        if self.name == "home":
+            self.mnt_pt_var = "{}{}".format(self.pool.mnt_pt, self.name)
+        else:
+            self.mnt_pt_var = "{}{}".format(settings.MNT_PT, self.name)
+
+    @property
+    def mnt_pt(self, *args, **kwargs):
+        return self.mnt_pt_var
+
     @property
     def size_gb(self):
         return self.size / (1024.0 * 1024.0)
@@ -65,7 +85,7 @@ class Share(models.Model):
     def mount_status(self, *args, **kwargs):
         # Presents raw string of active mount options
         try:
-            return mount_status('%s%s' % (settings.MNT_PT, self.name))
+            return mount_status(self.mnt_pt_var)
         except:
             return None
 
@@ -73,8 +93,7 @@ class Share(models.Model):
     def is_mounted(self, *args, **kwargs):
         # Calls mount_status in return boolean mode.
         try:
-            return mount_status('%s%s' % (settings.MNT_PT, self.name),
-                                RETURN_BOOLEAN)
+            return mount_status(self.mnt_pt_var, RETURN_BOOLEAN)
         except:
             return False
 
@@ -85,9 +104,7 @@ class Share(models.Model):
             if str(self.pqgroup) == '-1/-1':
                 return False
             else:
-                return qgroup_exists(
-                    '%s%s' % (settings.MNT_PT, self.pool.name),
-                    '%s' % self.pqgroup)
+                return qgroup_exists(self.mnt_pt_var, '{}'.format(self.pqgroup))
         except:
             return False
 

@@ -68,7 +68,9 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
     @transaction.atomic
     def _toggle_visibility(self, share, snap_name, snap_qgroup, on=True):
         cur_exports = list(NFSExport.objects.all())
-        snap_mnt_pt = ('%s%s/.%s' % (settings.MNT_PT, share.name, snap_name))
+        # The following may be buggy when used with system mounted (fstab) /home
+        # but we currently don't allow /home to be exported.
+        snap_mnt_pt = ('{}{}/.{}'.format(settings.MNT_PT, share.name, snap_name))
         export_pt = snap_mnt_pt.replace(settings.MNT_PT,
                                         settings.NFS_EXPORT_ROOT)
         if (on):
@@ -117,12 +119,11 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         qgroup_id = '0/na'
         if (snap_type == 'replication'):
             writable = False
-        add_snap(share.pool, share.subvol_name, snap_name, writable)
+        add_snap(share, snap_name, writable)
         snap_id = share_id(share.pool, snap_name)
         qgroup_id = ('0/%s' % snap_id)
         if share.pqgroup != settings.MODEL_DEFS['pqgroup']:
-            pool_mnt_pt = '{}{}'.format(settings.MNT_PT, share.pool.name)
-            qgroup_assign(qgroup_id, share.pqgroup, pool_mnt_pt)
+            qgroup_assign(qgroup_id, share.pqgroup, share.pool.mnt_pt)
         snap_size, eusage = volume_usage(share.pool, qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=snap_name,
                      size=snap_size, qgroup=qgroup_id,

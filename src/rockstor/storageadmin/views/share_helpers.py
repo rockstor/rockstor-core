@@ -190,8 +190,7 @@ def import_shares(pool, request):
             pqid = qgroup_create(pool)
             if pqid != PQGROUP_DEFAULT:
                 update_quota(pool, pqid, pool.size * 1024)
-                pool_mnt_pt = '{}{}'.format(settings.MNT_PT, pool.name)
-                qgroup_assign(qid, pqid, pool_mnt_pt)
+                qgroup_assign(qid, pqid, pool.mnt_pt)
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = \
                 volume_usage(pool, qid, pqid)
             nso = Share(pool=pool, qgroup=qid, pqgroup=pqid, name=share_name,
@@ -205,7 +204,7 @@ def import_shares(pool, request):
 
 
 def import_snapshots(share):
-    snaps_d = snaps_info('%s%s' % (settings.MNT_PT, share.pool.name),
+    snaps_d = snaps_info(share.pool.mnt_pt,
                          share.name)
     snaps = [s.name for s in Snapshot.objects.filter(share=share)]
     for s in snaps:

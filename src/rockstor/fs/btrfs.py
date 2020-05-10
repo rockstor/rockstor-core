@@ -471,7 +471,7 @@ def mount_root(pool):
     :return: either the relevant mount point or an Exception which either
     indicates 'no disks in pool' or 'Unknown Reason'
     """
-    root_pool_mnt = DEFAULT_MNT_DIR + pool.name
+    root_pool_mnt = pool.mnt_pt
     if pool.is_mounted:
         return root_pool_mnt
     # Creates a directory to act as the mount point.
@@ -759,15 +759,10 @@ def parse_snap_details(pool_mnt_pt, snap_rel_path):
     :return: snap_name (None if clone), writable (Boolean), is_clone (Boolean)
     Note: is_clone is redundant but serves as a convenience boolean.
     """
-    full_snap_path = pool_mnt_pt + '/' + snap_rel_path
-    # We may be querying system snapshots (boot to snapshot) so query the
-    # original as they may not exist in /mnt2/system yet.
-    if pool_mnt_pt == '{}{}'.format(settings.MNT_PT, settings.SYS_VOL_LABEL) \
-            and not os.path.exists(full_snap_path):
-        # we can try querying it's '/' original by supplanting the remount
-        # path component with it's original:
-        # ie /mnt2/system/.snapshots/2/snapshot with /.snapshots/2/snapshot
-        full_snap_path = full_snap_path.replace(pool_mnt_pt, '', 1)
+    if pool_mnt_pt == "/":
+        full_snap_path = pool_mnt_pt + snap_rel_path
+    else:
+        full_snap_path = pool_mnt_pt + '/' + snap_rel_path
     writable = not get_property(full_snap_path, 'ro')
     snap_name = None
     is_clone = False
@@ -872,7 +867,8 @@ def remove_share(pool, share_name, pqgroup, force=False):
     :param force: Flag used to also remove all subvolumes of the given share.
     """
     if (is_share_mounted(share_name)):
-        mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
+        # N.B. we only unmount rockstor managed share points.
+        mnt_pt = ('{}{}'.format(DEFAULT_MNT_DIR, share_name))
         umount_root(mnt_pt)
     root_pool_mnt = mount_root(pool)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
@@ -952,16 +948,16 @@ def add_clone(pool, share, clone, snapshot=None):
     return add_snap_helper(orig_path, clone_path, True)
 
 
-def add_snap(pool, share_name, snap_name, writable):
+def add_snap(share, snap_name, writable):
     """
     create a snapshot
     """
-    root_pool_mnt = mount_root(pool)
     # Note: origin of /mnt2/system/home does not work on some multi subvol root
     # arrangements: "ERROR: not a subvolume: /mnt2/system/home"
     # but /mnt2/home works on legacy and multi subvol roots.
-    share_full_path = ('{}/{}'.format(settings.MNT_PT, share_name))
-    snap_dir = ('{}/.snapshots/{}'.format(root_pool_mnt, share_name))
+    # We have to use /home for home share path on boot to snapshot ROOT pools.
+    share_full_path = share.mnt_pt
+    snap_dir = ('{}/.snapshots/{}'.format(share.pool.mnt_pt, share.subvol_name))
     create_tmp_dir(snap_dir)
     snap_full_path = ('{}/{}'.format(snap_dir, snap_name))
     return add_snap_helper(share_full_path, snap_full_path, writable)
@@ -1246,8 +1242,7 @@ def share_pqgroup_assign(pqgroup, share):
     :param share: share object
     :return: qgroup_assign() result.
     """
-    mnt_pt = '{}/{}'.format(settings.MNT_PT, share.pool.name)
-    return qgroup_assign(share.qgroup, pqgroup, mnt_pt)
+    return qgroup_assign(share.qgroup, pqgroup, share.pool.mnt_pt)
 
 
 def qgroup_assign(qid, pqid, mnt_pt):

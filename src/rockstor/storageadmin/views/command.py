@@ -91,7 +91,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 p.uuid = pool_info.uuid
                 p.save()
                 mount_root(p)
-                p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
+                p.raid = pool_raid(p.mnt_pt)['data']
                 p.size = p.usage_bound()
                 # Consider using mount_status() parse to update root pool db on
                 # active (fstab initiated) compression setting.
@@ -159,6 +159,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             for sftpo in SFTP.objects.all():
+                # The following may be buggy when used with system mounted (fstab) /home
+                # but we currently don't allow /home to be exported.
                 try:
                     sftp_mount(sftpo.share, settings.MNT_PT,
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
