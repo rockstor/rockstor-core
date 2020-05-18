@@ -903,6 +903,8 @@ def mount_status(mnt_pt, return_boolean=False):
     mount options, or 'unmounted' if no relevant /proc/mounts entry was found.
     """
     with open("/proc/mounts") as pfo:
+        # See in-developemnt test_mount_status() re the following line:
+        # for each_line in pfo.read().splitlines():
         for each_line in pfo.readlines():
             line_fields = each_line.split()
             if len(line_fields) < 4:

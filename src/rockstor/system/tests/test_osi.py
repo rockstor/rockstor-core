@@ -1685,3 +1685,80 @@ class OSITests(unittest.TestCase):
         returned = get_byid_name_map()
         self.maxDiff = None
         self.assertDictEqual(returned, expected)
+
+#     def test_mount_status(self):
+#         """
+#         Test mount_status with some real system data to assure expected output
+#         mount_status() parses cat /proc/mounts and is used primarily by the pool & share
+#         models.
+#         Test earmarked for post Python 3 move as some changes were made to how read call
+#         is interpreted in mock re readlines() and mock_open()
+#         https://docs.python.org/3/library/unittest.mock.html#mock-open
+#         """
+#         # Leap 15.2 boot-to-snap config with /@ pool mount
+#         proc_mount_out = """
+# sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
+# proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+# devtmpfs /dev devtmpfs rw,nosuid,size=1261576k,nr_inodes=315394,mode=755 0 0
+# securityfs /sys/kernel/security securityfs rw,nosuid,nodev,noexec,relatime 0 0
+# tmpfs /dev/shm tmpfs rw,nosuid,nodev 0 0
+# devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0
+# tmpfs /run tmpfs rw,nosuid,nodev,mode=755 0 0
+# tmpfs /sys/fs/cgroup tmpfs ro,nosuid,nodev,noexec,mode=755 0 0
+# cgroup /sys/fs/cgroup/unified cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+# cgroup /sys/fs/cgroup/systemd cgroup rw,nosuid,nodev,noexec,relatime,xattr,name=systemd 0 0
+# pstore /sys/fs/pstore pstore rw,nosuid,nodev,noexec,relatime 0 0
+# cgroup /sys/fs/cgroup/devices cgroup rw,nosuid,nodev,noexec,relatime,devices 0 0
+# cgroup /sys/fs/cgroup/freezer cgroup rw,nosuid,nodev,noexec,relatime,freezer 0 0
+# cgroup /sys/fs/cgroup/cpu,cpuacct cgroup rw,nosuid,nodev,noexec,relatime,cpu,cpuacct 0 0
+# cgroup /sys/fs/cgroup/cpuset cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
+# cgroup /sys/fs/cgroup/pids cgroup rw,nosuid,nodev,noexec,relatime,pids 0 0
+# cgroup /sys/fs/cgroup/hugetlb cgroup rw,nosuid,nodev,noexec,relatime,hugetlb 0 0
+# cgroup /sys/fs/cgroup/net_cls,net_prio cgroup rw,nosuid,nodev,noexec,relatime,net_cls,net_prio 0 0
+# cgroup /sys/fs/cgroup/blkio cgroup rw,nosuid,nodev,noexec,relatime,blkio 0 0
+# cgroup /sys/fs/cgroup/rdma cgroup rw,nosuid,nodev,noexec,relatime,rdma 0 0
+# cgroup /sys/fs/cgroup/memory cgroup rw,nosuid,nodev,noexec,relatime,memory 0 0
+# cgroup /sys/fs/cgroup/perf_event cgroup rw,nosuid,nodev,noexec,relatime,perf_event 0 0
+# /dev/vda3 / btrfs rw,relatime,space_cache,subvolid=456,subvol=/@/.snapshots/117/snapshot 0 0
+# systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=30,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=1843 0 0
+# debugfs /sys/kernel/debug debugfs rw,relatime 0 0
+# hugetlbfs /dev/hugepages hugetlbfs rw,relatime,pagesize=2M 0 0
+# mqueue /dev/mqueue mqueue rw,relatime 0 0
+# /dev/vda3 /.snapshots btrfs rw,relatime,space_cache,subvolid=258,subvol=/@/.snapshots 0 0
+# /dev/vda3 /boot/grub2/i386-pc btrfs rw,relatime,space_cache,subvolid=267,subvol=/@/boot/grub2/i386-pc 0 0
+# /dev/vda3 /tmp btrfs rw,relatime,space_cache,subvolid=264,subvol=/@/tmp 0 0
+# /dev/vda3 /root btrfs rw,relatime,space_cache,subvolid=262,subvol=/@/root 0 0
+# /dev/vda3 /srv btrfs rw,relatime,space_cache,subvolid=263,subvol=/@/srv 0 0
+# /dev/vda3 /usr/local btrfs rw,relatime,space_cache,subvolid=266,subvol=/@/usr/local 0 0
+# /dev/vda3 /home btrfs rw,relatime,space_cache,subvolid=484,subvol=/@/home 0 0
+# /dev/vda3 /boot/grub2/x86_64-efi btrfs rw,relatime,space_cache,subvolid=268,subvol=/@/boot/grub2/x86_64-efi 0 0
+# /dev/vda3 /opt btrfs rw,relatime,space_cache,subvolid=261,subvol=/@/opt 0 0
+# /dev/vda3 /var btrfs rw,relatime,space_cache,subvolid=265,subvol=/@/var 0 0
+# /dev/vda2 /boot/efi vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 0
+# tmpfs /run/user/0 tmpfs rw,nosuid,nodev,relatime,size=253996k,mode=700 0 0
+# /dev/vda3 /mnt2/ROOT btrfs rw,relatime,space_cache,subvolid=257,subvol=/@ 0 0
+# /dev/vda3 /mnt2/home btrfs rw,relatime,space_cache,subvolid=484,subvol=/@/home 0 0
+# /dev/vda3 /mnt2/sys-share btrfs rw,relatime,space_cache,subvolid=482,subvol=/@/sys-share 0 0
+# /dev/vda3 /mnt2/another-sys-share btrfs rw,relatime,space_cache,subvolid=485,subvol=/@/another-sys-share 0 0
+# /dev/vda3 /mnt2/another-sys-share/.another-sys-share-writable-visible btrfs rw,relatime,space_cache,subvolid=489,subvol=/@/.snapshots/another-sys-share/another-sys-share-writable-visible 0 0
+# /dev/vda3 /mnt2/another-sys-share/.another-sys-share-visible btrfs rw,relatime,space_cache,subvolid=488,subvol=/@/.snapshots/another-sys-share/another-sys-share-visible 0 0
+# tracefs /sys/kernel/debug/tracing tracefs rw,relatime 0 0
+# """
+#         expected = ["rw,relatime,space_cache,subvolid=484,subvol=/@/home",
+#                     "rw,relatime,space_cache,subvolid=482,subvol=/@/sys-share"]
+#         # Based on the following article:
+#         # https://nickolaskraus.org/articles/how-to-mock-the-built-in-function-open/
+#         # Python 3 has "builtins.open" note the "s"
+#         with mock.patch("__builtin__.open",
+#                         mock.mock_open(
+#                             read_data=proc_mount_out)) as mocked_open:
+#             returned = mount_status("/mnt2/sys-share")
+#             # The following shows that a handle.read().splitlines() works
+#             # ... but not handle.readlines() such as we use in mount_status()
+#             # But readlines() != splitlines() on break !!! readlines splits on \n only.
+#             # https://discuss.python.org/t/changing-str-splitlines-to-match-file-readlines/174
+#             # with open("foo") as test_open:
+#             #     for each_line in test_open.read().splitlines():
+#             #         print("each line = {}".format(each_line))
+#             mocked_open.assert_called_once_with("/proc/mounts")
+#         self.assertEqual(returned, expected[1])

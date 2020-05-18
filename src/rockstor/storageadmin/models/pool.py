@@ -18,15 +18,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from django.conf import settings
-from fs.btrfs import pool_usage, usage_bound, \
-    are_quotas_enabled, is_pool_missing_dev, dev_stats_zero
+from fs.btrfs import (
+    pool_usage,
+    usage_bound,
+    are_quotas_enabled,
+    is_pool_missing_dev,
+    dev_stats_zero,
+    default_subvol)
 from system.osi import mount_status
 
 RETURN_BOOLEAN = True
 
 
 class Pool(models.Model):
-    """Name of the pool"""
+    # Name of the pool
     name = models.CharField(max_length=4096, unique=True)
     """uuid given automatically by the client"""
     uuid = models.CharField(max_length=100, null=True)
@@ -42,6 +47,7 @@ class Pool(models.Model):
     def __init__(self, *args, **kwargs):
         super(Pool, self).__init__(*args, **kwargs)
         self.update_missing_dev()
+        self.update_mnt_pt_var()
         self.update_device_stats()
 
     def update_missing_dev(self, *args, **kwargs):
@@ -57,14 +63,27 @@ class Pool(models.Model):
     def has_missing_dev(self, *args, **kwargs):
         return self.missing_dev
 
+    def update_mnt_pt_var(self, *args, **kwargs):
+        # Establish an instance variable of our mnt_pt. Primarily, at least initially,
+        # this serves as a mechanism by which we can 'special case' our ROOT/system
+        # pool and avoid mounting it again at the usual /mnt2/pool-name as it is already
+        # mounted (or it's boot to snapshot instance) at "/".
+        if self.role == "root" and not default_subvol().boot_to_snap:
+            self.mnt_pt_var = "/"
+        else:
+            self.mnt_pt_var = "{}{}".format(settings.MNT_PT, self.name)
+
+    @property
+    def mnt_pt(self, *args, **kwargs):
+        return self.mnt_pt_var
+
     def update_device_stats(self, *args, **kwargs):
         # Establish an instance variable to represent non zero stats.
         # Currently Boolean and may be updated during instance life by
         # calling this method again or directly setting the field.
         try:
             if self.is_mounted:
-                mnt_pt = '%s%s' % (settings.MNT_PT, self.name)
-                self.dev_stats_zero = dev_stats_zero(mnt_pt)
+                self.dev_stats_zero = dev_stats_zero(self.mnt_pt_var)
             else:
                 self.dev_stats_zero = True
         except:
@@ -81,23 +100,24 @@ class Pool(models.Model):
         # less code. For share usage, this type of logic could slow things
         # down quite a bit because there can be 100's of Shares, but number
         # of Pools even on a large instance is usually no more than a few.
-        return self.size - pool_usage('%s%s' % (settings.MNT_PT, self.name))
+        return self.size - pool_usage(self.mnt_pt_var)
 
     @property
     def reclaimable(self, *args, **kwargs):
         return 0
 
     def usage_bound(self):
-        disk_sizes = [int(size) for size in self.disk_set
-                      .values_list('size', flat=True)
-                      .order_by('-size')]
+        disk_sizes = [
+            int(size)
+            for size in self.disk_set.values_list("size", flat=True).order_by("-size")
+        ]
         return usage_bound(disk_sizes, len(disk_sizes), self.raid)
 
     @property
     def mount_status(self, *args, **kwargs):
         # Presents raw string of active mount options akin to mnt_options field
         try:
-            return mount_status('%s%s' % (settings.MNT_PT, self.name))
+            return mount_status(self.mnt_pt_var)
         except:
             return None
 
@@ -105,8 +125,7 @@ class Pool(models.Model):
     def is_mounted(self, *args, **kwargs):
         # Calls mount_status in return boolean mode.
         try:
-            return mount_status('%s%s' % (settings.MNT_PT, self.name),
-                                RETURN_BOOLEAN)
+            return mount_status(self.mnt_pt_var, RETURN_BOOLEAN)
         except:
             return False
 
@@ -114,9 +133,9 @@ class Pool(models.Model):
     def quotas_enabled(self, *args, **kwargs):
         # Calls are_quotas_enabled for boolean response
         try:
-            return are_quotas_enabled('%s%s' % (settings.MNT_PT, self.name))
+            return are_quotas_enabled(self.mnt_pt_var)
         except:
             return False
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

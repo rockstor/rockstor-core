@@ -18,7 +18,8 @@ from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
                       share_id, device_scan, scrub_status,
                       degraded_pools_found, snapshot_idmap, get_property,
                       parse_snap_details, shares_info, get_snap,
-                      dev_stats_zero, get_dev_io_error_stats)
+                      dev_stats_zero, get_dev_io_error_stats, DefaultSubvol,
+                      default_subvol)
 from mock import patch
 
 
@@ -160,7 +161,7 @@ class BTRFSTests(unittest.TestCase):
             # assert get_pool_raid_level returns what we expect.
             self.assertEqual(pool_raid(mount_point), expected_result,
                              msg='get_pool_raid_level() miss identified raid '
-                                 'level %s' % raid_level)
+                                 'level {}'.format(raid_level))
 
     def test_is_subvol_exists(self):
         mount_point = '/mnt2/test-pool/test-share'
@@ -1194,10 +1195,10 @@ class BTRFSTests(unittest.TestCase):
         err = ['']
         rc = 0
         self.mock_run_command.return_value = (out, err, rc)
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '257'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("257", "@", False)
         # parse_snap_details
         self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
         self.mock_parse_snap_details = self.patch_parse_snap_details.start()
@@ -1251,10 +1252,10 @@ class BTRFSTests(unittest.TestCase):
         err = ['']
         rc = 0
         self.mock_run_command.return_value = (out, err, rc)
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '5'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("5", "(FS_TREE)", False)
         # parse_snap_details
         self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
         self.mock_parse_snap_details = self.patch_parse_snap_details.start()
@@ -1298,10 +1299,10 @@ class BTRFSTests(unittest.TestCase):
         err = ['']
         rc = 0
         self.mock_run_command.return_value = (out, err, rc)
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '5'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("5", "(FS_TREE)", False)
         self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
         self.mock_parse_snap_details = self.patch_parse_snap_details.start()
         # From above we expect the following Rockstor relevant shares:
@@ -1366,10 +1367,10 @@ class BTRFSTests(unittest.TestCase):
                'ID 294 gen 1725 parent 268 top level 268 path ghost-share', '']
         err = ['']
         rc = 0
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '268'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("268", "@/.snapshots/1/snapshot", True)
         # run_command
         self.mock_run_command.return_value = (out, err, rc)
         # parse_snap_details
@@ -1382,6 +1383,103 @@ class BTRFSTests(unittest.TestCase):
         # Mocked return value in following = (snap_name, writable, is_clone)
         # ie no clones
         self.mock_parse_snap_details.return_value = 'foo-bar', True, False
+        returned = shares_info(pool)
+        self.assertEqual(returned, expected,
+                         msg="Failed system pool share/clone filtering:\n"
+                             "returned {},\nexpected {}.\n".format(returned,
+                                                                   expected))
+
+    def test_shares_info_system_pool_boot_to_snapshot_root_user_share(self):
+        """
+        As per test_shares_info_system_pool_post_btrfs_subvol_list_path_changes() this
+        test concerns more modern "btrfs subvolume list -p" behaviour but in the context
+        our or 'Built on openSUSE' system pool user created shares not being reported
+        post creation due to our filtering our subvols of snapshots and given a boot to
+        snapshot makes our user share have a parent that is also a snapshot. Fix was to
+        make an exception for this exclusion if the parent id of the snapshot was also
+        the default_id of this pool (the boot to snapshot config).
+        We are testing for he detection of the user created share that post cretion in
+        later Leap15.1+ versions would then vanish post bottom up read via shares_info()
+        when ROOT pool was boot to snapshot enabled.
+        ID 257 gen 19 parent 5 top level 5 path @
+        -- ID 258 gen 14951 parent 257 top level 257 path @/.snapshots
+        --- ID 259 gen 15544 parent 258 top level 258 path @/.snapshots/1/snapshot
+        ---- ID 292 gen 941 parent 259 top level 259 path test_share_01
+        :return:
+        """
+        # Set role='root' as testing system pool subvol exclusion mechanism.
+        pool = Pool(raid='raid0', name='test-pool', role='root')
+        # example data includes default snapper 'system' snapshots & no clones.
+        snap_idmap_return = {'357': '.snapshots/81/snapshot',
+                             '365': '.snapshots/88/snapshot',
+                             '360': '.snapshots/84/snapshot',
+                             '331': '.snapshots/57/snapshot',
+                             '332': '.snapshots/58/snapshot',
+                             '270': '.snapshots/2/snapshot',
+                             '356': '.snapshots/80/snapshot',
+                             '355': '.snapshots/79/snapshot',
+                             '259': '.snapshots/1/snapshot',  # Our current ROOT snap
+                             '353': '.snapshots/78/snapshot',
+                             '352': '.snapshots/77/snapshot',
+                             '351': '.snapshots/76/snapshot',
+                             '350': '.snapshots/75/snapshot',
+                             '364': '.snapshots/87/snapshot',
+                             '361': '.snapshots/85/snapshot',
+                             '363': '.snapshots/86/snapshot',
+                             '359': '.snapshots/83/snapshot',
+                             '358': '.snapshots/82/snapshot'}
+        self.patch_snap_idmap = patch('fs.btrfs.snapshot_idmap')
+        self.mock_snap_idmap = self.patch_snap_idmap.start()
+        self.mock_snap_idmap.return_value = snap_idmap_return
+        # mock 'btrfs subvol_list_-p' (via run_command) return values
+        out = ['ID 257 gen 19 parent 5 top level 5 path @',
+               'ID 258 gen 16031 parent 257 top level 257 path @/.snapshots',
+               'ID 259 gen 16312 parent 258 top level 258 path @/.snapshots/1/snapshot',
+               'ID 260 gen 1656 parent 257 top level 257 path @/home',
+               'ID 261 gen 16318 parent 257 top level 257 path @/opt',
+               'ID 262 gen 16225 parent 257 top level 257 path @/root',
+               'ID 263 gen 11789 parent 257 top level 257 path @/srv',
+               'ID 264 gen 16318 parent 257 top level 257 path @/tmp',
+               'ID 265 gen 16318 parent 257 top level 257 path @/var',
+               'ID 266 gen 15722 parent 257 top level 257 path @/usr/local',
+               'ID 267 gen 11793 parent 257 top level 257 path @/boot/grub2/i386-pc',
+               'ID 268 gen 20 parent 257 top level 257 path @/boot/grub2/x86_64-efi',
+               'ID 270 gen 30 parent 258 top level 258 path @/.snapshots/2/snapshot',
+               # The following is our user created share with ROOT snap parent.
+               'ID 292 gen 941 parent 259 top level 259 path test_share_01',
+               'ID 331 gen 7527 parent 258 top level 258 path @/.snapshots/57/snapshot',
+               'ID 332 gen 7547 parent 258 top level 258 path @/.snapshots/58/snapshot',
+               'ID 350 gen 11335 parent 258 top level 258 path @/.snapshots/75/snapshot',
+               'ID 351 gen 11344 parent 258 top level 258 path @/.snapshots/76/snapshot',
+               'ID 352 gen 11346 parent 258 top level 258 path @/.snapshots/77/snapshot',
+               'ID 353 gen 11348 parent 258 top level 258 path @/.snapshots/78/snapshot',
+               'ID 355 gen 11371 parent 258 top level 258 path @/.snapshots/79/snapshot',
+               'ID 356 gen 11577 parent 258 top level 258 path @/.snapshots/80/snapshot',
+               'ID 357 gen 11578 parent 258 top level 258 path @/.snapshots/81/snapshot',
+               'ID 358 gen 11595 parent 258 top level 258 path @/.snapshots/82/snapshot',
+               'ID 359 gen 11596 parent 258 top level 258 path @/.snapshots/83/snapshot',
+               'ID 360 gen 11761 parent 258 top level 258 path @/.snapshots/84/snapshot',
+               'ID 361 gen 11784 parent 258 top level 258 path @/.snapshots/85/snapshot',
+               'ID 363 gen 11792 parent 258 top level 258 path @/.snapshots/86/snapshot',
+               'ID 364 gen 14949 parent 258 top level 258 path @/.snapshots/87/snapshot',
+               'ID 365 gen 14950 parent 258 top level 258 path @/.snapshots/88/snapshot',
+               '']
+        err = ['']
+        rc = 0
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("259", "@/.snapshots/1/snapshot", True)
+        # run_command
+        self.mock_run_command.return_value = (out, err, rc)
+        # parse_snap_details
+        self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
+        self.mock_parse_snap_details = self.patch_parse_snap_details.start()
+        # Mocked return value in following = (snap_name, writable, is_clone)
+        # ie no clones
+        self.mock_parse_snap_details.return_value = 'foo-bar', True, False
+
+        expected = {'home': '0/260', 'test_share_01': '0/292'}
         returned = shares_info(pool)
         self.assertEqual(returned, expected,
                          msg="Failed system pool share/clone filtering:\n"
@@ -1658,3 +1756,44 @@ class BTRFSTests(unittest.TestCase):
                 self.assertIsNone(returned, msg=msg)
             else:
                 self.assertEqual(returned, expected, msg=msg)
+
+    def test_default_subvol(self):
+        """
+        Present known real output from "btrfs subvol get-default /" and test the parsing
+        function of default_subvol()
+        """
+        # Legacy CentOS based install (default subvol not set so will default to ID 5)
+        # N.B. this is also the output expected from a regular data pool on Rockstor:
+        # e.g. "btrfs subvol get-default /mnt2/rock-pool/"
+        # ID 5 (FS_TREE)
+        # Relevant if we ever expand this function to take a pool mount point parameter.
+        out = [['ID 5 (FS_TREE)', '']]
+        err = [['']]
+        rc = [0]
+        expected_result = [DefaultSubvol("5", "(FS_TREE)", False)]
+        # openSUSE Leap 15.1 boot-to-snap enabled but in default state, no rollback
+        out.append(['ID 259 gen 60199 top level 258 path @/.snapshots/1/snapshot', ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(DefaultSubvol("259", "@/.snapshots/1/snapshot", True))
+        # openSUSE Leap 15.2 beta boot-to-snap enabled and rolled back to prior snap
+        out.append(['ID 456 gen 24246 top level 258 path @/.snapshots/117/snapshot', ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(DefaultSubvol("456", "@/.snapshots/117/snapshot", True))
+        # openSUSE Leap 15.2 beta NO boot-to-snap - deselected during install.
+        # On Root disks less than 17.5 GB (around 16GB btrfs system pool) this is the
+        # default install. Rockstor ISO installs enforce boot-to-snap irrispective.
+        out.append(['ID 256 gen 2858 top level 5 path @', ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(DefaultSubvol("256", "@", False))
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            # print('each out = {}'.format(o))
+            # print('each expected = {}'.format(expected))
+            self.mock_run_command.return_value = (o, e, r)
+            returned = default_subvol()
+            self.assertEqual(returned, expected,
+                             msg='Un-expected default_subvol() result:\n '
+                                 'returned = ({}).\n '
+                                 'expected = ({}).'.format(returned, expected))
