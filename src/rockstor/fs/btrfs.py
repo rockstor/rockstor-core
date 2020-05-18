@@ -1141,7 +1141,11 @@ def qgroup_max(mnt_pt):
         # confused/indeterminate quota state:
         emsg2 = "ERROR: cannot find the qgroup"
         # this is non fatal so treat as disabled and advise. Avoids blocking imports.
-        if re.match(emsg2, e.err[0]) is not None:
+        # Also check second line for same, as first line can be taken by the following:
+        # "WARNING: qgroup data inconsistent, rescan recommended"
+        if (re.match(emsg2, e.err[0]) is not None) or (
+            len(e.err) > 1 and re.match(emsg2, e.err[1]) is not None
+        ):
             logger.info(
                 "Mount Point: {} has indeterminate quota status, skipping "
                 "qgroup show.\nTry 'btrfs qgroup disable {}'.".format(mnt_pt, mnt_pt)
@@ -1225,6 +1229,20 @@ def qgroup_destroy(qid, mnt_pt):
         if e.err[0] == emsg:
             # we have quotas disabled so can't destroy any anyway so skip
             # and deal by returning False so our caller moves on.
+            return False
+        # Also catch missing qgroup and log suggestion as per in qgroup_max()
+        # confused/indeterminate quota state:
+        emsg2 = "ERROR: cannot find the qgroup"
+        # this is non fatal so treat as disabled and advise. Avoids blocking imports.
+        # Also check second line for same, as first line can be taken by the following:
+        # "WARNING: qgroup data inconsistent, rescan recommended"
+        if (re.match(emsg2, e.err[0]) is not None) or (
+            len(e.err) > 1 and re.match(emsg2, e.err[1]) is not None
+        ):
+            logger.info(
+                "Mount Point: {} has indeterminate quota status, skipping "
+                "qgroup show.\nTry 'btrfs qgroup disable {}'.".format(mnt_pt, mnt_pt)
+            )
             return False
         # otherwise we raise an exception as normal
         raise e
