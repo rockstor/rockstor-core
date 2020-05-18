@@ -78,6 +78,7 @@ ROOT_SUBVOL_EXCLUDE = [
     "@/opt",
     "root/var/lib/machines",
     "@/.snapshots",
+    ".snapshots",
 ]
 # Note in the above we have a non symmetrical exclusions entry of '@/.snapshots
 # this is to help distinguish our .snapshots from snapper's rollback subvol.
@@ -88,6 +89,8 @@ Dev = collections.namedtuple("Dev", "temp_name is_byid devid size allocated")
 DevPoolInfo = collections.namedtuple("DevPoolInfo", "devid size allocated uuid label")
 # Named Tuple for btrfs device usage info.
 DevUsageInfo = collections.namedtuple("DevUsageInfo", "temp_name size " "allocated")
+# Named Tuple for default_subvol info: id (string) path (string) boot_to_snap (boolean)
+DefaultSubvol = collections.namedtuple("DefaultSubvol", "id path boot_to_snap")
 
 
 def add_pool(pool, disks):
@@ -502,6 +505,10 @@ def mount_root(pool):
     at /mnt2/test-pool. Any mount options held in pool.mnt_options will be
     added to the mount command via the -o option as will a compress =
     pool.compression entry.
+    If the pool concerned has root.role == "root" (i.e. it's the system pool), there are
+    2 possible mount variants; depending on default_subvol().boot_to_snap:
+    Boot to snap True: add "subvol=/@" and mount as per normal data pools at /mnt2/ROOT
+    Boot to snap False: use the existing fstab managed mount at "/", ie no /mnt2/ROOT.
     N.B. Initially the mount target is defined by /dev/disk/by-label/pool.name,
     if this fails then an attempt to mount by each member of
     /dev/disk/by-id/pool.disk_set.all() but only if there are any members.
@@ -526,6 +533,8 @@ def mount_root(pool):
     if pool.compression is not None:
         if re.search("compress", mnt_options) is None:
             mnt_options = "{},compress={}".format(mnt_options, pool.compression)
+    if pool.role == "root" and root_pool_mnt != "/":  # boot-to-snap - See pool model
+        mnt_options = "{},subvol=/@".format(mnt_options)
     # Prior to a mount by label attempt we call btrfs device scan on all
     # members of our pool. This call ensures btrfs has up-to-date info on
     # the relevant devices and avoids the potential overkill of a system wide
@@ -656,9 +665,9 @@ def mount_share(share, mnt_pt):
 
 def mount_snap(share, snap_name, snap_qgroup, snap_mnt=None):
     pool_device = get_device_path(share.pool.disk_set.attached().first().target_name)
-    share_path = "{}{}".format(DEFAULT_MNT_DIR, share.name)
+    share_path = share.mnt_pt
     rel_snap_path = ".snapshots/{}/{}".format(share.name, snap_name)
-    snap_path = "{}{}/{}".format(DEFAULT_MNT_DIR, share.pool.name, rel_snap_path)
+    snap_path = "{}/{}".format(share.pool.mnt_pt, rel_snap_path).replace("//", "/")
     if snap_mnt is None:
         snap_mnt = "{}/.{}".format(share_path, snap_name)
     if is_mounted(snap_mnt):
@@ -669,27 +678,36 @@ def mount_snap(share, snap_name, snap_qgroup, snap_mnt=None):
         # snap_qgroup = "0/subvolid" use for subvol reference as more
         # flexible than "subvol=rel_snap_path" (prior method).
         subvol_str = "subvolid={}".format(snap_qgroup[2:])
-        return run_command([MOUNT, "-o", subvol_str, pool_device, snap_mnt])
+        return run_command([MOUNT, "-o", subvol_str, pool_device, snap_mnt], log=True)
 
 
-def default_subvolid():
+def default_subvol():
     """
-    Returns the default vol/subvol id for /, used by system-rollback/boot-from-
-    snapshot. If not set this is ID 5 ie the top level of the volume.
+    Returns the default vol/subvol id, path, and boot_to_snap boolean for /, used by
+    system-rollback/boot-to-snapshot.
+    If not set this ID = 5 i.e. the top level of the volume.
     Works by parsing the output from 'btrfs subvol get-default /':
     not set (default):
     ID 5 (FS_TREE)
     no system rollback enabled:
     ID 257 gen 5796 top level 5 path @
-    root configured for snapshots/rollback:
+    or another example of the same:
+    ID 256 gen 2858 top level 5 path @
+    root configured for snapshots/rollback (default before any rollbacks):
     ID 268 gen 2345 top level 267 path @/.snapshots/1/snapshot
-
+    and after having rolled back this can look like the following:
+    ID 456 gen 24246 top level 258 path @/.snapshots/117/snapshot
     """
     cmd = [BTRFS, "subvolume", "get-default", "/"]
     out, e, rc = run_command(cmd, throw=False)
     if rc == 0 and len(out) > 0:
         # we have no run error and at least one line of output
-        return out[0].split()[1]
+        line_list = out[0].split()
+        return DefaultSubvol(
+            id=line_list[1],
+            path=line_list[-1],  # N.B. can return ("5", "FS_TREE")
+            boot_to_snap=(line_list[-1] != "@" and line_list[-1] != "(FS_TREE)"),
+        )
     logger.exception(e)
     raise e
 
@@ -737,7 +755,7 @@ def shares_info(pool):
             return {}
         raise
     snap_idmap = snapshot_idmap(pool_mnt_pt)
-    default_id = default_subvolid()
+    default_id = default_subvol().id
     o, e, rc = run_command([BTRFS, "subvolume", "list", "-p", pool_mnt_pt])
     shares_d = {}
     share_ids = []
@@ -995,12 +1013,10 @@ def add_snap(share, snap_name, writable):
     """
     create a snapshot
     """
-    # Note: origin of /mnt2/system/home does not work on some multi subvol root
-    # arrangements: "ERROR: not a subvolume: /mnt2/system/home"
-    # but /mnt2/home works on legacy and multi subvol roots.
-    # We have to use /home for home share path on boot to snapshot ROOT pools.
     share_full_path = share.mnt_pt
-    snap_dir = "{}/.snapshots/{}".format(share.pool.mnt_pt, share.subvol_name)
+    snap_dir = "{}/.snapshots/{}".format(share.pool.mnt_pt, share.subvol_name).replace(
+        "//", "/"
+    )
     create_tmp_dir(snap_dir)
     snap_full_path = "{}/{}".format(snap_dir, snap_name)
     return add_snap_helper(share_full_path, snap_full_path, writable)
@@ -1464,18 +1480,14 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     out, err, rc = run_command(cmd, log=True)
     short_id = volume_id.split("/")[1]
     volume_dir = ""
-
+    # Examine all pool subvols until we find an ID match in column 1, then normalise
+    # it's full path by replacing (fast) leading @/ and double "//" with "/".
     for line in out:
         fields = line.split()
         if len(fields) > 0 and short_id in fields[1]:
-            volume_dir = root_pool_mnt + "/" + fields[-1].replace("@/", "", 1)
-            # If we are system mount we may not have a /mnt2/system/mount_point
-            # ie /mnt2/system/.snapshots/1/snapshot, hack for now by
-            # redirecting to original '/' mount.
-            if not os.path.exists(volume_dir) and root_pool_mnt == "{}{}".format(
-                settings.MNT_PT, settings.SYS_VOL_LABEL
-            ):
-                volume_dir = volume_dir.replace(root_pool_mnt, "", 1)
+            volume_dir = (
+                root_pool_mnt + "/" + fields[-1].replace("@/", "", 1)
+            ).replace("//", "/")
             break
     """
     Rockstor volume/subvolume hierarchy is not standard

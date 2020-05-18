@@ -24,7 +24,7 @@ from fs.btrfs import (
     are_quotas_enabled,
     is_pool_missing_dev,
     dev_stats_zero,
-)
+    default_subvol)
 from system.osi import mount_status
 
 RETURN_BOOLEAN = True
@@ -68,7 +68,7 @@ class Pool(models.Model):
         # this serves as a mechanism by which we can 'special case' our ROOT/system
         # pool and avoid mounting it again at the usual /mnt2/pool-name as it is already
         # mounted (or it's boot to snapshot instance) at "/".
-        if self.role == "root":
+        if self.role == "root" and not default_subvol().boot_to_snap:
             self.mnt_pt_var = "/"
         else:
             self.mnt_pt_var = "{}{}".format(settings.MNT_PT, self.name)

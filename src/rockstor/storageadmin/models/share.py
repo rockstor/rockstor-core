@@ -61,16 +61,8 @@ class Share(models.Model):
         self.update_mnt_pt_var()
 
     def update_mnt_pt_var(self, *args, **kwargs):
-        # Establish an instance variable of our mnt_pt. Primarily, at least initially,
-        # this serves as a mechanism by which we can 'special case' our ROOT/system
-        # pool shares, the natively (fstab) mounted of those (home) is not mounted by
-        # us and so lives in "/" + pool name (with some @/ fudging). Where as rockstor
-        # created shares are mount
-        # mounted (or it's boot to snapshot instance) at "/".
-        if self.name == "home":
-            self.mnt_pt_var = "{}{}".format(self.pool.mnt_pt, self.name)
-        else:
-            self.mnt_pt_var = "{}{}".format(settings.MNT_PT, self.name)
+        # Establish an instance variable of our mnt_pt.
+        self.mnt_pt_var = "{}{}".format(settings.MNT_PT, self.name)
 
     @property
     def mnt_pt(self, *args, **kwargs):

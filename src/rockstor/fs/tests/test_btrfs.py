@@ -18,7 +18,8 @@ from fs.btrfs import (pool_raid, is_subvol, volume_usage, balance_status,
                       share_id, device_scan, scrub_status,
                       degraded_pools_found, snapshot_idmap, get_property,
                       parse_snap_details, shares_info, get_snap,
-                      dev_stats_zero, get_dev_io_error_stats)
+                      dev_stats_zero, get_dev_io_error_stats, DefaultSubvol,
+                      default_subvol)
 from mock import patch
 
 
@@ -1194,10 +1195,10 @@ class BTRFSTests(unittest.TestCase):
         err = ['']
         rc = 0
         self.mock_run_command.return_value = (out, err, rc)
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '257'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("257", "@", False)
         # parse_snap_details
         self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
         self.mock_parse_snap_details = self.patch_parse_snap_details.start()
@@ -1251,10 +1252,10 @@ class BTRFSTests(unittest.TestCase):
         err = ['']
         rc = 0
         self.mock_run_command.return_value = (out, err, rc)
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '5'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("5", "(FS_TREE)", False)
         # parse_snap_details
         self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
         self.mock_parse_snap_details = self.patch_parse_snap_details.start()
@@ -1298,10 +1299,10 @@ class BTRFSTests(unittest.TestCase):
         err = ['']
         rc = 0
         self.mock_run_command.return_value = (out, err, rc)
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '5'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("5", "(FS_TREE)", False)
         self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
         self.mock_parse_snap_details = self.patch_parse_snap_details.start()
         # From above we expect the following Rockstor relevant shares:
@@ -1366,10 +1367,10 @@ class BTRFSTests(unittest.TestCase):
                'ID 294 gen 1725 parent 268 top level 268 path ghost-share', '']
         err = ['']
         rc = 0
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '268'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("268", "@/.snapshots/1/snapshot", True)
         # run_command
         self.mock_run_command.return_value = (out, err, rc)
         # parse_snap_details
@@ -1465,10 +1466,10 @@ class BTRFSTests(unittest.TestCase):
                '']
         err = ['']
         rc = 0
-        # default_subvolid
-        self.patch_default_subvolid = patch('fs.btrfs.default_subvolid')
-        self.mock_default_subvolid = self.patch_default_subvolid.start()
-        self.mock_default_subvolid.return_value = '259'
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        self.mock_default_subvol.return_value = DefaultSubvol("259", "@/.snapshots/1/snapshot", True)
         # run_command
         self.mock_run_command.return_value = (out, err, rc)
         # parse_snap_details
@@ -1755,3 +1756,44 @@ class BTRFSTests(unittest.TestCase):
                 self.assertIsNone(returned, msg=msg)
             else:
                 self.assertEqual(returned, expected, msg=msg)
+
+    def test_default_subvol(self):
+        """
+        Present known real output from "btrfs subvol get-default /" and test the parsing
+        function of default_subvol()
+        """
+        # Legacy CentOS based install (default subvol not set so will default to ID 5)
+        # N.B. this is also the output expected from a regular data pool on Rockstor:
+        # e.g. "btrfs subvol get-default /mnt2/rock-pool/"
+        # ID 5 (FS_TREE)
+        # Relevant if we ever expand this function to take a pool mount point parameter.
+        out = [['ID 5 (FS_TREE)', '']]
+        err = [['']]
+        rc = [0]
+        expected_result = [DefaultSubvol("5", "(FS_TREE)", False)]
+        # openSUSE Leap 15.1 boot-to-snap enabled but in default state, no rollback
+        out.append(['ID 259 gen 60199 top level 258 path @/.snapshots/1/snapshot', ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(DefaultSubvol("259", "@/.snapshots/1/snapshot", True))
+        # openSUSE Leap 15.2 beta boot-to-snap enabled and rolled back to prior snap
+        out.append(['ID 456 gen 24246 top level 258 path @/.snapshots/117/snapshot', ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(DefaultSubvol("456", "@/.snapshots/117/snapshot", True))
+        # openSUSE Leap 15.2 beta NO boot-to-snap - deselected during install.
+        # On Root disks less than 17.5 GB (around 16GB btrfs system pool) this is the
+        # default install. Rockstor ISO installs enforce boot-to-snap irrispective.
+        out.append(['ID 256 gen 2858 top level 5 path @', ''])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(DefaultSubvol("256", "@", False))
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            # print('each out = {}'.format(o))
+            # print('each expected = {}'.format(expected))
+            self.mock_run_command.return_value = (o, e, r)
+            returned = default_subvol()
+            self.assertEqual(returned, expected,
+                             msg='Un-expected default_subvol() result:\n '
+                                 'returned = ({}).\n '
+                                 'expected = ({}).'.format(returned, expected))
