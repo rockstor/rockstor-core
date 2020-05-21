@@ -1,13 +1,13 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (c) 2012-2020 Rockstor, Inc. <http://rockstor.com>
+This file is part of Rockstor.
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -40,7 +40,7 @@ def update_sftp_config(input_map):
     :return:
     """
     fo, npath = mkstemp()
-    userstr = "AllowUsers root %s" % " ".join(input_map.keys())
+    userstr = "AllowUsers root {}".format(" ".join(input_map.keys()))
     with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
             if re.match(settings.SSHD_HEADER, line) is None:
