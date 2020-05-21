@@ -16,17 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
-import shutil
-from system.osi import run_command, md5sum
-from system import services
-import logging
-import sys
-import re
 import json
+import logging
+import os
+import re
+import shutil
+import sys
 from tempfile import mkstemp
+
 from django.conf import settings
 
+from system import services
+from system.osi import run_command, md5sum, replace_line_if_found
 
 logger = logging.getLogger(__name__)
 
@@ -212,24 +213,51 @@ def update_tz(logging):
 
 
 def bootstrap_sshd_config(logging):
-    # Set AllowUsers if needed
-    with open("/etc/ssh/sshd_config", "a+") as sfo:
+    """
+    Setup sshd_config options for Rockstor:
+    1. Switch from the default /usr/lib/ssh/sftp-server subsystem
+        to the internal-sftp subsystem required for sftp access to work.
+        Note that this turns the SFTP service ON by default.
+    2. Add our customization header and allow only the root user to connect.
+    :param logging:
+    :return:
+    """
+    sshd_config = "/etc/ssh/sshd_config"
+
+    # Comment out default sftp subsystem
+    fh, npath = mkstemp()
+    sshdconf_source = "Subsystem\tsftp\t/usr/lib/ssh/sftp-server"
+    sshdconf_target = "#{}".format(sshdconf_source)
+    replaced = replace_line_if_found(
+        sshd_config, npath, sshdconf_source, sshdconf_target
+    )
+    if replaced:
+        shutil.move(npath, sshd_config)
+        logging.info("updated sshd_config: commented out default Subsystem")
+    else:
+        os.remove(npath)
+
+    # Set AllowUsers and Subsystem if needed
+    with open(sshd_config, "a+") as sfo:
+        logging.info("SSHD_CONFIG Customization")
         found = False
         for line in sfo.readlines():
             if (
                 re.match(settings.SSHD_HEADER, line) is not None
                 or re.match("AllowUsers ", line) is not None
+                or re.match(settings.SFTP_STR, line) is not None
             ):
                 # if header is found,
                 found = True
                 logging.info(
-                    "sshd_config already has the updates." " Leaving it unchanged."
+                    "sshd_config already has the updates. Leaving it unchanged."
                 )
                 break
         if not found:
-            sfo.write("%s\n" % settings.SSHD_HEADER)
+            sfo.write("{}\n".format(settings.SSHD_HEADER))
+            sfo.write("{}\n".format(settings.SFTP_STR))
             sfo.write("AllowUsers root\n")
-            logging.info("updated sshd_config")
+            logging.info("updated sshd_config.")
             run_command([SYSCTL, "restart", "sshd"])
 
 
