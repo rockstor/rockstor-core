@@ -1,13 +1,13 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (c) 2012-2020 Rockstor, Inc. <http://rockstor.com>
+This file is part of Rockstor.
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -16,29 +16,31 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 import re
 from shutil import move, copy
 from tempfile import mkstemp
-from services import systemctl
-from system.osi import run_command
-import os
+
 from django.conf import settings
 
+from services import systemctl, service_status
+from system.osi import run_command
 
 SSHD_CONFIG = "/etc/ssh/sshd_config"
 MKDIR = "/usr/bin/mkdir"
 MOUNT = "/usr/bin/mount"
 USERMOD = "/usr/sbin/usermod"
-SFTP_REGEX = "Subsystem\s+sftp"
-SFTP_STR = "Subsystem\tsftp\tinternal-sftp"
 
 
 def update_sftp_config(input_map):
     """
-    input map is a dictionary of user,directory pairs
+    Fetch sftp-related customization settings from database
+    and writes them to SSHD_CONFIG.
+    :param input_map: dictionary of user,directory pairs.
+    :return:
     """
     fo, npath = mkstemp()
-    userstr = "AllowUsers root %s" % " ".join(input_map.keys())
+    userstr = "AllowUsers root {}".format(" ".join(input_map.keys()))
     with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
             if re.match(settings.SSHD_HEADER, line) is None:
@@ -46,10 +48,20 @@ def update_sftp_config(input_map):
             else:
                 break
         tfo.write("{}\n".format(settings.SSHD_HEADER))
+        # Detect sftp service status and ensure we maintain it
+        if is_sftp_running():
+            tfo.write("{}\n".format(settings.SFTP_STR))
         tfo.write("{}\n".format(userstr))
+        # Set options for each user according to openSUSE's defaults:
+        # https://en.opensuse.org/SDB:SFTP_server_with_Chroot#Match_rule_block
+        # TODO: implement webUI element to re-enable rsync over ssh by omitting
+        #   the `ForceCommand internal sftp` line below.
         for user in input_map:
             tfo.write("Match User {}\n".format(user))
+            tfo.write("\tForceCommand internal-sftp\n")
             tfo.write("\tChrootDirectory {}\n".format(input_map[user]))
+            tfo.write("\tX11Forwarding no\n")
+            tfo.write("\tAllowTcpForwarding no\n")
 
     move(npath, SSHD_CONFIG)
     try:
@@ -59,20 +71,25 @@ def update_sftp_config(input_map):
 
 
 def toggle_sftp_service(switch=True):
-    # TODO add Subsystem sftp line below Rockstor header rather than above
+    """
+    Toggles the SFTP service on/off by writing or not the
+    `Subsystem sftp internal-sftp` (settings.SFTP_STR) declaration in SSHD_CONFIG.
+    :param switch:
+    :return:
+    """
     fo, npath = mkstemp()
     written = False
     with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
-            if re.match(SFTP_REGEX, line) is not None:
+            if re.match(settings.SFTP_STR, line) is not None:
                 if switch and not written:
-                    tfo.write("{}\n".format(SFTP_STR))
+                    tfo.write("{}\n".format(settings.SFTP_STR))
                     written = True
             elif re.match(settings.SSHD_HEADER, line) is not None:
-                if switch and not written:
-                    tfo.write("{}\n".format(SFTP_STR))
-                    written = True
                 tfo.write(line)
+                if switch and not written:
+                    tfo.write("{}\n".format(settings.SFTP_STR))
+                    written = True
             else:
                 tfo.write(line)
     move(npath, SSHD_CONFIG)
@@ -191,3 +208,16 @@ def is_pub_key(key):
         os.remove(npath)
 
     return True
+
+
+def is_sftp_running():
+    """
+    Simple wrapper around system.services.service_status()
+    to return a boolean for the SFTP service status
+    :return: True if running, False otherwise/
+    """
+    _, _, sftp_rc = service_status("sftp")
+    if sftp_rc == 0:
+        return True
+    else:
+        return False
