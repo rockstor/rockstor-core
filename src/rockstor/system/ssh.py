@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
+import platform
 from shutil import move, copy
 from tempfile import mkstemp
 
@@ -152,9 +153,13 @@ def rsync_for_sftp(chroot_loc):
     copy("/bin/bash", "{}/bin".format(chroot_loc))
     copy("/usr/bin/rsync", "{}/usr/bin".format(chroot_loc))
 
+    ld_linux_so = "/lib64/ld-linux-x86-64.so.2"
+    if platform.machine() == "aarch64":
+        ld_linux_so = "/lib64/ld-linux-aarch64.so.1"
+
     libs_d = {
         "rockstor": [
-            "/lib64/ld-linux-x86-64.so.2",
+            ld_linux_so,
             "/lib64/libacl.so.1",
             "/lib64/libattr.so.1",
             "/lib64/libc.so.6",
@@ -171,7 +176,7 @@ def rsync_for_sftp(chroot_loc):
             "/lib64/libattr.so.1",
             "/usr/lib64/libcrypto.so.1.1",
             "/lib64/libpthread.so.0",
-            "/lib64/ld-linux-x86-64.so.2",
+            ld_linux_so,
             "/lib64/libdl.so.2",
             "/lib64/libreadline.so.7",
             "/lib64/libtinfo.so.6",
@@ -182,7 +187,7 @@ def rsync_for_sftp(chroot_loc):
             "/lib64/libz.so.1",
             "/usr/lib64/libpopt.so.0",
             "/usr/lib64/libslp.so.1",
-            "/lib64/ld-linux-x86-64.so.2",
+            ld_linux_so,
             "/usr/lib64/libcrypto.so.1.1",
             "/lib64/libpthread.so.0",
             "/lib64/libdl.so.2",
