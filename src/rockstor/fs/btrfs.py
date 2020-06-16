@@ -1751,7 +1751,30 @@ def start_resize_pool(cmd):
     :param cmd: btrfs dev add/delete command in run_command() format (ie list).
     """
     logger.debug("Resize pool command ({}).".format(cmd))
-    run_command(cmd)
+    # N.B. in some instances, such as live disk removal, an attempt to remove missing:
+    # btrfs device delete missing /mnt2/pool-label
+    # results in rc=1, out=[""], and err=
+    # ["ERROR: error removing device 'missing': no missing devices found to remove", '']
+    # return advice, in this case, to improve usability. Customised exception message is
+    # presented in Pool details page - Balances tab, Errors or Notes column.
+    try:
+        run_command(cmd, log=True)
+    except CommandException as e:
+        emsg = (
+            "ERROR: error removing device 'missing': no missing devices found to remove"
+        )
+        if e.err[0] == emsg:
+            msg = (
+                "Missing Device removal failed, ensure degraded,rw mount options are used "
+                "(a reboot may be required)."
+            )
+            logger.error(msg)
+            raise Exception(
+                "{} Command was ({}). Command Exception was ({}).".format(
+                    msg, " ".join(cmd), emsg
+                )
+            )
+        raise e
 
 
 @task()
