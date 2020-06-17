@@ -90,6 +90,16 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     "are no attached devices. Moving on.".format(p.name)
                 )
                 continue
+            # If pool has no missing remove all detached disk pool associations.
+            # Accounts for 'end of run' clean-up in removing a detached disk and for cli
+            # maintenance re pool returned to no missing dev status. Also re-establishes
+            # pool info as source of truth re missing.
+            if not p.has_missing_dev:
+                for disk in p.disk_set.filter(name__startswith="detached-"):
+                    logger.info("Removing detached disk from Pool {}: no missing "
+                                "devices found.".format(p.name))
+                    disk.pool = None
+                    disk.save()
             try:
                 # Get and save what info we can prior to mount.
                 first_dev = p.disk_set.attached().first()
