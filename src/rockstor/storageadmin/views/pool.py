@@ -191,17 +191,17 @@ class PoolMixin(object):
             pool.save()
 
         if (re.search('noatime', mnt_options) is None):
-            mnt_options = ('%s,relatime,atime' % mnt_options)
+            mnt_options = ('{},relatime,atime'.format(mnt_options))
 
         if (re.search('compress-force', mnt_options) is None):
-            mnt_options = ('%s,compress=%s' % (mnt_options, compression))
+            mnt_options = ('{},compress={}'.format(mnt_options, compression))
 
         with open('/proc/mounts') as mfo:
             mount_map = {}
             for l in mfo.readlines():
                 share_name = None
                 if (re.search(
-                        '%s|%s' % (settings.NFS_EXPORT_ROOT, settings.MNT_PT),
+                        '{}|{}'.format(settings.NFS_EXPORT_ROOT, settings.MNT_PT),
                         l) is not None):
                     share_name = l.split()[1].split('/')[2]
                 elif (re.search(settings.SFTP_MNT_ROOT, l) is not None):
@@ -214,7 +214,7 @@ class PoolMixin(object):
                     mount_map[share_name].append(l.split()[1])
         failed_remounts = []
         try:
-            pool_mnt = '/mnt2/%s' % pool.name
+            pool_mnt = '/mnt2/{}'.format(pool.name)
             remount(pool_mnt, mnt_options)
         except:
             failed_remounts.append(pool_mnt)
@@ -345,7 +345,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks')]
             pname = request.data['pname']
-            if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
+            if (re.match('{}$'.format(settings.POOL_REGEX), pname) is None):
                 e_msg = ('Invalid characters in pool name. Following '
                          'characters are allowed: letter(a-z or A-Z), '
                          'digit(0-9), '
@@ -624,7 +624,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                                  'minimum of 3 disks.')
                         handle_exception(Exception(e_msg), request)
 
-                    usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
+                    usage = pool_usage('/{}/{}'.format(settings.MNT_PT, pool.name))
                     size_cut = 0
                     for d in disks:  # to be removed
                         size_cut += d.allocated
@@ -692,7 +692,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 for so in Share.objects.filter(pool=pool):
                     remove_share(so.pool, so.subvol_name, so.pqgroup,
                                  force=force)
-            pool_path = ('%s%s' % (settings.MNT_PT, pool.name))
+            pool_path = ('{}{}'.format(settings.MNT_PT, pool.name))
             umount_root(pool_path)
             pool.delete()
             try:
