@@ -460,15 +460,31 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 # change on unmounted Volumes (pools).
                 return self._quotas(request, pool)
 
-            if not pool.is_mounted:
-                e_msg = ('Pool member / raid edits require an active mount. '
-                         'Please see the "Maintenance required" section.')
-                handle_exception(Exception(e_msg), request)
-
+            # Establish missing and detached disk removal request flag defaults:
+            remove_missing_disk_request = False
+            all_members_detached = False
             if command == 'remove' and \
                     request.data.get('disks', []) == ['missing']:
+                remove_missing_disk_request = True
+            if pool.disk_set.filter(name__startswith="detached-").count() == pool.disk_set.count():
+                all_members_detached = True
+
+            if not pool.is_mounted:
+                # If we are asked to remove the last disk in a pool and it's detached
+                # then user has already been notified to not remove it if it's to be
+                # re-attached. So skip our mount exception as not possible anyway unless
+                # re-attached and we have already indicated that possible path.
+                # All works accounts for all pool members in detached state.
+                if all_members_detached:
+                    logger.info("Skipping mount requirement: all pool's member are detached.")
+                else:
+                    e_msg = ('Pool member / raid edits require an active mount. '
+                             'Please see the "Maintenance required" section.')
+                    handle_exception(Exception(e_msg), request)
+
+            if remove_missing_disk_request:
                 disks = []
-                logger.debug('Remove missing request skipping disk validation')
+                logger.debug('Remove missing request, so skipping disk validation')
             else:
                 disks = [self._validate_disk_id(diskId, request) for diskId in
                          request.data.get('disks', [])]
@@ -542,6 +558,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     d_o.save()
                 # Now we ensure udev info is updated via system wide trigger
                 trigger_udev_update()
+
             elif (command == 'remove'):
                 if (new_raid != pool.raid):
                     e_msg = ('Raid configuration cannot be changed while '
@@ -556,72 +573,93 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                         handle_exception(Exception(e_msg), request)
                     if re.match('detached-', d.name) is not None:
                         detached_disks_selected += 1
-                if detached_disks_selected >= 3:
-                    # Artificial constraint but no current btrfs raid level yet
-                    # allows for > 2 dev detached and we have a mounted vol.
-                    e_msg = ('We currently only support removing two'
-                             'detached disks at a time.')
+                if detached_disks_selected >= 2:
+                    # We translate the removal of a detached device into:
+                    # "btrfs device delete missing mnt_pt"
+                    # but only when appropriate, this removes the first 'missing' dev.
+                    # A detached disk is not necessarily missing, but an indication of
+                    # prior pool association.
+                    e_msg = ('Detached disk selection is limited to a single device. '
+                             'If all Pool members are detached all will be removed '
+                             'and their pool automatically deleted there after.')
                     handle_exception(Exception(e_msg), request)
                 attached_disks_selected = (
                             num_disks_selected - detached_disks_selected)
                 remaining_attached_disks = (
                             pool.disk_set.attached().count() - attached_disks_selected)
-                if (pool.raid == 'raid0'):
-                    e_msg = ('Disks cannot be removed from a pool with this '
-                             'raid ({}) configuration.').format(pool.raid)
+                # Add check for attempt to remove detached & attached disks concurrently
+                if detached_disks_selected > 0 and attached_disks_selected > 0:
+                    e_msg = ('Mixed detached and attached disk selection is '
+                             'not supported. Limit your selection to only attached '
+                             'disks, or a single detached disk.')
                     handle_exception(Exception(e_msg), request)
+                # Skip all further sanity checks when all members are detached.
+                if not all_members_detached:
+                    if pool.raid == 'raid0':
+                        e_msg = ('Disks cannot be removed from a pool with this '
+                                 'raid ({}) configuration.').format(pool.raid)
+                        handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid1' and remaining_attached_disks < 2):
-                    e_msg = ('Disks cannot be removed from this pool '
-                             'because its raid configuration (raid1) '
-                             'requires a minimum of 2 disks.')
-                    handle_exception(Exception(e_msg), request)
+                    if (pool.raid == 'raid1' and remaining_attached_disks < 2):
+                        e_msg = ('Disks cannot be removed from this pool '
+                                 'because its raid configuration (raid1) '
+                                 'requires a minimum of 2 disks.')
+                        handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid10' and remaining_attached_disks < 4):
-                    e_msg = ('Disks cannot be removed from this pool '
-                             'because its raid configuration (raid10) '
-                             'requires a minimum of 4 disks.')
-                    handle_exception(Exception(e_msg), request)
+                    if (pool.raid == 'raid10' and remaining_attached_disks < 4):
+                        e_msg = ('Disks cannot be removed from this pool '
+                                 'because its raid configuration (raid10) '
+                                 'requires a minimum of 4 disks.')
+                        handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid5' and remaining_attached_disks < 2):
-                    e_msg = ('Disks cannot be removed from this pool because '
-                             'its raid configuration (raid5) requires a '
-                             'minimum of 2 disks.')
-                    handle_exception(Exception(e_msg), request)
+                    if (pool.raid == 'raid5' and remaining_attached_disks < 2):
+                        e_msg = ('Disks cannot be removed from this pool because '
+                                 'its raid configuration (raid5) requires a '
+                                 'minimum of 2 disks.')
+                        handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid6' and remaining_attached_disks < 3):
-                    e_msg = ('Disks cannot be removed from this pool because '
-                             'its raid configuration (raid6) requires a '
-                             'minimum of 3 disks.')
-                    handle_exception(Exception(e_msg), request)
+                    if (pool.raid == 'raid6' and remaining_attached_disks < 3):
+                        e_msg = ('Disks cannot be removed from this pool because '
+                                 'its raid configuration (raid6) requires a '
+                                 'minimum of 3 disks.')
+                        handle_exception(Exception(e_msg), request)
 
-                usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-                size_cut = 0
-                for d in disks:
-                    size_cut += d.allocated
-                available_free = pool.size - usage
-                if size_cut >= available_free:
-                    e_msg = ('Removing disks ({}) may shrink the pool by '
-                             '{} KB, which is greater than available free '
-                             'space {} KB. This is '
-                             'not supported.').format(dnames, size_cut, available_free)
-                    handle_exception(Exception(e_msg), request)
+                    usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
+                    size_cut = 0
+                    for d in disks:  # to be removed
+                        size_cut += d.allocated
+                    available_free = pool.size - usage
+                    if size_cut >= available_free:
+                        e_msg = ('Removing disks ({}) may shrink the pool by '
+                                 '{} KB, which is greater than available free '
+                                 'space {} KB. This is '
+                                 'not supported.').format(dnames, size_cut, available_free)
+                        handle_exception(Exception(e_msg), request)
 
-                # Unlike resize_pool_start() with add=True a remove has an
-                # implicit balance where the removed disks contents are
-                # re-distributed across the remaining pool members.
-                # This internal balance cannot currently be monitored by the
-                # usual 'btrfs balance status /mnt_pt' command. So we have to
-                # use our own mechanism to assess it's status.
-                # Django-ztask initialization:
-                tid = self._resize_pool_start(pool, dnames, add=False)
-                ps = PoolBalance(pool=pool, tid=tid, internal=True)
-                ps.save()
+                    # Unlike resize_pool_start() with add=True a remove has an
+                    # implicit balance where the removed disks contents are
+                    # re-distributed across the remaining pool members.
+                    # This internal balance cannot currently be monitored by the
+                    # usual 'btrfs balance status /mnt_pt' command. So we have to
+                    # use our own mechanism to assess it's status.
+                    # Django-ztask initialization:
+                    tid = self._resize_pool_start(pool, dnames, add=False)
+                    ps = PoolBalance(pool=pool, tid=tid, internal=True)
+                    ps.save()
+                    # Setting disk.pool = None for all removed members is redundant
+                    # as our next disk scan will re-find them until such time as
+                    # our async task, and it's associated dev remove, has completed
+                    # it's internal balance. This can take hours. Except for db only
+                    # event of all_members_detached.
 
-                # Setting disk.pool = None for all removed members is redundant
-                # as our next disk scan will re-find them until such time as
-                # our async task, and it's associated dev remove, has completed
-                # it's internal balance. This can take hours.
+                else:  # all_members_detached:
+                    # If all members are detached then delete pool associations for all.
+                    # We cannot mount and so cannot perform any resize or any further
+                    # pool member validation anyway.
+                    # N.B. on next pool refresh, no members leads to pool removal.
+                    for d in pool.disk_set.all():
+                        d.pool = None
+                        d.save()
 
             else:
                 e_msg = 'Command ({}) is not supported.'.format(command)
