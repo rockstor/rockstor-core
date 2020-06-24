@@ -167,6 +167,7 @@ def switch_repo(subscription, on=True):
     # Historically our base subscription url denotes our CentOS rpm repo.
     subscription_distro_url = subscription.url
     distro_id = distro.id()
+    machine_arch = platform.machine()
     use_zypper = True
     repo_alias = "Rockstor-{}".format(subscription.name)
     logger.debug("########### SWITCH REPO repo-alias = {}".format(repo_alias))
@@ -176,6 +177,8 @@ def switch_repo(subscription, on=True):
         subscription_distro_url += "/tumbleweed"
     else:
         use_zypper = False
+    if machine_arch != "x86_64":
+        subscription_distro_url += "_{}".format(machine_arch)
     # Check if dir /etc/yum.repos.d exists and if not create.
     if not os.path.isdir(repos_dir):
         # Can use os.makedirs(path) if intermediate levels also don't exist.
@@ -301,7 +304,6 @@ def rockstor_pkg_update_check(subscription=None):
         if not available:
             continue
         if new_version is None:
-            machine_arch = platform.machine()
             if re.match("rockstor-", l) is not None:  # legacy yum
                 # eg: "rockstor-3.9.2-51.2089.x86_64"
                 new_version = (
