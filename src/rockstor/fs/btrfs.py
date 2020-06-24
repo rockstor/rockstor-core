@@ -70,6 +70,8 @@ ROOT_SUBVOL_EXCLUDE = [
     "@/boot/grub2/i386-pc",
     "boot/grub2/x86_64-efi",
     "@/boot/grub2/x86_64-efi",
+    "boot/grub2/arm64-efi",
+    "@/boot/grub2/arm64-efi",
     "srv",
     "@/srv",
     "usr/local",
