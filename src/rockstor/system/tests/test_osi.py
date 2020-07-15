@@ -324,6 +324,71 @@ class OSITests(unittest.TestCase):
         err.append([''])
         rc.append(0)
         expected_result.append(('vda3', False))
+        # Thanks to @bored-enginr on GitHub for submitting this info:
+        # https://github.com/rockstor/rockstor-core/issues/2126
+        # It seems we can end up picking the wrong device for Dell PERC/6i controllers.
+        # This is a regression observed in our 'Built on openSUSE' variant.
+        # Regression indicated by selection of
+        # /dev/disk/by-id/scsi-SDELL_PERC_6/i_Adapter_002c1e32094a1ad92500b63d22c0110b
+        # when the following viable/intended targets were also available:
+        # N.B. again we have 2 equal length names.
+        # /dev/disk/by-id/wwn-0x690b11c0223db60025d91a4a09321e2c
+        # or
+        # /dev/disk/by-id/scsi-3690b11c0223db60025d91a4a09321e2c
+        dev_name.append('sdb')
+        remove_path.append(True)
+        out.append([
+            'COMPAT_SYMLINK_GENERATION=2',
+            'DEVLINKS=/dev/disk/by-id/wwn-0x690b11c0223db60025d91a4a09321e2c /dev/disk/by-id/scsi-SDELL_PERC_6/i_Adapter_002c1e32094a1ad92500b63d22c0110b /dev/disk/by-label/Main /dev/disk/by-uuid/e7e4a52b-6fb0-4361-a463-509f2d875f99 /dev/disk/by-path/pci-0000:05:00.0-scsi-0:2:1:0 /dev/disk/by-id/scsi-3690b11c0223db60025d91a4a09321e2c',  # noqa E501
+            'DEVNAME=/dev/sdb',
+            'DEVPATH=/devices/pci0000:00/0000:00:03.0/0000:05:00.0/host0/target0:2:1/0:2:1:0/block/sdb',
+            'DEVTYPE=disk',
+            'DM_MULTIPATH_DEVICE_PATH=0',
+            'DONT_DEL_PART_NODES=1',
+            'FC_TARGET_LUN=0',
+            'ID_BTRFS_READY=1',
+            'ID_BUS=scsi',
+            'ID_FS_LABEL=Main',
+            'ID_FS_LABEL_ENC=Main',
+            'ID_FS_TYPE=btrfs',
+            'ID_FS_USAGE=filesystem',
+            'ID_FS_UUID=e7e4a52b-6fb0-4361-a463-509f2d875f99',
+            'ID_FS_UUID_ENC=e7e4a52b-6fb0-4361-a463-509f2d875f99',
+            'ID_FS_UUID_SUB=24f91f99-9fb0-44ee-a311-2be3a7ddecbc',
+            'ID_FS_UUID_SUB_ENC=24f91f99-9fb0-44ee-a311-2be3a7ddecbc',
+            'ID_MODEL=PERC_6/i_Adapter',
+            'ID_MODEL_ENC=PERC\x206/i\x20Adapter',
+            'ID_PATH=pci-0000:05:00.0-scsi-0:2:1:0',
+            'ID_PATH_TAG=pci-0000_05_00_0-scsi-0_2_1_0',
+            'ID_REVISION=1.22',
+            'ID_SCSI=1',
+            'ID_SCSI_INQUIRY=1',
+            'ID_SERIAL=3690b11c0223db60025d91a4a09321e2c',
+            'ID_SERIAL_SHORT=690b11c0223db60025d91a4a09321e2c',
+            'ID_TYPE=disk',
+            'ID_VENDOR=DELL',
+            'ID_VENDOR_ENC=DELL\x20\x20\x20\x20',
+            'ID_WWN=0x690b11c0223db600',
+            'ID_WWN_WITH_EXTENSION=0x690b11c0223db60025d91a4a09321e2c',
+            'MAJOR=8',
+            'MINOR=16',
+            'MPATH_SBIN_PATH=/sbin',
+            'SCSI_IDENT_LUN_NAA_REGEXT=690b11c0223db60025d91a4a09321e2c',
+            'SCSI_IDENT_SERIAL=002c1e32094a1ad92500b63d22c0110b',
+            'SCSI_MODEL=PERC_6/i_Adapter',
+            'SCSI_MODEL_ENC=PERC\x206/i\x20Adapter',
+            'SCSI_REVISION=1.22',
+            'SCSI_TPGS=0',
+            'SCSI_TYPE=disk',
+            'SCSI_VENDOR=DELL',
+            'SCSI_VENDOR_ENC=DELL\x20\x20\x20\x20',
+            'SUBSYSTEM=block',
+            'TAGS=:systemd:',
+            'USEC_INITIALIZED=11820225',
+        ])
+        err.append([''])
+        rc.append(0)
+        expected_result.append(('wwn-0x690b11c0223db60025d91a4a09321e2c', True))
         # Cycle through each of the above parameter / run_command data sets.
         for dev, rp, o, e, r, expected in zip(dev_name, remove_path, out, err,
                                               rc, expected_result):
@@ -1635,7 +1700,8 @@ class OSITests(unittest.TestCase):
         # This ls -lr output is derived from the ls -l output supplied by forum
         # member juchong.
 
-        out = [
+        out = [[
+            'total 0',
             'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part3 -> ../../sda3',  # noqa E501
             'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part2 -> ../../sda2',  # noqa E501
             'lrwxrwxrwx 1 root root 10 Oct 22 23:40 wwn-0x6000c29df1181dd53db36b41b3582636-part1 -> ../../sda1',  # noqa E501
@@ -1661,13 +1727,13 @@ class OSITests(unittest.TestCase):
             'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-WDC_WD60EFRX-68L0BN1_WD-WX11D6651995 -> ../../sdg',  # noqa E501
             'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-VMware_Virtual_SATA_CDRW_Drive_00000000000000000001 -> ../../sr0',  # noqa E501
             'lrwxrwxrwx 1 root root 9 Oct 22 23:40 ata-HGST_HUH728080ALE600_2EKXANGP -> ../../sdb',  # noqa E501
-        ]
-        err = ['']
-        rc = 0
+        ]]
+        err = [['']]
+        rc = [0]
         # The order of the following is unimportant as it's a dictionary but is
         # preserved on the index to aid comparison with:
         # test_get_byid_name_map_prior_command_mock()
-        expected = {
+        expected_result = [{
             'sda1': 'wwn-0x6000c29df1181dd53db36b41b3582636-part1',
             'sdf': 'ata-WDC_WD60EFRX-68MYMN1_WD-WX11DB4H8VJJ',
             'sdd': 'wwn-0x5000cca252017870',
@@ -1680,11 +1746,49 @@ class OSITests(unittest.TestCase):
             'sdc': 'ata-WDC_WD60EFRX-68MYMN1_WD-WX21DC42ELAT',
             'sdh': 'ata-WDC_WD60EFRX-68L0BN1_WD-WX31DB58YJF0',
             'sdi': 'ata-WDC_WD60EFRX-68MYMN1_WD-WXM1H84CXAUJ',
-            'sda3': 'wwn-0x6000c29df1181dd53db36b41b3582636-part3'}
-        self.mock_run_command.return_value = (out, err, rc)
-        returned = get_byid_name_map()
-        self.maxDiff = None
-        self.assertDictEqual(returned, expected)
+            'sda3': 'wwn-0x6000c29df1181dd53db36b41b3582636-part3'}]
+        # The following was hand created from GitHub issue:
+        # https://github.com/rockstor/rockstor-core/issues/2126
+        # Thanks to @bored-enginr for the report.
+        # Used to test for successful exclusion of subdirectory entries such as:
+        # "scsi-SDELL_PERC_6"
+        # Ordering is approximate as no exact 'ls -lr' was available.
+        out.append([
+            'total 0',
+            'lrwxrwxrwx 1 root root 10 Feb 10 19:13 wwn-0x690b11c0223db60025bb4a6c79bc0d52-part3 -> ../../sda3',
+            'lrwxrwxrwx 1 root root 10 Feb 10 19:13 wwn-0x690b11c0223db60025bb4a6c79bc0d52-part2 -> ../../sda2',
+            'lrwxrwxrwx 1 root root 10 Feb 10 19:13 wwn-0x690b11c0223db60025bb4a6c79bc0d52-part1 -> ../../sda1',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 wwn-0x690b11c0223db60025bb4a6c79bc0d52 -> ../../sda',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 wwn-0x690b11c0223db60025d4c51e13da4d84 -> ../../sdd',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 wwn-0x690b11c0223db60025bb4af281bd5edf -> ../../sdc',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 wwn-0x690b11c0223db60025bb4ab47e0f20eb -> ../../sdb',
+            'drwxr-xr-x 2 root root 200 Feb 10 19:14 scsi-SDELL_PERC_6',
+            'lrwxrwxrwx 1 root root 10 Feb 10 19:13 scsi-3690b11c0223db60025bb4a6c79bc0d52-part3 -> ../../sda3',
+            'lrwxrwxrwx 1 root root 10 Feb 10 19:13 scsi-3690b11c0223db60025bb4a6c79bc0d52-part2 -> ../../sda2',
+            'lrwxrwxrwx 1 root root 10 Feb 10 19:13 scsi-3690b11c0223db60025bb4a6c79bc0d52-part1 -> ../../sda1',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 scsi-3690b11c0223db60025bb4a6c79bc0d52 -> ../../sda',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 scsi-3690b11c0223db60025d4c51e13da4d84 -> ../../sdd',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 scsi-3690b11c0223db60025bb4af281bd5edf -> ../../sdc',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 scsi-3690b11c0223db60025bb4ab47e0f20eb -> ../../sdb',
+            'lrwxrwxrwx 1 root root 9 Feb 10 19:13 ata-HL-DT-ST_DVD+_-RW_GHA2N_KDXC9BK5217 -> ../../sr0',
+        ])
+        err.append([''])
+        rc.append(0)
+        expected_result.append({
+            'sda1': 'wwn-0x690b11c0223db60025bb4a6c79bc0d52-part1',
+            'sdd': 'wwn-0x690b11c0223db60025d4c51e13da4d84',
+            'sr0': 'ata-HL-DT-ST_DVD+_-RW_GHA2N_KDXC9BK5217',
+            'sda2': 'wwn-0x690b11c0223db60025bb4a6c79bc0d52-part2',
+            'sda3': 'wwn-0x690b11c0223db60025bb4a6c79bc0d52-part3',
+            'sdb': 'wwn-0x690b11c0223db60025bb4ab47e0f20eb',
+            'sdc': 'wwn-0x690b11c0223db60025bb4af281bd5edf',
+            'sda': 'wwn-0x690b11c0223db60025bb4a6c79bc0d52'
+        })
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            self.mock_run_command.return_value = (o, e, r)
+            returned = get_byid_name_map()
+            self.maxDiff = None
+            self.assertDictEqual(returned, expected)
 
 #     def test_mount_status(self):
 #         """

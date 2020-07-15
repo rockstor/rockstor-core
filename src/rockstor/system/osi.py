@@ -1722,9 +1722,9 @@ def get_dev_byid_name(device_name, remove_path=False):
     serial.
     Can optionally drop the path via the removePath parameter flag.
     Works by querying udev via udevadm info --query=property --name device_name
-    The first line of which is matched to 'DEVLINKS' and parsed for the longest
-    entry of the by-id type ie /dev/disk/by-id which is in turn a symlink to
-    our device_name eg:
+    The first line that begins with 'DEVLINKS' is parsed for the longest entry of the
+    by-id type that is not otherwise excluded (e.g. subdir based Dell PERC/6i names).
+    I.e. /dev/disk/by-id which is in turn a symlink to our device_name eg:
     DEVLINKS=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00005
     /dev/disk/by-path/pci-0000:00:05.0-ata-1.0
     In the above example we have the by-id name made from type, model, & serial
@@ -1771,6 +1771,11 @@ def get_dev_byid_name(device_name, remove_path=False):
             for devname in devlinks:
                 # check if device name is by-id type
                 if re.match("/dev/disk/by-id", devname) is not None:
+                    # Reject all alternative subdirectory names within /dev/disk/by-id:
+                    # e.g. "/dev/disk/by-id/scsi-SDELL_PERC_6/i_Adapter_00..."
+                    # as len("/dev/disk/by-id/dev-name".split("/")) = 5
+                    if len(devname.split("/")) > 5:
+                        continue
                     is_byid = True
                     # for openLUKS dm mapper device use dm-name-<dev-name>
                     # as we can most easily use this format for working
@@ -1828,6 +1833,11 @@ def get_byid_name_map():
     out, err, rc = run_command([LS, "-lr", "/dev/disk/by-id"], throw=True)
     if rc == 0:
         for each_line in out:
+            # Assumed cheap exclusion of empty or non link entry lines: e.g. "total 0"
+            # or directory entries such as:
+            # /dev/disk/by-id/scsi-SDELL_PERC_6/i_Adapter_002c1e32094a1ad925...
+            if len(each_line) == 0 or each_line[0] != "l":
+                continue
             # Split the line by spaces and '/' chars
             line_fields = each_line.replace("/", " ").split()
             # Grab every sda type name from the last field in the line and add
