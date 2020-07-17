@@ -1031,7 +1031,7 @@ def root_disk():
     Returns the base drive device name where / mount point is found.
     Works by parsing /proc/mounts. Eg if the root entry was as follows:
     /dev/sdc3 / btrfs rw,noatime,ssd,space_cache,subvolid=258,subvol=/root 0 0
-    the returned value is sdc
+    the returned value is /dev/sdc
     The assumption with non md devices is that the partition number will be a
     single character.
     :return: /dev/sdX type device name (with path) where root is mounted.
@@ -1055,7 +1055,7 @@ def root_disk():
                     return fields[0]
                 # resolve symbolic links to their targets.
                 disk = os.path.realpath(fields[0])
-                if re.match("/dev/md", disk) is not None:
+                if re.match("/dev/mmcblk|/dev/md", disk) is not None:
                     # We have an Multi Device naming scheme which is a little
                     # different ie 3rd partition = md126p3 on the md126 device,
                     # or md0p3 as third partition on md0 device.  As md devs
@@ -1066,6 +1066,9 @@ def root_disk():
                     # device name without the partition.  Search for where the
                     # numbers after "md" end.  N.B. the following will also
                     # work if root is not in a partition ie on md126 directly.
+                    # Note: this same pattern is also shared by mmcblk (sdcard) devices.
+                    # Base device examples: mmcblk1 or mmcblk2
+                    # First partition on the first device would be mmcblk1p1
                     end = re.search("\d+", disk).end()
                     return disk[:end]
                 if re.match("/dev/nvme", disk) is not None:

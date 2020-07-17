@@ -1762,3 +1762,59 @@ class OSITests(unittest.TestCase):
 #             #         print("each line = {}".format(each_line))
 #             mocked_open.assert_called_once_with("/proc/mounts")
 #         self.assertEqual(returned, expected[1])
+#
+#     def test_root_disk(self):
+#         """
+#         test root_disk() for expected function of identifying the base device name for the
+#         root mount point by mocking a variety of outputs from "/proc/mounts"
+#         Test earmarked for post Python 3 move as some changes were made to how read call
+#         is interpreted in mock re readlines() and mock_open()
+#         https://docs.python.org/3/library/unittest.mock.html#mock-open
+#         :param self:
+#         :return:
+#         """
+#
+#         # common SD/microSD card reader/driver device name:
+#         proc_mount_out = [
+#             """
+# /dev/mmcblk1p3 / btrfs rw,noatime,compress=lzo,ssd,space_cache,subvolid=258,subvol=/@/.snapshots/1/snapshot 0 0
+# """
+#         ]
+#         expected_result = ["/dev/mmcblk1"]
+#         # nvme device:
+#         proc_mount_out.append("""
+# /dev/nvme0n1p3 / btrfs rw,relatime,space_cache,subvolid=259,subvol=/@/.snapshots/1/snapshot 0 0
+# """)
+#         expected_result.append("/dev/nvme0n1")
+#         # md device, typically md126p3 or md0p3
+#         proc_mount_out.append("""
+# /dev/md126p3 / btrfs rw,relatime,space_cache,subvolid=259,subvol=/@/.snapshots/1/snapshot 0 0
+# """)
+#         expected_result.append("/dev/md126")
+#         # Regular virtio device:
+#         proc_mount_out.append("""
+# /dev/vda3 / btrfs rw,relatime,space_cache,subvolid=259,subvol=/@/.snapshots/1/snapshot 0 0
+# """)
+#         expected_result.append("/dev/vda")
+#         # root in luks device:
+#         proc_mount_out.append("""
+# /dev/mapper/luks-705349f4-becf-4344-98a7-064ceba181e7 / btrfs rw,relatime,space_cache,subvolid=259,subvol=/@/.snapshots/1/snapshot 0 0
+# """)
+#         expected_result.append("/dev/mapper/luks-705349f4-becf-4344-98a7-064ceba181e7")
+#
+#         # Based on the following article:
+#         # https://nickolaskraus.org/articles/how-to-mock-the-built-in-function-open/
+#         # Python 3 has "builtins.open" note the "s"
+#         # TODO: This mock of open is currently failing with empty reads of /proc/mounts
+#         for proc_out, expected in zip(proc_mount_out, expected_result):
+#             mock_open = mock.mock_open(read_data=proc_out)
+#             with mock.patch("__builtin__.open", mock_open) as mocked_open:
+#                 returned = root_disk()
+#                 # We assert a single call was made on "/proc/mounts"
+#                 mocked_open.assert_called_once_with("/proc/mounts")
+#
+#                 # The following shows that a handle.read().splitlines() works
+#                 # ... but not handle.readlines() such as we use in root_disk()
+#                 # But readlines() != splitlines() on break !!! readlines splits on \n only.
+#                 # https://discuss.python.org/t/changing-str-splitlines-to-match-file-readlines/174
+#             self.mocked_open.assertEqual(returned, expected)
