@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -32,8 +32,8 @@ class LoadAvg(models.Model):
 
     @property
     def uptime(self, *args, **kwargs):
-        with open('/proc/uptime') as ufo:
+        with open("/proc/uptime") as ufo:
             return int(float(ufo.readline().split()[0]))
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"
