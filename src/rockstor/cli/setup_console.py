@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -17,20 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from base_console import BaseConsole
-from rest_util import (api_call, print_disk_info)
+from rest_util import api_call, print_disk_info
 
 
 class SetupConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.prompt = prompt + ' setup>'
+        self.prompt = prompt + " setup>"
 
     def do_disks(self, args):
         """
         Discover and setup disks.
         """
-        url = BaseConsole.url + 'tools/sysdisks/'
-        result = api_call(url, calltype='post')
+        url = BaseConsole.url + "tools/sysdisks/"
+        result = api_call(url, calltype="post")
         print("Setup is complete")
         print_disk_info(result)

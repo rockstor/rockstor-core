@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,23 +21,22 @@ from rest_util import api_call
 
 
 class SupportConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.greeting = 'Support'
+        self.greeting = "Support"
         self.pprompt = prompt
-        self.prompt = ('%s %s>' % (self.pprompt, self.greeting))
-        self.baseurl = BaseConsole.url + 'support/'
+        self.prompt = "%s %s>" % (self.pprompt, self.greeting)
+        self.baseurl = BaseConsole.url + "support/"
 
     def do_list(self, args):
         """
         List support cases
         """
         url = self.baseurl
-        if (args is not None):
+        if args is not None:
             case_fields = args.split()
-            if (len(case_fields) > 0):
-                url = ('%s%s/' % (url, case_fields[0]))
+            if len(case_fields) > 0:
+                url = "%s%s/" % (url, case_fields[0])
         case_info = api_call(url)
         print(case_info)
 
@@ -48,17 +47,19 @@ class SupportConsole(BaseConsole):
         add -nnotes
         """
         case_fields = args.split()
-        if (len(case_fields) < 1):
+        if len(case_fields) < 1:
             return self.do_help(args)
 
-        input_data = {'type': 'manual', }
+        input_data = {
+            "type": "manual",
+        }
         for f in case_fields:
-            if (f[0:2] == '-n'):
-                input_data['notes'] = f[2:]
-        if (len(input_data) < 2):
+            if f[0:2] == "-n":
+                input_data["notes"] = f[2:]
+        if len(input_data) < 2:
             return self.do_help(args)
 
-        case_info = api_call(self.baseurl, data=input_data, calltype='put')
+        case_info = api_call(self.baseurl, data=input_data, calltype="put")
         print(case_info)
 
     def do_update(self, args):
@@ -68,10 +69,10 @@ class SupportConsole(BaseConsole):
         update <case_id> <resolved|submitted>
         """
         case_fields = args.split()
-        if (len(case_fields) < 2):
+        if len(case_fields) < 2:
             return self.do_help(args)
 
-        input_data = {'status': case_fields[1]}
-        url = ('%s%s/' % (self.baseurl, case_fields[0]))
-        case_info = api_call(url, data=input_data, calltype='put')
+        input_data = {"status": case_fields[1]}
+        url = "%s%s/" % (self.baseurl, case_fields[0])
+        case_info = api_call(url, data=input_data, calltype="put")
         print(case_info)

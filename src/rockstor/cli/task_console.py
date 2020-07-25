@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -22,19 +22,18 @@ import time
 
 
 class TaskConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.greeting = 'Scheduler'
+        self.greeting = "Scheduler"
         self.pprompt = prompt
-        self.prompt = ('%s %s>' % (self.pprompt, self.greeting))
-        self.baseurl = BaseConsole.url + 'sm/tasks/'
+        self.prompt = "%s %s>" % (self.pprompt, self.greeting)
+        self.baseurl = BaseConsole.url + "sm/tasks/"
 
     def do_types(self, args):
         """
         print all task types that can be scheduled
         """
-        url = ('%stypes' % self.baseurl)
+        url = "%stypes" % self.baseurl
         print(api_call(url))
 
     def do_list(self, args):
@@ -44,8 +43,8 @@ class TaskConsole(BaseConsole):
         list <task_id>
         """
         url = self.baseurl
-        if (len(args) > 0):
-            url = ('%s%s' % (url, args))
+        if len(args) > 0:
+            url = "%s%s" % (url, args)
         print(api_call(url))
 
     def do_log(self, args):
@@ -54,27 +53,29 @@ class TaskConsole(BaseConsole):
 
         log <task_id>
         """
-        url = ('%slog' % self.baseurl)
-        if (len(args) > 0):
-            url = ('%s/taskdef/%s' % (url, args))
+        url = "%slog" % self.baseurl
+        if len(args) > 0:
+            url = "%s/taskdef/%s" % (url, args)
         print(api_call(url))
 
     def do_snap(self, args):
         """
         snap share_name name_prefix frequency tag
         """
-        if (len(args) > 0):
+        if len(args) > 0:
             fields = args.split()
-            input_data = {'meta': {'share': fields[0],
-                                   'prefix': fields[1], },
-                          'task_type': 'snapshot',
-                          'name': fields[3],
-                          'ts': time.time() + 120,
-                          'frequency': fields[2], }
+            input_data = {
+                "meta": {"share": fields[0], "prefix": fields[1],},
+                "task_type": "snapshot",
+                "name": fields[3],
+                "ts": time.time() + 120,
+                "frequency": fields[2],
+            }
             print(input_data)
-            headers = {'content-type': 'application/json'}
-            snap_info = api_call(self.baseurl, data=input_data,
-                                 calltype='post', headers=headers)
+            headers = {"content-type": "application/json"}
+            snap_info = api_call(
+                self.baseurl, data=input_data, calltype="post", headers=headers
+            )
             print(snap_info)
         else:
             return self.do_help(args)
@@ -83,25 +84,30 @@ class TaskConsole(BaseConsole):
         """
         scrub pool_name frequency tag
         """
-        if (len(args) == 0):
+        if len(args) == 0:
             return self.do_help(args)
 
         fields = args.split()
-        input_data = {'meta': {'pool': fields[0]},
-                      'task_type': 'scrub',
-                      'name': fields[2],
-                      'ts': time.time() + 120,
-                      'frequency': fields[1], }
+        input_data = {
+            "meta": {"pool": fields[0]},
+            "task_type": "scrub",
+            "name": fields[2],
+            "ts": time.time() + 120,
+            "frequency": fields[1],
+        }
         print(input_data)
-        headers = {'content-type': 'application/json'}
-        scrub_info = api_call(self.baseurl, data=input_data,
-                              calltype='post', headers=headers)
+        headers = {"content-type": "application/json"}
+        scrub_info = api_call(
+            self.baseurl, data=input_data, calltype="post", headers=headers
+        )
         print(scrub_info)
 
     def _toggle_event(self, event_id, enabled=False):
-        url = ('%s/%s' % (self.baseurl, event_id))
-        input_data = {'enabled': enabled, }
-        print(api_call(url, data=input_data, calltype='put'))
+        url = "%s/%s" % (self.baseurl, event_id)
+        input_data = {
+            "enabled": enabled,
+        }
+        print(api_call(url, data=input_data, calltype="put"))
 
     def do_disable(self, args):
         """
@@ -109,7 +115,7 @@ class TaskConsole(BaseConsole):
 
         disable event_id
         """
-        if (len(args) == 0):
+        if len(args) == 0:
             return self.do_help(args)
         self._toggle_event(args)
 
@@ -119,7 +125,7 @@ class TaskConsole(BaseConsole):
 
         eanble event_id
         """
-        if (len(args) == 0):
+        if len(args) == 0:
             return self.do_help(args)
         self._toggle_event(args, enabled=True)
 
@@ -127,8 +133,8 @@ class TaskConsole(BaseConsole):
         """
         delete event_id
         """
-        if (len(args) == 0):
+        if len(args) == 0:
             return self.do_help(args)
-        url = ('%s%s' % (self.baseurl, args))
-        event_info = api_call(url, calltype='delete')
+        url = "%s%s" % (self.baseurl, args)
+        event_info = api_call(url, calltype="delete")
         print(event_info)

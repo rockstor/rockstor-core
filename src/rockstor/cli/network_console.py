@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -18,15 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from base_console import BaseConsole
-from rest_util import (api_error, api_call)
+from rest_util import api_error, api_call
 
 
 class NetworkConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.prompt = prompt + ' Network>'
-        self.baseurl = ('%s/network' % BaseConsole.url)
+        self.prompt = prompt + " Network>"
+        self.baseurl = "%s/network" % BaseConsole.url
 
     @api_error
     def do_scan(self, args):
@@ -35,7 +34,7 @@ class NetworkConsole(BaseConsole):
 
         scan
         """
-        network_info = api_call(self.baseurl, calltype='post')
+        network_info = api_call(self.baseurl, calltype="post")
         print(network_info)
 
     @api_error
@@ -59,22 +58,23 @@ class NetworkConsole(BaseConsole):
 
         """
         fields = args.split()
-        if (len(fields) < 2):
+        if len(fields) < 2:
             return self.do_help(args)
-        url = ('%s/%s' % (self.baseurl, fields[0]))
-        if (fields[1] == '-d'):
-            print(api_call(url, data={'boot_protocol': 'dhcp', },
-                           calltype='put'))
-        elif (fields[1] == '-s'):
-            if (len(fields) < 7):
+        url = "%s/%s" % (self.baseurl, fields[0])
+        if fields[1] == "-d":
+            print(api_call(url, data={"boot_protocol": "dhcp",}, calltype="put"))
+        elif fields[1] == "-s":
+            if len(fields) < 7:
                 return self.do_help(args[:2])
-            input_data = {'boot_protocol': 'static',
-                          'ipaddr': fields[2],
-                          'netmask': fields[3],
-                          'gateway': fields[4],
-                          'dns_servers': fields[5],
-                          'domain': fields[6],
-                          'itype': 'management', }
-            print(api_call(url, data=input_data, calltype='put'))
+            input_data = {
+                "boot_protocol": "static",
+                "ipaddr": fields[2],
+                "netmask": fields[3],
+                "gateway": fields[4],
+                "dns_servers": fields[5],
+                "domain": fields[6],
+                "itype": "management",
+            }
+            print(api_call(url, data=input_data, calltype="put"))
         else:
             return self.do_help(args)
