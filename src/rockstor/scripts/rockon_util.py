@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -23,9 +23,9 @@ from storageadmin.views.rockon_json import rockons
 
 def main():
     out_file = sys.argv[1]
-    with open(out_file, 'w') as ofo:
+    with open(out_file, "w") as ofo:
         json.dump(rockons, ofo, indent=4, sort_keys=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

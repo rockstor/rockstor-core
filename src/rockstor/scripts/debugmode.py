@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -28,16 +28,16 @@ from tempfile import mkstemp
 from system.osi import run_command
 
 
-SETTINGS_FILE = path.join(settings.ROOT_DIR, 'src/rockstor/settings.py')
-SUPERCTL_BIN = path.join(settings.ROOT_DIR, 'bin/supervisorctl')
+SETTINGS_FILE = path.join(settings.ROOT_DIR, "src/rockstor/settings.py")
+SUPERCTL_BIN = path.join(settings.ROOT_DIR, "bin/supervisorctl")
 
 
 def update_settings(debug_flag):
     fh, npath = mkstemp()
-    with open(SETTINGS_FILE) as sfo, open(npath, 'w') as tfo:
+    with open(SETTINGS_FILE) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
-            if re.match('DEBUG = ', line):
-                line = 'DEBUG = %s\n' % debug_flag
+            if re.match("DEBUG = ", line):
+                line = "DEBUG = %s\n" % debug_flag
             tfo.write(line)
     shutil.move(npath, SETTINGS_FILE)
 
@@ -47,22 +47,22 @@ def display_current():
 
 
 def main():
-    hmsg = 'Usage: %s [-h] [ON|OFF]' % sys.argv[0]
+    hmsg = "Usage: %s [-h] [ON|OFF]" % sys.argv[0]
     if len(sys.argv) > 1:
         log_level = sys.argv[1].upper()
-        if log_level not in ('ON', 'OFF'):
+        if log_level not in ("ON", "OFF"):
             sys.exit(hmsg)
 
         debug_flag = False
-        if log_level == 'ON':
+        if log_level == "ON":
             debug_flag = True
 
         if debug_flag == settings.DEBUG:
-            print('DEBUG flag already set to %s' % debug_flag)
+            print("DEBUG flag already set to %s" % debug_flag)
         else:
             update_settings(debug_flag)
-            run_command([SUPERCTL_BIN, 'restart', 'gunicorn'])
-            print('DEBUG flag is now set to %s' % debug_flag)
+            run_command([SUPERCTL_BIN, "restart", "gunicorn"])
+            print("DEBUG flag is now set to %s" % debug_flag)
     else:
         display_current()
         sys.exit(hmsg)

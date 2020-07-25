@@ -110,7 +110,7 @@ def current_rockstor_mgmt_ip(logger):
         except Exception as e:
             # interface vanished.
             logger.exception(
-                "Exception while gathering current management " "ip: {e}".format(e=e)
+                "Exception while gathering current management ip: {e}".format(e=e)
             )
 
     return ipaddr, port
@@ -354,7 +354,7 @@ def main():
     try:
         delete_old_kernels(logging)
     except Exception as e:
-        logging.debug("Exception while deleting old kernels. Soft error. " "Moving on.")
+        logging.debug("Exception while deleting old kernels. Soft error. Moving on.")
         logging.exception(e)
 
     cert_loc = "%s/certs/" % BASE_DIR
@@ -420,7 +420,7 @@ def main():
         run_command([SUPERCTL, "restart", "nginx"])
 
     logging.info(
-        "Checking for flash and Running flash optimizations if " "appropriate."
+        "Checking for flash and Running flash optimizations if appropriate."
     )
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
     try:
