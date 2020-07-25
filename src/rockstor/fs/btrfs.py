@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -90,7 +90,7 @@ Dev = collections.namedtuple("Dev", "temp_name is_byid devid size allocated")
 # Named Tuple for Device Pool Info.
 DevPoolInfo = collections.namedtuple("DevPoolInfo", "devid size allocated uuid label")
 # Named Tuple for btrfs device usage info.
-DevUsageInfo = collections.namedtuple("DevUsageInfo", "temp_name size " "allocated")
+DevUsageInfo = collections.namedtuple("DevUsageInfo", "temp_name size allocated")
 # Named Tuple for default_subvol info: id (string) path (string) boot_to_snap (boolean)
 DefaultSubvol = collections.namedtuple("DefaultSubvol", "id path boot_to_snap")
 
@@ -1062,7 +1062,7 @@ def rescan_quotas(pool):
         emsg = "ERROR: quota rescan failed: Read-only file system"
         if e.err[0] == emsg:
             logger.info(
-                "Pool: ({}) is Read-only, skipping " "quota rescan.".format(pool.name)
+                "Pool: ({}) is Read-only, skipping quota rescan.".format(pool.name)
             )
             return e.out, e.err, e.rc
         # Catch breaking exception for non fatal 'already running' state.
@@ -1088,7 +1088,7 @@ def are_quotas_enabled(mnt_pt):
     """
     o, e, rc = run_command([BTRFS, "qgroup", "show", "-f", "--raw", mnt_pt])
     if rc == 0 and (
-        e[0] == "" or e[0] == "WARNING: qgroup data inconsistent, " "rescan recommended"
+        e[0] == "" or e[0] == "WARNING: qgroup data inconsistent, rescan recommended"
     ):
         return True
     # Note on above e[0] clauses:
@@ -1224,7 +1224,7 @@ def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
         # this is non fatal so we catch this specific error and info log it.
         if e.err[0] == emsg:
             logger.info(
-                "Pool: {} is Read-only, skipping qgroup " "create.".format(pool.name)
+                "Pool: {} is Read-only, skipping qgroup create.".format(pool.name)
             )
             # We now return PQGROUP_DEFAULT because our proposed next
             # available pqgroup can't be assigned anyway (Read-only file
@@ -1398,7 +1398,7 @@ def qgroup_assign(qid, pqid, mnt_pt):
                 emsg = "ERROR: quota rescan failed: Operation now in progress"
                 if e2.err[0] == emsg:
                     return logger.debug(
-                        "{}.. Another rescan already in " "progress.".format(dmsg)
+                        "{}.. Another rescan already in progress.".format(dmsg)
                     )
                 logger.exception(e2)
                 raise e2
@@ -1420,21 +1420,21 @@ def update_quota(pool, qgroup, size_bytes):
     if qgroup == PQGROUP_DEFAULT:
         # We have a 'quotas disabled' or 'Read-only' qgroup value flag,
         # log and return blank.
-        logger.info("Pool: {} ignoring " "update_quota on {}".format(pool.name, qgroup))
+        logger.info("Pool: {} ignoring update_quota on {}".format(pool.name, qgroup))
         return out, err, rc
     try:
         out, err, rc = run_command(cmd, log=True)
     except CommandException as e:
         # ro mount options will result in o= [''], rc = 1 and e[0] =
-        emsg = "ERROR: unable to limit requested quota group: " "Read-only file system"
+        emsg = "ERROR: unable to limit requested quota group: Read-only file system"
         # this is non fatal so we catch this specific error and info log it.
         if e.err[0] == emsg:
             logger.info(
-                "Pool: {} is Read-only, skipping qgroup " "limit.".format(pool.name)
+                "Pool: {} is Read-only, skipping qgroup limit.".format(pool.name)
             )
             return out, err, rc
         # quotas disabled results in o = [''], rc = 1 and e[0] =
-        emsg2 = "ERROR: unable to limit requested quota group: " "Invalid argument"
+        emsg2 = "ERROR: unable to limit requested quota group: Invalid argument"
         # quotas disabled is not a fatal failure but here we key from what
         # is a non specific error: 'Invalid argument'.
         # TODO: improve this clause as currently too broad.
@@ -1447,11 +1447,11 @@ def update_quota(pool, qgroup, size_bytes):
             )
             return out, err, rc
         emsg3 = (
-            "ERROR: unable to limit requested quota group: " "No such file or directory"
+            "ERROR: unable to limit requested quota group: No such file or directory"
         )
         if e.err[0] == emsg3:
             logger.info(
-                "Pool: {} is missing expected " "qgroup {}".format(pool.name, qgroup)
+                "Pool: {} is missing expected qgroup {}".format(pool.name, qgroup)
             )
             logger.info("Previously disabled quotas can cause this issue")
             return out, err, rc
@@ -1676,7 +1676,7 @@ def scrub_status(pool):
         haltOffset = -1
     out, err, rc = run_command([BTRFS, "scrub", "status", "-R", mnt_pt])
     if err != [""] and len(err) > 0:
-        if err[0] == "WARNING: failed to read status: Connection reset by " "peer":
+        if err[0] == "WARNING: failed to read status: Connection reset by peer":
             stats["status"] = "conn-reset"
             return stats
     if len(out) > 1:

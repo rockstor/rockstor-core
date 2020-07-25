@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,15 +21,15 @@ import subprocess
 
 
 class PoolScrub(Process):
-
     def __init__(self, mnt_pt, force=False):
         self.mnt_pt = mnt_pt
         self.force = force
         super(PoolScrub, self).__init__()
 
     def run(self):
-        cmd = ['btrfs', 'scrub', 'start', '-B', self.mnt_pt]
-        if (self.force):
-            cmd.insert(3, '-f')
-        subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+        cmd = ["btrfs", "scrub", "start", "-B", self.mnt_pt]
+        if self.force:
+            cmd.insert(3, "-f")
+        subprocess.Popen(
+            cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )

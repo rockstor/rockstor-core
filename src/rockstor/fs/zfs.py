@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,18 +21,21 @@ import subprocess
 
 
 def add_zpool(disks):
-    p = subprocess.Popen(['zpool', 'destroy', 'pool1'], shell=False,
-                         stdout=subprocess.PIPE)
+    p = subprocess.Popen(
+        ["zpool", "destroy", "pool1"], shell=False, stdout=subprocess.PIPE
+    )
     p.communicate()
-    p = subprocess.Popen(['zpool', 'create', '-f', 'pool1'] + disks,
-                         shell=False, stdout=subprocess.PIPE)
+    p = subprocess.Popen(
+        ["zpool", "create", "-f", "pool1"] + disks, shell=False, stdout=subprocess.PIPE
+    )
     p.communicate()
     return True
 
 
 def add_zfs_share(pool, share):
-    share_fullname = pool + '/' + share
-    p = subprocess.Popen(['zfs', 'create', share_fullname], shell=False,
-                         stdout=subprocess.PIPE)
+    share_fullname = pool + "/" + share
+    p = subprocess.Popen(
+        ["zfs", "create", share_fullname], shell=False, stdout=subprocess.PIPE
+    )
     p.communicate()
     return True
