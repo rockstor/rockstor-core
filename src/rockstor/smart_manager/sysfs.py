@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,11 +21,10 @@ from multiprocessing import Process
 
 
 class SysRetreiver(Process):
-
     def __init__(self, q):
         self.q = q
         super(SysRetreiver, self).__init__()
 
     def run(self):
-        while(True):
+        while True:
             pass

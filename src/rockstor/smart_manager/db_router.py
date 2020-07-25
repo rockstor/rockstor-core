@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-APP_LABEL = 'smart_manager'
+APP_LABEL = "smart_manager"
 
 
 class SmartManagerDBRouter(object):
-
     def db_for_read(self, model, **hints):
         from django.conf import settings
+
         if APP_LABEL not in settings.DATABASES:
             return None
         if model._meta.app_label == APP_LABEL:
@@ -31,6 +31,7 @@ class SmartManagerDBRouter(object):
 
     def db_for_write(self, model, **hints):
         from django.conf import settings
+
         if APP_LABEL not in settings.DATABASES:
             return None
         if model._meta.app_label == APP_LABEL:
@@ -39,15 +40,16 @@ class SmartManagerDBRouter(object):
 
     def allow_relation(self, obj1, obj2, **hints):
         from django.conf import settings
+
         if APP_LABEL not in settings.DATABASES:
             return None
-        if (obj1._meta.app_label == APP_LABEL or
-                obj2._meta.app_label == APP_LABEL):
+        if obj1._meta.app_label == APP_LABEL or obj2._meta.app_label == APP_LABEL:
             return True
         return None
 
     def allow_migrate(self, db, model):
         from django.conf import settings
+
         if APP_LABEL not in settings.DATABASES:
             return None
         if db == APP_LABEL:

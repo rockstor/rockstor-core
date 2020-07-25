@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,16 +16,28 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework import (serializers, pagination)
-from .models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
-                     SProbe, NFSDCallDistribution,
-                     NFSDClientDistribution,
-                     NFSDShareDistribution,
-                     DiskStat, NetStat,
-                     NFSDShareClientDistribution,
-                     NFSDUidGidDistribution, TaskDefinition, Task,
-                     Replica, ReplicaTrail, ReplicaShare,
-                     ReceiveTrail, Service)
+from rest_framework import serializers, pagination
+from .models import (
+    CPUMetric,
+    LoadAvg,
+    MemInfo,
+    ServiceStatus,
+    SProbe,
+    NFSDCallDistribution,
+    NFSDClientDistribution,
+    NFSDShareDistribution,
+    DiskStat,
+    NetStat,
+    NFSDShareClientDistribution,
+    NFSDUidGidDistribution,
+    TaskDefinition,
+    Task,
+    Replica,
+    ReplicaTrail,
+    ReplicaShare,
+    ReceiveTrail,
+    Service,
+)
 from smart_manager.taplib.probe_config import TapConfig
 
 
@@ -37,7 +49,7 @@ class CPUMetricSerializer(serializers.ModelSerializer):
 class LoadAvgSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoadAvg
-        fields = ('uptime',)
+        fields = ("uptime",)
 
 
 class MemInfoSerializer(serializers.ModelSerializer):
@@ -110,9 +122,9 @@ class SProbeConfigSerializer(serializers.Serializer):
     sdetail = serializers.CharField(max_length=4096)
 
     def restore_object(self, attrs, instance=None):
-        if (instance is not None):
-            instance.uuid = attrs.get('uuid', instance.uuid)
-            instance.sdetail = attrs.get('sdetail', instance.sdetail)
+        if instance is not None:
+            instance.uuid = attrs.get("uuid", instance.uuid)
+            instance.sdetail = attrs.get("sdetail", instance.sdetail)
             return instance
         return TapConfig(**attrs)
 
@@ -131,7 +143,6 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class TaskType(object):
-
     def __init__(self, name, detail):
         self.name = name
         self.detail = detail
@@ -142,9 +153,9 @@ class TaskTypeSerializer(serializers.Serializer):
     detail = serializers.CharField(max_length=255)
 
     def restore_object(self, attrs, instance=None):
-        if (instance is not None):
-            instance.name = attrs.get('name', instance.name)
-            instance.detail = attrs.get('detail', instance.detail)
+        if instance is not None:
+            instance.name = attrs.get("name", instance.name)
+            instance.detail = attrs.get("detail", instance.detail)
             return instance
         return TaskType(**attrs)
 
@@ -155,7 +166,6 @@ class ReplicaSerializer(serializers.ModelSerializer):
 
 
 class ReplicaTrailSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ReplicaTrail
 
