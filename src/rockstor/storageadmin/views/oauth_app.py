@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
 from oauth2_provider.models import Application as OauthApplication
-from storageadmin.models import (OauthApp, User)
+from storageadmin.models import OauthApp, User
 from storageadmin.serializers import OauthAppSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -30,10 +30,10 @@ class OauthAppView(rfc.GenericView):
     serializer_class = OauthAppSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('name' in self.kwargs):
+        if "name" in self.kwargs:
             self.paginate_by = 0
             try:
-                return OauthApp.objects.get(name=self.kwargs['name'])
+                return OauthApp.objects.get(name=self.kwargs["name"])
             except:
                 return []
         return OauthApp.objects.all()
@@ -41,24 +41,29 @@ class OauthAppView(rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            name = request.data.get('name')
+            name = request.data.get("name")
             username = request.user.username
-            if (OauthApp.objects.filter(name=name).exists()):
-                e_msg = ('Application with name ({}) already exists. Choose a '
-                         'different name.').format(name)
+            if OauthApp.objects.filter(name=name).exists():
+                e_msg = (
+                    "Application with name ({}) already exists. Choose a "
+                    "different name."
+                ).format(name)
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             try:
                 user = User.objects.get(username=username)
             except:
-                e_msg = 'User with name ({}) does not exist.'.format(username)
+                e_msg = "User with name ({}) does not exist.".format(username)
                 handle_exception(Exception(e_msg), request)
 
             client_type = OauthApplication.CLIENT_CONFIDENTIAL
             auth_grant_type = OauthApplication.GRANT_CLIENT_CREDENTIALS
-            app = OauthApplication(name=name, client_type=client_type,
-                                   authorization_grant_type=auth_grant_type,
-                                   user=user.user)
+            app = OauthApplication(
+                name=name,
+                client_type=client_type,
+                authorization_grant_type=auth_grant_type,
+                user=user.user,
+            )
             app.save()
             oauth_app = OauthApp(name=name, application=app, user=user)
             oauth_app.save()
@@ -70,18 +75,20 @@ class OauthAppView(rfc.GenericView):
             try:
                 app = OauthApp.objects.get(id=id)
             except:
-                e_msg = 'Application with id ({}) does not exist.'.format(id)
+                e_msg = "Application with id ({}) does not exist.".format(id)
                 handle_exception(Exception(e_msg), request)
 
-            if (app.name == settings.OAUTH_INTERNAL_APP):
-                e_msg = ('Application with id ({}) cannot be deleted because '
-                         'it is '
-                         'used internally by Rockstor. If you really need to '
-                         'delete it, login as root and use '
-                         '{}bin/delete-api-key command. If you do delete it, '
-                         'please create another one with the same name as it '
-                         'is required by Rockstor '
-                         'internally.').format(id, settings.ROOT_DIR)
+            if app.name == settings.OAUTH_INTERNAL_APP:
+                e_msg = (
+                    "Application with id ({}) cannot be deleted because "
+                    "it is "
+                    "used internally by Rockstor. If you really need to "
+                    "delete it, login as root and use "
+                    "{}bin/delete-api-key command. If you do delete it, "
+                    "please create another one with the same name as it "
+                    "is required by Rockstor "
+                    "internally."
+                ).format(id, settings.ROOT_DIR)
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             app.application.delete()

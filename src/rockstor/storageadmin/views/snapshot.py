@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 if "sid" not in self.kwargs:
                     return Snapshot.objects.filter().order_by("-id")
 
-                e_msg = ("Share id ({}) does " "not exist.").format(self.kwargs["sid"])
+                e_msg = ("Share id ({}) does not exist.").format(self.kwargs["sid"])
                 handle_exception(Exception(e_msg), self.request)
 
             if "snap_name" in self.kwargs:
@@ -125,7 +125,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
     def _create(self, share, snap_name, request, uvisible, snap_type, writable):
         if Snapshot.objects.filter(share=share, name=snap_name).exists():
             # Note e_msg is consumed by replication/util.py create_snapshot()
-            e_msg = ("Snapshot ({}) already exists for " "the share ({}).").format(
+            e_msg = ("Snapshot ({}) already exists for the share ({}).").format(
                 snap_name, share.name
             )
             handle_exception(Exception(e_msg), request)
@@ -161,7 +161,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             uvisible = request.data.get("uvisible", False)
             if type(uvisible) != bool:
                 # N.B. quote type important - test string involves ('unicode')
-                e_msg = ("Element 'uvisible' must be a boolean, " "not ({}).").format(
+                e_msg = ("Element 'uvisible' must be a boolean, not ({}).").format(
                     type(uvisible)
                 )
                 handle_exception(Exception(e_msg), request)

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2019 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -134,7 +134,9 @@ class SambaMixin(object):
                 except KeyError:
                     # raise the outer exception as it's more meaningful to the
                     # user.
-                    raise Exception("Requested admin user({}) does not exist.".format(au))
+                    raise Exception(
+                        "Requested admin user({}) does not exist.".format(au)
+                    )
             finally:
                 auo.smb_shares.add(smb_share)
 

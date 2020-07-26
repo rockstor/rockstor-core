@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -127,7 +127,7 @@ def import_shares(pool, request):
                     # we have a void '-1/-1' or non existent pqgroup or
                     # this pqgroup has already been seen / used in this pool.
                     logger.debug(
-                        "#### replacing void, non-existent, or " "duplicate pqgroup."
+                        "#### replacing void, non-existent, or duplicate pqgroup."
                     )
                     pqgroup = qgroup_create(pool)
                     if pqgroup != PQGROUP_DEFAULT:

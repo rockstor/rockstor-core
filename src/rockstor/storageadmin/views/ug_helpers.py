@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,10 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (User, Group, )
-from system.users import (get_users, get_groups)
-from system.pinmanager import (pincard_states)
+from storageadmin.models import (
+    User,
+    Group,
+)
+from system.users import get_users, get_groups
+from system.pinmanager import pincard_states
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,13 +39,13 @@ def combined_users():
             uo.shell = sys_users[u][2]
             gname = get_groups(uo.gid).keys()[0]
             create = True
-            if (uo.group is not None):
-                if (uo.group.gid == uo.gid or uo.group.groupname == gname):
+            if uo.group is not None:
+                if uo.group.gid == uo.gid or uo.group.groupname == gname:
                     uo.group.groupname = gname
                     uo.group.gid = uo.gid
                     uo.group.save()
                     create = False
-            if (create):
+            if create:
                 try:
                     go = Group.objects.get(groupname=gname)
                     go.gid = uo.gid
@@ -62,18 +66,25 @@ def combined_users():
             users.append(uo)
 
         except User.DoesNotExist:
-            temp_uo = User(username=u, uid=sys_users[u][0],
-                           gid=sys_users[u][1], shell=sys_users[u][2],
-                           admin=False)
+            temp_uo = User(
+                username=u,
+                uid=sys_users[u][0],
+                gid=sys_users[u][1],
+                shell=sys_users[u][2],
+                admin=False,
+            )
             temp_uo.managed_user = False
-            temp_uo.pincard_allowed, temp_uo.has_pincard = pincard_states(temp_uo)  # noqa E501
+            temp_uo.pincard_allowed, temp_uo.has_pincard = pincard_states(
+                temp_uo
+            )  # noqa E501
             users.append(temp_uo)
 
     for u in User.objects.all():
-        if (u.username not in uname_list):
+        if u.username not in uname_list:
             users.append(u)
-    return sorted(users, cmp=lambda x, y: cmp(x.username.lower(),  # noqa F821
-                                              y.username.lower()))
+    return sorted(
+        users, cmp=lambda x, y: cmp(x.username.lower(), y.username.lower())  # noqa F821
+    )
 
 
 def combined_groups():
@@ -89,7 +100,9 @@ def combined_groups():
         except Group.DoesNotExist:
             groups.append(Group(groupname=g, gid=sys_groups[g]))
     for g in Group.objects.all():
-        if (g.groupname not in gname_list):
+        if g.groupname not in gname_list:
             groups.append(g)
-    return sorted(groups, cmp=lambda x, y: cmp(x.groupname.lower(),  # noqa F821
-                                               y.groupname.lower()))
+    return sorted(
+        groups,
+        cmp=lambda x, y: cmp(x.groupname.lower(), y.groupname.lower()),  # noqa F821
+    )

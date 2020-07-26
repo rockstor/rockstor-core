@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -28,9 +28,10 @@ from tempfile import mkstemp
 from django.conf import settings
 from system.services import superctl
 import logging
+
 logger = logging.getLogger(__name__)
 
-OPENSSL = '/usr/bin/openssl'
+OPENSSL = "/usr/bin/openssl"
 
 
 class TLSCertificateView(rfc.GenericView):
@@ -42,42 +43,51 @@ class TLSCertificateView(rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            name = request.data.get('name')
-            cert = request.data.get('cert')
-            key = request.data.get('key')
+            name = request.data.get("name")
+            cert = request.data.get("cert")
+            key = request.data.get("key")
             TLSCertificate.objects.filter().exclude(name=name).delete()
             co, created = TLSCertificate.objects.get_or_create(
-                name=name, defaults={'certificate': cert, 'key': key})
-            if (not created):
+                name=name, defaults={"certificate": cert, "key": key}
+            )
+            if not created:
                 co.certificate = cert
                 co.key = key
                 co.save()
             fo, kpath = mkstemp()
             fo, cpath = mkstemp()
-            with open(kpath, 'w') as kfo, open(cpath, 'w') as cfo:
+            with open(kpath, "w") as kfo, open(cpath, "w") as cfo:
                 kfo.write(key)
                 cfo.write(cert)
             try:
-                o, e, rc = run_command([OPENSSL, 'rsa', '-noout', '-modulus',
-                                        '-in', kpath])
+                o, e, rc = run_command(
+                    [OPENSSL, "rsa", "-noout", "-modulus", "-in", kpath]
+                )
             except Exception as e:
                 logger.exception(e)
-                e_msg = ('RSA key modulus could not be verified for the given '
-                         'Private Key. Correct your input and try again.')
+                e_msg = (
+                    "RSA key modulus could not be verified for the given "
+                    "Private Key. Correct your input and try again."
+                )
                 handle_exception(Exception(e_msg), request)
             try:
-                o2, e, rc = run_command([OPENSSL, 'x509', '-noout',
-                                         '-modulus', '-in', cpath])
+                o2, e, rc = run_command(
+                    [OPENSSL, "x509", "-noout", "-modulus", "-in", cpath]
+                )
             except Exception as e:
                 logger.exception(e)
-                e_msg = ('RSA key modulus could not be verified for the given '
-                         'Certificate. Correct your input and try again.')
+                e_msg = (
+                    "RSA key modulus could not be verified for the given "
+                    "Certificate. Correct your input and try again."
+                )
                 handle_exception(Exception(e_msg), request)
-            if (o[0] != o2[0]):
-                e_msg = ('Given Certificate and the Private Key do not match. '
-                         'Correct your input and try again.')
+            if o[0] != o2[0]:
+                e_msg = (
+                    "Given Certificate and the Private Key do not match. "
+                    "Correct your input and try again."
+                )
                 handle_exception(Exception(e_msg), request)
-            move(cpath, '%s/rockstor.cert' % settings.CERTDIR)
-            move(kpath, '%s/rockstor.key' % settings.CERTDIR)
-            superctl('nginx', 'restart')
+            move(cpath, "%s/rockstor.cert" % settings.CERTDIR)
+            move(kpath, "%s/rockstor.key" % settings.CERTDIR)
+            superctl("nginx", "restart")
             return Response(TLSCertificateSerializer(co).data)
