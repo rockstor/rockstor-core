@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,36 +26,35 @@ import chardet
 
 
 class User(models.Model):
-    user = models.OneToOneField(DjangoUser, null=True, blank=True,
-                                related_name='suser')
-    username = models.CharField(max_length=4096, unique=True, default='')
+    user = models.OneToOneField(DjangoUser, null=True, blank=True, related_name="suser")
+    username = models.CharField(max_length=4096, unique=True, default="")
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
     public_key = models.CharField(max_length=4096, null=True, blank=True)
-    smb_shares = models.ManyToManyField('SambaShare',
-                                        related_name='admin_users')
+    smb_shares = models.ManyToManyField("SambaShare", related_name="admin_users")
     shell = models.CharField(max_length=1024, null=True)
     homedir = models.CharField(max_length=1024, null=True)
-    email = models.CharField(max_length=1024, null=True, blank=True,
-                             validators=[validate_email])
+    email = models.CharField(
+        max_length=1024, null=True, blank=True, validators=[validate_email]
+    )
     # 'admin' field represents indicator of Rockstor web admin capability.
     admin = models.BooleanField(default=True)
     group = models.ForeignKey(Group, null=True, blank=True)
 
     @property
     def groupname(self, *args, **kwargs):
-        if (self.group is not None):
+        if self.group is not None:
             return self.group.groupname
-        if (self.gid is not None):
+        if self.gid is not None:
             groupname = grp.getgrgid(self.gid).gr_name
             charset = chardet.detect(groupname)
-            groupname = groupname.decode(charset['encoding'])
+            groupname = groupname.decode(charset["encoding"])
             return groupname
         return None
 
     @property
     def managed_user(self, *args, **kwargs):
-        return getattr(self, 'editable', True)
+        return getattr(self, "editable", True)
 
     @managed_user.setter
     def managed_user(self, val, *args, **kwargs):
@@ -63,7 +62,7 @@ class User(models.Model):
 
     @property
     def has_pincard(self, *args, **kwargs):
-        return getattr(self, 'pincard_exist', False)
+        return getattr(self, "pincard_exist", False)
 
     @has_pincard.setter
     def has_pincard(self, val, *args, **kwargs):
@@ -71,11 +70,11 @@ class User(models.Model):
 
     @property
     def pincard_allowed(self, *args, **kwargs):
-        return getattr(self, 'pincard_enabled', 'no')
+        return getattr(self, "pincard_enabled", "no")
 
     @pincard_allowed.setter
     def pincard_allowed(self, val, *args, **kwargs):
         self.pincard_enabled = val
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

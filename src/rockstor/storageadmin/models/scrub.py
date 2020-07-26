@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -24,14 +24,14 @@ class PoolScrub(models.Model):
 
     pool = models.ForeignKey(Pool)
     # with a max of 10 chars we use 'halted' to indicated 'interrupted'
-    status = models.CharField(max_length=10, default='started')
+    status = models.CharField(max_length=10, default="started")
     # pid is the process id of a scrub job
     pid = models.IntegerField()
     start_time = models.DateTimeField(auto_now=True)
     end_time = models.DateTimeField(null=True)
     time_left = models.BigIntegerField(default=0)
     eta = models.DateTimeField(null=True)
-    rate = models.CharField(max_length=15, default='')
+    rate = models.CharField(max_length=15, default="")
     kb_scrubbed = models.BigIntegerField(null=True)
     data_extents_scrubbed = models.BigIntegerField(default=0)
     tree_extents_scrubbed = models.BigIntegerField(default=0)
@@ -49,4 +49,4 @@ class PoolScrub(models.Model):
     last_physical = models.BigIntegerField(default=0)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

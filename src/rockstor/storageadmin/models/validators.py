@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -23,10 +23,12 @@ from django.core.validators import validate_ipv46_address
 
 def validate_nfs_host_str(value):
     error_count = 0
-    host_regex = ('^(([a-zA-Z0-9\*]|[a-zA-Z0-9\*][a-zA-Z0-9\-\*]*'
-                  '[a-zA-Z0-9\*])\.)*([A-Za-z0-9\*]|[A-Za-z0-9\*]'
-                  '[A-Za-z0-9\-\*]*[A-Za-z0-9\*])$')
-    if (re.match(host_regex, value) is None):
+    host_regex = (
+        "^(([a-zA-Z0-9\*]|[a-zA-Z0-9\*][a-zA-Z0-9\-\*]*"
+        "[a-zA-Z0-9\*])\.)*([A-Za-z0-9\*]|[A-Za-z0-9\*]"
+        "[A-Za-z0-9\-\*]*[A-Za-z0-9\*])$"
+    )
+    if re.match(host_regex, value) is None:
         error_count += 1
 
     # ip networks
@@ -35,16 +37,16 @@ def validate_nfs_host_str(value):
     except ValidationError:
         error_count += 1
 
-    if (error_count == 2):
-        raise ValidationError('Invalid host string: %s' % value)
+    if error_count == 2:
+        raise ValidationError("Invalid host string: %s" % value)
 
 
 def validate_nfs_modify_str(value):
-    if (value != 'ro' and value != 'rw'):
-        raise ValidationError('Invalid mod choice. Possible options: ro, rw')
+    if value != "ro" and value != "rw":
+        raise ValidationError("Invalid mod choice. Possible options: ro, rw")
 
 
 def validate_nfs_sync_choice(value):
-    if (value != 'async' and value != 'sync'):
-        msg = ('Invalid sync choice. Possible options: async, sync')
+    if value != "async" and value != "sync":
+        msg = "Invalid sync choice. Possible options: async, sync"
         raise ValidationError(msg)

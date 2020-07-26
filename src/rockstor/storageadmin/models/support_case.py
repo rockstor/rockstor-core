@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,20 +21,21 @@ from django.db import models
 
 class SupportCase(models.Model):
     """we use default id as the case number"""
+
     notes = models.TextField()
     """location of the zipped logfile(s)"""
     zipped_log = models.CharField(max_length=128)
     STATUS_CHOICES = (
-        ('created', 'created'),
-        ('submitted', 'submitted'),
-        ('resolved', 'resolved'),
-        )
+        ("created", "created"),
+        ("submitted", "submitted"),
+        ("resolved", "resolved"),
+    )
     status = models.CharField(max_length=9, choices=STATUS_CHOICES)
     TYPE_CHOICES = (
-        ('auto', 'auto'),
-        ('manual', 'manual'),
-        )
+        ("auto", "auto"),
+        ("manual", "manual"),
+    )
     case_type = models.CharField(max_length=6, choices=TYPE_CHOICES)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

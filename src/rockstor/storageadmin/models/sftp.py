@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -23,14 +23,13 @@ from storageadmin.models import Share  # noqa F401
 class SFTP(models.Model):
     READ_ONLY = "ro"
     READ_WRITE = "rw"
-    share = models.OneToOneField('Share')
+    share = models.OneToOneField("Share")
     """read only by default"""
     MODIFY_CHOICES = (
-        (READ_ONLY, 'ro'),
-        (READ_WRITE, 'rw'),
-        )
-    editable = models.CharField(max_length=2, choices=MODIFY_CHOICES,
-                                default=READ_ONLY)
+        (READ_ONLY, "ro"),
+        (READ_WRITE, "rw"),
+    )
+    editable = models.CharField(max_length=2, choices=MODIFY_CHOICES, default=READ_ONLY)
 
     def share_name(self, *args, **kwargs):
         return self.share.name
@@ -39,4 +38,4 @@ class SFTP(models.Model):
         return self.share.id
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

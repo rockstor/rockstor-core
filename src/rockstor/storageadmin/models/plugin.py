@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,11 +21,11 @@ from django.db import models
 
 class Plugin(models.Model):
     name = models.CharField(max_length=4096, unique=True)
-    display_name = models.CharField(max_length=4096, unique=True, default='')
-    description = models.CharField(max_length=4096, unique=False, default='')
-    css_file_name = models.CharField(max_length=4096, unique=False, )
+    display_name = models.CharField(max_length=4096, unique=True, default="")
+    description = models.CharField(max_length=4096, unique=False, default="")
+    css_file_name = models.CharField(max_length=4096, unique=False,)
     js_file_name = models.CharField(max_length=4096, unique=False)
     key = models.CharField(max_length=4096, unique=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
