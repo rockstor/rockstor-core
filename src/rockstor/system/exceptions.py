@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 class CommandException(Exception):
-
     def __init__(self, cmd, out, err, rc):
         self.cmd = cmd
         self.out = out
@@ -26,13 +25,13 @@ class CommandException(Exception):
         self.rc = rc
 
     def __str__(self):
-        return ('Error running a command. cmd = %s. rc = %d. stdout = %s. '
-                'stderr = %s' % (' '.join(self.cmd), self.rc, self.out,
-                                 self.err))
+        return (
+            "Error running a command. cmd = %s. rc = %d. stdout = %s. "
+            "stderr = %s" % (" ".join(self.cmd), self.rc, self.out, self.err)
+        )
 
 
 class NonBTRFSRootException(Exception):
-
     def __init__(self, err):
         self.err = err
 

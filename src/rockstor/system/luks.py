@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,10 +25,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-CRYPTSETUP = '/usr/sbin/cryptsetup'
-DMSETUP = '/usr/sbin/dmsetup'
-CRYPTTABFILE = '/etc/crypttab'
-DD = '/usr/bin/dd'
+CRYPTSETUP = "/usr/sbin/cryptsetup"
+DMSETUP = "/usr/sbin/dmsetup"
+CRYPTTABFILE = "/etc/crypttab"
+DD = "/usr/bin/dd"
 
 
 def get_open_luks_volume_status(mapped_device_name, byid_name_map):
@@ -60,34 +60,33 @@ def get_open_luks_volume_status(mapped_device_name, byid_name_map):
     status = {}
     status_found = False
     device_found = False
-    out, err, rc = run_command([CRYPTSETUP, 'status', mapped_device_name],
-                               throw=False)
+    out, err, rc = run_command([CRYPTSETUP, "status", mapped_device_name], throw=False)
     if rc != 0 and rc != 4:  # if return code is an error != 4 the empty dict.
         # rc = 4 is the result of querying a non existent volume ie detached
         # or closed.
         return status  # currently an empty dictionary
     for line in out:
-        if line == '':
+        if line == "":
             continue
         # get line fields
         line_fields = line.split()
         if len(line_fields) < 1:
             continue
-        if not status_found and re.match('/dev', line_fields[0]) is not None:
+        if not status_found and re.match("/dev", line_fields[0]) is not None:
             status_found = True
             # catch the line beginning /dev (1st line) and record it as status
-            status['status'] = ' '.join(line_fields[2:])
-        elif not device_found and line_fields[0] == 'device:':
+            status["status"] = " ".join(line_fields[2:])
+        elif not device_found and line_fields[0] == "device:":
             device_found = True
-            dev_no_path = line_fields[1].split('/')[-1]
+            dev_no_path = line_fields[1].split("/")[-1]
             # use by-id device name from provided map as value for device key.
             if dev_no_path in byid_name_map:
-                status['device'] = byid_name_map[dev_no_path]
+                status["device"] = byid_name_map[dev_no_path]
             else:
                 # better we have originally listed device than nothing
-                status['device'] = dev_no_path
+                status["device"] = dev_no_path
         else:
-            status[line_fields[0].replace(':', '')] = ' '.join(line_fields[1:])
+            status[line_fields[0].replace(":", "")] = " ".join(line_fields[1:])
     return status
 
 
@@ -106,27 +105,28 @@ def get_open_luks_container_dev(mapped_device_name, test=None):
     for the output of the cryptsetup command that is otherwise executed.
     :return: Empty string on any error or a device with path type /dev/vdd
     """
-    container_dev = ''
+    container_dev = ""
     if test is None:
-        out, err, rc = run_command([CRYPTSETUP, 'status', mapped_device_name],
-                                   throw=False)
+        out, err, rc = run_command(
+            [CRYPTSETUP, "status", mapped_device_name], throw=False
+        )
     else:
         # test mode so process test instead of cryptsetup output
         out = test
         rc = 0
     if rc != 0:  # if return code is an error return empty string
-        return ''
+        return ""
     # search output of cryptsetup to find a line such as the following:
     #   device:  /dev/sda3
     for line in out:
-        if line == '':
+        if line == "":
             continue
         # get line fields
         line_fields = line.split()
         # less than 2 fields are of no use so just in case:-
         if len(line_fields) < 2:
             continue
-        if re.match('device:', line_fields[0]) is not None:
+        if re.match("device:", line_fields[0]) is not None:
             # we have our line match so return it's second member
             return line_fields[1]
     return container_dev
@@ -150,13 +150,12 @@ def luks_format_disk(disk_byid, passphrase):
     # we have "Creates a temporary file in the most secure manner possible."
     # Populate this file with our passphrase and use as cryptsetup keyfile.
     try:
-        with open(npath, 'w') as passphrase_file_object:
+        with open(npath, "w") as passphrase_file_object:
             passphrase_file_object.write(passphrase)
-        cmd = [CRYPTSETUP, 'luksFormat', disk_byid_withpath, npath]
+        cmd = [CRYPTSETUP, "luksFormat", disk_byid_withpath, npath]
         out, err, rc = run_command(cmd)
     except Exception as e:
-        msg = ('Exception while running command(%s): %s' %
-               (cmd, e.__str__()))
+        msg = "Exception while running command(%s): %s" % (cmd, e.__str__())
         raise Exception(msg)
     finally:
         passphrase_file_object.close()
@@ -164,8 +163,7 @@ def luks_format_disk(disk_byid, passphrase):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s: %s' %
-                       (npath, e.__str__()))
+                msg = "Exception while removing temp file %s: %s" % (npath, e.__str__())
                 raise Exception(msg)
     return out, err, rc
 
@@ -191,15 +189,25 @@ def get_unlocked_luks_containers_uuids():
     # flag to minimise calls to get_uuid_name_map()
     uuid_name_map_retrieved = False
     uuid_name_map = {}
-    out, err, rc = run_command([DMSETUP, 'info', '--columns', '--noheadings',
-                                '--options', 'name', '--target', 'crypt'])
+    out, err, rc = run_command(
+        [
+            DMSETUP,
+            "info",
+            "--columns",
+            "--noheadings",
+            "--options",
+            "name",
+            "--target",
+            "crypt",
+        ]
+    )
     if len(out) > 0 and rc == 0:
         # The output has at least one line and our dmsetup executed OK.
         for each_line in out:
-            if each_line == '':
+            if each_line == "":
                 continue
             backing_container_uuid = None
-            if len(each_line) == 41 and re.match('luks-', each_line):
+            if len(each_line) == 41 and re.match("luks-", each_line):
                 # good chance on "luks-a47f4950-3296-4504-b9a4-2dc75681a6ad"
                 # naming convention so strip uuid from this (cheap and quick)
                 backing_container_uuid = each_line[5:]
@@ -209,8 +217,8 @@ def get_unlocked_luks_containers_uuids():
                 # Initial call to gain backing device name for our container
                 container_dev = get_open_luks_container_dev(each_line)
                 # strip leading /dev/ from device name if any returned.
-                if container_dev is not '':
-                    container_dev = container_dev.split('/')[-1]
+                if container_dev is not "":
+                    container_dev = container_dev.split("/")[-1]
                     # should now have name without path ie 'vdd' ready to
                     # index our uuid_name_map.
                     if not uuid_name_map_retrieved:
@@ -243,16 +251,16 @@ def get_crypttab_entries():
     if os.path.isfile(CRYPTTABFILE):
         with open(CRYPTTABFILE, "r") as ino:
             for line in ino.readlines():  # readlines reads whole file in one.
-                if line == '\n' or re.match(line, '#'):
+                if line == "\n" or re.match(line, "#"):
                     # empty line (a newline char) or begins with # so skip
                     continue
                 line_fields = line.split()
                 if len(line_fields) < 3:
                     # we expect at least 3 entries, ignore otherwise
                     continue
-                if re.match('UUID=', line_fields[1]) is not None:
+                if re.match("UUID=", line_fields[1]) is not None:
                     # we have a UUID= entry, perform basic validation
-                    uuid_entry_fields = line_fields[1].split('=')
+                    uuid_entry_fields = line_fields[1].split("=")
                     if len(uuid_entry_fields) == 2:
                         # we have at least 2 components: 'UUID', '<uuid>'
                         # split via '='
@@ -281,12 +289,12 @@ def update_crypttab(uuid, keyfile_entry):
     passed, True otherwise.
     """
     # Deal elegantly with null or '' uuid
-    if (uuid is None) or uuid == '':
+    if (uuid is None) or uuid == "":
         return False
     uuid_name_map_retrieved = False
     # Simpler paths for when no /etc/crypttab file exists.
     if not os.path.isfile(CRYPTTABFILE):
-        if keyfile_entry == 'false':
+        if keyfile_entry == "false":
             # The string 'false' is used to denote the removal of an existing
             # entry so we are essentially done as by whatever means there are
             # no entries in a non-existent crypttab.
@@ -300,12 +308,12 @@ def update_crypttab(uuid, keyfile_entry):
     # Pythons _candidate_tempdir_list() should ensure our npath temp file is
     # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
     # we have "Creates a temporary file in the most secure manner possible."
-    with open(CRYPTTABFILE, 'r') as ct_original, open(npath, 'w') as temp_file:
+    with open(CRYPTTABFILE, "r") as ct_original, open(npath, "w") as temp_file:
         # examine original crypttab line by line.
-        new_entry = None # temp var that doubles as flag for entry made.
+        new_entry = None  # temp var that doubles as flag for entry made.
         for line in ct_original.readlines():  # readlines (whole file in one).
             update_line = False
-            if line == '\n' or re.match(line, '#') is not None:
+            if line == "\n" or re.match(line, "#") is not None:
                 # blank line (return) or remark line, strip for simplicity.
                 continue
             line_fields = line.split()
@@ -316,9 +324,9 @@ def update_crypttab(uuid, keyfile_entry):
                 continue
             # We have a viable line of at least 3 columns so entertain it.
             # Interpret the source device entry in second column (index 1)
-            if re.match('UUID=', line_fields[1]) is not None:
+            if re.match("UUID=", line_fields[1]) is not None:
                 # we have our native UUID reference so split and compare
-                source_dev_fields = line_fields[1].split('=')
+                source_dev_fields = line_fields[1].split("=")
                 if len(source_dev_fields) is not 2:
                     # ie "UUID=" with no value which is non legit so skip
                     continue
@@ -329,9 +337,9 @@ def update_crypttab(uuid, keyfile_entry):
                 else:
                     # no UUID= type entry found so check for dev name
                     # eg instead of 'UUID=<uuid>' we have eg: '/dev/sdd'
-                    if re.match('/dev', source_dev_fields[1]) is not None:
+                    if re.match("/dev", source_dev_fields[1]) is not None:
                         # We have a dev entry so strip the path.
-                        dev_no_path = source_dev_fields[1].split('/')[-1]
+                        dev_no_path = source_dev_fields[1].split("/")[-1]
                         # index our uuid_name_map for dev name comparison
                         if not uuid_name_map_retrieved:
                             uuid_name_map = get_uuid_name_map()
@@ -344,7 +352,7 @@ def update_crypttab(uuid, keyfile_entry):
                             update_line = True
             if update_line:
                 # We have a device match by uuid with an existing line.
-                if keyfile_entry == 'false':
+                if keyfile_entry == "false":
                     # The string 'false' is used to denote no crypttab entry,
                     # this we can do by simply skipping this line.
                     continue
@@ -352,28 +360,33 @@ def update_crypttab(uuid, keyfile_entry):
                 # preserve custom options in column 4 if they exist:
                 # Use new mapper name (potentially controversial).
                 if len(line_fields) > 3:
-                    new_entry = ('luks-%s UUID=%s %s %s\n' %
-                                 (uuid, uuid, keyfile_entry,
-                                  ' '.join(line_fields[3:])))
+                    new_entry = "luks-%s UUID=%s %s %s\n" % (
+                        uuid,
+                        uuid,
+                        keyfile_entry,
+                        " ".join(line_fields[3:]),
+                    )
                 else:
                     # we must have a 3 column entry (>= 3 and then > 3)
                     # N.B. later 'man crypttab' suggests 4 columns as
                     # mandatory but that was not observed. We add 'luks'
                     # as fourth column entry just in case.
-                    new_entry = ('luks-%s UUID=%s %s luks\n' % (uuid, uuid,
-                                                                keyfile_entry))
+                    new_entry = "luks-%s UUID=%s %s luks\n" % (
+                        uuid,
+                        uuid,
+                        keyfile_entry,
+                    )
                 temp_file.write(new_entry)
             else:
                 # No update flag and no original line skip so we
                 # simply copy over what ever line we found. Most likely a non
                 # matching device.
                 temp_file.write(line)
-        if keyfile_entry != 'false' and new_entry is None:
+        if keyfile_entry != "false" and new_entry is None:
             # We have scanned the existing crypttab and not yet made our edit.
             # The string 'false' is used to denote no crypttab entry and if
             # new_entry is still None we have made no edit.
-            new_entry = ('luks-%s UUID=%s %s luks\n' % (uuid, uuid,
-                                                        keyfile_entry))
+            new_entry = "luks-%s UUID=%s %s luks\n" % (uuid, uuid, keyfile_entry)
             temp_file.write(new_entry)
     # secure temp file now holds our proposed (post edit) crypttab.
     # Copy contents over existing crypttab and ensure tempfile is removed.
@@ -386,16 +399,14 @@ def update_crypttab(uuid, keyfile_entry):
         # and avoiding a window prior to a separate chmod command.
         shutil.copy2(npath, CRYPTTABFILE)
     except Exception as e:
-        msg = ('Exception while creating fresh %s: %s' % (CRYPTTABFILE,
-                                                          e.__str__()))
+        msg = "Exception while creating fresh %s: %s" % (CRYPTTABFILE, e.__str__())
         raise Exception(msg)
     finally:
         if os.path.exists(npath):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s: %s' %
-                       (npath, e.__str__()))
+                msg = "Exception while removing temp file %s: %s" % (npath, e.__str__())
                 raise Exception(msg)
     return True
 
@@ -421,7 +432,7 @@ def new_crypttab_single_entry(uuid, keyfile_entry):
     # Pythons _candidate_tempdir_list() should ensure our npath temp file is
     # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
     # we have "Creates a temporary file in the most secure manner possible."
-    crypttab_line = ('luks-%s UUID=%s %s luks\n' % (uuid, uuid, keyfile_entry))
+    crypttab_line = "luks-%s UUID=%s %s luks\n" % (uuid, uuid, keyfile_entry)
     try:
         with open(npath, "w") as tempfo:
             tempfo.write(crypttab_line)
@@ -433,16 +444,14 @@ def new_crypttab_single_entry(uuid, keyfile_entry):
         # and avoiding a window prior to a separate chmod command.
         shutil.copy2(npath, CRYPTTABFILE)
     except Exception as e:
-        msg = ('Exception while creating fresh %s: %s' % (CRYPTTABFILE,
-                                                          e.__str__()))
+        msg = "Exception while creating fresh %s: %s" % (CRYPTTABFILE, e.__str__())
         raise Exception(msg)
     finally:
         if os.path.exists(npath):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s: %s' %
-                       (npath, e.__str__()))
+                msg = "Exception while removing temp file %s: %s" % (npath, e.__str__())
                 raise Exception(msg)
     return True
 
@@ -476,7 +485,7 @@ def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
         fresh_keyfile = True
     # We are by now assured of an existing keyfile_withpath.
     # Only register this keyfile with our LUKS container if needed:
-    if passphrase == '':
+    if passphrase == "":
         # If an empty passphrase was passed then we interpret this as a flag
         # to indicate no requirement to 'cryptsetup luksAddKey' so we are now
         # done. Use case is the return to "auto unlock via keyfile" when that
@@ -491,10 +500,16 @@ def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
     # Populate this file with our passphrase and use as cryptsetup keyfile.
     # We set rc in case our try fails earlier than our run_command.
     rc = 0
-    cmd = [CRYPTSETUP, 'luksAddKey', dev_byid_withpath, keyfile_withpath,
-               '--key-file', npath]
+    cmd = [
+        CRYPTSETUP,
+        "luksAddKey",
+        dev_byid_withpath,
+        keyfile_withpath,
+        "--key-file",
+        npath,
+    ]
     try:
-        with open(npath, 'w') as passphrase_file_object:
+        with open(npath, "w") as passphrase_file_object:
             passphrase_file_object.write(passphrase)
         out, err, rc = run_command(cmd, throw=False)
         if rc != 0:  # our luksAddKey command failed.
@@ -502,21 +517,21 @@ def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
                 # a freshly created keyfile without successful luksAddKey is
                 # meaningless so remove it.
                 os.remove(keyfile_withpath)
-            raise CommandException(('%s' % cmd), out, err, rc)
+            raise CommandException(("%s" % cmd), out, err, rc)
     except Exception as e:
         if rc == 1:
-            msg = 'Wrong Parameters exception'
+            msg = "Wrong Parameters exception"
         elif rc == 2:
-            msg = 'No Permission (Bad Passphrase) exception'
+            msg = "No Permission (Bad Passphrase) exception"
         elif rc == 3:
-            msg = 'Out of Memory exception'
+            msg = "Out of Memory exception"
         elif rc == 4:
-            msg = 'Wrong Device Specified exception'
+            msg = "Wrong Device Specified exception"
         elif rc == 5:
             msg = "Device already exists or device is busy exception"
         else:
-            msg = 'Exception'
-        msg += ' while running command(%s): %s' % (cmd, e.__str__())
+            msg = "Exception"
+        msg += " while running command(%s): %s" % (cmd, e.__str__())
         raise Exception(msg)
     finally:
         passphrase_file_object.close()
@@ -524,8 +539,7 @@ def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s: %s' %
-                       (npath, e.__str__()))
+                msg = "Exception while removing temp file %s: %s" % (npath, e.__str__())
                 raise Exception(msg)
     return True
 
@@ -550,8 +564,8 @@ def create_keyfile(keyfile_withpath):
     # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
     # we have "Creates a temporary file in the most secure manner possible."
     try:
-        with open(npath, 'w') as temp_keyfile:
-            cmd = [DD, 'bs=512', 'count=4', 'if=/dev/urandom', 'of=%s' % npath]
+        with open(npath, "w") as temp_keyfile:
+            cmd = [DD, "bs=512", "count=4", "if=/dev/urandom", "of=%s" % npath]
             out, err, rc = run_command(cmd, throw=False)
         if rc != 0:
             return False
@@ -563,8 +577,10 @@ def create_keyfile(keyfile_withpath):
         # and avoiding a window prior to a separate chmod command.
         shutil.copy2(npath, keyfile_withpath)
     except Exception as e:
-        msg = ('Exception while creating keyfile %s: %s' % (keyfile_withpath,
-                                                            e.__str__()))
+        msg = "Exception while creating keyfile %s: %s" % (
+            keyfile_withpath,
+            e.__str__(),
+        )
         raise Exception(msg)
     finally:
         # make sure we remove our temp file (just in case it became a keyfile)
@@ -573,8 +589,7 @@ def create_keyfile(keyfile_withpath):
             try:
                 os.remove(npath)
             except Exception as e:
-                msg = ('Exception while removing temp file %s: %s' %
-                       (npath, e.__str__()))
+                msg = "Exception while removing temp file %s: %s" % (npath, e.__str__())
                 raise Exception(msg)
     return True
 
@@ -586,6 +601,6 @@ def native_keyfile_exists(uuid):
     :return: True if /root/keyfile-<uuid> exists, False otherwise.
     """
     try:
-        return os.path.isfile('/root/keyfile-%s' % uuid)
+        return os.path.isfile("/root/keyfile-%s" % uuid)
     except:
         return False

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2019 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -38,25 +38,21 @@ def backup_config():
             "nfsexport",
             "nfsexportgroup",
             "advancednfsexport",
-            'rockon',
-            'dcontainer',
-            'dcustomconfig',
-            'dimage',
-            'dcontainerenv',
-            'dcontainerlabel',
-            'dvolume',
-            'dport',
-            'containeroption',
-            'dcontainerlink',
-            'dcontainerargs',
-            'dcontainerdevice',
+            "rockon",
+            "dcontainer",
+            "dcustomconfig",
+            "dimage",
+            "dcontainerenv",
+            "dcontainerlabel",
+            "dvolume",
+            "dport",
+            "containeroption",
+            "dcontainerlink",
+            "dcontainerargs",
+            "dcontainerdevice",
             "share",
         ],
-        "smart_manager": [
-            "service",
-            "servicestatus",
-            "taskdefinition"
-        ],
+        "smart_manager": ["service", "servicestatus", "taskdefinition"],
     }
     model_list = []
     for a in models:

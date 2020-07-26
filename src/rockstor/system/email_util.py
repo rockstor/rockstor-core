@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -28,13 +28,13 @@ from system.osi import gethostname
 def test_smtp_auth(eco):
     auth = None
     try:
-        smtp = smtplib.SMTP(eco.get('smtp_server'), eco.get('port'))
+        smtp = smtplib.SMTP(eco.get("smtp_server"), eco.get("port"))
     except:
         return False
     smtp.ehlo()
     smtp.starttls()
     try:
-        smtp.login(eco.get('username'), eco.get('password'))
+        smtp.login(eco.get("username"), eco.get("password"))
         auth = True
     except:
         auth = False
@@ -45,13 +45,13 @@ def test_smtp_auth(eco):
 
 def send_test_email(eco, subject):
     msg = MIMEMultipart()
-    msg['From'] = eco.sender
-    msg['To'] = eco.receiver
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = subject
+    msg["From"] = eco.sender
+    msg["To"] = eco.receiver
+    msg["Date"] = formatdate(localtime=True)
+    msg["Subject"] = subject
 
     msg.attach(MIMEText(subject))
-    smtp = smtplib.SMTP('localhost')
+    smtp = smtplib.SMTP("localhost")
     smtp.sendmail(eco.sender, eco.receiver, msg.as_string())
     smtp.close()
 
@@ -67,12 +67,12 @@ def email_root(subject, message):
     hostname = gethostname()
 
     msg = MIMEMultipart()
-    msg['From'] = 'notifications@%s' % hostname
-    msg['To'] = 'root@%s' % hostname
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = subject
+    msg["From"] = "notifications@%s" % hostname
+    msg["To"] = "root@%s" % hostname
+    msg["Date"] = formatdate(localtime=True)
+    msg["Subject"] = subject
     msg.attach(MIMEText(message))
 
-    smtp = smtplib.SMTP('localhost')
-    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+    smtp = smtplib.SMTP("localhost")
+    smtp.sendmail(msg["From"], msg["To"], msg.as_string())
     smtp.close()
