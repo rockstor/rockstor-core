@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -17,20 +17,50 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework import serializers
-from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
-                                 SambaShare, IscsiTarget, Appliance,
-                                 SupportCase, DashboardConfig, NetworkDevice,
-                                 NetworkConnection, User, PoolScrub, Setup,
-                                 NFSExportGroup, SFTP, AdvancedNFSExport,
-                                 OauthApp, Group, PoolBalance,
-                                 SambaCustomConfig, TLSCertificate,
-                                 RockOn, DContainer, DVolume, DPort, DCustomConfig,
-                                 DContainerEnv, DContainerDevice, DContainerLabel,
-                                 SMARTAttribute, SMARTCapability, SMARTInfo,
-                                 SMARTErrorLog, SMARTErrorLogSummary,
-                                 SMARTTestLog, SMARTTestLogDetail,
-                                 SMARTIdentity, ConfigBackup, EmailClient,
-                                 UpdateSubscription)
+from storageadmin.models import (
+    Disk,
+    Pool,
+    Share,
+    Snapshot,
+    NFSExport,
+    SambaShare,
+    IscsiTarget,
+    Appliance,
+    SupportCase,
+    DashboardConfig,
+    NetworkDevice,
+    NetworkConnection,
+    User,
+    PoolScrub,
+    Setup,
+    NFSExportGroup,
+    SFTP,
+    AdvancedNFSExport,
+    OauthApp,
+    Group,
+    PoolBalance,
+    SambaCustomConfig,
+    TLSCertificate,
+    RockOn,
+    DContainer,
+    DVolume,
+    DPort,
+    DCustomConfig,
+    DContainerEnv,
+    DContainerDevice,
+    DContainerLabel,
+    SMARTAttribute,
+    SMARTCapability,
+    SMARTInfo,
+    SMARTErrorLog,
+    SMARTErrorLogSummary,
+    SMARTTestLog,
+    SMARTTestLogDetail,
+    SMARTIdentity,
+    ConfigBackup,
+    EmailClient,
+    UpdateSubscription,
+)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -48,7 +78,7 @@ class DiskInfoSerializer(serializers.ModelSerializer):
 
 
 class PoolInfoSerializer(serializers.ModelSerializer):
-    disks = DiskInfoSerializer(many=True, source='disk_set')
+    disks = DiskInfoSerializer(many=True, source="disk_set")
     free = serializers.IntegerField()
     reclaimable = serializers.IntegerField()
     mount_status = serializers.CharField()
@@ -67,7 +97,7 @@ class SnapshotSerializer(serializers.ModelSerializer):
 
 
 class NFSExportSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
+    share = serializers.CharField(source="share_name")
     share_id = serializers.CharField()
 
     class Meta:
@@ -75,7 +105,7 @@ class NFSExportSerializer(serializers.ModelSerializer):
 
 
 class NFSExportGroupSerializer(serializers.ModelSerializer):
-    exports = NFSExportSerializer(many=True, source='nfsexport_set')
+    exports = NFSExportSerializer(many=True, source="nfsexport_set")
 
     class Meta:
         model = NFSExportGroup
@@ -88,16 +118,11 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
 
 class SUserSerializer(serializers.ModelSerializer):
 
-    ALLOWED_CHOICES = (
-        ('yes', 'yes'),
-        ('no', 'no'),
-        ('otp', 'otp')
-        )
+    ALLOWED_CHOICES = (("yes", "yes"), ("no", "no"), ("otp", "otp"))
     groupname = serializers.CharField()
     managed_user = serializers.BooleanField(default=True)
     has_pincard = serializers.BooleanField(default=False)
-    pincard_allowed = serializers.ChoiceField(choices=ALLOWED_CHOICES,
-                                              default='no')
+    pincard_allowed = serializers.ChoiceField(choices=ALLOWED_CHOICES, default="no")
 
     class Meta:
         model = User
@@ -109,11 +134,11 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    suser = SUserSerializer(source='suser')
+    suser = SUserSerializer(source="suser")
 
     class Meta:
         model = DjangoUser
-        fields = ('username', 'is_active', 'suser')
+        fields = ("username", "is_active", "suser")
 
 
 class SambaCustomConfigSerializer(serializers.ModelSerializer):
@@ -122,11 +147,12 @@ class SambaCustomConfigSerializer(serializers.ModelSerializer):
 
 
 class SambaShareSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
+    share = serializers.CharField(source="share_name")
     share_id = serializers.CharField()
     admin_users = SUserSerializer(many=True)
-    custom_config = SambaCustomConfigSerializer(many=True,
-                                                source='sambacustomconfig_set')
+    custom_config = SambaCustomConfigSerializer(
+        many=True, source="sambacustomconfig_set"
+    )
 
     class Meta:
         model = SambaShare
@@ -145,9 +171,9 @@ class SharePoolSerializer(serializers.ModelSerializer):
 
 
 class ShareSerializer(serializers.ModelSerializer):
-    snapshots = SnapshotSerializer(many=True, source='snapshot_set')
+    snapshots = SnapshotSerializer(many=True, source="snapshot_set")
     pool = PoolInfoSerializer()
-    nfs_exports = NFSExportSerializer(many=True, source='nfsexport_set')
+    nfs_exports = NFSExportSerializer(many=True, source="nfsexport_set")
     mount_status = serializers.CharField()
     is_mounted = serializers.BooleanField()
     pqgroup_exist = serializers.BooleanField()
@@ -157,7 +183,7 @@ class ShareSerializer(serializers.ModelSerializer):
 
 
 class ApplianceSerializer(serializers.ModelSerializer):
-    ip = serializers.CharField(source='ipaddr')
+    ip = serializers.CharField(source="ipaddr")
 
     class Meta:
         model = Appliance
@@ -206,7 +232,7 @@ class SetupSerializer(serializers.ModelSerializer):
 
 
 class SFTPSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
+    share = serializers.CharField(source="share_name")
     share_id = serializers.CharField()
 
     class Meta:
@@ -329,6 +355,5 @@ class EmailClientSerializer(serializers.ModelSerializer):
 
 
 class UpdateSubscriptionSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = UpdateSubscription
