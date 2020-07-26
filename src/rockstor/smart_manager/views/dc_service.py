@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,25 +25,25 @@ from smart_manager.models import Service
 
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class DataCollectorServiceView(BaseServiceDetailView):
-
     @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name='data-collector')
-        if (command == 'config'):
+        service = Service.objects.get(name="data-collector")
+        if command == "config":
             # nothing to really configure atm. just save the model
             try:
-                config = request.data['config']
+                config = request.data["config"]
                 self._save_config(service, config)
             except Exception as e:
                 logger.exception(e)
-                e_msg = ('Data Collector could not be configured. Try again')
+                e_msg = "Data Collector could not be configured. Try again"
                 handle_exception(Exception(e_msg), request)
 
         else:
@@ -51,8 +51,7 @@ class DataCollectorServiceView(BaseServiceDetailView):
                 superctl(service.name, command)
             except Exception as e:
                 logger.exception(e)
-                e_msg = ('Failed to %s Data collector due to a system error.' %
-                         command)
+                e_msg = "Failed to %s Data collector due to a system error." % command
                 handle_exception(Exception(e_msg), request)
 
         return Response()

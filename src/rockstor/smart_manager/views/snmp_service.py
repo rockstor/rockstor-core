@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,39 +26,43 @@ from smart_manager.models import Service
 
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class SNMPServiceView(BaseServiceDetailView):
 
-    service_name = 'snmpd'
+    service_name = "snmpd"
 
     @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
-        e_msg = ('Failed to %s SNMP service due to system error.' %
-                 command)
+        e_msg = "Failed to %s SNMP service due to system error." % command
         with self._handle_exception(request, e_msg):
-            if (command == 'config'):
+            if command == "config":
                 service = Service.objects.get(name=self.service_name)
-                config = request.data.get('config', {})
-                if (type(config) != dict):
-                    e_msg = ('config dictionary is required input')
+                config = request.data.get("config", {})
+                if type(config) != dict:
+                    e_msg = "config dictionary is required input"
                     handle_exception(Exception(e_msg), request)
-                for option in ('syslocation', 'syscontact', 'rocommunity',):
-                    if (option not in config):
-                        e_msg = ('%s is missing in config' % option)
+                for option in (
+                    "syslocation",
+                    "syscontact",
+                    "rocommunity",
+                ):
+                    if option not in config:
+                        e_msg = "%s is missing in config" % option
                         handle_exception(Exception(e_msg), request)
-                    if (config[option] is None or config[option] == ''):
-                        e_msg = ('%s cannot be empty' % option)
+                    if config[option] is None or config[option] == "":
+                        e_msg = "%s cannot be empty" % option
                         handle_exception(Exception(e_msg), request)
-                if ('aux' not in config):
-                    e_msg = ('aux is missing in config: %s' % config)
+                if "aux" not in config:
+                    e_msg = "aux is missing in config: %s" % config
                     handle_exception(Exception(e_msg), request)
-                if (type(config['aux']) != list):
-                    e_msg = ('aux must be a list in config: %s' % config)
+                if type(config["aux"]) != list:
+                    e_msg = "aux must be a list in config: %s" % config
                     handle_exception(Exception(e_msg), request)
 
                 configure_snmp(config)
@@ -69,9 +73,9 @@ class SNMPServiceView(BaseServiceDetailView):
 
     @classmethod
     def _switch_snmp(cls, switch):
-        if (switch == 'start'):
-            systemctl(cls.service_name, 'enable')
-            systemctl(cls.service_name, 'start')
+        if switch == "start":
+            systemctl(cls.service_name, "enable")
+            systemctl(cls.service_name, "start")
         else:
-            systemctl(cls.service_name, 'disable')
-            systemctl(cls.service_name, 'stop')
+            systemctl(cls.service_name, "disable")
+            systemctl(cls.service_name, "stop")

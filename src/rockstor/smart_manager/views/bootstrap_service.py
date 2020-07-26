@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,19 +21,20 @@ from system.services import systemctl
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class BootstrapServiceView(BaseServiceDetailView):
-    name = 'rockstor-bootstrap'
+    name = "rockstor-bootstrap"
 
     def post(self, request, command):
         Service.objects.get(name=self.name)
 
-        if (command == 'start'):
-            systemctl(self.name, 'enable')
-            systemctl(self.name, 'start')
-        elif (command == 'stop'):
-            systemctl(self.name, 'stop')
-            systemctl(self.name, 'disable')
+        if command == "start":
+            systemctl(self.name, "enable")
+            systemctl(self.name, "start")
+        elif command == "stop":
+            systemctl(self.name, "stop")
+            systemctl(self.name, "disable")
         return Response()

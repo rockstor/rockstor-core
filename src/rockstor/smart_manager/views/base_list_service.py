@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@ import rest_framework_custom as rfc
 from django.db import transaction
 from service_mixin import ServiceMixin
 import logging
+
 logger = logging.getLogger(__name__)
 # TODO: BaseService2View should be a 'list' endpoint
 
@@ -34,10 +35,11 @@ class BaseServiceListView(ServiceMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
             limit = self.request.query_params.get(
-                'limit', settings.REST_FRAMEWORK['MAX_LIMIT'])
+                "limit", settings.REST_FRAMEWORK["MAX_LIMIT"]
+            )
             limit = int(limit)
-            url_fields = self.request.path.strip('/').split('/')
-            if (len(url_fields) < 4):
+            url_fields = self.request.path.strip("/").split("/")
+            if len(url_fields) < 4:
                 sos = []
                 for s in Service.objects.all():
                     sos.append(self._get_or_create_sso(s))

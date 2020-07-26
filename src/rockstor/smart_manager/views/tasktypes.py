@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -17,19 +17,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework import generics
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
+from rest_framework.authentication import (
+    BasicAuthentication,
+    SessionAuthentication,
+)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from smart_manager.serializers import (TaskType, TaskTypeSerializer)
+from smart_manager.serializers import TaskType, TaskTypeSerializer
 
 
 class TaskTypeView(generics.ListAPIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
+    authentication_classes = (
+        DigestAuthentication,
+        SessionAuthentication,
+        BasicAuthentication,
+    )
     permission_classes = (IsAuthenticated,)
     serializer_class = TaskTypeSerializer
 
     def get_queryset(self):
-        return [TaskType('scrub', 'scrub a pool'),
-                TaskType('snapshot', 'take snapshot of a pool'), ]
+        return [
+            TaskType("scrub", "scrub a pool"),
+            TaskType("snapshot", "take snapshot of a pool"),
+        ]

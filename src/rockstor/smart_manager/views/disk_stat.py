@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -31,6 +31,5 @@ class DiskStatView(GenericSProbeView):
     def _sorted_results(self, sort_col, reverse):
         qs = []
         for d in Disk.objects.all():
-            qs.append(self.model_obj.objects.filter(
-                name=d.name).order_by('-ts')[0])
+            qs.append(self.model_obj.objects.filter(name=d.name).order_by("-ts")[0])
         return sorted(qs, key=attrgetter(sort_col), reverse=reverse)

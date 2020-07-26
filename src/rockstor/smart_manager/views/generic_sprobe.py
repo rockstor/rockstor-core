@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,29 +26,34 @@ class GenericSProbeView(rfc.GenericView):
 
     def get_queryset(self):
         limit = self.request.query_params.get(
-            'limit', settings.REST_FRAMEWORK['MAX_LIMIT'])
+            "limit", settings.REST_FRAMEWORK["MAX_LIMIT"]
+        )
         limit = int(limit)
-        t1 = self.request.query_params.get('t1', None)
-        t2 = self.request.query_params.get('t2', None)
-        group_field = self.request.query_params.get('group', None)
-        if (group_field is not None):
+        t1 = self.request.query_params.get("t1", None)
+        t2 = self.request.query_params.get("t2", None)
+        group_field = self.request.query_params.get("group", None)
+        if group_field is not None:
             qs = []
-            distinct_fields = self.model_obj.objects.values(
-                group_field).annotate(c=Count(group_field))
-            filter_field = ('%s__exact' % group_field)
+            distinct_fields = self.model_obj.objects.values(group_field).annotate(
+                c=Count(group_field)
+            )
+            filter_field = "%s__exact" % group_field
             for d in distinct_fields:
-                qs.extend(self.model_obj.objects.filter(
-                    **{filter_field: d[group_field]}).order_by('-ts')[0:limit])
+                qs.extend(
+                    self.model_obj.objects.filter(
+                        **{filter_field: d[group_field]}
+                    ).order_by("-ts")[0:limit]
+                )
             return qs
-        if (t1 is not None and t2 is not None):
+        if t1 is not None and t2 is not None:
             return self.model_obj.objects.filter(ts__gt=t1, ts__lte=t2)
 
-        sort_col = self.request.query_params.get('sortby', None)
-        if (sort_col is not None):
-            reverse = self.request.query_params.get('reverse', 'no')
-            if (reverse == 'yes'):
+        sort_col = self.request.query_params.get("sortby", None)
+        if sort_col is not None:
+            reverse = self.request.query_params.get("reverse", "no")
+            if reverse == "yes":
                 reverse = True
             else:
                 reverse = False
             return self._sorted_results(sort_col, reverse)
-        return self.model_obj.objects.all().order_by('-ts')[0:limit]
+        return self.model_obj.objects.all().order_by("-ts")[0:limit]

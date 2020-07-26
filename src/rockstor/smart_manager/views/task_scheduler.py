@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,50 +26,53 @@ from rest_framework.response import Response
 import rest_framework_custom as rfc
 from smart_manager.models import TaskDefinition
 from smart_manager.serializers import TaskDefinitionSerializer
-from storageadmin.models import (Pool, Share, EmailClient)
+from storageadmin.models import Pool, Share, EmailClient
 from storageadmin.util import handle_exception
 
 logger = logging.getLogger(__name__)
 
 
 class TaskSchedulerMixin(object):
-    valid_tasks = ('snapshot', 'scrub', 'reboot',
-                   'shutdown', 'suspend', 'custom')
+    valid_tasks = ("snapshot", "scrub", "reboot", "shutdown", "suspend", "custom")
 
     @staticmethod
     def _validate_input(request):
         meta = {}
-        crontab = request.data.get('crontab')
-        crontabwindow = request.data.get('crontabwindow')
-        meta = request.data.get('meta', {})
-        if (type(meta) != dict):
-            e_msg = ('meta must be a dictionary, not %s' % type(meta))
+        crontab = request.data.get("crontab")
+        crontabwindow = request.data.get("crontabwindow")
+        meta = request.data.get("meta", {})
+        if type(meta) != dict:
+            e_msg = "meta must be a dictionary, not %s" % type(meta)
             handle_exception(Exception(e_msg), request)
-        if 'pool' in meta:
-            if not Pool.objects.filter(id=meta['pool']).exists():
-                raise Exception('Non-existent Pool(%s) in meta. %s' %
-                                (meta['pool'], meta))
+        if "pool" in meta:
+            if not Pool.objects.filter(id=meta["pool"]).exists():
+                raise Exception(
+                    "Non-existent Pool(%s) in meta. %s" % (meta["pool"], meta)
+                )
             # Add pool_name to task meta dictionary
-            pool = Pool.objects.get(id=meta['pool'])
-            meta['pool_name'] = pool.name
-        if 'share' in meta:
-            if not meta['share'].isdigit():
-                raise Exception('Non-digit share element ({}) in meta {}'
-                                .format(meta['share'], meta))
-            if not Share.objects.filter(id=meta['share']).exists():
-                raise Exception('Non-existent Share id (%s) in meta. %s' %
-                                (meta['pool'], meta))
-        if 'rtc_hour' in meta:
-            meta['rtc_hour'] = int(meta['rtc_hour'])
-            meta['rtc_minute'] = int(meta['rtc_minute'])
+            pool = Pool.objects.get(id=meta["pool"])
+            meta["pool_name"] = pool.name
+        if "share" in meta:
+            if not meta["share"].isdigit():
+                raise Exception(
+                    "Non-digit share element ({}) in meta {}".format(
+                        meta["share"], meta
+                    )
+                )
+            if not Share.objects.filter(id=meta["share"]).exists():
+                raise Exception(
+                    "Non-existent Share id (%s) in meta. %s" % (meta["pool"], meta)
+                )
+        if "rtc_hour" in meta:
+            meta["rtc_hour"] = int(meta["rtc_hour"])
+            meta["rtc_minute"] = int(meta["rtc_minute"])
         return crontab, crontabwindow, meta
 
     @staticmethod
     def _validate_enabled(request):
-        enabled = request.data.get('enabled', True)
-        if (type(enabled) != bool):
-            e_msg = ('enabled flag must be a boolean and not %s' %
-                     type(enabled))
+        enabled = request.data.get("enabled", True)
+        if type(enabled) != bool:
+            e_msg = "enabled flag must be a boolean and not %s" % type(enabled)
             handle_exception(Exception(e_msg), request)
         return enabled
 
@@ -78,45 +81,52 @@ class TaskSchedulerMixin(object):
         try:
             return TaskDefinition.objects.get(id=tdid)
         except:
-            e_msg = ('Event with id: %s does not exist' % tdid)
+            e_msg = "Event with id: %s does not exist" % tdid
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
     def _refresh_crontab():
         mail_from = None
-        if (EmailClient.objects.filter().exists()):
-            eco = EmailClient.objects.filter().order_by('-id')[0]
+        if EmailClient.objects.filter().exists():
+            eco = EmailClient.objects.filter().order_by("-id")[0]
             mail_from = eco.sender
-        with open('/etc/cron.d/rockstortab', 'w') as cfo:
+        with open("/etc/cron.d/rockstortab", "w") as cfo:
             cfo.write("SHELL=/bin/bash\n")
             cfo.write("PATH=/sbin:/bin:/usr/sbin:/usr/bin\n")
             cfo.write("MAILTO=root\n")
-            if (mail_from is not None):
+            if mail_from is not None:
                 cfo.write("MAILFROM=%s\n" % mail_from)
-            cfo.write("# These entries are auto generated by Rockstor. "
-                      "Do not edit.\n")
+            cfo.write("# These entries are auto generated by Rockstor. Do not edit.\n")
             for td in TaskDefinition.objects.filter(enabled=True):
-                if (td.crontab is not None):
-                    tab = '%s root' % td.crontab
-                    if (td.task_type == 'snapshot'):
-                        tab = ('%s %sbin/st-snapshot %d' %
-                               (tab, settings.ROOT_DIR, td.id))
-                    elif (td.task_type == 'scrub'):
-                        tab = ('%s %s/bin/st-pool-scrub %d' %
-                               (tab, settings.ROOT_DIR, td.id))
-                    elif (td.task_type in ['reboot', 'shutdown', 'suspend']):
-                        tab = ('%s %s/bin/st-system-power %d' %
-                               (tab, settings.ROOT_DIR, td.id))
+                if td.crontab is not None:
+                    tab = "%s root" % td.crontab
+                    if td.task_type == "snapshot":
+                        tab = "%s %sbin/st-snapshot %d" % (
+                            tab,
+                            settings.ROOT_DIR,
+                            td.id,
+                        )
+                    elif td.task_type == "scrub":
+                        tab = "%s %s/bin/st-pool-scrub %d" % (
+                            tab,
+                            settings.ROOT_DIR,
+                            td.id,
+                        )
+                    elif td.task_type in ["reboot", "shutdown", "suspend"]:
+                        tab = "%s %s/bin/st-system-power %d" % (
+                            tab,
+                            settings.ROOT_DIR,
+                            td.id,
+                        )
                     else:
-                        logger.error('ignoring unknown task_type: %s'
-                                     % td.task_type)
+                        logger.error("ignoring unknown task_type: %s" % td.task_type)
                         continue
-                    if (td.crontabwindow is not None):
+                    if td.crontabwindow is not None:
                         # add crontabwindow as 2nd arg to task script, new line
                         # moved here
-                        tab = ('%s \%s\n' % (tab, td.crontabwindow))
+                        tab = "%s \%s\n" % (tab, td.crontabwindow)
                     else:
-                        logger.error('missing crontab window value')
+                        logger.error("missing crontab window value")
                         continue
                     cfo.write(tab)
 
@@ -125,34 +135,41 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
     serializer_class = TaskDefinitionSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('tdid' in self.kwargs):
+        if "tdid" in self.kwargs:
             self.paginate_by = 0
             try:
-                return TaskDefinition.objects.get(id=self.kwargs['tdid'])
+                return TaskDefinition.objects.get(id=self.kwargs["tdid"])
             except:
                 return []
-        return TaskDefinition.objects.filter().order_by('-id')
+        return TaskDefinition.objects.filter().order_by("-id")
 
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            name = request.data['name']
-            if (TaskDefinition.objects.filter(name=name).exists()):
-                msg = ('Another task exists with the same name({}). Choose '
-                       'a different name'.format(name))
+            name = request.data["name"]
+            if TaskDefinition.objects.filter(name=name).exists():
+                msg = (
+                    "Another task exists with the same name({}). Choose "
+                    "a different name".format(name)
+                )
                 handle_exception(Exception(msg), request)
 
-            task_type = request.data['task_type']
-            if (task_type not in self.valid_tasks):
-                e_msg = ('Unknown task type: {} cannot be scheduled'.format(name))
+            task_type = request.data["task_type"]
+            if task_type not in self.valid_tasks:
+                e_msg = "Unknown task type: {} cannot be scheduled".format(name)
                 handle_exception(Exception(e_msg), request)
 
             crontab, crontabwindow, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
             enabled = self._validate_enabled(request)
-            td = TaskDefinition(name=name, task_type=task_type,
-                                crontab=crontab, crontabwindow=crontabwindow,
-                                json_meta=json_meta, enabled=enabled)
+            td = TaskDefinition(
+                name=name,
+                task_type=task_type,
+                crontab=crontab,
+                crontabwindow=crontabwindow,
+                json_meta=json_meta,
+                enabled=enabled,
+            )
             td.save()
             self._refresh_crontab()
             return Response(TaskDefinitionSerializer(td).data)
@@ -163,7 +180,7 @@ class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
 
     def get(self, request, *args, **kwargs):
         try:
-            data = TaskDefinition.objects.get(id=self.kwargs['tdid'])
+            data = TaskDefinition.objects.get(id=self.kwargs["tdid"])
             serialized_data = TaskDefinitionSerializer(data)
             return Response(serialized_data.data)
         except:
@@ -174,7 +191,9 @@ class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
         with self._handle_exception(request):
             tdo = self._task_def(request, tdid)
             tdo.enabled = self._validate_enabled(request)
-            tdo.crontab, tdo.crontabwindow, new_meta = self._validate_input(request)  # noqa #E501
+            tdo.crontab, tdo.crontabwindow, new_meta = self._validate_input(
+                request
+            )  # noqa #E501
             meta = json.loads(tdo.json_meta)
             meta.update(new_meta)
             tdo.json_meta = json.dumps(meta)

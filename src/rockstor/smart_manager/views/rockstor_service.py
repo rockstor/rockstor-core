@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,11 +26,12 @@ import ztask_helpers
 
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class RockstorServiceView(BaseServiceDetailView):
-    name = 'rockstor'
+    name = "rockstor"
 
     @transaction.atomic
     def post(self, request, command):
@@ -38,39 +39,41 @@ class RockstorServiceView(BaseServiceDetailView):
         execute a command on the service
         """
         service = Service.objects.get(name=self.name)
-        if (command == 'config'):
+        if command == "config":
             try:
-                config = request.data.get('config')
+                config = request.data.get("config")
                 try:
-                    listener_port = int(config['listener_port'])
+                    listener_port = int(config["listener_port"])
                 except ValueError:
-                    raise Exception('Listener Port must be a valid port '
-                                    'number between 0-65535')
+                    raise Exception(
+                        "Listener Port must be a valid port number between 0-65535"
+                    )
 
-                if (listener_port < 0 or listener_port > 65535):
-                    raise Exception('Invalid listener port(%d)'
-                                    % listener_port)
-                ni = config['network_interface']
-                if (len(ni.strip()) == 0):  # empty string
+                if listener_port < 0 or listener_port > 65535:
+                    raise Exception("Invalid listener port(%d)" % listener_port)
+                ni = config["network_interface"]
+                if len(ni.strip()) == 0:  # empty string
                     ztask_helpers.restart_rockstor.async(None, listener_port)
                 else:
                     try:
                         nco = NetworkConnection.objects.get(name=ni)
                     except NetworkConnection.DoesNotExist:
-                        raise Exception('Network Connection(%s) does not '
-                                        'exist.' % ni)
+                        raise Exception("Network Connection(%s) does not exist." % ni)
                     # @todo: we should make restart transparent to the user.
-                    ztask_helpers.restart_rockstor.async(nco.ipaddr,
-                                                         listener_port)
+                    ztask_helpers.restart_rockstor.async(nco.ipaddr, listener_port)
                 self._save_config(service, config)
                 return Response()
             except Exception as e:
-                e_msg = ('Failed to configure Rockstor service. Try again. '
-                         'Exception: %s' % e.__str__())
+                e_msg = (
+                    "Failed to configure Rockstor service. Try again. "
+                    "Exception: %s" % e.__str__()
+                )
                 handle_exception(Exception(e_msg), request)
 
-        e_msg = ('%s service can only be configured from the UI. When '
-                 'configured, it is automatically restarted. To explicitly '
-                 'start/stop/restart, login to the terminal and use '
-                 'systemctl' % self.name)
+        e_msg = (
+            "%s service can only be configured from the UI. When "
+            "configured, it is automatically restarted. To explicitly "
+            "start/stop/restart, login to the terminal and use "
+            "systemctl" % self.name
+        )
         handle_exception(Exception(e_msg), request)
