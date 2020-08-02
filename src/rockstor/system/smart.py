@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2019 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -367,7 +367,7 @@ def update_config(config):
     else:
         SMARTD_CONFIG = "/etc/smartd.conf"
     ROCKSTOR_HEADER = (
-        "###BEGIN: Rockstor smartd config. DO NOT EDIT BELOW " "THIS LINE###"
+        "###BEGIN: Rockstor smartd config. DO NOT EDIT BELOW THIS LINE###"
     )
     fo, npath = mkstemp()
     with open(SMARTD_CONFIG) as sfo, open(npath, "w") as tfo:

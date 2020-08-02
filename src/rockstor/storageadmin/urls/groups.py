@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -22,9 +22,8 @@ from django.conf import settings
 
 
 urlpatterns = patterns(
-    '',
+    "",
     # User configuration
-    url(r'^$', GroupListView.as_view()),
-    url(r'/(?P<groupname>%s)$' % settings.USERNAME_REGEX,
-        GroupDetailView.as_view()),
+    url(r"^$", GroupListView.as_view()),
+    url(r"/(?P<groupname>%s)$" % settings.USERNAME_REGEX, GroupDetailView.as_view()),
 )

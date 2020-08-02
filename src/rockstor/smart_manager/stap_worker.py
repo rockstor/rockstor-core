@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,13 +26,13 @@ import fcntl
 from django.conf import settings
 from smart_manager.taplib.probe_config import TAP_MAP
 import logging
+
 logger = logging.getLogger(__name__)
 
-STAP_RUN = '/usr/bin/staprun'
+STAP_RUN = "/usr/bin/staprun"
 
 
 class StapWorker(Process):
-
     def __init__(self, task):
         self.task = task
         self.ppid = os.getpid()
@@ -42,16 +42,16 @@ class StapWorker(Process):
         try:
             ctx = zmq.Context()
             sink_socket = ctx.socket(zmq.PUSH)
-            sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
+            sink_socket.connect("tcp://%s:%d" % settings.SPROBE_SINK)
         except Exception as e:
-            msg = ('Exception while creating initial sockets. Aborting.')
+            msg = "Exception while creating initial sockets. Aborting."
             logger.error(msg)
             logger.exception(e)
             raise e
         try:
             return self._run_worker(sink_socket)
         except Exception as e:
-            msg = ('Unhandled exception in smart probe worker. Exiting.')
+            msg = "Unhandled exception in smart probe worker. Exiting."
             logger.error(msg)
             logger.exception(e)
             sink_socket.close()
@@ -60,42 +60,50 @@ class StapWorker(Process):
 
     def _run_worker(self, sink_socket):
         retval = 0
-        cmd = [STAP_RUN, self.task['module'], ]
-        rp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+        cmd = [
+            STAP_RUN,
+            self.task["module"],
+        ]
+        rp = subprocess.Popen(
+            cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         fcntl.fcntl(rp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         probe_stopped = False
-        sink_data = {'cb': TAP_MAP[self.task['tap']]['cb'],
-                     'rid': self.task['roid'], }
+        sink_data = {
+            "cb": TAP_MAP[self.task["tap"]]["cb"],
+            "rid": self.task["roid"],
+        }
         while True:
-            if (os.getppid() != self.ppid):
-                logger.error('Parent process(stap dispatcher) exited.')
+            if os.getppid() != self.ppid:
+                logger.error("Parent process(stap dispatcher) exited.")
                 rp.terminate()
-                logger.error('Terminated the probe process for rid: %s' %
-                             self.task['roid'])
-                logger.error('I am exiting too.')
+                logger.error(
+                    "Terminated the probe process for rid: %s" % self.task["roid"]
+                )
+                logger.error("I am exiting too.")
                 retval = -1
                 break
             try:
-                sink_data['part_out'] = rp.stdout.read()
+                sink_data["part_out"] = rp.stdout.read()
                 sink_socket.send_json(sink_data)
             except IOError:
                 pass
             finally:
-                if (not self.task['queue'].empty()):
+                if not self.task["queue"].empty():
                     # stop or pause received.
-                    msg = self.task['queue'].get()
+                    msg = self.task["queue"].get()
                     # @todo: handle pause.
                     rp.terminate()
                     probe_stopped = True
                     break
 
-            if (rp.poll() is not None):
-                if (probe_stopped is not True):
-                    msg = ('Probe process died. returncode: %s. '
-                           'stderr: %s' % (rp.returncode,
-                                           rp.stderr.read()))
+            if rp.poll() is not None:
+                if probe_stopped is not True:
+                    msg = "Probe process died. returncode: %s. stderr: %s" % (
+                        rp.returncode,
+                        rp.stderr.read(),
+                    )
                     logger.error(msg)
                 break
-            time.sleep(.5)
+            time.sleep(0.5)
         return retval

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -24,23 +24,24 @@ from cli.api_wrapper import APIWrapper
 
 
 class ReceiverPoolListView(APIView):
-
     def get(self, *args, **kwargs):
         try:
-            auuid = self.kwargs.get('auuid', None)
+            auuid = self.kwargs.get("auuid", None)
             ao = Appliance.objects.get(uuid=auuid)
-            url = ('https://%s:%s' % (ao.ip, ao.mgmt_port))
-            aw = APIWrapper(client_id=ao.client_id,
-                            client_secret=ao.client_secret, url=url)
-            response = aw.api_call('pools')
-            res = [p['name'] for p in response['results']]
+            url = "https://%s:%s" % (ao.ip, ao.mgmt_port)
+            aw = APIWrapper(
+                client_id=ao.client_id, client_secret=ao.client_secret, url=url
+            )
+            response = aw.api_call("pools")
+            res = [p["name"] for p in response["results"]]
             return Response(res)
         except Appliance.DoesNotExist:
-            msg = ('Remote appliance with the given uuid(%s) does not exist.' %
-                   auuid)
+            msg = "Remote appliance with the given uuid(%s) does not exist." % auuid
             handle_exception(Exception(msg), self.request)
         except Exception as e:
-            msg = ('Failed to retrieve list of Pools on the remote '
-                   'appliance(%s). Make sure it is running and try again. '
-                   'Here is the exact error: %s' % (ao.ip, e.__str__()))
+            msg = (
+                "Failed to retrieve list of Pools on the remote "
+                "appliance(%s). Make sure it is running and try again. "
+                "Here is the exact error: %s" % (ao.ip, e.__str__())
+            )
             handle_exception(Exception(msg), self.request)

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,10 +21,11 @@ from django.contrib.auth.models import User
 
 
 class DigestAuthentication(BaseAuthentication):
-
     def authenticate(self, request):
-        if ('apikey' in request.query_params and
-                request.query_params['apikey'] == 'adminapikey'):
+        if (
+            "apikey" in request.query_params
+            and request.query_params["apikey"] == "adminapikey"
+        ):
             try:
                 return (User.objects.all()[0], None)
             except:

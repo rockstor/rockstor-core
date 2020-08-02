@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@ class NFSDShareClientDistribution(models.Model):
     """
     for a given ts and share, number and i/o size of various nfs calls
     """
+
     rid = models.ForeignKey(SProbe)
     ts = models.DateTimeField(db_index=True)
     share = models.CharField(max_length=255)
@@ -43,4 +44,4 @@ class NFSDShareClientDistribution(models.Model):
     sum_write = models.BigIntegerField(default=0)
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"

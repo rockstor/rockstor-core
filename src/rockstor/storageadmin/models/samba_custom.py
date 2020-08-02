@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,4 +25,4 @@ class SambaCustomConfig(models.Model):
     custom_config = models.CharField(max_length=1024, null=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

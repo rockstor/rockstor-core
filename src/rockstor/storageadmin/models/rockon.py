@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -36,16 +36,16 @@ class RockOn(models.Model):
 
     @property
     def ui_port(self):
-        if (not self.ui):
+        if not self.ui:
             return None
         for co in self.dcontainer_set.all():
             for po in co.dport_set.all():
-                if (po.uiport):
+                if po.uiport:
                     return po.hostp
         return None
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 class DImage(models.Model):
@@ -54,7 +54,7 @@ class DImage(models.Model):
     repo = models.CharField(max_length=1024)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 class DContainer(models.Model):
@@ -68,18 +68,17 @@ class DContainer(models.Model):
     uid = models.IntegerField(null=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 class DContainerLink(models.Model):
     source = models.OneToOneField(DContainer)
-    destination = models.ForeignKey(DContainer,
-                                    related_name='destination_container')
+    destination = models.ForeignKey(DContainer, related_name="destination_container")
     name = models.CharField(max_length=64, null=True)
 
     class Meta:
-        unique_together = ('destination', 'name')
-        app_label = 'storageadmin'
+        unique_together = ("destination", "name")
+        app_label = "storageadmin"
 
 
 class DPort(models.Model):
@@ -93,8 +92,11 @@ class DPort(models.Model):
     label = models.CharField(max_length=1024, null=True)
 
     class Meta:
-        unique_together = ('container', 'containerp',)
-        app_label = 'storageadmin'
+        unique_together = (
+            "container",
+            "containerp",
+        )
+        app_label = "storageadmin"
 
 
 class DVolume(models.Model):
@@ -108,13 +110,16 @@ class DVolume(models.Model):
 
     @property
     def share_name(self):
-        if (self.share is not None):
+        if self.share is not None:
             return self.share.name
         return None
 
     class Meta:
-        unique_together = ('container', 'dest_dir',)
-        app_label = 'storageadmin'
+        unique_together = (
+            "container",
+            "dest_dir",
+        )
+        app_label = "storageadmin"
 
 
 class ContainerOption(models.Model):
@@ -123,7 +128,7 @@ class ContainerOption(models.Model):
     val = models.CharField(max_length=1024, blank=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 class DContainerArgs(models.Model):
@@ -132,7 +137,7 @@ class DContainerArgs(models.Model):
     val = models.CharField(max_length=1024, blank=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 class DCustomConfig(models.Model):
@@ -143,8 +148,11 @@ class DCustomConfig(models.Model):
     label = models.CharField(max_length=64, null=True)
 
     class Meta:
-        unique_together = ('rockon', 'key',)
-        app_label = 'storageadmin'
+        unique_together = (
+            "rockon",
+            "key",
+        )
+        app_label = "storageadmin"
 
 
 class DContainerEnv(models.Model):
@@ -163,8 +171,8 @@ class DContainerDevice(models.Model):
     label = models.CharField(max_length=64, null=True)
 
     class Meta:
-        unique_together = ('container', 'dev')
-        app_label = 'storageadmin'
+        unique_together = ("container", "dev")
+        app_label = "storageadmin"
 
 
 class DContainerLabel(models.Model):
@@ -173,5 +181,5 @@ class DContainerLabel(models.Model):
     val = models.CharField(max_length=1024, null=True)
 
     class Meta:
-        unique_together = ('container', 'val')
-        app_label = 'storageadmin'
+        unique_together = ("container", "val")
+        app_label = "storageadmin"

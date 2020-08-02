@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -31,33 +31,34 @@ def change_password(username, password):
         duser.set_password(password)
         duser.save()
     except:
-        sys.exit('username: %s does not exist in the admin database' %
-                 username)
+        sys.exit("username: %s does not exist in the admin database" % username)
     try:
         User.objects.get(username=username)
     except:
-        sys.exit('username: %s does not exist in the database' % username)
+        sys.exit("username: %s does not exist in the database" % username)
 
     try:
         pwd.getpwnam(username)
     except KeyError:
-        sys.exit('username: %s does not exist in the system' % username)
+        sys.exit("username: %s does not exist in the system" % username)
 
     try:
         users.usermod(username, password)
         users.smbpasswd(username, password)
     except:
-        sys.exit('Low level error occured while changing password of user: %s'
-                 % username)
+        sys.exit(
+            "Low level error occured while changing password of user: %s" % username
+        )
 
 
 def main():
-    if (len(sys.argv) < 3 or
-            (len(sys.argv) > 1 and sys.argv[1] == '-h')):
-        sys.exit('Usage: pwreset <username> <new_password>')
+    if len(sys.argv) < 3 or (len(sys.argv) > 1 and sys.argv[1] == "-h"):
+        sys.exit("Usage: pwreset <username> <new_password>")
 
     try:
         change_password(sys.argv[1], sys.argv[2])
     except:
-        sys.exit('Error changing password for user: %s. Check the username '
-                 'and try again.' % sys.argv[1])
+        sys.exit(
+            "Error changing password for user: %s. Check the username "
+            "and try again." % sys.argv[1]
+        )

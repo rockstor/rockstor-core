@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,6 +20,5 @@ from django.conf.urls import patterns, url
 from storageadmin.views import PincardView
 
 urlpatterns = patterns(
-    '',
-    url(r'^/(?P<command>create|reset)/(?P<user>\w+)$', PincardView.as_view(), )
-    )
+    "", url(r"^/(?P<command>create|reset)/(?P<user>\w+)$", PincardView.as_view(),)
+)

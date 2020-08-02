@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,41 +25,40 @@ from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class NISServiceView(BaseServiceDetailView):
-
     @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
         with self._handle_exception(request):
-            service = Service.objects.get(name='nis')
-            if (command == 'config'):
+            service = Service.objects.get(name="nis")
+            if command == "config":
                 try:
-                    config = request.data['config']
-                    configure_nis(config['domain'], config['server'])
+                    config = request.data["config"]
+                    configure_nis(config["domain"], config["server"])
                     self._save_config(service, config)
                 except Exception as e:
                     logger.exception(e)
-                    e_msg = ('NIS could not be configured. Try again')
+                    e_msg = "NIS could not be configured. Try again"
                     handle_exception(Exception(e_msg), request)
 
             else:
                 try:
-                    if (command == 'stop'):
-                        chkconfig('ypbind', 'off')
+                    if command == "stop":
+                        chkconfig("ypbind", "off")
                     else:
-                        chkconfig('ypbind', 'on')
-                        chkconfig('rpcbind', 'on')
-                        init_service_op('rpcbind', command)
-                    init_service_op('ypbind', command)
+                        chkconfig("ypbind", "on")
+                        chkconfig("rpcbind", "on")
+                        init_service_op("rpcbind", command)
+                    init_service_op("ypbind", command)
                 except Exception as e:
                     logger.exception(e)
-                    e_msg = ('Failed to %s NIS service due to system error.' %
-                             command)
+                    e_msg = "Failed to %s NIS service due to system error." % command
                     handle_exception(Exception(e_msg), request)
 
             return Response()

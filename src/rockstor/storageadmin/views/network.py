@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,17 +20,24 @@ import json
 from django.db import transaction
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
-from storageadmin.models import (NetworkConnection, NetworkDevice,
-                                 EthernetConnection, TeamConnection,
-                                 BondConnection)
+from storageadmin.models import (
+    NetworkConnection,
+    NetworkDevice,
+    EthernetConnection,
+    TeamConnection,
+    BondConnection,
+)
 from smart_manager.models import Service
 from storageadmin.util import handle_exception
-from storageadmin.serializers import (NetworkDeviceSerializer,
-                                      NetworkConnectionSerializer)
+from storageadmin.serializers import (
+    NetworkDeviceSerializer,
+    NetworkConnectionSerializer,
+)
 from system import network
 import rest_framework_custom as rfc
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 MIN_MTU = 1500
@@ -42,61 +49,69 @@ class NetworkMixin(object):
     # Runners for teams. @todo: support basic defaults + custom configuration.
     # @todo: lacp doesn't seem to be activating
     runners = {
-        'broadcast': '{ "runner": {"name": "broadcast"}}',
-        'roundrobin': '{ "runner": {"name": "roundrobin"}}',
-        'activebackup': '{ "runner": {"name": "activebackup"}}',
-        'loadbalance': '{ "runner": {"name": "loadbalance"}}',
-        'lacp': '{ "runner": {"name": "lacp"}}',
+        "broadcast": '{ "runner": {"name": "broadcast"}}',
+        "roundrobin": '{ "runner": {"name": "roundrobin"}}',
+        "activebackup": '{ "runner": {"name": "activebackup"}}',
+        "loadbalance": '{ "runner": {"name": "loadbalance"}}',
+        "lacp": '{ "runner": {"name": "lacp"}}',
     }
-    team_profiles = ('broadcast', 'roundrobin', 'activebackup', 'loadbalance',
-                     'lacp')
-    bond_profiles = ('balance-rr', 'active-backup', 'balance-xor', 'broadcast',
-                     '802.3ad', 'balance-tlb', 'balance-alb')
+    team_profiles = ("broadcast", "roundrobin", "activebackup", "loadbalance", "lacp")
+    bond_profiles = (
+        "balance-rr",
+        "active-backup",
+        "balance-xor",
+        "broadcast",
+        "802.3ad",
+        "balance-tlb",
+        "balance-alb",
+    )
 
     @staticmethod
     @transaction.atomic
     def _update_or_create_ctype(co, ctype, config):
-        if (ctype == '802-3-ethernet'):
+        if ctype == "802-3-ethernet":
             try:
                 eco = EthernetConnection.objects.get(connection=co)
-                eco.mac = config['mac']
-                eco.cloned_mac = config['cloned_mac']
-                eco.mtu = config['mtu']
+                eco.mac = config["mac"]
+                eco.cloned_mac = config["cloned_mac"]
+                eco.mtu = config["mtu"]
                 eco.save()
             except EthernetConnection.DoesNotExist:
                 EthernetConnection.objects.create(connection=co, **config)
-        elif (ctype == 'team'):
+        elif ctype == "team":
             try:
                 tco = TeamConnection.objects.get(connection=co)
                 tco.name = co.name
-                tco.config = config['config']
+                tco.config = config["config"]
                 tco.save()
             except TeamConnection.DoesNotExist:
                 TeamConnection.objects.create(connection=co, **config)
-        elif (ctype == 'bond'):
+        elif ctype == "bond":
             try:
                 bco = BondConnection.objects.get(connection=co)
                 bco.name = co.name
-                bco.config = config['config']
+                bco.config = config["config"]
                 bco.save()
             except BondConnection.DoesNotExist:
                 BondConnection.objects.create(connection=co, **config)
         else:
-            logger.error('Unknown ctype: {} config: {}'.format(ctype, config))
+            logger.error("Unknown ctype: {} config: {}".format(ctype, config))
 
     @staticmethod
     @transaction.atomic
     def _update_master(co, config, defer_list=None):
-        if ('master' not in config):
+        if "master" not in config:
             return config
         try:
-            co.master = NetworkConnection.objects.get(name=config['master'])
-        except (NetworkConnection.DoesNotExist,
-                NetworkConnection.MultipleObjectsReturned):
-            if (not isinstance(defer_list, list)):
+            co.master = NetworkConnection.objects.get(name=config["master"])
+        except (
+            NetworkConnection.DoesNotExist,
+            NetworkConnection.MultipleObjectsReturned,
+        ):
+            if not isinstance(defer_list, list):
                 raise
-            defer_list.append({'uuid': co.uuid, 'master': config['master']})
-        del(config['master'])
+            defer_list.append({"uuid": co.uuid, "master": config["master"]})
+        del config["master"]
 
     @classmethod
     @transaction.atomic
@@ -104,41 +119,44 @@ class NetworkMixin(object):
         cmap = network.get_con_config(network.get_con_list())
         defer_master_updates = []
         for nco in NetworkConnection.objects.all():
-            if (nco.uuid not in cmap):
+            if nco.uuid not in cmap:
                 nco.delete()
                 continue
             config = cmap[nco.uuid]
-            if ('ctype' in config):
-                ctype = config['ctype']
+            if "ctype" in config:
+                ctype = config["ctype"]
                 cls._update_or_create_ctype(nco, ctype, config[ctype])
-                del(config[ctype])
-                del(config['ctype'])
+                del config[ctype]
+                del config["ctype"]
             cls._update_master(nco, config, defer_master_updates)
             NetworkConnection.objects.filter(uuid=nco.uuid).update(**config)
             del cmap[nco.uuid]
         for uuid in cmap:
             # new connections not yet in administrative state.
             config = cmap[uuid]
-            config['uuid'] = uuid
+            config["uuid"] = uuid
             ctype = ctype_d = None
-            if ('ctype' in config):
-                ctype = config['ctype']
+            if "ctype" in config:
+                ctype = config["ctype"]
                 ctype_d = config[ctype]
-                del(config[ctype])
-                del(config['ctype'])
-            if ('master' in config):
-                defer_master_updates.append({'uuid': uuid, 'master':
-                                             config['master']})
-                del(config['master'])
+                del config[ctype]
+                del config["ctype"]
+            if "master" in config:
+                defer_master_updates.append({"uuid": uuid, "master": config["master"]})
+                del config["master"]
             nco = NetworkConnection.objects.create(**config)
-            if (ctype is not None):
+            if ctype is not None:
                 cls._update_or_create_ctype(nco, ctype, ctype_d)
         for e in defer_master_updates:
-            slave_co = NetworkConnection.objects.get(uuid=e['uuid'])
+            slave_co = NetworkConnection.objects.get(uuid=e["uuid"])
             try:
-                slave_co.master = NetworkConnection.objects.get(name=e['master'])  # noqa E501
-            except (NetworkConnection.DoesNotExist,
-                    NetworkConnection.MultipleObjectsReturned) as e:
+                slave_co.master = NetworkConnection.objects.get(
+                    name=e["master"]
+                )  # noqa E501
+            except (
+                NetworkConnection.DoesNotExist,
+                NetworkConnection.MultipleObjectsReturned,
+            ) as e:
                 logger.exception(e)
             slave_co.save()
 
@@ -148,17 +166,20 @@ class NetworkMixin(object):
         dmap = network.get_dev_config(network.get_dev_list())
 
         def update_connection(dconfig):
-            if ('connection' in dconfig):
+            if "connection" in dconfig:
                 try:
-                    dconfig['connection'] = NetworkConnection.objects.get(
-                        name=dconfig['connection'])
-                except (NetworkConnection.DoesNotExist,
-                        NetworkConnection.MultipleObjectsReturned) as e:
+                    dconfig["connection"] = NetworkConnection.objects.get(
+                        name=dconfig["connection"]
+                    )
+                except (
+                    NetworkConnection.DoesNotExist,
+                    NetworkConnection.MultipleObjectsReturned,
+                ) as e:
                     logger.exception(e)
-                    dconfig['connection'] = None
+                    dconfig["connection"] = None
 
         for ndo in NetworkDevice.objects.all():
-            if (ndo.name not in dmap):
+            if ndo.name not in dmap:
                 ndo.delete()
                 continue
             dconfig = dmap[ndo.name]
@@ -167,7 +188,7 @@ class NetworkMixin(object):
             del dmap[ndo.name]
         for dev in dmap:
             dconfig = dmap[dev]
-            dconfig['name'] = dev
+            dconfig["name"] = dev
             update_connection(dconfig)
             NetworkDevice.objects.create(**dconfig)
 
@@ -185,11 +206,11 @@ class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
 
 class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkConnectionSerializer
-    ctypes = ('ethernet', 'team', 'bond')
+    ctypes = ("ethernet", "team", "bond")
 
     # ethtool is the default link watcher.
 
-    config_methods = ('auto', 'manual')
+    config_methods = ("auto", "manual")
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
@@ -198,17 +219,16 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
 
     @staticmethod
     def _validate_devices(devices, request, size=2):
-        if (not isinstance(devices, list)):
-            raise Exception('devices must be a list')
-        if (len(devices) < size):
-            raise Exception(('A minimum of {} devices are '
-                            'required.').format(size))
+        if not isinstance(devices, list):
+            raise Exception("devices must be a list")
+        if len(devices) < size:
+            raise Exception(("A minimum of {} devices are required.").format(size))
         for d in devices:
             try:
                 NetworkDevice.objects.get(name=d)
                 # if device belongs to another connection, change it.
             except NetworkDevice.DoesNotExist:
-                e_msg = 'Unknown network device ({}).'.format(d)
+                e_msg = "Unknown network device ({}).".format(d)
                 handle_exception(Exception(e_msg), request)
         return devices
 
@@ -216,63 +236,82 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     def post(self, request):
         with self._handle_exception(request):
             ipaddr = gateway = dns_servers = search_domains = None
-            name = request.data.get('name')
-            if (NetworkConnection.objects.filter(name=name).exists()):
-                e_msg = ('Connection name ({}) is already in use. Choose a '
-                         'different name.').format(name)
+            name = request.data.get("name")
+            if NetworkConnection.objects.filter(name=name).exists():
+                e_msg = (
+                    "Connection name ({}) is already in use. Choose a "
+                    "different name."
+                ).format(name)
                 handle_exception(Exception(e_msg), request)
 
             # auto of manual
-            method = request.data.get('method')
-            if (method not in self.config_methods):
-                e_msg = ('Unsupported config method ({}). Supported ones '
-                         'include: ({}).').format(method, self.config_methods)
+            method = request.data.get("method")
+            if method not in self.config_methods:
+                e_msg = (
+                    "Unsupported config method ({}). Supported ones include: ({})."
+                ).format(method, self.config_methods)
                 handle_exception(Exception(e_msg), request)
-            if (method == 'manual'):
+            if method == "manual":
                 # ipaddr is of the format <IP>/<netmask>. eg:
                 # 192.168.1.2/24. If netmask is not given, it defaults to 32.
-                ipaddr = request.data.get('ipaddr')
-                gateway = request.data.get('gateway', None)
-                dns_servers = request.data.get('dns_servers', None)
-                search_domains = request.data.get('search_domains', None)
+                ipaddr = request.data.get("ipaddr")
+                gateway = request.data.get("gateway", None)
+                dns_servers = request.data.get("dns_servers", None)
+                search_domains = request.data.get("search_domains", None)
 
             # connection type can be one of ethernet, team or bond
-            ctype = request.data.get('ctype')
-            if (ctype not in self.ctypes):
-                e_msg = ('Unsupported connection type ({}). Supported ones '
-                         'include: ({}).').format(ctype, self.ctypes)
+            ctype = request.data.get("ctype")
+            if ctype not in self.ctypes:
+                e_msg = (
+                    "Unsupported connection type ({}). Supported ones include: ({})."
+                ).format(ctype, self.ctypes)
                 handle_exception(Exception(e_msg), request)
-            devices = request.data.get('devices', None)
-            if (ctype == 'team'):
+            devices = request.data.get("devices", None)
+            if ctype == "team":
                 # gather required input for team
-                team_profile = request.data.get('team_profile')
-                if (team_profile not in self.team_profiles):
-                    e_msg = ('Unsupported team profile ({}). Supported ones '
-                             'include: ({}).').format(team_profile,
-                                                      self.team_profiles)
+                team_profile = request.data.get("team_profile")
+                if team_profile not in self.team_profiles:
+                    e_msg = (
+                        "Unsupported team profile ({}). Supported ones "
+                        "include: ({})."
+                    ).format(team_profile, self.team_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
-                network.new_team_connection(name, self.runners[team_profile],
-                                            devices, ipaddr, gateway,
-                                            dns_servers, search_domains)
+                network.new_team_connection(
+                    name,
+                    self.runners[team_profile],
+                    devices,
+                    ipaddr,
+                    gateway,
+                    dns_servers,
+                    search_domains,
+                )
 
-            elif (ctype == 'ethernet'):
-                device = request.data.get('device')
+            elif ctype == "ethernet":
+                device = request.data.get("device")
                 self._validate_devices([device], request, size=1)
-                network.new_ethernet_connection(name, device, ipaddr, gateway,
-                                                dns_servers, search_domains)
+                network.new_ethernet_connection(
+                    name, device, ipaddr, gateway, dns_servers, search_domains
+                )
 
-            elif (ctype == 'bond'):
-                bond_profile = request.data.get('bond_profile')
-                if (bond_profile not in self.bond_profiles):
-                    e_msg = ('Unsupported bond profile ({}). Supported ones '
-                             'include: ({}).').format(bond_profile,
-                                                      self.bond_profiles)
+            elif ctype == "bond":
+                bond_profile = request.data.get("bond_profile")
+                if bond_profile not in self.bond_profiles:
+                    e_msg = (
+                        "Unsupported bond profile ({}). Supported ones "
+                        "include: ({})."
+                    ).format(bond_profile, self.bond_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
-                network.new_bond_connection(name, bond_profile, devices,
-                                            ipaddr, gateway, dns_servers,
-                                            search_domains)
+                network.new_bond_connection(
+                    name,
+                    bond_profile,
+                    devices,
+                    ipaddr,
+                    gateway,
+                    dns_servers,
+                    search_domains,
+                )
 
             return Response()
 
@@ -282,7 +321,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
     def get(self, *args, **kwargs):
         try:
-            data = NetworkConnection.objects.get(id=self.kwargs['id'])
+            data = NetworkConnection.objects.get(id=self.kwargs["id"])
             sdata = NetworkConnectionSerializer(data)
             return Response(sdata.data)
         except NetworkConnection.DoesNotExist:
@@ -293,7 +332,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
         try:
             return NetworkConnection.objects.get(id=id)
         except NetworkConnection.DoesNotExist:
-            e_msg = 'Network connection ({}) does not exist.'.format(id)
+            e_msg = "Network connection ({}) does not exist.".format(id)
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -301,30 +340,31 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            method = request.data.get('method')
+            method = request.data.get("method")
             mtu = DEFAULT_MTU
             try:
-                e_msg = ('The mtu must be an integer in {} - {} '
-                         'range.').format(MIN_MTU, MAX_MTU)
-                mtu = int(request.data.get('mtu', DEFAULT_MTU))
+                e_msg = ("The mtu must be an integer in {} - {} range.").format(
+                    MIN_MTU, MAX_MTU
+                )
+                mtu = int(request.data.get("mtu", DEFAULT_MTU))
                 if mtu < MIN_MTU or mtu > MAX_MTU:
                     handle_exception(Exception(e_msg), request)
             except ValueError:
                 handle_exception(Exception(e_msg), request)
             ipaddr = gateway = dns_servers = search_domains = None
-            if (method == 'manual'):
-                ipaddr = request.data.get('ipaddr', None)
-                gateway = request.data.get('gateway', None)
-                dns_servers = request.data.get('dns_servers', None)
-                search_domains = request.data.get('search_domains', None)
+            if method == "manual":
+                ipaddr = request.data.get("ipaddr", None)
+                gateway = request.data.get("gateway", None)
+                dns_servers = request.data.get("dns_servers", None)
+                search_domains = request.data.get("search_domains", None)
 
-            if (nco.ctype == 'ethernet'):
+            if nco.ctype == "ethernet":
                 device = nco.networkdevice_set.first().name
                 self._delete_connection(nco)
-                network.new_ethernet_connection(nco.name, device, ipaddr,
-                                                gateway, dns_servers,
-                                                search_domains, mtu)
-            elif (nco.ctype == 'team'):
+                network.new_ethernet_connection(
+                    nco.name, device, ipaddr, gateway, dns_servers, search_domains, mtu
+                )
+            elif nco.ctype == "team":
                 team_profile = nco.team_profile
                 devices = []
                 for child_nco in NetworkConnection.objects.filter(master=nco):
@@ -332,8 +372,15 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
                 self._delete_connection(nco)
                 network.new_team_connection(
-                    nco.name, self.runners[team_profile], devices, ipaddr,
-                    gateway, dns_servers, search_domains, mtu)
+                    nco.name,
+                    self.runners[team_profile],
+                    devices,
+                    ipaddr,
+                    gateway,
+                    dns_servers,
+                    search_domains,
+                    mtu,
+                )
 
             return Response(NetworkConnectionSerializer(nco).data)
 
@@ -350,17 +397,19 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
             nco = self._nco(request, id)
             restricted = False
             try:
-                so = Service.objects.get(name='rockstor')
+                so = Service.objects.get(name="rockstor")
                 config = json.loads(so.config)
-                if (config['network_interface'] == nco.name):
+                if config["network_interface"] == nco.name:
                     restricted = True
             except Exception as e:
                 logger.exception(e)
-            if (restricted):
-                e_msg = ('This connection ({}) is designated for '
-                         'management and cannot be deleted. If you really '
-                         'need to delete it, change the Rockstor service '
-                         'configuration and try again.').format(nco.name)
+            if restricted:
+                e_msg = (
+                    "This connection ({}) is designated for "
+                    "management and cannot be deleted. If you really "
+                    "need to delete it, change the Rockstor service "
+                    "configuration and try again."
+                ).format(nco.name)
                 handle_exception(Exception(e_msg), request)
             self._delete_connection(nco)
             return Response()
@@ -370,11 +419,11 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
         # switch the connection up, down or reload.
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            if (switch == 'up' and nco.ctype in ('team', 'bond')):
+            if switch == "up" and nco.ctype in ("team", "bond"):
                 # order_by('name') because in some cases member interfaces must
                 # be brought up in order. eg: active-backup.
-                for mnco in nco.networkconnection_set.all().order_by('name'):
-                    logger.debug('upping {} {}'.format(mnco.name, mnco.uuid))
+                for mnco in nco.networkconnection_set.all().order_by("name"):
+                    logger.debug("upping {} {}".format(mnco.name, mnco.uuid))
                     network.toggle_connection(mnco.uuid, switch)
             else:
                 network.toggle_connection(nco.uuid, switch)
@@ -391,6 +440,5 @@ class NetworkStateView(rfc.GenericView, NetworkMixin):
         with self._handle_exception(request):
             self._refresh_connections()
             self._refresh_devices()
-            ns = NetworkConnectionSerializer(
-                NetworkConnection.objects.all(), many=True)
+            ns = NetworkConnectionSerializer(NetworkConnection.objects.all(), many=True)
             return Response(ns.data)

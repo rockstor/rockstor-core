@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -29,17 +29,15 @@ class Replica(models.Model):
     dpool = models.CharField(max_length=4096)
     dshare = models.CharField(max_length=4096, null=True)
     enabled = models.BooleanField(default=False)
-    data_port = models.IntegerField(
-        default=settings.REPLICATION.get('listener_port'))
-    meta_port = models.IntegerField(
-        default=settings.REPLICATION.get('listener_port'))
+    data_port = models.IntegerField(default=settings.REPLICATION.get("listener_port"))
+    meta_port = models.IntegerField(default=settings.REPLICATION.get("listener_port"))
     """enabled/disabled state change ts"""
     ts = models.DateTimeField(null=True, db_index=True)
     crontab = models.CharField(max_length=64, null=True)
     replication_ip = models.CharField(max_length=4096, null=True)
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"
 
 
 class ReplicaTrail(models.Model):
@@ -49,6 +47,7 @@ class ReplicaTrail(models.Model):
     2. snapshot_created -> send_pending -> send_succeeded (happy path)
     3. snapshot_created -> send_pending -> send_failed (error)
     """
+
     replica = models.ForeignKey(Replica)
     snap_name = models.CharField(max_length=1024)
     kb_sent = models.BigIntegerField(default=0)
@@ -59,15 +58,15 @@ class ReplicaTrail(models.Model):
     send_failed = models.DateTimeField(null=True)
     end_ts = models.DateTimeField(null=True, db_index=True)
     STATUS_CHOICES = [
-        ('pending',) * 2,
-        ('succeeded',) * 2,
-        ('failed',) * 2,
-        ]
+        ("pending",) * 2,
+        ("succeeded",) * 2,
+        ("failed",) * 2,
+    ]
     status = models.CharField(max_length=10)
     error = models.CharField(max_length=4096, null=True)
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"
 
 
 class ReplicaShare(models.Model):
@@ -76,15 +75,13 @@ class ReplicaShare(models.Model):
     """ip from the appliance model of storageadmin"""
     appliance = models.CharField(max_length=4096)
     src_share = models.CharField(max_length=4096, null=True)
-    data_port = models.IntegerField(
-        default=settings.REPLICATION.get('listener_port'))
-    meta_port = models.IntegerField(
-        default=settings.REPLICATION.get('listener_port'))
+    data_port = models.IntegerField(default=settings.REPLICATION.get("listener_port"))
+    meta_port = models.IntegerField(default=settings.REPLICATION.get("listener_port"))
     """enabled/disabled state change ts"""
     ts = models.DateTimeField(null=True, db_index=True)
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"
 
 
 class ReceiveTrail(models.Model):
@@ -94,6 +91,7 @@ class ReceiveTrail(models.Model):
     2. snapshot_created -> send_pending -> send_succeeded (happy path)
     3. snapshot_created -> send_pending -> send_failed (error)
     """
+
     rshare = models.ForeignKey(ReplicaShare)
     snap_name = models.CharField(max_length=1024)
     kb_received = models.BigIntegerField(default=0)
@@ -102,12 +100,12 @@ class ReceiveTrail(models.Model):
     receive_failed = models.DateTimeField(null=True)
     end_ts = models.DateTimeField(null=True, db_index=True)
     STATUS_CHOICES = [
-        ('pending',) * 2,
-        ('succeeded',) * 2,
-        ('failed',) * 2,
-        ]
+        ("pending",) * 2,
+        ("succeeded",) * 2,
+        ("failed",) * 2,
+    ]
     status = models.CharField(max_length=10)
     error = models.CharField(max_length=4096, null=True)
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"

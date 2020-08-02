@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -22,10 +22,11 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Pincard(models.Model):
     user = models.IntegerField()
-    pin_number = models.IntegerField(validators=[MinValueValidator(1),
-                                                 MaxValueValidator(24)])
+    pin_number = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(24)]
+    )
     pin_code = models.CharField(max_length=32, null=False)
 
     class Meta:
-        unique_together = ('user', 'pin_number')
-        app_label = 'storageadmin'
+        unique_together = ("user", "pin_number")
+        app_label = "storageadmin"

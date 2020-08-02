@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,17 +20,25 @@ from system.osi import run_command
 from django.conf import settings
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class ProdExceptionMiddleware(object):
-
     def process_exception(self, request, exception):
         """just log the exception"""
-        e_msg = ('Exception occurred while processing a request. Path: {} '
-                 'method: {}').format(request.path, request.method)
+        e_msg = (
+            "Exception occurred while processing a request. Path: {} method: {}"
+        ).format(request.path, request.method)
         logger.error(e_msg)
         logger.exception(exception)
-        run_command(['/usr/bin/tar', '-c', '-z', '-f',
-                     settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
-                     settings.ROOT_DIR + 'var/log'])
+        run_command(
+            [
+                "/usr/bin/tar",
+                "-c",
+                "-z",
+                "-f",
+                settings.ROOT_DIR + "src/rockstor/logs/error.tgz",
+                settings.ROOT_DIR + "var/log",
+            ]
+        )

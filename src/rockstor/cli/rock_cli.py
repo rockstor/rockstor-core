@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -48,14 +48,14 @@ ASCII_LOGO = """
 
 
 class RockConsole(BaseConsole):
-
-    def __init__(self, greeting='Rockstor'):
+    def __init__(self, greeting="Rockstor"):
         self.user = pwd.getpwuid(os.getuid())[0]
-        self.greeting = self.user + '@' + greeting
-        self.prompt = self.greeting + '> '
-        self.intro = ('%s\nWelcome to Rockstor. The Smart Open Storage '
-                      'Platform.' % ASCII_LOGO)
-        self.user_hist_file = os.path.expanduser('~') + '/.rcli.hist'
+        self.greeting = self.user + "@" + greeting
+        self.prompt = self.greeting + "> "
+        self.intro = (
+            "%s\nWelcome to Rockstor. The Smart Open Storage Platform." % ASCII_LOGO
+        )
+        self.user_hist_file = os.path.expanduser("~") + "/.rcli.hist"
         try:
             readline.read_history_file(self.user_hist_file)
         except:
@@ -69,32 +69,33 @@ class RockConsole(BaseConsole):
         try:
             readline.write_history_file(self.user_hist_file)
         except:
-            print('Command history could not be saved')
+            print("Command history could not be saved")
 
     """
     Commands
     """
+
     def do_utcnow(self, args):
         """
         returns utc time on the server
         """
-        url = ('%scommands/utcnow' % BaseConsole.url)
-        print(api_call(url, calltype='post'))
+        url = "%scommands/utcnow" % BaseConsole.url
+        print(api_call(url, calltype="post"))
 
     def do_uptime(self, args):
         """
         return uptime(in seconds) of the server
         """
-        url = ('%scommands/uptime' % BaseConsole.url)
-        print(api_call(url, calltype='post'))
+        url = "%scommands/uptime" % BaseConsole.url
+        print(api_call(url, calltype="post"))
 
     def do_bootstrap(self, args):
         """
         bootraps the storage state, mounts anything that needs to be mounted
         etc..
         """
-        url = ('%scommands/bootstrap' % BaseConsole.url)
-        print(api_call(url, calltype='post'))
+        url = "%scommands/bootstrap" % BaseConsole.url
+        print(api_call(url, calltype="post"))
 
     def do_shares(self, args):
         """
@@ -108,7 +109,7 @@ class RockConsole(BaseConsole):
         commands on a share:        shares share_name <input>
         """
         shares_console = SharesConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             return shares_console.cmdloop()
         return shares_console.onecmd(args)
 
@@ -124,27 +125,30 @@ class RockConsole(BaseConsole):
         commands on a pool:        pools pool_name <input>
         """
         pools_console = PoolsConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             pools_console.cmdloop()
         else:
             pools_console.onecmd(args)
 
     def do_disks(self, args):
         disks_console = DisksConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             disks_console.cmdloop()
         else:
             disks_console.onecmd(args)
 
     def help_disks(self):
-        s = """
+        s = (
+            """
         %(c)sPerform operations on disks.%(e)s
 
         Available commands:
         Go to disks subconsole:    %(c)sdisks%(e)s
         Display the list of disks: %(c)sdisks list%(e)s
         Scan for new disks:        %(c)sdisks scan%(e)s
-        """ % BaseConsole.c_params
+        """
+            % BaseConsole.c_params
+        )
         print(s)
 
     def do_services(self, args):
@@ -157,7 +161,7 @@ class RockConsole(BaseConsole):
         smb service console:          services smb <command>
         """
         services_console = ServicesConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             services_console.cmdloop()
         else:
             services_console.onecmd(args)
@@ -169,7 +173,7 @@ class RockConsole(BaseConsole):
 
         """
         setup_console = SetupConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             setup_console.cmdloop()
         else:
             setup_console.onecmd(args)
@@ -179,7 +183,7 @@ class RockConsole(BaseConsole):
         Smart manager console
         """
         sm_console = SMConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             sm_console.cmdloop()
         else:
             sm_console.onecmd(args)
@@ -189,7 +193,7 @@ class RockConsole(BaseConsole):
         Support console
         """
         support_console = SupportConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             support_console.cmdloop()
         else:
             support_console.onecmd(args)
@@ -199,7 +203,7 @@ class RockConsole(BaseConsole):
         Network console
         """
         network_console = NetworkConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             network_console.cmdloop()
         else:
             network_console.onecmd(args)
@@ -209,7 +213,7 @@ class RockConsole(BaseConsole):
         Users console
         """
         users_console = UsersConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             users_console.cmdloop()
         else:
             users_console.onecmd(args)
@@ -219,7 +223,7 @@ class RockConsole(BaseConsole):
         Task Scheduler Console
         """
         task_console = TaskConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             task_console.cmdloop()
         else:
             task_console.onecmd(args)
@@ -229,7 +233,7 @@ class RockConsole(BaseConsole):
         Replication console
         """
         rc = ReplicationConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             rc.cmdloop()
         else:
             rc.onecmd(args)
@@ -239,21 +243,21 @@ class RockConsole(BaseConsole):
         Backup plugin console
         """
         bc = BackupPluginConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             bc.cmdloop()
         else:
             bc.cmdloop(args)
 
     def do_nfs_exports(self, args):
         ne = NFSExportConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             ne.cmdloop()
         else:
             ne.cmdloop(args)
 
     def do_api_keys(self, args):
         ak = APIKeyConsole(self.greeting)
-        if (len(args) == 0):
+        if len(args) == 0:
             ak.cmdloop()
         else:
             ak.cmdloop(args)
@@ -262,12 +266,12 @@ class RockConsole(BaseConsole):
 def main():
     set_token()
     rc = RockConsole()
-    if (len(sys.argv) > 1):
-        if (sys.argv[1] == '-c'):
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-c":
             #  command is called remotely using ssh
-            line = ' '.join(sys.argv[2:])
+            line = " ".join(sys.argv[2:])
         else:
-            line = ' '.join(sys.argv[1:])
+            line = " ".join(sys.argv[1:])
         return rc.postcmd(rc.onecmd(line), line)
     else:
         return rc.cmdloop()

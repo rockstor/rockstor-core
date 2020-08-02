@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -134,9 +134,9 @@ class PoolMixin(object):
         if compression is None or compression == "":
             compression = "no"
         if compression not in settings.COMPRESSION_TYPES:
-            e_msg = (
-                "Unsupported compression algorithm ({}). Use one of " "{}."
-            ).format(compression, settings.COMPRESSION_TYPES)
+            e_msg = ("Unsupported compression algorithm ({}). Use one of {}.").format(
+                compression, settings.COMPRESSION_TYPES
+            )
             handle_exception(Exception(e_msg), request)
         return compression
 
@@ -185,7 +185,7 @@ class PoolMixin(object):
                 ).format(o, sorted(allowed_options.keys()))
                 handle_exception(Exception(e_msg), request)
             if o == "compress-force" and v not in allowed_options["compress-force"]:
-                e_msg = ("compress-force is only allowed with " "{}.").format(
+                e_msg = ("compress-force is only allowed with {}.").format(
                     settings.COMPRESSION_TYPES
                 )
                 handle_exception(Exception(e_msg), request)
@@ -194,9 +194,9 @@ class PoolMixin(object):
                 try:
                     int(v)
                 except:
-                    e_msg = (
-                        "Value for mount option ({}) must be an " "integer."
-                    ).format(o)
+                    e_msg = ("Value for mount option ({}) must be an integer.").format(
+                        o
+                    )
                     handle_exception(Exception(e_msg), request)
         return mnt_options
 
@@ -303,7 +303,7 @@ class PoolMixin(object):
             # Btrfs balance without convert filters will convert dup level
             # metadata on a single level data pool to raid1 on multi disk
             # pools. Avoid by explicit convert in this instance.
-            logger.info("Preserve single data, dup metadata by explicit " "convert.")
+            logger.info("Preserve single data, dup metadata by explicit convert.")
             convert = "single"
         start_balance.async(mnt_pt, force=force, convert=convert)
         tid = 0
@@ -390,9 +390,9 @@ class PoolListView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if Pool.objects.filter(name=pname).exists():
-                e_msg = (
-                    "Pool ({}) already exists. " "Choose a different name."
-                ).format(pname)
+                e_msg = ("Pool ({}) already exists. Choose a different name.").format(
+                    pname
+                )
                 handle_exception(Exception(e_msg), request)
 
             if Share.objects.filter(name=pname).exists():
@@ -414,31 +414,31 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             raid_level = request.data["raid_level"]
             if raid_level not in self.RAID_LEVELS:
-                e_msg = ("Unsupported raid level. Use one of: " "{}.").format(
+                e_msg = ("Unsupported raid level. Use one of: {}.").format(
                     self.RAID_LEVELS
                 )
                 handle_exception(Exception(e_msg), request)
             # consolidated raid0 & raid 1 disk check
             if raid_level in self.RAID_LEVELS[1:3] and len(disks) <= 1:
                 e_msg = (
-                    "At least 2 disks are required for the raid level: " "{}."
+                    "At least 2 disks are required for the raid level: {}."
                 ).format(raid_level)
                 handle_exception(Exception(e_msg), request)
             if raid_level == self.RAID_LEVELS[3]:
                 if len(disks) < 4:
                     e_msg = (
-                        "A minimum of 4 drives are required for the " "raid level: {}."
+                        "A minimum of 4 drives are required for the raid level: {}."
                     ).format(raid_level)
                     handle_exception(Exception(e_msg), request)
             if raid_level == self.RAID_LEVELS[4] and len(disks) < 2:
-                e_msg = (
-                    "2 or more disks are required for the raid " "level: {}."
-                ).format(raid_level)
+                e_msg = ("2 or more disks are required for the raid level: {}.").format(
+                    raid_level
+                )
                 handle_exception(Exception(e_msg), request)
             if raid_level == self.RAID_LEVELS[5] and len(disks) < 3:
-                e_msg = (
-                    "3 or more disks are required for the raid " "level: {}."
-                ).format(raid_level)
+                e_msg = ("3 or more disks are required for the raid level: {}.").format(
+                    raid_level
+                )
                 handle_exception(Exception(e_msg), request)
 
             compression = self._validate_compression(request)
@@ -575,9 +575,9 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 if pool.raid == "single" and new_raid == "raid10":
                     # TODO: Consider removing once we have better space calc.
                     # Avoid extreme raid level change upwards (space issues).
-                    e_msg = (
-                        "Pool migration from {} to {} is not " "supported."
-                    ).format(pool.raid, new_raid)
+                    e_msg = ("Pool migration from {} to {} is not supported.").format(
+                        pool.raid, new_raid
+                    )
                     handle_exception(Exception(e_msg), request)
 
                 if new_raid == "raid10" and num_total_attached_disks < 4:
@@ -633,9 +633,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
 
             elif command == "remove":
                 if new_raid != pool.raid:
-                    e_msg = (
-                        "Raid configuration cannot be changed while " "removing disks."
-                    )
+                    e_msg = "Raid configuration cannot be changed while removing disks."
                     handle_exception(Exception(e_msg), request)
                 detached_disks_selected = 0
                 for d in disks:  # to be removed
@@ -795,9 +793,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 self._update_disk_state()
             except Exception as e:
                 logger.error(
-                    ("Exception while updating disk state: " "({}).").format(
-                        e.__str__()
-                    )
+                    ("Exception while updating disk state: ({}).").format(e.__str__())
                 )
             return Response()
 

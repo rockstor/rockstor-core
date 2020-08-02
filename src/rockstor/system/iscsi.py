@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -18,19 +18,43 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from osi import run_command
 
-TGTADM_BIN = '/usr/sbin/tgtadm'
-DD_BIN = '/usr/bin/dd'
+TGTADM_BIN = "/usr/sbin/tgtadm"
+DD_BIN = "/usr/bin/dd"
 
 
 def create_target_device(tid, tname):
-    cmd = [TGTADM_BIN, '--lld', 'iscsi', '--mode', 'target', '--op', 'new',
-           '--tid', tid, '--targetname', tname]
+    cmd = [
+        TGTADM_BIN,
+        "--lld",
+        "iscsi",
+        "--mode",
+        "target",
+        "--op",
+        "new",
+        "--tid",
+        tid,
+        "--targetname",
+        tname,
+    ]
     return run_command(cmd)
 
 
 def add_logical_unit(tid, lun, dev_name):
-    cmd = [TGTADM_BIN, '--lld', 'iscsi', '--mode', 'logicalunit', '--op',
-           'new', '--tid', tid, '--lun', lun, '-b', dev_name]
+    cmd = [
+        TGTADM_BIN,
+        "--lld",
+        "iscsi",
+        "--mode",
+        "logicalunit",
+        "--op",
+        "new",
+        "--tid",
+        tid,
+        "--lun",
+        lun,
+        "-b",
+        dev_name,
+    ]
     return run_command(cmd)
 
 
@@ -38,8 +62,19 @@ def ip_restrict(tid):
     """
     no restrictions at all
     """
-    cmd = [TGTADM_BIN, '--lld', 'iscsi', '--mode', 'target', '--op', 'bind',
-           '--tid', tid, '-I', 'ALL']
+    cmd = [
+        TGTADM_BIN,
+        "--lld",
+        "iscsi",
+        "--mode",
+        "target",
+        "--op",
+        "bind",
+        "--tid",
+        tid,
+        "-I",
+        "ALL",
+    ]
     return run_command(cmd)
 
 
@@ -47,9 +82,9 @@ def create_lun_file(dev_name, size):
     """
     size in MB
     """
-    of = ('of=%s' % dev_name)
-    count = ('count=%d' % size)
-    cmd = [DD_BIN, 'if=/dev/zero', of, 'bs=1M', count]
+    of = "of=%s" % dev_name
+    count = "count=%d" % size
+    cmd = [DD_BIN, "if=/dev/zero", of, "bs=1M", count]
     return run_command(cmd)
 
 

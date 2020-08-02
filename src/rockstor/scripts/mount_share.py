@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@ def mount_share():
     try:
         name = sys.argv[1]
     except IndexError:
-        sys.exit('%s <share_name>' % sys.argv[0])
+        sys.exit("%s <share_name>" % sys.argv[0])
 
     try:
         so = Share.objects.get(name=name)
     except Share.DoesNotExist:
-        sys.exit('Share(%s) does not exist' % name)
+        sys.exit("Share(%s) does not exist" % name)
 
-    mnt_pt = ('%s%s' % (settings.MNT_PT, so.name))
+    mnt_pt = "%s%s" % (settings.MNT_PT, so.name)
     btrfs.mount_share(so, mnt_pt)

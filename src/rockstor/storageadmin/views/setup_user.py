@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -38,14 +38,17 @@ class SetupUserView(UserListView):
         # Create user
         res = super(SetupUserView, self).post(request)
         # Create cliapp id and secret for oauth
-        name = 'cliapp'
-        user = User.objects.get(username=request.data['username'])
-        duser = DjangoUser.objects.get(username=request.data['username'])
+        name = "cliapp"
+        user = User.objects.get(username=request.data["username"])
+        duser = DjangoUser.objects.get(username=request.data["username"])
         client_type = OauthApplication.CLIENT_CONFIDENTIAL
         auth_grant_type = OauthApplication.GRANT_CLIENT_CREDENTIALS
-        app = OauthApplication(name=name, client_type=client_type,
-                               authorization_grant_type=auth_grant_type,
-                               user=duser)
+        app = OauthApplication(
+            name=name,
+            client_type=client_type,
+            authorization_grant_type=auth_grant_type,
+            user=duser,
+        )
         app.save()
         oauth_app = OauthApp(name=name, application=app, user=user)
         oauth_app.save()
@@ -53,11 +56,11 @@ class SetupUserView(UserListView):
 
     def get(self, request):
         setup = Setup.objects.all()[0]
-        return Response({'new_setup': not setup.setup_system, })
+        return Response({"new_setup": not setup.setup_system,})
 
     @transaction.atomic
     def put(self, request):
         setup = Setup.objects.all()[0]
         setup.setup_system = True
         setup.save()
-        return Response({'new_setup': not setup.setup_system, })
+        return Response({"new_setup": not setup.setup_system,})

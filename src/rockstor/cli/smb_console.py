@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -22,35 +22,34 @@ from rest_util import api_call
 
 
 class SMBConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.prompt = prompt + ' Samba>'
-        self.baseurl = ('%ssm/services/samba' % BaseConsole.url)
+        self.prompt = prompt + " Samba>"
+        self.baseurl = "%ssm/services/samba" % BaseConsole.url
 
     def do_status(self, args):
         smb_info = api_call(self.baseurl)
         print(smb_info)
 
     def put_wrapper(self, args, command):
-        url = ('%s/%s' % (self.baseurl, command))
-        smb_info = api_call(url, calltype='post')
+        url = "%s/%s" % (self.baseurl, command)
+        smb_info = api_call(url, calltype="post")
         print(smb_info)
 
     def do_start(self, args):
-        return self.put_wrapper(args, 'start')
+        return self.put_wrapper(args, "start")
 
     def do_stop(self, args):
-        return self.put_wrapper(args, 'stop')
+        return self.put_wrapper(args, "stop")
 
     def do_shares(self, args):
         pass
 
     def do_share(self, args):
         input_share = args.split()
-        if (len(input_share) > 0):
+        if len(input_share) > 0:
             ss_console = ShareSMBConsole(input_share[0])
-            if (len(input_share) > 1):
-                ss_console.onecmd(' '.join(input_share[1:]))
+            if len(input_share) > 1:
+                ss_console.onecmd(" ".join(input_share[1:]))
             else:
                 ss_console.cmdloop()

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from storageadmin.models import (Share, NFSExportGroup)
+from storageadmin.models import Share, NFSExportGroup
 
 
 class NFSExport(models.Model):
@@ -36,4 +36,4 @@ class NFSExport(models.Model):
         return self.share.id
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

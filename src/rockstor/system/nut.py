@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 Rockstor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of Rockstor.
 
 Rockstor is free software; you can redistribute it and/or modify
@@ -217,7 +217,7 @@ def update_upssched_early_shutdown(seconds):
     if not os.path.isfile(upssched_conf_template):
         # We have no template file so log the error and return False.
         logger.error(
-            "Skipping early shutdown settings: no upssched.conf " "template file found."
+            "Skipping early shutdown settings: no upssched.conf template file found."
         )
         return False
     # Create a temp file to use as our output until we are done editing.

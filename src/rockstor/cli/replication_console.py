@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,13 +21,12 @@ from rest_util import api_call
 
 
 class ReplicationConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
         self.parent_prompt = prompt
-        self.greeting = ('%s Replication' % self.parent_prompt)
-        self.prompt = ('%s>' % self.greeting)
-        self.url = ('%ssm/replicas/' % BaseConsole.url)
+        self.greeting = "%s Replication" % self.parent_prompt
+        self.prompt = "%s>" % self.greeting
+        self.url = "%ssm/replicas/" % BaseConsole.url
 
     def do_add(self, args):
         """
@@ -36,11 +35,13 @@ class ReplicationConsole(BaseConsole):
         add share_name target_appliance_ip target_pool frequency
         """
         fields = args.split()
-        input_data = {'share': fields[0],
-                      'appliance': fields[1],
-                      'pool': fields[2],
-                      'frequency': fields[3], }
-        ro = api_call(self.url, data=input_data, calltype='post')
+        input_data = {
+            "share": fields[0],
+            "appliance": fields[1],
+            "pool": fields[2],
+            "frequency": fields[3],
+        }
+        ro = api_call(self.url, data=input_data, calltype="post")
         print(ro)
 
     def do_list(self, args):
@@ -58,9 +59,11 @@ class ReplicationConsole(BaseConsole):
 
         enable replica_id
         """
-        input_data = {'enabled': True, }
-        url = ('%s%s' % (self.url, args))
-        ro = api_call(url, data=input_data, calltype='put')
+        input_data = {
+            "enabled": True,
+        }
+        url = "%s%s" % (self.url, args)
+        ro = api_call(url, data=input_data, calltype="put")
         print(ro)
 
     def do_disable(self, args):
@@ -69,7 +72,9 @@ class ReplicationConsole(BaseConsole):
 
         disable replica_id
         """
-        input_data = {'enabled': False, }
-        url = ('%s%s' % (self.url, args))
-        ro = api_call(url, data=input_data, calltype='put')
+        input_data = {
+            "enabled": False,
+        }
+        url = "%s%s" % (self.url, args)
+        ro = api_call(url, data=input_data, calltype="put")
         print(ro)

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,11 +20,12 @@ import os
 from django.db import models
 from django.conf import settings
 
+
 class ConfigBackup(models.Model):
     filename = models.CharField(max_length=64)
     md5sum = models.CharField(max_length=32, null=True)
     size = models.IntegerField(null=True)
-    config_backup = models.FileField(upload_to='config-backups', null=True)
+    config_backup = models.FileField(upload_to="config-backups", null=True)
 
     def __unicode__(self):
         return "{0}".format(self.filename)
@@ -33,9 +34,8 @@ class ConfigBackup(models.Model):
         return os.path.join(self.cb_dir(), self.filename)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
     @staticmethod
     def cb_dir():
         return settings.DEFAULT_CB_DIR
-

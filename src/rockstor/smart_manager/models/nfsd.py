@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@ class NFSDCallDistribution(models.Model):
     """
     for a given ts, number and i/o size of various nfs calls
     """
+
     rid = models.ForeignKey(SProbe)
     ts = models.DateTimeField(db_index=True)
     num_lookup = models.BigIntegerField(default=0)
@@ -41,7 +42,7 @@ class NFSDCallDistribution(models.Model):
     sum_write = models.BigIntegerField(default=0)
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"
 
 
 class NFSDClientDistribution(models.Model):
@@ -49,6 +50,7 @@ class NFSDClientDistribution(models.Model):
     """
     for a given ts and client_ip, number and i/o size of various nfs calls
     """
+
     rid = models.ForeignKey(SProbe)
     ts = models.DateTimeField()
     ip = models.CharField(max_length=15)
@@ -66,4 +68,4 @@ class NFSDClientDistribution(models.Model):
     sum_write = models.BigIntegerField(default=0)
 
     class Meta:
-        app_label = 'smart_manager'
+        app_label = "smart_manager"

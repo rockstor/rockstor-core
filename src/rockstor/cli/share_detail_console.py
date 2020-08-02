@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,13 +25,12 @@ from rest_util import api_error
 
 
 class ShareDetailConsole(BaseConsole):
-
     def __init__(self, greeting, share):
         BaseConsole.__init__(self)
         self.share = share
-        self.greeting = greeting + ' ' + self.share
-        self.prompt = self.greeting + '> '
-        self.url = ('%sshares/%s/' % (BaseConsole.url, self.share))
+        self.greeting = greeting + " " + self.share
+        self.prompt = self.greeting + "> "
+        self.url = "%sshares/%s/" % (BaseConsole.url, self.share)
 
     @api_error
     def do_nfs(self, args):
@@ -64,6 +63,6 @@ class ShareDetailConsole(BaseConsole):
         """
         input_snap = args.split()
         snap_console = SnapshotConsole(self.greeting, self.share)
-        if (len(input_snap) > 0):
-            return snap_console.onecmd(' '.join(input_snap))
+        if len(input_snap) > 0:
+            return snap_console.onecmd(" ".join(input_snap))
         snap_console.cmdloop()

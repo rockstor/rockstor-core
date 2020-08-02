@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -27,44 +27,44 @@ from smart_manager.models import Service
 
 
 import logging
+
 logger = logging.getLogger(__name__)
-SMART = '/usr/sbin/smartctl'
+SMART = "/usr/sbin/smartctl"
 
 
 class SMARTDServiceView(BaseServiceDetailView):
-    service_name = 'smartd'
+    service_name = "smartd"
 
     @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
-        e_msg = ('Failed to %s S.M.A.R.T service due to system error.' %
-                 command)
+        e_msg = "Failed to %s S.M.A.R.T service due to system error." % command
         with self._handle_exception(request, e_msg):
-            if (not os.path.exists(SMART)):
-                install_pkg('smartmontools')
-            if (command == 'config'):
+            if not os.path.exists(SMART):
+                install_pkg("smartmontools")
+            if command == "config":
                 service = Service.objects.get(name=self.service_name)
-                config = request.DATA.get('config', {})
-                logger.debug('config = %s' % config)
+                config = request.DATA.get("config", {})
+                logger.debug("config = %s" % config)
                 self._save_config(service, config)
-                if ('custom_config' in config):
-                    config = config['custom_config']
+                if "custom_config" in config:
+                    config = config["custom_config"]
                 else:
-                    config = ''
+                    config = ""
                 smart.update_config(config)
-                systemctl(self.service_name, 'enable')
-                systemctl(self.service_name, 'restart')
+                systemctl(self.service_name, "enable")
+                systemctl(self.service_name, "restart")
             else:
                 self._switch(command)
         return Response()
 
     @classmethod
     def _switch(cls, switch):
-        if (switch == 'start'):
-            systemctl(cls.service_name, 'enable')
-            systemctl(cls.service_name, 'start')
+        if switch == "start":
+            systemctl(cls.service_name, "enable")
+            systemctl(cls.service_name, "start")
         else:
-            systemctl(cls.service_name, 'disable')
-            systemctl(cls.service_name, 'stop')
+            systemctl(cls.service_name, "disable")
+            systemctl(cls.service_name, "stop")

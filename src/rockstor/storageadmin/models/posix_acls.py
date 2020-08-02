@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -22,25 +22,25 @@ from storageadmin.models import SambaShare
 
 class PosixACLs(models.Model):
     smb_share = models.ForeignKey(SambaShare)
-    USER = 'user'
-    GROUP = 'group'
-    OTHER = 'other'
+    USER = "user"
+    GROUP = "group"
+    OTHER = "other"
     OWNER_CHOICES = (
-        (USER, 'user'),
-        (GROUP, 'group'),
-        (OTHER, 'other'),
-        )
+        (USER, "user"),
+        (GROUP, "group"),
+        (OTHER, "other"),
+    )
     PERM_CHOICES = (
-        ('r', 'r'),
-        ('w', 'w'),
-        ('x', 'x'),
-        ('rw', 'rw'),
-        ('rx', 'rx'),
-        ('wx', 'wx'),
-        ('rwx', 'rwx'),
-        )
+        ("r", "r"),
+        ("w", "w"),
+        ("x", "x"),
+        ("rw", "rw"),
+        ("rx", "rx"),
+        ("wx", "wx"),
+        ("rwx", "rwx"),
+    )
     owner = models.CharField(max_length=5, choices=OWNER_CHOICES)
     perms = models.CharField(max_length=3, choices=PERM_CHOICES)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -23,20 +23,19 @@ from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class ZTaskdServiceView(BaseServiceDetailView):
-
     def post(self, request, command):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name='ztask-daemon')
+        service = Service.objects.get(name="ztask-daemon")
         try:
             superctl(service.name, command)
             return Response()
         except Exception as e:
-            e_msg = ('Failed to %s ZTaskd due to an error: %s' %
-                     (command, e.__str__()))
+            e_msg = "Failed to %s ZTaskd due to an error: %s" % (command, e.__str__())
             handle_exception(Exception(e_msg), request)

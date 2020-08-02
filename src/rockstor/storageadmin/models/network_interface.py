@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -60,13 +60,13 @@ class NetworkConnection(models.Model):
     ipv6_dns_search = models.CharField(max_length=256, null=True)
 
     # slave connections have a master. eg: team
-    master = models.ForeignKey('NetworkConnection', null=True)
+    master = models.ForeignKey("NetworkConnection", null=True)
 
     @property
     def ipaddr(self):
-        if (self.ipv4_addresses is None):
+        if self.ipv4_addresses is None:
             return None
-        return self.ipv4_addresses.split(',')[0].split('/')[0]
+        return self.ipv4_addresses.split(",")[0].split("/")[0]
 
     @property
     def mtu(self):
@@ -80,12 +80,12 @@ class NetworkConnection(models.Model):
 
     @property
     def ctype(self):
-        if (self.ethernetconnection_set.count() > 0):
-            return 'ethernet'
-        if (self.teamconnection_set.count() > 0):
-            return 'team'
-        if (self.bondconnection_set.count() > 0):
-            return 'bond'
+        if self.ethernetconnection_set.count() > 0:
+            return "ethernet"
+        if self.teamconnection_set.count() > 0:
+            return "team"
+        if self.bondconnection_set.count() > 0:
+            return "bond"
         return None
 
     @property
@@ -94,7 +94,7 @@ class NetworkConnection(models.Model):
         try:
             tco = self.teamconnection_set.first()
             config_d = json.loads(tco.config)
-            profile = config_d['runner']['name']
+            profile = config_d["runner"]["name"]
         except:
             pass
         finally:
@@ -106,14 +106,14 @@ class NetworkConnection(models.Model):
         try:
             bco = self.bondconnection_set.first()
             config_d = json.loads(bco.config)
-            profile = config_d['mode']
+            profile = config_d["mode"]
         except:
             pass
         finally:
             return profile
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 # network interfaces/devices are auto detected from the system via "nmcli d
@@ -127,8 +127,9 @@ class NetworkDevice(models.Model):
     # ethernet, infiniband etc..
     dtype = models.CharField(max_length=100, null=True)
     mac = models.CharField(max_length=100, null=True)
-    connection = models.ForeignKey(NetworkConnection, null=True,
-                                   on_delete=models.SET_NULL)
+    connection = models.ForeignKey(
+        NetworkConnection, null=True, on_delete=models.SET_NULL
+    )
     # active (== GENERAL.STATE: activated in nmcli), could also be activating
     # or blank(assumed inactive)
     state = models.CharField(max_length=64, null=True)
@@ -136,12 +137,12 @@ class NetworkDevice(models.Model):
 
     @property
     def cname(self):
-        if (self.connection is None):
+        if self.connection is None:
             return None
         return self.connection.name
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 # This is the most common of connection types that uses NetworkInterface of
@@ -153,7 +154,7 @@ class EthernetConnection(models.Model):
     mtu = models.CharField(max_length=64, null=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 class TeamConnection(models.Model):
@@ -164,7 +165,7 @@ class TeamConnection(models.Model):
     config = models.CharField(max_length=2048, null=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 class BondConnection(models.Model):
@@ -175,4 +176,4 @@ class BondConnection(models.Model):
     config = models.CharField(max_length=2048, null=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

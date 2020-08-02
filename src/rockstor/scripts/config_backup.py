@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -17,13 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
 from system.config_backup import backup_config
+
 
 def main():
     cbo = backup_config()
     print('config exported to: "%s"' % cbo.full_path())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

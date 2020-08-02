@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -27,55 +27,54 @@ from ntp_console import NTPConsole
 
 
 class ServicesConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.greeting = 'Services'
+        self.greeting = "Services"
         self.pprompt = prompt
-        self.prompt = ('%s %s>' % (self.pprompt, self.greeting))
+        self.prompt = "%s %s>" % (self.pprompt, self.greeting)
 
     def do_list(self, args):
-        url = BaseConsole.url + 'sm/services/'
+        url = BaseConsole.url + "sm/services/"
         service_info = api_call(url)
         print(service_info)
 
     def do_nfs(self, args):
-        return self.sub_service(args, 'nfs')
+        return self.sub_service(args, "nfs")
 
     def do_nis(self, args):
-        return self.sub_service(args, 'nis')
+        return self.sub_service(args, "nis")
 
     def do_nginx(self, args):
         pass
 
     def do_sftp(self, args):
-        return self.sub_service(args, 'sftp')
+        return self.sub_service(args, "sftp")
 
     def do_samba(self, args):
-        return self.sub_service(args, 'samba')
+        return self.sub_service(args, "samba")
 
     def do_iscsi(self, args):
-        return self.sub_service(args, 'iscsi')
+        return self.sub_service(args, "iscsi")
 
     def do_ntp(self, args):
-        return self.sub_service(args, 'ntp')
+        return self.sub_service(args, "ntp")
 
     def sub_service(self, args, name):
-        greeting = self.pprompt + ' ' + self.greeting
+        greeting = self.pprompt + " " + self.greeting
         sub_console = None
-        if (name == 'samba'):
+        if name == "samba":
             sub_console = SMBConsole(greeting)
-        elif (name == 'nfs'):
+        elif name == "nfs":
             sub_console = NFSConsole(greeting)
-        elif (name == 'sftp'):
+        elif name == "sftp":
             sub_console = SFTPConsole(greeting)
-        elif (name == 'iscsi'):
+        elif name == "iscsi":
             sub_console = IscsiConsole(greeting)
-        elif (name == 'nis'):
+        elif name == "nis":
             sub_console = NISConsole(greeting)
-        elif (name == 'ntp'):
+        elif name == "ntp":
             sub_console = NTPConsole(greeting)
         else:
             return self.do_help(args)
-        if (len(args) == 0):
+        if len(args) == 0:
             sub_console.cmdloop()

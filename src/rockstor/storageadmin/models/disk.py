@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,23 +20,29 @@ import json
 from django.db import models
 from fs.btrfs import get_dev_io_error_stats
 from storageadmin.models import Pool
-from system.osi import get_disk_power_status, read_hdparm_setting, \
-    get_disk_APM_level, get_dev_temp_name
+from system.osi import (
+    get_disk_power_status,
+    read_hdparm_setting,
+    get_disk_APM_level,
+    get_dev_temp_name,
+)
 
 
 class AttachedManager(models.Manager):
     """Manager subclass to return only attached disks"""
+
     use_for_related_fields = True
 
     def attached(self):
         # Return default queryset after excluding name="detached-*" items.
         # Alternative lookup type __regex=r'^detached-'
         query_set = self.get_queryset()
-        return query_set.exclude(name__startswith='detached-')
+        return query_set.exclude(name__startswith="detached-")
 
 
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
+
     pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
     """Previously the name field contained sda, sdb etc..  Revised to contain
     device names for use with the udev created links at /dev/disk/by-id/ which
@@ -137,11 +143,11 @@ class Disk(models.Model):
         try:
             if self.role is not None:
                 disk_role_dict = json.loads(self.role)
-                if 'redirect' in disk_role_dict:
-                    return disk_role_dict.get('redirect', self.name)
+                if "redirect" in disk_role_dict:
+                    return disk_role_dict.get("redirect", self.name)
             return self.name
         except:
             return self.name
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"

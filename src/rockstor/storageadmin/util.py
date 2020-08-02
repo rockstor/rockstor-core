@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -19,12 +19,13 @@ from storageadmin.exceptions import RockStorAPIException
 from system.pkg_mgmt import rpm_build_info
 import traceback
 import logging
+
 logger = logging.getLogger(__name__)
 
 # module level variable so it's computed once per process.
-version = 'unknown'
+version = "unknown"
 try:
-    version, date = rpm_build_info('rockstor')
+    version, date = rpm_build_info("rockstor")
 except Exception as e:
     logger.exception(e)
 
@@ -35,13 +36,14 @@ def handle_exception(e, request, e_msg=None, status_code=500):
     for optionally humanizing the message. Otherwise, error from the exception
     object is used.
     """
-    if (e_msg is not None):
-        e_msg = '({}). Lower level exception: ({}).'.format(e_msg, e.__str__())
+    if e_msg is not None:
+        e_msg = "({}). Lower level exception: ({}).".format(e_msg, e.__str__())
         logger.error(e_msg)
     else:
         e_msg = e.__str__()
 
-    logger.exception('Exception: {}'.format(e.__str__()))
-    logger.debug('Current Rockstor version: {}'.format(version))
-    raise RockStorAPIException(status_code=status_code, detail=e_msg,
-                               trace=traceback.format_exc())
+    logger.exception("Exception: {}".format(e.__str__()))
+    logger.debug("Current Rockstor version: {}".format(version))
+    raise RockStorAPIException(
+        status_code=status_code, detail=e_msg, trace=traceback.format_exc()
+    )

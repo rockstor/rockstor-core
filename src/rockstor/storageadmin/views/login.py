@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -19,22 +19,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import (authenticate, login)
+from django.contrib.auth import authenticate, login
 from storageadmin.util import handle_exception
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class LoginView(APIView):
     def post(self, request):
         try:
-            username = request.data['username']
-            password = request.data['password']
+            username = request.data["username"]
+            password = request.data["password"]
             user = authenticate(username=username, password=password)
-            if (user is not None and user.is_active):
+            if user is not None and user.is_active:
                 login(request, user)
-                return Response({'msg': 'logged in'})
+                return Response({"msg": "logged in"})
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:

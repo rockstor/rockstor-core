@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -231,9 +231,7 @@ class EmailClientView(rfc.GenericView):
             commands_list = ["send-test-email", "check-smtp-auth"]
             if command is not None:
                 if command not in commands_list:
-                    e_msg = ("Unknown command ({}) is " "not supported.").format(
-                        command
-                    )
+                    e_msg = ("Unknown command ({}) is not supported.").format(command)
                     handle_exception(Exception(e_msg), request)
 
                 if command == "send-test-email":
@@ -245,9 +243,7 @@ class EmailClientView(rfc.GenericView):
                         handle_exception(Exception(e_msg), request)
 
                     eco = EmailClient.objects.all()[0]
-                    subject = (
-                        "Test message from Rockstor. Appliance id: " "{}"
-                    ).format(
+                    subject = ("Test message from Rockstor. Appliance id: {}").format(
                         Appliance.objects.get(current_appliance=True).uuid
                     )  # noqa E501
                     send_test_email(eco, subject)

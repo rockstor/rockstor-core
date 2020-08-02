@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,22 +26,22 @@ from nfs_share_client_distrib import NFSDShareClientDistribView  # noqa E501
 from cpu_util import CPUMetricView  # noqa E501
 from nfs_uid_gid import NFSDUidGidDistributionView  # noqa E501
 from load_avg import LoadAvgView  # noqa E501
-from sprobe_metadata import (SProbeMetadataView, SProbeMetadataDetailView)  # noqa E501
-from base_service import (BaseServiceView, BaseServiceDetailView)  # noqa E501
+from sprobe_metadata import SProbeMetadataView, SProbeMetadataDetailView  # noqa E501
+from base_service import BaseServiceView, BaseServiceDetailView  # noqa E501
 from nis_service import NISServiceView  # noqa E501
 from samba_service import SambaServiceView  # noqa E501
 from nfs_service import NFSServiceView  # noqa E501
-from replication import (ReplicaListView, ReplicaDetailView)  # noqa E501
-from replica_trail import (ReplicaTrailListView, ReplicaTrailDetailView)  # noqa E501
+from replication import ReplicaListView, ReplicaDetailView  # noqa E501
+from replica_trail import ReplicaTrailListView, ReplicaTrailDetailView  # noqa E501
 from replication_service import ReplicationServiceView  # noqa E501
 from ntp_service import NTPServiceView  # noqa E501
 from ldap_service import LdapServiceView  # noqa E501
 from sftp_service import SFTPServiceView  # noqa E501
 from tasktypes import TaskTypeView  # noqa E501
-from task_scheduler import (TaskSchedulerListView, TaskSchedulerDetailView)  # noqa E501
+from task_scheduler import TaskSchedulerListView, TaskSchedulerDetailView  # noqa E501
 from task_log import TaskLogView  # noqa E501
-from replica_share import (ReplicaShareListView, ReplicaShareDetailView)  # noqa E501
-from receive_trail import (ReceiveTrailListView, ReceiveTrailDetailView)  # noqa E501
+from replica_share import ReplicaShareListView, ReplicaShareDetailView  # noqa E501
+from receive_trail import ReceiveTrailListView, ReceiveTrailDetailView  # noqa E501
 from ts_service import TaskSchedulerServiceView  # noqa E501
 from dc_service import DataCollectorServiceView  # noqa E501
 from sm_service import ServiceMonitorView  # noqa E501

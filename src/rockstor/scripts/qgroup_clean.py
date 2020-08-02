@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,46 +21,45 @@ from storageadmin.models import Pool
 from system.osi import run_command
 from fs.btrfs import mount_root
 
-BTRFS = '/usr/sbin/btrfs'
+BTRFS = "/usr/sbin/btrfs"
 
 
 def main():
     for p in Pool.objects.all():
         try:
-            print('Processing pool(%s)' % p.name)
+            print("Processing pool(%s)" % p.name)
             mnt_pt = mount_root(p)
-            o, e, rc = run_command([BTRFS, 'subvol', 'list', mnt_pt])
+            o, e, rc = run_command([BTRFS, "subvol", "list", mnt_pt])
             subvol_ids = []
             for l in o:
-                if (re.match('ID ', l) is not None):
+                if re.match("ID ", l) is not None:
                     subvol_ids.append(l.split()[1])
 
-            o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt],
-                                   throw=False)
-            if (rc != 0):
-                print('Quotas not enabled on pool(%s). Skipping it.' % p.name)
+            o, e, rc = run_command([BTRFS, "qgroup", "show", mnt_pt], throw=False)
+            if rc != 0:
+                print("Quotas not enabled on pool(%s). Skipping it." % p.name)
                 continue
 
             qgroup_ids = []
             for l in o:
-                if (re.match('0/', l) is not None):
-                    q = l.split()[0].split('/')[1]
-                    if (q == '5'):
+                if re.match("0/", l) is not None:
+                    q = l.split()[0].split("/")[1]
+                    if q == "5":
                         continue
-                    qgroup_ids.append(l.split()[0].split('/')[1])
+                    qgroup_ids.append(l.split()[0].split("/")[1])
 
             for q in qgroup_ids:
-                if (q not in subvol_ids):
-                    print('qgroup %s not in use. deleting' % q)
-                    run_command([BTRFS, 'qgroup', 'destroy', '0/%s' % q,
-                                 mnt_pt])
+                if q not in subvol_ids:
+                    print("qgroup %s not in use. deleting" % q)
+                    run_command([BTRFS, "qgroup", "destroy", "0/%s" % q, mnt_pt])
                 else:
-                    print('qgroup %s is in use. Moving on.' % q)
-            print('Finished processing pool(%s)' % p.name)
+                    print("qgroup %s is in use. Moving on." % q)
+            print("Finished processing pool(%s)" % p.name)
         except Exception as e:
-            print('Exception while qgroup-cleanup of Pool(%s): %s' %
-                  (p.name, e.__str__()))
+            print(
+                "Exception while qgroup-cleanup of Pool(%s): %s" % (p.name, e.__str__())
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

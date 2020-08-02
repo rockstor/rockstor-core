@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -96,8 +96,10 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             # pool info as source of truth re missing.
             if not p.has_missing_dev:
                 for disk in p.disk_set.filter(name__startswith="detached-"):
-                    logger.info("Removing detached disk from Pool {}: no missing "
-                                "devices found.".format(p.name))
+                    logger.info(
+                        "Removing detached disk from Pool {}: no missing "
+                        "devices found.".format(p.name)
+                    )
                     disk.pool = None
                     disk.save()
             try:
@@ -183,7 +185,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     import_snapshots(share)
                 except Exception as e:
                     e_msg = (
-                        "Exception while importing snapshots of share " "({}): ({})."
+                        "Exception while importing snapshots of share ({}): ({})."
                     ).format(share.name, e.__str__())
                     logger.error(e_msg)
                     logger.exception(e)
@@ -226,9 +228,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 exports.update(exports_d)
                 self.refresh_wrapper(exports, request, logger)
             except Exception as e:
-                e_msg = ("Exception while bootstrapping NFS: " "({}).").format(
-                    e.__str__()
-                )
+                e_msg = ("Exception while bootstrapping NFS: ({}).").format(e.__str__())
                 logger.error(e_msg)
 
             #  bootstrap services
@@ -278,9 +278,9 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                         pass
                 return Response(rockstor_pkg_update_check(subscription=subo))
             except Exception as e:
-                e_msg = (
-                    "Unable to check update due to a system error: " "({})."
-                ).format(e.__str__())
+                e_msg = ("Unable to check update due to a system error: ({}).").format(
+                    e.__str__()
+                )
                 handle_exception(Exception(e_msg), request)
 
         if command == "update":
@@ -296,7 +296,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                     update_run(update_all_other=True)
                 return Response("Done")
             except Exception as e:
-                e_msg = ("Update failed due to this exception: " "({}).").format(
+                e_msg = ("Update failed due to this exception: ({}).").format(
                     e.__str__()
                 )
                 handle_exception(Exception(e_msg), request)
@@ -306,7 +306,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response(current_version())
             except Exception as e:
                 e_msg = (
-                    "Unable to check current version due to this " "exception: ({})."
+                    "Unable to check current version due to this exception: ({})."
                 ).format(e.__str__())
                 handle_exception(Exception(e_msg), request)
 
@@ -332,7 +332,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 system_shutdown(delay)
             except Exception as e:
                 msg = (
-                    "Failed to shutdown the system due to a low level " "error: ({})."
+                    "Failed to shutdown the system due to a low level error: ({})."
                 ).format(e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
@@ -345,7 +345,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 system_reboot(delay)
             except Exception as e:
                 msg = (
-                    "Failed to reboot the system due to a low level " "error: ({})."
+                    "Failed to reboot the system due to a low level error: ({})."
                 ).format(e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
@@ -359,7 +359,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 system_suspend()
             except Exception as e:
                 msg = (
-                    "Failed to suspend the system due to a low level " "error: ({})."
+                    "Failed to suspend the system due to a low level error: ({})."
                 ).format(e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
@@ -383,7 +383,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response({"enabled": True})
             except Exception as e:
                 msg = (
-                    "Failed to enable auto update due to this exception: " "({})."
+                    "Failed to enable auto update due to this exception: ({})."
                 ).format(e.__str__())
                 handle_exception(Exception(msg), request)
 
@@ -393,7 +393,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 return Response({"enabled": False})
             except Exception as e:
                 msg = (
-                    "Failed to disable auto update due to this exception:  " "({})."
+                    "Failed to disable auto update due to this exception:  ({})."
                 ).format(e.__str__())
                 handle_exception(Exception(msg), request)
 

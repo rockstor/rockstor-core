@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,43 +21,45 @@ from storageadmin.models import Pool
 from system.osi import run_command
 from fs.btrfs import mount_root
 
-BTRFS = '/usr/sbin/btrfs'
+BTRFS = "/usr/sbin/btrfs"
 
 
 def main():
     for p in Pool.objects.all():
         try:
-            print('Processing pool(%s)' % p.name)
+            print("Processing pool(%s)" % p.name)
             mnt_pt = mount_root(p)
-            o, e, rc = run_command([BTRFS, 'qgroup', 'show', '-p', mnt_pt],
-                                   throw=False)
-            if (rc != 0):
-                print('Quotas not enabled on pool(%s). Skipping it.' % p.name)
+            o, e, rc = run_command([BTRFS, "qgroup", "show", "-p", mnt_pt], throw=False)
+            if rc != 0:
+                print("Quotas not enabled on pool(%s). Skipping it." % p.name)
                 continue
 
             qgroup_ids = []
             for l in o:
-                if (re.match('qgroupid', l) is not None or
-                        re.match('-------', l) is not None):
+                if (
+                    re.match("qgroupid", l) is not None
+                    or re.match("-------", l) is not None
+                ):
                     continue
                 cols = l.strip().split()
-                if (len(cols) != 4):
-                    print('Ignoring unexcepted line(%s).' % l)
+                if len(cols) != 4:
+                    print("Ignoring unexcepted line(%s)." % l)
                     continue
-                if (cols[3] == '---'):
-                    print('No parent qgroup for %s' % l)
+                if cols[3] == "---":
+                    print("No parent qgroup for %s" % l)
                     continue
                 qgroup_ids.append(cols[3])
 
             for q in qgroup_ids:
-                print('relaxing the limit on qgroup %s' % q)
-                run_command([BTRFS, 'qgroup', 'limit', 'none', q, mnt_pt])
+                print("relaxing the limit on qgroup %s" % q)
+                run_command([BTRFS, "qgroup", "limit", "none", q, mnt_pt])
 
-            print('Finished processing pool(%s)' % p.name)
+            print("Finished processing pool(%s)" % p.name)
         except Exception as e:
-            print('Exception while qgroup-maxout of Pool(%s): %s' %
-                  (p.name, e.__str__()))
+            print(
+                "Exception while qgroup-maxout of Pool(%s): %s" % (p.name, e.__str__())
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

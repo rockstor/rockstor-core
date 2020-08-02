@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -21,28 +21,31 @@ from rest_util import api_call
 
 
 class SMConsole(BaseConsole):
-
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.greeting = 'Smart Manager'
+        self.greeting = "Smart Manager"
         self.pprompt = prompt
-        self.prompt = ('%s %s>' % (self.pprompt, self.greeting))
-        self.baseurl = BaseConsole.url + 'sm/sprobes/'
+        self.prompt = "%s %s>" % (self.pprompt, self.greeting)
+        self.baseurl = BaseConsole.url + "sm/sprobes/"
 
     def do_data(self, args):
-        if (args is not None):
+        if args is not None:
             tap_fields = args.split()
-            url = ('%s%s/%s/data?%s' % (self.baseurl, tap_fields[0],
-                                        tap_fields[1], tap_fields[2]))
+            url = "%s%s/%s/data?%s" % (
+                self.baseurl,
+                tap_fields[0],
+                tap_fields[1],
+                tap_fields[2],
+            )
             stap_info = api_call(url)
             print(stap_info)
         else:
             return self.do_help(args)
 
     def do_data2(self, args):
-        if (args is not None):
+        if args is not None:
             tap_fields = args.split()
-            url = ('%s%s?%s' % (self.baseurl, tap_fields[0], tap_fields[1]))
+            url = "%s%s?%s" % (self.baseurl, tap_fields[0], tap_fields[1])
             print(api_call(url))
         else:
             return self.do_help(args)
@@ -51,11 +54,10 @@ class SMConsole(BaseConsole):
         print(api_call(self.baseurl))
 
     def do_stop(self, args):
-        if (args is not None):
+        if args is not None:
             tap_fields = args.split()
-            url = ('%s%s/%s/stop' % (self.baseurl, tap_fields[0],
-                                     tap_fields[1]))
-            stap_info = api_call(url, data=None, calltype='post')
+            url = "%s%s/%s/stop" % (self.baseurl, tap_fields[0], tap_fields[1])
+            stap_info = api_call(url, data=None, calltype="post")
             print(stap_info)
         else:
             return self.do_help(args)
@@ -65,11 +67,12 @@ class SMConsole(BaseConsole):
         start probe_name display_name
         """
         tap_fields = args.split()
-        if (len(tap_fields) > 0):
+        if len(tap_fields) > 0:
             tname = tap_fields[0]
-            url = ('%s%s' % (self.baseurl, tname))
-            stap_info = api_call(url, data={'display_name': tap_fields[1], },
-                                 calltype='post')
+            url = "%s%s" % (self.baseurl, tname)
+            stap_info = api_call(
+                url, data={"display_name": tap_fields[1],}, calltype="post"
+            )
             print(stap_info)
         else:
             return self.do_help(args)
