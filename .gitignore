@@ -42,3 +42,6 @@ node_modules/
 
 # VS Code
 .vscode
+
+# Vagrant working files.
+.vagrant/

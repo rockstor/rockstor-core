@@ -1,0 +1,215 @@
+---
+- name: Set distro_ver
+  set_fact:
+    distro_ver: "{{ ansible_facts.distribution_version }}"
+
+- name: Disable non-OSS repos
+  zypper_repository:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - repo-non-oss
+    - repo-update-non-oss
+  when: distro_ver == "15.2"
+
+- name: Apply all upstream updates
+  zypper:
+    name: "*"
+    state: latest
+    update_cache: yes
+    disable_recommends: yes
+
+- name: Verify installer options
+  block:
+  - name: Ensure firewalld is disabled (Installer option)
+    systemd:
+      name: firewalld
+      enabled: no
+      state: stopped
+
+  - name: Ensure openssh is installed (Installer option)
+    zypper:
+      name: openssh
+      state: present
+      update_cache: no
+  - name: Ensure sshd is enabled (Installer option)
+    systemd:
+      name: sshd
+      enabled: yes
+      state: started
+
+  - name: ensure wicked is disabled (Installer option)
+    systemd:
+      name: wickedd
+      enabled: no
+      state: stopped
+
+  - name: Ensure NetworkManager is installed (Installer option)
+    zypper:
+      name: NetworkManager
+      state: present
+      update_cache: no
+  - name: Ensure NetworkManager is enabled (Installer option)
+    systemd:
+      name: NetworkManager
+      enabled: yes
+      state: started
+
+  - name: Stop and Disable AppArmor
+    systemd:
+      name: apparmor
+      enabled: no
+      state: stopped
+    ignore_errors: yes
+
+- name: Disable IPv6 in sysctl
+  block:
+    - name: Check /proc/sys/net/ipv6 exists
+      stat:
+        path: /proc/sys/net/ipv6
+      register: sysctl_ipv6
+
+    - name: Disable IPv6 in sysctl
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - { name: "net.ipv6.conf.all.autoconf", value: "0" }
+        - { name: "net.ipv6.conf.all.disable_ipv6", value: "1" }
+        - { name: "net.ipv6.conf.default.autoconf", value: "0" }
+        - { name: "net.ipv6.conf.default.disable_ipv6", value: "1" }
+        - { name: "net.ipv6.conf.lo.autoconf", value: "0" }
+        - { name: "net.ipv6.conf.lo.disable_ipv6", value: "1" }
+      when: sysctl_ipv6.stat.exists and sysctl_ipv6.stat.isdir
+
+- name: Disable IPv6 in grub
+  block:
+    - name: Set GRUB_CMDLINE_LINUX_DEFAULT
+      replace:
+        dest: /etc/default/grub
+        regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=["'](.*)["']$
+        replace: 'GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1 \1"'
+        backup: yes
+
+    - name: grub2-mkconfig
+      command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+    - name: Reboot to ensure IPv6 disabled
+      reboot:
+        msg: "Reboot initiated by Ansible"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: uptime
+  when: ("ipv6.disable" not in ansible_facts.cmdline) or
+        ("ipv6.disable" in ansible_facts.cmdline and ansible_facts.cmdline["ipv6.disable"] != "1")
+
+- name: Install useful server admin packages
+  zypper:
+    name: "{{ item }}"
+    state: present
+    update_cache: no
+  loop: "{{ rs_inst_useful_server_packages }}"
+
+- name: Update btrfsprogs to 5.x
+  block:
+    - name: Check filesystems repo file
+      stat:
+        path: /etc/zypp/repos.d/filesystems.repo
+      register: filesystems_repo
+
+    - name: Add filesystems repo
+      zypper_repository:
+        repo: https://download.opensuse.org/repositories/filesystems/openSUSE_Leap_{{ distro_ver }}/filesystems.repo
+        enabled: yes
+        state: present
+        runrefresh: no
+      when: not filesystems_repo.stat.exists
+
+    - name: Update btrfsprogs
+      zypper:
+        name: btrfsprogs
+        state: latest
+        refresh: yes
+        extra_args_precommand: --gpg-auto-import-keys
+  when:
+    - rs_inst_experimental
+    - "'Leap' in ansible_facts.distribution"
+
+- name: Add ‘shells’ OBS repo
+  block:
+    - name: Check shells repo file
+      stat:
+        path: /etc/zypp/repos.d/shells.repo
+      register: shells_repo
+
+    - name: Add shells repo
+      zypper_repository:
+        repo: https://download.opensuse.org/repositories/shells/openSUSE_Leap_{{ distro_ver }}/shells.repo
+        enabled: yes
+        priority: 105
+        state: present
+      when: not shells_repo.stat.exists
+
+    - name: Refresh zypper to import shells GPG key
+      command:
+        cmd: zypper --quiet --non-interactive --gpg-auto-import-keys refresh
+        warn: no
+
+- name: Set up Rockstor
+  block:
+    - name: Import Rockstor’s public key
+      rpm_key:
+        state: present
+        key: "{{ rs_inst_update_repo_key }}"
+
+    - name: Add rockstor testing channel repository
+      zypper_repository:
+        repo: "{{ rs_inst_update_repo_url }}"
+        name: "{{ rs_inst_update_repo_name }}"
+        enabled: yes
+        state: present
+        runrefresh: yes
+
+    - name: Install Rockstor testing rpm
+      zypper:
+        name: rockstor
+        state: present
+        disable_recommends: yes
+
+    - name: Start the relevant rockstor related systemd services
+      systemd:
+        name: rockstor
+        enabled: yes
+        daemon_reload: yes
+        state: started
+
+- debug: msg="rs_inst_set_root_pass={{ rs_inst_set_root_pass }}"
+- name: Set the Root password
+  user:
+    name: "root"
+    password: "{{ rs_inst_root_password }}"
+  when: rs_inst_set_root_pass != 'false'
+
+# This is needed because Rockstors installer locks down sshd to allow only the user 'root'.
+# Unfortunately, this breaks vagrant which relies on ssh via the user 'vagrant'. This will
+# be fairly problematic for any provisioners like ansible, salt, etc which will rely on ssh
+# access. Forcing the use of root for provisioning is probably a 'discussion' point!
+- name: Ensure vagrant can still ssh in (add vagrant to sshd AllowUsers)
+  lineinfile:
+    path: "/etc/ssh/sshd_config"
+    backrefs: yes
+    regexp: "^(.*AllowUsers.*)$"
+    line: '\1 vagrant'
+
+- name: Reboot to ensure Rockstor resiliency
+  reboot:
+    msg: "Reboot initiated by Ansible"
+    connect_timeout: 5
+    reboot_timeout: 300
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: uptime

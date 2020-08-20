@@ -1,0 +1,59 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Requires vagrant-host-shell and vagrant-vbguest
+required_plugins = %w(
+    vagrant-host-shell
+    vagrant-sshfs
+    )
+    #vagrant-vbguest
+required_plugins.each do |plugin|
+  system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
+end
+
+NAS_MEM = 2048
+NAS_CPU = 2
+
+# Vagrant uses it's own build in host inventory.
+ANSIBLE_GROUPS = {
+  "all_groups" => ["rockstor"],
+  "all_groups:vars" => {
+        "rs_inst_set_root_pass" => "true"
+        }
+}
+
+VAGRANTFILE_API_VERSION = '2'
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+    config.vm.network "private_network", type: "dhcp"
+    # We don't need this directory syncing in this usage.
+    config.vm.synced_folder('.', '/vagrant', disabled: true)
+
+    config.vm.provider 'virtualbox' do |vb|
+    # Uncomment this to use linked clones and save space and spead up subsequent bring ups.
+    #     vb.linked_clone = true
+    end
+
+    config.vm.define "rockstor" do |v|
+        v.vm.hostname = "rockstor"
+        v.vm.box = 'bento/opensuse-leap-15'
+
+        # VirtualBox provider is pretty standard.
+        # (Other providers could be added later - eg. libvirt, kvm, esxi...)
+        v.vm.provider :virtualbox do |vb|
+            vb.memory = NAS_MEM
+            vb.cpus = NAS_CPU
+            # To force the console to pop up. If 'false' it will run headless.
+            vb.gui = true
+        end
+
+        # Provisioner using the external stand-alone ansible.
+        # (Other provisions could be added later - eg. salt, puppet...)
+        config.vm.provision "rockstor", type: "ansible" do |ansible|
+            ansible.config_file = "../ansible/ansible.cfg"
+            ansible.playbook = "../ansible/Rockstor.yml"
+            ansible.verbose = "vv"
+            ansible.groups = ANSIBLE_GROUPS
+        end
+    end
+end

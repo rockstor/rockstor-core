@@ -1,0 +1,13 @@
+---
+rs_inst_update_repo_key: "https://raw.githubusercontent.com/rockstor/rockstor-core/master/conf/ROCKSTOR-GPG-KEY"
+rs_inst_update_repo_url: "http://updates.rockstor.com:8999/rockstor-testing/leap/{{ distro_ver }}/"
+rs_inst_update_repo_name: "Rockstor-Testing"
+rs_inst_useful_server_packages:
+    - ffmpeg
+    - mediainfo
+    - mosh
+    - tmux
+    - tree
+rs_inst_experimental: no
+rs_inst_set_root_pass: 'false' # Assume the host already has one set.
+rs_inst_root_password: "{{ 'password' | password_hash('sha512', 'mysecretsalt') }}"
