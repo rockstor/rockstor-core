@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+
+  roles:
+    - role: rockstor_installer
+      vars:
+        rs_inst_install_from_repo: yes
+#        rs_inst_set_root_pass: yes
+#        rs_inst_experimental: yes
+#        rs_inst_useful_server_packages:
+#            - ffmpeg
+#            - mediainfo
+#            - mosh
+#            - tmux
+#            - tree

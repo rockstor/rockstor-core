@@ -1,0 +1,41 @@
+---
+# TODO: What does Server(Tranction) mean in Rocktor dev guide.
+# TODO: We will need to add some architecture awareness here
+rs_inst_update_repo_key: "https://raw.githubusercontent.com/rockstor/rockstor-core/master/conf/ROCKSTOR-GPG-KEY"
+rs_inst_update_repo_url: "http://updates.rockstor.com:8999/rockstor-testing/{{ rs_repo_ver }}/"
+rs_inst_oss_repo_url: "https://download.opensuse.org/repositories/filesystems/openSUSE_{{ oss_repo_ver }}/filesystems.repo"
+rs_inst_bs_shell_rep_url: "https://download.opensuse.org/repositories/shells/openSUSE_{{ oss_repo_ver }}/shells.repo"
+rs_inst_update_repo_name: "Rockstor-Testing"
+rs_inst_build_packages:
+    - at
+    - dnf-plugins-core
+    - dnf-yum
+    - docker
+    - firewalld
+    - gcc
+    - gcc-c++
+    - libblkid-devel
+    - nfs-kernel-server
+    - nginx
+    - nut
+    - postgresql10
+    - postgresql10-devel
+    - postgresql10-server
+    - python-devel
+    - python-xml
+    - python2-setuptools
+    - python3-distro
+    - samba
+
+rs_inst_leap_build_packages:
+    - python2-chardet
+    - python2-distro
+    - python2-requests
+
+rs_inst_tumbleweed_build_packages:
+    - python2-pip
+
+rs_inst_tumbeweed_pip2_packages:
+    - chardet
+    - distro
+    - requests

@@ -1,0 +1,22 @@
+---
+# This option can be used to force an rockstor package install from the test repository.
+rs_inst_install_from_repo: no
+
+# An experimental option to turn on bleading edge features eg. latest BTRFS repository.
+rs_inst_experimental: no
+
+# Force the root password to a know value.
+rs_inst_set_root_pass: no # Assume the host already has one set.
+rs_inst_root_password: "{{ 'password' | password_hash('sha512', 'mysecretsalt') }}"
+
+# Rockstor currently requires IPv6 to be disabled.
+rs_inst_ipv6_disable: yes
+
+# The user can use this to install any additional packages they may require.
+#rs_inst_useful_server_packages:
+#    - ffmpeg
+#    - mediainfo
+#    - mosh
+#    - tmux
+#    - tree
+

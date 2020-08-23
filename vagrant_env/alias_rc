@@ -1,0 +1,11 @@
+
+# Some aliases used to build and test Rockstor
+REPO_DIR="/opt/rockstor-core"
+
+alias build_init="python ${REPO_DIR}/bootstrap.py -c ${REPO_DIR}/buildout.cfg"
+alias build_all="${REPO_DIR}/bin/buildout -N -c ${REPO_DIR}/buildout.cfg"
+alias build_ui="${REPO_DIR}/bin/buildout -c ${REPO_DIR}/buildout.cfg install collectstatic"
+alias make_mig_stadm="${REPO_DIR}/bin/django makemigrations storageadmin"
+alias apply_migrations_stadm="${REPO_DIR}/bin/django migrate storageadmin"
+alias make_mig_smtmgr="${REPO_DIR}/bin/django makemigrations smart_manager"
+alias apply_migrations_smtmgr="${REPO_DIR}/bin/django migrate --database=smart_manager smart_manager"
