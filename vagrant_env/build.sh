@@ -9,8 +9,6 @@ VAGRANT_HOST="rockstor-core"
 
 if ! vagrant status | grep -q running; then
   vagrant up ${VAGRANT_HOST}
-  # Do an extra reload because the zypper update in the provisioning breaks the vbguest tools. This will fix them.
-#  vagrant reload ${VAGRANT_HOST}
 fi
 # We are rsync'ing the build directory and it needs to be refreshed with changes.
 # (Note: this will also delete the build artifacts - effectively forcing a clean build.
@@ -22,4 +20,4 @@ VAGRANT_PATH="/root"
 CODE_PATH="${VAGRANT_PATH}"
 echo "$(basename ${BASH_SOURCE[0]}): CODE_PATH is '${CODE_PATH}'"
 
-vagrant ssh -c "sudo cd ${CODE_PATH}; sudo /vagrant/build_rockstor.sh" ${VAGRANT_HOST}
+vagrant ssh -c "sudo /vagrant/build_rockstor.sh" ${VAGRANT_HOST}

@@ -138,6 +138,26 @@ apply_migrations_smtmgr
 ```
 See [alias_rc](./alias_rc) for details
 
+Deploy from Testing Channel
+---------------------------
+
+If you wish to deploy a VM from the Test Channel RPMs (rather than building from source) you need to update 
+the ansible playbook 'ansible/Rockstor.yml' to set the variable 'rs_inst_install_from_repo:yes' as follows:
+
+```
+  roles:
+    - role: rockstor_installer
+      vars:
+        rs_inst_install_from_repo: yes
+```
+
+Then simply bring up the VM using the command:
+```
+vagrant up
+```
+
+Do NOT run 'build.sh' in this scenario.
+
 Managing the Virtual Machine
 ----------------------------
 To manage the Vagrant box VM simple type the following from this directory...
@@ -152,10 +172,7 @@ of the experimental 'disk' feature:
 - Bring up a vagrant box VM
     ```shell script
     vagrant up
-    vagrant reload 
     ```
-    The reload is required to fix the vm tools that get broken by the kernel update performed in 
-    the ansible provisioner. (build.sh does both of these for you.)
 
 - Reconfigure the vagrant box VM following a change to the Vagrantfile:
     ```shell script
@@ -186,8 +203,13 @@ to using the --delete options):
 Debuging the Ansible
 --------------------
 
-If you need additional debug for the ansible add more an addition 'v' to the provisioners 
-verbosity variable. eg.
+If you need additional debug for the ansible add additional 'v' to the provisioners 
+verbosity variable in the Vagrantfile. eg.
 ```
-ansible.verbose = "vvvv"
+        config.vm.provision "rockstor", type: "ansible" do |ansible|
+            ansible.config_file = "../ansible/ansible.cfg"
+            ansible.playbook = "../ansible/Rockstor.yml"
+            ansible.verbose = "vvvv"
+            ansible.groups = ANSIBLE_GROUPS
+        end
 ```
