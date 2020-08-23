@@ -14,10 +14,10 @@ fi
 # (Note: this will also delete the build artifacts - effectively forcing a clean build.
 vagrant rsync
 
-VAGRANT_PATH="/root"
+VAGRANT_PATH="/opt/rockstor-core"
 #vagrant ssh -c "ls -l ${VAGRANT_PATH}" ${VAGRANT_HOST}
 
 CODE_PATH="${VAGRANT_PATH}"
 echo "$(basename ${BASH_SOURCE[0]}): CODE_PATH is '${CODE_PATH}'"
 
-vagrant ssh -c "sudo /vagrant/build_rockstor.sh" ${VAGRANT_HOST}
+vagrant ssh -c "cd ${VAGRANT_PATH}; sudo /vagrant/build_rockstor.sh" ${VAGRANT_HOST}
