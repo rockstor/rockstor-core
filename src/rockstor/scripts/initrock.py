@@ -256,7 +256,7 @@ def bootstrap_sshd_config(logging):
         if not found:
             sfo.write("{}\n".format(settings.SSHD_HEADER))
             sfo.write("{}\n".format(settings.SFTP_STR))
-            sfo.write("AllowUsers root\n")
+            sfo.write("AllowUsers root vagrant\n")
             logging.info("updated sshd_config.")
             run_command([SYSCTL, "restart", "sshd"])
 
