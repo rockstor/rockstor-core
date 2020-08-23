@@ -28,14 +28,14 @@ It is also assumed that you have a local copy of this repository [rockstor-core]
 on your machine, see the top level README.md, and are currently within the 'vagrant_env' directory: where the 
 Vagrantfile is located.
 
-Vagrant Boxes for OpenSUSE Leap
--------------------------------
+Vagrant Boxes
+-------------
 
-This Vagrantfile uses the vagrant box: [bento/opensuse-leap-15](https://app.vagrantup.com/bento/boxes/opensuse-leap-15) 
+This Vagrantfile uses a number of vagrant box: 
 
-```
-v.vm.box = bento/opensuse-leap-15 
-```
+- [bento/opensuse-leap-15](https://app.vagrantup.com/bento/boxes/opensuse-leap-15) 
+- [opensuse/Tumbleweed.x86_64](https://app.vagrantup.com/opensuse/boxes/Tumbleweed.x86_64)
+- [opensuse/Tumbleweed.aarch64](https://app.vagrantup.com/opensuse/boxes/Tumbleweed.aarch64)
 
 Explanantion:
 
@@ -48,34 +48,18 @@ a fixed version of leap there are specific tags available. eg.
 v.vm.box = bento/opensuse-leap-15.2 
 ```
 
-Building for OpenSUSE Tumbleweed x86_64/Aarch64
------------------------------------------------
+The vagrant boxes for tumbleweed are from official OpenSUSE vagrant boxes.
 
-[Work in progress...]
-
-<s>
-The Vagrantfile contains commented out alternative vagrant boxes for OpenSUSE Tumbleweed x86_64 and Aarch64.
-These are official OpenSUSE Tumbleweed vagrant box images.
-
-To change the box to use one of these comment out the Leap box and uncomment your desired box. eg.
-
-```
-#        v.vm.box = 'bento/opensuse-leap-15'
-        v.vm.box = "opensuse/Tumbleweed.x86_64"
-#        v.vm.box = "opensuse/Tumbleweed.aarch64"
-```
-</s>
-
-Building the VM and Rockstor from source
-----------------------------------------
+Building an OpenSUSE Leap VM and installing Rockstor from source
+----------------------------------------------------------------
 On Mac OSX, Linux and Windows:
 
 ```shell script
 ./build.sh
 ```
 
-This will build and provision the vagrant box - including rsyncing the source to the VM in /root. 
-It will then build and install Rockstor from source as per the install guide in the top level README.md.
+This will, by default, build and provision an OpenSUSE Leap 15 vagrant box - including rsyncing the source to the 
+VM in /root. It will then build and install Rockstor from source as per the install guide in the top level README.md.
 
 The VM window should have popped up and show the usual Rockstor messages regarding how to reach the Web UI. eg.
 
@@ -107,7 +91,7 @@ These are appended onto the file /root/.bashrc so that they are available
 when logged in as the root user. 
 
 Typically in the world of vagrant you login as the user 'vagrant' and sudo operating. However, for ease in this case
-and in line with the instruction you can log in as root in one of the following ways:
+and in line with the instruction you can also log in as root in one of the following ways:
 
 ```
 host> vagrant ssh
@@ -121,9 +105,10 @@ or
 
 ```
 host> ssh root@<vm IP>
-password: password
+password: vagrant
 ```
-The root password is deifned in [ansible/defaults/main.yml](../ansible/defaults/main.yml)
+If you have set the ansible option `rs_inst_set_root_pass: yes` then the root password will be defined in 
+[ansible/defaults/main.yml](../ansible/defaults/main.yml) and defaults to 'password'
 
 From here the aliases can used. Here is a summary of them:
 
@@ -158,6 +143,26 @@ vagrant up
 
 Do NOT run 'build.sh' in this scenario.
 
+Building for Tumbleweed and Aarch64
+-----------------------------------
+
+To build for Tumbleweed x86_64:
+```shell script
+./build.sh tw
+```
+
+To build for Tumbleweed Aarch64:
+
+[Work in progress... and only on libvirt]
+
+<s>
+
+```shell script
+./build.sh pi
+```
+
+</s>
+
 Managing the Virtual Machine
 ----------------------------
 To manage the Vagrant box VM simple type the following from this directory...
@@ -169,35 +174,59 @@ of the experimental 'disk' feature:
     ```
   Note: This is enabled in 'build.sh' but needs external enablement if you wish to use descrete vagrant calls below.
 
-- Bring up a vagrant box VM
+- Bring up all vagrant box VMs
     ```shell script
     vagrant up
+    ```
+- Bring up a particular vagrant box VMs
+    ```shell script
+    vagrant up <box-name eg. rockstor-core>
     ```
 
 - Reconfigure the vagrant box VM following a change to the Vagrantfile:
     ```shell script
     vagrant reload
     ```
+    or
+    ```shell script
+    vagrant reload <box-name eg. rockstor-core>
+    ```
 
 - If you change the provisioner section of the Vagrantfile or update the ansible, you can rerun just that part as follows:
     ```shell script
     vagrant provision
+    ```
+    or
+    ```shell script
+    vagrant provision <box-name eg. rockstor-core>
     ```
 
 - Destroy the vagrant box VM:
     ```shell script
     vagrant destroy
     ```
+    or
+    ```shell script
+    vagrant destroy <box-name eg. rockstor-core>
+    ```
 
 - If you wish to ssh into the vagrant box VM to poke around, try this:
     ```shell script
     vagrant ssh
+    ```
+    or
+    ```shell script
+    vagrant ssh <box-name eg. rockstor-core>
     ```
 
 - If you wish to re-rsync your source files (warning this will have the effect of cleaning the build too due 
 to using the --delete options):
     ```
     vagrant rsync
+    ```
+    or
+    ```shell script
+    vagrant rsync <box-name eg. rockstor-core>
     ```
   
 Debuging the Ansible

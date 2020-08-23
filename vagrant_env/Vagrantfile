@@ -6,10 +6,10 @@ required_plugins = %w(
     vagrant-host-shell
     vagrant-sshfs
     )
-    #vagrant-vbguest
 required_plugins.each do |plugin|
   system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
 end
+system "vagrant plugin uninstall vagrant-vbguest"
 
 MEM = 2048
 CPU = 2
@@ -28,6 +28,19 @@ ANSIBLE_GROUPS = {
 VAGRANTFILE_API_VERSION = '2'
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
+    config.vm.define "rockstor-core" do |v|
+        v.vm.hostname = "rockstor-core"
+        v.vm.box = 'bento/opensuse-leap-15'
+    end
+    config.vm.define "rockstor-tw" do |v|
+        v.vm.hostname = "rockstor-tw"
+        v.vm.box = "opensuse/Tumbleweed.x86_64"
+    end
+#     config.vm.define "rockstor-pi" do |v|
+#        v.vm.hostname = "rockstor-pi"
+#        v.vm.box = "opensuse/Tumbleweed.aarch64"
+#     end
+
     config.vm.network "private_network", type: "dhcp"
 
     # We need to use the Rsync folder sync type because the basic VirtualBox sharing seem to get broken with a OS update
@@ -45,41 +58,34 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         rsync__verbose: true,
         rsync__auto: false
 
-    config.vm.define "rockstor-core" do |v|
-        v.vm.hostname = "rockstor-core"
-        v.vm.box = 'bento/opensuse-leap-15'
-#        v.vm.box = "opensuse/Tumbleweed.x86_64"
-#        v.vm.box = "opensuse/Tumbleweed.aarch64"
+    # Enforce the minimum size requirement on the OS HDD.
+    config.vm.disk :disk, size: SIZE_OS_HDD, primary: true
 
-        # Enforce the minimum size requirement on the OS HDD.
-        v.vm.disk :disk, size: SIZE_OS_HDD, primary: true
+    # Add some Data HDD to test with.
+    (1..NUM_DATA_HDD).each do |i|
+        config.vm.disk :disk, size: SIZE_DATA_HDD, name: "Data-#{i}"
+    end
 
-        # Add some Data HDD to test with.
-        (1..NUM_DATA_HDD).each do |i|
-            v.vm.disk :disk, size: SIZE_DATA_HDD, name: "Data-#{i}"
-        end
+    # VirtualBox provider is pretty standard.
+    # (Other providers could be added later - eg. libvirt, kvm, esxi...)
+    config.vm.provider :virtualbox do |vb|
+        vb.memory = MEM
+        vb.cpus = CPU
+        # To force the console to pop up. If 'false' it will run headless.
+        vb.gui = true
+    end
 
-        # VirtualBox provider is pretty standard.
-        # (Other providers could be added later - eg. libvirt, kvm, esxi...)
-        v.vm.provider :virtualbox do |vb|
-            vb.memory = MEM
-            vb.cpus = CPU
-            # To force the console to pop up. If 'false' it will run headless.
-            vb.gui = true
-        end
+    # Inject the Aliases into the root user.
+    config.vm.provision "shell", inline: <<-SHELL
+        cat /vagrant/alias_rc >> /root/.bashrc
+    SHELL
 
-        # Inject the Aliases into the root user.
-        config.vm.provision "shell", inline: <<-SHELL
-            cat /vagrant/alias_rc >> /root/.bashrc
-        SHELL
-
-        # Provisioner using the external stand-alone ansible.
-        # (Other provisions could be added later - eg. salt, puppet...)
-        config.vm.provision "rockstor", type: "ansible" do |ansible|
-            ansible.config_file = "../ansible/ansible.cfg"
-            ansible.playbook = "../ansible/Rockstor.yml"
-            ansible.verbose = "vv"
-            ansible.groups = ANSIBLE_GROUPS
-        end
+    # Provisioner using the external stand-alone ansible.
+    # (Other provisions could be added later - eg. salt, puppet...)
+    config.vm.provision "rockstor", type: "ansible" do |ansible|
+        ansible.config_file = "../ansible/ansible.cfg"
+        ansible.playbook = "../ansible/Rockstor.yml"
+        ansible.verbose = "vv"
+        ansible.groups = ANSIBLE_GROUPS
     end
 end
