@@ -1,0 +1,48 @@
+---
+- name: Import Rockstor’s public key
+  rpm_key:
+    state: present
+    key: "{{ rs_inst_update_repo_key }}"
+
+- name: Add rockstor testing channel repository
+  zypper_repository:
+    repo: "{{ rs_inst_update_repo_url }}"
+    name: "{{ rs_inst_update_repo_name }}"
+    enabled: yes
+    state: present
+    runrefresh: yes
+
+- name: Install Rockstor testing rpm
+  zypper:
+    name: rockstor
+    state: present
+    disable_recommends: yes
+
+- name: Start the relevant rockstor related systemd services
+  systemd:
+    name: rockstor
+    enabled: yes
+    daemon_reload: yes
+    state: started
+
+# TODO: Raise issue to discuss the lock down of ssh to only root
+#
+# This is needed because Rockstor locks down sshd to allow only the user 'root'.
+# Unfortunately, this breaks vagrant which relies on ssh via the user 'vagrant'. This will
+# be fairly problematic for any provisioners like ansible, salt, etc which will rely on ssh
+# access. Forcing the use of root for provisioning is probably a 'discussion' point!
+- name: Ensure vagrant can still ssh in (add vagrant to sshd AllowUsers)
+  lineinfile:
+    path: "/etc/ssh/sshd_config"
+    backrefs: yes
+    regexp: "^(.*AllowUsers.*)$"
+    line: '\1 vagrant'
+
+- name: Reboot to ensure Rockstor resiliency
+  reboot:
+    msg: "Reboot initiated by Ansible"
+    connect_timeout: 5
+    reboot_timeout: 300
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: uptime

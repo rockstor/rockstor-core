@@ -14,6 +14,7 @@ There are some variables in default/main.yml which can (or need to) be overridde
     ```yaml
     rs_inst_root_password: "{{ 'root' | password_hash('sha512', 'mysecretsalt') }}"
     ```
+* `rs_inst_update_os`: no[default] or yes. Choose to update the OS packages or not.
 * `rs_inst_useful_server_packages`: A list of useful addition packages to install on the server (eg. to support a Rock-On).
 
 ## Vars in role configuration

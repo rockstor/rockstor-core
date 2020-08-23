@@ -5,7 +5,8 @@
 
   roles:
     - role: rockstor_installer
-#      vars:
+      vars:
+        rs_inst_update_os: yes
 #        rs_inst_install_from_repo: yes
 #        rs_inst_set_root_pass: yes
 #        rs_inst_experimental: yes

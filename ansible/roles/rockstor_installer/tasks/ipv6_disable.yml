@@ -1,0 +1,19 @@
+---
+- name: Set GRUB_CMDLINE_LINUX_DEFAULT
+  replace:
+    dest: /etc/default/grub
+    regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=["'](.*)["']$
+    replace: 'GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1 \1"'
+    backup: yes
+
+- name: grub2-mkconfig
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Reboot to ensure IPv6 disabled
+  reboot:
+    msg: "Reboot initiated by Ansible"
+    connect_timeout: 5
+    reboot_timeout: 300
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: uptime

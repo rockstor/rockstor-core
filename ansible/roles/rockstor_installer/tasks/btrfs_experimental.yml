@@ -1,0 +1,20 @@
+---
+- name: Check filesystems repo file
+  stat:
+    path: /etc/zypp/repos.d/filesystems.repo
+  register: filesystems_repo
+
+- name: Add filesystems repo
+  zypper_repository:
+    repo: "{{ rs_inst_oss_repo_url }}"
+    enabled: yes
+    state: present
+    runrefresh: no
+  when: not filesystems_repo.stat.exists
+
+- name: Update btrfsprogs
+  zypper:
+    name: btrfsprogs
+    state: latest
+    refresh: yes
+    extra_args_precommand: --gpg-auto-import-keys

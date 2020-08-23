@@ -1,0 +1,77 @@
+---
+- name: Populate service facts
+  service_facts:
+
+- block:
+  #- name: Ensure firewalld is disabled (Installer option)
+  # TODO: Fails on Tumbleweed
+  #  systemd:
+  #    name: firewalld
+  #    enabled: no
+  #    state: stopped
+  - name: Ensure sshd is disabled (Installer option)
+    command: systemctl disable sshd
+  - name: Ensure sshd is stopped (Installer option)
+    command: systemctl stop sshd
+  when: "'firewalld' in ansible_facts.services"
+
+- block:
+  - name: Ensure openssh is installed (Installer option)
+    zypper:
+      name: openssh
+      state: present
+      update_cache: no
+  #- name: Ensure sshd is enabled and started (Installer option)
+  # TODO: Fails on Tumbleweed
+  #  systemd:
+  #    name: sshd
+  #    enabled: yes
+  #    state: started
+  - name: Ensure sshd is enabled (Installer option)
+    command: systemctl enable sshd
+  - name: Ensure sshd is started (Installer option)
+    command: systemctl start sshd
+
+- block:
+  #- name: ensure wicked is disabled (Installer option)
+  # TODO: Fails on Tumbleweed
+  #  systemd:
+  #    name: wickedd
+  #    enabled: no
+  #    state: stopped
+  - name: Ensure wickedd is disabled (Installer option)
+    command: systemctl disable wickedd
+  - name: Ensure wickedd is stopped (Installer option)
+    command: systemctl stop wickedd
+  when: "'wickedd' in ansible_facts.services"
+
+- block:
+  - name: Ensure NetworkManager is installed (Installer option)
+    zypper:
+      name: NetworkManager
+      state: present
+      update_cache: no
+  #- name: Ensure NetworkManager is enabled (Installer option)
+  # TODO: Fails on Tumbleweed
+  #  systemd:
+  #    name: NetworkManager
+  #    enabled: yes
+  #    force: yes
+  #    state: started
+  - name: Ensure NetworkManager is enabled (Installer option)
+    command: systemctl enable -f NetworkManager
+  - name: Ensure NetworkManager is started (Installer option)
+    command: systemctl start NetworkManager
+
+- block:
+  #- name: Stop and Disable AppArmor
+  # TODO: Fails on Tumbleweed
+  #  systemd:
+  #    name: apparmor
+  #    enabled: no
+  #    state: stopped
+  - name: Ensure apparmor is disabled (Installer option)
+    command: systemctl disable apparmor
+  - name: Ensure apparmor is stopped (Installer option)
+    command: systemctl stop apparmor
+  when: "'apparmor' in ansible_facts.services"

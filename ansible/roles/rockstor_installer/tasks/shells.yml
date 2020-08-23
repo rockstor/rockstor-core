@@ -1,0 +1,19 @@
+---
+- name: Check shells repo file
+  stat:
+    path: /etc/zypp/repos.d/shells.repo
+  register: shells_repo
+
+# TODO: Fails on Tumbleweed
+- name: Add shells repo
+  zypper_repository:
+    repo: "{{ rs_inst_bs_shell_rep_url }}"
+    enabled: yes
+    priority: 105
+    state: present
+  when: not shells_repo.stat.exists
+
+- name: Refresh zypper to import shells GPG key
+  command:
+    cmd: zypper --quiet --non-interactive --gpg-auto-import-keys refresh
+    warn: no

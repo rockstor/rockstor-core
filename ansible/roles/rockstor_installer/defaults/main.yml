@@ -12,6 +12,9 @@ rs_inst_root_password: "{{ 'password' | password_hash('sha512', 'mysecretsalt') 
 # Rockstor currently requires IPv6 to be disabled.
 rs_inst_ipv6_disable: yes
 
+# Choose to update the OS or not.
+rs_inst_update_os: no
+
 # The user can use this to install any additional packages they may require.
 #rs_inst_useful_server_packages:
 #    - ffmpeg
