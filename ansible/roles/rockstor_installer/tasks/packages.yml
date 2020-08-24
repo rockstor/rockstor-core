@@ -27,10 +27,12 @@
 - name: Install pip2 packages
   command: pip2 install "{{ item }}"
   loop: "{{ rs_inst_pip2_packages }}"
+  when: not rs_inst_install_from_repo
 
 - name: Install pip3 packages
   command: pip3 install "{{ item }}"
   loop: "{{ rs_inst_pip3_packages }}"
+  when: not rs_inst_install_from_repo
 
 - name: Force Postgresql 10
   command: alternatives --set postgresql /usr/lib/postgresql10
