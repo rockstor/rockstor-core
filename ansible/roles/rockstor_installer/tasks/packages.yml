@@ -16,27 +16,28 @@
     disable_recommends: yes
   when: rs_inst_update_os
 
-- name: Install build packages
-  zypper:
-    name: "{{ build_packages }}"
-    state: present
-    update_cache: no
-  when: not rs_inst_install_from_repo
+- block:
+  - name: Install build packages
+    zypper:
+      name: "{{ build_packages }}"
+      state: present
+      update_cache: no
 
-# TODO: Might help put python2 dependencies on Tumbleweed
-- name: Install pip2 packages
-  command: pip2 install "{{ item }}"
-  loop: "{{ rs_inst_pip2_packages }}"
-  when: not rs_inst_install_from_repo
+  # TODO: Might help put python2 dependencies on Tumbleweed
+  - name: Install pip2 packages
+    command: pip2 install "{{ item }}"
+    loop: "{{ rs_inst_pip2_packages }}"
 
-- name: Install pip3 packages
-  command: pip3 install "{{ item }}"
-  loop: "{{ rs_inst_pip3_packages }}"
-  when: not rs_inst_install_from_repo
+  - name: Install pip3 packages
+    command: pip3 install "{{ item }}"
+    loop: "{{ rs_inst_pip3_packages }}"
 
-- name: Force Postgresql 10
-  command: alternatives --set postgresql /usr/lib/postgresql10
-  when: "'Tumbleweed' in ansible_facts.distribution"
+  - name: Force Postgresql 10
+    command: alternatives --set postgresql /usr/lib/postgresql10
+    when:
+      - "'Tumbleweed' in ansible_facts.distribution"
+
+  when: not rs_inst_install_from_repo
 
 - name: Install useful server admin packages
   zypper:
