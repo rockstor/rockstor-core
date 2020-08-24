@@ -19,7 +19,6 @@ NUM_DATA_HDD = 2
 
 # Vagrant uses it's own build in host inventory.
 ANSIBLE_GROUPS = {
-  "all_groups" => ["rockstor"],
   "all_groups:vars" => {
         "rs_inst_set_root_pass" => "true"
         }
