@@ -153,7 +153,7 @@ To build for Tumbleweed x86_64:
 
 To build for Tumbleweed Aarch64:
 
-[Work in progress... and only on libvirt]
+[Work in progress... and only on libvirt] [see vagrant libvirt plugin](https://github.com/vagrant-libvirt/vagrant-libvirt)]
 
 <s>
 

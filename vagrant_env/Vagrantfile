@@ -6,6 +6,7 @@ required_plugins = %w(
     vagrant-host-shell
     vagrant-sshfs
     )
+#     vagrant-libvirt (see https://github.com/vagrant-libvirt/vagrant-libvirt)
 required_plugins.each do |plugin|
   system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
 end
@@ -27,19 +28,6 @@ ANSIBLE_GROUPS = {
 VAGRANTFILE_API_VERSION = '2'
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-    config.vm.define "rockstor-core" do |v|
-        v.vm.hostname = "rockstor-core"
-        v.vm.box = 'bento/opensuse-leap-15'
-    end
-    config.vm.define "rockstor-tw" do |v|
-        v.vm.hostname = "rockstor-tw"
-        v.vm.box = "opensuse/Tumbleweed.x86_64"
-    end
-#     config.vm.define "rockstor-pi" do |v|
-#        v.vm.hostname = "rockstor-pi"
-#        v.vm.box = "opensuse/Tumbleweed.aarch64"
-#     end
-
     config.vm.network "private_network", type: "dhcp"
 
     # We need to use the Rsync folder sync type because the basic VirtualBox sharing seem to get broken with a OS update
@@ -57,22 +45,61 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         rsync__verbose: true,
         rsync__auto: false
 
+#     config.vm.provider 'virtualbox' do |vb|
+#         vb.linked_clone = true
+#     end
+
     # Enforce the minimum size requirement on the OS HDD.
     config.vm.disk :disk, size: SIZE_OS_HDD, primary: true
 
-    # Add some Data HDD to test with.
-    (1..NUM_DATA_HDD).each do |i|
-        config.vm.disk :disk, size: SIZE_DATA_HDD, name: "Data-#{i}"
+    config.vm.define "rockstor-leap" do |rsc|
+        rsc.vm.hostname = "rockstor-leap"
+        rsc.vm.box = 'bento/opensuse-leap-15'
+        # VirtualBox provider is pretty standard.
+        # (Other providers could be added later - eg. libvirt, kvm, esxi...)
+        rsc.vm.provider :virtualbox do |vb|
+            vb.memory = MEM
+            vb.cpus = CPU
+            # To force the console to pop up. If 'false' it will run headless.
+            vb.gui = true
+        end
+        # Add some Data HDD to test with.
+        (1..NUM_DATA_HDD).each do |i|
+            rsc.vm.disk :disk, size: SIZE_DATA_HDD, name: "Data-leap-#{i}"
+        end
     end
-
-    # VirtualBox provider is pretty standard.
-    # (Other providers could be added later - eg. libvirt, kvm, esxi...)
-    config.vm.provider :virtualbox do |vb|
-        vb.memory = MEM
-        vb.cpus = CPU
-        # To force the console to pop up. If 'false' it will run headless.
-        vb.gui = true
+    config.vm.define "rockstor-tw" do |rstw|
+        rstw.vm.hostname = "rockstor-tw"
+        rstw.vm.box = "opensuse/Tumbleweed.x86_64"
+        # VirtualBox provider is pretty standard.
+        # (Other providers could be added later - eg. libvirt, kvm, esxi...)
+        rstw.vm.provider :virtualbox do |vb|
+            vb.memory = MEM
+            vb.cpus = CPU
+            # To force the console to pop up. If 'false' it will run headless.
+            vb.gui = true
+        end
+        # Add some Data HDD to test with.
+        (1..NUM_DATA_HDD).each do |i|
+            rstw.vm.disk :disk, size: SIZE_DATA_HDD, name: "Data-tw-#{i}"
+        end
     end
+#     config.vm.define "rockstor-pi" do |rspi|
+#        rspi.vm.hostname = "rockstor-pi"
+#        rspi.vm.box = "opensuse/Tumbleweed.aarch64"
+#         # Vagrant box not available on VirtualBox.
+#         # Only Libvirt at present (untested - since we don't have a Aarch64 TW Rockstor package repo yet?).
+#         rspi.vm.provider :libvirt do |lv|
+#             lv.memory = MEM
+#             lv.cpus = CPU
+#             # To force the console to pop up. If 'false' it will run headless.
+#             lv.gui = true
+#         end
+#         # Add some Data HDD to test with.
+#         (1..NUM_DATA_HDD).each do |i|
+#             rspi.vm.disk :disk, size: SIZE_DATA_HDD, name: "Data-pi-#{i}"
+#         end
+#     end
 
     # Inject the Aliases into the root user.
     config.vm.provision "shell", inline: <<-SHELL

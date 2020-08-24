@@ -4,7 +4,7 @@ set -u
 #set -x
 
 export VAGRANT_EXPERIMENTAL="disks"
-VAGRANT_HOST="rockstor-${1:-core}"
+VAGRANT_HOST="rockstor-${1:-leap}"
 
 if ! vagrant status ${VAGRANT_HOST} | grep -q running; then
   vagrant up ${VAGRANT_HOST}
@@ -19,4 +19,5 @@ VAGRANT_PATH="/opt/rockstor-core"
 CODE_PATH="${VAGRANT_PATH}"
 echo "$(basename ${BASH_SOURCE[0]}): CODE_PATH is '${CODE_PATH}'"
 
+# TODO: don't run this if installed from repo RPMs - but how to know?
 vagrant ssh -c "cd ${VAGRANT_PATH}; sudo /vagrant/build_rockstor.sh" ${VAGRANT_HOST}
