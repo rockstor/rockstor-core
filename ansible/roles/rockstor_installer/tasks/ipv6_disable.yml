@@ -1,9 +1,9 @@
 ---
-- name: Set GRUB_CMDLINE_LINUX_DEFAULT
+- name: Set GRUB_CMDLINE_LINUX
   replace:
     dest: /etc/default/grub
-    regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=["'](.*)["']$
-    replace: 'GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1 \1"'
+    regexp: ^GRUB_CMDLINE_LINUX=["'](.*)["']$
+    replace: 'GRUB_CMDLINE_LINUX="ipv6.disable=1 \1"'
     backup: yes
 
 - name: grub2-mkconfig
