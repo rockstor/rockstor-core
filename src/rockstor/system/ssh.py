@@ -41,7 +41,7 @@ def update_sftp_config(input_map):
     :return:
     """
     fo, npath = mkstemp()
-    userstr = "AllowUsers root vagrant {}".format(" ".join(input_map.keys()))
+    userstr = "AllowUsers root {}".format(" ".join(input_map.keys()))
     with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
             if re.match(settings.SSHD_HEADER, line) is None:
