@@ -54,7 +54,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define "rockstor-leap" do |rsc|
         rsc.vm.hostname = "rockstor-leap"
-        rsc.vm.box = 'bento/opensuse-leap-15'
+        rsc.vm.box = 'opensuse/Leap-15.2.x86_64'
         # VirtualBox provider is pretty standard.
         # (Other providers could be added later - eg. libvirt, kvm, esxi...)
         rsc.vm.provider :virtualbox do |vb|
@@ -86,9 +86,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 #     config.vm.define "rockstor-pi" do |rspi|
 #        rspi.vm.hostname = "rockstor-pi"
+#        rspi.vm.box = 'opensuse/Leap-15.2.aarch64'
 #        rspi.vm.box = "opensuse/Tumbleweed.aarch64"
 #         # Vagrant box not available on VirtualBox.
-#         # Only Libvirt at present (untested - since we don't have a Aarch64 TW Rockstor package repo yet?).
+#         # Only Libvirt at present (untested).
 #         rspi.vm.provider :libvirt do |lv|
 #             lv.memory = MEM
 #             lv.cpus = CPU
