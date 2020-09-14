@@ -426,7 +426,7 @@ RockStorGlobals = {
     navbarLoaded: false,
     applianceNameSet: false,
     currentAppliance: null,
-    maxPageSize: 9000,
+    maxPageSize: 32000,
     browserChecked: false,
     kernel: null
 };
