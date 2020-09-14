@@ -31,6 +31,7 @@ import chardet
 import random
 import string
 import crypt
+import stat
 
 import logging
 
@@ -233,7 +234,8 @@ def add_ssh_key(username, key, old_key=None):
     if not os.path.isdir(SSH_DIR):
         os.mkdir(SSH_DIR)
     run_command([CHOWN, "-R", "%s:%s" % (username, groupname), SSH_DIR])
-    os.chmod(SSH_DIR, 700)
+    # Set directory to rwx --- --- (700) via stat constants.
+    os.chmod(SSH_DIR, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     fo, npath = mkstemp()
     exists = False
     with open(AUTH_KEYS, openmode) as afo, open(npath, "w") as tfo:
@@ -248,5 +250,6 @@ def add_ssh_key(username, key, old_key=None):
     if exists:
         return os.remove(npath)
     move(npath, AUTH_KEYS)
-    os.chmod(AUTH_KEYS, 600)
+    # Set file to rw- --- --- (600) via stat constants.
+    os.chmod(AUTH_KEYS, stat.S_IRUSR | stat.S_IWUSR)
     run_command([CHOWN, "%s:%s" % (username, groupname), AUTH_KEYS])
