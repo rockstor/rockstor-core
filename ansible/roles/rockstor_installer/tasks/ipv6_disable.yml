@@ -1,13 +1,22 @@
 ---
+- name: Check whether /etc/default/grub contains IPV6 disable already
+  command: grep "ipv6.disable=1" /etc/default/grub
+  register: check_grub_config
+  ignore_errors: yes
+  changed_when: no
+
 - name: Set GRUB_CMDLINE_LINUX
   replace:
     dest: /etc/default/grub
     regexp: ^GRUB_CMDLINE_LINUX=["'](.*)["']$
     replace: 'GRUB_CMDLINE_LINUX="ipv6.disable=1 \1"'
     backup: yes
+  register: grub_config
+  when: check_grub_config.rc == 0
 
 - name: grub2-mkconfig
   command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  when: grub_config.changed
 
 - name: Reboot to ensure IPv6 disabled
   reboot:
@@ -17,3 +26,4 @@
     pre_reboot_delay: 0
     post_reboot_delay: 30
     test_command: uptime
+  when: grub_config.changed
