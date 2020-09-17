@@ -19,10 +19,16 @@ Pre-requesits
 -------------
 It is assumped that you have the follow software packages install on you host machine:
 - Vagrant (https://www.vagrantup.com/downloads)
-- VirtualBox (https://www.virtualbox.org/wiki/Downloads)
 - Ansible - see this [README](../ansible/README.md) for download instructions.
 
-All packages are available on Linux, Mac OSX and Windows.
+All above packages are available on Linux, Mac OSX and Windows.
+
+You will also need one of the following virtualisation platforms:
+  - <b>Linux users:</b> may prefer to use libvirt, qemu + kxm (see https://github.com/vagrant-libvirt/vagrant-libvirt)
+
+    or 
+  - Virtualbox is available on all platforms (https://www.virtualbox.org/wiki/Downloads)
+ 
 
 It is also assumed that you have a local copy of this repository [rockstor-core](https://github.com/rockstor/rockstor-core) 
 on your machine, see the top level README.md, and are currently within the 'vagrant_env' directory: where the 
@@ -33,22 +39,9 @@ Vagrant Boxes
 
 This Vagrantfile uses a number of vagrant box: 
 
-- [bento/opensuse-leap-15](https://app.vagrantup.com/bento/boxes/opensuse-leap-15) 
+- [opensuse/leap-15.2.x86_64](https://app.vagrantup.com/opensuse/boxes/Leap-15.2.x86_64)
 - [opensuse/Tumbleweed.x86_64](https://app.vagrantup.com/opensuse/boxes/Tumbleweed.x86_64)
 - [opensuse/Tumbleweed.aarch64](https://app.vagrantup.com/opensuse/boxes/Tumbleweed.aarch64)
-
-Explanantion:
-
-*Bento*: is a provider of many base boxes for vagrant, based on official images with the virtualisation tools added.  
-
-*opensuse-leap-15*: is a 'tag' for 'Leap 15 latest' and will track the latest release of leap 15. Should you require 
-a fixed version of leap there are specific tags available. eg. 
-
-```
-v.vm.box = bento/opensuse-leap-15.2 
-```
-
-The vagrant boxes for tumbleweed are from official OpenSUSE vagrant boxes.
 
 Building an OpenSUSE Leap VM and installing Rockstor from source
 ----------------------------------------------------------------
@@ -58,8 +51,14 @@ On Mac OSX, Linux and Windows:
 ./build.sh
 ```
 
-This will, by default, build and provision an OpenSUSE Leap 15 vagrant box - including rsyncing the source to the 
+This will, by default, build and provision an OpenSUSE Leap 15 vagrant box in libvirt - including rsyncing the source to the 
 VM in /root. It will then build and install Rockstor from source as per the install guide in the top level README.md.
+
+Should you prefer to user virtual box you can perform the following:
+
+```shell script
+./build.sh leap virtualbox
+```
 
 The VM window should have popped up and show the usual Rockstor messages regarding how to reach the Web UI. eg.
 
@@ -76,10 +75,22 @@ rockstor login:
 
 Note: your IPs may well vary.
 
-CAUTION: This command will ALWAYS do a clean build due to the nature of the vagran rsync which uses the rsync 
+CAUTION: This command will ALWAYS do a clean build due to the nature of the vagrant rsync which uses the rsync 
 option --delete.
 
 To do subsequent builds see the Aliases section that follows on how to login as root and run further operations.
+
+Accessing Rockstor on the VMs
+-----------------------------
+Port forwarding is used to provide local access to the Rockstor Web UI. To allow you to have Rockstor built and 
+running in each platform side by side port the ports are assigned as follows:
+
+|VM Name|Host Port|Guest Port|Example URL|
+|-------|---------|----------|-----------|
+|rockstor-leap|2443|443|https://172.28.128.101:2443|
+|rockstor-tw|2444|443|https://172.28.128.101:2444|
+|rockstor-pi|2445|443|https://172.28.128.101:2445|
+
 
 Aliases
 -------
@@ -146,12 +157,16 @@ Do NOT run 'build.sh' in this scenario.
 Building for Tumbleweed and Aarch64
 -----------------------------------
 
-To build for Tumbleweed x86_64:
+To build for Tumbleweed x86_64 in libvirt:
 ```shell script
 ./build.sh tw
 ```
+or for virtual box:
+```shell script
+./build.sh tw virtualbox
+```
 
-To build for Tumbleweed Aarch64:
+To build for Tumbleweed Aarch64 in libvirt:
 
 [Work in progress... and only on libvirt] [see vagrant libvirt plugin](https://github.com/vagrant-libvirt/vagrant-libvirt)]
 
@@ -159,6 +174,10 @@ To build for Tumbleweed Aarch64:
 
 ```shell script
 ./build.sh pi
+```
+or for virtual box:
+```shell script
+./build.sh pi virtualbox
 ```
 
 </s>
@@ -170,17 +189,24 @@ To manage the Vagrant box VM simple type the following from this directory...
 - Enable disk management to allow creation of data disks requires the enablement 
 of the experimental 'disk' feature:
     ```
-    export VAGRANT_EXPERIMENTAL="disks"
+    export VAGRANT_EXPERIMENTAL="disks"  # <-- may be in ~/.profile, /etc/profile, or elsewhere
+    export VAGRANT_DEFAULT_PROVIDER=kvm  # <-- may be in ~/.profile, /etc/profile, or elsewhere
     ```
   Note: This is enabled in 'build.sh' but needs external enablement if you wish to use descrete vagrant calls below.
 
-- Bring up all vagrant box VMs
+- Bring up all vagrant box VMs in libvirt
     ```shell script
-    vagrant up
+    vagrant up --provider=libvirt
     ```
+  or for virtual box
+    ```shell script
+    vagrant up --provider=virtualbox
+    ```
+    Note: You can NOT manage boxes in both libvirt and virtual box at the same time.
+     
 - Bring up a particular vagrant box VMs
     ```shell script
-    vagrant up <box-name eg. rockstor-core>
+    vagrant up <box-name eg. rockstor-core> --provider=libvirt
     ```
 
 - Reconfigure the vagrant box VM following a change to the Vagrantfile:
