@@ -83,7 +83,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define "rockstor-tw" do |rstw|
         rstw.vm.hostname = "rockstor-tw"
         rstw.vm.box = "opensuse/Tumbleweed.x86_64"
-         rstw.vm.network :forwarded_port, guest: 443, host: 2444, host_ip: "0.0.0.0"
+        rstw.vm.network :forwarded_port, guest: 443, host: 2444, host_ip: "0.0.0.0"
 
         rstw.vm.provider :libvirt do |lv|
             lv.nested = true
