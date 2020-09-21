@@ -26,21 +26,17 @@ rs_inst_build_packages:
     - python2-setuptools
     - python2-pip
     - python3-pip
-#    - python3-distro
     - samba
 
 rs_inst_leap_build_packages: []
-#    - python2-chardet
-#    - python2-distro
-#    - python2-requests
 
 rs_inst_tumbleweed_build_packages: []
-#    - python2-pip
 
 rs_inst_pip2_packages:
     - chardet
     - distro
     - requests
+    - six
 
 rs_inst_pip3_packages:
     - distro
