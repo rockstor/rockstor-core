@@ -51,7 +51,7 @@ On Mac OSX, Linux and Windows:
 ./build.sh
 ```
 
-This will, by default, build and provision an OpenSUSE Leap 15 vagrant box in libvirt - including rsyncing the source to the 
+This will, by default, build and provision an OpenSUSE Leap 15.2 vagrant box in libvirt - including rsyncing the source to the 
 VM in /root. It will then build and install Rockstor from source as per the install guide in the top level README.md.
 
 Should you prefer to user virtual box you can perform the following:
@@ -204,7 +204,7 @@ of the experimental 'disk' feature:
     ```
     Note: You can NOT manage boxes in both libvirt and virtual box at the same time.
      
-- Bring up a particular vagrant box VMs
+- Bring up a particular vagrant box VM
     ```shell script
     vagrant up <box-name eg. rockstor-core> --provider=libvirt
     ```
