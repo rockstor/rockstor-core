@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op, chkconfig
+from system.osi import run_command
+from system.services import systemctl
 from system.nis import configure_nis
 from django.db import transaction
 from base_service import BaseServiceDetailView
@@ -50,12 +51,13 @@ class NISServiceView(BaseServiceDetailView):
             else:
                 try:
                     if command == "stop":
-                        chkconfig("ypbind", "off")
+                        systemctl("ypbind", "disable")
+                        systemctl("ypbind", "stop")
                     else:
-                        chkconfig("ypbind", "on")
-                        chkconfig("rpcbind", "on")
-                        init_service_op("rpcbind", command)
-                    init_service_op("ypbind", command)
+                        # To instantiate our above config changes in /etc/yp.conf we:
+                        run_command(["netconfig", "update", "-f"])
+                        systemctl("ypbind", "enable")
+                        systemctl("ypbind", "start")
                 except Exception as e:
                     logger.exception(e)
                     e_msg = "Failed to %s NIS service due to system error." % command
