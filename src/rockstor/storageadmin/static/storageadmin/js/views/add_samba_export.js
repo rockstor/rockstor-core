@@ -139,7 +139,40 @@ AddSambaExportView = RockstorLayoutView.extend({
         if(this.sambaShareId == null) {
             this.$('#shares').select2();
         }
-        this.$('#admin_users').select2();
+
+        // https://select2.org/searching
+        // https://select2.org/searching#customizing-how-results-are-matched
+        function matchCustom(params, data) {
+            // If there are no search terms, return all of the data
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+
+            // Do not display the item if there is no 'text' property
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+
+            // Search area
+            // `params.term` should be the term that is used for searching
+            // `data.text` is the text that is displayed for the data object
+            // substring didn't appear any faster than indexOf:
+            // if (data.text.indexOf(params.term) === 0) {
+            // if (data.text.substring(0, params.term.length) === params.term) {
+            // Still 20-26 for 30,000 users in chrome, 2 sec per filter in Firefox.
+            if (data.text.startsWith(params.term)) {
+                return data;
+            }
+
+            // Return `null` if the term should not be displayed
+            return null;
+        }
+        this.$('#admin_users').select2({
+            minimumInputLength: 3,
+            allowClear: true,
+            placeholder: '',
+            matcher: matchCustom
+        });
         this.$('#add-samba-export-form :input').tooltip({
             html: true,
             placement: 'right'
@@ -242,6 +275,8 @@ AddSambaExportView = RockstorLayoutView.extend({
         }
     },
 
+    // Very slow in Chrome with 30,000 users: 20s per key press on first user entry.
+    // But OK in Firefox: 1 second per key press.
     initHandlebarHelpers: function(){
         Handlebars.registerHelper('display_adminUser_options', function(){
             var html = '';
@@ -250,8 +285,9 @@ AddSambaExportView = RockstorLayoutView.extend({
                 var userName = user.get('username');
                 html += '<option value="' + userName + '"';
                 if (_this.sambaShareIdNotNull && _this.smbShare.get('admin_users').length > 0) {
-                    for(i=0; i< _this.smbShare.get('admin_users').length; i++){
-                        if(_this.smbShare.get('admin_users')[i].username == userName){
+                    var admin_users = _this.smbShare.get('admin_users');
+                    for(var i = 0, len = admin_users.length; i < len; i++){
+                        if(admin_users[i].username === userName){
                             html += 'selected= "selected"';
                         }
                     }
