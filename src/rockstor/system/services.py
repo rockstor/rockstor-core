@@ -26,7 +26,6 @@ from django.conf import settings
 
 from osi import run_command
 
-CHKCONFIG_BIN = settings.CHKCONFIG_BIN
 AUTHCONFIG = "/usr/sbin/authconfig"
 SSHD_CONFIG = "/etc/ssh/sshd_config"
 SYSTEMCTL_BIN = "/usr/bin/systemctl"
@@ -67,10 +66,6 @@ def init_service_op(service_name, command, throw=True):
         raise Exception("unknown service: {}".format(service_name))
 
     return run_command([SYSTEMCTL_BIN, command, service_name], throw=throw)
-
-
-def chkconfig(service_name, switch):
-    return run_command([CHKCONFIG_BIN, service_name, switch])
 
 
 def systemctl(service_name, switch):

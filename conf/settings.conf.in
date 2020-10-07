@@ -437,7 +437,6 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # The following have been tested in CentOS, openSUSE Leap15, and Tumbleweed
 UDEVADM = subprocess.check_output(["which", "udevadm"]).rstrip()
 SHUTDOWN = subprocess.check_output(["which", "shutdown"]).rstrip()
-CHKCONFIG_BIN = subprocess.check_output(["which", "chkconfig"]).rstrip()
 
 # Establish our OS base id, name, and version:
 # Use id for code path decisions. Others are for Web-UI display purposes.
