@@ -40,6 +40,7 @@ ZYPPER = "/usr/bin/zypper"
 SYSTEMCTL = "/usr/bin/systemctl"
 AT = "/usr/bin/at"
 YCFILE = "/etc/yum/yum-cron.conf"  # Doesn't exist in openSUSE
+STABLE_CREDENTIALS_FILE = "/etc/zypp/credentials.d/Rockstor-Stable"
 
 
 def install_pkg(name):
@@ -160,6 +161,47 @@ def zypper_repos_list():
     return repo_list
 
 
+def create_credentials_file(user, password):
+    """
+    Takes Appliance ID as username and Activation code as password and creates a zypper
+    compatible Rockstor-Stable credentials file in /etc/zypp/credentials.d which is the
+    default credentials.global.dir see: /etc/zypp/zypp.conf
+    :param user: Appliance ID
+    :param password: Activation code
+    :return: True if credentials file successfully created, or throws an exception.
+    """
+    # Create a temp file to construct our proposed Rockstor-Stable file prior to copying
+    # with preserved attributes.
+    tfo, npath = mkstemp()
+    # Pythons _candidate_tempdir_list() should ensure our npath temp file is
+    # in memory (tmpfs). From https://docs.python.org/2/library/tempfile.html
+    # we have "Creates a temporary file in the most secure manner possible."
+    try:
+        with open(npath, "w") as temp_file:
+            temp_file.write("username={}\n".format(user))
+            temp_file.write("password={}\n".format(password))
+        # shutil.copy2 is equivalent to cp -p (preserver attributes).
+        # This preserves the secure defaults of the temp file without having
+        # to chmod there after. Result is the desired:
+        # -rw------- 1 root root
+        # ie rw to root only or 0600
+        # and avoiding a window prior to a separate chmod command.
+        shutil.copy2(npath, STABLE_CREDENTIALS_FILE)
+    except Exception as e:
+        msg = "Exception while creating {}: {}".format(STABLE_CREDENTIALS_FILE, e.__str__())
+        raise Exception(msg)
+    finally:
+        if os.path.exists(npath):
+            try:
+                os.remove(npath)
+            except Exception as e:
+                msg = "Exception while removing temp file {}: {}".format(
+                    npath, e.__str__()
+                )
+                raise Exception(msg)
+    return True
+
+
 def switch_repo(subscription, on=True):
     repos_dir = "/etc/yum.repos.d"
     yum_file = "{}/Rockstor-{}.repo".format(repos_dir, subscription.name)
@@ -197,8 +239,22 @@ def switch_repo(subscription, on=True):
                 if "Rockstor-Testing" in current_repo_list:
                     run_command([ZYPPER, "removerepo", "Rockstor-Testing"])
                 # If already added rc=4
+                create_credentials_file(
+                    subscription.appliance.uuid, subscription.password
+                )
                 run_command(
-                    [ZYPPER, "addrepo", "--refresh", repo_url, repo_alias],
+                    [
+                        ZYPPER,
+                        "--non-interactive",
+                        "addrepo",
+                        "--refresh",
+                        "http://{}@{}?credentials={}&auth=basic".format(
+                            subscription.appliance.uuid,
+                            subscription_distro_url,
+                            STABLE_CREDENTIALS_FILE,
+                        ),
+                        repo_alias,
+                    ],
                     log=True,
                     throw=False,
                 )
