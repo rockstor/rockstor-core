@@ -136,6 +136,28 @@ def replace_line_if_found(Original_file, new_file, regex, replacement_line):
     return found_and_replaced
 
 
+def append_to_line(original_file, new_file, regexes, new_content, remove=False):
+    """
+    Append a new string or remove a string from specific lines in a config file
+    identified by one or more regular expressions.
+    :param original_file: Original file path - usually a system configuration file
+    :param new_file: New file path - usually a secure temporary file setup by caller
+    :param regexes: List - list of regex(ex) used to identify lines to be considered
+    :param new_content: String - string to be appended or removed
+    :param remove: Boolean - remove string from line if set to True
+    :return:
+    """
+    with open(original_file) as ofo, open(new_file, "w") as tfo:
+        for line in ofo.readlines():
+            if any(re.match(regex, line) for regex in regexes):
+                if remove:
+                    tfo.write(line.replace("".join([" ", new_content]), ""))
+                else:
+                    tfo.write("".join([line.strip(), " ", new_content, "\n"]))
+            else:
+                tfo.write(line)
+
+
 def run_command(
     cmd,
     shell=False,
@@ -1795,9 +1817,7 @@ def get_dev_byid_name(device_name, remove_path=False):
                         # save the longest by-id type name so far.
                         byid_name = devname
     if err == ["device node not found", ""]:
-        logger.error(
-            "Device ({}) not found by command ({})".format(device_name, cmd)
-        )
+        logger.error("Device ({}) not found by command ({})".format(device_name, cmd))
     if is_byid:
         # Return the longest by-id name found in the DEVLINKS line
         # or the first if multiple by-id names were of equal length.

@@ -1,6 +1,6 @@
 <script>
   /*
-  * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+  * Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
   *
   * RockStor is free software; you can redistribute it and/or modify
@@ -47,22 +47,31 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label" for="password">Password<span class="required"> *</span></label>
                         <div class="col-sm-4">
-                            <input class="form-control" type="password" id="password" name="password" placeholder="Password">
+                            <input class="form-control" type="password" id="password" name="password" value="{{config.password}}" placeholder="Password">
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label" for="idmap_range">Idmap Range</label>
-                        <div class="col-sm-4">
-                            <input class="form-control" type="text" id="idmap_range" name="idmap_range" value="{{config.idmap_range}}" placeholder="10000 - 999999">
-                        </div>
-                    </div>
-
                     <div class="form-group">
                         <div class="col-sm-offset-4 col-sm-8">
                             <label class="checkbox inline">
-          <input type="checkbox" id="rfc2307" name="rfc2307" {{#if config.rfc2307}}checked{{/if}}> Enable RFC2307 and use UIDS and homes/shells AD DC values
-        </label>
+                                <input type="checkbox" id="enumerate" name="enumerate" {{#if config.enumerate}}checked{{/if}}>
+                                Enable enumeration
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <label class="checkbox inline">
+                                <input type="checkbox" id="no_ldap_id_mapping" name="no_ldap_id_mapping" {{#if config.no_ldap_id_mapping}}checked{{/if}}>
+                                Disable automatic ID mapping
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <label class="checkbox inline">
+                                <input type="checkbox" id="case_sensitive" name="case_sensitive" {{#if config.case_sensitive}}checked{{/if}}>
+                                Treat user and group names as case sensitive
+                            </label>
                         </div>
                     </div>
 
