@@ -27,8 +27,8 @@ from appliances import ApplianceListView, ApplianceDetailView  # noqa F401
 from login import LoginView  # noqa F401
 from user import UserListView, UserDetailView  # noqa F401
 from dashboardconfig import DashboardConfigView  # noqa F401
-from network import (
-    NetworkDeviceListView,  # noqa F401
+from storageadmin.views.network import (
+    NetworkDeviceListView,
     NetworkConnectionListView,
     NetworkStateView,
     NetworkConnectionDetailView,
@@ -57,6 +57,7 @@ from rockon_custom_config import RockOnCustomConfigView  # noqa F401
 from rockon_environment import RockOnEnvironmentView  # noqa F401
 from rockon_device import RockOnDeviceView  # noqa F401
 from rockon_labels import RockOnLabelView  # noqa F401
+from rockon_networks import RockOnNetworkView  # noqa F401
 from disk_smart import DiskSMARTDetailView  # noqa F401
 from config_backup import (
     ConfigBackupListView,

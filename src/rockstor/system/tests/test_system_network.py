@@ -162,6 +162,12 @@ class SystemNetworkTests(unittest.TestCase):
         This tests for correct parsing of nmcli connection config by get_con_config(),
         which should return a dict with detailed config for each network connection detected.
         """
+        # Mock and patch docker-specific calls
+        self.patch_dnets = patch("system.network.dnets")
+        self.mock_dnets = self.patch_dnets.start()
+        self.patch_dnet_inspect = patch("system.network.dnet_inspect")
+        self.mock_dnet_inspect = self.patch_dnet_inspect.start()
+
         con_name = ["c54ea011-0e23-43fa-8f06-23429b9ce714"]
         out = [
             [
@@ -298,6 +304,8 @@ class SystemNetworkTests(unittest.TestCase):
         ]
         err = [[""]]
         rc = [0]
+        dnets_out = [""]
+        dnet_inspect_out = [""]
         expected_result = [
             {
                 "c54ea011-0e23-43fa-8f06-23429b9ce714": {
@@ -319,19 +327,21 @@ class SystemNetworkTests(unittest.TestCase):
             }
         ]
 
-        con_name.append("ecb5c4a6-05ed-4a29-bdd2-2023f691f096")
+        # Default docker bridge
+        con_name.append("7ffa9c37-4559-4608-80de-ea77a27876cd")
         out.append(
             [
                 "connection.id:                          docker0",
-                "connection.uuid:                        ecb5c4a6-05ed-4a29-bdd2-2023f691f096",
+                "connection.uuid:                        7ffa9c37-4559-4608-80de-ea77a27876cd",
                 "connection.stable-id:                   --",
                 "connection.type:                        bridge",
                 "connection.interface-name:              docker0",
                 "connection.autoconnect:                 no",
                 "connection.autoconnect-priority:        0",
                 "connection.autoconnect-retries:         -1 (default)",
+                "connection.multi-connect:               0 (default)",
                 "connection.auth-retries:                -1",
-                "connection.timestamp:                   1557955026",
+                "connection.timestamp:                   1593384718",
                 "connection.read-only:                   no",
                 "connection.permissions:                 --",
                 "connection.zone:                        --",
@@ -343,36 +353,42 @@ class SystemNetworkTests(unittest.TestCase):
                 "connection.metered:                     unknown",
                 "connection.lldp:                        default",
                 "connection.mdns:                        -1 (default)",
+                "connection.llmnr:                       -1 (default)",
+                "connection.wait-device-timeout:         -1",
                 "ipv4.method:                            manual",
                 "ipv4.dns:                               --",
                 "ipv4.dns-search:                        --",
-                'ipv4.dns-options:                       ""',
+                "ipv4.dns-options:                       --",
                 "ipv4.dns-priority:                      100",
                 "ipv4.addresses:                         172.17.0.1/16",
                 "ipv4.gateway:                           --",
                 "ipv4.routes:                            --",
                 "ipv4.route-metric:                      -1",
                 "ipv4.route-table:                       0 (unspec)",
+                "ipv4.routing-rules:                     --",
                 "ipv4.ignore-auto-routes:                no",
                 "ipv4.ignore-auto-dns:                   no",
                 "ipv4.dhcp-client-id:                    --",
+                "ipv4.dhcp-iaid:                         --",
                 "ipv4.dhcp-timeout:                      0 (default)",
                 "ipv4.dhcp-send-hostname:                yes",
                 "ipv4.dhcp-hostname:                     --",
                 "ipv4.dhcp-fqdn:                         --",
+                "ipv4.dhcp-hostname-flags:               0x0 (none)",
                 "ipv4.never-default:                     no",
                 "ipv4.may-fail:                          yes",
                 "ipv4.dad-timeout:                       -1 (default)",
                 "ipv6.method:                            ignore",
                 "ipv6.dns:                               --",
                 "ipv6.dns-search:                        --",
-                'ipv6.dns-options:                       ""',
+                "ipv6.dns-options:                       --",
                 "ipv6.dns-priority:                      100",
                 "ipv6.addresses:                         --",
                 "ipv6.gateway:                           --",
                 "ipv6.routes:                            --",
                 "ipv6.route-metric:                      -1",
                 "ipv6.route-table:                       0 (unspec)",
+                "ipv6.routing-rules:                     --",
                 "ipv6.ignore-auto-routes:                no",
                 "ipv6.ignore-auto-dns:                   no",
                 "ipv6.never-default:                     no",
@@ -380,8 +396,10 @@ class SystemNetworkTests(unittest.TestCase):
                 "ipv6.ip6-privacy:                       -1 (unknown)",
                 "ipv6.addr-gen-mode:                     stable-privacy",
                 "ipv6.dhcp-duid:                         --",
+                "ipv6.dhcp-iaid:                         --",
                 "ipv6.dhcp-send-hostname:                yes",
                 "ipv6.dhcp-hostname:                     --",
+                "ipv6.dhcp-hostname-flags:               0x0 (none)",
                 "ipv6.token:                             --",
                 "bridge.mac-address:                     --",
                 "bridge.stp:                             no",
@@ -392,20 +410,24 @@ class SystemNetworkTests(unittest.TestCase):
                 "bridge.ageing-time:                     300",
                 "bridge.group-forward-mask:              0",
                 "bridge.multicast-snooping:              yes",
+                "bridge.vlan-filtering:                  no",
+                "bridge.vlan-default-pvid:               1",
+                "bridge.vlans:                           --",
                 "proxy.method:                           none",
                 "proxy.browser-only:                     no",
                 "proxy.pac-url:                          --",
                 "proxy.pac-script:                       --",
                 "GENERAL.NAME:                           docker0",
-                "GENERAL.UUID:                           ecb5c4a6-05ed-4a29-bdd2-2023f691f096",
+                "GENERAL.UUID:                           7ffa9c37-4559-4608-80de-ea77a27876cd",
                 "GENERAL.DEVICES:                        docker0",
+                "GENERAL.IP-IFACE:                       docker0",
                 "GENERAL.STATE:                          activated",
                 "GENERAL.DEFAULT:                        no",
                 "GENERAL.DEFAULT6:                       no",
                 "GENERAL.SPEC-OBJECT:                    --",
                 "GENERAL.VPN:                            no",
-                "GENERAL.DBUS-PATH:                      /org/freedesktop/NetworkManager/ActiveConnection/6",
-                "GENERAL.CON-PATH:                       /org/freedesktop/NetworkManager/Settings/6",
+                "GENERAL.DBUS-PATH:                      /org/freedesktop/NetworkManager/ActiveConnection/2",
+                "GENERAL.CON-PATH:                       /org/freedesktop/NetworkManager/Settings/2",
                 "GENERAL.ZONE:                           --",
                 "GENERAL.MASTER-PATH:                    --",
                 "IP4.ADDRESS[1]:                         172.17.0.1/16",
@@ -417,10 +439,51 @@ class SystemNetworkTests(unittest.TestCase):
         )
         err.append([""])
         rc.append(0)
+        dnets_out.append("")
+        dnet_inspect_out.append(
+            {
+                "Ingress": False,
+                "Name": "bridge",
+                "Created": "2020-08-11T11:06:06.107666148-04:00",
+                "EnableIPv6": False,
+                "Labels": {},
+                "Driver": "bridge",
+                "Attachable": False,
+                "ConfigOnly": False,
+                "Internal": False,
+                "ConfigFrom": {"Network": ""},
+                "Options": {
+                    "com.docker.network.bridge.name": "docker0",
+                    "com.docker.network.bridge.default_bridge": "true",
+                    "com.docker.network.bridge.enable_ip_masquerade": "true",
+                    "com.docker.network.driver.mt": "1500",
+                    "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+                    "com.docker.network.bridge.enable_icc": "true",
+                },
+                "IPAM": {
+                    "Config": [{"Subnet": "172.17.0.0/16", "Gateway": "172.17.0.1"}],
+                    "Driver": "default",
+                    "Options": None,
+                },
+                "Scope": "local",
+                "Id": "fc57dc3d46f9c27bc9b094e58be282b7fca57db3480e0e27e8dd83e0241ad0c8",
+                "Containers": {},
+            }
+        )
         expected_result.append(
             {
-                "ecb5c4a6-05ed-4a29-bdd2-2023f691f096": {
-                    "bridge": {},
+                "7ffa9c37-4559-4608-80de-ea77a27876cd": {
+                    "bridge": {
+                        "aux_address": None,
+                        "subnet": u"172.17.0.0/16",
+                        "internal": False,
+                        "host_binding": u"0.0.0.0",
+                        "docker_name": "docker0",
+                        "icc": u"true",
+                        "ip_masquerade": False,
+                        "dgateway": u"172.17.0.1",
+                        "ip_range": None,
+                    },
                     "ctype": "bridge",
                     "ipv6_addresses": None,
                     "ipv4_method": "manual",
@@ -438,19 +501,193 @@ class SystemNetworkTests(unittest.TestCase):
             }
         )
 
+        # User-created rocknet
+        con_name.append("c344cf82-783e-420e-9d02-30980e058ae5")
+        out.append(
+            [
+                "connection.id:                          br-6088a34098e0",
+                "connection.uuid:                        c344cf82-783e-420e-9d02-30980e058ae5",
+                "connection.stable-id:                   --",
+                "connection.type:                        bridge",
+                "connection.interface-name:              br-6088a34098e0",
+                "connection.autoconnect:                 no",
+                "connection.autoconnect-priority:        0",
+                "connection.autoconnect-retries:         -1 (default)",
+                "connection.multi-connect:               0 (default)",
+                "connection.auth-retries:                -1",
+                "connection.timestamp:                   1593385318",
+                "connection.read-only:                   no",
+                "connection.permissions:                 --",
+                "connection.zone:                        --",
+                "connection.master:                      --",
+                "connection.slave-type:                  --",
+                "connection.autoconnect-slaves:          -1 (default)",
+                "connection.secondaries:                 --",
+                "connection.gateway-ping-timeout:        0",
+                "connection.metered:                     unknown",
+                "connection.lldp:                        default",
+                "connection.mdns:                        -1 (default)",
+                "connection.llmnr:                       -1 (default)",
+                "connection.wait-device-timeout:         -1",
+                "ipv4.method:                            manual",
+                "ipv4.dns:                               --",
+                "ipv4.dns-search:                        --",
+                "ipv4.dns-options:                       --",
+                "ipv4.dns-priority:                      100",
+                "ipv4.addresses:                         172.20.0.1/16",
+                "ipv4.gateway:                           --",
+                "ipv4.routes:                            --",
+                "ipv4.route-metric:                      -1",
+                "ipv4.route-table:                       0 (unspec)",
+                "ipv4.routing-rules:                     --",
+                "ipv4.ignore-auto-routes:                no",
+                "ipv4.ignore-auto-dns:                   no",
+                "ipv4.dhcp-client-id:                    --",
+                "ipv4.dhcp-iaid:                         --",
+                "ipv4.dhcp-timeout:                      0 (default)",
+                "ipv4.dhcp-send-hostname:                yes",
+                "ipv4.dhcp-hostname:                     --",
+                "ipv4.dhcp-fqdn:                         --",
+                "ipv4.dhcp-hostname-flags:               0x0 (none)",
+                "ipv4.never-default:                     no",
+                "ipv4.may-fail:                          yes",
+                "ipv4.dad-timeout:                       -1 (default)",
+                "ipv6.method:                            ignore",
+                "ipv6.dns:                               --",
+                "ipv6.dns-search:                        --",
+                "ipv6.dns-options:                       --",
+                "ipv6.dns-priority:                      100",
+                "ipv6.addresses:                         --",
+                "ipv6.gateway:                           --",
+                "ipv6.routes:                            --",
+                "ipv6.route-metric:                      -1",
+                "ipv6.route-table:                       0 (unspec)",
+                "ipv6.routing-rules:                     --",
+                "ipv6.ignore-auto-routes:                no",
+                "ipv6.ignore-auto-dns:                   no",
+                "ipv6.never-default:                     no",
+                "ipv6.may-fail:                          yes",
+                "ipv6.ip6-privacy:                       -1 (unknown)",
+                "ipv6.addr-gen-mode:                     stable-privacy",
+                "ipv6.dhcp-duid:                         --",
+                "ipv6.dhcp-iaid:                         --",
+                "ipv6.dhcp-send-hostname:                yes",
+                "ipv6.dhcp-hostname:                     --",
+                "ipv6.dhcp-hostname-flags:               0x0 (none)",
+                "ipv6.token:                             --",
+                "bridge.mac-address:                     --",
+                "bridge.stp:                             no",
+                "bridge.priority:                        32768",
+                "bridge.forward-delay:                   15",
+                "bridge.hello-time:                      2",
+                "bridge.max-age:                         20",
+                "bridge.ageing-time:                     300",
+                "bridge.group-forward-mask:              0",
+                "bridge.multicast-snooping:              yes",
+                "bridge.vlan-filtering:                  no",
+                "bridge.vlan-default-pvid:               1",
+                "bridge.vlans:                           --",
+                "proxy.method:                           none",
+                "proxy.browser-only:                     no",
+                "proxy.pac-url:                          --",
+                "proxy.pac-script:                       --",
+                "GENERAL.NAME:                           br-6088a34098e0",
+                "GENERAL.UUID:                           c344cf82-783e-420e-9d02-30980e058ae5",
+                "GENERAL.DEVICES:                        br-6088a34098e0",
+                "GENERAL.IP-IFACE:                       br-6088a34098e0",
+                "GENERAL.STATE:                          activated",
+                "GENERAL.DEFAULT:                        no",
+                "GENERAL.DEFAULT6:                       no",
+                "GENERAL.SPEC-OBJECT:                    --",
+                "GENERAL.VPN:                            no",
+                "GENERAL.DBUS-PATH:                      /org/freedesktop/NetworkManager/ActiveConnection/3",
+                "GENERAL.CON-PATH:                       /org/freedesktop/NetworkManager/Settings/3",
+                "GENERAL.ZONE:                           --",
+                "GENERAL.MASTER-PATH:                    --",
+                "IP4.ADDRESS[1]:                         172.20.0.1/16",
+                "IP4.GATEWAY:                            --",
+                "IP4.ROUTE[1]:                           dst = 172.20.0.0/16, nh = 0.0.0.0, mt = 0",
+                "IP6.GATEWAY:                            --",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        dnets_out.append(["rocknet01"])
+        dnet_inspect_out.append(
+            {
+                "Ingress": False,
+                "Name": "rocknet01",
+                "Created": "2020-08-07T16:43:14.04154885-04:00",
+                "EnableIPv6": False,
+                "Labels": {},
+                "Driver": "bridge",
+                "Attachable": False,
+                "ConfigOnly": False,
+                "Internal": False,
+                "ConfigFrom": {"Network": ""},
+                "Options": {
+                    "com.docker.network.bridge.enable_icc": "true",
+                    "com.docker.network.driver.mtu": "1500",
+                },
+                "IPAM": {
+                    "Config": [{"Subnet": "172.20.0.0/16", "Gateway": "172.20.0.1"}],
+                    "Driver": "default",
+                    "Options": {},
+                },
+                "Scope": "local",
+                "Id": "2c7dfdeef407717c107041f6e1e53c3248cf688b78be1f346e4a1079e9da6570",
+                "Containers": {},
+            }
+        )
+        expected_result.append(
+            {
+                "c344cf82-783e-420e-9d02-30980e058ae5": {
+                    "bridge": {
+                        "aux_address": None,
+                        "subnet": u"172.20.0.0/16",
+                        "internal": False,
+                        "host_binding": None,
+                        "docker_name": "rocknet01",
+                        "icc": u"true",
+                        "ip_masquerade": False,
+                        "dgateway": u"172.20.0.1",
+                        "ip_range": None,
+                    },
+                    "ctype": "bridge",
+                    "ipv6_addresses": None,
+                    "ipv4_method": "manual",
+                    "ipv6_method": None,
+                    "ipv6_dns": None,
+                    "name": "br-6088a34098e0",
+                    "ipv4_addresses": "172.20.0.1/16",
+                    "ipv6_gw": None,
+                    "ipv4_dns": None,
+                    "state": "activated",
+                    "ipv6_dns_search": None,
+                    "ipv4_gw": None,
+                    "ipv4_dns_search": None,
+                }
+            }
+        )
+
         # @todo: Add more types of connections, such as docker0, wifi, eth, veth, etc...
 
         # Cycle through each of the above parameter / run_command data sets.
-        for con, o, e, r, expected in zip(con_name, out, err, rc, expected_result):
+        for con, o, e, r, dnet_o, dnet_inspect_o, expected in zip(
+            con_name, out, err, rc, dnets_out, dnet_inspect_out, expected_result
+        ):
             con_list = [con]
             self.mock_run_command.return_value = (o, e, r)
+            self.mock_dnets.return_value = dnet_o
+            self.mock_dnet_inspect.return_value = dnet_inspect_o
             returned = get_con_config(con_list)
             self.assertEqual(
                 returned,
                 expected,
                 msg="Un-expected get_con_config() result:\n "
-                "returned = ({}).\n "
-                "expected = ({}).".format(returned, expected),
+                "returned = {}.\n "
+                "expected = {}.\n ".format(returned, expected),
             )
 
     def test_get_con_config_con_not_found(self):

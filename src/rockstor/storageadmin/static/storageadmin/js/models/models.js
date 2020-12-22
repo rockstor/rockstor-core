@@ -784,6 +784,26 @@ var RockOnLabelCollection = RockStorPaginatedCollection.extend({
     }
 });
 
+var RockOnNetwork = Backbone.Model.extend({
+    urlRoot: '/api/rockon/networks/' + this.rid
+});
+
+var RockOnNetworkCollection = RockStorPaginatedCollection.extend({
+    model: RockOnNetwork,
+    initialize: function(models, options) {
+        this.constructor.__super__.initialize.apply(this, arguments);
+        if (options) {
+            this.rid = options.rid;
+        }
+    },
+    baseUrl: function() {
+        if (this.rid) {
+            return '/api/rockons/networks/' + this.rid;
+        }
+        return '/api/rockons/networks';
+    }
+});
+
 var RockOnCustomConfig = Backbone.Model.extend({
     urlRoot: '/api/rockon/customconfig/' + this.rid
 });

@@ -26,6 +26,8 @@ from storageadmin.models import (
     EthernetConnection,
     TeamConnection,
     BondConnection,
+    BridgeConnection,
+    DContainerLink,
 )
 from smart_manager.models import Service
 from storageadmin.util import handle_exception
@@ -33,7 +35,15 @@ from storageadmin.serializers import (
     NetworkDeviceSerializer,
     NetworkConnectionSerializer,
 )
-from system import network
+from system.docker import (
+    docker_status,
+    probe_running_containers,
+    dnet_create,
+    dnet_connect,
+    dnet_disconnect,
+    dnet_remove,
+)
+import system.network as sysnet
 import rest_framework_custom as rfc
 
 import logging
@@ -46,6 +56,7 @@ DEFAULT_MTU = MIN_MTU
 
 
 class NetworkMixin(object):
+    logger.debug("The class NetworkMixin has been initialized")
     # Runners for teams. @todo: support basic defaults + custom configuration.
     # @todo: lacp doesn't seem to be activating
     runners = {
@@ -69,6 +80,7 @@ class NetworkMixin(object):
     @staticmethod
     @transaction.atomic
     def _update_or_create_ctype(co, ctype, config):
+        logger.debug("The function _update_or_create_ctype has been called")
         if ctype == "802-3-ethernet":
             try:
                 eco = EthernetConnection.objects.get(connection=co)
@@ -94,6 +106,30 @@ class NetworkMixin(object):
                 bco.save()
             except BondConnection.DoesNotExist:
                 BondConnection.objects.create(connection=co, **config)
+        elif (ctype == "bridge") and (docker_status()):
+            try:
+                brco = BridgeConnection.objects.get(connection=co)
+                brco.docker_name = config["docker_name"]
+                if (not DContainerLink.objects.filter(name=brco.docker_name)) and (
+                    "docker0" not in brco.docker_name
+                ):
+                    # The bridge connection is not the default docker bridge network
+                    # and isn't a docker bridge network defined as a container_link
+                    brco.usercon = True
+                brco.save()
+            except BridgeConnection.DoesNotExist:
+                usercon = False
+                docker_name = config["docker_name"]
+                if (not DContainerLink.objects.filter(name=docker_name)) and (
+                    "docker0" not in docker_name
+                ):
+                    # The bridge connection is not the default docker bridge network
+                    # and isn't a docker bridge network defined as a container_link
+                    usercon = True
+                BridgeConnection.objects.create(
+                    connection=co, usercon=usercon, **config
+                )
+
         else:
             logger.error("Unknown ctype: {} config: {}".format(ctype, config))
 
@@ -116,7 +152,7 @@ class NetworkMixin(object):
     @classmethod
     @transaction.atomic
     def _refresh_connections(cls):
-        cmap = network.get_con_config(network.get_con_list())
+        cmap = sysnet.get_con_config(sysnet.get_con_list())
         defer_master_updates = []
         for nco in NetworkConnection.objects.all():
             if nco.uuid not in cmap:
@@ -163,7 +199,7 @@ class NetworkMixin(object):
     @staticmethod
     @transaction.atomic
     def _refresh_devices():
-        dmap = network.get_dev_config(network.get_dev_list())
+        dmap = sysnet.get_dev_config(sysnet.get_dev_list())
 
         def update_connection(dconfig):
             if "connection" in dconfig:
@@ -206,7 +242,7 @@ class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
 
 class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkConnectionSerializer
-    ctypes = ("ethernet", "team", "bond")
+    ctypes = ("ethernet", "team", "bond", "docker")
 
     # ethtool is the default link watcher.
 
@@ -235,7 +271,18 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            ipaddr = gateway = dns_servers = search_domains = None
+            ipaddr = (
+                gateway
+            ) = (
+                dns_servers
+            ) = (
+                search_domains
+            ) = (
+                aux_address
+            ) = (
+                dgateway
+            ) = host_binding = icc = internal = ip_masquerade = ip_range = subnet = None
+            mtu = DEFAULT_MTU
             name = request.data.get("name")
             if NetworkConnection.objects.filter(name=name).exists():
                 e_msg = (
@@ -258,8 +305,17 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                 gateway = request.data.get("gateway", None)
                 dns_servers = request.data.get("dns_servers", None)
                 search_domains = request.data.get("search_domains", None)
+                aux_address = request.data.get("aux_address", None)
+                dgateway = request.data.get("dgateway", None)
+                host_binding = request.data.get("host_binding", None)
+                icc = request.data.get("icc")
+                internal = request.data.get("internal")
+                ip_masquerade = request.data.get("ip_masquerade")
+                ip_range = request.data.get("ip_range", None)
+                mtu = request.data.get("mtu", 1500)
+                subnet = request.data.get("subnet", None)
 
-            # connection type can be one of ethernet, team or bond
+            # connection type can be one of ethernet, team, bond, or docker
             ctype = request.data.get("ctype")
             if ctype not in self.ctypes:
                 e_msg = (
@@ -277,7 +333,7 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                     ).format(team_profile, self.team_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
-                network.new_team_connection(
+                sysnet.new_team_connection(
                     name,
                     self.runners[team_profile],
                     devices,
@@ -290,7 +346,7 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
             elif ctype == "ethernet":
                 device = request.data.get("device")
                 self._validate_devices([device], request, size=1)
-                network.new_ethernet_connection(
+                sysnet.new_ethernet_connection(
                     name, device, ipaddr, gateway, dns_servers, search_domains
                 )
 
@@ -303,7 +359,7 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                     ).format(bond_profile, self.bond_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
-                network.new_bond_connection(
+                sysnet.new_bond_connection(
                     name,
                     bond_profile,
                     devices,
@@ -311,6 +367,20 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                     gateway,
                     dns_servers,
                     search_domains,
+                )
+
+            elif ctype == "docker":
+                dnet_create(
+                    name,
+                    aux_address,
+                    dgateway,
+                    host_binding,
+                    icc,
+                    internal,
+                    ip_masquerade,
+                    ip_range,
+                    mtu,
+                    subnet,
                 )
 
             return Response()
@@ -337,7 +407,6 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
     @transaction.atomic
     def put(self, request, id):
-
         with self._handle_exception(request):
             nco = self._nco(request, id)
             method = request.data.get("method")
@@ -351,17 +420,37 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                     handle_exception(Exception(e_msg), request)
             except ValueError:
                 handle_exception(Exception(e_msg), request)
-            ipaddr = gateway = dns_servers = search_domains = None
+            ipaddr = (
+                gateway
+            ) = (
+                dns_servers
+            ) = (
+                search_domains
+            ) = (
+                aux_address
+            ) = (
+                dgateway
+            ) = host_binding = icc = internal = ip_masquerade = ip_range = subnet = None
             if method == "manual":
                 ipaddr = request.data.get("ipaddr", None)
                 gateway = request.data.get("gateway", None)
                 dns_servers = request.data.get("dns_servers", None)
                 search_domains = request.data.get("search_domains", None)
+                aux_address = request.data.get("aux_address", None)
+                dgateway = request.data.get("dgateway", None)
+                host_binding = request.data.get("host_binding", None)
+                icc = request.data.get("icc")
+                internal = request.data.get("internal")
+                ip_masquerade = request.data.get("ip_masquerade")
+                ip_range = request.data.get("ip_range", None)
+                mtu = request.data.get("mtu", 1500)
+                subnet = request.data.get("subnet", None)
 
+            ctype = request.data.get("ctype")
             if nco.ctype == "ethernet":
                 device = nco.networkdevice_set.first().name
                 self._delete_connection(nco)
-                network.new_ethernet_connection(
+                sysnet.new_ethernet_connection(
                     nco.name, device, ipaddr, gateway, dns_servers, search_domains, mtu
                 )
             elif nco.ctype == "team":
@@ -371,7 +460,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                     devices.append(child_nco.networkdevice_set.first().name)
 
                 self._delete_connection(nco)
-                network.new_team_connection(
+                sysnet.new_team_connection(
                     nco.name,
                     self.runners[team_profile],
                     devices,
@@ -381,37 +470,108 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                     search_domains,
                     mtu,
                 )
-
+            elif ctype == "docker":
+                docker_name = request.data.get("docker_name")
+                dname = request.data.get("dname")
+                # Get list of connected containers to re-connect them later
+                clist = probe_running_containers(network=docker_name, all=True)[:-1]
+                logger.debug("clist is {}".format(clist))
+                if len(clist) > 0:
+                    for c in clist:
+                        dnet_disconnect(c, docker_name)
+                # Remove docker network
+                dnet_remove(network=docker_name)
+                # Create the Docker network with new settings
+                try:
+                    dnet_create(
+                        dname,
+                        aux_address,
+                        dgateway,
+                        host_binding,
+                        icc,
+                        internal,
+                        ip_masquerade,
+                        ip_range,
+                        mtu,
+                        subnet,
+                    )
+                    # Disconnect and reconnect all containers (if any)
+                    if len(clist) > 0:
+                        for c in clist:
+                            dnet_connect(c, dname, all=True)
+                except Exception as e:
+                    logger.debug(
+                        "An error occurred while creating the docker network: {}".format(
+                            e
+                        )
+                    )
+                    # The creation of the new network has failed, so re-create the old one
+                    dconf = BridgeConnection.objects.filter(
+                        docker_name=docker_name
+                    ).values()[0]
+                    aux_address = dconf["aux_address"]
+                    dgateway = dconf["dgateway"]
+                    host_binding = dconf["host_binding"]
+                    icc = dconf["icc"]
+                    internal = dconf["internal"]
+                    ip_masquerade = dconf["ip_masquerade"]
+                    ip_range = dconf["ip_range"]
+                    subnet = dconf["subnet"]
+                    dnet_create(
+                        docker_name,
+                        aux_address,
+                        dgateway,
+                        host_binding,
+                        icc,
+                        internal,
+                        ip_masquerade,
+                        ip_range,
+                        mtu,
+                        subnet,
+                    )
+                    if len(clist) > 0:
+                        for c in clist:
+                            dnet_connect(c, docker_name, all=True)
+                    raise e
             return Response(NetworkConnectionSerializer(nco).data)
 
     @staticmethod
     def _delete_connection(nco):
         for mnco in nco.networkconnection_set.all():
-            network.delete_connection(mnco.uuid)
-        network.delete_connection(nco.uuid)
+            sysnet.delete_connection(mnco.uuid)
+        sysnet.delete_connection(nco.uuid)
         nco.delete()
 
     @transaction.atomic
     def delete(self, request, id):
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            restricted = False
-            try:
-                so = Service.objects.get(name="rockstor")
-                config = json.loads(so.config)
-                if config["network_interface"] == nco.name:
-                    restricted = True
-            except Exception as e:
-                logger.exception(e)
-            if restricted:
-                e_msg = (
-                    "This connection ({}) is designated for "
-                    "management and cannot be deleted. If you really "
-                    "need to delete it, change the Rockstor service "
-                    "configuration and try again."
-                ).format(nco.name)
-                handle_exception(Exception(e_msg), request)
-            self._delete_connection(nco)
+            if nco.bridgeconnection_set.first() > 0:  # If docker network
+                brco = nco.bridgeconnection_set.first()
+                # check for running containers and disconnect them first
+                clist = probe_running_containers(network=brco.docker_name)
+                if len(clist) > 1:
+                    for c in clist[:-1]:
+                        dnet_disconnect(c, brco.docker_name)
+                dnet_remove(network=brco.docker_name)
+            else:
+                restricted = False
+                try:
+                    so = Service.objects.get(name="rockstor")
+                    config = json.loads(so.config)
+                    if config["network_interface"] == nco.name:
+                        restricted = True
+                except Exception as e:
+                    logger.exception(e)
+                if restricted:
+                    e_msg = (
+                        "This connection ({}) is designated for "
+                        "management and cannot be deleted. If you really "
+                        "need to delete it, change the Rockstor service "
+                        "configuration and try again."
+                    ).format(nco.name)
+                    handle_exception(Exception(e_msg), request)
+                self._delete_connection(nco)
             return Response()
 
     @transaction.atomic
@@ -424,9 +584,9 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                 # be brought up in order. eg: active-backup.
                 for mnco in nco.networkconnection_set.all().order_by("name"):
                     logger.debug("upping {} {}".format(mnco.name, mnco.uuid))
-                    network.toggle_connection(mnco.uuid, switch)
+                    sysnet.toggle_connection(mnco.uuid, switch)
             else:
-                network.toggle_connection(nco.uuid, switch)
+                sysnet.toggle_connection(nco.uuid, switch)
             return Response(NetworkConnectionSerializer(nco).data)
 
 

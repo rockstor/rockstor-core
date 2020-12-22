@@ -24,8 +24,6 @@ from django.conf import settings
 from django_ztask.decorators import task
 
 from cli.api_wrapper import APIWrapper
-from fs.btrfs import mount_share
-from rockon_utils import container_status
 from storageadmin.models import (
     RockOn,
     DContainer,
@@ -38,9 +36,12 @@ from storageadmin.models import (
     DContainerDevice,
     DContainerArgs,
     DContainerLabel,
+    DContainerNetwork,
 )
+from system.docker import dnet_create, dnet_connect
 from system.osi import run_command
-from system.services import service_status
+from fs.btrfs import mount_share
+from rockon_utils import container_status
 
 DOCKER = "/usr/bin/docker"
 ROCKON_URL = "https://localhost/api/rockons"
@@ -52,17 +53,13 @@ DCMD2 = list(DCMD) + [
     "-d",
     "--restart=unless-stopped",
 ]
-
+DNET = [
+    DOCKER,
+    "network",
+]
 
 logger = logging.getLogger(__name__)
 aw = APIWrapper()
-
-
-def docker_status():
-    o, e, rc = service_status("docker")
-    if rc != 0:
-        return False
-    return True
 
 
 def rockon_status(name):
@@ -128,9 +125,42 @@ def generic_stop(rockon):
 
 
 @task()
-def update(rid):
-    uninstall(rid, new_state="pending_update")
-    install(rid)
+def update(rid, live=False):
+    """
+    Guides general update procedure for a rock-on settings:
+      - if a live-update is possible, first start the rock-on and apply new settings
+      - if a live-update is impossible, first uninstall the rock-on and re-install
+        using the new settings
+    :param rid:
+    :param live:
+    :return:
+    """
+    if live:
+        new_state = "installed"
+        try:
+            rockon = RockOn.objects.get(id=rid)
+            # Ensure the rock-on is running before attempting network connection
+            start(rid)
+            dnet_create_connect(rockon)
+        except Exception as e:
+            logger.debug(
+                "Exception while live-updating the rock-on ({})".format(rockon)
+            )
+            logger.exception(e)
+            new_state = "install_failed"
+        finally:
+            url = "rockons/{}/state_update".format(rid)
+            logger.debug(
+                "Update rockon ({}) state to: {} ({})".format(
+                    rockon.name, new_state, url
+                )
+            )
+            return aw.api_call(
+                url, data={"new_state": new_state,}, calltype="post", save_error=False
+            )
+    else:
+        uninstall(rid, new_state="pending_update")
+        install(rid)
 
 
 @task()
@@ -184,13 +214,21 @@ def container_ops(container):
 def port_ops(container):
     ops_list = []
     for po in DPort.objects.filter(container=container):
-        pstr = "%s:%s" % (po.hostp, po.containerp)
+        # Skip the port if no set to be published
+        if po.publish is not True:
+            logger.debug(
+                "The port {} ({}) should not be published ({}), so skip it.".format(
+                    po.id, po.description, po.publish
+                )
+            )
+            continue
+        pstr = "{}:{}".format(po.hostp, po.containerp)
         if po.protocol is not None:
-            pstr = "%s/%s" % (pstr, po.protocol)
+            pstr = "{}/{}".format(pstr, po.protocol)
             ops_list.extend(["-p", pstr])
         else:
-            tcp = "%s/tcp" % pstr
-            udp = "%s/udp" % pstr
+            tcp = "{}/tcp".format(pstr)
+            udp = "{}/udp".format(pstr)
             ops_list.extend(
                 ["-p", tcp, "-p", udp,]
             )
@@ -211,7 +249,6 @@ def vol_ops(container):
 def device_ops(container):
     device_list = []
     for d in DContainerDevice.objects.filter(container=container):
-        # device_list.append(d.dev)
         if len(d.val.strip()) > 0:
             device_list.extend(["--device", "%s" % (d.val)])
     return device_list
@@ -250,6 +287,29 @@ def labels_ops(container):
     return labels_list
 
 
+def dnet_create_connect(rockon):
+    """
+    For a given rockon, apply all containers <-> docker networks connections
+    (container_link or rocknet) if any. If the docker network in question does
+    not yet exist, create it first.
+    :param rockon: RockOn object
+    :return:
+    """
+    for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
+        if DContainerLink.objects.filter(destination=c):
+            for lo in DContainerLink.objects.filter(destination=c):
+                dnet_create(lo.name)
+                dnet_connect(lo.destination.name, lo.name)
+                dnet_connect(lo.source.name, lo.name)
+        if DContainerNetwork.objects.filter(container=c):
+            for cno in DContainerNetwork.objects.filter(container=c):
+                dnet_create(cno.connection.docker_name)
+                dnet_connect(
+                    container=cno.container.name, network=cno.connection.docker_name
+                )
+    # @todo: add detection of (or wait for) finished installed before creating networks?
+
+
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
         rm_container(c.name)
@@ -277,6 +337,8 @@ def generic_install(rockon):
         cmd.append(image_name_plus_tag)
         cmd.extend(cargs(c))
         run_command(cmd, log=True)
+    # Apply all network connections, if any
+    dnet_create_connect(rockon)
 
 
 def openvpn_install(rockon):

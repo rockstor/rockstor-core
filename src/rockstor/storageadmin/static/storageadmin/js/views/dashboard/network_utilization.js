@@ -168,7 +168,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         this.networkInterfaces.each(function(ni, i) {
             var opt = $('<option/>');
             opt.val(ni.get('name'));
-            opt.text(ni.get('name'));
+            opt.text(ni.get('dev_name'));
             if (i == 0) {
                 opt.attr({
                     selected: 'selected'

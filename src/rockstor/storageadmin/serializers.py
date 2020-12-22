@@ -49,6 +49,7 @@ from storageadmin.models import (
     DContainerEnv,
     DContainerDevice,
     DContainerLabel,
+    DContainerNetwork,
     SMARTAttribute,
     SMARTCapability,
     SMARTInfo,
@@ -201,6 +202,7 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
 
 class NetworkDeviceSerializer(serializers.ModelSerializer):
     cname = serializers.CharField()
+    dev_name = serializers.CharField()
 
     class Meta:
         model = NetworkDevice
@@ -211,6 +213,9 @@ class NetworkConnectionSerializer(serializers.ModelSerializer):
     mtu = serializers.IntegerField()
     team_profile = serializers.CharField()
     bond_profile = serializers.CharField()
+    docker_name = serializers.CharField()
+    user_dnet = serializers.BooleanField()
+    docker_options = serializers.DictField()
 
     class Meta:
         model = NetworkConnection
@@ -254,6 +259,8 @@ class TLSCertificateSerializer(serializers.ModelSerializer):
 
 class RockOnSerializer(serializers.ModelSerializer):
     ui_port = serializers.IntegerField()
+    ui_publish = serializers.BooleanField()
+    host_network = serializers.BooleanField()
 
     class Meta:
         model = RockOn
@@ -272,6 +279,8 @@ class RockOnVolumeSerializer(serializers.ModelSerializer):
 
 
 class RockOnPortSerializer(serializers.ModelSerializer):
+    container_name = serializers.CharField()
+
     class Meta:
         model = DPort
 
@@ -294,6 +303,14 @@ class RockOnDeviceSerializer(serializers.ModelSerializer):
 class RockOnLabelSerializer(serializers.ModelSerializer):
     class Meta:
         model = DContainerLabel
+
+
+class RockOnNetworkSerializer(serializers.ModelSerializer):
+    docker_name = serializers.CharField()
+    container_name = serializers.CharField()
+
+    class Meta:
+        model = DContainerNetwork
 
 
 class SMARTCapabilitySerializer(serializers.ModelSerializer):

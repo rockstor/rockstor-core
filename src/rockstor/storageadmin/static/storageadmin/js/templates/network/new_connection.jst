@@ -35,6 +35,14 @@
             <input class="form-control" type="text" id="name" name="name" {{#if connection}}value="{{connection.name}}" disabled{{/if}}>
           </div>
 	</div>
+          {{#if connection.docker_name}}
+      	<div class="form-group">
+          <label class="col-sm-4 control-label" for="dname">Docker Name<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="dname" name="dname" {{#if connection}}value="{{connection.docker_name}}"{{/if}}>
+          </div>
+    	</div>
+        {{/if}}
         <div class="form-group">
           <label class="col-sm-4 control-label" for="ctype">Connection Type<span class="required"> *</span></label>
           <div class="col-sm-4">
@@ -135,6 +143,56 @@
           </div>
         </div>
         </div><!--close methodOptionalFields-->
+            <div id="methodOptionalFieldsDocker" {{#if connection}}{{#isAuto connection}}style="display:none;"{{/isAuto}}{{else}}style="display:none;"{{/if}}>
+          <div class="form-group">
+          <label class="col-sm-4 control-label" for="aux_address">Auxilliary IP</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text"  id="aux_address" name="aux_address" {{#if connection}}value="{{connection.docker_options.aux_address}}"{{/if}} placeholder="Auxiliary IP Address">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="dgateway">Gateway</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="dgateway" name="dgateway" {{#if connection}}value="{{connection.docker_options.dgateway}}"{{/if}} placeholder="Gateway">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="ip_range">IP range</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="ip_range" name="ip_range" {{#if connection}}value="{{connection.docker_options.ip_range}}"{{/if}} placeholder="IP range">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="subnet">Subnet</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="subnet" name="subnet" {{#if connection}}value="{{connection.docker_options.subnet}}"{{/if}} placeholder="Subnet">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="host_binding">Host IP binding</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="host_binding" name="host_binding" {{#if connection}}value="{{connection.docker_options.host_binding}}"{{/if}} placeholder="Host IPv4 binding address">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="internal">Internal Network</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="checkbox" id="internal" name="internal" {{#if connection}}{{#if connection.docker_options.internal}}checked{{/if}}{{/if}}>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="ip_masquerade">IP Masquerading</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="checkbox" id="ip_masquerade" name="ip_masquerade" {{#if connection}}{{#if connection.docker_options.ip_masquerade}}checked{{/if}}{{/if}}>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="icc">Inter-Containers Connectivity</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="checkbox" id="icc" name="icc" {{#if connection}}{{#if connection.docker_options.icc}}checked{{/if}}{{/if}}>
+          </div>
+        </div>
+        </div><!--close methodOptionalFieldsDocker-->
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">
 	    <button id="cancel" class="btn btn-default">Cancel</button>
