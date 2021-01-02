@@ -148,44 +148,14 @@ def update_global_config(smb_config=None, ad_config=None):
         # Next add AD config to smb_config and build AD section
         if ad_config is not None:
             smb_config.update(ad_config)
-
         domain = smb_config.pop("domain", None)
         if domain is not None:
-            idmap_high = int(smb_config["idmap_range"].split()[2])
-            default_range = "{} - {}".format(idmap_high + 1, idmap_high + 1000000)
-            workgroup = ad_config["workgroup"]
             tfo.write("{}\n".format(RS_AD_HEADER))
             tfo.write("    security = ads\n")
             tfo.write("    realm = {}\n".format(domain))
-            tfo.write("    template shell = /bin/sh\n")
             tfo.write("    kerberos method = secrets and keytab\n")
-            tfo.write("    winbind use default domain = false\n")
-            tfo.write("    winbind offline logon = true\n")
-            tfo.write("    winbind enum users = yes\n")
-            tfo.write("    winbind enum groups = yes\n")
-            tfo.write("    idmap config * : backend = tdb\n")
-            tfo.write("    idmap config * : range = {}\n".format(default_range))
-            # enable rfc2307 schema and collect UIDS from AD DC we assume if
-            # rfc2307 then winbind nss info too - collects AD DC home and shell
-            # for each user
-            if smb_config.pop("rfc2307", None):
-                tfo.write("    idmap config {} : backend = ad\n".format(workgroup))
-                tfo.write(
-                    "    idmap config {} : range = {}\n".format(
-                        workgroup, smb_config["idmap_range"]
-                    )
-                )
-                tfo.write(
-                    "    idmap config {} : schema_mode = rfc2307\n".format(workgroup)
-                )
-                tfo.write("    winbind nss info = rfc2307\n")
-            else:
-                tfo.write("    idmap config {} : backend = rid\n".format(workgroup))
-                tfo.write(
-                    "    idmap config {} : range = {}\n".format(
-                        workgroup, smb_config["idmap_range"]
-                    )
-                )
+            tfo.write("    client signing = yes\n")
+            tfo.write("    client use spnego = yes\n")
             tfo.write("{}\n\n".format(RS_AD_FOOTER))
 
         # After default [global], custom [global] and AD writes
