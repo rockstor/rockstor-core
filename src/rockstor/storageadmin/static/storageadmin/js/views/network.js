@@ -37,11 +37,16 @@ NetworkView = Backbone.View.extend({
         this.collection.on('reset', this.renderNetwork, this);
         this.devices = new NetworkDeviceCollection();
         this.devices.on('reset', this.renderNetwork, this);
+        this.docker_service = new Service({
+            name: 'docker'
+        });
+        this.docker_service.on('reset', this.renderNetwork, this);
         this.initHandlebarHelpers();
     },
 
     render: function() {
         var _this = this;
+        this.docker_service.fetch();
         this.collection.fetch();
         this.devices.fetch();
         return this;
@@ -60,6 +65,11 @@ NetworkView = Backbone.View.extend({
                 this.pc.push(c.toJSON());
             }
         }
+        // Get status of Rock-on service to display edit/delete links accordingly
+        // on docker network connections (rocknets)
+        if (typeof this.current_docker_status == 'undefined') {
+            this.current_docker_status = this.docker_service.get('status');
+        }
 
         $(this.el).empty();
         $(this.el).append(this.template({
@@ -67,7 +77,8 @@ NetworkView = Backbone.View.extend({
             connections: this.collection.toJSON(),
             parent_connections: this.pc,
             child_connections: this.cc,
-            devices: this.devices.toJSON()
+            devices: this.devices.toJSON(),
+            docker_running: this.current_docker_status
         }));
         setApplianceName();
 
