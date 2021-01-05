@@ -163,8 +163,13 @@ class SystemNetworkTests(unittest.TestCase):
         which should return a dict with detailed config for each network connection detected.
         """
         # Mock and patch docker-specific calls
+        self.patch_docker_status = patch("system.network.docker_status")
+        self.mock_docker_status = self.patch_docker_status.start()
+        self.mock_docker_status.return_value = True
+
         self.patch_dnets = patch("system.network.dnets")
         self.mock_dnets = self.patch_dnets.start()
+
         self.patch_dnet_inspect = patch("system.network.dnet_inspect")
         self.mock_dnet_inspect = self.patch_dnet_inspect.start()
 

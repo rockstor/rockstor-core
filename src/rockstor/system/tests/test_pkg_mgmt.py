@@ -627,3 +627,11 @@ class SystemPackageTests(unittest.TestCase):
                 "returned = ({}).\n "
                 "expected = ({}).".format(returned, expected),
             )
+
+    # TODO: Add test for zypper auto update functionality post transition from currently
+    #  legacy yum based system which was previously lightly tested to exist only via
+    #  API level unit test src/rockstor/storageadmin/tests/test_commands.py
+    #  Suggested name:
+    #  test_auto_update(self)
+    #  Related additional low level test:
+    #  test_auto_update_status(self)

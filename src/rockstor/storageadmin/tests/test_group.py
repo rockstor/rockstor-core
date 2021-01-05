@@ -92,12 +92,12 @@ class GroupTests(APITestMixin, APITestCase):
 
         # invalid gid
         data = {'groupname': 'ngroup2',
-                'gid': 1001, }
+                'gid': 100, }
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_400_BAD_REQUEST,
                          msg=response.data)
-        err_msg = 'GID (1001) already exists. Choose a different one.'
+        err_msg = 'GID (100) already exists. Choose a different one.'
         self.assertEqual(response.data[0], err_msg)
 
         # happy path

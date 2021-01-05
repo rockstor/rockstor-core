@@ -56,6 +56,12 @@ class CommandTests(APITestMixin, APITestCase):
         cls.mock_update_check = cls.patch_update_check.start()
         cls.mock_update_check.return_value = 1, 1, 1
 
+        # Mock src/rockstor/system/pkg_mgmt.py auto_update() in
+        # src/rockstor/storageadmin/views/command.py
+        cls.patch_auto_update = patch('storageadmin.views.command.auto_update')
+        cls.mock_auto_update = cls.patch_auto_update.start()
+        cls.mock_auto_update.return_value = True
+
         cls.patch_system_shutdown = patch(
             'storageadmin.views.command.system_shutdown')
         cls.mock_system_shutdown = cls.patch_system_shutdown.start()
