@@ -258,7 +258,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
 
         if command == "kernel":
             try:
-                return Response(kernel_info(settings.SUPPORTED_KERNEL_VERSION))
+                return Response(kernel_info())
             except Exception as e:
                 handle_exception(e, request)
 

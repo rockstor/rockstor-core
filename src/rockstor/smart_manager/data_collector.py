@@ -881,7 +881,6 @@ class ServicesNamespace(RockstorIO):
 class SysinfoNamespace(RockstorIO):
 
     start = False
-    supported_kernel = settings.SUPPORTED_KERNEL_VERSION
     os_distro_name = settings.OS_DISTRO_NAME
 
     # This function is run once on every connection
@@ -938,16 +937,11 @@ class SysinfoNamespace(RockstorIO):
                 "kernel_info",
                 {
                     "key": "sysinfo:kernel_info",
-                    "data": kernel_info(self.supported_kernel),
+                    "data": kernel_info(),
                 },
             )
-            # kernel_info() in above raises an Exception if the running
-            # kernel != supported kernel and so:
         except Exception as e:
             logger.error("Exception while gathering kernel info: %s" % e.__str__())
-            # Emit an event to the front end to capture error report
-            self.emit("kernel_error", {"key": "sysinfo:kernel_error", "data": str(e)})
-            self.error("unsupported_kernel", str(e))
 
     def update_rockons(self):
 

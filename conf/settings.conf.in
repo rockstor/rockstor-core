@@ -357,8 +357,6 @@ CONFROOT = '${buildout:depdir}/conf'
 CERTDIR = '${buildout:depdir}/certs'
 COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 
-SUPPORTED_KERNEL_VERSION = ${django-settings-conf:kernel}
-
 SNAP_TS_FORMAT = '%Y%m%d%H%M'
 
 MODEL_DEFS = {
