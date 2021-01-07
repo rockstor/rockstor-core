@@ -165,15 +165,15 @@ class UserTests(APITestMixin, APITestCase):
         #          "username.")
         # self.assertEqual(response.data[0], e_msg)
 
-        # create a user with existing uid ('nobody' has a uid 99)
+        # create a user with existing uid ('nobody' has a uid 65534)
         # TODO: We are not limiting user id to >= 1000.
         data = {'username': 'newUser', 'password': 'pwuser2',
-                'group': 'admin', 'uid': '99', 'pubic_key': 'xxx'}
+                'group': 'admin', 'uid': '65534', 'pubic_key': 'xxx'}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
-        e_msg = "UID (99) already exists. Please choose a different one."
+        e_msg = "UID (65534) already exists. Please choose a different one."
         self.assertEqual(response.data[0], e_msg)
 
         # create a user that is already a system user(eg: root)
@@ -390,7 +390,10 @@ class UserTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
 
-        username = 'games'
+        # Hack fix as lp exists as real system user but is currently, incorrectly, not
+        # included in the exclude_list within src/rockstor/storageadmin/views/user.py
+        # Proper approach would be to setup a User.objects mock
+        username = 'lp'
         response = self.client.delete('{}/{}'.format(self.BASE_URL, username))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
