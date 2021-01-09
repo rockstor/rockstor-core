@@ -145,7 +145,9 @@ def update_tz(logging):
                 else:
                     tfo.write("TIME_ZONE = '{}'\n".format(zonestr))
                     updated = True
-                    logging.info("Changed timezone from {} to {}".format(curzone, zonestr))
+                    logging.info(
+                        "Changed timezone from {} to {}".format(curzone, zonestr)
+                    )
             else:
                 tfo.write(line)
     if updated:
@@ -296,9 +298,9 @@ def main():
 
     cert_loc = "{}/certs/".format(BASE_DIR)
     if os.path.isdir(cert_loc):
-        if not os.path.isfile("{}/rockstor.cert".format(cert_loc)) or not os.path.isfile(
-            "{}/rockstor.key".format(cert_loc)
-        ):
+        if not os.path.isfile(
+            "{}/rockstor.cert".format(cert_loc)
+        ) or not os.path.isfile("{}/rockstor.key".format(cert_loc)):
             shutil.rmtree(cert_loc)
 
     if not os.path.isdir(cert_loc):
@@ -356,9 +358,7 @@ def main():
         logging.info("restarting nginx...")
         run_command([SUPERCTL, "restart", "nginx"])
 
-    logging.info(
-        "Checking for flash and Running flash optimizations if appropriate."
-    )
+    logging.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
     try:
         logging.info("Updating the timezone from the system")
@@ -375,7 +375,9 @@ def main():
 
     if not os.path.isfile(STAMP):
         logging.info("Please be patient. This script could take a few minutes")
-        shutil.copyfile("{}/conf/django-hack".format(BASE_DIR), "{}/django".format(BASE_BIN))
+        shutil.copyfile(
+            "{}/conf/django-hack".format(BASE_DIR), "{}/django".format(BASE_BIN)
+        )
         run_command([SYSCTL, "enable", "postgresql"])
         logging.debug("Progresql enabled")
         pg_data = "/var/lib/pgsql/data"
@@ -444,7 +446,12 @@ def main():
         logging.debug("smartdb app database loaded")
         logging.info("Done")
         run_command(
-            ["cp", "-f", "{}/conf/postgresql.conf".format(BASE_DIR), "/var/lib/pgsql/data/"]
+            [
+                "cp",
+                "-f",
+                "{}/conf/postgresql.conf".format(BASE_DIR),
+                "/var/lib/pgsql/data/",
+            ]
         )
         logging.debug("postgresql.conf copied")
         run_command(
@@ -471,7 +478,9 @@ def main():
         db = "default"
         if app == "smart_manager":
             db = app
-        o, e, rc = run_command([DJANGO, "migrate", "--list", "--database={}".format(db), app])
+        o, e, rc = run_command(
+            [DJANGO, "migrate", "--list", "--database={}".format(db), app]
+        )
         initial_faked = False
         for l in o:
             if l.strip() == "[X] 0001_initial":

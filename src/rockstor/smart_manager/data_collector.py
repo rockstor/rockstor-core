@@ -934,11 +934,7 @@ class SysinfoNamespace(RockstorIO):
 
         try:
             self.emit(
-                "kernel_info",
-                {
-                    "key": "sysinfo:kernel_info",
-                    "data": kernel_info(),
-                },
+                "kernel_info", {"key": "sysinfo:kernel_info", "data": kernel_info()}
             )
         except Exception as e:
             logger.error("Exception while gathering kernel info: %s" % e.__str__())
