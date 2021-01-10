@@ -1140,21 +1140,12 @@ $(document).ready(function() {
         }
     });
 
-    var kernelError = function(data) {
-        // If 'kernel' does not show up in the string, we're ok
-        if (data.indexOf('kernel') !== -1) {
-            // Put an alert at the top of the page
-            $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data + '</div>');
-        }
-    };
-
 
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
     RockStorSocket.addListener(distroInfo, this, 'sysinfo:distro_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
     RockStorSocket.addListener(displayLocaleTime, this, 'sysinfo:localtime');
     RockStorSocket.addListener(displayYumUpdates, this, 'sysinfo:yum_updates');
-    RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
     RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software_update');
     RockStorSocket.addListener(displayShutdownStatus, this, 'sysinfo:shutdown_status');
     RockStorSocket.addListener(displayPoolDegradedStatus, this, 'sysinfo:pool_degraded_status');

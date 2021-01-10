@@ -33,46 +33,16 @@ logger = logging.getLogger(__name__)
 
 SYSCTL = "/usr/bin/systemctl"
 BASE_DIR = settings.ROOT_DIR
-BASE_BIN = "%sbin" % BASE_DIR
-DJANGO = "%s/django" % BASE_BIN
-STAMP = "%s/.initrock" % BASE_DIR
-FLASH_OPTIMIZE = "%s/flash-optimize" % BASE_BIN
-PREP_DB = "%s/prep_db" % BASE_BIN
-SUPERCTL = "%s/supervisorctl" % BASE_BIN
+BASE_BIN = "{}bin".format(BASE_DIR)
+DJANGO = "{}/django".format(BASE_BIN)
+STAMP = "{}/.initrock".format(BASE_DIR)
+FLASH_OPTIMIZE = "{}/flash-optimize".format(BASE_BIN)
+PREP_DB = "{}/prep_db".format(BASE_BIN)
+SUPERCTL = "{}/supervisorctl".format(BASE_BIN)
 OPENSSL = "/usr/bin/openssl"
-GRUBBY = "/usr/sbin/grubby"
 RPM = "/usr/bin/rpm"
 YUM = "/usr/bin/yum"
 IP = "/usr/sbin/ip"
-
-
-def delete_old_kernels(logging, num_retain=5):
-    # Don't keep more than num_retain kernels
-    o, e, rc = run_command([RPM, "-q", "kernel-ml"])
-    ml_kernels = o[:-1]  # last entry is an empty string.
-    ml_kernels = sorted(ml_kernels)
-    # centos kernels, may or may not be installed.
-    centos_kernels = []
-    o, e, rc = run_command([RPM, "-q", "kernel"], throw=False)
-    if rc == 0:
-        centos_kernels = o[:-1]
-
-    # Don't delete current running kernel
-    # Don't delete current default kernel
-    running_kernel = os.uname()[2]
-    default_kernel = settings.SUPPORTED_KERNEL_VERSION
-    deleted = 0
-    for k in centos_kernels:
-        kv = k.split("kernel-")[1]
-        if kv != running_kernel and kv != default_kernel:
-            run_command([YUM, "remove", "-y", k])
-            deleted += 1
-            logging.info("Deleted old Kernel: %s" % k)
-    for i in range(len(centos_kernels) + len(ml_kernels) - deleted - num_retain):
-        kv = ml_kernels[i].split("kernel-ml-")[1]
-        if kv != running_kernel and kv != default_kernel:
-            run_command([YUM, "remove", "-y", ml_kernels[i]])
-            logging.info("Deleted old Kernel: %s" % ml_kernels[i])
 
 
 def inet_addrs(interface=None):
@@ -159,38 +129,11 @@ def update_nginx(logger):
         logger.exception("Exception while updating nginx: {e}".format(e=e))
 
 
-def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
-    supported_kernel_path = "/boot/vmlinuz-%s" % version
-    if not os.path.isfile(supported_kernel_path):
-        return logger.error(
-            "Supported kernel(%s) does not exist" % supported_kernel_path
-        )
-    try:
-        o, e, rc = run_command([GRUBBY, "--default-kernel"])
-        if o[0] == supported_kernel_path:
-            return logging.info(
-                "Supported kernel(%s) is already the default" % supported_kernel_path
-            )
-    except Exception as e:
-        return logger.error(
-            "Exception while listing the default kernel: %s" % e.__str__()
-        )
-
-    try:
-        run_command([GRUBBY, "--set-default=%s" % supported_kernel_path])
-        return logger.info("Default kernel set to %s" % supported_kernel_path)
-    except Exception as e:
-        return logger.error(
-            "Exception while setting kernel(%s) as "
-            "default: %s" % (version, e.__str__())
-        )
-
-
 def update_tz(logging):
     # update timezone variable in settings.py
     zonestr = os.path.realpath("/etc/localtime").split("zoneinfo/")[1]
-    logging.info("system timezone = %s" % zonestr)
-    sfile = "%s/src/rockstor/settings.py" % BASE_DIR
+    logging.info("system timezone = {}".format(zonestr))
+    sfile = "{}/src/rockstor/settings.py".format(BASE_DIR)
     fo, npath = mkstemp()
     updated = False
     with open(sfile) as sfo, open(npath, "w") as tfo:
@@ -200,9 +143,11 @@ def update_tz(logging):
                 if curzone == zonestr:
                     break
                 else:
-                    tfo.write("TIME_ZONE = '%s'\n" % zonestr)
+                    tfo.write("TIME_ZONE = '{}'\n".format(zonestr))
                     updated = True
-                    logging.info("Changed timezone from %s to %s" % (curzone, zonestr))
+                    logging.info(
+                        "Changed timezone from {} to {}".format(curzone, zonestr)
+                    )
             else:
                 tfo.write(line)
     if updated:
@@ -263,7 +208,7 @@ def bootstrap_sshd_config(logging):
 
 def require_postgres(logging):
     rs_dest = "/etc/systemd/system/rockstor-pre.service"
-    rs_src = "%s/conf/rockstor-pre.service" % BASE_DIR
+    rs_src = "{}/conf/rockstor-pre.service".format(BASE_DIR)
     logging.info("updating rockstor-pre service..")
     with open(rs_dest, "w") as dfo, open(rs_src) as sfo:
         for l in sfo.readlines():
@@ -301,7 +246,7 @@ def establish_shellinaboxd_service(logging):
 
 def enable_rockstor_service(logging):
     rs_dest = "/etc/systemd/system/rockstor.service"
-    rs_src = "%s/conf/rockstor.service" % BASE_DIR
+    rs_src = "{}/conf/rockstor.service".format(BASE_DIR)
     sum1 = md5sum(rs_dest)
     sum2 = md5sum(rs_src)
     if sum1 != sum2:
@@ -314,8 +259,8 @@ def enable_rockstor_service(logging):
 
 def enable_bootstrap_service(logging):
     name = "rockstor-bootstrap.service"
-    bs_dest = "/etc/systemd/system/%s" % name
-    bs_src = "%s/conf/%s" % (BASE_DIR, name)
+    bs_dest = "/etc/systemd/system/{}".format(name)
+    bs_src = "{}/conf/{}".format(BASE_DIR, name)
     sum1 = "na"
     if os.path.isfile(bs_dest):
         sum1 = md5sum(bs_dest)
@@ -326,23 +271,23 @@ def enable_bootstrap_service(logging):
         run_command([SYSCTL, "enable", name])
         run_command([SYSCTL, "daemon-reload"])
         return logging.info("Done.")
-    return logging.info("%s looks correct. Not updating." % name)
+    return logging.info("{} looks correct. Not updating.".format(name))
 
 
 def update_smb_service(logging):
     name = "smb.service"
-    ss_dest = "/etc/systemd/system/%s" % name
+    ss_dest = "/etc/systemd/system/{}".format(name)
     if not os.path.isfile(ss_dest):
-        return logging.info("%s is not enabled. Not updating.")
-    ss_src = "%s/conf/%s" % (BASE_DIR, name)
+        return logging.info("{} is not enabled. Not updating.".format(name))
+    ss_src = "{}/conf/{}".format(BASE_DIR, name)
     sum1 = md5sum(ss_dest)
     sum2 = md5sum(ss_src)
     if sum1 != sum2:
-        logging.info("Updating %s" % name)
+        logging.info("Updating {}".format(name))
         shutil.copy(ss_src, ss_dest)
         run_command([SYSCTL, "daemon-reload"])
         return logging.info("Done.")
-    return logging.info("%s looks correct. Not updating." % name)
+    return logging.info("{} looks correct. Not updating.".format(name))
 
 
 def main():
@@ -350,18 +295,12 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "-x":
         loglevel = logging.DEBUG
     logging.basicConfig(format="%(asctime)s: %(message)s", level=loglevel)
-    set_def_kernel(logging)
-    try:
-        delete_old_kernels(logging)
-    except Exception as e:
-        logging.debug("Exception while deleting old kernels. Soft error. Moving on.")
-        logging.exception(e)
 
-    cert_loc = "%s/certs/" % BASE_DIR
+    cert_loc = "{}/certs/".format(BASE_DIR)
     if os.path.isdir(cert_loc):
-        if not os.path.isfile("%s/rockstor.cert" % cert_loc) or not os.path.isfile(
-            "%s/rockstor.key" % cert_loc
-        ):
+        if not os.path.isfile(
+            "{}/rockstor.cert".format(cert_loc)
+        ) or not os.path.isfile("{}/rockstor.key".format(cert_loc)):
             shutil.rmtree(cert_loc)
 
     if not os.path.isdir(cert_loc):
@@ -379,9 +318,9 @@ def main():
                 "-newkey",
                 "rsa:2048",
                 "-keyout",
-                "%s/first.key" % cert_loc,
+                "{}/first.key".format(cert_loc),
                 "-out",
-                "%s/rockstor.csr" % cert_loc,
+                "{}/rockstor.csr".format(cert_loc),
                 "-subj",
                 dn,
             ]
@@ -393,9 +332,9 @@ def main():
                 OPENSSL,
                 "rsa",
                 "-in",
-                "%s/first.key" % cert_loc,
+                "{}/first.key".format(cert_loc),
                 "-out",
-                "%s/rockstor.key" % cert_loc,
+                "{}/rockstor.key".format(cert_loc),
             ]
         )
         logging.debug("rockstor key created")
@@ -405,12 +344,12 @@ def main():
                 OPENSSL,
                 "x509",
                 "-in",
-                "%s/rockstor.csr" % cert_loc,
+                "{}/rockstor.csr".format(cert_loc),
                 "-out",
-                "%s/rockstor.cert" % cert_loc,
+                "{}/rockstor.cert".format(cert_loc),
                 "-req",
                 "-signkey",
-                "%s/rockstor.key" % cert_loc,
+                "{}/rockstor.key".format(cert_loc),
                 "-days",
                 "3650",
             ]
@@ -419,26 +358,26 @@ def main():
         logging.info("restarting nginx...")
         run_command([SUPERCTL, "restart", "nginx"])
 
-    logging.info(
-        "Checking for flash and Running flash optimizations if appropriate."
-    )
+    logging.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
     try:
         logging.info("Updating the timezone from the system")
         update_tz(logging)
     except Exception as e:
-        logging.error("Exception while updating timezone: %s" % e.__str__())
+        logging.error("Exception while updating timezone: {}".format(e.__str__()))
         logging.exception(e)
 
     try:
         logging.info("Updating sshd_config")
         bootstrap_sshd_config(logging)
     except Exception as e:
-        logging.error("Exception while updating sshd_config: %s" % e.__str__())
+        logging.error("Exception while updating sshd_config: {}".format(e.__str__()))
 
     if not os.path.isfile(STAMP):
         logging.info("Please be patient. This script could take a few minutes")
-        shutil.copyfile("%s/conf/django-hack" % BASE_DIR, "%s/django" % BASE_BIN)
+        shutil.copyfile(
+            "{}/conf/django-hack".format(BASE_DIR), "{}/django".format(BASE_BIN)
+        )
         run_command([SYSCTL, "enable", "postgresql"])
         logging.debug("Progresql enabled")
         pg_data = "/var/lib/pgsql/data"
@@ -491,7 +430,7 @@ def main():
                 "-",
                 "postgres",
                 "-c",
-                "psql storageadmin -f %s/conf/storageadmin.sql.in" % BASE_DIR,
+                "psql storageadmin -f {}/conf/storageadmin.sql.in".format(BASE_DIR),
             ]
         )  # noqa E501
         logging.debug("storageadmin app database loaded")
@@ -501,17 +440,22 @@ def main():
                 "-",
                 "postgres",
                 "-c",
-                "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR,
+                "psql smartdb -f {}/conf/smartdb.sql.in".format(BASE_DIR),
             ]
         )
         logging.debug("smartdb app database loaded")
         logging.info("Done")
         run_command(
-            ["cp", "-f", "%s/conf/postgresql.conf" % BASE_DIR, "/var/lib/pgsql/data/"]
+            [
+                "cp",
+                "-f",
+                "{}/conf/postgresql.conf".format(BASE_DIR),
+                "/var/lib/pgsql/data/",
+            ]
         )
         logging.debug("postgresql.conf copied")
         run_command(
-            ["cp", "-f", "%s/conf/pg_hba.conf" % BASE_DIR, "/var/lib/pgsql/data/"]
+            ["cp", "-f", "{}/conf/pg_hba.conf".format(BASE_DIR), "/var/lib/pgsql/data/"]
         )
         logging.debug("pg_hba.conf copied")
         run_command([SYSCTL, "restart", "postgresql"])
@@ -534,14 +478,16 @@ def main():
         db = "default"
         if app == "smart_manager":
             db = app
-        o, e, rc = run_command([DJANGO, "migrate", "--list", "--database=%s" % db, app])
+        o, e, rc = run_command(
+            [DJANGO, "migrate", "--list", "--database={}".format(db), app]
+        )
         initial_faked = False
         for l in o:
             if l.strip() == "[X] 0001_initial":
                 initial_faked = True
                 break
         if not initial_faked:
-            db_arg = "--database=%s" % db
+            db_arg = "--database={}".format(db)
             logger.debug(
                 "migrate (--fake) db=({}) app=({}) 0001_initial".format(db, app)
             )
