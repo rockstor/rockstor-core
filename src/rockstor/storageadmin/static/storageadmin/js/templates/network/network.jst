@@ -51,18 +51,24 @@
                     data-parent="#connections"
                     data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp;
                     {{#unless this.docker_name}}
-                    <a href="#network/edit/{{this.id}}"><i
+                    <a href="#network/edit/{{this.id}}" title="Edit connection"><i
                             class="glyphicon glyphicon-pencil"></i></a>
                     <a id="{{this.id}}" data-action="delete" rel="tooltip"
                        title="Delete connection"><i
                             class="glyphicon glyphicon-trash"></i></a></td>
                     {{/unless}}
                     {{#if this.user_dnet}}
-                    <a href="#network/edit/{{this.id}}"><i
+                    {{#if ../docker_running}}
+                    <a href="#network/edit/{{this.id}}" title="Edit connection"><i
                             class="glyphicon glyphicon-pencil"></i></a>
                     <a id="{{this.id}}" data-action="delete" rel="tooltip"
                        title="Delete connection"><i
                             class="glyphicon glyphicon-trash"></i></a></td>
+                    {{else}}
+                    <i class="glyphicon glyphicon-info-sign"
+                       title="Cannot edit/delete rocknet while the Rock-on service is OFF">
+                    </i></td>
+                    {{/if}}
                     {{/if}}
                 <td>{{this.uuid}}</td>
                 <td>{{this.ctype}} {{#if

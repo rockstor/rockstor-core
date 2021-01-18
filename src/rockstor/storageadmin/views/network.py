@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -56,7 +56,6 @@ DEFAULT_MTU = MIN_MTU
 
 
 class NetworkMixin(object):
-    logger.debug("The class NetworkMixin has been initialized")
     # Runners for teams. @todo: support basic defaults + custom configuration.
     # @todo: lacp doesn't seem to be activating
     runners = {
@@ -131,7 +130,7 @@ class NetworkMixin(object):
                 )
 
         else:
-            logger.error("Unknown ctype: {} config: {}".format(ctype, config))
+            logger.debug("Unknown ctype: {} config: {}".format(ctype, config))
 
     @staticmethod
     @transaction.atomic

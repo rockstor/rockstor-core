@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -145,16 +145,17 @@ def probe_running_containers(container=None, network=None, all=False):
         "--filter",
         "status=paused",
     ]
-    if all:
-        cmd.extend((["-a",]))
-    if network:
-        cmd.extend((["--filter", "network={}".format(network),]))
-    if container:
-        cmd.extend((running_filters + ["--filter", "name={}".format(container),]))
-    else:
-        cmd.extend((running_filters))
-    o, e, rc = run_command(cmd)
-    return o
+    if docker_status():
+        if all:
+            cmd.extend((["-a",]))
+        if network:
+            cmd.extend((["--filter", "network={}".format(network),]))
+        if container:
+            cmd.extend((running_filters + ["--filter", "name={}".format(container),]))
+        else:
+            cmd.extend((running_filters))
+        o, e, rc = run_command(cmd)
+        return o
 
 
 def dnet_create(
@@ -185,6 +186,11 @@ def dnet_create(
     :param subnet:
     :return:
     """
+    if not docker_status():
+        raise Exception(
+            "Cannot create rocknet while docker is not running. "
+            "Turn the Rock-on service ON and try again"
+        )
     o, e, rc = run_command(list(DNET) + ["list", "--format", "{{.Name}}",])
     if network not in o:
         logger.debug(

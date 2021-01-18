@@ -71,7 +71,7 @@ class RockOn(models.Model):
         """
         for co in self.dcontainer_set.all():
             res = probe_running_containers(container=co.name, network="host", all=True)
-            if len(res) > 1:
+            if (res is not None) and (len(res) > 1):
                 return True
             else:
                 return False
