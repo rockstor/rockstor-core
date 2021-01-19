@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -892,7 +892,6 @@ class SysinfoNamespace(RockstorIO):
         self.spawn(self.update_storage_state, sid)
         self.spawn(self.update_check, sid)
         self.spawn(self.yum_updates, sid)
-        self.spawn(self.update_rockons, sid)
         self.spawn(self.send_kernel_info, sid)
         self.spawn(self.prune_logs, sid)
         self.spawn(self.send_localtime, sid)
@@ -938,18 +937,6 @@ class SysinfoNamespace(RockstorIO):
             )
         except Exception as e:
             logger.error("Exception while gathering kernel info: %s" % e.__str__())
-
-    def update_rockons(self):
-
-        try:
-            self.aw.api_call(
-                "rockons/update", data=None, calltype="post", save_error=False
-            )
-        except Exception as e:
-            logger.error(
-                "failed to update Rock-on metadata. low-level "
-                "exception: %s" % e.__str__()
-            )
 
     def update_storage_state(self):
         # update storage state once a minute as long as
