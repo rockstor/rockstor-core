@@ -1,53 +1,61 @@
-# Rockstor
+# The Rockstor Project
 
-[![Build Status](http://192.195.81.208:22082/buildStatus/icon?job=build-rockstor-core)](http://192.195.81.208:22082/job/build-rockstor-core)
+An open source (GPL) community endeavour to sustainably develop, maintain, and
+distribute an easy to use, flexible, Linux & BTRFS based DIY storage appliance.
+
+[About Us](http://rockstor.com/about-us.html)
+
+Donations welcome: 
+
+[www.paypal.me/rockstor](https://www.paypal.me/rockstor)
 
 # What is Rockstor?
 
-Rockstor is a Network Attached Storage(NAS) solution based on Linux and B-Tree
-Filesystem(BTRFS). It is written in Python and Javascript, and is made
+Rockstor is a Network Attached Storage (NAS) solution built on Linux and the B-Tree
+Filesystem (BTRFS). It is written in Python and Javascript and is made
 available as a complete Linux distribution for convenience. Rockstor takes NAS
-to a new level with advanced features, ease of use and management. It goes
-beyond NAS by supporting Docker based apps, RESTful APIs and serves as a
-powerful cloud storage platform in a box.
+to a new level with advanced features, ease of use, and management. It goes
+beyond traditional NAS by supporting Docker based apps, RESTful APIs; and serves as a
+powerful cloud storage platform out-of-the-box.
 
 # What are the project goals?
 
-The main goal is to develop the ultimate open source NAS solution that anyone can
-simply deploy on commodity hardware, use it easily and not be restricted in any
-way. For more information, read the [team's
-mission](http://rockstor.com/about-us.html).
+The main goal is to develop an easy to deploy and use open source NAS solution for
+for commodity hardware. For more information, see:
+[Our Endeavour](http://rockstor.com/about-us.html).
 
 # Who should use it?
 
-Rockstor can be used by consumers and organizations, both big and small. As of
-the current release, it's intended for advanced home users, DIY NAS builders
-and smaller organizations that need NAS or private cloud in a box. Go to
-[rockstor.com](http://rockstor.com) for more information.
+Rockstor aims to aid individuals and organisations alike. As a DIY setup some
+familiarity with PC/Pi4 operating system install is required; but not much beyond
+the basics. For more information please see our main web site:
+[rockstor.com](http://rockstor.com)
 
-# Getting started
+# Getting started & any questions
 
-Best way to get started is by following the [quickstart
+The best way to get started is by following the [quickstart
 guide](http://rockstor.com/docs/quickstart.html).
 
-To get in touch with developers, users and contributors join our
-[community forum](http://forum.rockstor.com).
+To get in touch with developers, users, and contributors join our
+[community forum](http://forum.rockstor.com) and ask away.
 
 # Documentation
 
-Documentation is in the
-[rockstor-doc](https://github.com/rockstor/rockstor-doc) repository. You can also read it
-[online](http://rockstor.com/docs).
+[Our Documentation](http://rockstor.com/docs) is also a community endeavour with it's
+own GitHub repo: [rockstor-doc](https://github.com/rockstor/rockstor-doc): contributions
+and correction are always welcome.
 
 # Troubleshooting
 
-The [community forum](http://forum.rockstor.com) is the ideal place to look for
-help and ask other users and developers questions.
+The [community forum](http://forum.rockstor.com) is the ideal location for help and 
+support; all current developers are also active forum members.
 
 # Issue tracking
 
-You can go through all open issues for rockstor-core
-[here](https://github.com/rockstor/rockstor-core/issues).
+We use GitHub's issue system, although a forum post/discussion is advised prior to
+opening a GitHub issue as this often helps in identifying exactly what should be added
+to an new issue.
+[Rocksor issues](https://github.com/rockstor/rockstor-core/issues).
 
 # License
 
@@ -55,9 +63,12 @@ Please see the file [COPYING](https://github.com/rockstor/rockstor-core/blob/mas
 
 # Contributing
 
-Development environment setup and contribution guidelines are explained
-[here](http://rockstor.com/docs/contribute.html).
+Development environment setup and contribution guidelines are available in our docs:
+[Contributing to Rockstor - Overview](http://rockstor.com/docs/contribute.html)
 
-Pull requests are welcome. Pick an issue that interests you or create a new one
-to work on. You can also ask on the [community forum](http://forum.rockstor.com) for
-guidance. We'll be happy to help.
+There is no contributor licence agreement.
+
+Pull requests are welcome. Pick an issue that interests you or create a new one.
+Please also references our [friendly community forum ](http://forum.rockstor.com)
+for open questions and our ever growing wiki entries that serve as our
+community facing developer notes.  
