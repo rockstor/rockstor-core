@@ -1,6 +1,6 @@
 # The Rockstor Project
 
-An open source (GPL) community endeavour to sustainably develop, maintain, and
+An open source (GPLv3 core / AGPLv3 Rock-ons) community endeavour to sustainably develop, maintain, and
 distribute an easy to use, flexible, Linux & BTRFS based DIY storage appliance.
 
 [About Us](http://rockstor.com/about-us.html)
