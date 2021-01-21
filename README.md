@@ -31,7 +31,7 @@ familiarity with PC/Pi4 operating system install is required; but not much beyon
 the basics. For more information please see our main web site:
 [rockstor.com](http://rockstor.com)
 
-# Getting started & any questions
+# Getting started and questions
 
 The best way to get started is by following the [quickstart
 guide](http://rockstor.com/docs/quickstart.html).
