@@ -70,5 +70,5 @@ There is no Contributor License Agreement (CLA).
 
 Pull requests are welcome. Pick an issue that interests you or create a new one.
 Please also reference our [friendly community forum ](http://forum.rockstor.com)
-for open questions and our ever growing wiki entries that serve as our
+for open questions and our ever-growing wiki entries that serve as our
 community facing developer notes.  
