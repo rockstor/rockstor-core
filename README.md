@@ -69,6 +69,6 @@ Development environment setup and contribution guidelines are available in our d
 There is no Contributor License Agreement (CLA).
 
 Pull requests are welcome. Pick an issue that interests you or create a new one.
-Please also references our [friendly community forum ](http://forum.rockstor.com)
+Please also reference our [friendly community forum ](http://forum.rockstor.com)
 for open questions and our ever growing wiki entries that serve as our
 community facing developer notes.  
