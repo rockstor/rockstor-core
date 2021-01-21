@@ -43,7 +43,7 @@ To get in touch with developers, users, and contributors join our
 
 [Our Documentation](http://rockstor.com/docs) is also a community endeavour with its
 own GitHub repo: [rockstor-doc](https://github.com/rockstor/rockstor-doc): contributions
-and correction are always welcome.
+and corrections are always welcome.
 
 # Troubleshooting
 
