@@ -66,7 +66,7 @@ Please see the file [COPYING](https://github.com/rockstor/rockstor-core/blob/mas
 Development environment setup and contribution guidelines are available in our docs:
 [Contributing to Rockstor - Overview](http://rockstor.com/docs/contribute.html)
 
-There is no contributor licence agreement.
+There is no Contributor License Agreement (CLA).
 
 Pull requests are welcome. Pick an issue that interests you or create a new one.
 Please also references our [friendly community forum ](http://forum.rockstor.com)
