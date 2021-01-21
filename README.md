@@ -31,7 +31,7 @@ familiarity with PC/Pi4 operating system install is required; but not much beyon
 the basics. For more information please see our main web site:
 [rockstor.com](http://rockstor.com)
 
-# Getting started & any questions
+# Getting started and questions
 
 The best way to get started is by following the [quickstart
 guide](http://rockstor.com/docs/quickstart.html).
@@ -41,9 +41,9 @@ To get in touch with developers, users, and contributors join our
 
 # Documentation
 
-[Our Documentation](http://rockstor.com/docs) is also a community endeavour with it's
+[Our Documentation](http://rockstor.com/docs) is also a community endeavour with its
 own GitHub repo: [rockstor-doc](https://github.com/rockstor/rockstor-doc): contributions
-and correction are always welcome.
+and corrections are always welcome.
 
 # Troubleshooting
 
@@ -66,9 +66,9 @@ Please see the file [COPYING](https://github.com/rockstor/rockstor-core/blob/mas
 Development environment setup and contribution guidelines are available in our docs:
 [Contributing to Rockstor - Overview](http://rockstor.com/docs/contribute.html)
 
-There is no contributor licence agreement.
+There is no Contributor License Agreement (CLA).
 
 Pull requests are welcome. Pick an issue that interests you or create a new one.
-Please also references our [friendly community forum ](http://forum.rockstor.com)
-for open questions and our ever growing wiki entries that serve as our
+Please also reference our [friendly community forum ](http://forum.rockstor.com)
+for open questions and our ever-growing wiki entries that serve as our
 community facing developer notes.  
