@@ -37,7 +37,7 @@ from storageadmin.serializers import (
 )
 from system.docker import (
     docker_status,
-    probe_running_containers,
+    probe_containers,
     dnet_create,
     dnet_connect,
     dnet_disconnect,
@@ -473,7 +473,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                 docker_name = request.data.get("docker_name")
                 dname = request.data.get("dname")
                 # Get list of connected containers to re-connect them later
-                clist = probe_running_containers(network=docker_name, all=True)[:-1]
+                clist = probe_containers(network=docker_name, all=True)[:-1]
                 logger.debug("clist is {}".format(clist))
                 if len(clist) > 0:
                     for c in clist:
@@ -548,7 +548,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
             if nco.bridgeconnection_set.first() > 0:  # If docker network
                 brco = nco.bridgeconnection_set.first()
                 # check for running containers and disconnect them first
-                clist = probe_running_containers(network=brco.docker_name)
+                clist = probe_containers(network=brco.docker_name)
                 if len(clist) > 1:
                     for c in clist[:-1]:
                         dnet_disconnect(c, brco.docker_name)
