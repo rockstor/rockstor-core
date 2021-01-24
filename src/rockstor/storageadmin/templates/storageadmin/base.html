@@ -4,7 +4,7 @@
   <head>
     <!--
     /**
-    * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+    * Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
     * This file is part of RockStor.
     *
     * RockStor is free software; you can redistribute it and/or modify
@@ -249,41 +249,6 @@
   <div id="appliance-select-popup" class="modal hide fade">
       <div id="appliance-select-content"></div>
   </div>
-
-  <div class="modal fade" id="donate-modal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal"
-                  aria-label="Close"><span aria-hidden="true">&times;</span>
-          </button>
-          <h2 id="donate-modal-label">Please consider donating to help support
-            Rockstor's development</h2>
-        </div>
-        <div class="modal-body">
-          <h5 id="donate-modal-subtitle">Our Open Source development is
-            dependant upon update channel subscriptions and donations.</h5>
-          <form id="inner-contrib-form"
-                action="https://www.paypal.com/cgi-bin/webscr" method="post"
-                target="_blank" style="text-align: center;">
-            <input type="hidden" name="cmd" value="_s-xclick"/>
-            <input type="hidden" name="hosted_button_id"
-                   value="P72VDTYULUZTC"/>
-            <input type="image"
-                   src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif"
-                   border="0" name="paypal_donate_button"
-                   id="paypal_donate_button"
-                   title="PayPal - The safer, easier way to pay online!"
-                   alt="Donate with PayPal button"/>
-            <!--      <img alt="" border="0" src="https://www.paypal.com/en_GB/i/scr/pixel.gif"-->
-            <!--           width="1" height="1"/>-->
-          </form>
-              <em>Upon clicking the above button, you will be redirected to our donation handler PayPal.</em>
-        </div><!-- /.model-body -->
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
-
 
   <form name="dummy-form" action="/login" method="post">
       {% csrf_token %}

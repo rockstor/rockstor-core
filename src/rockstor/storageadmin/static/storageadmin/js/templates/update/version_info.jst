@@ -29,7 +29,8 @@ $(document).ready(function(){
         Rockstor package
         <a href="http://rockstor.com/docs/update-channels/update_channels.html" target="_blank"> update channels. </a>
         Please activate appropriately for your needs.
-        <br>- <strong>Stable updates</strong>: recommended for production use (paid).
+        <br>- <strong>Stable updates</strong>: recommended for production use (paid) -
+        <a href="http://rockstor.com/commercial_support.html" target="_blank"><i>Commercial Support</i></a> eligible.
         <br>- <strong>Testing updates</strong>: for development / actively testing latest code (free).
         <br>See our <a href="https://forum.rockstor.com/" target="_blank">friendly forum</a> for advise.
       </p>
@@ -82,6 +83,11 @@ $(document).ready(function(){
           <td><i class="fa fa-check"></i></td>
           <td><i class="fa fa-times"></i></td>
 	</tr>
+  <tr>
+          <td>Commercial Support available</td>
+          <td><i class="fa fa-check"></i></td>
+          <td><i class="fa fa-times"></i></td>
+  </tr>
 	<tr>
           <td></td>
           <td><a id="stable-modal" class="btn btn-success" title="Activate Stable subscription">Activate</a></td>
@@ -127,8 +133,15 @@ $(document).ready(function(){
 <div class="col-md-offset-2 col-md-8 col-md-offset-2" id="supportBox">
   {{#is_sub_active defaultSub}}
   <div class="alert alert-success" id="contrib-alert">
-    <h4>We are happy to make this update available to you. Please support us by
-      <a id="showDonateModal" href="#">Donating</a> or making a <a href="http://shop.rockstor.com" target="_blank"> Purchase</a></h4>
+    <h4>Our Open Source development is dependant upon active
+      <a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates </a>
+      participation,
+      <a href="https://www.paypal.me/rockstor" target="_blank"> donations (paypal.me)</a>
+      , and
+      <a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates </a>
+      subscriptions with their associated
+      <a href="http://rockstor.com/commercial_support.html" target="_blank"><i>Commercial Support</i></a> options.
+    </h4>
   </div>
   {{/is_sub_active}}
   <a id="update" class="btn btn-primary" title="start update">Start Update</a>
@@ -155,8 +168,10 @@ $(document).ready(function(){
     <p></p>
     <p>
       <a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a>
-      are <strong>activated</strong>. While it's not recommended, if you are
-      absolutely sure,
+      are <strong>activated</strong> - install eligible for
+      <a href="http://rockstor.com/commercial_support.html" target="_blank"><i>Commercial Support.</i></a>
+      <br><br>
+      While it's not recommended, if you are absolutely sure,
       <a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a>
       can be activated by clicking <a id="testing-modal"> here.</a>
     </p>
