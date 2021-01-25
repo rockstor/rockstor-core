@@ -121,7 +121,7 @@ def dnet_inspect(dname):
     return json.loads(o[0])
 
 
-def probe_running_containers(container=None, network=None, all=False):
+def probe_containers(container=None, network=None, all=False):
     """
     List docker containers.
     :param container: container name
@@ -135,25 +135,19 @@ def probe_running_containers(container=None, network=None, all=False):
         "--format",
         "{{.Names}}",
     ]
-    running_filters = [
-        "--filter",
-        "status=created",
-        "--filter",
-        "status=restarting",
-        "--filter",
-        "status=running",
-        "--filter",
-        "status=paused",
-    ]
     if docker_status():
         if all:
-            cmd.extend((["-a",]))
+            cmd.extend(
+                ["-a",]
+            )
         if network:
-            cmd.extend((["--filter", "network={}".format(network),]))
+            cmd.extend(
+                ["--filter", "network={}".format(network),]
+            )
         if container:
-            cmd.extend((running_filters + ["--filter", "name={}".format(container),]))
-        else:
-            cmd.extend((running_filters))
+            cmd.extend(
+                ["--filter", "name={}".format(container),]
+            )
         o, e, rc = run_command(cmd)
         return o
 
@@ -260,8 +254,8 @@ def dnet_connect(container, network, all=False):
     :param all:
     :return:
     """
-    if (container in probe_running_containers(container=container, all=all)) and (
-        container not in probe_running_containers(network=network, all=all)
+    if (container in probe_containers(container=container, all=all)) and (
+        container not in probe_containers(network=network, all=all)
     ):
         run_command(list(DNET) + ["connect", network, container,], log=True)
 

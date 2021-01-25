@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import Share, BridgeConnection
 
-from system.docker import probe_running_containers
+from system.docker import probe_containers
 
 
 class RockOn(models.Model):
@@ -70,7 +70,7 @@ class RockOn(models.Model):
         :return: True if using host networking.
         """
         for co in self.dcontainer_set.all():
-            res = probe_running_containers(container=co.name, network="host", all=True)
+            res = probe_containers(container=co.name, network="host", all=True)
             if (res is not None) and (len(res) > 1):
                 return True
             else:
