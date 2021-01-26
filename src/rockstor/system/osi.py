@@ -2189,7 +2189,7 @@ def update_hdparm_service(hdparm_command_list, comment):
     if update is not True and tempfile_length > systemd_template_line_count:
         # This is a fresh systemd instance so enable it but only if our line
         # count (ie entries) is greater than the template file's line count.
-        # N.B. can't use systemctrl wrapper as then circular dependency ie:-
+        # N.B. can't use systemctl wrapper as then circular dependency ie:-
         # return systemctl('rockstor-hdparm', 'enable')
         out, err, rc = run_command([SYSTEMCTL_BIN, "enable", service])
         if rc != 0:

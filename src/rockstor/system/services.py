@@ -121,7 +121,7 @@ def service_status(service_name, config=None):
     """
     Service status of either systemd or supervisord managed services.
     Hardwired to identify controlling system by service name and uses one of
-    systemctrl, init_service_op, or superctl to assess status accordingly.
+    systemctl, init_service_op, or superctl to assess status accordingly.
     Note some sanity checks for some services.
     :param service_name:
     :return:
