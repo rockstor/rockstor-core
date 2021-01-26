@@ -66,11 +66,19 @@ def init_service_op(service_name, command, throw=True):
     if service_name not in supported_services:
         raise Exception("unknown service: {}".format(service_name))
 
-    return run_command([SYSTEMCTL_BIN, command, service_name], throw=throw)
+    arg_list = [SYSTEMCTL_BIN, command, service_name]
+    if command == "status":
+        arg_list.append("--lines=0")
+
+    return run_command(arg_list, throw=throw)
 
 
 def systemctl(service_name, switch):
-    return run_command([SYSTEMCTL_BIN, switch, service_name], log=True)
+    arg_list = [SYSTEMCTL_BIN, switch, service_name]
+    if switch == "status":
+        arg_list.append("--lines=0")
+
+    return run_command(arg_list, log=True)
 
 
 def set_autostart(service, switch):
@@ -169,15 +177,15 @@ def service_status(service_name, config=None):
     elif service_name in ("replication", "data-collector", "ztask-daemon"):
         return superctl(service_name, "status")
     elif service_name == "smb":
-        out, err, rc = run_command([SYSTEMCTL_BIN, "status", "smb"], throw=False)
+        out, err, rc = run_command([SYSTEMCTL_BIN, "--lines=0", "status", "smb"], throw=False)
         if rc != 0:
             return out, err, rc
-        return run_command([SYSTEMCTL_BIN, "status", "nmb"], throw=False)
+        return run_command([SYSTEMCTL_BIN, "--lines=0", "status", "nmb"], throw=False)
     elif service_name == "nut":
         # Establish if nut is running by lowest common denominator nut-monitor
         # In netclient mode it is all that is required, however we don't then
         # reflect the state of the other services of nut-server and nut-driver.
-        return run_command([SYSTEMCTL_BIN, "status", "nut-monitor"], throw=False)
+        return run_command([SYSTEMCTL_BIN, "--lines=0", "status", "nut-monitor"], throw=False)
     elif service_name == "active-directory":
         if config is not None:
             active_directory_rc = 1
