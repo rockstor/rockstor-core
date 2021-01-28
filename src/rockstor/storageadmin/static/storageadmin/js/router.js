@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -957,19 +957,6 @@ $(document).ready(function() {
             $(target).removeClass('in');
             $(target).css('height', '0');
         }
-    });
-
-    // donate menu item handler
-    $('#donate_nav').click(function(event) {
-        if (event) {
-            event.preventDefault();
-        }
-        $('#donate-modal').modal('show');
-    });
-
-    // donate modal paypal donate button handler
-    $('#donate-modal #paypal_donate_button').click(function(event) {
-        $('#donate-modal').modal('hide');
     });
 
     /********** Websockets **************/
