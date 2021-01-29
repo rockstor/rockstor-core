@@ -84,6 +84,8 @@ ROOT_SUBVOL_EXCLUDE = [
 ]
 # Note in the above we have a non symmetrical exclusions entry of '@/.snapshots
 # this is to help distinguish our .snapshots from snapper's rollback subvol.
+# System-wide subvolume exclude list.
+SUBVOL_EXCLUDE = [".beeshome", "@/.beeshome"]
 
 # tuple subclass for devices from a btrfs view.
 Dev = collections.namedtuple("Dev", "temp_name is_byid devid size allocated")
@@ -765,6 +767,11 @@ def shares_info(pool):
         if re.match("ID ", l) is None:
             continue
         fields = l.split()
+        if fields[-1] in SUBVOL_EXCLUDE:
+            logger.debug(
+                "Skipping system-wide excluded subvol: name=({}).".format(fields[-1])
+            )
+            continue
         # Exclude root fs (in subvol) to avoid dependence on subvol name to
         # root fs top level dir name collision for normal operation.
         # And to expose root fs components that are themselves a subvol of
