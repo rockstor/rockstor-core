@@ -834,6 +834,15 @@ Handlebars.registerHelper('sidenav', function(condition) {
     }
     return new Handlebars.SafeString(html);
 });
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
+// attempt to conform to https://tools.ietf.org/html/rfc3986
+Handlebars.registerHelper('clean_forum_title', function(err_detail) {
+    return encodeURIComponent(err_detail).replace(/[!'()*]/g, function(c) {
+        return '%' + c.charCodeAt(0).toString(16);
+    });
+});
+
 //Initiate the router
 var app_router = new AppRouter;
 //###Render the view###
@@ -1198,5 +1207,6 @@ $(document).ready(function() {
 
         return new Handlebars.SafeString(html);
     });
+
 
 });
