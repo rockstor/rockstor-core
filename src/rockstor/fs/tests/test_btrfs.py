@@ -1222,6 +1222,73 @@ class BTRFSTests(unittest.TestCase):
                              "returned {},\nexpected {}.\n".format(returned,
                                                                    expected))
 
+    def test_shares_info_systemwide_exclusion_datapool(self):
+        """
+        Test initial system-wide subvol exclusion using the default .beeshome
+        :return:
+        """
+        # Pool with non root role so data pool
+        pool = Pool(raid='raid0', name='test-pool')
+        # Data drive hosting a rock-ons-root and it's associated snapshots
+        snap_idmap_return = {
+            '273': 'rock-ons-root/btrfs/subvolumes/31954001671f2231f1ef70b8811d3d2dd153c1b090f6049bbba8111084fd0750',  # noqa E501
+            '267': 'rock-ons-root/btrfs/subvolumes/ffc3da093f3cf41a55a0267266609dd1f46258c799217301d207b70d1f97bb2c',  # noqa E501
+            '266': 'rock-ons-root/btrfs/subvolumes/99dbb04d6fd808b4541092fb7bd35ce15973e8a849130f3020ea2b4c862f8a6e',  # noqa E501
+            '265': 'rock-ons-root/btrfs/subvolumes/fe9a6750a513c8f9dd0c16c94cdf4820678811ff522f5727ef8904e646a38d00',  # noqa E501
+            '264': 'rock-ons-root/btrfs/subvolumes/7b477be7aeb7e79afd9374b040cfe11a146db6f9de6a118a9c5a251b8f2219b8',  # noqa E501
+            '274': 'rock-ons-root/btrfs/subvolumes/83f5114a6ace79010aaf626b380e4bc69f6ac6415d866c66a6161c9649fdefae',  # noqa E501
+            '269': 'rock-ons-root/btrfs/subvolumes/54ee9f063bcb6895e7ff4b0100a37211e20f8394354ca3b91f42ea73fc4a28f8',  # noqa E501
+            '268': 'rock-ons-root/btrfs/subvolumes/d50a699a3bb167add6ba7ab7e16b531c7ad6ba088987649b11feb16ced4b78a7'}  # noqa E501
+        self.patch_snap_idmap = patch('fs.btrfs.snapshot_idmap')
+        self.mock_snap_idmap = self.patch_snap_idmap.start()
+        self.mock_snap_idmap.return_value = snap_idmap_return
+        # mock 'btrfs subvol_list_-p' (via run_command) return values
+        # Note the to-be-excluded ".beeshome" subvol among some typical native subvols.
+        out = ['ID 257 gen 14 parent 5 top level 5 path sftp-test',
+               'ID 258 gen 1280 parent 5 top level 5 path rock-ons-root',
+               'ID 259 gen 1132 parent 5 top level 5 path netstat-config',
+               'ID 262 gen 1122 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/ebd43251ad7f48649bf81604304d19e0c445995043daad20980923d25db76a9c',
+               'ID 263 gen 1231 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/d0bd97cdbf4e04f714a2e3660d3e78be84dbf48b43ecdcf050ace47335f4c00f',
+               'ID 264 gen 1233 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/7b477be7aeb7e79afd9374b040cfe11a146db6f9de6a118a9c5a251b8f2219b8',
+               'ID 265 gen 1235 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/fe9a6750a513c8f9dd0c16c94cdf4820678811ff522f5727ef8904e646a38d00',
+               'ID 266 gen 1237 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/99dbb04d6fd808b4541092fb7bd35ce15973e8a849130f3020ea2b4c862f8a6e',
+               'ID 267 gen 1239 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/ffc3da093f3cf41a55a0267266609dd1f46258c799217301d207b70d1f97bb2c',
+               'ID 268 gen 1241 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/d50a699a3bb167add6ba7ab7e16b531c7ad6ba088987649b11feb16ced4b78a7',
+               'ID 269 gen 1243 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/54ee9f063bcb6895e7ff4b0100a37211e20f8394354ca3b91f42ea73fc4a28f8',
+               'ID 272 gen 1261 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/d45e851142dae84abf19ab4088bb93c65c8c1070d1778fa099983fb6a281f0a8',
+               'ID 273 gen 1263 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/31954001671f2231f1ef70b8811d3d2dd153c1b090f6049bbba8111084fd0750',
+               'ID 274 gen 1265 parent 258 top level 258 path rock-ons-root/btrfs/subvolumes/83f5114a6ace79010aaf626b380e4bc69f6ac6415d866c66a6161c9649fdefae',
+               'ID 275 gen 1284 parent 5 top level 5 path .beeshome', '']
+        err = ['']
+        rc = 0
+        self.mock_run_command.return_value = (out, err, rc)
+        # default_subvol
+        self.patch_default_subvol = patch('fs.btrfs.default_subvol')
+        self.mock_default_subvol = self.patch_default_subvol.start()
+        # Typical boot to snapshot arrangement but not relevant to this test.
+        self.mock_default_subvol.return_value = DefaultSubvol("259",
+                                                              "@/.snapshots/1/snapshot",
+                                                              True)
+        # parse_snap_details
+        self.patch_parse_snap_details = patch('fs.btrfs.parse_snap_details')
+        self.mock_parse_snap_details = self.patch_parse_snap_details.start()
+
+        def parse_snap_details_return(*args, **kwargs):
+            # We have no clone shares (snaps at top level) in our test data:
+            # brand all as writable - ok for subvol filter test.
+            # (snap_name, writable, is_clone)
+            return 'arbitrary-name', True, False
+
+        self.mock_parse_snap_details.side_effect = parse_snap_details_return
+        # From above we expect the following Rockstor relevant shares:
+        expected = {'sftp-test': '0/257', 'rock-ons-root': '0/258',
+                    'netstat-config': '0/259'}
+        returned = shares_info(pool)
+        self.assertEqual(returned, expected,
+                         msg="Failed data pool subvol exclusion:\n"
+                             "returned {},\nexpected {}.\n".format(returned,
+                                                                   expected))
+
     def test_shares_info_legacy_system_pool_used(self):
         """
         Test shares_info() on legacy systems pool with some snaps and clones.
