@@ -45,6 +45,7 @@ class ApplianceListView(rfc.GenericView):
     @staticmethod
     @transaction.atomic
     def _update_hostname():
+        # TODO: We fail to deal with DoesNotExist for current appliance.
         a = Appliance.objects.get(current_appliance=True)
         cur_hostname = gethostname()
         if cur_hostname != a.hostname:
@@ -160,6 +161,7 @@ class ApplianceDetailView(rfc.GenericView):
             e_msg = ("Failed updating hostname for appliance with id = ({}).").format(
                 appid
             )
+            # TODO above msg is unused
             handle_exception(e, request)
 
     @transaction.atomic
@@ -185,4 +187,5 @@ class ApplianceDetailView(rfc.GenericView):
         except Exception as e:
             logger.exception(e)
             e_msg = "Delete failed for appliance with id = ({}).".format(appid)
+            # TODO above msg is unused
             handle_exception(e, request)

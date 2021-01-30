@@ -63,13 +63,13 @@ setup(
 
     install_requires=[
         'URLObject == 2.1.1',
-        'chardet == 2.3.0',
+        'chardet == 4.0.0',
         'distribute >= 0.6.35',
-        'django == 1.8.16',
-        'django-oauth-toolkit == 0.9.0',
+        'django == 1.11.29',
+        'django-oauth-toolkit == 1.1.2',
         'django-pipeline == 1.6.9',
         'huey == 2.3.0',
-        'djangorestframework == 3.1.1',
+        'djangorestframework == 3.9.3',
         'python-engineio == 2.3.2',  # Revisit version post 3.0.0
         'gevent == 1.1.2',
         'gevent-websocket == 0.9.5',
@@ -80,7 +80,7 @@ setup(
         'python-socketio == 1.6.0',
         'pytz == 2014.3',
         'pyzmq == 15.0.0',
-        'requests == 1.1.0',
+        'requests == 2.25.1',
         'six == 1.14.0',  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
         'distro',
         'django-braces == 1.13.0',  # 1.14.0 (30 Dec 2019) needs Django 1.11.0+

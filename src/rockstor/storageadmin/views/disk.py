@@ -137,6 +137,7 @@ class DiskMixin(object):
             # to a non refreshed webui acting upon an entry that is different
             # from that shown to the user.
             do.name = "detached-" + str(uuid.uuid4()).replace("-", "")
+            do.save(update_fields=["name"])
             # Delete duplicate or fake by serial number db disk entries.
             # It makes no sense to save fake serial number drives between scans
             # as on each scan the serial number is re-generated (fake) anyway.
@@ -150,6 +151,7 @@ class DiskMixin(object):
                     "Deleting duplicate or fake (by serial) disk db "
                     "entry. Serial = ({}).".format(do.serial)
                 )
+                # TODO: Post django update retrieve items deleted and log.
                 do.delete()  # django >=1.9 returns a dict of deleted items.
                 # Continue onto next db disk object as nothing more to process.
                 continue
@@ -184,6 +186,7 @@ class DiskMixin(object):
             if Disk.objects.filter(serial=d.serial).exists():
                 dob = Disk.objects.get(serial=d.serial)
                 dob.name = byid_disk_name
+                dob.save(update_fields=["name"])
             else:
                 # We have an assumed new disk entry as no serial match in db.
                 # Build a new entry for this disk.  N.B. we may want to force a
@@ -214,6 +217,7 @@ class DiskMixin(object):
                 dob.btrfs_uuid = None
                 dob.devid = 0
                 dob.allocated = 0
+            dob.save()
             # ### BEGINNING OF ROLE FIELD UPDATE ###
             # Update the role field with scan_disks findings.
             # SCAN_DISKS_KNOWN_ROLES a list of scan_disks identifiable roles.
@@ -231,6 +235,7 @@ class DiskMixin(object):
                 # existing mdraid members will be re-assigned if appropriate
                 # using the new json format.
                 dob.role = None
+                dob.save(update_fields=["role"])
             # First extract all non scan_disks assigned roles so we can add
             # them back later; all scan_disks assigned roles will be identified
             # from our recent scan_disks data so we assert the new truth.
@@ -353,6 +358,7 @@ class DiskMixin(object):
                 dob.role = json.dumps(combined_roles)
             else:
                 dob.role = None
+            dob.save(update_fields=["role"])
             # ### END OF ROLE FIELD UPDATE ###
             # Does our existing Pool db know of this disk's pool?
             # Find pool association, if any, of the current disk:

@@ -16,9 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from storageadmin.views import (
-    PoolListView,
     PoolDetailView,
     PoolScrubView,
     PoolBalanceView,
@@ -27,15 +26,13 @@ from storageadmin.views import (
 )
 
 
-urlpatterns = patterns(
-    "",
-    url(r"^$", PoolListView.as_view(), name="pool-view"),
-    url(r"^/usage_bound$", get_usage_bound),
-    url(r"^/(?P<pid>\d+)$", PoolDetailView.as_view()),
-    url(r"^/(?P<pid>\d+)/shares$", PoolShareListView.as_view(),),
-    url(r"^/(?P<pid>\d+)/balance$", PoolBalanceView.as_view(),),
-    url(r"^/(?P<pid>\d+)/balance/(?P<command>.*)$", PoolBalanceView.as_view()),
-    url(r"^/(?P<pid>\d+)/scrub$", PoolScrubView.as_view(),),
-    url(r"^/(?P<pid>\d+)/scrub/(?P<command>.*)$", PoolScrubView.as_view(),),
-    url(r"^/(?P<pid>\d+)/(?P<command>.*)$", PoolDetailView.as_view(),),
-)
+urlpatterns = [
+    url(r"^usage_bound$", get_usage_bound),
+    url(r"^(?P<pid>\d+)$", PoolDetailView.as_view()),
+    url(r"^(?P<pid>\d+)/shares$", PoolShareListView.as_view(),),
+    url(r"^(?P<pid>\d+)/balance$", PoolBalanceView.as_view(),),
+    url(r"^(?P<pid>\d+)/balance/(?P<command>.*)$", PoolBalanceView.as_view()),
+    url(r"^(?P<pid>\d+)/scrub$", PoolScrubView.as_view(),),
+    url(r"^(?P<pid>\d+)/scrub/(?P<command>.*)$", PoolScrubView.as_view(),),
+    url(r"^(?P<pid>\d+)/(?P<command>.*)$", PoolDetailView.as_view(),),
+]

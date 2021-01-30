@@ -435,9 +435,11 @@ class PoolListView(PoolMixin, rfc.GenericView):
                 mnt_options=mnt_options,
             )
             p.save()
-            p.disk_set.add(*disks)
+            # p.disk_set.add(*disks)
+            p.disk_set.add(*disks, bulk=False)
             # added for loop to save disks appears p.disk_set.add(*disks) was
             # not saving disks in test environment
+            # N.B. but we now have bulk=False in above so loop may be redundant now.
             for d in disks:
                 d.pool = p
                 d.save()

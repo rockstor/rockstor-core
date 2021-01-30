@@ -76,6 +76,7 @@ class DiskInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Disk
+        fields = "__all__"
 
 
 class PoolInfoSerializer(serializers.ModelSerializer):
@@ -90,11 +91,13 @@ class PoolInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pool
+        fields = "__all__"
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Snapshot
+        fields = "__all__"
 
 
 class NFSExportSerializer(serializers.ModelSerializer):
@@ -103,6 +106,7 @@ class NFSExportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NFSExport
+        fields = "__all__"
 
 
 class NFSExportGroupSerializer(serializers.ModelSerializer):
@@ -110,11 +114,14 @@ class NFSExportGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NFSExportGroup
+        fields = "__all__"
 
 
 class AdvancedNFSExportSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdvancedNFSExport
+        fields = "__all__"
+
 
 
 class SUserSerializer(serializers.ModelSerializer):
@@ -127,11 +134,13 @@ class SUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+        fields = "__all__"
 
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
+        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -145,6 +154,7 @@ class UserSerializer(serializers.ModelSerializer):
 class SambaCustomConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = SambaCustomConfig
+        fields = "__all__"
 
 
 class SambaShareSerializer(serializers.ModelSerializer):
@@ -157,11 +167,14 @@ class SambaShareSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SambaShare
+        fields = "__all__"
+
 
 
 class IscsiSerializer(serializers.ModelSerializer):
     class Meta:
         model = IscsiTarget
+        fields = "__all__"
 
 
 class SharePoolSerializer(serializers.ModelSerializer):
@@ -169,6 +182,7 @@ class SharePoolSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Share
+        fields = "__all__"
 
 
 class ShareSerializer(serializers.ModelSerializer):
@@ -181,6 +195,7 @@ class ShareSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Share
+        fields = "__all__"
 
 
 class ApplianceSerializer(serializers.ModelSerializer):
@@ -188,16 +203,19 @@ class ApplianceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appliance
+        fields = "__all__"
 
 
 class SupportSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupportCase
+        fields = "__all__"
 
 
 class DashboardConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = DashboardConfig
+        fields = "__all__"
 
 
 class NetworkDeviceSerializer(serializers.ModelSerializer):
@@ -206,6 +224,7 @@ class NetworkDeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NetworkDevice
+        fields = "__all__"
 
 
 class NetworkConnectionSerializer(serializers.ModelSerializer):
@@ -219,21 +238,25 @@ class NetworkConnectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NetworkConnection
+        fields = "__all__"
 
 
 class PoolScrubSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoolScrub
+        fields = "__all__"
 
 
 class PoolBalanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoolBalance
+        fields = "__all__"
 
 
 class SetupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Setup
+        fields = "__all__"
 
 
 class SFTPSerializer(serializers.ModelSerializer):
@@ -242,6 +265,7 @@ class SFTPSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SFTP
+        fields = "__all__"
 
 
 class OauthAppSerializer(serializers.ModelSerializer):
@@ -250,11 +274,13 @@ class OauthAppSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OauthApp
+        fields = "__all__"
 
 
 class TLSCertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TLSCertificate
+        fields = "__all__"
 
 
 class RockOnSerializer(serializers.ModelSerializer):
@@ -264,11 +290,13 @@ class RockOnSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RockOn
+        fields = "__all__"
 
 
 class RockOnContainerSerializer(serializers.ModelSerializer):
     class Meta:
         model = DContainer
+        fields = "__all__"
 
 
 class RockOnVolumeSerializer(serializers.ModelSerializer):
@@ -276,6 +304,7 @@ class RockOnVolumeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DVolume
+        fields = "__all__"
 
 
 class RockOnPortSerializer(serializers.ModelSerializer):
@@ -283,16 +312,19 @@ class RockOnPortSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DPort
+        fields = "__all__"
 
 
 class RockOnCustomConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = DCustomConfig
+        fields = "__all__"
 
 
 class RockOnEnvironmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = DContainerEnv
+        fields = "__all__"
 
 
 class RockOnDeviceSerializer(serializers.ModelSerializer):
@@ -303,6 +335,7 @@ class RockOnDeviceSerializer(serializers.ModelSerializer):
 class RockOnLabelSerializer(serializers.ModelSerializer):
     class Meta:
         model = DContainerLabel
+        fields = "__all__"
 
 
 class RockOnNetworkSerializer(serializers.ModelSerializer):
@@ -311,41 +344,49 @@ class RockOnNetworkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DContainerNetwork
+        fields = "__all__"
 
 
 class SMARTCapabilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTCapability
+        fields = "__all__"
 
 
 class SMARTAttributeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTAttribute
+        fields = "__all__"
 
 
 class SMARTErrorLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTErrorLog
+        fields = "__all__"
 
 
 class SMARTErrorLogSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTErrorLogSummary
+        fields = "__all__"
 
 
 class SMARTTestLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTTestLog
+        fields = "__all__"
 
 
 class SMARTTestLogDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTTestLogDetail
+        fields = "__all__"
 
 
 class SMARTIdentitySerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTIdentity
+        fields = "__all__"
 
 
 class SMARTInfoSerializer(serializers.ModelSerializer):
@@ -359,18 +400,23 @@ class SMARTInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SMARTInfo
+        fields = "__all__"
 
 
 class ConfigBackupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConfigBackup
+        fields = "__all__"
 
 
 class EmailClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailClient
+        fields = "__all__"
+
 
 
 class UpdateSubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = UpdateSubscription
+        fields = "__all__"

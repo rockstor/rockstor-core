@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 
 
 class RockstorOAuth2Authentication(OAuth2Authentication):
