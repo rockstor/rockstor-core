@@ -1151,7 +1151,7 @@ def qgroup_max(mnt_pt):
     :return: -1 if quotas not enabled, else highest 2015/* qgroup found or 0
     """
     try:
-        o, e, rc = run_command([BTRFS, "qgroup", "show", mnt_pt], log=True)
+        o, e, rc = run_command([BTRFS, "qgroup", "show", mnt_pt], log=False)
     except CommandException as e:
         # disabled quotas can result in o = [''], rc = 1 and e[0] =
         emsg = "ERROR: can't list qgroups: quotas not enabled"
@@ -1224,7 +1224,7 @@ def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
     else:
         qid = "{}/{}".format(QID, max_native_qgroup + 1)
     try:
-        out, err, rc = run_command([BTRFS, "qgroup", "create", qid, mnt_pt], log=True)
+        out, err, rc = run_command([BTRFS, "qgroup", "create", qid, mnt_pt], log=False)
     except CommandException as e:
         # ro mount options will result in o= [''], rc = 1 and e[0] =
         emsg = "ERROR: unable to create quota group: Read-only file system"
@@ -1247,7 +1247,7 @@ def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
 def qgroup_destroy(qid, mnt_pt):
     cmd = [BTRFS, "qgroup", "show", mnt_pt]
     try:
-        o, e, rc = run_command(cmd, log=True)
+        o, e, rc = run_command(cmd, log=False)
     except CommandException as e:
         # we may have quotas disabled so catch and deal.
         emsg = "ERROR: can't list qgroups: quotas not enabled"
@@ -1282,12 +1282,12 @@ def qgroup_is_assigned(qid, pqid, mnt_pt):
     # path(mnt_pt)
     cmd = [BTRFS, "qgroup", "show", "-pc", mnt_pt]
     try:
-        o, e, rc = run_command(cmd, log=True)
+        o, e, rc = run_command(cmd, log=False)
     except CommandException as e:
         # we may have quotas disabled so catch and deal.
         emsg = "ERROR: can't list qgroups: quotas not enabled"
         if e.err[0] == emsg:
-            # No deed to scan output as nothing to see with quotas disabled.
+            # No need to scan output as nothing to see with quotas disabled.
             # And since no quota capability can be enacted we return True
             # to avoid our caller trying any further with quotas.
             return True
@@ -1358,7 +1358,7 @@ def qgroup_assign(qid, pqid, mnt_pt):
     # "WARNING: # quotas may be inconsistent, rescan needed" and returns with
     # exit code 1.
     try:
-        run_command([BTRFS, "qgroup", "assign", qid, pqid, mnt_pt], log=True)
+        run_command([BTRFS, "qgroup", "assign", qid, pqid, mnt_pt], log=False)
     except CommandException as e:
         emsg = "ERROR: unable to assign quota group: Read-only file system"
         # this is non fatal so we catch this specific error and info log it.
@@ -1430,7 +1430,7 @@ def update_quota(pool, qgroup, size_bytes):
         logger.info("Pool: {} ignoring update_quota on {}".format(pool.name, qgroup))
         return out, err, rc
     try:
-        out, err, rc = run_command(cmd, log=True)
+        out, err, rc = run_command(cmd, log=False)
     except CommandException as e:
         # ro mount options will result in o= [''], rc = 1 and e[0] =
         emsg = "ERROR: unable to limit requested quota group: Read-only file system"
@@ -1513,7 +1513,7 @@ def volume_usage(pool, volume_id, pvolume_id=None):
     """
     # Here we depend on fail through throw=False if quotas are disabled/indeterminate
     cmd = [BTRFS, "qgroup", "show", volume_dir]
-    out, err, rc = run_command(cmd, log=True, throw=False)
+    out, err, rc = run_command(cmd, log=False, throw=False)
     volume_id_sizes = [0, 0]
     pvolume_id_sizes = [0, 0]
     for line in out:
