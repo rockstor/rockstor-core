@@ -120,9 +120,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._ntp_check(request)
                 # 2. Name resolution check?
                 self._resolve_check(config.get("domain"), request)
-                # 3. Get current Samba config
-                smbo = Service.objects.get(name="smb")
-                smb_config = self._get_config(smbo)
 
                 if method == "winbind":
                     cmd = [
@@ -160,9 +157,39 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                         "--enablelocauthorize",
                     ]
                     run_command(cmd)
+                # 3. Get WORKGROUP from AD server
                 config["workgroup"] = domain_workgroup(domain, method=method)
-                self._save_config(service, config)
+
+                # 4. Update Samba config
+                smbo = Service.objects.get(name="smb")
+                # smb_config = self._get_config(smbo)
+                try:
+                    smb_config = self._get_config(smbo)
+                    if smb_config["workgroup"] != config["workgroup"]:
+                        # the current Samba workgroup is different than what
+                        # we need so stop here and alert the user
+                        err_msg = (
+                            "The AD domain workgroup differs from the workgroup "
+                            "currently defined in the Samba configuration:\n"
+                            "AD domain workgroup: {}\n"
+                            "Samba workgroup: {}\n"
+                            "Ensure the Samba workgroup matches the AD domain "
+                            "workgroup and try again.".format(
+                                config["workgroup"], smb_config["workgroup"]
+                            )
+                        )
+                        raise Exception(err_msg)
+                except TypeError:
+                    # Samba service is not configured, so let's do that now
+                    smb_config = {}
+                    smb_config["workgroup"] = config["workgroup"]
+                    self._save_config(smbo, smb_config)
+                # finally:
+                #     # Set Samba WORKGROUP as AD REALM and save entry to Model
                 update_global_config(smb_config, config)
+
+                # 5. Save final Active_Directory service config and join AD
+                self._save_config(service, config)
                 join_domain(config, method=method)
 
                 # Customize SSSD config
