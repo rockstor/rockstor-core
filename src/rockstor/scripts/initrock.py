@@ -496,7 +496,6 @@ def main():
     run_command(migration_cmd + ["auth"])
     run_command(migration_cmd + ["storageadmin"])
     run_command(migration_cmd + smartdb_opts)
-    run_command(migration_cmd + ["django_ztask"])
     logging.info("Done")
     logging.info("Running prepdb...")
     run_command([PREP_DB])

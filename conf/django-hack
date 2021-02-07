@@ -16,7 +16,7 @@ sys.path[0:0] = [
     join(base, 'eggs/django_braces-1.8.0-py2.7.egg'),
     join(base, 'eggs/django_oauth_toolkit-0.9.0-py2.7.egg'),
     join(base, 'eggs/django_pipeline-1.6.9-py2.7.egg'),
-    join(base, 'eggs/django_ztask-0.1.5-py2.7.egg'),
+    join(base, 'eggs/huey-2.3.0-py2.7.egg'),
     join(base, 'eggs/djangorecipe-1.9-py2.7.egg'),
     join(base, 'eggs/djangorestframework-3.1.1-py2.7.egg'),
     join(base, 'eggs/gevent-1.1.2-py2.7-linux-x86_64.egg'),

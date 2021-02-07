@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-# @todo: Let's deprecate gevent in favor of django channels and we won't need
+# TODO: Let's deprecate gevent in favor of django channels and we won't need
 # monkey patching and flake8 exceptions.
 from gevent import monkey
+monkey.patch_all()
 
 from fs.btrfs import degraded_pools_found
 
-monkey.patch_all()
 
 import psutil  # noqa E402
 import re  # noqa E402

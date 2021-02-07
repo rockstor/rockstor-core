@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
 import os
-import pickle
 import re
 
 import requests
@@ -45,7 +44,7 @@ from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from rockon_helpers import rockon_status
 from system.docker import docker_status
-from django_ztask.models import Task
+from huey.contrib.djhuey import HUEY
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -57,54 +56,57 @@ class RockOnView(rfc.GenericView):
     @transaction.atomic
     def get_queryset(self, *args, **kwargs):
         if docker_status():
-            pending_rids = {}
-            failed_rids = {}
-            for t in Task.objects.filter(
-                function_name__regex="rockon_helpers"
-            ):  # noqa E501
-                rid = pickle.loads(t.args)[0]
-                if t.retry_count == 0 and t.failed is not None:
-                    failed_rids[rid] = t
-                else:
-                    pending_rids[rid] = t
-            # Remove old failed attempts @todo: we should prune all failed
-            # tasks of the past, not here though.
-            for rid in pending_rids.keys():
-                if rid in failed_rids:
-                    pt = pending_rids[rid]
-                    ft = failed_rids[rid]
-                    if failed_rids[rid].created > pending_rids[rid].created:
-                        # this should never be the case. pending tasks either
-                        # succeed and get deleted or they are marked failed.
-                        msg = (
-                            "Found a failed Task ({}) in the future of a "
-                            "pending Task ({})."
-                        ).format(ft.uuid, pt.uuid)
-                        handle_exception(Exception(msg), self.request)
-                    failed_rids[rid].delete()
-                    del failed_rids[rid]
+            # https://huey.readthedocs.io/en/latest/api.html#Huey.pending
+            # HUEY.pending() returns a list of task instances waiting to be run.
+            # https://huey.readthedocs.io/en/latest/api.html#huey-object
+            # Example hi.pending() result:
+            # [storageadmin.views.rockon_helpers.rock_helpers.uninstall:
+            # 7ce769d4-a468-4cd0-8706-c246d207e81c]
+            # But for above task.name = "uninstall"
+            hi = HUEY
+            logger.debug("HUEY.pending() {}".format(hi.pending()))
+            # List of pending rockon related tasks.
+            pending_task_ids = [
+                task.id
+                for task in hi.pending()
+                if task.name in ["start", "stop", "update", "install", "uninstall"]
+            ]
+            for item in hi.pending():
+                logger.debug("Pending task name: {}, ID: {}".format(item.name, item.id))
+            logger.debug("PENDING TASK ID'S {}".format(pending_task_ids))
+            # List of rockons with an associated active pending task.
+            pending_rockon_ids = [
+                rockon.id
+                for rockon in RockOn.objects.all()
+                if rockon.taskid in pending_task_ids
+            ]
+            logger.debug("PENDING ROCKON_ID'S {}".format(pending_rockon_ids))
+            # https://huey.readthedocs.io/en/latest/api.html#Huey.all_results
+            # HUEY.all_results()
+            # dict of task-id to the serialized result data for all
+            # key/value pairs in the result store.
+            # https://huey.readthedocs.io/en/latest/api.html#Huey.__len__
+            # HUEY.__len__ Return the number of items currently in the queue.
+
+            # For all RockOns
             for ro in RockOn.objects.all():
                 if ro.state == "installed":
                     # update current running status of installed rockons.
-                    if ro.id not in pending_rids:
-                        ro.status = rockon_status(ro.name)
+                    if ro.id not in pending_rockon_ids:
+                        ro.status = rockon_status(ro)
                 elif re.search("pending", ro.state) is not None:
-                    if ro.id in failed_rids:
-                        # we update the status on behalf of the task runner
-                        func_name = t.function_name.split(".")[-1]
-                        ro.state = "%s_failed" % func_name
-                    elif ro.id not in pending_rids:
-                        logger.error(
+                    if ro.id not in pending_rockon_ids:
+                        logger.info(
                             (
-                                "Rockon ({}) is in pending state but "
-                                "there is no pending or failed task "
-                                "for it."
+                                "Rockon ({}) state pending and no pending task: "
+                                "assuming task is mid execution."
                             ).format(ro.name)
                         )
-                        ro.state = "%s_failed" % ro.state.split("_")[1]
                     else:
                         logger.debug(
-                            ("Rockon ({}) is in pending state.").format(ro.name)
+                            "Rockon ({}) state pending with pending task id {}.".format(
+                                ro.name, ro.taskid
+                            )
                         )
                 elif ro.state == "uninstall_failed":
                     ro.state = "installed"
@@ -129,7 +131,7 @@ class RockOnView(rfc.GenericView):
                     try:
                         self._create_update_meta(r, rockons[r])
                     except Exception as e:
-                        error_str = "%s: %s" % (r, e.__str__())
+                        error_str = "{}: {}".format(r, e.__str__())
                         logger.exception(e)
                 if len(error_str) > 0:
                     e_msg = (
@@ -227,9 +229,7 @@ class RockOnView(rfc.GenericView):
                     co.dimage.delete()
             if co is None:
                 co = DContainer(name=c, rockon=ro)
-            defaults = {
-                "repo": "na",
-            }
+            defaults = {"repo": "na"}
             io, created = DImage.objects.get_or_create(
                 name=c_d["image"], tag=c_d.get("tag", "latest"), defaults=defaults
             )
@@ -433,10 +433,7 @@ class RockOnView(rfc.GenericView):
         cc_d = r_d.get("custom_config", {})
         for k in self._sorted_keys(cc_d):
             ccc_d = cc_d[k]
-            defaults = {
-                "description": ccc_d["description"],
-                "label": ccc_d["label"],
-            }
+            defaults = {"description": ccc_d["description"], "label": ccc_d["label"]}
             cco, created = DCustomConfig.objects.get_or_create(
                 rockon=ro, key=k, defaults=defaults
             )
@@ -450,10 +447,7 @@ class RockOnView(rfc.GenericView):
         cd_d = c_d.get("devices", {})
         for d in cd_d:
             ccd_d = cd_d[d]
-            defaults = {
-                "description": ccd_d["description"],
-                "label": ccd_d["label"],
-            }
+            defaults = {"description": ccd_d["description"], "label": ccd_d["label"]}
             cd, created = DContainerDevice.objects.get_or_create(
                 container=co, dev=d, defaults=defaults
             )
@@ -464,10 +458,7 @@ class RockOnView(rfc.GenericView):
         cc_d = c_d.get("environment", {})
         for k in self._sorted_keys(cc_d):
             ccc_d = cc_d[k]
-            defaults = {
-                "description": ccc_d["description"],
-                "label": ccc_d["label"],
-            }
+            defaults = {"description": ccc_d["description"], "label": ccc_d["label"]}
             cco, created = DContainerEnv.objects.get_or_create(
                 container=co, key=k, defaults=defaults
             )
@@ -483,8 +474,8 @@ class RockOnView(rfc.GenericView):
             return {}
 
         url_root = settings.ROCKONS.get("remote_metastore")
-        remote_root = "%s/%s" % (url_root, settings.ROCKONS.get("remote_root"))
-        msg = ("Error while processing remote metastore at ({}).").format(remote_root)
+        remote_root = "{}/{}".format(url_root, settings.ROCKONS.get("remote_root"))
+        msg = "Error while processing remote metastore at ({}).".format(remote_root)
         with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
             if response.status_code != 200:
@@ -493,10 +484,8 @@ class RockOnView(rfc.GenericView):
 
         meta_cfg = {}
         for k, v in root.items():
-            cur_meta_url = "%s/%s" % (url_root, v)
-            msg = ("Error while processing Rock-on profile at ({}).").format(
-                cur_meta_url
-            )
+            cur_meta_url = "{}/{}".format(url_root, v)
+            msg = "Error while processing Rock-on profile at ({}).".format(cur_meta_url)
             with self._handle_exception(self.request, msg=msg):
                 cur_res = requests.get(cur_meta_url, timeout=10)
                 if cur_res.status_code != 200:
@@ -506,8 +495,8 @@ class RockOnView(rfc.GenericView):
         local_root = settings.ROCKONS.get("local_metastore")
         if os.path.isdir(local_root):
             for f in os.listdir(local_root):
-                fp = "%s/%s" % (local_root, f)
-                msg = ("Error while processing Rock-on profile at ({}).").format(fp)
+                fp = "{}/{}".format(local_root, f)
+                msg = "Error while processing Rock-on profile at ({}).".format(fp)
                 with self._handle_exception(self.request, msg=msg):
                     with open(fp) as fo:
                         ds = json.load(fo)

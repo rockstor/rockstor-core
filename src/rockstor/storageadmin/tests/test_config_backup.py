@@ -1283,7 +1283,7 @@ class ConfigBackupTests(APITestMixin, APITestCase):
                     "containers": [79, 80],
                 },
             }
-            update_rockon_shares(c, self.sa_ml, r, rockons)
+            rockons = update_rockon_shares(c, self.sa_ml, r, rockons)
             self.assertEqual(
                 rockons,
                 out,
@@ -1381,7 +1381,7 @@ class ConfigBackupTests(APITestMixin, APITestCase):
                 75: {"rname": "Alpine With AddStorage Single", "new_rid": 75},
                 74: {"rname": "Alpine With AddStorage 2Ports", "new_rid": 74},
             }
-            validate_install_config(self.sa_ml, r, rockons)
+            rockons = validate_install_config(self.sa_ml, r, rockons)
             self.assertEqual(
                 rockons,
                 o,
@@ -1482,8 +1482,8 @@ class ConfigBackupTests(APITestMixin, APITestCase):
                 75: {"rname": "Alpine With AddStorage Single", "new_rid": 75},
                 74: {"rname": "Alpine With AddStorage 2Ports", "new_rid": 74},
             }
-            validate_install_config(self.sa_ml, r, rockons)
-            validate_update_config(self.sa_ml, r, rockons)
+            rockons = validate_install_config(self.sa_ml, r, rockons)
+            rockons = validate_update_config(self.sa_ml, r, rockons)
             self.assertEqual(
                 rockons,
                 o,

@@ -121,16 +121,17 @@ stderr_logfile=${supervisord-conf:logdir}/supervisord_%(program_name)s_stderr.lo
 stderr_logfile_maxbytes=1MB   ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=10     ; # of stderr logfile backups (default 10)
 
-; ztask daemon
+; huey daemon - program name maintained as legacy to match existing service name
 [program:ztask-daemon]
 environment=DJANGO_SETTINGS_MODULE=settings
-command=${supervisord-conf:ztask_cmd} ; the program (relative uses PATH, can take args)
+command=${supervisord-conf:huey_cmd} ; the program (relative uses PATH, can take args)
 process_name=%(program_name)s ; process_name expr (default %(program_name)s)
 numprocs=1                    ; number of processes copies to start (def 1)
 priority=200
 autostart=true                ; start at supervisord start (default: true)
-autorestart=unexpected        ; whether/when to restart (default: unexpected)
-startsecs=2                   ; number of secs prog must stay running (def. 1)
+; autorestart=unexpected        ; whether/when to restart (default: unexpected)
+autorestart=true
+startsecs=10                   ; number of secs prog must stay running (def. 1)
 startretries=3                ; max # of serial start failures (default 3)
 exitcodes=0,2                 ; 'expected' exit codes for process (default 0,2)
 stopsignal=TERM               ; signal used to kill process (default TERM)
@@ -141,3 +142,5 @@ stdout_logfile_backups=10     ; # of stdout logfile backups (default 10)
 stderr_logfile=${supervisord-conf:logdir}/supervisord_%(program_name)s_stderr.log        ; stderr log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=1MB   ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=10     ; # of stderr logfile backups (default 10)
+; Causes supervisor to send the termination signal (SIGTERM) to the whole process group.
+;stopasgroup=true

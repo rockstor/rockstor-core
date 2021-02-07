@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# incomplete shell wrapper for potential suture invocation of huey:
+# https://github.com/coleifer/huey/issues/88
+
+echo "Starting Rockstor-huey as `whoami`"
+
+# Start Huey
+exec python2 ${buildout:directory}/manage.py run_huey

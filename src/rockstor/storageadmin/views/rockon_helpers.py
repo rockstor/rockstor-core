@@ -21,7 +21,7 @@ import os
 import time
 
 from django.conf import settings
-from django_ztask.decorators import task
+from huey.contrib.djhuey import db_task, HUEY
 
 from cli.api_wrapper import APIWrapper
 from storageadmin.models import (
@@ -45,27 +45,18 @@ from rockon_utils import container_status
 
 DOCKER = "/usr/bin/docker"
 ROCKON_URL = "https://localhost/api/rockons"
-DCMD = [
-    DOCKER,
-    "run",
-]
-DCMD2 = list(DCMD) + [
-    "-d",
-    "--restart=unless-stopped",
-]
-DNET = [
-    DOCKER,
-    "network",
-]
+DCMD = [DOCKER, "run"]
+DCMD2 = list(DCMD) + ["-d", "--restart=unless-stopped"]
+DNET = [DOCKER, "network"]
 
 logger = logging.getLogger(__name__)
 aw = APIWrapper()
 
 
-def rockon_status(name):
-    ro = RockOn.objects.get(name=name)
-    if globals().get("%s_status" % ro.name.lower()) is not None:
-        return globals().get("%s_status" % ro.name.lower())(ro)
+def rockon_status(ro):
+    # Run/return container_status() or custom "rockon.name.lower()_status" if it exists.
+    if globals().get("{}_status".format(ro.name.lower())) is not None:
+        return globals().get("{}_status".format(ro.name.lower()))(ro)
     co = DContainer.objects.filter(rockon=ro).order_by("-launch_order")[0]
     return container_status(co.name)
 
@@ -80,10 +71,13 @@ def rm_container(name):
     )
 
 
-@task()
-def start(rid):
+@db_task(context=True)
+def start(rid, task=None):
     rockon = RockOn.objects.get(id=rid)
-    globals().get("%s_start" % rockon.name.lower(), generic_start)(rockon)
+    rockon.taskid = task.id
+    rockon.save()
+    # Run generic_start() or custom "rockon.name.lower()_start" if it exists.
+    globals().get("{}_start".format(rockon.name.lower()), generic_start)(rockon)
 
 
 def generic_start(rockon):
@@ -96,16 +90,24 @@ def generic_start(rockon):
         logger.exception(e)
         new_status = "start_failed"
     finally:
-        url = "rockons/%d/status_update" % rockon.id
-        return aw.api_call(
-            url, data={"new_status": new_status,}, calltype="post", save_error=False
-        )
+        # Here we use to call rockons/rid/status_update to post our final new_status
+        # But we were passed a "rockon" db object so we can update new_status directly.
+        # url = "rockons/{}/status_update".format(rockon.id)
+        # return aw.api_call(
+        #     url, data={"new_status": new_status}, calltype="post", save_error=False
+        # )
+        rockon.taskid = None
+        rockon.status = new_status
+        rockon.save()
 
 
-@task()
-def stop(rid):
+@db_task(context=True)
+def stop(rid, task=None):
     rockon = RockOn.objects.get(id=rid)
-    globals().get("%s_stop" % rockon.name.lower(), generic_stop)(rockon)
+    rockon.taskid = task.id
+    rockon.save()
+    # Run generic_stop() or custom "rockon.name.lower()_stop" if it exists.
+    globals().get("{}_stop".format(rockon.name.lower()), generic_stop)(rockon)
 
 
 def generic_stop(rockon):
@@ -118,29 +120,45 @@ def generic_stop(rockon):
         logger.exception(e)
         new_status = "stop_failed"
     finally:
-        url = "rockons/%d/status_update" % rockon.id
-        return aw.api_call(
-            url, data={"new_status": new_status,}, calltype="post", save_error=False
-        )
+        # Here we use to call rockons/rid/status_update to post our final new_status
+        # But we were passed a "rockon" db object so we can update new_status directly.
+        # url = "rockons/{}/status_update".format(rockon.id)
+        # return aw.api_call(
+        #     url, data={"new_status": new_status}, calltype="post", save_error=False
+        # )
+        rockon.taskid = None
+        rockon.status = new_status
+        rockon.save()
 
 
-@task()
-def update(rid, live=False):
+@db_task(context=True)
+def update(rid, live=False, task=None):
     """
     Guides general update procedure for a rock-on settings:
       - if a live-update is possible, first start the rock-on and apply new settings
       - if a live-update is impossible, first uninstall the rock-on and re-install
         using the new settings
-    :param rid:
+    :param rid: RockOn model instance id.
     :param live:
+    :param task: Huey task object via context=True, or inherited from a parent task.
     :return:
     """
     if live:
         new_state = "installed"
+        rockon = None
         try:
             rockon = RockOn.objects.get(id=rid)
             # Ensure the rock-on is running before attempting network connection
-            start(rid)
+            # N.B. the following is executed via task and we are also in a task
+            # This may require serialising via a task pipeline:
+            # https://huey.readthedocs.io/en/latest/api.html#Task.then
+            # Or use of prioritization parameters on our task decorator:
+            # https://huey.readthedocs.io/en/latest/api.html#Huey.task
+            # TODO: We may need to use a Huey task pipeline here:
+            # Execute our RockOn start() call within our own thread, this way we
+            # await the start completion prior to calling dnet_create_connect().
+            # Note we pass our own task  to have the rockon's taskid updated.
+            start.call_local(rid, task=task)
             dnet_create_connect(rockon)
         except Exception as e:
             logger.debug(
@@ -149,52 +167,90 @@ def update(rid, live=False):
             logger.exception(e)
             new_state = "install_failed"
         finally:
-            url = "rockons/{}/state_update".format(rid)
             logger.debug(
-                "Update rockon ({}) state to: {} ({})".format(
-                    rockon.name, new_state, url
+                "Update rockon ({}) state to: {}".format(rockon.name, new_state)
+            )
+            if rockon is not None:
+                rockon.taskid = None
+                rockon.state = new_state
+                rockon.save()
+            else:
+                url = "rockons/{}/state_update".format(rid)
+                return aw.api_call(
+                    url,
+                    data={"new_state": new_state},
+                    calltype="post",
+                    save_error=False,
                 )
-            )
-            return aw.api_call(
-                url, data={"new_state": new_state,}, calltype="post", save_error=False
-            )
     else:
-        uninstall(rid, new_state="pending_update")
-        install(rid)
+        # N.B. the following is executed via task and we are also in a task
+        # This may require serialising via a task pipeline:
+        # https://huey.readthedocs.io/en/latest/api.html#Task.then
+        # Or use of prioritization parameters on our task decorator:
+        # https://huey.readthedocs.io/en/latest/api.html#Huey.task
+        # For the time being we run with a single worker via "run_huey --workers 1"
+        # Also call via task.call_local to serialise within our existing update thread.
+        uninstall.call_local(rid, new_state="pending_update", task=task)
+        install.call_local(rid, task=task)
 
 
-@task()
-def install(rid):
+@db_task(context=True)
+def install(rid, task=None):
     new_state = "installed"
+    rockon = None
     try:
         rockon = RockOn.objects.get(id=rid)
-        globals().get("%s_install" % rockon.name.lower(), generic_install)(rockon)
+        # Run generic_install() or custom "rockon.name.lower()_install" if it exists.
+        globals().get("{}_install".format(rockon.name.lower()), generic_install)(rockon)
     except Exception as e:
         logger.debug("Exception while installing the Rockon ({}).".format(rid))
         logger.exception(e)
         new_state = "install_failed"
     finally:
         logger.debug("Set rock-on {} state to {}".format(rid, new_state))
-        url = "rockons/%d/state_update" % rid
-        return aw.api_call(
-            url, data={"new_state": new_state,}, calltype="post", save_error=False
-        )
+        if rockon is not None:
+            rockon.taskid = None
+            rockon.state = new_state
+            rockon.save()
+        else:
+            url = "rockons/{}/state_update".format(rid)
+            return aw.api_call(
+                url, data={"new_state": new_state}, calltype="post", save_error=False
+            )
 
 
-@task()
-def uninstall(rid, new_state="available"):
+@db_task(context=True)
+def uninstall(rid, new_state="available", task=None):
+    rockon = None
     try:
         rockon = RockOn.objects.get(id=rid)
-        globals().get("%s_uninstall" % rockon.name.lower(), generic_uninstall)(rockon)
+        # Run generic_uninstall() or custom "rockon.name.lower()_uninstall" if it exists.
+        globals().get("{}_uninstall".format(rockon.name.lower()), generic_uninstall)(
+            rockon
+        )
     except Exception as e:
         logger.debug(("Exception while uninstalling the rockon ({}).").format(rid))
         logger.exception(e)
         new_state = "installed"
     finally:
-        url = "rockons/%d/state_update" % rid
-        return aw.api_call(
-            url, data={"new_state": new_state,}, calltype="post", save_error=False
-        )
+        if rockon is not None:
+            # During non live update we do uninstall-install under task.name "update"
+            # During this cycle we want to maintain our taskid stamp.
+            if new_state is not "pending_update" and task is not None:
+                rockon.taskid = None
+            else:
+                logger.info(
+                    "Preserving taskid on pending_update rockon ({}).".format(
+                        rockon.name
+                    )
+                )
+            rockon.state = new_state
+            rockon.save()
+        else:
+            url = "rockons/{}/state_update".format(rid)
+            return aw.api_call(
+                url, data={"new_state": new_state}, calltype="post", save_error=False
+            )
 
 
 def generic_uninstall(rockon):
@@ -229,18 +285,16 @@ def port_ops(container):
         else:
             tcp = "{}/tcp".format(pstr)
             udp = "{}/udp".format(pstr)
-            ops_list.extend(
-                ["-p", tcp, "-p", udp,]
-            )
+            ops_list.extend(["-p", tcp, "-p", udp])
     return ops_list
 
 
 def vol_ops(container):
     ops_list = []
     for v in DVolume.objects.filter(container=container):
-        share_mnt = "%s%s" % (settings.MNT_PT, v.share.name)
+        share_mnt = "{}{}".format(settings.MNT_PT, v.share.name)
         mount_share(v.share, share_mnt)
-        ops_list.extend(["-v", "%s:%s" % (share_mnt, v.dest_dir)])
+        ops_list.extend(["-v", "{}:{}".format(share_mnt, v.dest_dir)])
     # map /etc/localtime for consistency across base rockstor and apps.
     ops_list.extend(["-v", "/etc/localtime:/etc/localtime:ro"])
     return ops_list
@@ -250,7 +304,7 @@ def device_ops(container):
     device_list = []
     for d in DContainerDevice.objects.filter(container=container):
         if len(d.val.strip()) > 0:
-            device_list.extend(["--device", "%s" % (d.val)])
+            device_list.extend(["--device", "{}".format(d.val)])
     return device_list
 
 
@@ -259,7 +313,7 @@ def vol_owner_uid(container):
     vo = DVolume.objects.filter(container=container).first()
     if vo is None:
         return None
-    share_mnt = "%s%s" % (settings.MNT_PT, vo.share.name)
+    share_mnt = "{}{}".format(settings.MNT_PT, vo.share.name)
     return os.stat(share_mnt).st_uid
 
 
@@ -275,7 +329,7 @@ def cargs(container):
 def envars(container):
     var_list = []
     for e in DContainerEnv.objects.filter(container=container):
-        var_list.extend(["-e", "%s=%s" % (e.key, e.val)])
+        var_list.extend(["-e", "{}={}".format(e.key, e.val)])
     return var_list
 
 
@@ -283,7 +337,7 @@ def labels_ops(container):
     labels_list = []
     for l in DContainerLabel.objects.filter(container=container):
         if len(l.val.strip()) > 0:
-            labels_list.extend(["--label", "%s" % (l.val)])
+            labels_list.extend(["--label", "{}".format(l.val)])
     return labels_list
 
 
@@ -316,10 +370,7 @@ def generic_install(rockon):
         # pull image explicitly so we get updates on re-installs.
         image_name_plus_tag = c.dimage.name + ":" + c.dimage.tag
         run_command([DOCKER, "pull", image_name_plus_tag], log=True)
-        cmd = list(DCMD2) + [
-            "--name",
-            c.name,
-        ]
+        cmd = list(DCMD2) + ["--name", c.name]
         cmd.extend(vol_ops(c))
         # Add '--device' flag
         cmd.extend(device_ops(c))
@@ -341,6 +392,20 @@ def generic_install(rockon):
     dnet_create_connect(rockon)
 
 
+def rockon_tasks_pending():
+    """
+    Wrapper around Huey.pending() with filter to discern rockon relevance.
+    :return: List of rockon relevant task names currently pending.
+    """
+    hi = HUEY
+    current_task_names = [
+        task.name
+        for task in hi.pending()
+        if task.name in ["start", "stop", "update", "install", "uninstall"]
+    ]
+    return current_task_names
+
+
 def openvpn_install(rockon):
     """
     Custom config for the openvpn Rock-on install.
@@ -349,10 +414,7 @@ def openvpn_install(rockon):
     """
     # volume container
     vol_co = DContainer.objects.get(rockon=rockon, launch_order=1)
-    volc_cmd = list(DCMD) + [
-        "--name",
-        vol_co.name,
-    ]
+    volc_cmd = list(DCMD) + ["--name", vol_co.name]
     volc_cmd.extend(container_ops(vol_co))
     image_name_plus_tag = vol_co.dimage.name + ":" + vol_co.dimage.tag
     volc_cmd.append(image_name_plus_tag)
@@ -360,20 +422,15 @@ def openvpn_install(rockon):
     # initialize vol container data
     cco = DCustomConfig.objects.get(rockon=rockon)
     oc = DContainer.objects.get(rockon=rockon, launch_order=2)
-    dinit_cmd = list(DCMD) + [
-        "--rm",
-    ]
+    dinit_cmd = list(DCMD) + ["--rm"]
     dinit_cmd.extend(container_ops(oc))
     image_name_plus_tag = oc.dimage.name + ":" + oc.dimage.tag
     dinit_cmd.extend(
-        [image_name_plus_tag, "ovpn_genconfig", "-u", "udp://%s" % cco.val,]
+        [image_name_plus_tag, "ovpn_genconfig", "-u", "udp://{}".format(cco.val)]
     )
     run_command(dinit_cmd, log=True)
     # start the server
-    server_cmd = list(DCMD2) + [
-        "--name",
-        oc.name,
-    ]
+    server_cmd = list(DCMD2) + ["--name", oc.name]
     server_cmd.extend(container_ops(oc))
     server_cmd.extend(port_ops(oc))
     server_cmd.append(oc.dimage.name)
@@ -388,44 +445,43 @@ def owncloud_install(rockon):
     """
     for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
         rm_container(c.name)
-        cmd = list(DCMD2) + [
-            "--name",
-            c.name,
-        ]
+        cmd = list(DCMD2) + ["--name", c.name]
         db_user = DCustomConfig.objects.get(rockon=rockon, key="db_user").val
         db_pw = DCustomConfig.objects.get(rockon=rockon, key="db_pw").val
         if c.dimage.name == "postgres":
             # change permissions on the db volume to 700
             vo = DVolume.objects.get(container=c)
-            share_mnt = "%s%s" % (settings.MNT_PT, vo.share.name)
+            share_mnt = "{}{}".format(settings.MNT_PT, vo.share.name)
             run_command(["/usr/bin/chmod", "700", share_mnt])
             cmd.extend(
                 [
                     "-e",
-                    "POSTGRES_USER=%s" % db_user,
+                    "POSTGRES_USER={}".format(db_user),
                     "-e",
-                    "POSTGRES_PASSWORD=%s" % db_pw,
+                    "POSTGRES_PASSWORD={}".format(db_pw),
                 ]
             )
         cmd.extend(port_ops(c))
         for lo in DContainerLink.objects.filter(destination=c):
-            cmd.extend(["--link", "%s:%s" % (lo.source.name, lo.name)])
+            cmd.extend(["--link", "{}:{}".format(lo.source.name, lo.name)])
         cmd.extend(vol_ops(c))
         if c.name == "owncloud":
             cmd.extend(
                 [
                     "-v",
-                    "%s/rockstor.key:/etc/ssl/private/owncloud.key"
-                    % settings.CERTDIR,  # noqa E501
+                    "{}/rockstor.key:/etc/ssl/private/owncloud.key".format(
+                        settings.CERTDIR
+                    ),  # noqa E501
                     "-v",
-                    "%s/rockstor.cert:/etc/ssl/certs/owncloud.crt"
-                    % settings.CERTDIR,  # noqa E501
+                    "{}/rockstor.cert:/etc/ssl/certs/owncloud.crt".format(
+                        settings.CERTDIR
+                    ),  # noqa E501
                     "-e",
                     "HTTPS_ENABLED=true",
                 ]
             )
             cmd.extend(
-                ["-e", "DB_USER=%s" % db_user, "-e", "DB_PASS=%s" % db_pw,]
+                ["-e", "DB_USER={}".format(db_user), "-e", "DB_PASS={}".format(db_pw)]
             )
         image_name_plus_tag = c.dimage.name + ":" + c.dimage.tag
         cmd.append(image_name_plus_tag)

@@ -26,8 +26,15 @@ class RockOn(models.Model):
     name = models.CharField(max_length=1024)
     description = models.CharField(max_length=2048)
     version = models.CharField(max_length=2048)
+    # available, pending_install, installed, install_failed
+    # pending_uninstall, pending_update
     state = models.CharField(max_length=2048)
+    # started, pending_start, start_failed
+    # stopped, pending_stop, stop_failed
     status = models.CharField(max_length=2048)
+    # We stash our Huey task id to ease sanity checks
+    # Taskid=None means no associated tasks.
+    taskid = models.CharField(max_length=36, null=True)
     link = models.CharField(max_length=1024, null=True)
     website = models.CharField(max_length=2048, null=True)
     https = models.BooleanField(default=False)

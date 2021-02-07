@@ -184,7 +184,8 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                         ceo = DContainerEnv.objects.get(container=co, key=e)
                         ceo.val = env_map[e]
                         ceo.save()
-                install.async(rockon.id)
+                task_result_handle = install(rockon.id)
+                rockon.taskid = task_result_handle.id
                 rockon.state = "pending_install"
                 rockon.save()
             elif command == "uninstall":
@@ -202,7 +203,8 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                         "try again."
                     ).format(rockon.name)
                     handle_exception(Exception(e_msg), request)
-                uninstall.async(rockon.id)
+                task_result_handle = uninstall(rockon.id)
+                rockon.taskid = task_result_handle.id
                 rockon.state = "pending_uninstall"
                 rockon.save()
                 for co in DContainer.objects.filter(rockon=rockon):
@@ -308,13 +310,17 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                                 cno.save()
                 rockon.state = "pending_update"
                 rockon.save()
-                update.async(rockon.id, live=live)
+                task_result_handle = update(rockon.id, live=live)
+                rockon.taskid = task_result_handle.id
+                rockon.save()
             elif command == "stop":
-                stop.async(rockon.id)
+                task_result_handle = stop(rockon.id)
+                rockon.taskid = task_result_handle.id
                 rockon.status = "pending_stop"
                 rockon.save()
             elif command == "start":
-                start.async(rockon.id)
+                task_result_handle = start(rockon.id)
+                rockon.taskid = task_result_handle.id
                 rockon.status = "pending_start"
                 rockon.save()
             elif command == "state_update":
