@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,13 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.db import models
+import grp
+
+import chardet
+from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from django.core.validators import validate_email
-from django.conf import settings
+from django.db import models
+
 from storageadmin.models import Group
-import grp
-import chardet
+from system.users import ifp_get_groupname
 
 
 class User(models.Model):
@@ -46,10 +49,14 @@ class User(models.Model):
         if self.group is not None:
             return self.group.groupname
         if self.gid is not None:
-            groupname = grp.getgrgid(self.gid).gr_name
-            charset = chardet.detect(groupname)
-            groupname = groupname.decode(charset["encoding"])
-            return groupname
+            try:
+                groupname = grp.getgrgid(self.gid).gr_name
+                charset = chardet.detect(groupname)
+                groupname = groupname.decode(charset["encoding"])
+                return groupname
+            except Exception:
+                # Failed to fetch user using grp, so let's try with infofipe
+                return ifp_get_groupname(self.gid)
         return None
 
     @property

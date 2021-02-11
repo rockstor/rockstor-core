@@ -78,8 +78,9 @@ def update_nss(databases, provider, remove=False):
     :return:
     """
     fo, npath = mkstemp()
+    sep = " "
     dbs = [db + ":" for db in databases]
-    append_to_line(NSSWITCH_FILE, npath, dbs, provider, remove)
+    append_to_line(NSSWITCH_FILE, npath, dbs, provider, sep, remove)
     move(npath, NSSWITCH_FILE)
     # Set file to rw- r-- r-- (644) via stat constants.
     os.chmod(NSSWITCH_FILE, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
@@ -193,7 +194,7 @@ def sssd_add_ldap(ldap_params):
 
 def sssd_remove_ldap(server):
     """
-    Removes any configuration pertaining to "sever" from sssd.conf
+    Removes any configuration pertaining to "server" from sssd.conf
     thereby unconfiguring the LDAP server. We thus need to remove it
     from the list of domains in the [sssd] section, and then remove
     its own section titled [domain/server].
@@ -229,6 +230,23 @@ def sssd_remove_ldap(server):
             server, SSSD_FILE
         )
     )
+
+
+def sssd_update_services(service, remove=False):
+    """
+    Update the list of sssd services.
+    :param service: String - name of the service to be updated
+    :param remove: Boolean - Remove from list of services if True
+    """
+    fo, npath = mkstemp()
+    sep = ", "
+    pattern = ["services = "]
+    append_to_line(SSSD_FILE, npath, pattern, service, sep, remove)
+    move(npath, SSSD_FILE)
+    # Set file to rw- --- --- (600) via stat constants.
+    os.chmod(SSSD_FILE, stat.S_IRUSR | stat.S_IWUSR)
+    logger.debug("The {} service has been added to {}".format(service, SSSD_FILE))
+    systemctl("sssd", "restart")
 
 
 def join_domain(config, method="sssd"):

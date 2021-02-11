@@ -15,25 +15,27 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+import crypt
+import fcntl
+import grp
+import logging
+import os
+import pwd
+import random
+import re
+import stat
+import string
+import subprocess
+import time
+from shutil import move
+from tempfile import mkstemp
+
+import chardet
+import dbus
+from dbus import DBusException
 
 from exceptions import CommandException
 from osi import run_command
-import subprocess
-import fcntl
-import time
-import re
-import os
-import pwd
-import grp
-from shutil import move
-from tempfile import mkstemp
-import chardet
-import random
-import string
-import crypt
-import stat
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +104,15 @@ def get_groups(*gids):
             charset = chardet.detect(g.gr_name)
             gr_name = g.gr_name.decode(charset["encoding"])
             groups[gr_name] = g.gr_gid
+
+        # Fetch remote groups from InfoPipe and add missing ones to dict
+        try:
+            ifp_groups = ifp_get_groups()
+            for ifp_gp, ifp_gid in ifp_groups.items():
+                if ifp_gp not in groups:
+                    groups[ifp_gp] = ifp_gid
+        except DBusException:
+            pass
     return groups
 
 
@@ -253,3 +264,50 @@ def add_ssh_key(username, key, old_key=None):
     # Set file to rw- --- --- (600) via stat constants.
     os.chmod(AUTH_KEYS, stat.S_IRUSR | stat.S_IWUSR)
     run_command([CHOWN, "%s:%s" % (username, groupname), AUTH_KEYS])
+
+
+def ifp_get_groupname(gid):
+    """
+    Uses InfoPipe (SSSD D-Bus responder) to get groupname from a gid
+    :param gid: Int
+    :return: String - name of the group identified by gid
+    """
+    bus = dbus.SystemBus()
+    groups_obj = bus.get_object(
+        "org.freedesktop.sssd.infopipe", "/org/freedesktop/sssd/infopipe/Groups"
+    )
+    groups_iface = dbus.Interface(groups_obj, "org.freedesktop.sssd.infopipe.Groups")
+
+    my_obj = bus.get_object("org.freedesktop.sssd.infopipe", groups_iface.FindByID(gid))
+    my_iface_properties = dbus.Interface(my_obj, "org.freedesktop.DBus.Properties")
+
+    gpname = my_iface_properties.Get(
+        "org.freedesktop.sssd.infopipe.Groups.Group", "name"
+    )
+    return str(gpname)
+
+
+def ifp_get_groups():
+    """
+    List all groups as seen by InfoPipe (SSSD D-Bus responder).
+    :return: Dict - groupname as key, group gid as value
+    """
+    bus = dbus.SystemBus()
+    groups_obj = bus.get_object(
+        "org.freedesktop.sssd.infopipe", "/org/freedesktop/sssd/infopipe/Groups"
+    )
+    groups_iface = dbus.Interface(groups_obj, "org.freedesktop.sssd.infopipe.Groups")
+
+    allgroups = groups_iface.ListByName("*", 0)
+    ifp_groups = {}
+    for group in allgroups:
+        my_obj = bus.get_object("org.freedesktop.sssd.infopipe", group)
+        my_obj_properties = dbus.Interface(my_obj, "org.freedesktop.DBus.Properties")
+        gpname = my_obj_properties.Get(
+            "org.freedesktop.sssd.infopipe.Groups.Group", "name"
+        )
+        gpid = my_obj_properties.Get(
+            "org.freedesktop.sssd.infopipe.Groups.Group", "gidNumber"
+        )
+        ifp_groups[str(gpname)] = int(gpid)
+    return ifp_groups

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,24 +16,26 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import logging
 import socket
-from rest_framework.response import Response
-from storageadmin.util import handle_exception
+
 from django.db import transaction
+from rest_framework.response import Response
+
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
+from storageadmin.util import handle_exception
 from system.directory_services import (
     update_nss,
     sssd_update_ad,
     join_domain,
     domain_workgroup,
     leave_domain,
+    sssd_update_services,
 )
 from system.osi import run_command
 from system.samba import update_global_config
 from system.services import systemctl
-
-import logging
 
 logger = logging.getLogger(__name__)
 REALM = "/usr/sbin/realm"
@@ -192,7 +194,10 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._save_config(service, config)
                 join_domain(config, method=method)
 
-                # Customize SSSD config
+                # SSSD config
+                # Ensure ifp service is activated
+                sssd_update_services(service="ifp")
+                # Customize domain settings
                 if (
                     method == "sssd"
                     and (config.get("enumerate") or config.get("case_sensitive"))

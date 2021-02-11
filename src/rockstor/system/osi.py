@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,9 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from socket import inet_ntoa
-from struct import pack
-from tempfile import mkstemp
 import collections
 import hashlib
 import logging
@@ -30,6 +27,9 @@ import stat
 import subprocess  # TODO: consider drop in replacement of subprocess32 module
 import time
 import uuid
+from socket import inet_ntoa
+from struct import pack
+from tempfile import mkstemp
 
 from django.conf import settings
 
@@ -136,10 +136,11 @@ def replace_line_if_found(Original_file, new_file, regex, replacement_line):
     return found_and_replaced
 
 
-def append_to_line(original_file, new_file, regexes, new_content, remove=False):
+def append_to_line(original_file, new_file, regexes, new_content, sep, remove=False):
     """
     Append a new string or remove a string from specific lines in a config file
     identified by one or more regular expressions.
+    :param sep: String - separator (" " or ", ", for instance)
     :param original_file: Original file path - usually a system configuration file
     :param new_file: New file path - usually a secure temporary file setup by caller
     :param regexes: List - list of regex(ex) used to identify lines to be considered
@@ -151,9 +152,11 @@ def append_to_line(original_file, new_file, regexes, new_content, remove=False):
         for line in ofo.readlines():
             if any(re.match(regex, line) for regex in regexes):
                 if remove:
-                    tfo.write(line.replace("".join([" ", new_content]), ""))
+                    tfo.write(line.replace("".join([sep, new_content]), ""))
+                elif re.search(new_content, line) is None:
+                    tfo.write("".join([line.strip(), sep, new_content, "\n"]))
                 else:
-                    tfo.write("".join([line.strip(), " ", new_content, "\n"]))
+                    tfo.write(line)
             else:
                 tfo.write(line)
 
