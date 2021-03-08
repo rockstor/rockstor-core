@@ -33,7 +33,7 @@ from system.osi import (
 )
 from system.exceptions import CommandException
 from pool_scrub import PoolScrub
-from django_ztask.decorators import task
+from huey.contrib.djhuey import task
 from django.conf import settings
 import logging
 from datetime import datetime
@@ -1750,13 +1750,14 @@ def scrub_status(pool):
 def start_resize_pool(cmd):
     """
     Note for device add, which is almost instantaneous, we are currently called
-    without the async function extension (start_resize_pool.async()) which
+    via the huey async bypass function (start_resize_pool.call_local()) which
     bypasses our @task() decorator and we are then called directly.
+    See: https://huey.readthedocs.io/en/latest/guide.html#tips-and-tricks
 
-    From https://github.com/dmgctrl/django-ztask we have:
-    "It is a recommended best practice that instead of passing a Django model
-    object to a task, you instead pass along the model's
-    ID or primary key, and re-get the object in the task function."
+    https://www.untangled.dev/2020/07/01/huey-minimal-task-queue-django/
+    "... avoid passing a Django model instance or queryset as parameter."
+    "Instead pass the object id, which is an int..."
+    and retrieve the Django object a-fresh in the task function.
     :param cmd: btrfs dev add/delete command in run_command() format (ie list).
     """
     logger.debug("Resize pool command ({}).".format(cmd))
@@ -1817,7 +1818,7 @@ def balance_status(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    stats = {"status": "unknown"}
+    stats = {"status": u"unknown"}
     # The balance status of an umounted pool is undetermined / unknown, ie it
     # could still be mid balance: our balance status command requires a
     # relevant active mount path.
@@ -1835,13 +1836,13 @@ def balance_status(pool):
     if len(out) > 0:
         if re.match("Balance", out[0]) is not None:
             if re.search("cancel requested", out[0]) is not None:
-                stats["status"] = "cancelling"
+                stats["status"] = u"cancelling"
             elif re.search("pause requested", out[0]) is not None:
-                stats["status"] = "pausing"
+                stats["status"] = u"pausing"
             elif re.search("paused", out[0]) is not None:
-                stats["status"] = "paused"
+                stats["status"] = u"paused"
             else:
-                stats["status"] = "running"
+                stats["status"] = u"running"
             # make sure we have a second line before parsing it.
             if len(out) > 1 and re.search("chunks balanced", out[1]) is not None:
                 percent_left = out[1].split()[-2][:-1]
@@ -1851,7 +1852,7 @@ def balance_status(pool):
                 except:
                     pass
         elif re.match("No balance", out[0]) is not None:
-            stats["status"] = "finished"
+            stats["status"] = u"finished"
             stats["percent_done"] = 100
     return stats
 
@@ -1921,7 +1922,7 @@ def balance_status_internal(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    stats = {"status": "unknown"}
+    stats = {"status": u"unknown"}
     try:
         mnt_pt = mount_root(pool)
     except Exception as e:
@@ -1941,12 +1942,12 @@ def balance_status_internal(pool):
         if fields[0] == "Unallocated:":
             unallocated = int(fields[1])
             if unallocated < 0:
-                stats["status"] = "running"
+                stats["status"] = u"running"
                 break
     if unallocated >= 0:
         # We have not 'tell' so report a finished balance as there is no
         # evidence of one happening.
-        stats["status"] = "finished"
+        stats["status"] = u"finished"
         stats["percent_done"] = 100
     return stats
 

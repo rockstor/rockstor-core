@@ -128,11 +128,11 @@ PoolRebalanceTableModule = RockstorModuleView.extend({
                     html += moment(poolrebalance.get('start_time')).format(RS_DATE_FORMAT);
                 }
                 html += '</td>';
-                // html += '<td>';
-                // if (poolrebalance.get('end_time')) {
-                //     html += moment(poolrebalance.get('end_time')).format(RS_DATE_FORMAT);
-                // }
-                // html += '</td>';
+                html += '<td>';
+                if (poolrebalance.get('end_time')) {
+                    html += moment(poolrebalance.get('end_time')).format(RS_DATE_FORMAT);
+                }
+                html += '</td>';
                 html += '<td>';
                 if (percent_done != 100 && internal_balance) {
                     html += 'unavailable';

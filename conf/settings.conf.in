@@ -20,6 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # Django settings for Rockstor project.
 import os
 import subprocess, distro
+from huey import SqliteHuey
 
 DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
@@ -158,7 +159,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'smart_manager',
     'oauth2_provider',
-    'django_ztask',
+    'huey.contrib.djhuey',
 )
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
@@ -419,7 +420,7 @@ ROCKONS = {
 	'local_metastore': '${buildout:depdir}/rockons-metastore',
 }
 
-ZTASKD_URL = 'ipc:///var/run/rockon-ztaskd'
+HUEY = SqliteHuey(filename='${buildout:depdir}/rockstor-tasks-huey.db')
 
 TASK_SCHEDULER = {
 	       'max_log': 100 #max number of task log entries to keep

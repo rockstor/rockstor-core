@@ -24,6 +24,9 @@ from storageadmin.tests.test_api import APITestMixin
 from storageadmin.models import Pool
 
 
+class MockTask(object):
+    id = 0
+
 class PoolBalanceTests(APITestMixin, APITestCase):
     # fixture assumed to have:
     # 1 non sys pool (id=2, name='rock-pool', raid='raid1')
@@ -46,7 +49,8 @@ class PoolBalanceTests(APITestMixin, APITestCase):
         cls.patch_start_balance = patch('storageadmin.views.pool.'
                                         'start_balance')
         cls.mock_start_balance = cls.patch_start_balance.start()
-        cls.mock_start_balance.return_value = None
+        # start_balance normally returns a Huey task_result_handle.
+        cls.mock_start_balance.return_value = MockTask()
 
         cls.patch_balance_status = patch('storageadmin.views.pool_balance.'
                                          'balance_status')

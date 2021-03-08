@@ -18,8 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 import re
-import pickle
-import time
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -45,7 +43,6 @@ from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-from django_ztask.models import Task
 import json
 
 import logging
@@ -305,15 +302,8 @@ class PoolMixin(object):
             # pools. Avoid by explicit convert in this instance.
             logger.info("Preserve single data, dup metadata by explicit convert.")
             convert = "single"
-        start_balance.async(mnt_pt, force=force, convert=convert)
-        tid = 0
-        count = 0
-        while tid == 0 and count < 25:
-            for t in Task.objects.all():
-                if pickle.loads(t.args)[0] == mnt_pt:
-                    tid = t.uuid
-            time.sleep(0.2)  # 200 milliseconds
-            count += 1
+        task_result_handle = start_balance(mnt_pt, force=force, convert=convert)
+        tid = task_result_handle.id
         logger.debug("balance tid = ({}).".format(tid))
         return tid
 
@@ -328,6 +318,7 @@ class PoolMixin(object):
         :param add: True if adding dnames, False if deleting (removing) dnames.
         :return: 0 if
         """
+        # default tid: flags non async task calls i.e. task.call_local() or None cmd.
         tid = 0
         cmd = resize_pool_cmd(pool, dnames, add)
         if cmd is None:
@@ -337,19 +328,12 @@ class PoolMixin(object):
             "Changed member devices:({}).".format(pool.name, dnames)
         )
         if add:
-            # Mostly instantaneous so avoid complexity/overhead of django ztask
-            start_resize_pool(cmd)
+            # Mostly instantaneous so avoid complexity/overhead of huey
+            start_resize_pool.call_local(cmd)
             return tid
         # Device delete initiates long running internal balance: start async.
-        start_resize_pool.async(cmd)
-        # Try to find django-ztask id for (25*0.2) 5 seconds via cmd args match
-        count = 0
-        while tid == 0 and count < 25:
-            for t in Task.objects.all():
-                if pickle.loads(t.args)[0] == cmd:
-                    tid = t.uuid
-            time.sleep(0.2)  # 200 milliseconds
-            count += 1
+        task_result_handle = start_resize_pool(cmd)
+        tid = task_result_handle.id
         logger.debug("Pool resize tid = ({}).".format(tid))
         return tid
 
@@ -619,7 +603,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 # blanket apply '-f' to allow for reducing metadata integrity.
                 if new_raid != pool.raid:
                     force = True
-                # Django-ztask initialization as balance is long running.
+                # Huey async initialization as balance is long running.
                 tid = self._balance_start(pool, force=force, convert=new_raid)
                 ps = PoolBalance(pool=pool, tid=tid)
                 ps.save()
@@ -731,7 +715,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     # This internal balance cannot currently be monitored by the
                     # usual 'btrfs balance status /mnt_pt' command. So we have to
                     # use our own mechanism to assess it's status.
-                    # Django-ztask initialization:
+                    # Huey async initialization:
                     tid = self._resize_pool_start(pool, dnames, add=False)
                     ps = PoolBalance(pool=pool, tid=tid, internal=True)
                     ps.save()

@@ -37,5 +37,5 @@ class ZTaskdServiceView(BaseServiceDetailView):
             superctl(service.name, command)
             return Response()
         except Exception as e:
-            e_msg = "Failed to %s ZTaskd due to an error: %s" % (command, e.__str__())
+            e_msg = "Failed to %s run_huey due to an error: %s" % (command, e.__str__())
             handle_exception(Exception(e_msg), request)

@@ -26,7 +26,7 @@ from time import sleep
 
 from django.conf import settings
 from django.db import transaction
-from django_ztask.decorators import task
+from huey.contrib.djhuey import db_task, lock_task, HUEY
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -36,6 +36,7 @@ from smart_manager.models.service import Service, ServiceStatus
 from storageadmin.models import ConfigBackup, RockOn
 from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
+from storageadmin.views.rockon_helpers import rockon_tasks_pending
 from system.config_backup import backup_config
 from system.osi import md5sum, run_command
 
@@ -217,6 +218,8 @@ def restore_scheduled_tasks(ml):
     logger.info("Finished restoring scheduled tasks.")
 
 
+@db_task()
+@lock_task("rockon_restore_lock")
 def restore_rockons(ml):
     """
     Parses and filter the model list input (ml) to gather all the information
@@ -247,42 +250,53 @@ def restore_rockons(ml):
     logger.info("Started restoring rock-ons.")
     rockons = validate_rockons(ml)
     logger.info("The following rock-ons will be restored: {}.".format(rockons))
+    # Note as-yet undocumented huey pipeline capabilities.
+    # I.e. composable pipelines: https://github.com/coleifer/huey/issues/491
+    # https://github.com/coleifer/huey/commit/bc8bb7385ba5339fcb7ed7c66231c90cf88dbf52
     if len(rockons) > 0:
-        for rid in rockons:
-            # Get config for initial install
-            validate_install_config(ml, rid, rockons)
+        # N.B. static iterator base via dict.copy
+        for index, rid in enumerate(rockons.copy()):
+            logger.debug("index = {}, rid = {}".format(index, rid))
+            # Modify rockons config for initial install
+            rockons = validate_install_config(ml, rid, rockons)
             # Install
-            rockon_transition_checker.async(rid, rockons)
-            restore_install_rockon.async(rid, rockons, command="install")
+            rockon_transition_checker(rid, rockons)
+            restore_install_rockon(rid, rockons, command="install")
 
             # Get config for post-install update
-            validate_update_config(ml, rid, rockons)
+            rockons = validate_update_config(ml, rid, rockons)
             # Update
+            logger.debug("Current rockons[rid] = {}".format(rockons[rid]))
+            # N.B. the following assumes validate_install_config()'s pre-processing.
             if bool(rockons[rid]["shares"]) or bool(rockons[rid]["labels"]):
                 # docker stop
-                rockon_transition_checker.async(rid, rockons)
-                restore_install_rockon.async(rid, rockons, command="stop")
+                rockon_transition_checker(rid, rockons)
+                restore_install_rockon(rid, rockons, command="stop")
                 # Start update
-                rockon_transition_checker.async(rid, rockons)
-                restore_install_rockon.async(rid, rockons, command="update")
+                rockon_transition_checker(rid, rockons)
+                restore_install_rockon(rid, rockons, command="update")
     logger.info("Finished restoring rock-ons.")
 
 
-@task()
 def rockon_transition_checker(rid, rockons):
     cur_wait = 0
-    while RockOn.objects.filter(state__contains="pending").exists():
+    # Wait while there are pending Rockons or pending rockon tasks.
+    while (
+        RockOn.objects.filter(state__contains="pending").exists()
+        or rockon_tasks_pending()
+    ):
+        logger.debug("Waiting for pending rock-on or task to complete.")
+        logger.debug("Current tasks = {}".format(rockon_tasks_pending()))
         sleep(2)
         cur_wait += 2
-        if cur_wait > 30:
+        if cur_wait > 46:
             logger.error(
                 "Waited too long for the previous rock-on to install..."
                 "Stop trying to install the rock-on ({})".format(rockons[rid]["rname"])
             )
-        break
+            break
 
 
-@task()
 def restore_install_rockon(rid, rockons, command):
     logger.info(
         "Send {} command to the rock-ons api for the following rock-on: {}".format(
@@ -303,29 +317,33 @@ def validate_install_config(ml, rid, rockons):
     :param ml: dict of models present in the config backup
     :param rid: rockon ID
     :param rockons: parent dict of rock-ons to be updated
-    :return: the same dict updated with the installation parameters present in config backup
+    :return rockons_cfg: a copy of the passed rockons post cfg updates; i.e.: with the
+    installation parameters found in config backup (ml) for the rockon (rid) rockon
+    An updated rockons dict.
     """
-    rockons[rid]["containers"] = []
-    rockons[rid]["shares"] = {}
-    rockons[rid]["ports"] = {}
-    rockons[rid]["devices"] = {}
-    rockons[rid]["environment"] = {}
-    rockons[rid]["cc"] = {}
+    rockons_cfg = rockons.copy()
+    rockons_cfg[rid]["containers"] = []
+    rockons_cfg[rid]["shares"] = {}
+    rockons_cfg[rid]["ports"] = {}
+    rockons_cfg[rid]["devices"] = {}
+    rockons_cfg[rid]["environment"] = {}
+    rockons_cfg[rid]["cc"] = {}
     # Get container(s) id(s)
     for m in ml:
         if m["model"] == "storageadmin.dcontainer" and m["fields"]["rockon"] is rid:
-            rockons[rid]["containers"].append(m["pk"])
+            rockons_cfg[rid]["containers"].append(m["pk"])
     # For each container_id:
-    for cid in rockons[rid].get("containers"):
+    # N.B. iterate over dict.copy as non deterministic to alter our iterator base.
+    for cid in rockons_cfg.copy()[rid].get("containers"):
         # get shares
-        update_rockon_shares(cid, ml, rid, rockons)
+        rockons_cfg = update_rockon_shares(cid, ml, rid, rockons_cfg)
 
         # get ports
         for m in ml:
             if m["model"] == "storageadmin.dport" and m["fields"]["container"] is cid:
                 hostp = m["fields"]["hostp"]
                 containerp = m["fields"]["containerp"]
-                rockons[rid]["ports"].update({hostp: containerp})
+                rockons_cfg[rid]["ports"].update({hostp: containerp})
 
         # get devices
         for m in ml:
@@ -335,16 +353,17 @@ def validate_install_config(ml, rid, rockons):
             ):
                 dev = m["fields"]["dev"]
                 val = m["fields"]["val"]
-                rockons[rid]["devices"].update({dev: val})
+                rockons_cfg[rid]["devices"].update({dev: val})
 
         # get environment
-        update_rockon_env(cid, ml, rid, rockons)
+        rockons_cfg = update_rockon_env(cid, ml, rid, rockons_cfg)
     # get cc
     for m in ml:
         if m["model"] == "storageadmin.dcustomconfig" and m["fields"]["rockon"] is rid:
             key = m["fields"]["key"]
             val = m["fields"]["val"]
-            rockons[rid]["cc"].update({key: val})
+            rockons_cfg[rid]["cc"].update({key: val})
+    return rockons_cfg
 
 
 def validate_update_config(ml, rid, rockons):
@@ -357,13 +376,14 @@ def validate_update_config(ml, rid, rockons):
     :param rockons: dict of rock-ons parameters to be updated
     :return: the same dict of rock-ons parameters updated with post-install customization options
     """
+    rockons_local = rockons.copy()
     # Reset both 'shares' AND 'labels' to empty dicts
-    rockons[rid]["shares"] = {}
-    rockons[rid]["labels"] = {}
+    rockons_local[rid]["shares"] = {}
+    rockons_local[rid]["labels"] = {}
     # For each container_id:
     for cid in rockons[rid].get("containers"):
         # get shares
-        update_rockon_shares(cid, ml, rid, rockons, uservol=True)
+        rockons_local = update_rockon_shares(cid, ml, rid, rockons_local, uservol=True)
 
         # get labels
         for m in ml:
@@ -373,7 +393,8 @@ def validate_update_config(ml, rid, rockons):
             ):
                 label = m["fields"]["val"]
                 cname = m["fields"]["key"]
-                rockons[rid]["labels"].update({label: cname})
+                rockons_local[rid]["labels"].update({label: cname})
+    return rockons_local
 
 
 def update_rockon_env(cid, ml, rid, rockons):
@@ -383,6 +404,8 @@ def update_rockon_env(cid, ml, rid, rockons):
     """
     # todo: When the env variable is PUID or PGID, try fetching value by name with
     #     current system in case an update is needed.
+    # Avoid modifying the parameter rockons dict.
+    rockons_local = rockons.copy()
     for m in ml:
         if (
             m["model"] == "storageadmin.dcontainerenv"
@@ -390,7 +413,8 @@ def update_rockon_env(cid, ml, rid, rockons):
         ):
             key = m["fields"]["key"]
             val = m["fields"]["val"]
-            rockons[rid]["environment"].update({key: val})
+            rockons_local[rid]["environment"].update({key: val})
+    return rockons_local
 
 
 def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
@@ -404,6 +428,7 @@ def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
     :param uservol: boolean
     :return: the same dict of rock-ons parameters updated with share:volume mappings
     """
+    rockons_local = rockons.copy()
     for m in ml:
         if (
             m["model"] == "storageadmin.dvolume"
@@ -414,9 +439,10 @@ def update_rockon_shares(cid, ml, rid, rockons, uservol=False):
             sname = get_sname(ml, share_id)
             dest_dir = m["fields"]["dest_dir"]
             if not uservol:
-                rockons[rid]["shares"].update({sname: dest_dir})
+                rockons_local[rid]["shares"].update({sname: dest_dir})
             else:
-                rockons[rid]["shares"].update({dest_dir: sname})
+                rockons_local[rid]["shares"].update({dest_dir: sname})
+    return rockons_local
 
 
 def validate_rockons(ml):
@@ -461,7 +487,8 @@ def get_sname(ml, share_id):
     return sname
 
 
-@task()
+@db_task()
+@lock_task("restore_config_lock")
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
     fp = os.path.join(settings.MEDIA_ROOT, "config-backups", cbo.filename)
@@ -478,6 +505,7 @@ def restore_config(cbid):
     # restore_appliances(ml)
     # restore_network(sa_ml)
     restore_scheduled_tasks(sm_ml)
+    # N.B. the following is also a Huey task in it's own right.
     restore_rockons(sa_ml)
 
 
@@ -576,7 +604,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
                 # 6. Scheduled Tasks
                 # 7. SFTP
                 logger.debug("restore starting...")
-                restore_config.async(cbo.id)
+                restore_config(cbo.id)
                 logger.debug("restore submitted...")
         return Response()
 
