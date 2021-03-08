@@ -71,7 +71,7 @@ setup(
         'django-pipeline == 1.6.9',
         'huey == 2.3.0',
         'djangorestframework == 3.1.1',
-        'python-engineio == 2.3.2',  # Revisit version post 3.0.0
+        'python-engineio == 3.8.2.post1',  # Revisit version post 3.0.0
         'gevent == 1.1.2',
         'gevent-websocket == 0.9.5',
         'mock == 1.0.1',
