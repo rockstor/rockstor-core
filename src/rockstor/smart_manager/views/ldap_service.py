@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,22 +16,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import logging
 import socket
-
-from rest_framework.response import Response
 from os.path import dirname
-from storageadmin.util import handle_exception
+
 from django.db import transaction
+from rest_framework.response import Response
+
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-
-import logging
-
+from storageadmin.util import handle_exception
 from system.directory_services import (
     update_nss,
     sssd_add_ldap,
     sssd_remove_ldap,
     validate_tls_cert,
+    sssd_update_services,
 )
 from system.services import systemctl
 
@@ -106,6 +106,8 @@ class LdapServiceView(BaseServiceDetailView):
                 # Update SSSD config
                 try:
                     sssd_add_ldap(ldap_params)
+                    # Ensure ifp service is activated
+                    sssd_update_services(service="ifp")
                     systemctl("sssd", "enable")
                 except Exception as e:
                     logger.exception(e)

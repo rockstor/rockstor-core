@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -20,11 +20,8 @@ from storageadmin.models import (
     User,
     Group,
 )
-from system.users import get_users, get_groups
 from system.pinmanager import pincard_states
-import logging
-
-logger = logging.getLogger(__name__)
+from system.users import get_users, get_groups
 
 
 def combined_users():
@@ -74,9 +71,7 @@ def combined_users():
                 admin=False,
             )
             temp_uo.managed_user = False
-            temp_uo.pincard_allowed, temp_uo.has_pincard = pincard_states(
-                temp_uo
-            )  # noqa E501
+            temp_uo.pincard_allowed, temp_uo.has_pincard = pincard_states(temp_uo)
             users.append(temp_uo)
 
     for u in User.objects.all():
