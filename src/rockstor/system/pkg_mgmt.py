@@ -105,40 +105,27 @@ def current_version():
 def rpm_build_info(pkg):
     version = "Unknown Version"
     date = None
-    distro_id = distro.id()
+
+    if pkg_infos(pkg, tag='NAME') != pkg:
+        logger.info('No "{}" package found: source install?'.format(pkg))
+        return version, date
+
+    buildtime_str = pkg_infos(pkg, tag='BUILDTIME')
+    version_str   = pkg_infos(pkg, tag='VERSION')
+    release_str   = pkg_infos(pkg, tag='RELEASE')
+
     try:
-        o, e, rc = run_command([YUM, "info", "installed", "-v", pkg])
-    except CommandException as e:
-        # Catch "No matching Packages to list" so we can return:
-        # "Unknown Version", None
-        emsg = "Error: No matching Packages to list"
-        # By checking both the first error element and the second to last we
-        # catch one yum waiting for another to release yum lock.
-        if e.err[0] == emsg or e.err[-2] == emsg:
-            logger.info('No "{}" package found: source install?'.format(pkg))
-            return version, date
-        # otherwise we raise an exception as normal.
-        raise e
-    for l in o:
-        if re.match("Buildtime", l) is not None:
-            # Legacy Rockstor (using original yum):
-            #     "Buildtime   : Tue Dec  5 13:34:06 2017"
-            # openSUSE Rocsktor (using dnf-yum):
-            #     "Buildtime    : Fri 29 Nov 2019 18:34:43 GMT"
-            # we return 2017-Dec-06 or 2019-Nov-29
-            # Note the one day on from retrieved Buildtime with zero padding.
-            dfields = l.strip().split()
-            if distro_id == "rockstor":  # CentOS based Rockstor conditional
-                dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
-            else:  # Assuming we are openSUSE variant and so using dnf-yum
-                dstr = dfields[5] + " " + dfields[4] + " " + dfields[3]
-            bdate = datetime.strptime(dstr, "%Y %b %d")
-            bdate += timedelta(days=1)
-            date = bdate.strftime("%Y-%b-%d")
-        if re.match("Version ", l) is not None:
-            version = l.strip().split()[2]
-        if re.match("Release ", l) is not None:
-            version = "{}-{}".format(version, l.strip().split()[2])
+        bdate = datetime.fromtimestamp(int(buildtime_str))
+    except (ValueError, OverflowError):
+        pass
+    else:
+        bdate += timedelta(days=1)
+        date = bdate.strftime("%Y-%b-%d")
+
+    if version_str:
+        version = version_str
+    if release_str:
+        version = "{}-{}".format(version, release_str)
     return version, date
 
 
