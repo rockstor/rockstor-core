@@ -70,7 +70,7 @@ setup(
         'django-oauth-toolkit == 0.9.0',
         'django-pipeline == 1.6.9',
         'huey == 2.3.0',
-        'djangorestframework == 3.1.1',
+        'djangorestframework == 3.11.2',
         'python-engineio == 2.3.2',  # Revisit version post 3.0.0
         'gevent == 1.1.2',
         'gevent-websocket == 0.9.5',
