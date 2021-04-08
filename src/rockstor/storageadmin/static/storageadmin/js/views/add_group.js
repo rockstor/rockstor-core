@@ -72,6 +72,7 @@ AddGroupView = RockstorLayoutView.extend({
             submitHandler: function() {
                 var groupname = _this.$('#groupname').val();
                 var gid = _this.$('#gid').val() || null;
+                var admin = _this.$('#admin').prop("checked");
                 var group;
                 if (_this.groupname != null && _this.group != null) {
                     group = new Group({
@@ -92,7 +93,8 @@ AddGroupView = RockstorLayoutView.extend({
                     group = new tmpGroupModel();
                     group.save({
                         groupname: groupname,
-                        gid: gid
+                        gid: gid,
+                        admin: admin
                     }, {
                         success: function(model, response, options) {
                             _this.$('#group-create-form :input').tooltip('hide');
