@@ -18,7 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 # TODO: Let's deprecate gevent in favor of django channels and we won't need
 # monkey patching and flake8 exceptions.
+import shutil
+from tempfile import mkstemp
+
 from gevent import monkey
+
 monkey.patch_all()
 
 from fs.btrfs import degraded_pools_found
@@ -46,7 +50,7 @@ from system.pinmanager import (
 )
 
 from django.conf import settings  # noqa E402
-from system.osi import uptime, kernel_info, get_byid_name_map  # noqa E402
+from system.osi import uptime, kernel_info, get_byid_name_map, run_command  # noqa E402
 from datetime import datetime, timedelta  # noqa E402
 import time  # noqa E402
 from django.utils.timezone import utc  # noqa E402
@@ -59,6 +63,9 @@ import distro
 import logging  # noqa E402
 
 logger = logging.getLogger(__name__)
+
+JOURNALCTL = "/usr/bin/journalctl"
+DMESG_LOG = "/var/log/dmesg"
 
 
 class RockstorIO(socketio.Namespace):
@@ -247,6 +254,7 @@ class LogManagerNamespace(RockstorIO):
         "tail200": {"command": "/usr/bin/tail", "args": "-n 200"},
         "tail30": {"command": "/usr/bin/tail", "args": "-n 30"},
         "tailf": {"command": "/usr/bin/tail", "args": "-f"},
+        "journalctlf": {"command": JOURNALCTL, "args": "-kf"},
     }
 
     logs = {
@@ -310,6 +318,17 @@ class LogManagerNamespace(RockstorIO):
         self.cleanup(sid)
 
     def build_log_path(self, selectedlog):
+        if selectedlog == "dmesg":
+            fh, npath = mkstemp()
+            with open(npath, "w") as tfo:
+                cmd = [
+                    JOURNALCTL,
+                    "-k",
+                ]
+                o, e, rc = run_command(cmd)
+                for line in o:
+                    tfo.write("{}\n".format(line))
+            shutil.move(npath, DMESG_LOG)
 
         return "{0}{1}".format(
             self.logs[selectedlog]["logdir"], self.logs[selectedlog]["logfile"]
@@ -450,8 +469,9 @@ class LogManagerNamespace(RockstorIO):
             # If our reader has opt args we add them to popen command
             if "args" in self.readers[reader]:
                 command.append(self.readers[reader]["args"])
-            # Queue log file to popen command
-            command.append(log_path)
+            if reader != "journalctlf":
+                # Queue log file to popen command
+                command.append(log_path)
             return command
 
         def static_reader(reader, log_path):
@@ -518,7 +538,10 @@ class LogManagerNamespace(RockstorIO):
             self.livereading = True
 
             # Build reader command from readers dict
-            read_command = build_reader_command("tailf")
+            if logfile == "dmesg":
+                read_command = build_reader_command("journalctlf")
+            else:
+                read_command = build_reader_command("tailf")
 
             self.livereader_process = Popen(read_command, bufsize=1, stdout=PIPE)
             while self.livereading:
