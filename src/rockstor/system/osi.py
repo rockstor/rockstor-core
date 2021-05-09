@@ -2265,35 +2265,28 @@ def hostid():
     doesn't exist for any reason, generate a uuid like we used to prior to this
     change.
 
-    There's a lazy vendor problem where uuid is not set and defaults to
-    03000200-0400-0500-0006-000700080009 or
-    00020003-0004-0005-0006-000700080009. I don't know how these values are
-    populated, but empirically it seems to be just these
-    two. A non-persistent uuid is also generated in this case.
-
-    Observed motherboards with these fake non unique puuids:
-    - Examples of the first listed fake_puuids
-    ASRock N3700-ITX
-    ASRock C2550D4I
-    ASRock J3455 ITX - Thanks to forum member adworacz for reporting this one.
-    - Examples of the second listed fake_puuids
-    ZOTAC 880G-ITX (880GITX-A-E) - Thanks to forum member mmmdonuts
-    - Examples of the third listed fake_puuids
-    GIADA N70E-DR - Thanks to forum member hammerite
-    - Examples of the fourth listed fake_puuids
-    HP / HPE ProLiant MicroServer Gen8 - Thanks to David via support email
-    - Examples of the fifth listed fake_puuids
-    Unknown: reported by Appman
-    - Examples of the sixth listed fake_puuids
-    Unknown: reported by Appman
+    There's a lazy vendor problem where uuid is non unique.
+    A non-persistent uuid is also generated in this case.
     """
 
+    # Newer kernels output lowercase; in line with https://tools.ietf.org/html/rfc4122
+    # as does dmidecode: https://savannah.nongnu.org/bugs/index.php?53569
+    # As from kernel 4.17 product_uuid output is lowercase:
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/
+    # ?h=v4.17-rc1&id=712ff25450bd01366301eef81c33e865d901e7b7
     fake_puuids = (
+        # ASRock N3700-ITX, ASRock C2550D4I - Rockstor devs.
+        # ASRock J3455 ITX - Thanks to forum member adworacz.
         "03000200-0400-0500-0006-000700080009",
+        # ZOTAC 880G-ITX (880GITX-A-E) - Thanks to forum member mmmdonuts.
         "00020003-0004-0005-0006-000700080009",
-        "5C4606FA-192F-453A-B299-7B088C63BB9B",
-        "31393138-3538-5A43-3135-353130323750",
+        # GIADA N70E-DR - Thanks to forum member hammerite.
+        "5c4606fa-192f-453a-b299-7b088c63bb9b",
+        # HP / HPE ProLiant MicroServer Gen8 - Thanks to David via support email.
+        "31393138-3538-5a43-3135-353130323750",
+        # Reported by Appman
         "00000000-0000-0000-0807-060504030201",
+        # Reported by Appman
         "00000000-2093bfe3-e53b-4fc3-9cb1-9217ea6228c7",
     )
     try:
