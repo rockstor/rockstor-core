@@ -415,7 +415,7 @@ UPDATE_CHANNELS = {
 }
 
 ROCKONS = {
-	'remote_metastore': 'http://rockstor.com/rockons',
+	'remote_metastore': 'https://rockstor.com/rockons',
 	'remote_root': 'root.json',
 	'local_metastore': '${buildout:depdir}/rockons-metastore',
 }
