@@ -115,7 +115,7 @@ def rpm_build_info(pkg):
         # By checking both the first error element and the second to last we
         # catch one yum waiting for another to release yum lock.
         if e.err[0] == emsg or e.err[-2] == emsg:
-            logger.info('No "rockstor" package found: source install?')
+            logger.info('No "{}" package found: source install?'.format(pkg))
             return version, date
         # otherwise we raise an exception as normal.
         raise e
