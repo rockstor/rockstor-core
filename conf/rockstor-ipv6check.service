@@ -1,0 +1,23 @@
+[Unit]
+Description=Rockstor IPv6 Check
+ConditionKernelCommandLine=ipv6.disable=1
+# Not required - helps to prevent a reboot interrupting our other services.
+After=rockstor-bootstrap.service
+
+
+[Service]
+Type=oneshot
+# N.B. Type oneshot can have multiple ExecStart - executed sequentially.
+ExecStart=/usr/bin/sed -i -e 's/ipv6\\.disable=1[ ]*//g' /etc/default/grub
+ExecStart=/usr/sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+# We indicate the requirement to reboot in an unusualy colour.
+ExecStartPost=/usr/bin/sh -c "/usr/bin/echo -e \"\\e[1;45m Reboot required to re-enable IPv6 & Rock-ons \\e[0m\""
+
+
+TimeoutSec=0
+RemainAfterExit=yes
+# Mirror output to console as well.
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
