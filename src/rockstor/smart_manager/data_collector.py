@@ -248,6 +248,7 @@ class LogManagerNamespace(RockstorIO):
     rockstor_logs = "%svar/log/" % settings.ROOT_DIR
     samba_subd_logs = "%ssamba/" % system_logs
     nginx_subd_logs = "%snginx/" % system_logs
+    zypp_subd_logs = "%szypp/" % system_logs
 
     readers = {
         "cat": {"command": "/usr/bin/cat", "args": "-n"},
@@ -295,7 +296,7 @@ class LogManagerNamespace(RockstorIO):
             "logdir": rockstor_logs,
         },
         "supervisord": {"logfile": "supervisord.log", "logdir": rockstor_logs},
-        "yum": {"logfile": "yum.log", "logdir": system_logs},
+        "zypper": {"logfile": "history", "logdir": zypp_subd_logs},
     }
 
     tar_utility = ["/usr/bin/tar", "czf"]

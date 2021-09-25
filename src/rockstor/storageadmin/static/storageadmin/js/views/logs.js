@@ -267,7 +267,7 @@ LogsView = RockstorLayoutView.extend({
             'gunicorn': 'Gunicorn (WebUI)',
             'gunicorn_stdout': 'Gunicorn stdout (WebUI)',
             'gunicorn_stderr': 'Gunicorn stderr (WebUI)',
-            'yum': 'Yum (System updates)'
+            'zypper': 'Zypper (System updates)'
         };
 
         Handlebars.registerHelper('print_logs_divs', function() {
