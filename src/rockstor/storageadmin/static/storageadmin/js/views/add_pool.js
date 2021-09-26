@@ -115,7 +115,8 @@ AddPoolView = Backbone.View.extend({
             }
             // Observed in a 4 bay ORICO USB 3.0 enclosure that obfuscated all it's
             // disk serial numbers and replaced them with '000000000000'.
-            if (diskSerialNumber == '000000000000') {
+            // 152D00539000 pertains to USB ID 152d:0567 JMS567 based device
+            if (diskSerialNumber == '000000000000' || diskSerialNumber == '152D00539000') {
                 return false;
             }
             return true;
