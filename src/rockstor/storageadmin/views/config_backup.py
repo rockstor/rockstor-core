@@ -148,15 +148,23 @@ def restore_services(ml):
                 config = json.loads(config)
                 services[name] = {"conf": {"config": config}, "id": pkid}
     for s in services:
+        logger.info("Restore the following service: {}".format(s))
         generic_post(
             "{}/sm/services/{}/config".format(BASE_URL, s), services[s]["conf"]
         )
         # Turn the service ON if it is ON in backup AND currently OFF
-        so = Service.objects.get(name=s)
-        if (
-            validate_service_status(ml, services[s]["id"])
-            and not ServiceStatus.objects.get(service_id=so.id).status
-        ):
+        so = False
+        cur_status = False
+        try:
+            so = Service.objects.get(name=s)
+            cur_status = ServiceStatus.objects.get(service_id=so.id).status
+        except Service.DoesNotExist:
+            logger.info("The service named {} does not exist; skip it.".format(s))
+        except ServiceStatus.DoesNotExist:
+            logger.debug(
+                "The {} service has no ServiceStatus entry, so assume OFF".format(s)
+            )
+        if so and validate_service_status(ml, services[s]["id"]) and not cur_status:
             generic_post("{}/sm/services/{}/start".format(BASE_URL, s), {})
     logger.info("Finished restoring services.")
 
