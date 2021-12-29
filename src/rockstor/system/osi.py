@@ -871,15 +871,6 @@ def get_net_config(all=False, name=None):
     return {name: net_config_helper(name)}
 
 
-def update_issue(ipaddr):
-    msg = (
-        "\n\nYou can go to RockStor's Web-UI by pointing your web browser"
-        " to https://{}\n\n".format(ipaddr)
-    )
-    with open("/etc/issue", "w") as ifo:
-        ifo.write(msg)
-
-
 def sethostname(hostname):
     return run_command([HOSTNAMECTL, "set-hostname", hostname])
 

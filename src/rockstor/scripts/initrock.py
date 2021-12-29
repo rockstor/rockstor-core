@@ -92,7 +92,8 @@ def init_update_issue(logger):
     if ipaddr is None:
         ipaddr_list = inet_addrs()
 
-    with open("/etc/issue", "w") as ifo:
+    # We open w+ in case /etc/issue does not exist
+    with open("/etc/issue", "w+") as ifo:
         if ipaddr is None and len(ipaddr_list) == 0:
             ifo.write("The system does not yet have an ip address.\n")
             ifo.write(
@@ -507,7 +508,6 @@ def main():
     logging.info("firewalld stopped and disabled")
     update_nginx(logging)
 
-    shutil.copyfile("/etc/issue", "/etc/issue.rockstor")
     init_update_issue(logging)
 
     establish_shellinaboxd_service(logging)
