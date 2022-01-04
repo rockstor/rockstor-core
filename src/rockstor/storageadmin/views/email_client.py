@@ -27,7 +27,7 @@ from storageadmin.models import EmailClient, Appliance
 from storageadmin.serializers import EmailClientSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from system.osi import run_command, gethostname, replace_line_if_found
+from system.osi import run_command, gethostname, replace_line_if_found, getdnsdomain
 from shutil import move
 from tempfile import mkstemp
 from system.services import systemctl
@@ -157,11 +157,17 @@ def update_generic(sender, revert=False):
     :return:
     """
     hostname = gethostname()
+    dnsdomain = getdnsdomain()
     with open(GENERIC, "w") as fo:
         if not revert:
             fo.write("@{} {}\n".format(hostname, sender))
             fo.write("@{}.localdomain {}\n".format(hostname, sender))
-            # todo need an entry here to add @<hostname>.<domain>
+            # add @<hostname>.<domain>
+            fo.write("@{}.{} {}\n".format(hostname, dnsdomain, sender))
+            # Add fall through entries for when the sending agent uses localhost.
+            # This avoids some bounce scenarios when sender/from is root@localhost
+            fo.write("@localhost {}\n".format(sender))
+            fo.write("@localhost.localdomain {}\n".format(sender))
     # Set file to r-- --- --- (400) via stat constants.
     os.chmod(GENERIC, stat.S_IRUSR)
     run_command([POSTMAP, GENERIC])

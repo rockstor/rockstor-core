@@ -41,6 +41,7 @@ CAT = "/usr/bin/cat"
 CHATTR = "/usr/bin/chattr"
 DD = "/usr/bin/dd"
 DEFAULT_MNT_DIR = "/mnt2/"
+DNSDOMAIN = "/usr/bin/dnsdomainname"
 EXPORTFS = "/usr/sbin/exportfs"
 GRUBBY = "/usr/sbin/grubby"
 HDPARM = "/usr/sbin/hdparm"
@@ -877,6 +878,11 @@ def sethostname(hostname):
 
 def gethostname():
     o, e, rc = run_command([HOSTNAMECTL, "--static"])
+    return o[0]
+
+
+def getdnsdomain():
+    o, e, rc = run_command([DNSDOMAIN])
     return o[0]
 
 
