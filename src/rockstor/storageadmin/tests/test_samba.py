@@ -347,23 +347,17 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         e_msg = "Must provide share names."
         self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch("storageadmin.models.user.grp.getgrgid")
+    @mock.patch("storageadmin.models.user.ifp_get_groupname")
     @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
     @mock.patch("storageadmin.views.samba.User")
-    def test_post_requests_2(self, mock_user, mock_validate_share, mock_getgrgid):
+    def test_post_requests_2(
+        self, mock_user, mock_validate_share, mock_ifp_get_groupname
+    ):
         """
-         . Create a samba export for the share that has already been exported
+        . Create a samba export for the share that has already been exported
         """
-        # Nullify exception of getgrgid via:
-        mock_getgrgid.side_effects = None
-
-        # Python2
-        # import grp
-        # >>> groupname = grp.getgrgid("470")
-        # >>> print(groupname)
-        # grp.struct_group(gr_name='ntp', gr_passwd='x', gr_gid=470, gr_mem=[])
-        # return "testgroup" for all gr_name calls:
-        mock_getgrgid.gr_name.return_value = "testgroup"
+        # Return "testgroup" for ifp_get_groupname() call
+        mock_ifp_get_groupname.return_value = "testgroup"
 
         mock_validate_share.return_value = self.temp_share_smb
 
@@ -425,9 +419,8 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         }
         mock_validate_share.return_value = self.temp_share2
         mock_user.objects.get.side_effects = None
-        # The following relies on our mocked return value in grp.getgrgid.gr_name.
-        # Otherwise we error/exception out with grp.getgrgid(1) in models/user.py
-        # 'getgrgid(): gid not found: 1'
+        # The following relies on our mocked return value in ipf_get_groupname().
+        # Otherwise we error/exception out with ipf_get_groupname() in models/user.py
         temp_user = User.objects.create(
             username="admin", uid=1, gid=1, admin=False, user=self.user
         )
