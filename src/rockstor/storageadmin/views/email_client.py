@@ -74,12 +74,12 @@ def rockstor_postfix_config(fo, smtp_server, port, revert):
     fo.write("relayhost = [{}]:{}\n".format(smtp_server, port))
     fo.write("smtp_use_tls = yes\n")
     fo.write("smtp_sasl_auth_enable = yes\n")
-    fo.write("smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd\n")
+    fo.write("smtp_sasl_password_maps = lmdb:/etc/postfix/sasl_passwd\n")
     fo.write("smtp_tls_CAfile = {}\n".format(CAfile_path))
     fo.write("smtp_sasl_security_options = noanonymous\n")
     # N.B. no "yast sysconfig set" option found for the following:
     fo.write("smtp_sasl_tls_security_options = noanonymous\n")
-    fo.write("smtp_generic_maps = hash:/etc/postfix/generic\n")
+    fo.write("smtp_generic_maps = lmdb:/etc/postfix/generic\n")
     fo.write("{}\n".format(FOOTER))
 
 
@@ -165,8 +165,6 @@ def update_generic(sender, revert=False):
     # Set file to r-- --- --- (400) via stat constants.
     os.chmod(GENERIC, stat.S_IRUSR)
     run_command([POSTMAP, GENERIC])
-    # Set file to rw- --- --- (600) via stat constants.
-    os.chmod("{}.db".format(GENERIC), stat.S_IRUSR | stat.S_IWUSR)
 
 
 def update_sasl(smtp_server, port, username, password, revert=False):
@@ -177,8 +175,6 @@ def update_sasl(smtp_server, port, username, password, revert=False):
     # Set file to r-- --- --- (400) via stat constants.
     os.chmod(sasl_file, stat.S_IRUSR)
     run_command([POSTMAP, sasl_file])
-    # Set file to rw- --- --- (600) via stat constants.
-    os.chmod("{}.db".format(sasl_file), stat.S_IRUSR | stat.S_IWUSR)
 
 
 def update_postfix(smtp_server, port, revert=False):
