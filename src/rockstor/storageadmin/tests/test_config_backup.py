@@ -23,13 +23,12 @@ from storageadmin.views.config_backup import (
     update_rockon_shares,
     validate_install_config,
     validate_update_config,
+    validate_service_status,
 )
 
 
 class ConfigBackupTests(APITestMixin, APITestCase):
-    fixtures = [
-        "fix2.json"
-    ]
+    fixtures = ["fix2.json"]
     BASE_URL = "/api/config-backup"
     sa_ml = [
         {
@@ -874,6 +873,280 @@ class ConfigBackupTests(APITestMixin, APITestCase):
             "pk": 30,
         },
     ]
+    sm_ml = [
+        {
+            "fields": {
+                "display_name": "Replication",
+                "config": None,
+                "name": "replication",
+            },
+            "model": "smart_manager.service",
+            "pk": 1,
+        },
+        {
+            "fields": {"display_name": "Samba", "config": None, "name": "smb"},
+            "model": "smart_manager.service",
+            "pk": 2,
+        },
+        {
+            "fields": {"display_name": "NFS", "config": None, "name": "nfs"},
+            "model": "smart_manager.service",
+            "pk": 3,
+        },
+        {
+            "fields": {"display_name": "NTP", "config": None, "name": "ntpd"},
+            "model": "smart_manager.service",
+            "pk": 5,
+        },
+        {
+            "fields": {"display_name": "NIS", "config": None, "name": "nis"},
+            "model": "smart_manager.service",
+            "pk": 6,
+        },
+        {
+            "fields": {"display_name": "LDAP", "config": None, "name": "ldap"},
+            "model": "smart_manager.service",
+            "pk": 7,
+        },
+        {
+            "fields": {"display_name": "SFTP", "config": None, "name": "sftp"},
+            "model": "smart_manager.service",
+            "pk": 8,
+        },
+        {
+            "fields": {
+                "display_name": "Rockstor",
+                "config": None,
+                "name": "rockstor",
+            },
+            "model": "smart_manager.service",
+            "pk": 9,
+        },
+        {
+            "fields": {
+                "display_name": "S.M.A.R.T",
+                "config": None,
+                "name": "smartd",
+            },
+            "model": "smart_manager.service",
+            "pk": 10,
+        },
+        {
+            "fields": {
+                "display_name": "Active Directory",
+                "config": None,
+                "name": "active-directory",
+            },
+            "model": "smart_manager.service",
+            "pk": 11,
+        },
+        {
+            "fields": {"display_name": "NUT-UPS", "config": None, "name": "nut"},
+            "model": "smart_manager.service",
+            "pk": 12,
+        },
+        {
+            "fields": {"display_name": "SNMP", "config": None, "name": "snmpd"},
+            "model": "smart_manager.service",
+            "pk": 13,
+        },
+        {
+            "fields": {
+                "display_name": "Rock-on",
+                "config": '{"root_share": "rockons-root"}',
+                "name": "docker",
+            },
+            "model": "smart_manager.service",
+            "pk": 14,
+        },
+        {
+            "fields": {
+                "display_name": "Shell In A Box",
+                "config": '{"detach": false, "css": "white-on-black", "shelltype": "LOGIN"}',
+                "name": "shellinaboxd",
+            },
+            "model": "smart_manager.service",
+            "pk": 15,
+        },
+        {
+            "fields": {
+                "display_name": "ZTaskd",
+                "config": None,
+                "name": "ztask-daemon",
+            },
+            "model": "smart_manager.service",
+            "pk": 17,
+        },
+        {
+            "fields": {
+                "display_name": "Bootstrap",
+                "config": None,
+                "name": "rockstor-bootstrap",
+            },
+            "model": "smart_manager.service",
+            "pk": 18,
+        },
+        {
+            "fields": {
+                "status": True,
+                "count": 15,
+                "ts": "2021-12-24T18:49:51.195Z",
+                "service": 14,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 17,
+        },
+        {
+            "fields": {
+                "status": True,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.756Z",
+                "service": 9,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 18,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.783Z",
+                "service": 10,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 19,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.816Z",
+                "service": 2,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 20,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.829Z",
+                "service": 11,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 21,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.858Z",
+                "service": 5,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 22,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.890Z",
+                "service": 12,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 23,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.921Z",
+                "service": 13,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 24,
+        },
+        {
+            "fields": {
+                "status": True,
+                "count": 2,
+                "ts": "2021-12-24T18:47:11.948Z",
+                "service": 8,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 25,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:12.133Z",
+                "service": 1,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 26,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:12.169Z",
+                "service": 15,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 27,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:12.216Z",
+                "service": 3,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 28,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:12.243Z",
+                "service": 7,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 29,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:12.283Z",
+                "service": 6,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 30,
+        },
+        {
+            "fields": {
+                "status": True,
+                "count": 2,
+                "ts": "2021-12-24T18:47:12.475Z",
+                "service": 17,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 31,
+        },
+        {
+            "fields": {
+                "status": False,
+                "count": 2,
+                "ts": "2021-12-24T18:47:12.513Z",
+                "service": 18,
+            },
+            "model": "smart_manager.servicestatus",
+            "pk": 32,
+        },
+    ]
 
     @classmethod
     def setUpClass(cls):
@@ -1490,4 +1763,41 @@ class ConfigBackupTests(APITestMixin, APITestCase):
                 msg="Un-expected validate_update_config() result:\n "
                 "returned = {}.\n "
                 "expected = {}.".format(rockons, o),
+            )
+
+    def test_validate_service_status(self):
+        """
+        Test correct parsing of sm_ml for two services:
+        - docker service is set as ON below
+        - shellinabox service is set as OFF below
+        """
+        services = {
+            "docker": {"id": 14, "conf": {"config": {"root_share": "rockons-root"}}}
+        }
+        out = [True]
+
+        services.update(
+            {
+                "shellinaboxd": {
+                    "id": 15,
+                    "conf": {
+                        "config": {
+                            "detach": False,
+                            "css": "white-on-black",
+                            "shelltype": "LOGIN",
+                        }
+                    },
+                }
+            }
+        )
+        out.append(False)
+
+        for s, o in zip(services, out):
+            ret = validate_service_status(self.sm_ml, services[s]["id"])
+            self.assertEqual(
+                ret,
+                o,
+                msg="Un-expected validate_service_status() result:\n "
+                "returned = {}.\n "
+                "expected = {}.".format(ret, o),
             )
