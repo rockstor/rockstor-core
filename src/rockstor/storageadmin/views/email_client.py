@@ -27,7 +27,7 @@ from storageadmin.models import EmailClient, Appliance
 from storageadmin.serializers import EmailClientSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from system.osi import run_command, gethostname, replace_line_if_found
+from system.osi import run_command, gethostname, replace_line_if_found, getdnsdomain
 from shutil import move
 from tempfile import mkstemp
 from system.services import systemctl
@@ -81,6 +81,7 @@ def rockstor_postfix_config(fo, smtp_server, port, revert):
     fo.write("smtp_sasl_tls_security_options = noanonymous\n")
     fo.write("smtp_generic_maps = lmdb:/etc/postfix/generic\n")
     fo.write("{}\n".format(FOOTER))
+    logger.info("master.cf: adding new configuration")
 
 
 def update_master():
@@ -157,11 +158,18 @@ def update_generic(sender, revert=False):
     :return:
     """
     hostname = gethostname()
+    dnsdomain = getdnsdomain()
     with open(GENERIC, "w") as fo:
         if not revert:
             fo.write("@{} {}\n".format(hostname, sender))
             fo.write("@{}.localdomain {}\n".format(hostname, sender))
-            # todo need an entry here to add @<hostname>.<domain>
+            # add @<hostname>.<domain> if we can get a dnsdomain:
+            if dnsdomain != "":
+                fo.write("@{}.{} {}\n".format(hostname, dnsdomain, sender))
+            # Add fall through entries for when the sending agent uses localhost.
+            # This avoids some bounce scenarios when sender/from is root@localhost
+            fo.write("@localhost {}\n".format(sender))
+            fo.write("@localhost.localdomain {}\n".format(sender))
     # Set file to r-- --- --- (400) via stat constants.
     os.chmod(GENERIC, stat.S_IRUSR)
     run_command([POSTMAP, GENERIC])
@@ -194,6 +202,7 @@ def update_postfix(smtp_server, port, revert=False):
                 # "inet_protocols = ipv4" as our NetworkManager is ipv4 only.
                 # Or if we find duplicates of our to-be-installed settings;
                 if len(line) > 0 and line[0] is not "#":
+                    # TODO: Revert ipv4 only once network config is ipv6 aware.
                     if re.match("inet_protocols = all", line) is not None:
                         tfo.write("inet_protocols = ipv4\n")
                         continue
@@ -299,7 +308,7 @@ class EmailClientView(rfc.GenericView):
         update_postfix("", "", revert=True)
         disable_sysconfig_mail()
         update_master()  # Not needed as no revert but preserves consistency
-        # Restart ensures sevice is running, even if not running previously.
+        # Restart ensures service is running, even if not running previously.
         systemctl("postfix", "restart")
         EmailClient.objects.all().delete()
         return Response()
