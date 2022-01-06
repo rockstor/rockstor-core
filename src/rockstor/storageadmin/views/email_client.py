@@ -81,6 +81,7 @@ def rockstor_postfix_config(fo, smtp_server, port, revert):
     fo.write("smtp_sasl_tls_security_options = noanonymous\n")
     fo.write("smtp_generic_maps = lmdb:/etc/postfix/generic\n")
     fo.write("{}\n".format(FOOTER))
+    logger.info("master.cf: adding new configuration")
 
 
 def update_master():
@@ -162,8 +163,9 @@ def update_generic(sender, revert=False):
         if not revert:
             fo.write("@{} {}\n".format(hostname, sender))
             fo.write("@{}.localdomain {}\n".format(hostname, sender))
-            # add @<hostname>.<domain>
-            fo.write("@{}.{} {}\n".format(hostname, dnsdomain, sender))
+            # add @<hostname>.<domain> if we can get a dnsdomain:
+            if dnsdomain != "":
+                fo.write("@{}.{} {}\n".format(hostname, dnsdomain, sender))
             # Add fall through entries for when the sending agent uses localhost.
             # This avoids some bounce scenarios when sender/from is root@localhost
             fo.write("@localhost {}\n".format(sender))
@@ -200,6 +202,7 @@ def update_postfix(smtp_server, port, revert=False):
                 # "inet_protocols = ipv4" as our NetworkManager is ipv4 only.
                 # Or if we find duplicates of our to-be-installed settings;
                 if len(line) > 0 and line[0] is not "#":
+                    # TODO: Revert ipv4 only once network config is ipv6 aware.
                     if re.match("inet_protocols = all", line) is not None:
                         tfo.write("inet_protocols = ipv4\n")
                         continue
@@ -305,7 +308,7 @@ class EmailClientView(rfc.GenericView):
         update_postfix("", "", revert=True)
         disable_sysconfig_mail()
         update_master()  # Not needed as no revert but preserves consistency
-        # Restart ensures sevice is running, even if not running previously.
+        # Restart ensures service is running, even if not running previously.
         systemctl("postfix", "restart")
         EmailClient.objects.all().delete()
         return Response()

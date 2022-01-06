@@ -882,7 +882,12 @@ def gethostname():
 
 
 def getdnsdomain():
-    o, e, rc = run_command([DNSDOMAIN])
+    o, e, rc = run_command([DNSDOMAIN], throw=False, log=True)
+    if rc != 0:
+        logger.info(
+            "Check your network domain configuration. See above error for details."
+        )
+        return ""
     return o[0]
 
 
