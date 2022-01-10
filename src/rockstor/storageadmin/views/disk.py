@@ -131,8 +131,10 @@ class DiskMixin(object):
             # It makes no sense to save fake serial number drives between scans
             # as on each scan the serial number is re-generated (fake) anyway.
             # Serial numbers beginning with 'fake-serial-' are from scan_disks.
-            if (do.serial in serial_numbers_seen) or (
-                re.match("fake-serial-", do.serial) is not None
+            if (
+                (do.serial in serial_numbers_seen)
+                or (do.serial is None)
+                or (re.match("fake-serial-", do.serial) is not None)
             ):
                 logger.info(
                     "Deleting duplicate or fake (by serial) disk db "
