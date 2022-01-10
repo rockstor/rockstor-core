@@ -112,7 +112,7 @@
           {{/if}}
       </td>
       <td>
-        {{#checkSerialStatus this.serial this.name}}
+        {{#checkSerialStatus this.serial}}
         <div class="alert alert-danger"><h4>Warning! Disk unusable as pool member - serial number is not legitimate or unique.</h4>Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN.
           Please ensure that disks are provided with unique serial numbers before proceeding further.
           See our <a href="http://rockstor.com/docs/quickstart.html#minimum-system-requirements" target="_blank">Minimum system requirements</a> for VMware config.</div>

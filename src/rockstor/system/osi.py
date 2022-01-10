@@ -80,6 +80,28 @@ EXCLUDED_MOUNT_DEVS = [
     "sunrpc",
 ]
 
+# We watch for the following known fake serial numbers.
+# When found we substitute for "fake-serial-uuid" where uuid is a random uuid4.
+# Our Web-UI js then flags these drives as unusable.
+#
+# See "Device Management in Rockstor", subtitle: 'Rockstor's Serial Obsession'.
+# https://forum.rockstor.com/t/device-management-in-rockstor/1768
+#
+# Known models of external enclosures that obfuscate 'real' drive serials with fakes.
+# N.B. All host drives within these enclosures appear to have identical serials.
+# 8 bay Orico unit (JMS567 controller) - forum member outicnz report.
+# 4 bay ORICO USB 3.0 - forum member beaglenz report.
+# 5 bay ORICO USB 3.0 - forum member Brett_Abela report.
+# 4 bay Mediasonic USB 3.0 & eSATA (HFD1-SU3S2) - GitHub user azilber report.
+# 5 bay no-name USB - forum member Miyuki report.
+
+EXCLUDED_SERIAL_NUMS = [
+    "",
+    "000000000000",  # Many reports of multiple Orico models.
+    "152D00539000",  # USB ID 152d:0567 a JMS567 based device.
+    "0123456789ABCDEF",  # No-name USB external multi-bay.
+]
+
 Disk = collections.namedtuple(
     "Disk",
     "name model serial size transport vendor "
@@ -550,9 +572,11 @@ def scan_disks(min_size, test_mode=False):
                 # reset the bdev_flag as we are only interested in devices
                 # listed directly after a bdev anyway.
                 bdev_flag = False
-            if dmap["SERIAL"] == "" or (dmap["SERIAL"] in serials_seen):
+            if (dmap["SERIAL"] in EXCLUDED_SERIAL_NUMS) or (
+                dmap["SERIAL"] in serials_seen
+            ):
                 # No serial number still or its a repeat. Overwrite drive
-                # serial entry in dmap with fake-serial- + uuid4 See
+                # serial entry in dmap with fake-serial- + uuid4. See js/template/
                 # disk/disks_table.jst for a use of this flag mechanism.
                 # Previously we did dmap['SERIAL'] = dmap['NAME'] which is less
                 # robust as it can itself produce duplicate serial numbers.
