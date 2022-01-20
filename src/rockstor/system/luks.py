@@ -201,7 +201,7 @@ def get_unlocked_luks_containers_uuids():
             "crypt",
         ]
     )
-    if len(out) > 0 and rc == 0:
+    if len(out) > 0 == rc:
         # The output has at least one line and our dmsetup executed OK.
         for each_line in out:
             if each_line == "":
