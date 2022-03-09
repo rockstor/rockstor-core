@@ -64,6 +64,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Minimum disk size. Smaller disks will be ignored. Recommended minimum = 16 GiB.
+# Btrfs works in chunks (units) of 1 GiB for data, and 256 MiB for metadata.
+# Using very small disks requires mixed data/metadata chunks of 256 MiB.
+# If a device is less than 16 GiB, the mixed (--mixed) mode is recommended.
+# https://btrfs.wiki.kernel.org/index.php/FAQ
+# https://btrfs.wiki.kernel.org/index.php/Glossary
+# Rockstor does not enforce --mixed for any drive size.
+# 5 GiB = (5 * 1024 * 1024) = 5242880 KiB
+MIN_DISK_SIZE = 5242880
+
 # A list of scan_disks() assigned roles: ie those that can be identified from
 # the output of lsblk with the following switches:
 # -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
@@ -102,7 +112,7 @@ class DiskMixin(object):
         :return: serialized models of attached and missing disks via serial num
         """
         # Acquire a list (namedtupil collection) of attached drives > min size
-        disks = scan_disks(settings.MIN_DISK_SIZE)
+        disks = scan_disks(MIN_DISK_SIZE)
         # Acquire a list of uuid's for currently unlocked LUKS containers.
         # Although we could tally these as we go by noting fstype crypt_LUKS
         # and then loop through our db Disks again updating all matching

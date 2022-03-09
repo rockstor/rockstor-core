@@ -293,12 +293,6 @@ SUPPORT = {
 }
 
 """
-Minimum disk size allowed is 1GB. Anything less is not really usable. Reduce
-this to 100MB if you really need to, but any less would just break things.
-"""
-MIN_DISK_SIZE = 1024 * 1024
-
-"""
 Maximum number of seconds to keep data collected by smart probes. The logic
 behind this needs to evolve quite a bit.
 """
