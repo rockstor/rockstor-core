@@ -22,9 +22,9 @@ from storageadmin.models import Share, NFSExportGroup
 
 class NFSExport(models.Model):
 
-    export_group = models.ForeignKey(NFSExportGroup)
+    export_group = models.ForeignKey(NFSExportGroup, on_delete=models.CASCADE)
     """share that is exported"""
-    share = models.ForeignKey(Share)
+    share = models.ForeignKey(Share, on_delete=models.CASCADE)
     """mount point of the share"""
     mount = models.CharField(max_length=4096)
 

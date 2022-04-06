@@ -47,13 +47,9 @@ class SmartManagerDBRouter(object):
             return True
         return None
 
-    def allow_migrate(self, db, app_label, model_name=None, **hints):
+    def allow_migrate(self, db, APP_LABEL, model_name=None, **hints):
         from django.conf import settings
 
-        if APP_LABEL not in settings.DATABASES:
-            return None
-        if db == APP_LABEL:
-            return app_label == APP_LABEL
-        elif app_label == APP_LABEL:
-            return False
+        if APP_LABEL in settings.DATABASES:
+            return db == APP_LABEL
         return None

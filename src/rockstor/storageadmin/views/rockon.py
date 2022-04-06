@@ -42,7 +42,7 @@ from storageadmin.models import (
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from rockon_helpers import rockon_status
+from .rockon_helpers import rockon_status
 from system.docker import docker_status
 from huey.contrib.djhuey import HUEY
 from django.conf import settings

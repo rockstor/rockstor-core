@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from user import User
+from .user import User
 
 
 class SambaShare(models.Model):
     YES = "yes"
     NO = "no"
     """share that is exported"""
-    share = models.OneToOneField("Share", related_name="sambashare")
+    share = models.OneToOneField("Share", related_name="sambashare", on_delete=models.DO_NOTHING)
     """mount point of the share"""
     path = models.CharField(max_length=4096, unique=True)
     comment = models.CharField(max_length=100, default="foo bar")

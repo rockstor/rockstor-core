@@ -21,7 +21,7 @@ from storageadmin.models import Share
 
 
 class IscsiTarget(models.Model):
-    share = models.ForeignKey(Share)
+    share = models.ForeignKey(Share, on_delete=models.CASCADE)
     """target id"""
     tid = models.IntegerField(unique=True)
     """target name"""

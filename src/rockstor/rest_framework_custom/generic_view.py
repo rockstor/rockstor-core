@@ -21,7 +21,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from oauth_wrapper import RockstorOAuth2Authentication
+from .oauth_wrapper import RockstorOAuth2Authentication
 from contextlib import contextmanager
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException

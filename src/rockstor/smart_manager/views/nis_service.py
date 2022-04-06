@@ -22,7 +22,7 @@ from system.osi import run_command
 from system.services import systemctl
 from system.nis import configure_nis
 from django.db import transaction
-from base_service import BaseServiceDetailView
+from .base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging

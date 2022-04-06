@@ -28,7 +28,7 @@ RETURN_BOOLEAN = True
 
 class Share(models.Model):
     # pool that this share is part of
-    pool = models.ForeignKey(Pool)
+    pool = models.ForeignKey(Pool,on_delete=models.CASCADE)
     """auto created 0/x qgroup"""
     qgroup = models.CharField(max_length=100)
     """quota group y/x explicitly created for this Share"""

@@ -21,7 +21,7 @@ import stat
 
 import re
 
-from osi import append_to_line, run_command
+from .osi import append_to_line, run_command
 from tempfile import mkstemp
 from shutil import move
 import logging

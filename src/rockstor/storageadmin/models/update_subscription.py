@@ -28,7 +28,7 @@ class UpdateSubscription(models.Model):
     description = models.CharField(max_length=128)
     """url of the repo"""
     url = models.CharField(max_length=512)
-    appliance = models.ForeignKey(Appliance)
+    appliance = models.ForeignKey(Appliance, on_delete=models.DO_NOTHING)
     password = models.CharField(max_length=64, null=True)
     """status of subscription: active, inactive, expired etc.."""
     status = models.CharField(max_length=64)

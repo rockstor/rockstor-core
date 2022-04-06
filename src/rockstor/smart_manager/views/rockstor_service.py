@@ -19,10 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from django.db import transaction
-from base_service import BaseServiceDetailView
+from .base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.models import NetworkConnection
-import ztask_helpers
+import smart_manager.views.ztask_helpers
 
 
 import logging

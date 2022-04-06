@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import url
+#from django.conf.urls import patterns, urls
+from django.urls import include, re_path
 from smart_manager.views import (
     ActiveDirectoryServiceView,
     BootstrapServiceView,
@@ -43,63 +44,64 @@ command_regex = "config|start|stop"
 
 urlpatterns = [
     # Services
-    url(r"^nis$", NISServiceView.as_view()),
-    url(r"^nis/(?P<command>%s)$" % command_regex, NISServiceView.as_view()),
-    url(r"^smb$", SambaServiceView.as_view()),
-    url(r"^smb/(?P<command>%s)$" % command_regex, SambaServiceView.as_view()),
-    url(r"^nfs$", NFSServiceView.as_view()),
-    url(r"^nfs/(?P<command>%s)$" % command_regex, NFSServiceView.as_view()),
-    url(r"^ntpd$", NTPServiceView.as_view()),
-    url(r"^ntpd/(?P<command>%s)$" % command_regex, NTPServiceView.as_view()),
-    url(r"^active-directory$", ActiveDirectoryServiceView.as_view()),
-    url(
+    re_path(r"^$", BaseServiceView.as_view()),
+    re_path(r"^nis$", NISServiceView.as_view()),
+    re_path(r"^nis/(?P<command>%s)$" % command_regex, NISServiceView.as_view()),
+    re_path(r"^smb$", SambaServiceView.as_view()),
+    re_path(r"^smb/(?P<command>%s)$" % command_regex, SambaServiceView.as_view()),
+    re_path(r"^nfs$", NFSServiceView.as_view()),
+    re_path(r"^nfs/(?P<command>%s)$" % command_regex, NFSServiceView.as_view()),
+    re_path(r"^ntpd$", NTPServiceView.as_view()),
+    re_path(r"^ntpd/(?P<command>%s)$" % command_regex, NTPServiceView.as_view()),
+    re_path(r"^active-directory$", ActiveDirectoryServiceView.as_view()),
+    re_path(
         r"^active-directory/(?P<command>%s)$" % command_regex,
         ActiveDirectoryServiceView.as_view(),
     ),
-    url(r"^ldap$", LdapServiceView.as_view()),
-    url(r"^ldap/(?P<command>%s)$" % command_regex, LdapServiceView.as_view()),
-    url(r"^sftp$", SFTPServiceView.as_view()),
-    url(r"^sftp/(?P<command>%s)$" % command_regex, SFTPServiceView.as_view()),
-    url(r"^replication$", ReplicationServiceView.as_view()),
-    url(
+    re_path(r"^ldap$", LdapServiceView.as_view()),
+    re_path(r"^ldap/(?P<command>%s)$" % command_regex, LdapServiceView.as_view()),
+    re_path(r"^sftp$", SFTPServiceView.as_view()),
+    re_path(r"^sftp/(?P<command>%s)$" % command_regex, SFTPServiceView.as_view()),
+    re_path(r"^replication$", ReplicationServiceView.as_view()),
+    re_path(
         r"^replication/(?P<command>%s)$" % command_regex,
         ReplicationServiceView.as_view(),
     ),
-    url(r"^task-scheduler$", TaskSchedulerServiceView.as_view()),
-    url(
+    re_path(r"^task-scheduler$", TaskSchedulerServiceView.as_view()),
+    re_path(
         r"^task-scheduler/(?P<command>%s)$" % command_regex,
         TaskSchedulerServiceView.as_view(),
     ),
-    url(r"^data-collector$", DataCollectorServiceView.as_view()),
-    url(
+    re_path(r"^data-collector$", DataCollectorServiceView.as_view()),
+    re_path(
         r"^data-collector/(?P<command>%s)$" % command_regex,
         DataCollectorServiceView.as_view(),
     ),
-    url(r"^service-monitor$", ServiceMonitorView.as_view()),
-    url(
+    re_path(r"^service-monitor$", ServiceMonitorView.as_view()),
+    re_path(
         r"^service-monitor/(?P<command>%s)$" % command_regex,
         ServiceMonitorView.as_view(),
     ),
-    url(r"^snmpd$", SNMPServiceView.as_view()),
-    url(r"^snmpd/(?P<command>%s)$" % command_regex, SNMPServiceView.as_view()),
-    url(r"^docker$", DockerServiceView.as_view()),
-    url(r"^docker/(?P<command>%s)$" % command_regex, DockerServiceView.as_view()),
-    url(r"^smartd$", SMARTDServiceView.as_view()),
-    url(r"^smartd/(?P<command>%s)$" % command_regex, SMARTDServiceView.as_view()),
-    url(r"^nut$", NUTServiceView.as_view()),
-    url(r"^nut/(?P<command>%s)$" % command_regex, NUTServiceView.as_view()),
-    url(r"^ztask-daemon$", ZTaskdServiceView.as_view()),
-    url(r"^ztask-daemon/(?P<command>%s)$" % command_regex, ZTaskdServiceView.as_view()),
-    url(r"^rockstor-bootstrap$", BootstrapServiceView.as_view()),
-    url(
+    re_path(r"^snmpd$", SNMPServiceView.as_view()),
+    re_path(r"^snmpd/(?P<command>%s)$" % command_regex, SNMPServiceView.as_view()),
+    re_path(r"^docker$", DockerServiceView.as_view()),
+    re_path(r"^docker/(?P<command>%s)$" % command_regex, DockerServiceView.as_view()),
+    re_path(r"^smartd$", SMARTDServiceView.as_view()),
+    re_path(r"^smartd/(?P<command>%s)$" % command_regex, SMARTDServiceView.as_view()),
+    re_path(r"^nut$", NUTServiceView.as_view()),
+    re_path(r"^nut/(?P<command>%s)$" % command_regex, NUTServiceView.as_view()),
+    re_path(r"^ztask-daemon$", ZTaskdServiceView.as_view()),
+    re_path(r"^ztask-daemon/(?P<command>%s)$" % command_regex, ZTaskdServiceView.as_view()),
+    re_path(r"^rockstor-bootstrap$", BootstrapServiceView.as_view()),
+    re_path(
         r"^rockstor-bootstrap/(?P<command>%s)$" % command_regex,
         BootstrapServiceView.as_view(),
     ),
-    url(r"^shellinaboxd$", ShellInABoxServiceView.as_view()),
-    url(
+    re_path(r"^shellinaboxd$", ShellInABoxServiceView.as_view()),
+    re_path(
         r"^shellinaboxd/(?P<command>%s)$" % command_regex,
         ShellInABoxServiceView.as_view(),
     ),
-    url(r"^rockstor$", RockstorServiceView.as_view()),
-    url(r"^rockstor/(?P<command>%s)$" % command_regex, RockstorServiceView.as_view()),
+    re_path(r"^rockstor$", RockstorServiceView.as_view()),
+    re_path(r"^rockstor/(?P<command>%s)$" % command_regex, RockstorServiceView.as_view()),
 ]

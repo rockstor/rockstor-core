@@ -23,8 +23,8 @@ from tempfile import mkstemp
 
 import distro
 
-from exceptions import CommandException
-from osi import run_command, get_base_device_byid, get_device_path
+from .exceptions import CommandException
+from .osi import run_command, get_base_device_byid, get_device_path
 from system.email_util import email_root
 
 logger = logging.getLogger(__name__)

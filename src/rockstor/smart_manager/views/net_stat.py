@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from smart_manager.models import NetStat
 from smart_manager.serializers import NetStatSerializer
-from generic_sprobe import GenericSProbeView
+from .generic_sprobe import GenericSProbeView
 
 
 class NetStatView(GenericSProbeView):

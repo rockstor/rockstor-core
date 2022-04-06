@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import url
+#from django.conf.urls import patterns, url
+from django.urls import include, re_path
 from storageadmin.views import CommandView
 
 valid_commands = (
@@ -27,9 +28,9 @@ valid_commands = (
     "|refresh-snapshot-state"
 )
 
-urlpatterns =[
-    url(r"(?P<command>%s)$" % valid_commands, CommandView.as_view(), name="user-view"),
-    url(
+urlpatterns = [
+    re_path(r"(?P<command>%s)$" % valid_commands, CommandView.as_view(), name="user-view"),
+    re_path(
         r"(?P<command>shutdown|suspend)/(?P<rtcepoch>\d+)$",
         CommandView.as_view(),
         name="user-view",

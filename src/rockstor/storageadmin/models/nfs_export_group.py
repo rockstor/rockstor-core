@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from validators import (
+from .validators import (
     validate_nfs_host_str,
     validate_nfs_modify_str,
     validate_nfs_sync_choice,

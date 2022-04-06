@@ -58,8 +58,8 @@ class NetworkConnection(models.Model):
     ipv6_dns = models.CharField(max_length=256, null=True)
     ipv6_dns_search = models.CharField(max_length=256, null=True)
 
-    # slave connections have a master. eg: team
-    master = models.ForeignKey("NetworkConnection", null=True)
+    # subordinate connections have a master. eg: team
+    master = models.ForeignKey("NetworkConnection", null=True, on_delete=models.SET_NULL)
 
     @property
     def ipaddr(self):
@@ -223,7 +223,7 @@ class NetworkDevice(models.Model):
 # This is the most common of connection types that uses NetworkInterface of
 # dtype=ethernet
 class EthernetConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.SET_NULL)
     mac = models.CharField(max_length=64, null=True)
     cloned_mac = models.CharField(max_length=64, null=True)
     mtu = models.CharField(max_length=64, null=True)
@@ -233,7 +233,7 @@ class EthernetConnection(models.Model):
 
 
 class TeamConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.SET_NULL)
     # eg: Team1
     name = models.CharField(max_length=64, null=True)
     # json config.
@@ -244,7 +244,7 @@ class TeamConnection(models.Model):
 
 
 class BondConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=64, null=True)
     # at the NM level it's not json like in team config, but we could convert
     # it for consistency.
@@ -255,7 +255,7 @@ class BondConnection(models.Model):
 
 
 class BridgeConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.SET_NULL)
     docker_name = models.CharField(max_length=64, null=True)
     usercon = models.BooleanField(default=False)
     aux_address = models.CharField(max_length=2048, null=True)

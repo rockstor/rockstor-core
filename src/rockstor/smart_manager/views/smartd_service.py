@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from system.services import systemctl
 from system.pkg_mgmt import install_pkg
 from django.db import transaction
-from base_service import BaseServiceDetailView
+from .base_service import BaseServiceDetailView
 import os
 from system import smart
 from smart_manager.models import Service

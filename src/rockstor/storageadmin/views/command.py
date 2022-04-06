@@ -46,7 +46,7 @@ from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
 from django.db import transaction
-from share_helpers import sftp_snap_toggle, import_shares, import_snapshots
+from .share_helpers import sftp_snap_toggle, import_shares, import_snapshots
 from rest_framework_custom.oauth_wrapper import RockstorOAuth2Authentication
 from system.pkg_mgmt import (
     auto_update,
@@ -55,7 +55,7 @@ from system.pkg_mgmt import (
     update_run,
     auto_update_status,
 )
-from nfs_exports import NFSExportMixin
+from .nfs_exports import NFSExportMixin
 import logging
 
 logger = logging.getLogger(__name__)

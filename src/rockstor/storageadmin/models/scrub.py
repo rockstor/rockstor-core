@@ -22,7 +22,7 @@ from storageadmin.models import Pool
 
 class PoolScrub(models.Model):
 
-    pool = models.ForeignKey(Pool)
+    pool = models.ForeignKey(Pool, on_delete=models.DO_NOTHING)
     # with a max of 10 chars we use 'halted' to indicated 'interrupted'
     status = models.CharField(max_length=10, default="started")
     # pid is the process id of a scrub job

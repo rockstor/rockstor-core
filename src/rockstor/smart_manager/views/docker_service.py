@@ -25,7 +25,7 @@ from django.conf import settings
 from django.db import transaction
 from rest_framework.response import Response
 
-from base_service import BaseServiceDetailView
+from .base_service import BaseServiceDetailView
 from fs.btrfs import mount_share
 from smart_manager.models import Service
 from storageadmin.models import Share

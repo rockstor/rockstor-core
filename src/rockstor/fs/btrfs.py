@@ -32,7 +32,7 @@ from system.osi import (
     dev_mount_point,
 )
 from system.exceptions import CommandException
-from pool_scrub import PoolScrub
+from .pool_scrub import PoolScrub
 from huey.contrib.djhuey import task
 from django.conf import settings
 import logging

@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import url
+#from django.conf.urls import patterns, include, url
+from django.urls import include, re_path
 from storageadmin.views import (
     ShareDetailView,
     ShareACLView,
@@ -32,21 +33,22 @@ snap_command = "clone|repclone"
 share_command = "rollback|clone"
 
 urlpatterns = [
-    url(r"^(?P<sid>\d+)$", ShareDetailView.as_view(), name="share-view"),
-    url(r"^(?P<sid>\d+)/(?P<command>force)$", ShareDetailView.as_view(),),
+    re_path(r"^$", ShareListView.as_view(), name="share-view"),
+    re_path(r"^/(?P<sid>\d+)$", ShareDetailView.as_view(), name="share-view"),
+    re_path(r"^/(?P<sid>\d+)/(?P<command>force)$", ShareDetailView.as_view(),),
     # Individual snapshots don't have detailed representation in the web-ui. So
     # thre is no need for SnapshotDetailView.
-    url(r"^(?P<sid>\d+)/snapshots$", SnapshotView.as_view(), name="snapshot-view"),
-    url(
-        r"^(?P<sid>\d+)/snapshots/(?P<snap_name>%s)$" % snap_regex,
+    re_path(r"^/(?P<sid>\d+)/snapshots$", SnapshotView.as_view(), name="snapshot-view"),
+    re_path(
+        r"^/(?P<sid>\d+)/snapshots/(?P<snap_name>%s)$" % snap_regex,
         SnapshotView.as_view(),
         name="snapshot-view",
     ),
-    url(
-        r"^(?P<sid>\d+)/snapshots/(?P<snap_name>%s)/(?P<command>%s)$"
+    re_path(
+        r"^/(?P<sid>\d+)/snapshots/(?P<snap_name>%s)/(?P<command>%s)$"
         % (snap_regex, snap_command),
         SnapshotView.as_view(),
     ),
-    url(r"^(?P<sid>\d+)/acl$", ShareACLView.as_view(), name="acl-view"),
-    url(r"^(?P<sid>\d+)/(?P<command>%s)$" % share_command, ShareCommandView.as_view()),
+    re_path(r"^/(?P<sid>\d+)/acl$", ShareACLView.as_view(), name="acl-view"),
+    re_path(r"^/(?P<sid>\d+)/(?P<command>%s)$" % share_command, ShareCommandView.as_view()),
 ]

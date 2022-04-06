@@ -16,31 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.db import models
-from storageadmin.models import SambaShare
+#from django.conf.urls import patterns, urls
+from django.urls import include, re_path
+from storageadmin.views import ApplianceListView, ApplianceDetailView
 
-
-class PosixACLs(models.Model):
-    smb_share = models.ForeignKey(SambaShare, on_delete=models.DO_NOTHING)
-    USER = "user"
-    GROUP = "group"
-    OTHER = "other"
-    OWNER_CHOICES = (
-        (USER, "user"),
-        (GROUP, "group"),
-        (OTHER, "other"),
-    )
-    PERM_CHOICES = (
-        ("r", "r"),
-        ("w", "w"),
-        ("x", "x"),
-        ("rw", "rw"),
-        ("rx", "rx"),
-        ("wx", "wx"),
-        ("rwx", "rwx"),
-    )
-    owner = models.CharField(max_length=5, choices=OWNER_CHOICES)
-    perms = models.CharField(max_length=3, choices=PERM_CHOICES)
-
-    class Meta:
-        app_label = "storageadmin"
+urlpatterns = [
+    re_path(r'^$', ApplianceListView.as_view()),
+    re_path(r'^/(?P<appid>\d+)$', ApplianceDetailView.as_view()),
+]

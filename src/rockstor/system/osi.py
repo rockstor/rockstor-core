@@ -34,7 +34,7 @@ from distutils.util import strtobool
 
 from django.conf import settings
 
-from exceptions import CommandException, NonBTRFSRootException
+from .exceptions import CommandException, NonBTRFSRootException
 
 logger = logging.getLogger(__name__)
 

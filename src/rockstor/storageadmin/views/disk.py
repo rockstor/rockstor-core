@@ -31,7 +31,7 @@ from fs.btrfs import (
 )
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
-from share_helpers import import_shares, import_snapshots
+from .share_helpers import import_shares, import_snapshots
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart

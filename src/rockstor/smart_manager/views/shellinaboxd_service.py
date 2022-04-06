@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from rest_framework.response import Response
 from system.services import systemctl
-from base_service import BaseServiceDetailView
+from .base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from system.shell import update_shell_config, restart_shell
 import json

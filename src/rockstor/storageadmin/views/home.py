@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
+from django.template import RequestContext
+#from django.shortcuts import render_to_response
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 
@@ -29,6 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def login_page(request):
+    #return render_to_response("login.html", context_instance=RequestContext(request))
     return render(request, "login.html")
 
 
@@ -41,6 +45,7 @@ def login_submit(request):
             login(request, user)
             return redirect("/home")
     messages.add_message(request, messages.INFO, "Login incorrect!")
+    #return render_to_response("login.html", context_instance=RequestContext(request))
     return render(request, "login.html")
 
 
@@ -66,16 +71,21 @@ def home(request):
     }
     logger.debug("context={}".format(context))
     if request.user.is_authenticated():
-        logger.debug("ABOUT TO RENDER INDEX")
-        return render(request, "index.html", context)
+        #return render_to_response(
+        #    "index.html", context, context_instance=RequestContext(request)
+        #)
+        return render(request,"index.html",context)
     else:
         if setup.setup_user:
-            logger.debug("ABOUT TO RENDER LOGIN")
-            return render(request, "login.html", context)
+            #return render_to_response(
+            #    "login.html", context, context_instance=RequestContext(request)
+            #)
+            return render(request,"login.html",context)
         else:
-            logger.debug("ABOUT TO RENDER SETUP")
-            return render(request, "setup.html", context)
-
+            #return render_to_response(
+            #    "setup.html", context, context_instance=RequestContext(request)
+            #)
+            return render(request,"setup.html",context)
 
 def logout_user(request):
     logout(request)

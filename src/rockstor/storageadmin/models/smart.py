@@ -21,7 +21,7 @@ from storageadmin.models import Disk
 
 
 class SMARTCapability(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=1024)
     flag = models.CharField(max_length=64)
     capabilities = models.CharField(max_length=2048)
@@ -31,7 +31,7 @@ class SMARTCapability(models.Model):
 
 
 class SMARTAttribute(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.DO_NOTHING)
     aid = models.IntegerField()
     name = models.CharField(max_length=256)
     flag = models.CharField(max_length=64)
@@ -48,7 +48,7 @@ class SMARTAttribute(models.Model):
 
 
 class SMARTErrorLog(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.DO_NOTHING)
     line = models.CharField(max_length=128)
 
     class Meta:
@@ -56,7 +56,7 @@ class SMARTErrorLog(models.Model):
 
 
 class SMARTErrorLogSummary(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.DO_NOTHING)
     error_num = models.IntegerField()
     lifetime_hours = models.IntegerField()
     state = models.CharField(max_length=64)
@@ -68,7 +68,7 @@ class SMARTErrorLogSummary(models.Model):
 
 
 class SMARTTestLog(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.DO_NOTHING)
     test_num = models.IntegerField()
     description = models.CharField(max_length=64)
     status = models.CharField(max_length=256)
@@ -81,7 +81,7 @@ class SMARTTestLog(models.Model):
 
 
 class SMARTTestLogDetail(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.DO_NOTHING)
     line = models.CharField(max_length=128)
 
     class Meta:
@@ -89,7 +89,7 @@ class SMARTTestLogDetail(models.Model):
 
 
 class SMARTIdentity(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.DO_NOTHING)
     CHOICES = [
         ("Model Family",) * 2,
         ("Device Model",) * 2,
@@ -129,7 +129,7 @@ class SMARTIdentity(models.Model):
 
 
 class SMARTInfo(models.Model):
-    disk = models.ForeignKey(Disk)
+    disk = models.ForeignKey(Disk, on_delete=models.DO_NOTHING)
     toc = models.DateTimeField(auto_now=True)
 
     class Meta:

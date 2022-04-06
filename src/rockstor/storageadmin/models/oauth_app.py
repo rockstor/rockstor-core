@@ -22,9 +22,9 @@ from storageadmin.models import User
 
 
 class OauthApp(models.Model):
-    application = models.OneToOneField(Application)
+    application = models.OneToOneField(Application, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=128, unique=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     def client_id(self, *args, **kwargs):
         return self.application.client_id

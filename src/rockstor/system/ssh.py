@@ -24,7 +24,7 @@ from tempfile import mkstemp
 
 from django.conf import settings
 
-from services import systemctl, service_status
+from system.services import systemctl, service_status
 from system.osi import run_command
 
 SSHD_CONFIG = "/etc/ssh/sshd_config"

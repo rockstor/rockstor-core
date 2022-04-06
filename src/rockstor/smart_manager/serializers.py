@@ -38,6 +38,7 @@ from .models import (
     ReceiveTrail,
     Service,
 )
+
 from smart_manager.taplib.probe_config import TapConfig
 
 

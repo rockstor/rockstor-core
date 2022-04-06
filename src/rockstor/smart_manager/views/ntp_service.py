@@ -21,7 +21,7 @@ from storageadmin.util import handle_exception
 from system.services import systemctl
 from system.osi import run_command
 from django.db import transaction
-from base_service import BaseServiceDetailView
+from .base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from django.conf import settings
 import re

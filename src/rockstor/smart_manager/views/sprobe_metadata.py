@@ -20,7 +20,7 @@ from smart_manager.models import SProbe
 from smart_manager.serializers import SProbeSerializer
 from rest_framework.response import Response
 from django.conf import settings
-from advanced_sprobe import AdvancedSProbeView
+from .advanced_sprobe import AdvancedSProbeView
 
 
 class SProbeMetadataView(AdvancedSProbeView):

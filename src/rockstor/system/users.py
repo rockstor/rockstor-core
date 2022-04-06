@@ -34,8 +34,8 @@ import chardet
 import dbus
 from dbus import DBusException
 
-from exceptions import CommandException
-from osi import run_command
+from .exceptions import CommandException
+from .osi import run_command
 
 logger = logging.getLogger(__name__)
 

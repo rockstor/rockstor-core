@@ -24,7 +24,7 @@ from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import Pool, PoolBalance
 import rest_framework_custom as rfc
 from fs.btrfs import balance_status, balance_status_internal
-from pool import PoolMixin
+from .pool import PoolMixin
 
 import logging
 

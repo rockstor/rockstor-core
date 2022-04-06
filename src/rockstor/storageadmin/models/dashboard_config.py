@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 
 
 class DashboardConfig(models.Model):
-    user = models.OneToOneField(User, null=False)
+    user = models.OneToOneField(User, null=False,on_delete=models.DO_NOTHING)
     widgets = models.CharField(max_length=4096)
 
     class Meta:
