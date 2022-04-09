@@ -175,6 +175,8 @@ class NetworkConnection(models.Model):
 
     class Meta:
         app_label = "storageadmin"
+        ordering = ['-id']
+
 
 
 # network interfaces/devices are auto detected from the system via "nmcli d
@@ -215,6 +217,7 @@ class NetworkDevice(models.Model):
 
     class Meta:
         app_label = "storageadmin"
+        ordering = ['-id']
 
 
 # This is the most common of connection types that uses NetworkInterface of

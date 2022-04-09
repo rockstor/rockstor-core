@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.template import RequestContext
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 
 from storageadmin.models import Appliance, Setup, UpdateSubscription
@@ -25,9 +24,12 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.conf import settings
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def login_page(request):
-    return render_to_response("login.html", context_instance=RequestContext(request))
+    return render(request, "login.html")
 
 
 def login_submit(request):
@@ -39,7 +41,7 @@ def login_submit(request):
             login(request, user)
             return redirect("/home")
     messages.add_message(request, messages.INFO, "Login incorrect!")
-    return render_to_response("login.html", context_instance=RequestContext(request))
+    return render(request, "login.html")
 
 
 def home(request):
@@ -62,19 +64,17 @@ def home(request):
         "page_size": settings.REST_FRAMEWORK["PAGE_SIZE"],
         "update_channel": update_channel,
     }
+    logger.debug("context={}".format(context))
     if request.user.is_authenticated():
-        return render_to_response(
-            "index.html", context, context_instance=RequestContext(request)
-        )
+        logger.debug("ABOUT TO RENDER INDEX")
+        return render(request, "index.html", context)
     else:
         if setup.setup_user:
-            return render_to_response(
-                "login.html", context, context_instance=RequestContext(request)
-            )
+            logger.debug("ABOUT TO RENDER LOGIN")
+            return render(request, "login.html", context)
         else:
-            return render_to_response(
-                "setup.html", context, context_instance=RequestContext(request)
-            )
+            logger.debug("ABOUT TO RENDER SETUP")
+            return render(request, "setup.html", context)
 
 
 def logout_user(request):

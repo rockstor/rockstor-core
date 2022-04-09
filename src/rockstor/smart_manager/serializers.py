@@ -44,6 +44,7 @@ from smart_manager.taplib.probe_config import TapConfig
 class CPUMetricSerializer(serializers.ModelSerializer):
     class Meta:
         model = CPUMetric
+        fields = "__all__"
 
 
 class LoadAvgSerializer(serializers.ModelSerializer):
@@ -55,21 +56,25 @@ class LoadAvgSerializer(serializers.ModelSerializer):
 class MemInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemInfo
+        fields = "__all__"
 
 
 class DiskStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiskStat
+        fields = "__all__"
 
 
 class NetStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = NetStat
+        fields = "__all__"
 
 
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
+        fields = "__all__"
 
 
 class ServiceStatusSerializer(serializers.ModelSerializer):
@@ -79,11 +84,13 @@ class ServiceStatusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceStatus
+        fields = "__all__"
 
 
 class SProbeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SProbe
+        fields = "__all__"
 
 
 # TODO: Do we need this class anymore? Only used in advanced_sprobe
@@ -95,26 +102,31 @@ class PaginatedSProbe(pagination.PageNumberPagination):
 class NFSDCallDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDCallDistribution
+        fields = "__all__"
 
 
 class NFSDClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDClientDistribution
+        fields = "__all__"
 
 
 class NFSDShareDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareDistribution
+        fields = "__all__"
 
 
 class NFSDShareClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareClientDistribution
+        fields = "__all__"
 
 
 class NFSDUidGidDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDUidGidDistribution
+        fields = "__all__"
 
 
 class SProbeConfigSerializer(serializers.Serializer):
@@ -135,11 +147,13 @@ class TaskDefinitionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskDefinition
+        fields = "__all__"
 
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
+        fields = "__all__"
 
 
 class TaskType(object):
@@ -163,18 +177,22 @@ class TaskTypeSerializer(serializers.Serializer):
 class ReplicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Replica
+        fields = "__all__"
 
 
 class ReplicaTrailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReplicaTrail
+        fields = "__all__"
 
 
 class ReplicaShareSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReplicaShare
+        fields = "__all__"
 
 
 class ReceiveTrailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReceiveTrail
+        fields = "__all__"

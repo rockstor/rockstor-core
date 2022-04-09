@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 from mock import patch
 from storageadmin.models import Appliance
 from storageadmin.tests.test_api import APITestMixin
@@ -26,6 +26,7 @@ from storageadmin.tests.test_api import APITestMixin
 class AppliancesTests(APITestMixin, APITestCase):
     fixtures = ['test_appliances.json']
     BASE_URL = '/api/appliances'
+    client = APIClient()
 
     @classmethod
     def setUpClass(cls):
@@ -64,23 +65,23 @@ class AppliancesTests(APITestMixin, APITestCase):
 
     def test_get(self):
 
-        ######################
-        # TODO: We should not have to do this as in fixtures so remove once
-        # proper appliance instance is sorted.
-        # add appliance
-        data = {'ip': '', 'mgmt_port': '443', 'client_id': '',
-                'client_secret': '', 'current_appliance': True}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-        ######################
+        # ######################
+        # # TODO: We should not have to do this as in fixtures so remove once
+        # #  proper appliance instance is sorted.
+        # #  add appliance
+        # data = {'ip': '', 'mgmt_port': '443', 'client_id': '',
+        #         'client_secret': '', 'current_appliance': True}
+        # response = self.client.post(self.BASE_URL, data=data, follow=True)
+        # self.assertEqual(response.status_code,
+        #                  status.HTTP_200_OK, msg=response.data)
+        # ######################
 
         # now on to our actual test for this section.
 
         # get base URL
         response = self.client.get(self.BASE_URL)
         self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+                         status.HTTP_200_OK, msg=response.data, follow=True)
 
     def test_post_requests_1(self):
 
@@ -88,7 +89,7 @@ class AppliancesTests(APITestMixin, APITestCase):
         data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
                 'client_secret': '', 'current_appliance': False}
         self.mock_set_token.side_effect = Exception()
-        response = self.client.post(self.BASE_URL, data=data)
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
@@ -101,7 +102,7 @@ class AppliancesTests(APITestMixin, APITestCase):
         data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
                 'client_secret': '', 'current_appliance': False}
         self.mock_api_call.side_effect = Exception()
-        response = self.client.post(self.BASE_URL, data=data)
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
@@ -120,6 +121,7 @@ class AppliancesTests(APITestMixin, APITestCase):
         # ip already exists
         data = {'ip': '192.168.124.235', 'mgmt_port': '443', 'client_id': '',
                 'client_secret': '', 'current_appliance': False}
+        # N.B. if the following is set to follow=True we get infinite recursion !!
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -134,7 +136,7 @@ class AppliancesTests(APITestMixin, APITestCase):
         # invalid management port
         data = {'ip': '1.1.1.1', 'mgmt_port': 'invalid', 'client_id': '',
                 'client_secret': '', 'current_appliance': False}
-        response = self.client.post(self.BASE_URL, data=data)
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.data)
@@ -144,7 +146,7 @@ class AppliancesTests(APITestMixin, APITestCase):
         # happy path
         data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
                 'client_secret': '', 'current_appliance': False}
-        response = self.client.post(self.BASE_URL, data=data)
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
@@ -152,7 +154,7 @@ class AppliancesTests(APITestMixin, APITestCase):
         # add appliance
         data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
                 'client_secret': '', 'current_appliance': False}
-        response = self.client.post(self.BASE_URL, data=data)
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 

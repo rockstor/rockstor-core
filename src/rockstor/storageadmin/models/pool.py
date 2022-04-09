@@ -140,3 +140,4 @@ class Pool(models.Model):
 
     class Meta:
         app_label = "storageadmin"
+        ordering = ['-id']

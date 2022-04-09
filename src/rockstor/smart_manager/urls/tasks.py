@@ -16,21 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from smart_manager.views import (
-    TaskSchedulerListView,
     TaskLogView,
     TaskTypeView,
     TaskSchedulerDetailView,
 )
 
-urlpatterns = patterns(
-    "",
-    url(r"^$", TaskSchedulerListView.as_view(),),
+urlpatterns = [
     url(r"^(?P<tdid>\d+)$", TaskSchedulerDetailView.as_view(),),
     url(r"^log$", TaskLogView.as_view(),),
     url(r"^log/(?P<command>prune)$", TaskLogView.as_view(),),
     url(r"^log/taskdef/(?P<tdid>\d+)", TaskLogView.as_view(),),
     url(r"^log/(?P<tid>\d+)", TaskLogView.as_view(),),
     url(r"^types$", TaskTypeView.as_view(),),
-)
+]

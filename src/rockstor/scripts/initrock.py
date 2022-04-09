@@ -377,7 +377,7 @@ def main():
     if not os.path.isfile(STAMP):
         logging.info("Please be patient. This script could take a few minutes")
         shutil.copyfile(
-            "{}/conf/django-hack".format(BASE_DIR), "{}/django".format(BASE_BIN)
+            "{}/conf/django-hack.py".format(BASE_DIR), "{}/django".format(BASE_BIN)
         )
         run_command([SYSCTL, "enable", "postgresql"])
         logging.debug("Progresql enabled")
@@ -480,7 +480,7 @@ def main():
         if app == "smart_manager":
             db = app
         o, e, rc = run_command(
-            [DJANGO, "migrate", "--list", "--database={}".format(db), app]
+            [DJANGO, "showmigrations", "--list", "--database={}".format(db), app]
         )
         initial_faked = False
         for l in o:
@@ -497,6 +497,11 @@ def main():
     run_command(migration_cmd + ["auth"])
     run_command(migration_cmd + ["storageadmin"])
     run_command(migration_cmd + smartdb_opts)
+    # Avoid re-apply from our six days 0002_08_updates to oauth2_provider
+    # by faking so we can catch-up on remaining migrations.
+    run_command(fake_migration_cmd + ["oauth2_provider", "0002_08_updates"])
+    run_command(migration_cmd + ["oauth2_provider"])
+
     logging.info("Done")
     logging.info("Running prepdb...")
     run_command([PREP_DB])
