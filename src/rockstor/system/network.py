@@ -21,7 +21,7 @@ import logging
 import re
 
 from .exceptions import CommandException
-from .osi import run_command
+from .osi import run_command, to_boolean
 from .docker import dnets, docker_status, dnet_inspect
 
 NMCLI = "/usr/bin/nmcli"
@@ -232,16 +232,20 @@ def get_con_config(con_list):
                                 "com.docker.network.bridge.host_binding_ipv4"
                             ]
                         if dtmap["Options"].get("com.docker.network.bridge.enable_icc"):
-                            tmap[tmap["ctype"]]["icc"] = dtmap["Options"][
-                                "com.docker.network.bridge.enable_icc"
-                            ]
+                            tmap[tmap["ctype"]]["icc"] = to_boolean(
+                                dtmap["Options"]["com.docker.network.bridge.enable_icc"]
+                            )
                         tmap[tmap["ctype"]]["internal"] = dtmap["Internal"]
                         if dtmap["Options"].get(
                             "com.docker.network.bridge.ip_masquerade"
                         ):
-                            tmap[tmap["ctype"]]["ip_masquerade"] = dtmap["Options"][
-                                "com.docker.network.bridge.ip_masquerade"
-                            ]
+                            tmap[tmap["ctype"]]["ip_masquerade"] = to_boolean(
+                                dtmap["Options"][
+                                    "com.docker.network.bridge.ip_masquerade"
+                                ]
+                            )
+                            # if used com.docker.network.bridge.default_bridge may also
+                            # requires to_boolean()
                         if dtmap["IPAM"]["Config"][0].get("IPRange"):
                             tmap[tmap["ctype"]]["ip_range"] = dtmap["IPAM"]["Config"][
                                 0

@@ -30,6 +30,7 @@ import uuid
 from socket import inet_ntoa
 from struct import pack
 from tempfile import mkstemp
+from distutils.util import strtobool
 
 from django.conf import settings
 
@@ -2393,3 +2394,20 @@ def systemd_name_escape(original_sting, template=""):
             return out
     else:
         return ""
+
+
+def to_boolean(proposed_boolean):
+    """Wrapper around distutils.util.strtobool (Python 2.7 and 3) to convert if needed
+    a string representation of a boolean: e.g "y", "yes", "t", "true", "on", and "1" to
+    True similarly for False string values. Raises ValueError if value is otherwise.
+    Note that strtobool returns binary but we require True or False Boolean type.
+    N.B. For historical reasons Python Bool is subtype of integer (0, 1).
+    Python 2: use as per Python 3.
+    Python 3: https://docs.python.org/3/distutils/apiref.html#distutils.util.strtobool
+    :param proposed_boolean: Likely a string but may already be a Boolean type.
+    :return: proposed_boolean if proved to be of type Boolean or bool(strtobool(input)).
+    """
+    if isinstance(proposed_boolean, bool):
+        return proposed_boolean
+    else:
+        return bool(strtobool(proposed_boolean))
