@@ -27,7 +27,6 @@ monkey.patch_all()
 
 from fs.btrfs import degraded_pools_found
 
-
 import psutil  # noqa E402
 import re  # noqa E402
 import json  # noqa E402
@@ -41,6 +40,12 @@ from os import path  # noqa E402
 from sys import getsizeof  # noqa E402
 from glob import glob  # noqa E402
 
+# See:
+# https://docs.djangoproject.com/en/1.11/topics/settings/#calling-django-setup-is-required-for-standalone-django-usage
+import django
+from django.conf import settings  # noqa E402
+django.setup()
+
 from system.pinmanager import (
     has_pincard,
     username_to_uid,  # noqa E402
@@ -49,7 +54,6 @@ from system.pinmanager import (
     generate_otp,
 )
 
-from django.conf import settings  # noqa E402
 from system.osi import uptime, kernel_info, get_byid_name_map, run_command  # noqa E402
 from datetime import datetime, timedelta  # noqa E402
 import time  # noqa E402
