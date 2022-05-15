@@ -26,7 +26,7 @@ class NFSDShareDistribution(models.Model):
     for a given ts and share, number and i/o size of various nfs calls
     """
 
-    rid = models.ForeignKey(SProbe,on_delete=models.DO_NOTHING)
+    rid = models.ForeignKey(SProbe,on_delete=models.CASCADE)
     ts = models.DateTimeField(db_index=True)
     share = models.CharField(max_length=255)
     num_lookup = models.BigIntegerField(default=0)

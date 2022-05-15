@@ -23,7 +23,7 @@ from storageadmin.models import Share  # noqa F401
 class SFTP(models.Model):
     READ_ONLY = "ro"
     READ_WRITE = "rw"
-    share = models.OneToOneField("Share", on_delete=models.DO_NOTHING)
+    share = models.OneToOneField("Share", on_delete=models.CASCADE)
     """read only by default"""
     MODIFY_CHOICES = (
         (READ_ONLY, "ro"),

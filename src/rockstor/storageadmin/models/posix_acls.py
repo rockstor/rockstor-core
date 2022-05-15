@@ -21,7 +21,7 @@ from storageadmin.models import SambaShare
 
 
 class PosixACLs(models.Model):
-    smb_share = models.ForeignKey(SambaShare, on_delete=models.DO_NOTHING)
+    smb_share = models.ForeignKey(SambaShare, on_delete=models.CASCADE)
     USER = "user"
     GROUP = "group"
     OTHER = "other"

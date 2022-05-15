@@ -22,7 +22,7 @@ from smart_manager.models import TaskDefinition
 
 class Task(models.Model):
 
-    task_def = models.ForeignKey(TaskDefinition,on_delete=models.DO_NOTHING)
+    task_def = models.ForeignKey(TaskDefinition,on_delete=models.CASCADE)
     state = models.CharField(max_length=64)
     start = models.DateTimeField(null=True, db_index=True)
     end = models.DateTimeField(null=True, db_index=True)

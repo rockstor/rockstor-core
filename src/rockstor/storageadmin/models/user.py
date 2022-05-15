@@ -29,7 +29,7 @@ from system.users import ifp_get_groupname
 
 
 class User(models.Model):
-    user = models.OneToOneField(DjangoUser, null=True, blank=True, related_name="suser", on_delete=models.DO_NOTHING)
+    user = models.OneToOneField(DjangoUser, null=True, blank=True, related_name="suser", on_delete=models.CASCADE)
     username = models.CharField(max_length=4096, unique=True, default="")
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
@@ -42,7 +42,7 @@ class User(models.Model):
     )
     # 'admin' field represents indicator of Rockstor web admin capability.
     admin = models.BooleanField(default=True)
-    group = models.ForeignKey(Group, null=True, blank=True, on_delete=models.DO_NOTHING)
+    group = models.ForeignKey(Group, null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def groupname(self, *args, **kwargs):

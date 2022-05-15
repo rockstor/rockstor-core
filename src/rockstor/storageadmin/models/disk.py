@@ -43,7 +43,7 @@ class AttachedManager(models.Manager):
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
 
-    pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
+    pool = models.ForeignKey(Pool, null=True, on_delete=models.CASCADE)
     """Previously the name field contained sda, sdb etc..  Revised to contain
     device names for use with the udev created links at /dev/disk/by-id/ which
     in turn are symlinks to sda, sdb etc.  eg ata-QEMU_HARDDISK_QM00005 ie
