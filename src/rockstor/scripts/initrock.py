@@ -473,14 +473,16 @@ def main():
 
     # Migrate Content types before individual apps
     logger.debug("migrate (--fake-initial) contenttypes")
-    run_command(fake_initial_migration_cmd + ["--database=default", "contenttypes"])
+    run_command(
+        fake_initial_migration_cmd + ["--database=default", "contenttypes"], log=True
+    )
 
     for app in ("storageadmin", "smart_manager"):
         db = "default"
         if app == "smart_manager":
             db = app
         o, e, rc = run_command(
-            [DJANGO, "showmigrations", "--list", "--database={}".format(db), app]
+            [DJANGO, "showmigrations", "--list", "--database={}".format(db), app],
         )
         initial_faked = False
         for l in o:
@@ -492,15 +494,36 @@ def main():
             logger.debug(
                 "migrate (--fake) db=({}) app=({}) 0001_initial".format(db, app)
             )
-            run_command(fake_migration_cmd + [db_arg, app, "0001_initial"])
+            run_command(fake_migration_cmd + [db_arg, app, "0001_initial"], log=True)
 
-    run_command(migration_cmd + ["auth"])
-    run_command(migration_cmd + ["storageadmin"])
-    run_command(migration_cmd + smartdb_opts)
+    run_command(migration_cmd + ["auth"], log=True)
+    run_command(migration_cmd + ["storageadmin"], log=True)
+    run_command(migration_cmd + smartdb_opts, log=True)
+
     # Avoid re-apply from our six days 0002_08_updates to oauth2_provider
     # by faking so we can catch-up on remaining migrations.
-    run_command(fake_migration_cmd + ["oauth2_provider", "0002_08_updates"])
-    run_command(migration_cmd + ["oauth2_provider"])
+    # Only do this if not already done, however, as we would otherwise incorrectly reset
+    # the list of migrations applied (https://github.com/rockstor/rockstor-core/issues/2376).
+    oauth2_provider_faked = False
+    # Get current list of migrations
+    o, e, rc = run_command([DJANGO, "showmigrations", "--list", "oauth2_provider"])
+    for l in o:
+        if l.strip() == "[X] 0002_08_updates":
+            logger.debug(
+                "The 0002_08_updates migration seems already applied, so skip it"
+            )
+            oauth2_provider_faked = True
+            break
+    if not oauth2_provider_faked:
+        logger.debug(
+            "The 0002_08_updates migration is not already applied so fake apply it now"
+        )
+        run_command(
+            fake_migration_cmd + ["oauth2_provider", "0002_08_updates"], log=True
+        )
+
+    # Run all migrations for oauth2_provider
+    run_command(migration_cmd + ["oauth2_provider"], log=True)
 
     logging.info("Done")
     logging.info("Running prepdb...")
