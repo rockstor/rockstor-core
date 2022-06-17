@@ -228,7 +228,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
                 var data = _this.$('#scheduled-task-create-form').getJSON();
                 var url, req_type;
                 if (_this.taskDefId == null) {
-                    url = '/api/sm/tasks/';
+                    url = '/api/sm/tasks';
                     req_type = 'POST';
                 } else {
                     url = '/api/sm/tasks/' + _this.taskDefId;
