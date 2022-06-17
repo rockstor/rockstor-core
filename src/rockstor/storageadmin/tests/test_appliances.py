@@ -81,7 +81,7 @@ class AppliancesTests(APITestMixin, APITestCase):
         # get base URL
         response = self.client.get(self.BASE_URL)
         self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data, follow=True)
+                         status.HTTP_200_OK, msg=response.data)
 
     def test_post_requests_1(self):
 

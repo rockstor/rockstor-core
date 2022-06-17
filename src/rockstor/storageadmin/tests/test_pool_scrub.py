@@ -27,6 +27,11 @@ from storageadmin.tests.test_api import APITestMixin
 class PoolScrubTests(APITestMixin, APITestCase):
     # fixture assumed to have:
     # 1 non sys pool (id=2, name='rock-pool', raid='raid1')
+    # 'default' db is storageadmin
+    # django dumpdata --exclude contenttypes --exclude auth.Permission --natural-foreign
+    #  --indent 4 >  src/rockstor/storageadmin/fixtures/test_pool_scrub_balance.json
+    #
+    # ./bin/test -v 2 -p test_pool_scrub.py
     fixtures = ['test_pool_scrub_balance.json']
     BASE_URL = '/api/pools'
 
@@ -50,11 +55,11 @@ class PoolScrubTests(APITestMixin, APITestCase):
     def tearDownClass(cls):
         super(PoolScrubTests, cls).tearDownClass()
 
-    @mock.patch('storageadmin.views.pool_scrub.Pool')
-    def test_get(self, mock_pool):
+    # @mock.patch('storageadmin.views.pool_scrub.Pool')
+    def test_get(self):
 
-        temp_pool = Pool(id=2, name='rock-pool', raid='raid', size=88025459)
-        mock_pool.objects.get.return_value = temp_pool
+        # temp_pool = Pool(id=2, name='rock-pool', raid='raid', size=88025459)
+        # mock_pool.objects.get.return_value = temp_pool
 
         # get base URL
         pId = 2  # already created and exists in fixture
@@ -76,11 +81,11 @@ class PoolScrubTests(APITestMixin, APITestCase):
         e_msg = 'Pool with id ({}) does not exist.'.format(pId)
         self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch('storageadmin.views.pool_scrub.Pool')
-    def test_post_requests_2(self, mock_pool):
+    # @mock.patch('storageadmin.views.pool_scrub.Pool')
+    def test_post_requests_2(self):
 
-        temp_pool = Pool(id=2, name='rock-pool', raid='raid', size=88025459)
-        mock_pool.objects.get.return_value = temp_pool
+        # temp_pool = Pool(id=2, name='rock-pool', raid='raid', size=88025459)
+        # mock_pool.objects.get.return_value = temp_pool
 
         # Invalid scrub command
         data = {'force': 'true'}
@@ -95,14 +100,14 @@ class PoolScrubTests(APITestMixin, APITestCase):
 
         # happy path
         data = {'force': 'true'}
-        response = self.client.post('{}/{}/scrub'.format(self.BASE_URL,pId),
+        response = self.client.post('{}/{}/scrub'.format(self.BASE_URL, pId),
                                     data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
         # happy path
         data = {'force': 'true'}
-        response = self.client.post('{}/{}/scrub/status'.format(self.BASE_URL,pId),
+        response = self.client.post('{}/{}/scrub/status'.format(self.BASE_URL, pId),
                                     data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
