@@ -46,7 +46,7 @@ class SMARTDServiceView(BaseServiceDetailView):
                 install_pkg("smartmontools")
             if command == "config":
                 service = Service.objects.get(name=self.service_name)
-                config = request.DATA.get("config", {})
+                config = request.data.get("config", {})
                 logger.debug("config = %s" % config)
                 self._save_config(service, config)
                 if "custom_config" in config:
