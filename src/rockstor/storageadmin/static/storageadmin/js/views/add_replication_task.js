@@ -118,7 +118,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
                 var data = _this.$('#replication-task-create-form').getJSON();
                 var url, req_type;
                 if (_this.replicaId == null) {
-                    url = '/api/sm/replicas/';
+                    url = '/api/sm/replicas';
                     req_type = 'POST';
                 } else {
                     url = '/api/sm/replicas/' + _this.replicaId;
