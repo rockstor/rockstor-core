@@ -15,16 +15,16 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-import mock
+# import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
+# from rest_framework.test import APITestCase
 from mock import patch
 
-from storageadmin.models import Pool
+# from storageadmin.models import Pool
 from storageadmin.tests.test_api import APITestMixin
 
 
-class PoolScrubTests(APITestMixin, APITestCase):
+class PoolScrubTests(APITestMixin):
     # fixture assumed to have:
     # 1 non sys pool (id=2, name='rock-pool', raid='raid1')
     # 'default' db is storageadmin
@@ -32,7 +32,7 @@ class PoolScrubTests(APITestMixin, APITestCase):
     #  --indent 4 >  src/rockstor/storageadmin/fixtures/test_pool_scrub_balance.json
     #
     # ./bin/test -v 2 -p test_pool_scrub.py
-    fixtures = ['test_pool_scrub_balance.json']
+    fixtures = ['test_pool_scrub_balance_new.json']
     BASE_URL = '/api/pools'
 
     @classmethod
