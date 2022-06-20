@@ -1,0 +1,118 @@
+[
+{
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$36000$yMUGZdD9N0IA$bqdiDoqzWWaKd/8m9wQdYYw/l+I4M+JqRRNxb+TXldY=",
+        "last_login": "2022-06-20T15:00:58.830Z",
+        "is_superuser": false,
+        "username": "admin",
+        "first_name": "",
+        "last_name": "",
+        "email": "",
+        "is_staff": false,
+        "is_active": true,
+        "date_joined": "2022-06-20T14:59:40.204Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "oauth2_provider.application",
+    "pk": 1,
+    "fields": {
+        "client_id": "ZXZ1nIHHEGX7EsLlqdIwp8bzve5Zqgb5RmFb3jlG",
+        "user": [
+            "admin"
+        ],
+        "redirect_uris": "",
+        "client_type": "confidential",
+        "authorization_grant_type": "client-credentials",
+        "client_secret": "2AN4qnindcFdggPPgCbcBL0on0EbNiijoCfjZuBhA68IpYBhYiorAgdAJCK9NwzYqG2x7sF8SWEIP8NvRE5sqSHvhk1RFwEyeGFG3nhnCKEaPU41ioAcQ9rZ8OW1V0V5",
+        "name": "cliapp",
+        "skip_authorization": false,
+        "created": "2022-06-20T14:59:40.630Z",
+        "updated": "2022-06-20T14:59:40.630Z"
+    }
+},
+{
+    "model": "oauth2_provider.accesstoken",
+    "pk": 1,
+    "fields": {
+        "user": null,
+        "source_refresh_token": null,
+        "token": "I4fHfL23iJ1MhN4OzjNbsMkunWGL7u",
+        "application": [
+            "ZXZ1nIHHEGX7EsLlqdIwp8bzve5Zqgb5RmFb3jlG"
+        ],
+        "expires": "2022-06-21T00:59:41.514Z",
+        "scope": "read write",
+        "created": "2022-06-20T14:59:41.514Z",
+        "updated": "2022-06-20T14:59:41.514Z"
+    }
+},
+{
+    "model": "oauth2_provider.accesstoken",
+    "pk": 2,
+    "fields": {
+        "user": null,
+        "source_refresh_token": null,
+        "token": "3du53K6KflSMRkvu8SmuSOGjf9ZPyi",
+        "application": [
+            "ZXZ1nIHHEGX7EsLlqdIwp8bzve5Zqgb5RmFb3jlG"
+        ],
+        "expires": "2022-06-21T00:59:41.523Z",
+        "scope": "read write",
+        "created": "2022-06-20T14:59:41.524Z",
+        "updated": "2022-06-20T14:59:41.524Z"
+    }
+},
+{
+    "model": "oauth2_provider.accesstoken",
+    "pk": 3,
+    "fields": {
+        "user": null,
+        "source_refresh_token": null,
+        "token": "utlsW2n1CEno5drWTaUUtGBdnVFqpt",
+        "application": [
+            "ZXZ1nIHHEGX7EsLlqdIwp8bzve5Zqgb5RmFb3jlG"
+        ],
+        "expires": "2022-06-21T01:00:37.132Z",
+        "scope": "read write",
+        "created": "2022-06-20T15:00:37.132Z",
+        "updated": "2022-06-20T15:00:37.132Z"
+    }
+},
+{
+    "model": "oauth2_provider.accesstoken",
+    "pk": 4,
+    "fields": {
+        "user": null,
+        "source_refresh_token": null,
+        "token": "PRjAJ2EETyOJVZpVv5MDrM3M7FcfL2",
+        "application": [
+            "ZXZ1nIHHEGX7EsLlqdIwp8bzve5Zqgb5RmFb3jlG"
+        ],
+        "expires": "2022-06-21T01:00:59.284Z",
+        "scope": "read write",
+        "created": "2022-06-20T15:00:59.285Z",
+        "updated": "2022-06-20T15:00:59.285Z"
+    }
+},
+{
+    "model": "oauth2_provider.accesstoken",
+    "pk": 5,
+    "fields": {
+        "user": null,
+        "source_refresh_token": null,
+        "token": "xTh6dtTtsv7QPBeEIz2ybhDvcdoASe",
+        "application": [
+            "ZXZ1nIHHEGX7EsLlqdIwp8bzve5Zqgb5RmFb3jlG"
+        ],
+        "expires": "2022-06-21T01:00:59.282Z",
+        "scope": "read write",
+        "created": "2022-06-20T15:00:59.282Z",
+        "updated": "2022-06-20T15:00:59.282Z"
+    }
+}
+]
