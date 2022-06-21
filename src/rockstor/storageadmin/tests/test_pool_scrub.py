@@ -29,7 +29,7 @@ class PoolScrubTests(APITestMixin):
     # fixture assumed to have:
     # 1 non sys pool (id=2, name='rock-pool', raid='raid1')
     # 'default' db is storageadmin
-    # bin/django dumpdata storageadmin.pool --natural-foreign --indent 4 \
+    # bin/django dumpdata storageadmin.pool --natural-foreign --indent 4 >
     # src/rockstor/storageadmin/fixtures/test_pool_scrub_balance_minimal.json
     # ./bin/test -v 2 -p test_pool_scrub.py
     fixtures = ["test_api.json", "test_pool_scrub_balance_minimal.json"]

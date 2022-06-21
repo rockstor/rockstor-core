@@ -25,8 +25,7 @@ from mock import patch
 class APITestMixin(APITestCase):
     # Models to have in fixture:
     # auth.user
-    # oauth2_provider
-    # bin/django dumpdata --natural-foreign --indent 4 auth.user oauth2_provider > src/rockstor/storageadmin/fixtures/test_api.json
+    # bin/django dumpdata --natural-foreign --indent 4 auth.user > src/rockstor/storageadmin/fixtures/test_api.json
 
     # @classmethod
     # def setUpClass(cls):
