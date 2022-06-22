@@ -25,6 +25,9 @@ from storageadmin.tests.test_api import APITestMixin
 
 
 class PoolTests(APITestMixin, APITestCase):
+    # django dumpdata --exclude contenttypes --exclude auth.Permission --natural-foreign
+    #  --indent 4 >  src/rockstor/storageadmin/fixtures/test_pools.json
+    #
     fixtures = ['test_pools.json']
     BASE_URL = '/api/pools'
 

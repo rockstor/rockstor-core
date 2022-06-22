@@ -34,6 +34,9 @@ class PoolScrubView(rfc.GenericView):
     serializer_class = PoolScrubSerializer
 
     def _validate_pool(self, pid, request):
+        # Catch all Pool values and log
+        # all_pools = Pool.objects.all().values()
+        # logger.info("Pool objects are: ({})".format(all_pools))
         try:
             return Pool.objects.get(id=pid)
         except:

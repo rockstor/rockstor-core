@@ -30,6 +30,7 @@ class MockTask(object):
 class PoolBalanceTests(APITestMixin, APITestCase):
     # fixture assumed to have:
     # 1 non sys pool (id=2, name='rock-pool', raid='raid1')
+
     fixtures = ['test_pool_scrub_balance.json']
     BASE_URL = '/api/pools'
 

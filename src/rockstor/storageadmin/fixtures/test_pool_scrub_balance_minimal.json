@@ -1,0 +1,30 @@
+[
+{
+    "model": "storageadmin.pool",
+    "pk": 1,
+    "fields": {
+        "name": "ROOT",
+        "uuid": "4ac51b0f-afeb-4946-aad1-975a2a26c941",
+        "size": 18805740,
+        "raid": "single",
+        "toc": "2022-06-20T15:26:22.069Z",
+        "compression": "no",
+        "mnt_options": null,
+        "role": "root"
+    }
+},
+{
+    "model": "storageadmin.pool",
+    "pk": 2,
+    "fields": {
+        "name": "rock-pool",
+        "uuid": "17c4ce17-dbee-42d5-9d81-9e0a068186b2",
+        "size": 5242880,
+        "raid": "raid1",
+        "toc": "2022-06-20T15:26:22.058Z",
+        "compression": "no",
+        "mnt_options": "",
+        "role": null
+    }
+}
+]

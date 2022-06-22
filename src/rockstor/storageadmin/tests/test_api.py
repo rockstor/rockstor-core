@@ -23,15 +23,18 @@ from mock import patch
 
 # functionality for all API tests.
 class APITestMixin(APITestCase):
+    # Models to have in fixture:
+    # auth.user
+    # bin/django dumpdata --natural-foreign --indent 4 auth.user > src/rockstor/storageadmin/fixtures/test_api.json
 
-    @classmethod
-    def setUpClass(cls):
-        pass
-        # run_command removed as we no longer zip log files so no need to mock.
-        # # error handling run_command mocks
-        # cls.patch_run_command = patch('storageadmin.util.run_command')
-        # cls.mock_run_command = cls.patch_run_command.start()
-        # cls.mock_run_command.return_value = True
+    # @classmethod
+    # def setUpClass(cls):
+    #     pass
+    #     # run_command removed as we no longer zip log files so no need to mock.
+    #     # # error handling run_command mocks
+    #     # cls.patch_run_command = patch('storageadmin.util.run_command')
+    #     # cls.mock_run_command = cls.patch_run_command.start()
+    #     # cls.mock_run_command.return_value = True
 
     @classmethod
     def tearDownClass(cls):
@@ -39,12 +42,13 @@ class APITestMixin(APITestCase):
 
     def setUp(self):
         # self.client.login(username='admin', password='admin')
-        self.user = User.objects.create(username='admin',
-                                        password='admin', is_active=1)
+        # self.user = User.objects.create(username='radmin',
+        #                                 password='radmin', is_active=1)
+        self.user = User.objects.get(username='admin')
         self.client.force_authenticate(user=self.user)
 
     def tearDown(self):
-        self.client.logout()
+        # self.client.logout()
         self.client.force_authenticate(user=None)
 
     def get_base(self, baseurl, name=True):
