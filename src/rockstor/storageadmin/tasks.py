@@ -60,10 +60,24 @@ def task_completed(signal, task):
     # Task completed OK.
     # Could do clean if task name begins with rockon_helper:
     # removing all key,value pairs where value = task.id
-    logger.info("Task [{}] completed OK".format(task.name))
+    logger.info("Task [{}], id: {} completed OK".format(task.name, task.id))
     if task.name == "start_balance" or task.name == "start_resize_pool":
-        logger.info("Updating end_time accordingly")
-        PoolBalance.objects.filter(tid=task.id).update(end_time=timezone.now())
+        logger.info("Updating end_time accordingly to {}".format(timezone.now()))
+        # Object.update approach fails, could be thread related.
+        # PoolBalance.objects.filter(tid=task.id).update(end_time=timezone.now())
+        try:
+            PoolBalance.objects.filter(tid=task.id).latest().update(
+                end_time=timezone.now()
+            )
+            # pb = PoolBalance.objects.filter(tid=task.id).latest()
+            # pb.end_time = timezone.now()
+            # pb.save(update_fields=["end_time"])
+        except Exception as e:
+            logger.error(
+                "Exception while updating PoolBalance end_time from Huey.signal: {}".format(
+                    e.__str__()
+                )
+            )
 
 
 @HUEY.signal(SIGNAL_ERROR, SIGNAL_LOCKED)
@@ -79,8 +93,11 @@ def task_failed(signal, task, exc=None):
     # Only log the final failure, once all retries are exhausted.
     if task.retries > 0:
         return
-    message = "Task [{}] failed, Task ID: {} Args: {}, Kwargs: {}, Exception{}".format(
+    message = "Task [{}], id: {} failed, Args: {}, Kwargs: {}, Exception{}".format(
         task.name, task.id, task.args, task.kwargs, exc
     )
     logger.error(message)
     # mail_admins(subject, message)
+    if task.name == "start_balance" or task.name == "start_resize_pool":
+        logger.info("Updating status accordingly")
+        PoolBalance.objects.filter(tid=task.id).update(status="failed")

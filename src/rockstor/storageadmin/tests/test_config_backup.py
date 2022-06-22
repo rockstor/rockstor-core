@@ -14,7 +14,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
 
 from storageadmin.models import ConfigBackup
 from storageadmin.tests.test_api import APITestMixin
@@ -27,8 +26,9 @@ from storageadmin.views.config_backup import (
 )
 
 
-class ConfigBackupTests(APITestMixin, APITestCase):
-    fixtures = ["fix2.json"]
+class ConfigBackupTests(APITestMixin):
+    # Proposed fixture = "test_config-backup" was "fix2.json"
+    fixtures = ["test_api.json"]
     BASE_URL = "/api/config-backup"
     sa_ml = [
         {
@@ -914,20 +914,12 @@ class ConfigBackupTests(APITestMixin, APITestCase):
             "pk": 8,
         },
         {
-            "fields": {
-                "display_name": "Rockstor",
-                "config": None,
-                "name": "rockstor",
-            },
+            "fields": {"display_name": "Rockstor", "config": None, "name": "rockstor"},
             "model": "smart_manager.service",
             "pk": 9,
         },
         {
-            "fields": {
-                "display_name": "S.M.A.R.T",
-                "config": None,
-                "name": "smartd",
-            },
+            "fields": {"display_name": "S.M.A.R.T", "config": None, "name": "smartd"},
             "model": "smart_manager.service",
             "pk": 10,
         },

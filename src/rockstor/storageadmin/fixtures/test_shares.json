@@ -1,369 +1,293 @@
 [
 {
+    "model": "storageadmin.pool",
+    "pk": 1,
     "fields": {
-        "username": "admin",
-        "first_name": "",
-        "last_name": "",
-        "is_active": true,
-        "is_superuser": false,
-        "is_staff": false,
-        "last_login": "2018-02-07T18:54:22.173Z",
-        "groups": [],
-        "user_permissions": [],
-        "password": "pbkdf2_sha256$20000$TGVpYcKhzrUs$7KmgcbennXNnXixXckOVrHG0zXDndmsheNO6TagRwjQ=",
-        "email": "",
-        "date_joined": "2018-02-07T18:54:21.909Z"
-    },
-    "model": "auth.user",
-    "pk": 1
-},
-{
-    "fields": {
-        "expire_date": "2018-02-21T18:54:22.178Z",
-        "session_data": "Mjc5ZjIyZmZmNmViN2ViNmU4MzM3YzA3MzY0ZTFmOTQwMWFiYmRkMDp7Il9hdXRoX3VzZXJfaGFzaCI6IjMzNTBjMmViZjA0ZGRjZWY3NWYzNmM0MzE3ZmIxMWMzOWI1M2Y2MWUiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZCIsIl9hdXRoX3VzZXJfaWQiOiIxIn0="
-    },
-    "model": "sessions.session",
-    "pk": "9ebgzovjqxps70ood0jp8qigwrosnvlp"
-},
-{
-    "fields": {
-        "domain": "example.com",
-        "name": "example.com"
-    },
-    "model": "sites.site",
-    "pk": 1
-},
-{
-    "fields": {
+        "name": "ROOT",
+        "uuid": "475bbc39-01c8-4cdd-bb22-de07b40f7e13",
+        "size": 23000044,
         "raid": "single",
-        "compression": null,
-        "uuid": "b3d201a8-b497-4365-a90d-a50c50b8e808",
-        "name": "rockstor_rockstor",
+        "toc": "2022-06-25T14:33:48.192Z",
+        "compression": "no",
         "mnt_options": null,
-        "role": "root",
-        "toc": "2018-02-07T18:55:23.700Z",
-        "size": 7025459
-    },
-    "model": "storageadmin.pool",
-    "pk": 1
+        "role": "root"
+    }
 },
 {
+    "model": "storageadmin.pool",
+    "pk": 4,
     "fields": {
-        "raid": "raid0",
-        "compression": null,
-        "uuid": null,
         "name": "rock-pool",
-        "mnt_options": null,
-        "role": null,
-        "toc": "2018-02-07T18:55:23.675Z",
-        "size": 8388608
-    },
-    "model": "storageadmin.pool",
-    "pk": 2
+        "uuid": "fbc9daf3-0eef-4c84-b075-b53ffc55d392",
+        "size": 10485760,
+        "raid": "single",
+        "toc": "2022-06-25T14:33:48.175Z",
+        "compression": "no",
+        "mnt_options": "",
+        "role": null
+    }
 },
 {
+    "model": "storageadmin.share",
+    "pk": 1,
     "fields": {
-        "smart_enabled": false,
-        "parted": false,
-        "btrfs_uuid": "a42eafc7-6f3a-4a5c-ad6e-73ec789d07ce",
-        "vendor": "0x1af4",
-        "name": "virtio-serial-1",
-        "smart_available": false,
-        "transport": null,
-        "smart_options": null,
-        "role": null,
-        "serial": "serial-1",
-        "offline": false,
-        "model": null,
-        "pool": 2,
-        "size": 4194304
-    },
-    "model": "storageadmin.disk",
-    "pk": 1
-},
-{
-    "fields": {
-        "smart_enabled": false,
-        "parted": false,
-        "btrfs_uuid": "a42eafc7-6f3a-4a5c-ad6e-73ec789d07ce",
-        "vendor": "0x1af4",
-        "name": "virtio-serial-2",
-        "smart_available": false,
-        "transport": null,
-        "smart_options": null,
-        "role": null,
-        "serial": "serial-2",
-        "offline": false,
-        "model": null,
-        "pool": 2,
-        "size": 4194304
-    },
-    "model": "storageadmin.disk",
-    "pk": 2
-},
-{
-    "fields": {
-        "smart_enabled": false,
-        "parted": true,
-        "btrfs_uuid": "b3d201a8-b497-4365-a90d-a50c50b8e808",
-        "vendor": "0x1af4",
-        "name": "virtio-3579-part3",
-        "smart_available": false,
-        "transport": null,
-        "smart_options": null,
-        "role": "{\"root\": \"btrfs\"}",
-        "serial": "3579",
-        "offline": false,
-        "model": null,
         "pool": 1,
-        "size": 7025459
-    },
-    "model": "storageadmin.disk",
-    "pk": 3
-},
-{
-    "fields": {
-        "pqgroup_rusage": 0,
-        "group": "root",
+        "qgroup": "0/259",
+        "pqgroup": "2015/30",
         "name": "home",
-        "perms": "755",
-        "pqgroup": "2015/5",
-        "eusage": 16,
         "uuid": null,
-        "pqgroup_eusage": 0,
-        "compression_algo": null,
+        "size": 23000044,
         "owner": "root",
-        "replica": false,
-        "qgroup": "0/258",
-        "toc": "2018-02-07T18:55:23.802Z",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:48.993Z",
         "subvol_name": "home",
-        "rusage": 16,
-        "pool": 1,
-        "size": 7025459
-    },
-    "model": "storageadmin.share",
-    "pk": 1
+        "replica": false,
+        "compression_algo": null,
+        "rusage": 341319,
+        "eusage": 341319,
+        "pqgroup_rusage": 341319,
+        "pqgroup_eusage": 341319
+    }
 },
 {
+    "model": "storageadmin.share",
+    "pk": 7,
     "fields": {
-        "pqgroup_rusage": 0,
-        "group": "root",
-        "name": "root",
-        "perms": "755",
-        "pqgroup": "2015/6",
-        "eusage": 2212495,
-        "uuid": null,
-        "pqgroup_eusage": 0,
-        "compression_algo": null,
-        "owner": "root",
-        "replica": false,
+        "pool": 4,
         "qgroup": "0/257",
-        "toc": "2018-02-07T18:55:23.840Z",
-        "subvol_name": "root",
-        "rusage": 2212495,
-        "pool": 1,
-        "size": 7025459
-    },
-    "model": "storageadmin.share",
-    "pk": 2
-},
-{
-    "fields": {
-        "pqgroup_rusage": 0,
-        "group": "root",
+        "pqgroup": "2015/1",
         "name": "rock-share",
-        "perms": "755",
-        "pqgroup": "2015/197",
-        "eusage": 16,
         "uuid": null,
-        "pqgroup_eusage": 0,
-        "compression_algo": null,
+        "size": 1048576,
         "owner": "root",
-        "replica": false,
-        "qgroup": "0/703",
-        "toc": "2018-02-07T18:55:23.758Z",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:48.648Z",
         "subvol_name": "rock-share",
+        "replica": false,
+        "compression_algo": "no",
         "rusage": 16,
-        "pool": 2,
-        "size": 8388608
-    },
+        "eusage": 16,
+        "pqgroup_rusage": 32,
+        "pqgroup_eusage": 32
+    }
+},
+{
     "model": "storageadmin.share",
-    "pk": 3
+    "pk": 8,
+    "fields": {
+        "pool": 1,
+        "qgroup": "0/440",
+        "pqgroup": "2015/31",
+        "name": "root-share",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:48.913Z",
+        "subvol_name": "root-share",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
 },
 {
+    "model": "storageadmin.share",
+    "pk": 9,
     "fields": {
-        "autoconnect": true,
-        "name": "eth0",
-        "ipv6_dns": null,
-        "ipv4_addresses": "192.168.124.235/24",
-        "ipv6_gw": null,
-        "ipv6_addresses": null,
-        "ipv4_dns": "192.168.124.1",
-        "state": "activated",
-        "ipv4_method": "auto",
-        "ipv6_dns_search": null,
-        "master": null,
-        "ipv4_gw": "192.168.124.1",
-        "ipv4_dns_search": null,
-        "ipv6_method": null,
-        "uuid": "8dca3630-8c54-4ad7-8421-327cc2d3d14a"
-    },
-    "model": "storageadmin.networkconnection",
-    "pk": 1
+        "pool": 1,
+        "qgroup": "0/441",
+        "pqgroup": "2015/32",
+        "name": "rock-ons-root",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:49.070Z",
+        "subvol_name": "rock-ons-root",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
 },
 {
+    "model": "storageadmin.share",
+    "pk": 11,
     "fields": {
-        "name": "lo",
-        "state": "10 (unmanaged)",
-        "dtype": "loopback",
-        "connection": null,
-        "mtu": "65536",
-        "mac": "00:00:00:00:00:00"
-    },
-    "model": "storageadmin.networkdevice",
-    "pk": 1
+        "pool": 4,
+        "qgroup": "0/262",
+        "pqgroup": "2015/2",
+        "name": "NFS-share",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:48.379Z",
+        "subvol_name": "NFS-share",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
 },
 {
+    "model": "storageadmin.share",
+    "pk": 12,
     "fields": {
-        "name": "eth0",
-        "state": "100 (connected)",
-        "dtype": "ethernet",
-        "connection": 1,
-        "mtu": "1500",
-        "mac": "52:54:00:58:5D:66"
-    },
-    "model": "storageadmin.networkdevice",
-    "pk": 2
+        "pool": 4,
+        "qgroup": "0/263",
+        "pqgroup": "2015/3",
+        "name": "SAMBA-share",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:48.445Z",
+        "subvol_name": "SAMBA-share",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
 },
 {
+    "model": "storageadmin.share",
+    "pk": 13,
     "fields": {
-        "connection": 1,
-        "mtu": "auto",
-        "mac": "52:54:00:58:5D:66",
-        "cloned_mac": null
-    },
-    "model": "storageadmin.ethernetconnection",
-    "pk": 1
+        "pool": 4,
+        "qgroup": "0/264",
+        "pqgroup": "2015/4",
+        "name": "SFTP-share",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "admin",
+        "group": "users",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:48.578Z",
+        "subvol_name": "SFTP-share",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
 },
 {
+    "model": "storageadmin.share",
+    "pk": 14,
     "fields": {
-        "current_appliance": true,
-        "uuid": "679E27FE-EB1A-4DE4-98EF-D9416830C4F5",
-        "mgmt_port": 443,
-        "ip": "",
-        "hostname": "install-test",
-        "client_id": null,
-        "client_secret": null
-    },
-    "model": "storageadmin.appliance",
-    "pk": 1
+        "pool": 4,
+        "qgroup": "0/265",
+        "pqgroup": "2015/5",
+        "name": "share-with-snap",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-25T14:33:48.510Z",
+        "subvol_name": "share-with-snap",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 32,
+        "pqgroup_eusage": 32
+    }
 },
 {
+    "model": "storageadmin.snapshot",
+    "pk": 6,
     "fields": {
-        "admin": true,
-        "groupname": "admin",
-        "gid": 1002
-    },
-    "model": "storageadmin.group",
-    "pk": 1
+        "share": 7,
+        "name": "rock-share_2_replication_1",
+        "real_name": "rock-share_2_replication_1",
+        "writable": false,
+        "size": 16,
+        "toc": "2022-06-24T19:20:02.474Z",
+        "qgroup": "0/261",
+        "uvisible": false,
+        "snap_type": "replication",
+        "rusage": 16,
+        "eusage": 16
+    }
 },
 {
+    "model": "storageadmin.snapshot",
+    "pk": 7,
     "fields": {
-        "username": "admin",
-        "public_key": null,
-        "shell": "/bin/bash",
-        "group": 1,
-        "uid": 1002,
-        "admin": true,
-        "gid": 1002,
-        "user": [
-            "admin"
-        ],
-        "smb_shares": [],
-        "email": null,
-        "homedir": "/home/admin"
-    },
-    "model": "storageadmin.user",
-    "pk": 1
+        "share": 14,
+        "name": "default-snapshot",
+        "real_name": "default-snapshot",
+        "writable": false,
+        "size": 16,
+        "toc": "2022-06-25T14:32:59.464Z",
+        "qgroup": "0/266",
+        "uvisible": false,
+        "snap_type": "admin",
+        "rusage": 16,
+        "eusage": 16
+    }
 },
 {
+    "model": "storageadmin.nfsexport",
+    "pk": 1,
     "fields": {
-        "setup_network": false,
-        "setup_user": true,
-        "setup_disks": false,
-        "setup_system": true
-    },
-    "model": "storageadmin.setup",
-    "pk": 1
+        "export_group": 1,
+        "share": 11,
+        "mount": "/export/NFS-share"
+    }
 },
 {
+    "model": "storageadmin.nfsexportgroup",
+    "pk": 1,
     "fields": {
-        "display_name": "Backup",
-        "css_file_name": "backup",
-        "description": "Backup Server functionality",
-        "js_file_name": "backup",
-        "key": "",
-        "name": "backup"
-    },
-    "model": "storageadmin.plugin",
-    "pk": 1
+        "host_str": "*",
+        "editable": "rw",
+        "syncable": "async",
+        "mount_security": "insecure",
+        "nohide": false,
+        "enabled": true,
+        "admin_host": null
+    }
 },
 {
+    "model": "storageadmin.sambashare",
+    "pk": 1,
     "fields": {
-        "application": 1,
-        "name": "cliapp",
-        "user": 1
-    },
-    "model": "storageadmin.oauthapp",
-    "pk": 1
+        "share": 12,
+        "path": "/mnt2/SAMBA-share",
+        "comment": "Samba-Export",
+        "browsable": "yes",
+        "read_only": "no",
+        "guest_ok": "no",
+        "shadow_copy": false,
+        "time_machine": false,
+        "snapshot_prefix": null
+    }
 },
 {
+    "model": "storageadmin.sftp",
+    "pk": 1,
     "fields": {
-        "redirect_uris": "",
-        "name": "cliapp",
-        "client_type": "confidential",
-        "user": [
-            "admin"
-        ],
-        "client_id": "zf0fowbWQryO2cnEiPWGKInus8FWY8PlRnRWltJm",
-        "skip_authorization": false,
-        "client_secret": "AVfY3P43UquT2MQqLyfgX0YOi00g3wvV9pAt148JkRZg04YjQzHOaZX6kjA2UZxV6VKDSudz3EPh5zjXg2KE9sv2SM9qpq79OmcYLjhCXQ1NYuAiNXXMmHzbKv2GY9AN",
-        "authorization_grant_type": "client-credentials"
-    },
-    "model": "oauth2_provider.application",
-    "pk": 1
-},
-{
-    "fields": {
-        "application": 1,
-        "token": "fMPUrsRcen9wLFVB03vJDjRnWVSiAt",
-        "expires": "2018-02-08T04:54:22.916Z",
-        "user": null,
-        "scope": "read write"
-    },
-    "model": "oauth2_provider.accesstoken",
-    "pk": 1
-},
-{
-    "fields": {
-        "application": 1,
-        "token": "vJMXnH7JR1L37MVkoMzUH8uiPJOki9",
-        "expires": "2018-02-08T04:54:22.928Z",
-        "user": null,
-        "scope": "read write"
-    },
-    "model": "oauth2_provider.accesstoken",
-    "pk": 2
-},
-{
-    "fields": {
-        "application": 1,
-        "token": "OWupZ75lzh3SfMvCKF9n1Qn0Uypqaj",
-        "expires": "2018-02-08T04:54:22.928Z",
-        "user": null,
-        "scope": "read write"
-    },
-    "model": "oauth2_provider.accesstoken",
-    "pk": 3
+        "share": 13,
+        "editable": "rw"
+    }
 }
 ]

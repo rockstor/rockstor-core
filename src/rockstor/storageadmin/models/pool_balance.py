@@ -23,6 +23,7 @@ from storageadmin.models import Pool
 class PoolBalance(models.Model):
 
     pool = models.ForeignKey(Pool)
+    # started|running|cancelling|cancelled|pausing|paused|finished|failed|terminated
     status = models.CharField(max_length=10, default="started")
     # huey uuid
     tid = models.CharField(max_length=36, null=True)
@@ -35,3 +36,4 @@ class PoolBalance(models.Model):
 
     class Meta:
         app_label = "storageadmin"
+        get_latest_by = "start_time"

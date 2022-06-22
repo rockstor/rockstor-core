@@ -124,36 +124,5 @@
     "display_name": "NUT-UPS",
     "name": "nut"
   }
-},
-{
-  "pk": 1, 
-  "model": "auth.user", 
-  "fields": {
-    "username": "admin", 
-    "first_name": "", 
-    "last_name": "", 
-    "is_active": true, 
-    "is_superuser": false, 
-    "is_staff": false, 
-    "last_login": "2014-11-05T14:19:15.421Z", 
-    "groups": [], 
-    "user_permissions": [], 
-    "password": "pbkdf2_sha256$12000$bIlTp3bZu4if$HhIMeQVPN/0NJz0NtrVj7ib8h+xHZkUT/md5DaPlq6A=", 
-    "email": "", 
-    "date_joined": "2014-11-05T14:19:13.535Z"
-  }
-},
-{
-  "pk": 1, 
-  "model": "oauth2_provider.application", 
-  "fields": {
-    "redirect_uris": "", 
-    "name": "cliapp", 
-    "client_type": "confidential", 
-    "user": 1, 
-    "client_id": "y5s_6Ge1yP.xUacU_U9_;t.bdAosyX43a2Of.kdH", 
-    "client_secret": "wIsVYk0=14O?JylV.Y7p2lcOnIeWmC_lZEuKy@xloaVj9dIQol@5Rp.V7M4gx2PScfK-v8=ttbOzG-e;U:qlkpx-:Vr3-l-Gh1ab2nkukMRkst01EsvBL-5Ld_jw6I-K", 
-    "authorization_grant_type": "client-credentials"
-  }
 }
 ]

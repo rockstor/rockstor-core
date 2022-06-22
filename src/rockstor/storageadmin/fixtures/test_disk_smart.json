@@ -1,0 +1,294 @@
+[
+{
+    "model": "storageadmin.disk",
+    "pk": 2,
+    "fields": {
+        "pool": null,
+        "name": "ata-QEMU_HARDDISK_QM00003",
+        "devid": 0,
+        "size": 10485760,
+        "allocated": 0,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": null,
+        "model": "QEMU_HARDDISK",
+        "serial": "QM00003",
+        "transport": "sata",
+        "vendor": "ATA",
+        "smart_available": true,
+        "smart_enabled": true,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 1,
+    "fields": {
+        "info": 1,
+        "name": "Total time to complete Offline data collection",
+        "flag": "",
+        "capabilities": "288 seconds."
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 2,
+    "fields": {
+        "info": 1,
+        "name": "Short self-test routine recommended polling time",
+        "flag": "",
+        "capabilities": "2 minutes."
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 3,
+    "fields": {
+        "info": 1,
+        "name": "Self-test execution status",
+        "flag": "0",
+        "capabilities": "The previous self-test routine completed\nwithout error or no self-test has ever\nbeen run."
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 4,
+    "fields": {
+        "info": 1,
+        "name": "SMART capabilities",
+        "flag": "0x0003",
+        "capabilities": "Saves SMART data before entering\npower-saving mode.\nSupports SMART auto save timer."
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 5,
+    "fields": {
+        "info": 1,
+        "name": "Offline data collection status",
+        "flag": "0x82",
+        "capabilities": "Offline data collection activity\nwas completed without error.\nAuto Offline Data Collection: Enabled."
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 6,
+    "fields": {
+        "info": 1,
+        "name": "Offline data collection capabilities",
+        "flag": "0x19",
+        "capabilities": "SMART execute Offline immediate.\nNo Auto Offline data collection support.\nSuspend Offline collection upon new\ncommand.\nOffline surface scan supported.\nSelf-test supported.\nNo Conveyance Self-test supported.\nNo Selective Self-test supported."
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 7,
+    "fields": {
+        "info": 1,
+        "name": "Extended self-test routine recommended polling time",
+        "flag": "",
+        "capabilities": "54 minutes."
+    }
+},
+{
+    "model": "storageadmin.smartcapability",
+    "pk": 8,
+    "fields": {
+        "info": 1,
+        "name": "Error logging capability",
+        "flag": "0x01",
+        "capabilities": "Error logging supported.\nNo General Purpose Logging support."
+    }
+},
+{
+    "model": "storageadmin.smartattribute",
+    "pk": 1,
+    "fields": {
+        "info": 1,
+        "aid": 4,
+        "name": "Start_Stop_Count",
+        "flag": "0x0002",
+        "normed_value": 100,
+        "worst": 100,
+        "threshold": 20,
+        "atype": "Old_age",
+        "raw_value": "100",
+        "updated": "Always",
+        "failed": "-"
+    }
+},
+{
+    "model": "storageadmin.smartattribute",
+    "pk": 2,
+    "fields": {
+        "info": 1,
+        "aid": 3,
+        "name": "Spin_Up_Time",
+        "flag": "0x0003",
+        "normed_value": 100,
+        "worst": 100,
+        "threshold": 0,
+        "atype": "Pre-fail",
+        "raw_value": "16",
+        "updated": "Always",
+        "failed": "-"
+    }
+},
+{
+    "model": "storageadmin.smartattribute",
+    "pk": 3,
+    "fields": {
+        "info": 1,
+        "aid": 5,
+        "name": "Reallocated_Sector_Ct",
+        "flag": "0x0003",
+        "normed_value": 100,
+        "worst": 100,
+        "threshold": 36,
+        "atype": "Pre-fail",
+        "raw_value": "0",
+        "updated": "Always",
+        "failed": "-"
+    }
+},
+{
+    "model": "storageadmin.smartattribute",
+    "pk": 4,
+    "fields": {
+        "info": 1,
+        "aid": 1,
+        "name": "Raw_Read_Error_Rate",
+        "flag": "0x0003",
+        "normed_value": 100,
+        "worst": 100,
+        "threshold": 6,
+        "atype": "Pre-fail",
+        "raw_value": "0",
+        "updated": "Always",
+        "failed": "-"
+    }
+},
+{
+    "model": "storageadmin.smartattribute",
+    "pk": 5,
+    "fields": {
+        "info": 1,
+        "aid": 9,
+        "name": "Power_On_Hours",
+        "flag": "0x0003",
+        "normed_value": 100,
+        "worst": 100,
+        "threshold": 0,
+        "atype": "Pre-fail",
+        "raw_value": "1",
+        "updated": "Always",
+        "failed": "-"
+    }
+},
+{
+    "model": "storageadmin.smartattribute",
+    "pk": 6,
+    "fields": {
+        "info": 1,
+        "aid": 12,
+        "name": "Power_Cycle_Count",
+        "flag": "0x0003",
+        "normed_value": 100,
+        "worst": 100,
+        "threshold": 0,
+        "atype": "Pre-fail",
+        "raw_value": "0",
+        "updated": "Always",
+        "failed": "-"
+    }
+},
+{
+    "model": "storageadmin.smartattribute",
+    "pk": 7,
+    "fields": {
+        "info": 1,
+        "aid": 190,
+        "name": "Airflow_Temperature_Cel",
+        "flag": "0x0003",
+        "normed_value": 69,
+        "worst": 69,
+        "threshold": 50,
+        "atype": "Pre-fail",
+        "raw_value": "31 (Min/Max 31/31)",
+        "updated": "Always",
+        "failed": "-"
+    }
+},
+{
+    "model": "storageadmin.smarterrorlog",
+    "pk": 1,
+    "fields": {
+        "info": 1,
+        "line": "SMART Error Log Version: 1"
+    }
+},
+{
+    "model": "storageadmin.smarterrorlog",
+    "pk": 2,
+    "fields": {
+        "info": 1,
+        "line": "No Errors Logged"
+    }
+},
+{
+    "model": "storageadmin.smarterrorlog",
+    "pk": 3,
+    "fields": {
+        "info": 1,
+        "line": ""
+    }
+},
+{
+    "model": "storageadmin.smarterrorlog",
+    "pk": 4,
+    "fields": {
+        "info": 1,
+        "line": ""
+    }
+},
+{
+    "model": "storageadmin.smarttestlogdetail",
+    "pk": 1,
+    "fields": {
+        "info": 1,
+        "line": "SMART Self-test log structure revision number 1"
+    }
+},
+{
+    "model": "storageadmin.smartidentity",
+    "pk": 1,
+    "fields": {
+        "info": 1,
+        "model_family": "",
+        "device_model": "QEMU HARDDISK",
+        "serial_number": "QM00003",
+        "world_wide_name": "",
+        "firmware_version": "2.5+",
+        "capacity": "10,737,418,240 bytes [10.7 GB]",
+        "sector_size": "512 bytes logical/physical",
+        "rotation_rate": "",
+        "in_smartdb": "Not in smartctl database [for details use: -P showall]",
+        "ata_version": "ATA/ATAPI-7, ATA/ATAPI-5 published, ANSI NCITS 340-2000",
+        "sata_version": "",
+        "scanned_on": "Thu Jun 23 16:21:08 2022 BST",
+        "supported": "Available - device has SMART capability.",
+        "enabled": "Enabled",
+        "version": "7.2 2021-09-14 r5237",
+        "assessment": "PASSED"
+    }
+},
+{
+    "model": "storageadmin.smartinfo",
+    "pk": 1,
+    "fields": {
+        "disk": 2,
+        "toc": "2022-06-23T15:21:08.681Z"
+    }
+}
+]

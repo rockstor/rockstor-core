@@ -24,15 +24,19 @@ from mock import patch
 # from storageadmin.models import Pool
 from storageadmin.tests.test_api import APITestMixin
 
+"""
+Fixture creation instructions:
+
+System needs 1 non sys pool (id=2, name='rock-pool', raid='raid1'). Maintain system pool.
+
+bin/django dumpdata storageadmin.pool --natural-foreign --indent 4 > \
+src/rockstor/storageadmin/fixtures/test_pool_scrub.json
+
+./bin/test -v 2 -p test_pool_scrub.py
+"""
 
 class PoolScrubTests(APITestMixin):
-    # fixture assumed to have:
-    # 1 non sys pool (id=2, name='rock-pool', raid='raid1')
-    # 'default' db is storageadmin
-    # bin/django dumpdata storageadmin.pool --natural-foreign --indent 4 >
-    # src/rockstor/storageadmin/fixtures/test_pool_scrub_balance_minimal.json
-    # ./bin/test -v 2 -p test_pool_scrub.py
-    fixtures = ["test_api.json", "test_pool_scrub_balance_minimal.json"]
+    fixtures = ["test_api.json", "test_pool_scrub.json"]
     BASE_URL = "/api/pools"
 
     @classmethod

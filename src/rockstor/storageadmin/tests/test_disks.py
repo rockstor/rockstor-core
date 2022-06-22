@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
 from mock import patch
 
 from storageadmin.models import Disk
 from storageadmin.tests.test_api import APITestMixin
 
 
-class DiskTests(APITestMixin, APITestCase):
-    # fixtures = ['fix1.json']
-    fixtures = ["test_disks.json"]
+class DiskTests(APITestMixin):
+    # Proposed fixture = ['test_disks.json']
+    fixtures = ["test_api.json"]
     BASE_URL = "/api/disks"
 
     @classmethod

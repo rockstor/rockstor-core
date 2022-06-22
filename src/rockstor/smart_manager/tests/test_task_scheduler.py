@@ -21,6 +21,23 @@ from rest_framework.test import APITestCase
 
 
 class TaskSchedulerTests(APITestCase):
+    # Fixture needs to contain
+    # auth.user matching our session_login() credentials
+    # storageadmin.pool containing a pool for a scrub task to be defined against.
+    # storageadmin.share containing a share to accommodate a snapshot task against.
+    # smart_manager.taskdefinition containing:
+    # - scrub task (against the fixture defined pool)
+    # - snapshot task (against the fixture defined share id (on the fixture pool))
+    # - reboot task
+    # - shutdown task
+    # - suspend task
+    #
+    # TODO Untested fixture creation command.
+    # bin/django dumpdata auth.user storageadmin.pool storageadmin.share
+    # smart_manager.taskdefinition --natural-foreign --indent 4 >
+    # src/rockstor/storageadmin/fixtures/test_pool_scrub_balance_minimal.json
+    #
+    # ./bin/test -v 2 -p test_task_scheduler.py
     multi_db = True
     fixtures = ["scheduled_tasks.json"]
     BASE_URL = "/api/sm/tasks"
@@ -96,7 +113,7 @@ class TaskSchedulerTests(APITestCase):
         ]
         self.session_login()
         for data in datalist:
-            response = self.client.post("{}/".format(self.BASE_URL), data=data)
+            response = self.client.post("{}".format(self.BASE_URL), data=data)
             self.assertEqual(
                 response.status_code, status.HTTP_200_OK, msg=response.content
             )
@@ -116,7 +133,7 @@ class TaskSchedulerTests(APITestCase):
         }
 
         self.session_login()
-        response = self.client.post("{}/".format(self.BASE_URL), data=data)
+        response = self.client.post("{}".format(self.BASE_URL), data=data)
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -138,7 +155,7 @@ class TaskSchedulerTests(APITestCase):
         }
 
         self.session_login()
-        response = self.client.post("{}/".format(self.BASE_URL), data=data)
+        response = self.client.post("{}".format(self.BASE_URL), data=data)
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
