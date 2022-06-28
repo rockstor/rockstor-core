@@ -26,7 +26,6 @@ from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import Disk, Pool, Share, PoolBalance
 from fs.btrfs import (
     add_pool,
-    pool_usage,
     resize_pool_cmd,
     umount_root,
     btrfs_uuid,
@@ -697,11 +696,10 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                         )
                         handle_exception(Exception(e_msg), request)
 
-                    usage = pool_usage("/{}/{}".format(settings.MNT_PT, pool.name))
                     size_cut = 0
                     for d in disks:  # to be removed
                         size_cut += d.allocated
-                    available_free = pool.size - usage
+                    available_free = pool.free
                     if size_cut >= available_free:
                         e_msg = (
                             "Removing disks ({}) may shrink the pool by "
