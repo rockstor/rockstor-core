@@ -702,11 +702,11 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     available_free = pool.free
                     if size_cut >= available_free:
                         e_msg = (
-                            "Removing disks ({}) may shrink the pool by "
+                            "Removing disk/s ({}) may shrink the pool by "
                             "{} KB, which is greater than available free "
                             "space {} KB. This is "
                             "not supported."
-                        ).format(dnames, size_cut, available_free)
+                        ).format(" ".join(dnames), size_cut, available_free)
                         handle_exception(Exception(e_msg), request)
 
                     # Unlike resize_pool_start() with add=True a remove has an
