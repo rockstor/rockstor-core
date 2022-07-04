@@ -1786,9 +1786,7 @@ def start_resize_pool(cmd):
             )
         raise e
 
-
-@task()
-def start_balance(mnt_pt, force=False, convert=None):
+def balance_pool_cmd(mnt_pt, force=False, convert=None):
     cmd = ["btrfs", "balance", "start", mnt_pt]
     # With no filters we also get a warning that block some balances due to
     # expected long execution time, in this case "--full-balance" is required.
@@ -1807,7 +1805,30 @@ def start_balance(mnt_pt, force=False, convert=None):
         # button tooltip.
         cmd.insert(3, "--full-balance")
     logger.debug("Balance command ({}).".format(cmd))
-    run_command(cmd)
+    return cmd
+
+@task()
+def start_balance(cmd):
+    """
+    Simple named wrapper to run balance command via Huey with logging and possible
+    exception filtering in case we need to improve error messaging.
+    See: start_resize_pool as counterpart wrapper.
+
+    https://www.untangled.dev/2020/07/01/huey-minimal-task-queue-django/
+    "... avoid passing a Django model instance or queryset as parameter."
+    "Instead pass the object id, which is an int..."
+    and retrieve the Django object a-fresh in the task function.
+    :param cmd: btrfs dev add/delete command in run_command() format (ie list).
+    :param cmd:
+    :return:
+    """
+    logger.debug("Balance pool command ({}).".format(cmd))
+    try:
+        run_command(cmd)
+    except CommandException as e:
+        # We may need additional exception filtering/altering here.
+        raise e
+
 
 
 def balance_status(pool):

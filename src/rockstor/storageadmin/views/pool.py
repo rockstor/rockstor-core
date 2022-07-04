@@ -27,6 +27,7 @@ from storageadmin.models import Disk, Pool, Share, PoolBalance
 from fs.btrfs import (
     add_pool,
     resize_pool_cmd,
+    balance_pool_cmd,
     umount_root,
     btrfs_uuid,
     mount_root,
@@ -301,7 +302,8 @@ class PoolMixin(object):
             # pools. Avoid by explicit convert in this instance.
             logger.info("Preserve single data, dup metadata by explicit convert.")
             convert = "single"
-        task_result_handle = start_balance(mnt_pt, force=force, convert=convert)
+        cmd = balance_pool_cmd(mnt_pt, force=force, convert=convert)
+        task_result_handle = start_balance(cmd)
         tid = task_result_handle.id
         logger.debug("balance tid = ({}).".format(tid))
         return tid
