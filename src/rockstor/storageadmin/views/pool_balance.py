@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from huey.exceptions import TaskException
 from django.core.exceptions import ObjectDoesNotExist
+from rest_framework import status
 from rest_framework.response import Response
 from django.db import transaction
 from huey.contrib.djhuey import HUEY
@@ -228,7 +229,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                     logger.debug(
                         "====== Returning Empty as no PoolBalance - status command. ======"
                     )
-                    return Response()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
             force = request.data.get("force", False)
             if PoolBalance.objects.filter(
                 pool=pool, status__regex=r"(started|running)"
