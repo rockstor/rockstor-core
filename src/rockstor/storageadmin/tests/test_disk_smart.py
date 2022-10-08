@@ -51,8 +51,10 @@ class DiskSmartTests(APITestMixin):
     def setUpClass(cls):
         super(DiskSmartTests, cls).setUpClass()
 
-        # post mock
-        cls.patch_run_test = patch("system.smart.run_test")
+        # Contextual mock of run_command to return nothing.
+        # Here we test our API end points against our existing fixture info.
+        # TODO Create system.test.test_smart for lower level smartctl output parsing.
+        cls.patch_run_test = patch("system.smart.run_command")
         cls.mock_run_test = cls.patch_run_test.start()
         cls.mock_run_test.return_value = [""], [""], 0
 
