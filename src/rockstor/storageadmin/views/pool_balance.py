@@ -133,6 +133,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                 balance_active, internal, live_status
             )
         )
+        msg_new_cli = "Suspected cli balance detected. New entry created."
         try:
             ps = PoolBalance.objects.filter(pool=pool).latest()
         except ObjectDoesNotExist as e:
@@ -141,14 +142,21 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                 return Response()
             else:  # Active balance but no existing PoolBalance record for this Pool.
                 # Web-UI initiated balances always have an existing PoolBalance record.
-                logger.debug("Initial Balance entry for Pool ().".format({pool.name}))
-                logger.debug("Assuming cli initiated")
-                ps = PoolBalance(pool=pool, internal=internal, **live_status)
+                ps = PoolBalance(
+                    pool=pool, internal=internal, message=msg_new_cli, **live_status
+                )
                 ps.save()
+                logger.debug(
+                    "++++++ "
+                    + msg_new_cli
+                    + " Pool name {}, PoolBalance ID {}.".format(pool.name, ps.id)
+                )
                 return ps
         else:  # We have a prior entry, check for Huey task id and matching task:
             logger.debug(
-                "Latest PoolBalance: TID = {} Pool ({})".format(ps.tid, pool.name)
+                "Latest PoolBalance: TID = {} Pool ({}) End_time ({})".format(
+                    ps.tid, pool.name, ps.end_time
+                )
             )
             if ps.tid is not None:  # latest balance record has Huey task id (tid)
                 hi = HUEY
@@ -195,11 +203,11 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
             if prior_status["status"] in [u"finished", u"cancelled"]:
                 if live_status["status"] not in [u"unknown", u"finished"]:
                     # Create new PoolBalance record:
-                    message = "Suspected cli balance detected. New entry created."
-                    ps = PoolBalance(pool=pool, message=message, **proposed_status)
+                    ps = PoolBalance(pool=pool, message=msg_new_cli, **proposed_status)
                     ps.save()
                     logger.debug(
-                        message
+                        "++++++ "
+                        + msg_new_cli
                         + " Pool name {}, PoolBalance ID {}.".format(pool.name, ps.id)
                     )
             else:  # prior_status is neither finished nor cancelled, so we update it.
