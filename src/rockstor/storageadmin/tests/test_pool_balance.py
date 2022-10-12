@@ -77,19 +77,9 @@ class PoolBalanceTests(APITestMixin):
 
         # Mock balance_status() - Wrapper for 'btrfs balance status pool_mount_point'.
         # For testing our response to PUT add command (adding disks and/or re-raid).
-        cls.patch_balance_status = patch(
-            "storageadmin.views.pool_balance.balance_status"
-        )
+        cls.patch_balance_status = patch("fs.btrfs.balance_status")
         cls.mock_balance_status = cls.patch_balance_status.start()
         cls.mock_balance_status.return_value = cls.default_balance_status
-
-        # Mock balance_status_internal() - Wrapper for fs.btrfs.balance_status_internal()
-        # For testing our response to PUT remove command (removing disks).
-        cls.patch_balance_status_internal = patch(
-            "storageadmin.views.pool_balance.balance_status_internal"
-        )
-        cls.mock_balance_status_internal = cls.patch_balance_status_internal.start()
-        cls.mock_balance_status_internal.return_value = cls.default_balance_status
 
     @classmethod
     def tearDownClass(cls):
@@ -152,7 +142,7 @@ class PoolBalanceTests(APITestMixin):
 
         # happy path for pool with and then without prior balance record
         for pool_name in ["test-pool-balance", "ROOT"]:
-            test_pool = Pool.objects.get(name=pool_name)  # has balance record
+            test_pool = Pool.objects.get(name=pool_name)
             pId = test_pool.id
             data = {"force": "false"}
             r = self.client.post(

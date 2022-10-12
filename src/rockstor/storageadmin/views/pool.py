@@ -38,6 +38,7 @@ from fs.btrfs import (
     disable_quota,
     rescan_quotas,
     start_resize_pool,
+    balance_status_all,
 )
 from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
@@ -605,18 +606,20 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     )
                     handle_exception(Exception(e_msg), request)
 
-                # TODO Check for ongoing balance:
-                #  We could use api status command /api/pools/PoolID/balance/status
-                #  but we are mid transaction.atomic and status comand is likewise:
-                #
-
-
+                # Check for ongoing balance:
+                # We could use api status command /api/pools/PoolID/balance/status
+                # but we are mid PUT COMMAND transaction.atomic and status command is
+                # likewise transaction.atomic:
+                bstatus = balance_status_all(pool)
                 # TODO we can receive multiple instances here.
                 #  We are only interested in the last object to match by start_time
-                if PoolBalance.objects.filter(
-                    pool=pool,
-                    status__regex=r"(started|running|cancelling|pausing|paused)",
-                ).exists():  # noqa E501
+                if (
+                    bstatus.active
+                    or PoolBalance.objects.filter(
+                        pool=pool,
+                        status__regex=r"(started|running|cancelling|pausing|paused)",
+                    ).exists()
+                ):  # noqa E501
                     e_msg = (
                         "A Balance process is already running or paused "
                         "for this pool ({}). Resize is not supported "

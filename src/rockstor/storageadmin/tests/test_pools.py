@@ -19,7 +19,7 @@ from django.conf import settings
 from rest_framework import status
 from mock import patch
 
-import storageadmin
+import fs.btrfs
 from storageadmin.models import Disk, Pool, PoolBalance
 from storageadmin.tests.test_api import APITestMixin
 
@@ -104,19 +104,10 @@ class PoolTests(APITestMixin):
 
         # Mock balance_status() - Wrapper for 'btrfs balance status pool_mount_point'.
         # For testing our response to PUT add command (adding disks and/or re-raid).
-        cls.patch_balance_status = patch(
-            "storageadmin.views.pool_balance.balance_status"
-        )
+        cls.patch_balance_status = patch("fs.btrfs.balance_status")
         cls.mock_balance_status = cls.patch_balance_status.start()
         cls.mock_balance_status.return_value = cls.default_balance_status
 
-        # Mock balance_status_internal() - Wrapper for our own fs.btrfs.balance_status_internal()
-        # For testing our response to PUT remove command (removing disks).
-        cls.patch_balance_status_internal = patch(
-            "storageadmin.views.pool_balance.balance_status_internal"
-        )
-        cls.mock_balance_status_internal = cls.patch_balance_status_internal.start()
-        cls.mock_balance_status_internal.return_value = cls.default_balance_status
 
     @classmethod
     def tearDownClass(cls):
@@ -1569,13 +1560,16 @@ class PoolTests(APITestMixin):
         pId = existing_pool.id
 
         # Add disk to pool with cli initiated "running" balance status.
-
-        # mock and check mock of balance_status in views.pool_balance
-        # See fs.tests.test_btrfs.py for expected output from balance.status
+        e_msg = (
+            "A Balance process is already running or paused "
+            "for this pool ({}). Resize is not supported "
+            "during a balance process.".format(existing_pool.name)
+        )
+        # mock and check mock of balance_status in fs.btrfs.balance_status
+        # See fs.tests.test_btrfs.py for expected output from balance_status
         running_balance_status = {"status": "running", "percent_done": 6}
         self.mock_balance_status.return_value = running_balance_status
-        result = storageadmin.views.pool_balance.balance_status(existing_pool)
-        print(result)
+        result = fs.btrfs.balance_status(existing_pool)
         self.assertEqual(
             result,
             running_balance_status,
@@ -1586,7 +1580,19 @@ class PoolTests(APITestMixin):
         response = self.client.put(
             "{}/{}/add".format(self.BASE_URL, pId), data=one_disk
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        # Assert we have an error state returned and it's messages is what we expect
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        self.assertEqual(response.data[0], e_msg)
         # We don't background 'add' so no Huey task and we just add to db directly.
         # But in this case our above fail should mean we still have only one disk.
+        # So get our pool info and check we still have only a single disk.
+        response = self.client.get("{}/{}".format(self.BASE_URL, pId))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
         self.assertEqual(len(response.data["disks"]), 1)
+        # TODO the following should be assured by our setUpClass() but it is not.
+        self.mock_balance_status.return_value = self.default_balance_status
+

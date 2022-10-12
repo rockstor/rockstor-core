@@ -25,7 +25,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import Pool, PoolBalance
 import rest_framework_custom as rfc
-from fs.btrfs import balance_status, balance_status_internal
+from fs.btrfs import balance_status_all
 from pool import PoolMixin
 
 import logging
@@ -117,22 +117,11 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
         :return: Empty response if no PoolBalance entry and no cli balance is detected.
         Other-wise an updated or freshly created PoolBalance is returned.
         """
-        balance_active = False
-        internal = False
+        bstatus = balance_status_all(pool)
+        balance_active = bstatus.active
+        internal = bstatus.internal
+        live_status = bstatus.status
         return_empty = False  # Default to empty response
-        live_status = balance_status(pool)
-        if live_status["status"] in [u"unknown", u"finished"]:
-            # Try internal balance detection as we don't have regular balance in-flight.
-            live_status = balance_status_internal(pool)
-            if live_status["status"] not in [u"unknown", u"finished"]:
-                internal = balance_active = True
-        else:
-            balance_active = True
-        logger.debug(
-            "Balance active: ({}), Internal: ({}), Live Status: ({})".format(
-                balance_active, internal, live_status
-            )
-        )
         msg_new_cli = "Suspected cli balance detected. New entry created."
         try:
             ps = PoolBalance.objects.filter(pool=pool).latest()

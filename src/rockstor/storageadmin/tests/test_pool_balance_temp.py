@@ -63,19 +63,9 @@ class PoolBalanceTests2(APITestMixin):
 
         # Mock balance_status() - Wrapper for 'btrfs balance status pool_mount_point'.
         # For testing our response to PUT add command (adding disks and/or re-raid).
-        cls.patch_balance_status = patch(
-            "storageadmin.views.pool_balance.balance_status"
-        )
+        cls.patch_balance_status = patch("fs.btrfs.balance_status")
         cls.mock_balance_status = cls.patch_balance_status.start()
         cls.mock_balance_status.return_value = cls.default_balance_status
-
-        # Mock balance_status_internal() - Wrapper for fs.btrfs.balance_status_internal()
-        # For testing our response to PUT remove command (removing disks).
-        cls.patch_balance_status_internal = patch(
-            "storageadmin.views.pool_balance.balance_status_internal"
-        )
-        cls.mock_balance_status_internal = cls.patch_balance_status_internal.start()
-        cls.mock_balance_status_internal.return_value = cls.default_balance_status
 
     @classmethod
     def tearDownClass(cls):
@@ -176,6 +166,7 @@ class PoolBalanceTests2(APITestMixin):
         #     PoolBalance.objects.filter(tid=huey_task_id).latest().end_time,
         #     msg="Failed end_time Not None check.",
         # )
+
 
 # test case for huey task set akin to what we already have in the already functional
 # cli counterparts within test_pool_balance.py test_post_status_running_cli_balance()
