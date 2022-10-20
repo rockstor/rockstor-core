@@ -27,6 +27,7 @@ from storageadmin.models import Pool, PoolBalance
 import rest_framework_custom as rfc
 from fs.btrfs import balance_status_all
 from pool import PoolMixin
+from huey.contrib.djhuey import db_task
 
 import logging
 
@@ -81,7 +82,29 @@ def is_pending_balance_task(Huey_handle, tid):
     if tid in pending_balance_task_ids:
         logger.debug("Pending task id found ({})".format(tid))
         return True
+    logger.debug("Pending task id NOT found ({})".format(tid))
     return False
+
+
+@db_task()
+def update_end_time(tid, end_time):
+    """
+    Used by @HUEY.signal(SIGNAL_COMPLETE) task_completed() to update a PoolBalance
+    record.
+    :param tid: Huey task id
+    :param end_time: timezone() format for balance end time.
+    """
+    try:
+        pb = PoolBalance.objects.get(tid=tid)
+        logger.debug(
+            "update_end_time for balance id ({}) on Pool ({})".format(tid, pb.pool.name)
+        )
+        pb.end_time = end_time
+        pb.save(update_fields=["end_time"])
+    except Exception as e:
+        logger.error(
+            "Exception while updating PoolBalance end_time: {}".format(e.__str__())
+        )
 
 
 class PoolBalanceView(PoolMixin, rfc.GenericView):
@@ -97,6 +120,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
+            logger.debug("PoolBalanceView get_queryset() called")
             pool = self._validate_pool(self.kwargs["pid"], self.request)
             self._balance_status(pool)
             return PoolBalance.objects.filter(pool=pool).order_by("start_time")
@@ -167,7 +191,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                     ps.save(update_fields=["status", "message"])
                     return ps
                 else:  # task has not failed
-                    logger.debug("Matching task result={}".format(task_result))
+                    logger.debug("Matching task result = {}".format(task_result))
                     if task_result is None:  # Check for pending task.
                         # Pending balance tasks. Executing tasks are no longer pending.
                         # There is a 1 to 3 second 'pending" status for Huey tasks.
