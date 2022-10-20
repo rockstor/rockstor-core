@@ -31,14 +31,14 @@ class MockTask(object):
     id = 0
 
 
-class PoolBalanceTests2(APITestMixin):
+class PoolBalanceTestsHuey(APITestMixin):
     fixtures = ["test_api.json", "test_pool_balance.json"]
     BASE_URL = "/api/pools"
     default_balance_status = {"status": "finished", "percent_done": 100}
 
     @classmethod
     def setUpClass(cls):
-        super(PoolBalanceTests2, cls).setUpClass()
+        super(PoolBalanceTestsHuey, cls).setUpClass()
 
         cls.patch_mount_root = patch("storageadmin.views.pool.mount_root")
         cls.mock_mount_root = cls.patch_mount_root.start()
@@ -69,7 +69,7 @@ class PoolBalanceTests2(APITestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        super(PoolBalanceTests2, cls).tearDownClass()
+        super(PoolBalanceTestsHuey, cls).tearDownClass()
 
     def test_post_valid_balance_follow_through(self):
         """
@@ -117,32 +117,57 @@ class PoolBalanceTests2(APITestMixin):
         # So it should complete successfully once our task has passed from pending/cued
         # to having been executed.
         huey_handle = HUEY
+        # huey_handle.immediate = True
         self.assertTrue(
             is_pending_balance_task(huey_handle, huey_task_id),
             msg="Expected pending Huey task id ({}) not found".format(huey_task_id),
         )
-        # Await, with time-out, our huey task's transition from pending to execution:
-        # and then assert that we have a non 'None' end time.
-        time_out = 6  # Seconds to wait for Huey to begin execution of a 'pending' task.
-        while time_out:
-            time.sleep(1)
-            print(time_out)
-            time_out -= 1
-            if not is_pending_balance_task(huey_handle, huey_task_id):
-                break
-        # Wait for huey task null-op execution (0.007s to 0.009s)
-        time.sleep(1)
+        # TODO test case for huey task set akin to what we already have in the already functional
+        #  cli counterparts within test_pool_balance.py test_post_status_running_cli_balance()
+        #  see below for hints.
+
+
+        # huey_handle.immediate = True
+        # # Await, with time-out, our huey task's transition from pending to execution:
+        # # and then assert that we have a non 'None' end time.
+        # # N.B. use of Huey immediate mode when testing:
+        # # https://huey.readthedocs.io/en/latest/api.html#Huey.immediate
+        # # However this could introduce, or cover up, race conditions.
+        # time_out = 6  # Seconds to wait for Huey to begin execution of a 'pending' task.
+        # while time_out:
+        #     time.sleep(1)
+        #     print(time_out)
+        #     time_out -= 1
+        #     if not is_pending_balance_task(huey_handle, huey_task_id):
+        #         break
+        # # Wait for huey task null-op execution (0.007s to 0.009s)
+        # time.sleep(1)
+        # # Check that the associated PoolBalance db record has been updated appropriately
+        # # with an end time.
+        # # N.B. We don't make a status api call as this, in turn, does it's own update.
+        # # We are checking that the Huey task_completed() event has update db end_time.
+        # #
+        # # the following PoolBalance has already been proven to exist in a prior step.
+        # Huey_PoolBalance_record = PoolBalance.objects.filter(tid=huey_task_id).latest()
+        # print(Huey_PoolBalance_record.end_time)
+        # self.assertIsNotNone(
+        #     Huey_PoolBalance_record.end_time,
+        #     msg="Failed end_time NOT None check. Got {}, Expected {}.".format(
+        #         Huey_PoolBalance_record.end_time, "NOT None"
+        #     ),
+        # )
+
         # post a pool status request:
-        r = self.client.post("{}/{}/balance/status".format(self.BASE_URL, pId))
-        # test for matching huey task id
-        self.assertEqual(r.data["tid"], huey_task_id, msg="Failed to match Huey tid")
-        # test for completed end_time: see tasks.py
-        self.assertIsNotNone(
-            r.data["end_time"],
-            msg="Failed non None end_time. Got {}, Expected {}.".format(
-                r.data["end_time"], "not None"
-            ),
-        )
+        # r = self.client.post("{}/{}/balance/status".format(self.BASE_URL, pId))
+        # # test for matching huey task id
+        # self.assertEqual(r.data["tid"], huey_task_id, msg="Failed to match Huey tid")
+        # # test for completed end_time: see tasks.py
+        # self.assertIsNotNone(
+        #     r.data["end_time"],
+        #     msg="Failed non None end_time. Got {}, Expected {}.".format(
+        #         r.data["end_time"], "not None"
+        #     ),
+        # )
 
         # time_out = 3
         # task_result = None
@@ -168,5 +193,4 @@ class PoolBalanceTests2(APITestMixin):
         # )
 
 
-# test case for huey task set akin to what we already have in the already functional
-# cli counterparts within test_pool_balance.py test_post_status_running_cli_balance()
+
