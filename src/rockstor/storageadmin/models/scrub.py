@@ -40,7 +40,7 @@ class PoolScrub(models.Model):
     csum_errors = models.IntegerField(default=0)
     verify_errors = models.IntegerField(default=0)
     no_csum = models.IntegerField(default=0)
-    csum_discards = models.IntegerField(default=0)
+    csum_discards = models.BigIntegerField(default=0)
     super_errors = models.IntegerField(default=0)
     malloc_errors = models.IntegerField(default=0)
     uncorrectable_errors = models.IntegerField(default=0)
