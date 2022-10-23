@@ -1,0 +1,146 @@
+[
+{
+    "model": "smart_manager.service",
+    "pk": 1,
+    "fields": {
+        "name": "replication",
+        "display_name": "Replication",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 2,
+    "fields": {
+        "name": "smb",
+        "display_name": "Samba",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 3,
+    "fields": {
+        "name": "nfs",
+        "display_name": "NFS",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 5,
+    "fields": {
+        "name": "ntpd",
+        "display_name": "NTP",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 6,
+    "fields": {
+        "name": "nis",
+        "display_name": "NIS",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 7,
+    "fields": {
+        "name": "ldap",
+        "display_name": "LDAP",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 8,
+    "fields": {
+        "name": "sftp",
+        "display_name": "SFTP",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 9,
+    "fields": {
+        "name": "rockstor",
+        "display_name": "Rockstor",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 10,
+    "fields": {
+        "name": "smartd",
+        "display_name": "S.M.A.R.T",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 11,
+    "fields": {
+        "name": "active-directory",
+        "display_name": "Active Directory",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 12,
+    "fields": {
+        "name": "nut",
+        "display_name": "NUT-UPS",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 13,
+    "fields": {
+        "name": "snmpd",
+        "display_name": "SNMP",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 14,
+    "fields": {
+        "name": "docker",
+        "display_name": "Rock-on",
+        "config": "{\"root_share\": \"rock-ons-root\"}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 15,
+    "fields": {
+        "name": "shellinaboxd",
+        "display_name": "Shell In A Box",
+        "config": "{\"detach\": false, \"css\": \"white-on-black\", \"shelltype\": \"LOGIN\"}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 17,
+    "fields": {
+        "name": "ztask-daemon",
+        "display_name": "ZTaskd",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 18,
+    "fields": {
+        "name": "rockstor-bootstrap",
+        "display_name": "Bootstrap",
+        "config": null
+    }
+}
+]

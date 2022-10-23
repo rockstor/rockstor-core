@@ -95,6 +95,8 @@ DevPoolInfo = collections.namedtuple("DevPoolInfo", "devid size allocated uuid l
 DevUsageInfo = collections.namedtuple("DevUsageInfo", "temp_name size allocated")
 # Named Tuple for default_subvol info: id (string) path (string) boot_to_snap (boolean)
 DefaultSubvol = collections.namedtuple("DefaultSubvol", "id path boot_to_snap")
+# Named Tuple for balance status: active (boolean) internal (boolean) status (dict)
+BalanceStatusAll = collections.namedtuple("BalanceStatusAll", "active internal status")
 
 
 def add_pool(pool, disks):
@@ -1786,6 +1788,7 @@ def start_resize_pool(cmd):
             )
         raise e
 
+
 def balance_pool_cmd(mnt_pt, force=False, convert=None):
     cmd = ["btrfs", "balance", "start", mnt_pt]
     # With no filters we also get a warning that block some balances due to
@@ -1806,6 +1809,7 @@ def balance_pool_cmd(mnt_pt, force=False, convert=None):
         cmd.insert(3, "--full-balance")
     logger.debug("Balance command ({}).".format(cmd))
     return cmd
+
 
 @task()
 def start_balance(cmd):
@@ -1828,7 +1832,6 @@ def start_balance(cmd):
     except CommandException as e:
         # We may need additional exception filtering/altering here.
         raise e
-
 
 
 def balance_status(pool):
@@ -1971,6 +1974,37 @@ def balance_status_internal(pool):
         stats["status"] = u"finished"
         stats["percent_done"] = 100
     return stats
+
+
+def balance_status_all(pool):
+    """
+    Wrapper/meta caller of balance_status() and balance_status_internal().
+    If the former reports no live balance the latter is checked.
+    Used to inform the caller of the current or last know status as reported
+    by a call to 'btfs balance status' (balance_status()) or an implied
+    internal balance as repoted by balance_status_internal().
+    For status dict see called functions.
+    param pool: Pool db object.
+    :return: named tupil: active:boolean, internal:boolean, status:dict
+    """
+    # TODO Copy code from current beginning of
+    #  storageadmin.views.pool_balance._balance_status
+    active = False
+    internal = False
+    status = balance_status(pool)
+    if status["status"] in [u"unknown", u"finished"]:
+        # Try internal balance detection as we don't have regular balance in-flight.
+        status = balance_status_internal(pool)
+        if status["status"] not in [u"unknown", u"finished"]:
+            internal = active = True
+    else:
+        active = True
+    logger.debug(
+        "Balance active: ({}), Internal: ({}), Live Status: ({})".format(
+            active, internal, status
+        )
+    )
+    return BalanceStatusAll(active=active, internal=internal, status=status)
 
 
 def device_scan(dev_byid_list=["all"]):

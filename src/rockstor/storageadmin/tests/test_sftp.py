@@ -14,19 +14,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
 from mock import patch
 
 from storageadmin.models import Pool, Share, SFTP
 from storageadmin.tests.test_api import APITestMixin
 
 
-class SFTPTests(APITestMixin, APITestCase):
+class SFTPTests(APITestMixin):
     # fixture with:
     # share-sftp (admin:admin) exported by SFTP
     # share-root-owned (root:root) - no SFTP export
     # share-user-owned (admin:admin) - no SFTP export.
-    fixtures = ['test_sftp.json']
+    # proposed fixture = "test_sftp.json"
+    fixtures = ["test_api.json"]
     BASE_URL = '/api/sftp'
 
     @classmethod

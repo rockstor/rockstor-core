@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import mock
 from mock import patch
 from rest_framework import status
-from rest_framework.test import APITestCase
 
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Pool, Share, SambaShare, User
@@ -26,13 +25,36 @@ from storageadmin.tests.test_api import APITestMixin
 from storageadmin.views.samba import SambaListView
 
 
-class SambaTests(APITestMixin, APITestCase, SambaListView):
+class SambaTests(APITestMixin, SambaListView):
     # fixture with:
-    # share-smb - SMB exported with defaults: (comment "Samba-Export")
-    # {'browsable': 'yes', 'guest_ok': 'no', 'read_only': 'no'}
-    # share2 - no SMB export
-    # fixtures = ['fix3.json']
-    fixtures = ["test_smb.json"]
+    # 1 pool:
+    #   - id=11
+    #   - name="rock-pool"
+    # 1 share:
+    #   - pool: "rock-pool" above
+    #   - name: share-smb
+    #   - exported with defaults:
+    #       - comment: "Samba-Export"
+    #       - admin_users: None
+    #       - browsable: 'yes'
+    #       - guest_ok: 'no'
+    #       - read_only: 'no'
+    # 1 share:
+    #   - name: share2 - no SMB export
+    # 1 User:
+    #   - id: 1
+    #   - name: admin
+    #   - group: 1
+    # 1 Group:
+    #   - pk: 1
+
+    # proposed fixture = "test_smb.json"
+    # bin/django dumpdata storageadmin.pool storageadmin.share
+    # storageadmin.sambashare storageadmin.user storageadmin.group
+    # --natural-foreign --indent 4 >
+    # src/rockstor/storageadmin/fixtures/test_smb.json
+    # ./bin/test -v 2 -p test_samba.py
+    fixtures = ["test_api.json", "test_smb.json"]
     BASE_URL = "/api/samba"
 
     @classmethod
@@ -61,15 +83,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         )
         cls.mock_refresh_smb_config = cls.patch_refresh_smb_config.start()
         cls.mock_refresh_smb_config.return_value = "smbconfig"
-
-        # all values as per fixture
-        cls.temp_pool = Pool(id=11, name="rock-pool", size=5242880)
-        cls.temp_share_smb = Share(id=23, name="share-smb", pool=cls.temp_pool)
-        cls.temp_sambashare = SambaShare(id=1, share=cls.temp_share_smb)
-        # cls.temp_smb_custom_config = \
-        #     SambaCustomConfig(id=1, smb_share=cls.temp_sambashare)
-
-        cls.temp_share2 = Share(id=24, name="share2", pool=cls.temp_pool)
 
     @classmethod
     def tearDownClass(cls):
@@ -208,14 +221,11 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         with self.assertRaises(RockStorAPIException):
             self._validate_input(rdata=data)
 
-    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
-    def test_create_samba_share(self, mock_validate_share):
+    def test_create_samba_share(self):
         """
         Test that create_samba_share() returns a correct SambaShare object
         when all conditions are valid.
         """
-        mock_validate_share.return_value = self.temp_share_smb
-
         data = {
             "read_only": "no",
             "comment": "Samba-Export",
@@ -223,11 +233,11 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "browsable": "yes",
             "custom_config": [],
             "snapshot_prefix": "",
-            "shares": ["23"],
+            "shares": ["2"],
             "shadow_copy": False,
             "guest_ok": "no",
         }
-        expected_result = self.temp_sambashare
+        expected_result = SambaShare.objects.get(pk=1)
         returned = self.create_samba_share(data)
         self.assertEqual(
             returned,
@@ -258,20 +268,12 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         with self.assertRaises(RockStorAPIException):
             self.create_samba_share(rdata=data)
 
-    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
-    @mock.patch("storageadmin.views.samba.SambaShare.objects")
     @mock.patch("storageadmin.views.samba.logger")
-    def test_create_samba_share_existing_export(
-        self, mock_validate_share, mock_sambashare, mock_logger
-    ):
+    def test_create_samba_share_existing_export(self, mock_logger):
         """
         Test that create_samba_share() logs the appropriate error
         when the given share is already exported via Samba.
         """
-        mock_validate_share.return_value = self.temp_share_smb
-        mock_sambashare.filter.return_value = mock_sambashare
-        mock_sambashare.exists.return_value = True
-
         data = {
             "read_only": "no",
             "comment": "Samba-Export",
@@ -279,7 +281,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
             "browsable": "yes",
             "custom_config": [],
             "snapshot_prefix": "",
-            "shares": ["23"],
+            "shares": ["2"],
             "shadow_copy": False,
             "guest_ok": "no",
         }
@@ -347,23 +349,13 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         e_msg = "Must provide share names."
         self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch("storageadmin.models.user.ifp_get_groupname")
-    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
-    @mock.patch("storageadmin.views.samba.User")
-    def test_post_requests_2(
-        self, mock_user, mock_validate_share, mock_ifp_get_groupname
-    ):
+    def test_post_requests_2(self):
         """
         . Create a samba export for the share that has already been exported
         """
-        # Return "testgroup" for ifp_get_groupname() call
-        mock_ifp_get_groupname.return_value = "testgroup"
-
-        mock_validate_share.return_value = self.temp_share_smb
-
         # create samba with invalid browsable, guest_ok, read_only choices
         data = {
-            "shares": ["23"],
+            "shares": ["3"],
             "browsable": "Y",
             "guest_ok": "yes",
             "read_only": "yes",
@@ -378,7 +370,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         self.assertEqual(response.data[0], e_msg)
 
         data = {
-            "shares": ["23"],
+            "shares": ["3"],
             "browsable": "yes",
             "guest_ok": "Y",
             "read_only": "yes",
@@ -393,7 +385,7 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         self.assertEqual(response.data[0], e_msg)
 
         data = {
-            "shares": ["23"],
+            "shares": ["3"],
             "browsable": "yes",
             "guest_ok": "yes",
             "read_only": "Y",
@@ -408,24 +400,15 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         self.assertEqual(response.data[0], e_msg)
 
         # create samba export
-        # we use share id 24 (share2) as not yet smb exported.
+        # we use share id 3 (share2) as not yet smb exported.
         data = {
-            "shares": ["24"],
+            "shares": ["3"],
             "browsable": "yes",
             "guest_ok": "yes",
             "read_only": "yes",
             "admin_users": ("admin",),
             "custom_config": ("CONFIG", "XYZ"),
         }
-        mock_validate_share.return_value = self.temp_share2
-        mock_user.objects.get.side_effects = None
-        # The following relies on our mocked return value in ipf_get_groupname().
-        # Otherwise we error/exception out with ipf_get_groupname() in models/user.py
-        temp_user = User.objects.create(
-            username="admin", uid=1, gid=1, admin=False, user=self.user
-        )
-        mock_user.objects.get.return_value = temp_user
-
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
@@ -467,17 +450,14 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         # e_msg = "Share (share2) is already exported via Samba."
         # self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch("storageadmin.views.samba.ShareMixin._validate_share")
-    def test_post_requests_no_admin(self, mock_validate_share):
+    def test_post_requests_no_admin(self):
         """
         Test a valid post request creating a samba export
         when no admin user is specified
         """
-        mock_validate_share.return_value = self.temp_share_smb
-
         # create samba export with no admin users
         data = {
-            "shares": ["24"],
+            "shares": ["3"],
             "browsable": "yes",
             "guest_ok": "yes",
             "read_only": "yes",
@@ -490,7 +470,6 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         """
         . Edit samba that does not exists
         """
-
         # edit samba that does not exist
         smb_id = 99999
         data = {
@@ -508,15 +487,11 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         e_msg = "Samba export for the id ({}) does not exist.".format(smb_id)
         self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch("storageadmin.views.samba.SambaShare")
-    def test_put_requests_2(self, mock_sambashare):
+    def test_put_requests_2(self):
         """
         1. Edit samba that does not exists
         2. Edit samba
         """
-
-        mock_sambashare.objects.get.return_value = self.temp_sambashare
-
         # edit samba with invalid custom config
         smb_id = 1
         data = {
@@ -612,14 +587,10 @@ class SambaTests(APITestMixin, APITestCase, SambaListView):
         e_msg = "Samba export for the id ({}) does not exist.".format(smb_id)
         self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch("storageadmin.views.samba.SambaShare")
-    def test_delete_requests_2(self, mock_sambashare):
+    def test_delete_requests_2(self):
         """
         . Delete samba
         """
-
-        mock_sambashare.objects.get.return_value = self.temp_sambashare
-
         # happy path
         smb_id = 1
         response = self.client.delete("{}/{}".format(self.BASE_URL, smb_id))

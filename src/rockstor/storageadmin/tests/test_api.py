@@ -27,23 +27,16 @@ class APITestMixin(APITestCase):
     # auth.user
     # bin/django dumpdata --natural-foreign --indent 4 auth.user > src/rockstor/storageadmin/fixtures/test_api.json
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     pass
-    #     # run_command removed as we no longer zip log files so no need to mock.
-    #     # # error handling run_command mocks
-    #     # cls.patch_run_command = patch('storageadmin.util.run_command')
-    #     # cls.mock_run_command = cls.patch_run_command.start()
-    #     # cls.mock_run_command.return_value = True
+    @classmethod
+    def setUpClass(cls):
+        super(APITestMixin, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         patch.stopall()
+        super(APITestMixin, cls).tearDownClass()
 
     def setUp(self):
-        # self.client.login(username='admin', password='admin')
-        # self.user = User.objects.create(username='radmin',
-        #                                 password='radmin', is_active=1)
         self.user = User.objects.get(username='admin')
         self.client.force_authenticate(user=self.user)
 

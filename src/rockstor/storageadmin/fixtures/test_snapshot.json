@@ -1,0 +1,96 @@
+[
+{
+    "model": "storageadmin.pool",
+    "pk": 2,
+    "fields": {
+        "name": "pool1",
+        "uuid": "6ec74b72-cb81-4965-938c-254fdc6efeab",
+        "size": 10485760,
+        "raid": "single",
+        "toc": "2022-06-23T20:12:49.411Z",
+        "compression": "no",
+        "mnt_options": "",
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 2,
+    "fields": {
+        "pool": 2,
+        "qgroup": "0/257",
+        "pqgroup": "2015/1",
+        "name": "share1",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-23T20:12:49.599Z",
+        "subvol_name": "share1",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 32,
+        "pqgroup_eusage": 32
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 3,
+    "fields": {
+        "pool": 2,
+        "qgroup": "0/258",
+        "pqgroup": "2015/2",
+        "name": "share2",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2022-06-23T20:12:49.660Z",
+        "subvol_name": "share2",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 32,
+        "pqgroup_eusage": 32
+    }
+},
+{
+    "model": "storageadmin.snapshot",
+    "pk": 1,
+    "fields": {
+        "share": 2,
+        "name": "snap1",
+        "real_name": "snap1",
+        "writable": false,
+        "size": 16,
+        "toc": "2022-06-23T20:00:29.525Z",
+        "qgroup": "0/259",
+        "uvisible": false,
+        "snap_type": "admin",
+        "rusage": 16,
+        "eusage": 16
+    }
+},
+{
+    "model": "storageadmin.snapshot",
+    "pk": 2,
+    "fields": {
+        "share": 3,
+        "name": "snap2",
+        "real_name": "snap2",
+        "writable": false,
+        "size": 16,
+        "toc": "2022-06-23T20:01:13.048Z",
+        "qgroup": "0/260",
+        "uvisible": true,
+        "snap_type": "admin",
+        "rusage": 16,
+        "eusage": 16
+    }
+}
+]

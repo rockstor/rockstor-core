@@ -38,6 +38,7 @@ from fs.btrfs import (
     disable_quota,
     rescan_quotas,
     start_resize_pool,
+    balance_status_all,
 )
 from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
@@ -56,6 +57,7 @@ class PoolMixin(object):
 
     @staticmethod
     def _validate_disk(d, request):
+        # Used by post (create) pool
         # TODO: Consider moving this and related code to id based validation.
         try:
             return Disk.objects.get(name=d)
@@ -65,6 +67,7 @@ class PoolMixin(object):
 
     @staticmethod
     def _validate_disk_id(diskId, request):
+        # Used by put (modify) pool
         try:
             return Disk.objects.get(id=diskId)
         except:
@@ -359,6 +362,10 @@ class PoolListView(PoolMixin, rfc.GenericView):
         input is a list of disks, raid_level and name of the pool.
         """
         with self._handle_exception(request):
+            # TODO Add check for None and iterable before the following disk validation
+            #  else we end up "TypeError: 'NoneType' object is not iterable"
+            #  when no disks are entered via API (Web-UI has sanity check already).
+            #  N.B. we have an existing test for this 'NoneType' response !!
             disks = [self._validate_disk(d, request) for d in request.data.get("disks")]
             pname = request.data["pname"]
             if re.match("{}$".format(settings.POOL_REGEX), pname) is None:
@@ -379,6 +386,11 @@ class PoolListView(PoolMixin, rfc.GenericView):
                     pname
                 )
                 handle_exception(Exception(e_msg), request)
+
+            # TODO: Add check against un-imported pool names.
+            # e_msg = "Unimported Pool ({}) already exists. Choose a different name.".format(
+            #     pname
+            # )
 
             if Share.objects.filter(name=pname).exists():
                 e_msg = (
@@ -467,12 +479,17 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
     def put(self, request, pid, command):
         """
         resize a pool.
-        @pname: pool's name
-        @command: 'add' - add a list of disks and hence expand the pool
-                  'remove' - remove a list of disks and hence shrink the pool
-                  'remount' - remount the pool, to apply changed mount options
-                  'quotas' - request pool quota setting change
+        :param pid: id of Pool object in db
+        :param command:
+        'add' - add a list of disks and hence expand the pool
+        'remove' - remove a list of disks and hence shrink the pool
+        'remount' - remount the pool, to apply changed mount options
+        'quotas' - request pool quota setting change
         """
+        logger.debug("######## PUT request on pool id ({}) ###############".format(pid))
+        logger.debug("######## request = ({})".format(request.data))
+        logger.debug("######## request disks = ({})".format(request.data.get("disks")))
+        logger.debug("######## command = ({})".format(command))
         with self._handle_exception(request):
             try:
                 pool = Pool.objects.get(id=pid)
@@ -480,6 +497,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 e_msg = "Pool with id ({}) does not exist.".format(pid)
                 handle_exception(Exception(e_msg), request)
 
+            logger.debug("######## pool name ({}) ###############".format(pool.name))
             if pool.role == "root" and command != "quotas":
                 e_msg = (
                     "Edit operations are not allowed on this pool ({}) "
@@ -588,15 +606,31 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     )
                     handle_exception(Exception(e_msg), request)
 
-                if PoolBalance.objects.filter(
-                    pool=pool,
-                    status__regex=r"(started|running|cancelling|pausing|paused)",
-                ).exists():  # noqa E501
+                # Check for ongoing balance:
+                # We could use api status command /api/pools/PoolID/balance/status
+                # but we are mid PUT COMMAND transaction.atomic and status command is
+                # likewise transaction.atomic:
+                bstatus = balance_status_all(pool)
+                # TODO we can receive multiple instances here.
+                #  We are only interested in the last object to match by start_time
+                if (
+                    bstatus.active
+                    or PoolBalance.objects.filter(
+                        pool=pool,
+                        status__regex=r"(started|running|cancelling|pausing|paused)",
+                    ).exists()
+                ):  # noqa E501
                     e_msg = (
                         "A Balance process is already running or paused "
                         "for this pool ({}). Resize is not supported "
                         "during a balance process."
                     ).format(pool.name)
+                    temp_poolBalances = PoolBalance.objects.filter(pool=pool)
+                    for record in temp_poolBalances:
+                        logger.debug(
+                            "====== Recorded status = ({})."
+                            "000000 full info = {}".format(record.status, record)
+                        )
                     handle_exception(Exception(e_msg), request)
 
                 # _resize_pool_start() add dev mode is quick so no async or tid
@@ -701,7 +735,16 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     size_cut = 0
                     for d in disks:  # to be removed
                         size_cut += d.allocated
+                        logger.debug(
+                            "++++++++ adding disk {} allocated space {} to size_cut".format(
+                                d.name, d.allocated
+                            )
+                        )
                     available_free = pool.free
+                    logger.debug("available_free = {}".format(available_free))
+                    logger.debug("pool size = {}".format(pool.size))
+                    # TODO improve disk list presentation in the following msg.
+                    #  currently we have: "Removing disks ([u'virtio-1']) may shrink"
                     if size_cut >= available_free:
                         e_msg = (
                             "Removing disk/s ({}) may shrink the pool by "

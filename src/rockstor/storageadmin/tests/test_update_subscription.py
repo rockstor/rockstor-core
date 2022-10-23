@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework import status
-from rest_framework.test import APITestCase
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
 
 
-class UpdateSubscriptionTests(APITestMixin, APITestCase):
-    fixtures = ['fix1.json']
-    BASE_URL = '/api/update-subscriptions'
+class UpdateSubscriptionTests(APITestMixin):
+    # Proposed fixture "test_update_subscription.json" was "fix1.json"
+    fixtures = ["test_api.json"]
+    BASE_URL = "/api/update-subscriptions"
 
     @classmethod
     def setUpClass(cls):
@@ -32,13 +32,15 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
 
         # post mocks
 
-        cls.patch_repo_status = patch('storageadmin.views.update_subscription'
-                                      '.repo_status')
+        cls.patch_repo_status = patch(
+            "storageadmin.views.update_subscription" ".repo_status"
+        )
         cls.mock_repo_status = cls.patch_repo_status.start()
-        cls.mock_repo_status.return_value = ('active', 'public repo')
+        cls.mock_repo_status.return_value = ("active", "public repo")
 
-        cls.patch_switch_repo = patch('storageadmin.views.update_subscription.'
-                                      'switch_repo')
+        cls.patch_switch_repo = patch(
+            "storageadmin.views.update_subscription." "switch_repo"
+        )
         cls.mock_switch_repo = cls.patch_switch_repo.start()
 
     @classmethod
@@ -49,18 +51,17 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
 
         # get base URL
         response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_post_requests(self):
 
         # happy path
-        response = self.client.post('%s/activate-stable' % self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_400_BAD_REQUEST,
-                         msg=response.data)
+        response = self.client.post("%s/activate-stable" % self.BASE_URL)
+        self.assertEqual(
+            response.status_code, status.HTTP_400_BAD_REQUEST, msg=response.data
+        )
 
-        e_msg = 'Activation code is required for Stable subscription.'
+        e_msg = "Activation code is required for Stable subscription."
         self.assertEqual(response.data[0], e_msg)
 
         # # repo staturn returning inactive
@@ -84,7 +85,7 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
         #         'message.')
         # self.assertEqual(response.data[0], e_msg)
 
-        self.mock_repo_status.return_value = ('active', 'public repo')
+        self.mock_repo_status.return_value = ("active", "public repo")
 
         # repo staturn returning not active
         # TODO: may need mock appliance object
@@ -97,7 +98,7 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
         # e_msg = ('Failed to activate subscription. Status code: invalid '
         #          'details: public repo')
         # self.assertEqual(response.data[0], e_msg)
-        self.mock_repo_status.return_value = ('active', 'public repo')
+        self.mock_repo_status.return_value = ("active", "public repo")
 
         # happy path
         # TODO: may need mock appliance object
@@ -106,15 +107,13 @@ class UpdateSubscriptionTests(APITestMixin, APITestCase):
         #                  status.HTTP_200_OK, msg=response.data)
 
         # happy path
-        data = {'activation_code': 'pass'}
-        response = self.client.post('%s/activate-stable'
-                                    % self.BASE_URL, data=data)
+        data = {"activation_code": "pass"}
+        response = self.client.post("%s/activate-stable" % self.BASE_URL, data=data)
         # TODO: another "Appliance matching query does not exist"
         # self.assertEqual(response.status_code,
         #                  status.HTTP_200_OK, msg=response.data)
-        data = {'name': 'stable'}
-        response = self.client.post('%s/check-status'
-                                    % self.BASE_URL, data=data)
+        data = {"name": "stable"}
+        response = self.client.post("%s/check-status" % self.BASE_URL, data=data)
         # TODO: UpdateSubscription matching query does not exist
         # self.assertEqual(response.status_code,
         #                  status.HTTP_200_OK, msg=response.data)

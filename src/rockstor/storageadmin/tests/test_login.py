@@ -15,13 +15,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from rest_framework import status
-from rest_framework.test import APITestCase
 from storageadmin.tests.test_api import APITestMixin
 
 
-class LoginTests(APITestMixin, APITestCase):
-    fixtures = ['fix2.json']
-    BASE_URL = '/api/login'
+class LoginTests(APITestMixin):
+    # Proposed fixture "test_login.json" was "fix2.json"
+    fixtures = ["test_api.json"]
+    BASE_URL = "/api/login"
 
     @classmethod
     def setUpClass(cls):
@@ -34,10 +34,11 @@ class LoginTests(APITestMixin, APITestCase):
     def test_post_requests(self):
 
         # Unauthorised user
-        data = {'username': 'admin', 'password': 'invalid'}
+        data = {"username": "admin", "password": "invalid"}
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_401_UNAUTHORIZED, msg=response.data)
+        self.assertEqual(
+            response.status_code, status.HTTP_401_UNAUTHORIZED, msg=response.data
+        )
 
         # TODO:
         # The following fails but we have admin/admin setup in APITestMixin.
