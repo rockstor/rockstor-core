@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import logging
+import stat
 import os
 import re
 import shutil
@@ -32,7 +33,7 @@ from system.osi import run_command, md5sum, replace_line_if_found
 logger = logging.getLogger(__name__)
 
 SYSCTL = "/usr/bin/systemctl"
-BASE_DIR = settings.ROOT_DIR
+BASE_DIR = settings.ROOT_DIR  # ends in "/"
 BASE_BIN = "{}bin".format(BASE_DIR)
 DJANGO = "{}/django".format(BASE_BIN)
 STAMP = "{}/.initrock".format(BASE_DIR)
@@ -291,6 +292,46 @@ def update_smb_service(logging):
     return logging.info("{} looks correct. Not updating.".format(name))
 
 
+def update_django_launcher(logging):
+    """
+    We currently have a Django hack of sorts to help with enabling our eggs orientated
+    environment. The source file, distributed by our rpm, needs to be re-instantiated,
+    if needed, to the binary directory.
+    :param logging: Handle used to provide debug logging.
+    :return: logging.info.
+    """
+    target_csum = "na"
+    source_name = "django-hack.py"
+    target_name = "django"
+    source_with_path = "{}conf/{}".format(BASE_DIR, source_name)
+    target_with_path = "{}/{}".format(BASE_BIN, target_name)
+    if not os.path.isfile(source_with_path):
+        return logging.info(
+            "{} file not found. Not updating {}.".format(
+                source_with_path, target_with_path
+            )
+        )
+    source_csum = md5sum(source_with_path)
+    if os.path.isfile(target_with_path):
+        target_csum = md5sum(target_with_path)
+    if not (source_csum == target_csum):
+        logging.info("Updating {}".format(target_with_path))
+        shutil.copyfile(source_with_path, target_with_path)
+        # Set execution writes on our target script file to "-rwxr-xr-x".
+        os.chmod(
+            target_with_path,
+            stat.S_IRUSR
+            | stat.S_IWUSR
+            | stat.S_IXUSR
+            | stat.S_IRGRP
+            | stat.S_IXGRP
+            | stat.S_IROTH
+            | stat.S_IXOTH,
+        )
+        return logging.info("Done.")
+    return logging.info("{} up-to-date.".format(target_with_path))
+
+
 def main():
     loglevel = logging.INFO
     if len(sys.argv) > 1 and sys.argv[1] == "-x":
@@ -374,11 +415,10 @@ def main():
     except Exception as e:
         logging.error("Exception while updating sshd_config: {}".format(e.__str__()))
 
+    update_django_launcher(logging)
+
     if not os.path.isfile(STAMP):
         logging.info("Please be patient. This script could take a few minutes")
-        shutil.copyfile(
-            "{}/conf/django-hack.py".format(BASE_DIR), "{}/django".format(BASE_BIN)
-        )
         run_command([SYSCTL, "enable", "postgresql"])
         logging.debug("Progresql enabled")
         pg_data = "/var/lib/pgsql/data"
