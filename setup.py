@@ -78,7 +78,7 @@ setup(
         'psutil == 3.3.0',
         'psycogreen == 1.0',
         # N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
-        'psycopg2 == 2.8.7',  # last Python 2.7 version, PostgreSQL 13 errorcodes map
+        'psycopg2 == 2.8.6',  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
         'python-socketio == 1.6.0',
         'pytz == 2014.3',
         'pyzmq == 15.0.0',
