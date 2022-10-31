@@ -49,6 +49,7 @@ class PoolBalanceTests(APITestMixin):
     fixtures = ["test_api.json", "test_pool_balance.json"]
     BASE_URL = "/api/pools"
     default_balance_status = {"status": "finished", "percent_done": 100}
+    default_balance_status_internal = {"status": "finished", "percent_done": 100}
 
     @classmethod
     def setUpClass(cls):
@@ -75,11 +76,27 @@ class PoolBalanceTests(APITestMixin):
         # # start_balance normally returns a Huey task_result_handle.
         # cls.mock_start_balance.return_value = MockTask()
 
+        # In the following two mocks we are preserving our ability to discern between
+        # them. However, it should be noted that we also have a lower level test for
+        # fs.btrfs.balance_status_all() that is a superset of:
+        # - fs.btrfs.balance_status
+        # - fs.btrfs.balance_status_internal
+        # see fs/tests/btrfs.py test_balance_status_all()
+        # As such we may want to move to mocking fs.btrfs.balance_status_all.
+
         # Mock balance_status() - Wrapper for 'btrfs balance status pool_mount_point'.
         # For testing our response to PUT add command (adding disks and/or re-raid).
         cls.patch_balance_status = patch("fs.btrfs.balance_status")
         cls.mock_balance_status = cls.patch_balance_status.start()
         cls.mock_balance_status.return_value = cls.default_balance_status
+
+        # Mock balance_status_internal() - Wrapper for 'btrfs dev usage -b mnt_pt'.
+        # For testing our response to PUT add command (adding disks and/or re-raid).
+        cls.patch_balance_status_internal = patch("fs.btrfs.balance_status_internal")
+        cls.mock_balance_status_internal = cls.patch_balance_status_internal.start()
+        cls.mock_balance_status_internal.return_value = (
+            cls.default_balance_status_internal
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -212,6 +229,7 @@ class PoolBalanceTests(APITestMixin):
         for pool_name in ["test-pool-balance", "ROOT"]:
             loop_test_pool = Pool.objects.get(name=pool_name)
             pId = loop_test_pool.id
+            # Create a test data loop with auto generated index (0 indexed).
             for test_data_index, (bstatus, btid, pbid, pbmessage) in enumerate(
                 zip(
                     balance_status,
