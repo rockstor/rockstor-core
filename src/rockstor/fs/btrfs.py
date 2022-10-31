@@ -1969,7 +1969,7 @@ def balance_status_internal(pool):
                 stats["status"] = u"running"
                 break
     if unallocated >= 0:
-        # We have not 'tell' so report a finished balance as there is no
+        # We have no 'tell' so report a finished balance as there is no
         # evidence of one happening.
         stats["status"] = u"finished"
         stats["percent_done"] = 100
@@ -1987,16 +1987,15 @@ def balance_status_all(pool):
     param pool: Pool db object.
     :return: named tupil: active:boolean, internal:boolean, status:dict
     """
-    # TODO Copy code from current beginning of
-    #  storageadmin.views.pool_balance._balance_status
     active = False
     internal = False
     status = balance_status(pool)
     if status["status"] in [u"unknown", u"finished"]:
         # Try internal balance detection as we don't have regular balance in-flight.
-        status = balance_status_internal(pool)
-        if status["status"] not in [u"unknown", u"finished"]:
+        status_internal = balance_status_internal(pool)
+        if status_internal["status"] not in [u"unknown", u"finished"]:
             internal = active = True
+            status = status_internal
     else:
         active = True
     logger.debug(
