@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 Rockstor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 Rockstor, Inc. <https://rockstor.com>
 This file is part of Rockstor.
 
 Rockstor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
@@ -29,21 +29,70 @@ from django.conf import settings
 
 from system import services
 from system.osi import run_command, md5sum, replace_line_if_found
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
 SYSCTL = "/usr/bin/systemctl"
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
 BASE_BIN = "{}bin".format(BASE_DIR)
+CONF_DIR = "{}conf".format(BASE_DIR)
 DJANGO = "{}/django".format(BASE_BIN)
 STAMP = "{}/.initrock".format(BASE_DIR)
 FLASH_OPTIMIZE = "{}/flash-optimize".format(BASE_BIN)
-PREP_DB = "{}/prep_db".format(BASE_BIN)
+DJANGO_PREP_DB = "{}/prep_db".format(BASE_BIN)
 SUPERCTL = "{}/supervisorctl".format(BASE_BIN)
 OPENSSL = "/usr/bin/openssl"
 RPM = "/usr/bin/rpm"
 YUM = "/usr/bin/yum"
 IP = "/usr/sbin/ip"
+# The collections, in order, of commands to run via "su - postgres -c"
+#
+# Our openSUSE systemd ExecStart= script runs 'initdb' for us, if required.
+# And we (initrock.py) are run only after a successful postgresql systemd start:
+# rockstor-pre.service has "After=postgresql.service & Requires=postgresql.service"
+#
+# Default Postgresql data dir: /var/lib/pgsql/data
+# Default Postgresql log dir: /var/lib/pgsql/data/log/
+#
+# Configure host-based authentication (pg_hba.conf).
+# md5 upscales to scram-sha-256 (released in pg10, default in pg13) hashes if found.
+# See: https://www.postgresql.org/docs/13/auth-password.html
+# Display the password hash: begins "md5" (old) or "SCRAM-SHA-256" (new)
+# su - postgres -c "psql -c \"SELECT ROLPASSWORD FROM pg_authid WHERE rolname = 'rocky'\""
+# su - postgres -c "psql -c \"ALTER ROLE rocky WITH PASSWORD 'rocky'\""
+
+OVERWRITE_PG_HBA = "cp -f {}/pg_hba.conf /var/lib/pgsql/data/".format(CONF_DIR)
+PG_RELOAD = "pg_ctl reload"  # Does not require pg_hba.conf based authentication.
+RUN_SQL = "psql -w -f"  # Without password prompt and from file.
+#
+# We use psql the postgresql client command line program
+# See: https://www.postgresql.org/docs/13/app-psql.html
+#
+# Tune Postgesql server to our needs.
+DB_SYS_TUNE = OrderedDict()
+DB_SYS_TUNE["Setup_host_based_auth"] = OVERWRITE_PG_HBA
+DB_SYS_TUNE["Reload_config"] = PG_RELOAD  # Enables pg_hba for following psql access.
+DB_SYS_TUNE["PG_tune"] = "{} {}/postgresql_tune.sql".format(RUN_SQL, CONF_DIR)
+
+# Create and then populate our databases from scratch.
+DB_SETUP = OrderedDict()
+DB_SETUP["drop_and_recreate"] = "{} {}/postgresql_setup.sql".format(RUN_SQL, CONF_DIR)
+DB_SETUP[
+    "populate_storageadmin"
+] = "psql storageadmin -w -f {}/storageadmin.sql.in".format(CONF_DIR)
+DB_SETUP["populate_smartdb"] = "psql smartdb -w -f {}/smartdb.sql.in".format(CONF_DIR)
+
+# List of systemd services to instantiate/update or remove, if required.
+# Service filenames that are not found in CONF_DIR will be removed from the system.
+SYSTEMD_DIR = "/etc/systemd/system"
+ROCKSTOR_SYSTEMD_SERVICES = [
+    "rockstor-pre.service",  # Loads us (initrock.py).
+    "rockstor.service",
+    "rockstor-bootstrap.service",
+    # "rockstor-hdparm.service",  # Managed by system.osi.update_hdparm_service()
+    "rockstor-ipv6check.service",  # Legacy service from pre v4.1.0-0 development.
+]
 
 
 def inet_addrs(interface=None):
@@ -62,7 +111,7 @@ def inet_addrs(interface=None):
     return ipaddr_list
 
 
-def current_rockstor_mgmt_ip(logger):
+def current_rockstor_mgmt_ip(log):
     # importing here because, APIWrapper needs postgres to be setup, so
     # importing at the top results in failure the first time.
     from smart_manager.models import Service
@@ -80,15 +129,15 @@ def current_rockstor_mgmt_ip(logger):
                 ipaddr = ipaddr_list[0]
         except Exception as e:
             # interface vanished.
-            logger.exception(
+            log.exception(
                 "Exception while gathering current management ip: {e}".format(e=e)
             )
 
     return ipaddr, port
 
 
-def init_update_issue(logger):
-    ipaddr, port = current_rockstor_mgmt_ip(logger)
+def init_update_issue(log):
+    ipaddr, port = current_rockstor_mgmt_ip(log)
 
     if ipaddr is None:
         ipaddr_list = inet_addrs()
@@ -123,18 +172,18 @@ def init_update_issue(logger):
     return ipaddr
 
 
-def update_nginx(logger):
+def update_nginx(log):
     try:
-        ip, port = current_rockstor_mgmt_ip(logger)
+        ip, port = current_rockstor_mgmt_ip(log)
         services.update_nginx(ip, port)
     except Exception as e:
-        logger.exception("Exception while updating nginx: {e}".format(e=e))
+        log.exception("Exception while updating nginx: {e}".format(e=e))
 
 
-def update_tz(logging):
+def update_tz(log):
     # update timezone variable in settings.py
     zonestr = os.path.realpath("/etc/localtime").split("zoneinfo/")[1]
-    logging.info("system timezone = {}".format(zonestr))
+    log.info("system timezone = {}".format(zonestr))
     sfile = "{}/src/rockstor/settings.py".format(BASE_DIR)
     fo, npath = mkstemp()
     updated = False
@@ -147,9 +196,7 @@ def update_tz(logging):
                 else:
                     tfo.write("TIME_ZONE = '{}'\n".format(zonestr))
                     updated = True
-                    logging.info(
-                        "Changed timezone from {} to {}".format(curzone, zonestr)
-                    )
+                    log.info("Changed timezone from {} to {}".format(curzone, zonestr))
             else:
                 tfo.write(line)
     if updated:
@@ -159,14 +206,14 @@ def update_tz(logging):
     return updated
 
 
-def bootstrap_sshd_config(logging):
+def bootstrap_sshd_config(log):
     """
     Setup sshd_config options for Rockstor:
     1. Switch from the default /usr/lib/ssh/sftp-server subsystem
         to the internal-sftp subsystem required for sftp access to work.
         Note that this turns the SFTP service ON by default.
     2. Add our customization header and allow only the root user to connect.
-    :param logging:
+    :param log:
     :return:
     """
     sshd_config = "/etc/ssh/sshd_config"
@@ -180,13 +227,13 @@ def bootstrap_sshd_config(logging):
     )
     if replaced:
         shutil.move(npath, sshd_config)
-        logging.info("updated sshd_config: commented out default Subsystem")
+        log.info("updated sshd_config: commented out default Subsystem")
     else:
         os.remove(npath)
 
     # Set AllowUsers and Subsystem if needed
     with open(sshd_config, "a+") as sfo:
-        logging.info("SSHD_CONFIG Customization")
+        log.info("SSHD_CONFIG Customization")
         found = False
         for line in sfo.readlines():
             if (
@@ -196,33 +243,17 @@ def bootstrap_sshd_config(logging):
             ):
                 # if header is found,
                 found = True
-                logging.info(
-                    "sshd_config already has the updates. Leaving it unchanged."
-                )
+                log.info("sshd_config already has the updates. Leaving it unchanged.")
                 break
         if not found:
             sfo.write("{}\n".format(settings.SSHD_HEADER))
             sfo.write("{}\n".format(settings.SFTP_STR))
             sfo.write("AllowUsers root\n")
-            logging.info("updated sshd_config.")
+            log.info("updated sshd_config.")
             run_command([SYSCTL, "restart", "sshd"])
 
 
-def require_postgres(logging):
-    rs_dest = "/etc/systemd/system/rockstor-pre.service"
-    rs_src = "{}/conf/rockstor-pre.service".format(BASE_DIR)
-    logging.info("updating rockstor-pre service..")
-    with open(rs_dest, "w") as dfo, open(rs_src) as sfo:
-        for l in sfo.readlines():
-            dfo.write(l)
-            if re.match("After=postgresql.service", l) is not None:
-                dfo.write("Requires=postgresql.service\n")
-                logging.info("rockstor-pre now requires postgresql")
-    run_command([SYSCTL, "daemon-reload"])
-    return logging.info("systemd daemon reloaded")
-
-
-def establish_shellinaboxd_service(logging):
+def establish_shellinaboxd_service():
     """
     Normalise on shellinaboxd as service name for shellinabox package.
     The https://download.opensuse.org/repositories/shells shellinabox package
@@ -232,81 +263,87 @@ def establish_shellinaboxd_service(logging):
     create a copy to enable us to normalise on shellinaboxd and avoid carrying
     another package just to implement this service name change as we are
     heavily invested in the shellinaboxd service name.
-    :param logging: handle to logger.
-    :return: logger handle.
+    :return: Indication of action taken
+    :rtype: Boolean
     """
-    logging.info("Normalising on shellinaboxd service file")
+    logger.info("Normalising on shellinaboxd service file")
     required_sysd_name = "/usr/lib/systemd/system/shellinaboxd.service"
     opensuse_sysd_name = "/usr/lib/systemd/system/shellinabox.service"
     if os.path.exists(required_sysd_name):
-        return logging.info("- shellinaboxd.service already exists")
+        logger.info("- shellinaboxd.service already exists")
+        return False
     if os.path.exists(opensuse_sysd_name):
         shutil.copyfile(opensuse_sysd_name, required_sysd_name)
+        logger.info("- established shellinaboxd.service file")
+        return True
+
+
+def establish_systemd_services():
+    """
+    Wrapper to establish our various systemd services.
+    """
+    conf_altered = establish_shellinaboxd_service()
+    for service_file_name in ROCKSTOR_SYSTEMD_SERVICES:
+        conf_altered = install_or_update_systemd_service(service_file_name)
+    # Make systemd aware of our changes, if any:
+    # See: https://www.freedesktop.org/software/systemd/man/systemd.generator.html
+    if conf_altered:
+        logger.info("Systemd config altered, running daemon-reload")
         run_command([SYSCTL, "daemon-reload"])
-        return logging.info("- established shellinaboxd.service file")
 
 
-def enable_rockstor_service(logging):
-    rs_dest = "/etc/systemd/system/rockstor.service"
-    rs_src = "{}/conf/rockstor.service".format(BASE_DIR)
-    sum1 = md5sum(rs_dest)
-    sum2 = md5sum(rs_src)
-    if sum1 != sum2:
-        logging.info("updating rockstor systemd service")
-        shutil.copy(rs_src, rs_dest)
-        run_command([SYSCTL, "enable", "rockstor"])
-        logging.info("Done.")
-    logging.info("rockstor service looks correct. Not updating.")
+def install_or_update_systemd_service(filename):
+    """
+    Generic systemd service file installer/updater.
+    Uses file existence and checksums to establish if install or an update is required.
+    :return: Indication of action taken
+    :rtype: Boolean
+    """
+    target_csum = "na"
+    source_with_path = "{}/{}".format(CONF_DIR, filename)
+    target_with_path = "{}/{}".format(SYSTEMD_DIR, filename)
+    if not os.path.isfile(source_with_path):
+        if os.path.isfile(target_with_path):
+            logger.info(
+                "{} stopping, disabling, and removing as legacy.".format(
+                    target_with_path
+                )
+            )
+            run_command([SYSCTL, "stop", filename], throw=False)  # allow for not loaded
+            run_command([SYSCTL, "disable", filename])
+            os.remove(target_with_path)
+            logger.info("{} removed.".format(filename))
+            return True
+        else:
+            logger.debug("Legacy {} already removed.".format(filename))
+            return False
+    source_csum = md5sum(source_with_path)
+    if os.path.isfile(target_with_path):
+        target_csum = md5sum(target_with_path)
+    if not (source_csum == target_csum):
+        shutil.copyfile(source_with_path, target_with_path)
+        logger.info("{} updated.".format(target_with_path))
+        run_command([SYSCTL, "enable", filename])
+        return True
+    logger.info("{} up-to-date.".format(target_with_path))
+    return False
 
 
-def enable_bootstrap_service(logging):
-    name = "rockstor-bootstrap.service"
-    bs_dest = "/etc/systemd/system/{}".format(name)
-    bs_src = "{}/conf/{}".format(BASE_DIR, name)
-    sum1 = "na"
-    if os.path.isfile(bs_dest):
-        sum1 = md5sum(bs_dest)
-    sum2 = md5sum(bs_src)
-    if sum1 != sum2:
-        logging.info("updating rockstor-bootstrap systemd service")
-        shutil.copy(bs_src, bs_dest)
-        run_command([SYSCTL, "enable", name])
-        run_command([SYSCTL, "daemon-reload"])
-        return logging.info("Done.")
-    return logging.info("{} looks correct. Not updating.".format(name))
-
-
-def update_smb_service(logging):
-    name = "smb.service"
-    ss_dest = "/etc/systemd/system/{}".format(name)
-    if not os.path.isfile(ss_dest):
-        return logging.info("{} is not enabled. Not updating.".format(name))
-    ss_src = "{}/conf/{}".format(BASE_DIR, name)
-    sum1 = md5sum(ss_dest)
-    sum2 = md5sum(ss_src)
-    if sum1 != sum2:
-        logging.info("Updating {}".format(name))
-        shutil.copy(ss_src, ss_dest)
-        run_command([SYSCTL, "daemon-reload"])
-        return logging.info("Done.")
-    return logging.info("{} looks correct. Not updating.".format(name))
-
-
-def update_django_launcher(logging):
+def update_django_launcher(log):
     """
     We currently have a Django hack of sorts to help with enabling our eggs orientated
     environment. The source file, distributed by our rpm, needs to be re-instantiated,
     if needed, to the binary directory.
-    :param logging: Handle used to provide debug logging.
+    :param log: Handle used to provide debug logging.
     :return: logging.info.
     """
     target_csum = "na"
     source_name = "django-hack.py"
     target_name = "django"
-    source_with_path = "{}conf/{}".format(BASE_DIR, source_name)
+    source_with_path = "{}/{}".format(CONF_DIR, source_name)
     target_with_path = "{}/{}".format(BASE_BIN, target_name)
     if not os.path.isfile(source_with_path):
-        return logging.info(
+        return log.info(
             "{} file not found. Not updating {}.".format(
                 source_with_path, target_with_path
             )
@@ -315,7 +352,7 @@ def update_django_launcher(logging):
     if os.path.isfile(target_with_path):
         target_csum = md5sum(target_with_path)
     if not (source_csum == target_csum):
-        logging.info("Updating {}".format(target_with_path))
+        log.info("Updating {}".format(target_with_path))
         shutil.copyfile(source_with_path, target_with_path)
         # Set execution writes on our target script file to "-rwxr-xr-x".
         os.chmod(
@@ -328,8 +365,8 @@ def update_django_launcher(logging):
             | stat.S_IROTH
             | stat.S_IXOTH,
         )
-        return logging.info("Done.")
-    return logging.info("{} up-to-date.".format(target_with_path))
+        return log.info("Done.")
+    return log.info("{} up-to-date.".format(target_with_path))
 
 
 def main():
@@ -417,93 +454,20 @@ def main():
 
     update_django_launcher(logging)
 
-    if not os.path.isfile(STAMP):
-        logging.info("Please be patient. This script could take a few minutes")
-        run_command([SYSCTL, "enable", "postgresql"])
-        logging.debug("Progresql enabled")
-        pg_data = "/var/lib/pgsql/data"
-        if os.path.isdir(pg_data):
-            logger.debug("Deleting /var/lib/pgsql/data")
-            shutil.rmtree("/var/lib/pgsql/data")
-        logging.info("initializing Postgresql...")
-        # Conditionally run this only if found (CentOS/RedHat script)
-        if os.path.isfile("/usr/bin/postgresql-setup"):
-            logger.debug("running postgresql-setup initdb")
-            # Legacy (CentOS) db init command
-            run_command(["/usr/bin/postgresql-setup", "initdb"])
-        else:
-            ## In eg openSUSE run the generic initdb from postgresql##-server
-            if os.path.isfile("/usr/bin/initdb"):
-                logger.debug("running generic initdb on {}".format(pg_data))
-                run_command(
-                    [
-                        "su",
-                        "-",
-                        "postgres",
-                        "-c",
-                        "/usr/bin/initdb -D {}".format(pg_data),
-                    ]
-                )
-        logging.info("Done.")
-        run_command([SYSCTL, "restart", "postgresql"])
-        run_command([SYSCTL, "status", "postgresql"])
-        logging.debug("Postgresql restarted")
-        logging.info("Creating app databases...")
-        run_command(["su", "-", "postgres", "-c", "/usr/bin/createdb smartdb"])
-        logging.debug("smartdb created")
-        run_command(["su", "-", "postgres", "-c", "/usr/bin/createdb storageadmin"])
-        logging.debug("storageadmin created")
-        logging.info("Done")
-        logging.info("Initializing app databases...")
-        run_command(
-            [
-                "su",
-                "-",
-                "postgres",
-                "-c",
-                "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\"",
-            ]
-        )  # noqa E501
-        logging.debug("rocky ROLE created")
-        run_command(
-            [
-                "su",
-                "-",
-                "postgres",
-                "-c",
-                "psql storageadmin -f {}/conf/storageadmin.sql.in".format(BASE_DIR),
-            ]
-        )  # noqa E501
-        logging.debug("storageadmin app database loaded")
-        run_command(
-            [
-                "su",
-                "-",
-                "postgres",
-                "-c",
-                "psql smartdb -f {}/conf/smartdb.sql.in".format(BASE_DIR),
-            ]
-        )
-        logging.debug("smartdb app database loaded")
-        logging.info("Done")
-        run_command(
-            [
-                "cp",
-                "-f",
-                "{}/conf/postgresql.conf".format(BASE_DIR),
-                "/var/lib/pgsql/data/",
-            ]
-        )
-        logging.debug("postgresql.conf copied")
-        run_command(
-            ["cp", "-f", "{}/conf/pg_hba.conf".format(BASE_DIR), "/var/lib/pgsql/data/"]
-        )
-        logging.debug("pg_hba.conf copied")
-        run_command([SYSCTL, "restart", "postgresql"])
-        logging.info("Postgresql restarted")
-        run_command(["touch", STAMP])
-        require_postgres(logging)
-        logging.info("Done")
+    db_already_setup = os.path.isfile(STAMP)
+    for db_stage_name, db_stage_items in zip(
+        ["Tune Postgres", "Setup Databases"], [DB_SYS_TUNE, DB_SETUP]
+    ):
+        if db_stage_name == "Setup Databases" and db_already_setup:
+            continue
+        logging.info("--DB-- {} --DB--".format(db_stage_name))
+        for action, command in db_stage_items.items():
+            logging.info("--DB-- Running - {}".format(action))
+            run_command(["su", "-", "postgres", "-c", command])
+            logging.info("--DB-- Done with {}.".format(action))
+        logging.info("--DB-- {} Done --DB--.".format(db_stage_name))
+        if db_stage_name == "Setup Databases":
+            run_command(["touch", STAMP])  # file flag indicating db setup
 
     logging.info("Running app database migrations...")
     migration_cmd = [DJANGO, "migrate", "--noinput"]
@@ -522,7 +486,7 @@ def main():
         if app == "smart_manager":
             db = app
         o, e, rc = run_command(
-            [DJANGO, "showmigrations", "--list", "--database={}".format(db), app],
+            [DJANGO, "showmigrations", "--list", "--database={}".format(db), app]
         )
         initial_faked = False
         for l in o:
@@ -565,9 +529,10 @@ def main():
     # Run all migrations for oauth2_provider
     run_command(migration_cmd + ["oauth2_provider"], log=True)
 
-    logging.info("Done")
-    logging.info("Running prepdb...")
-    run_command([PREP_DB])
+    logging.info("DB Migrations Done")
+
+    logging.info("Running Django prep_db.")
+    run_command([DJANGO_PREP_DB])
     logging.info("Done")
 
     logging.info("stopping firewalld...")
@@ -578,9 +543,7 @@ def main():
 
     init_update_issue(logging)
 
-    establish_shellinaboxd_service(logging)
-    enable_rockstor_service(logging)
-    enable_bootstrap_service(logging)
+    establish_systemd_services()
 
 
 if __name__ == "__main__":
