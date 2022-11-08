@@ -75,7 +75,7 @@ setup(
         'gevent == 1.1.2',
         'gevent-websocket == 0.9.5',
         'mock == 1.0.1',
-        'psutil == 3.3.0',
+        'psutil == 5.9.4',
         'psycogreen == 1.0',
         # N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
         'psycopg2 == 2.8.6',  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
