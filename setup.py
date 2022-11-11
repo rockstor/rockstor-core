@@ -63,8 +63,8 @@ setup(
 
     install_requires=[
         'URLObject == 2.1.1',
-        'chardet == 4.0.0',
-        'distribute >= 0.6.35',
+        'chardet == 4.0.0',  # 5.0.0 requires Python3.
+        # 'distribute >= 0.6.35',
         'django == 1.11.29',
         'django-oauth-toolkit == 1.1.2',
         'oauthlib == 3.1.0',  # Last Python 2.7 compat + 3.7 compat.
@@ -80,12 +80,18 @@ setup(
         # N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
         'psycopg2 == 2.8.6',  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
         'python-socketio == 1.6.0',
-        'pytz == 2014.3',
-        'pyzmq == 15.0.0',
-        'requests == 2.25.1',
-        'six == 1.14.0',  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
-        'distro',
+        'pytz == 2022.6',
+        # pyzmq requires libzmq5 on system unless in wheel form.
+        'pyzmq == 19.0.2',  # Last specifying Python 2 on PyPi page.
+        'urllib3 == 1.26.12',  # Requests (2.27.1) requires urllib3<1.27,>=1.21.1
+        'idna == 2.10',  # Requests (2.27.1) requires idna<3,>=2.5
+        'certifi == 2021.10.8',  # Requests (2.27.1) requires certifi>=2017.4.17
+        'requests == 2.27.1',  # Last Python 2/3 version, requires chardet
+        'six == 1.16.0',  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
+        # 1.7.0 distro.id returns "opensuse", was "opensuse leap"
+        'distro == 1.6.0',  # Last Python 2/3 version.
         'django-braces == 1.13.0',  # 1.14.0 (30 Dec 2019) needs Django 1.11.0+
+        'dbus-python == 1.2.18',  # Last Python 2/3 version
     ]
 
 )
