@@ -83,6 +83,9 @@ setup(
         'pytz == 2022.6',
         # pyzmq requires libzmq5 on system unless in wheel form.
         'pyzmq == 19.0.2',  # Last specifying Python 2 on PyPi page.
+        'urllib3 == 1.26.12',  # Requests (2.27.1) requires urllib3<1.27,>=1.21.1
+        'idna == 1.26.12',  # Requests (2.27.1) requires idna<3,>=2.5
+        'certifi == 2021.10.8',  # Requests (2.27.1) requires certifi>=2017.4.17
         'requests == 2.27.1',  # Last Python 2/3 version, requires chardet
         'six == 1.16.0',  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
         # 1.7.0 distro.id returns "opensuse", was "opensuse leap"
