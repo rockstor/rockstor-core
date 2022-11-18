@@ -41,11 +41,17 @@ def init_service_op(service_name, command, throw=True):
     Wrapper for run_command calling systemctl, hardwired filter on service_name
     and will raise Exception on failed match. Enables run_command exceptions
     by default.
+    https://www.freedesktop.org/software/systemd/man/systemctl.html for rc return codes.
+    0 = unit is active, 3 = unit is not active, 4 = no such unit
     :param service_name:
     :param command:
     :param throw:
     :return: out err rc
     """
+    # TODO: Consider speed-up by removing hardwired 'native' check and replacing by
+    #  rc == 4 check for system unknown (not-installed) services ("no such unit").
+    #  We could also do with a lean Boolean wrapper i.e. service_status_boolean()
+    #  to be used in for example model properties etc, where we need only a boolean.
     supported_services = (
         "nfs-server",
         "smb",
@@ -144,7 +150,9 @@ def service_status(service_name, config=None):
             return init_service_op("nfs-server", "status", throw=False)
     elif service_name == "ldap":
         o, e, rc = init_service_op("sssd", "status", throw=False)
-        # initial check on sssd status: 0 = OK 3 = stopped
+        # initial check on sssd status: 0 = OK 3 = stopped 4 = no such unit
+        # TODO In the following we only check config on already running sssd service!
+        #  but with more modern instances, running is dependant on configuration.
         if rc != 0:
             return o, e, rc
         # check for service configuration

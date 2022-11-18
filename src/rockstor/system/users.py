@@ -36,6 +36,7 @@ from dbus import DBusException
 
 from exceptions import CommandException
 from osi import run_command
+from system.services import init_service_op
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +106,11 @@ def get_groups(*gids):
             gr_name = g.gr_name.decode(charset["encoding"])
             groups[gr_name] = g.gr_gid
 
+        # If sssd.service is running:
         # Fetch remote groups from InfoPipe and add missing ones to dict
+        out, err, rc = init_service_op("sssd", "status", throw=False)
+        if rc != 0:
+            return groups
         try:
             ifp_groups = ifp_get_groups()
             for ifp_gp, ifp_gid in ifp_groups.items():
@@ -272,6 +277,10 @@ def ifp_get_groupname(gid):
     :param gid: Int
     :return: String - name of the group identified by gid
     """
+    # InfoPipe depends on the sssd service running:
+    out, err, rc = init_service_op("sssd", "status", throw=False)
+    if rc != 0:
+        return None
     bus = dbus.SystemBus()
     groups_obj = bus.get_object(
         "org.freedesktop.sssd.infopipe", "/org/freedesktop/sssd/infopipe/Groups"
