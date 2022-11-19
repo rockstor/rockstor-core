@@ -86,7 +86,7 @@ setup(
         'urllib3 == 1.26.12',  # Requests (2.27.1) requires urllib3<1.27,>=1.21.1
         'idna == 2.10',  # Requests (2.27.1) requires idna<3,>=2.5
         'certifi == 2021.10.8',  # Requests (2.27.1) requires certifi>=2017.4.17
-        'requests == 2.27.1',  # Last Python 2/3 version, requires chardet
+        'requests == 2.28.1',  # Last Python 2/3 version, requires chardet
         'six == 1.16.0',  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
         # 1.7.0 distro.id returns "opensuse", was "opensuse leap"
         'distro == 1.6.0',  # Last Python 2/3 version.
