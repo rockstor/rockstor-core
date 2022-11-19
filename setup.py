@@ -65,7 +65,7 @@ setup(
         'URLObject == 2.1.1',
         'chardet == 4.0.0',  # 5.0.0 requires Python3.
         # 'distribute >= 0.6.35',
-        'django == 1.11.29',
+        'django == 4.1.3',
         'django-oauth-toolkit == 1.1.2',
         'oauthlib == 3.1.0',  # Last Python 2.7 compat + 3.7 compat.
         'django-pipeline == 1.6.9',
