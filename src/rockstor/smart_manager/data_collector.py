@@ -249,10 +249,10 @@ class LogManagerNamespace(RockstorIO):
     livereading = False
     # Set common vars used both for log reading and downloading
     system_logs = "/var/log/"
-    rockstor_logs = "%svar/log/" % settings.ROOT_DIR
-    samba_subd_logs = "%ssamba/" % system_logs
-    nginx_subd_logs = "%snginx/" % system_logs
-    zypp_subd_logs = "%szypp/" % system_logs
+    rockstor_logs = "{}var/log/".format(settings.ROOT_DIR)
+    samba_subd_logs = "{}samba/".format(system_logs)
+    nginx_subd_logs = "{}nginx/".format(system_logs)
+    zypp_subd_logs = "{}zypp/".format(system_logs)
 
     readers = {
         "cat": {"command": "/usr/bin/cat", "args": "-n"},
@@ -281,15 +281,8 @@ class LogManagerNamespace(RockstorIO):
             "rotatingdir": "old/",
             "excluded": ["dc-connect", "idmap", "locator"],
         },
-        "nginx": {"logfile": "access.log", "logdir": nginx_subd_logs},
-        "nginx_stdout": {
-            "logfile": "supervisord_nginx_stdout.log",
-            "logdir": rockstor_logs,
-        },
-        "nginx_stderr": {
-            "logfile": "supervisord_nginx_stderr.log",
-            "logdir": rockstor_logs,
-        },
+        "nginx_access": {"logfile": "access.log", "logdir": nginx_subd_logs},
+        "nginx_error": {"logfile": "error.log", "logdir": nginx_subd_logs},
         "gunicorn": {"logfile": "gunicorn.log", "logdir": rockstor_logs},
         "gunicorn_stdout": {
             "logfile": "supervisord_gunicorn_stdout.log",

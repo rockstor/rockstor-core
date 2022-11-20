@@ -1,0 +1,53 @@
+#! /bin/bash
+### BEGIN INIT INFO
+# Provides: gunicorn
+# Required-Start: nginx
+# Required-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: The main django process
+# Description: The gunicorn process that receives HTTP requests
+# from nginx
+#
+### END INIT INFO
+#
+# Author: Mathieu Leplatre <mathieu.leplatre@makina-corpus.com>
+#
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+WORKERS=2
+PIDFILE=/run/gunicorn.pid
+DAEMON=/opt/rockstor/bin/gunicorn
+PYPATH=/opt/rockstor/src/rockstor
+BIND=127.0.0.1:8000
+USER=rocky
+LOGFILE=/opt/rockstor/var/log/gunicorn.log
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+        log_daemon_msg "Starting deferred execution scheduler" "gunicorn"
+
+        $DAEMON --bind=$BIND --pid=$PIDFILE --worker-class socketio.sgunicorn.GeventSocketIOWorker --workers=$WORKERS --log-file=$LOGFILE --pythonpath=$PYPATH wsgi:application
+        log_end_msg $?
+    ;;
+  stop)
+        log_daemon_msg "Stopping deferred execution scheduler" "gunicorn"
+        killproc -p $PIDFILE $DAEMON
+        log_end_msg $?
+    ;;
+  force-reload|restart)
+    $0 stop
+    $0 start
+    ;;
+  status)
+    status_of_proc -p $PIDFILE $DAEMON && exit 0 || exit $?
+    ;;
+  *)
+    echo "Usage: /etc/init.d/gunicorn {start|stop|restart|force-reload|status}"
+    exit 1
+    ;;
+esac
+
+exit 0

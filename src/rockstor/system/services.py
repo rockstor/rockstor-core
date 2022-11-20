@@ -28,8 +28,8 @@ from osi import run_command
 
 SSHD_CONFIG = "/etc/ssh/sshd_config"
 SYSTEMCTL_BIN = "/usr/bin/systemctl"
-SUPERCTL_BIN = "%s/bin/supervisorctl" % settings.ROOT_DIR
-SUPERVISORD_CONF = "%s/etc/supervisord.conf" % settings.ROOT_DIR
+SUPERCTL_BIN = "{}.venv/bin/supervisorctl".format(settings.ROOT_DIR)
+SUPERVISORD_CONF = "{}etc/supervisord.conf".format(settings.ROOT_DIR)
 SSSD_FILE = "/etc/sssd/sssd.conf"
 NET = "/usr/bin/net"
 WBINFO = "/usr/bin/wbinfo"
@@ -234,7 +234,7 @@ def update_nginx(ip, port):
             if http_server is True and lines[i].strip() == "}":
                 http_server = False
     shutil.move(npath, conf)
-    superctl("nginx", "restart")
+    run_command([SYSTEMCTL_BIN, "restart", "nginx"])
 
 
 def define_avahi_service(service_name, share_names=None):

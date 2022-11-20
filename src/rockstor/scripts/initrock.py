@@ -18,7 +18,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import logging
-import stat
 import os
 import re
 import shutil
@@ -35,13 +34,12 @@ logger = logging.getLogger(__name__)
 
 SYSCTL = "/usr/bin/systemctl"
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
-BASE_BIN = "{}bin".format(BASE_DIR)
+BASE_BIN = "{}.venv/bin".format(BASE_DIR)
 CONF_DIR = "{}conf".format(BASE_DIR)
-DJANGO = "{}/django".format(BASE_BIN)
+DJANGO = "{}/django-admin".format(BASE_BIN)
 STAMP = "{}/.initrock".format(BASE_DIR)
 FLASH_OPTIMIZE = "{}/flash-optimize".format(BASE_BIN)
 DJANGO_PREP_DB = "{}/prep_db".format(BASE_BIN)
-SUPERCTL = "{}/supervisorctl".format(BASE_BIN)
 OPENSSL = "/usr/bin/openssl"
 RPM = "/usr/bin/rpm"
 YUM = "/usr/bin/yum"
@@ -76,6 +74,8 @@ DB_SYS_TUNE["Reload_config"] = PG_RELOAD  # Enables pg_hba for following psql ac
 DB_SYS_TUNE["PG_tune"] = "{} {}/postgresql_tune.sql".format(RUN_SQL, CONF_DIR)
 
 # Create and then populate our databases from scratch.
+# # {storageadmin,smartdb}.sql.in are created using:
+# `pg_dump --username=rocky <db_name> > <db_name>.sql.in
 DB_SETUP = OrderedDict()
 DB_SETUP["drop_and_recreate"] = "{} {}/postgresql_setup.sql".format(RUN_SQL, CONF_DIR)
 DB_SETUP[
@@ -277,14 +277,28 @@ def establish_shellinaboxd_service():
         logger.info("- established shellinaboxd.service file")
         return True
 
+def establish_rockstor_nginx_overide_conf():
+    """
+    We use a systemd drop-in override configuration file to have nginx configured
+    as we required via an ExecStart nginx configurastion file directive (-c).
+    :return: Indication of action taken
+    :rtype: Boolean
+    """
+    logger.info("Establishing nginx service override file")
+    override_path = "{}/nginx.service.d".format(SYSTEMD_DIR)
+    return install_or_update_systemd_service("rockstor-nginx-override.conf", "nginx", override_path)
+
 
 def establish_systemd_services():
     """
     Wrapper to establish our various systemd services.
     """
     conf_altered = establish_shellinaboxd_service()
+    if establish_rockstor_nginx_overide_conf():
+        conf_altered = True
     for service_file_name in ROCKSTOR_SYSTEMD_SERVICES:
-        conf_altered = install_or_update_systemd_service(service_file_name)
+        if install_or_update_systemd_service(service_file_name):
+            conf_altered = True
     # Make systemd aware of our changes, if any:
     # See: https://www.freedesktop.org/software/systemd/man/systemd.generator.html
     if conf_altered:
@@ -292,16 +306,18 @@ def establish_systemd_services():
         run_command([SYSCTL, "daemon-reload"])
 
 
-def install_or_update_systemd_service(filename):
+def install_or_update_systemd_service(filename, service_name=None, target_directory=SYSTEMD_DIR):
     """
     Generic systemd service file installer/updater.
     Uses file existence and checksums to establish if install or an update is required.
     :return: Indication of action taken
     :rtype: Boolean
     """
+    if service_name is None:
+        service_name = filename
     target_csum = "na"
     source_with_path = "{}/{}".format(CONF_DIR, filename)
-    target_with_path = "{}/{}".format(SYSTEMD_DIR, filename)
+    target_with_path = "{}/{}".format(target_directory, filename)
     if not os.path.isfile(source_with_path):
         if os.path.isfile(target_with_path):
             logger.info(
@@ -309,8 +325,8 @@ def install_or_update_systemd_service(filename):
                     target_with_path
                 )
             )
-            run_command([SYSCTL, "stop", filename], throw=False)  # allow for not loaded
-            run_command([SYSCTL, "disable", filename])
+            run_command([SYSCTL, "stop", service_name], throw=False)  # allow for not loaded
+            run_command([SYSCTL, "disable", service_name])
             os.remove(target_with_path)
             logger.info("{} removed.".format(filename))
             return True
@@ -321,52 +337,15 @@ def install_or_update_systemd_service(filename):
     if os.path.isfile(target_with_path):
         target_csum = md5sum(target_with_path)
     if not (source_csum == target_csum):
+        # create our target_directory if it doesn't exist.
+        if not os.path.isdir(target_directory):
+            os.mkdir(target_directory)
         shutil.copyfile(source_with_path, target_with_path)
         logger.info("{} updated.".format(target_with_path))
-        run_command([SYSCTL, "enable", filename])
+        run_command([SYSCTL, "enable", service_name])
         return True
     logger.info("{} up-to-date.".format(target_with_path))
     return False
-
-
-def update_django_launcher(log):
-    """
-    We currently have a Django hack of sorts to help with enabling our eggs orientated
-    environment. The source file, distributed by our rpm, needs to be re-instantiated,
-    if needed, to the binary directory.
-    :param log: Handle used to provide debug logging.
-    :return: logging.info.
-    """
-    target_csum = "na"
-    source_name = "django-hack.py"
-    target_name = "django"
-    source_with_path = "{}/{}".format(CONF_DIR, source_name)
-    target_with_path = "{}/{}".format(BASE_BIN, target_name)
-    if not os.path.isfile(source_with_path):
-        return log.info(
-            "{} file not found. Not updating {}.".format(
-                source_with_path, target_with_path
-            )
-        )
-    source_csum = md5sum(source_with_path)
-    if os.path.isfile(target_with_path):
-        target_csum = md5sum(target_with_path)
-    if not (source_csum == target_csum):
-        log.info("Updating {}".format(target_with_path))
-        shutil.copyfile(source_with_path, target_with_path)
-        # Set execution writes on our target script file to "-rwxr-xr-x".
-        os.chmod(
-            target_with_path,
-            stat.S_IRUSR
-            | stat.S_IWUSR
-            | stat.S_IXUSR
-            | stat.S_IRGRP
-            | stat.S_IXGRP
-            | stat.S_IROTH
-            | stat.S_IXOTH,
-        )
-        return log.info("Done.")
-    return log.info("{} up-to-date.".format(target_with_path))
 
 
 def main():
@@ -435,7 +414,7 @@ def main():
         )
         logging.debug("cert signed.")
         logging.info("restarting nginx...")
-        run_command([SUPERCTL, "restart", "nginx"])
+        run_command([SYSCTL, "restart", "nginx"])
 
     logging.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
@@ -451,8 +430,6 @@ def main():
         bootstrap_sshd_config(logging)
     except Exception as e:
         logging.error("Exception while updating sshd_config: {}".format(e.__str__()))
-
-    update_django_launcher(logging)
 
     db_already_setup = os.path.isfile(STAMP)
     for db_stage_name, db_stage_items in zip(
@@ -535,10 +512,16 @@ def main():
     run_command([DJANGO_PREP_DB])
     logging.info("Done")
 
-    logging.info("stopping firewalld...")
+    logging.info("Stopping firewalld...")
     run_command([SYSCTL, "stop", "firewalld"])
     run_command([SYSCTL, "disable", "firewalld"])
-    logging.info("firewalld stopped and disabled")
+    logging.info("Firewalld stopped and disabled")
+
+    logging.info("Enabling and Starting atd...")
+    run_command([SYSCTL, "enable", "atd"])
+    run_command([SYSCTL, "start", "atd"])
+    logging.info("Atd enabled and started")
+
     update_nginx(logging)
 
     init_update_issue(logging)
