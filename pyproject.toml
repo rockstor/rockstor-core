@@ -27,7 +27,7 @@ exclude = [
 
 # We use groups to clarify our dependencies (essentially labels):
 # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
-[tools.poetry.dependencies]
+[tool.poetry.dependencies]
 python = "~2.7"
 
 [tool.poetry.group.django.dependencies]
