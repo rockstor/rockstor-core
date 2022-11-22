@@ -25,12 +25,15 @@ exclude = [
     {path = "test"},
 ]
 
-# We use groups to clarify our dependencies (essentially labels):
+# We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
+# We currently need Poetry 1.1.15 for it's Python 2.7 compatibility.
 # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
+#
+# https://python-poetry.org/docs/1.1/dependency-specification/
 [tool.poetry.dependencies]
 python = "~2.7"
 
-[tool.poetry.group.django.dependencies]
+# [tool.poetry.group.django.dependencies]
 django = "==1.11.29"
 django-oauth-toolkit = "==1.1.2"
 djangorestframework = "==3.9.3"
@@ -41,12 +44,12 @@ python-engineio = "==2.3.2"  # Revisit version post 3.0.0
 python-socketio = "==1.6.0"
 dbus-python = "==1.2.18"
 # N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
-psycopg2 = "== 2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
+psycopg2 = "==2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
 psycogreen = "==1.0"
 gevent = "==1.1.2"
-gevent-websocket = "== 0.9.5"
+gevent-websocket = "==0.9.5"
 
-[tool.poetry.group.requests.dependencies]
+# [tool.poetry.group.requests.dependencies]
 requests = "==2.27.1"  # Last Python 2/3 version, requires chardet
 chardet = "==4.0.0"  # 5.0.0 requires Python3.
 idna = "==2.10"  # Requests (2.27.1) requires idna<3,>=2.5
@@ -54,13 +57,13 @@ certifi = "==2021.10.8"  # Requests (2.27.1) requires certifi>=2017.4.17
 urllib3 = "==1.26.12"  # Requests (2.27.1) requires urllib3<1.27,>=1.21.1
 pytz = "==2022.6"
 
-[tool.poetry.group.tools.dependencies]
-six = "== 1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
+# [tool.poetry.group.tools.dependencies]
+six = "==1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
 huey = "==2.3.0"
 psutil = "==5.9.4"
 mock = "==1.0.1"
 # pyzmq requires libzmq5 on system unless in wheel form.
-pyzmq = "== 19.0.2"  # Last specifying Python 2 on PyPi page.
+pyzmq = "==19.0.2"  # Last specifying Python 2 on PyPi page.
 distro = "==1.6.0"  # Last Python 2/3 version that works as we expect.
 URLObject = "==2.1.1"
 
