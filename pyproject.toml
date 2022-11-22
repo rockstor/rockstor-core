@@ -25,12 +25,12 @@ exclude = [
     {path = "test"},
 ]
 
+[tool.poetry.dependencies]
 # We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
 # We currently need Poetry 1.1.15 for it's Python 2.7 compatibility.
 # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
 #
 # https://python-poetry.org/docs/1.1/dependency-specification/
-[tool.poetry.dependencies]
 python = "~2.7"
 
 # [tool.poetry.group.django.dependencies]
@@ -69,31 +69,37 @@ URLObject = "==2.1.1"
 
 # [tool.poetry.dev-dependencies]
 
-
 [tool.poetry.scripts]
-backup-plugin = 'backup.scheduler:main'
-backup-config = 'scripts.config_backup:main'
-bootstrap = 'scripts.bootstrap:main'
-data-collector = 'smart_manager.data_collector:main'
-debug-mode = 'scripts.debugmode:main'
-delete-api-key = 'scripts.delete_api_key:main'
-delete-rockon = 'scripts.rockon_delete:delete_rockon'
-#docker-wrapper = 'scripts.docker_wrapper:main'
+# https://python-poetry.org/docs/pyproject#scripts
+# script-name = package.module.function
+# -- Init and startup related --
+initrock = 'scripts.initrock:main'  # systemd rockstor-pre
 flash-optimize = 'scripts.flash_optimize:main'
-initrock = 'scripts.initrock:main'
-mnt-share = 'scripts.mount_share:mount_share'
-ovpn-client-gen = 'scripts.ovpn_util:client_gen'
-ovpn-client-print = 'scripts.ovpn_util:client_retrieve'
-ovpn-initpki = 'scripts.ovpn_util:initpki'
 prep_db = 'scripts.prep_db:main'
-pwreset = 'scripts.pwreset:main'
+bootstrap = 'scripts.bootstrap:main'  # systemd rockstor-bootstrap
 qgroup-clean = 'scripts.qgroup_clean:main'
 qgroup-maxout-limit = 'scripts.qgroup_maxout_limit:main'
-qgroup-test = 'scripts.qgroup_test:main'
-rcli = 'cli.rock_cli:main'
+# -- Web-UI --
+data-collector = 'smart_manager.data_collector:main'
 replicad = 'smart_manager.replication.listener_broker:main'
-rockon-json = 'scripts.rockon_util:main'
 send-replica = 'scripts.scheduled_tasks.send_replica:main'
+backup-config = 'scripts.config_backup:main'
+mnt-share = 'scripts.mount_share:mount_share'  # Samba mnt_helper
 st-pool-scrub = 'scripts.scheduled_tasks.pool_scrub:main'
 st-snapshot = 'scripts.scheduled_tasks.snapshot:main'
 st-system-power = 'scripts.scheduled_tasks.reboot_shutdown:main'
+delete-api-key = 'scripts.delete_api_key:main'
+pwreset = 'scripts.pwreset:main'
+ovpn-client-gen = 'scripts.ovpn_util:client_gen'
+ovpn-client-print = 'scripts.ovpn_util:client_retrieve'
+ovpn-initpki = 'scripts.ovpn_util:initpki'
+# -- CLI Utilities --
+debug-mode = 'scripts.debugmode:main'
+delete-rockon = 'scripts.rockon_delete:delete_rockon'
+# qgroup-test = 'scripts.qgroup_test:main'  # broken, in need of update/repair.
+
+# Legacy scripts
+# rcli = 'cli.rock_cli:main'
+# docker-wrapper = 'scripts.docker_wrapper:main'
+# rockon-json = 'scripts.rockon_util:main'
+
