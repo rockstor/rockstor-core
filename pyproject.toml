@@ -52,6 +52,8 @@ psycopg2 = "==2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
 psycogreen = "==1.0"
 gevent = "==1.1.2"
 gevent-websocket = "==0.9.5"
+# Python WSGI HTTP Server - 20.0 (2019/10/30) dropped Python 2.7.
+gunicorn = "==19.10.0"  # buildout previously used 19.7.1
 
 # [tool.poetry.group.requests.dependencies]
 requests = "==2.27.1"  # Last Python 2/3 version, requires chardet
@@ -70,6 +72,8 @@ mock = "==1.0.1"
 pyzmq = "==19.0.2"  # Last specifying Python 2 on PyPi page.
 distro = "==1.6.0"  # Last Python 2/3 version that works as we expect.
 URLObject = "==2.1.1"
+# https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
+supervisor = "==4.2.4"
 
 [tool.poetry.dev-dependencies]
 
