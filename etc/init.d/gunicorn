@@ -15,13 +15,13 @@
 #
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
-WORKERS=${init-gunicorn:workers}
-PIDFILE=${init-gunicorn:pidfile}
-DAEMON=${buildout:directory}/bin/gunicorn
-PYPATH=${buildout:directory}/src/rockstor
-BIND=${init-gunicorn:bind}:${init-gunicorn:port}
-USER=${init-gunicorn:user}
-LOGFILE=${init-gunicorn:logfile}
+WORKERS=2
+PIDFILE=/run/gunicorn.pid
+DAEMON=/opt/rockstor/bin/gunicorn
+PYPATH=/opt/rockstor/src/rockstor
+BIND=127.0.0.1:8000
+USER=rocky
+LOGFILE=/opt/rockstor/var/log/gunicorn.log
 
 . /lib/lsb/init-functions
 

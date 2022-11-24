@@ -22,7 +22,7 @@ import os
 import subprocess, distro
 from huey import SqliteHuey
 
-DEBUG = ${django-settings-conf:debug}
+DEBUG = False
 
 ALLOWED_HOSTS = [ '*', ]
 
@@ -51,7 +51,7 @@ DATABASE_ROUTERS = ['smart_manager.db_router.SmartManagerDBRouter',]
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'Europe/London'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -87,7 +87,7 @@ MEDIA_URL = '/media/'
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.path.join('${buildout:depdir}', 'static')
+MEDIA_ROOT = os.path.join('/opt/rockstor', 'static')
 
 # Absolute filesystem path where config backups are stored by default
 DEFAULT_CB_DIR = os.path.join(MEDIA_ROOT, 'config-backups')
@@ -97,7 +97,7 @@ DEFAULT_CB_DIR = os.path.join(MEDIA_ROOT, 'config-backups')
 #    # Put strings here, like "/home/html/static" or "C:/www/django/static".
 #    # Always use forward slashes, even on Windows.
 #    # Don't forget to use absolute paths, not relative paths.
-#    ('storageadmin', '${django-settings-conf:static_dir}')
+#    ('storageadmin', '/opt/rockstor/src/rockstor/storageadmin/static/storageadmin')
 #)
 
 # List of finder classes that know how to find static files in
@@ -119,8 +119,8 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             # insert your TEMPLATE_DIRS here
-            '${django-settings-conf:template_dir1}',
-            '${django-settings-conf:template_dir2}',
+            '/opt/rockstor/src/rockstor/storageadmin/templates/storageadmin',
+            '/opt/rockstor/src/rockstor/templates/admin',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -243,7 +243,7 @@ LOGGING = {
         'file': {
             'level': LOG_LEVEL,
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '${django-settings-conf:logfile}',
+            'filename': '/opt/rockstor/var/log/rockstor.log',
             'maxBytes': 1000000,
             'backupCount': 3,
             'formatter': 'standard',
@@ -292,14 +292,14 @@ SFTP_MNT_ROOT = '/mnt3/'
 # install: ie 'btrfs fi show' gives 'Label: none'
 SYS_VOL_LABEL = 'ROOT'
 
-TAP_DIR = '${django-settings-conf:taplib}'
-TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
+TAP_DIR = '/opt/rockstor/src/rockstor/smart_manager/taplib'
+TAP_SERVER = ('127.0.0.1', 10000)
 MAX_TAP_WORKERS = 10
-SPROBE_SINK = ('127.0.0.1', ${django-settings-conf:sinkport})
+SPROBE_SINK = ('127.0.0.1', 10001)
 
 SUPPORT = {
         'email': 'suman@rockstor.com',
-        'log_loc': '${buildout:depdir}/var/log',
+        'log_loc': '/opt/rockstor/var/log',
 }
 
 """
@@ -318,9 +318,9 @@ MAX_SHARE_SIZE = 18014398509481984L
 
 START_UID = 5000
 END_UID = 6000
-VALID_SHELLS = ('${buildout:depdir}/bin/rcli', '/bin/bash', '/sbin/nologin',)
+VALID_SHELLS = ('/opt/rockstor/bin/rcli', '/bin/bash', '/sbin/nologin',)
 
-SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
+SCHEDULER = ('127.0.0.1', 10001)
 REPLICATION = {
 	    'ipc_socket': '/var/run/replication.sock',
 	    'max_send_attempts': 10,
@@ -331,7 +331,7 @@ REPLICATION = {
 SHARE_REGEX = r'[A-Za-z0-9_.-]+'
 POOL_REGEX = SHARE_REGEX
 USERNAME_REGEX = r'[A-Za-z][-a-zA-Z0-9_]*$'
-ROOT_DIR = '${buildout:depdir}/'
+ROOT_DIR = '/opt/rockstor/'
 
 #things get purged when they are > MAX_TS_RECORDS x MAX_TS_MULTIPLIER of if the service just
 #starts and they are > MAX_TS_RECORDS.
@@ -358,8 +358,8 @@ REST_FRAMEWORK = {
 	'MAX_LIMIT': 10000,
 }
 
-CONFROOT = '${buildout:depdir}/conf'
-CERTDIR = '${buildout:depdir}/certs'
+CONFROOT = '/opt/rockstor/conf'
+CERTDIR = '/opt/rockstor/certs'
 COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 
 SNAP_TS_FORMAT = '%Y%m%d%H%M'
@@ -421,10 +421,10 @@ UPDATE_CHANNELS = {
 ROCKONS = {
 	'remote_metastore': 'https://rockstor.com/rockons',
 	'remote_root': 'root.json',
-	'local_metastore': '${buildout:depdir}/rockons-metastore',
+	'local_metastore': '/opt/rockstor/rockons-metastore',
 }
 
-HUEY = SqliteHuey(filename='${buildout:depdir}/rockstor-tasks-huey.db')
+HUEY = SqliteHuey(filename='/opt/rockstor/rockstor-tasks-huey.db')
 
 TASK_SCHEDULER = {
 	       'max_log': 100 #max number of task log entries to keep
