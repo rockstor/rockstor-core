@@ -76,6 +76,8 @@ DB_SYS_TUNE["Reload_config"] = PG_RELOAD  # Enables pg_hba for following psql ac
 DB_SYS_TUNE["PG_tune"] = "{} {}/postgresql_tune.sql".format(RUN_SQL, CONF_DIR)
 
 # Create and then populate our databases from scratch.
+# # {storageadmin,smartdb}.sql.in are created using:
+# `pg_dump --username=rocky <db_name> > <db_name>.sql.in
 DB_SETUP = OrderedDict()
 DB_SETUP["drop_and_recreate"] = "{} {}/postgresql_setup.sql".format(RUN_SQL, CONF_DIR)
 DB_SETUP[
