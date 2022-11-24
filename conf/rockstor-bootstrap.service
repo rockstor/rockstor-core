@@ -4,7 +4,7 @@ After=rockstor.service
 Requires=rockstor.service
 
 [Service]
-ExecStart=${buildout:depdir}/bin/bootstrap
+ExecStart=/opt/rockstor/bin/bootstrap
 Type=oneshot
 RemainAfterExit=yes
 

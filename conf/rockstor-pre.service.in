@@ -4,7 +4,7 @@ After=postgresql.service
 Requires=postgresql.service
 
 [Service]
-ExecStart=${buildout:depdir}/bin/initrock
+ExecStart=/opt/rockstor/bin/initrock
 Type=oneshot
 RemainAfterExit=yes
 

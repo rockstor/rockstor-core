@@ -1,0 +1,10 @@
+[Unit]
+Description=Rockstor startup script
+After=rockstor-pre.service
+Requires=rockstor-pre.service
+
+[Service]
+ExecStart=/opt/rockstor/bin/supervisord -c /opt/rockstor/etc/supervisord.conf
+
+[Install]
+WantedBy=multi-user.target
