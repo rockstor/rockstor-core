@@ -31,6 +31,11 @@ include = [
     { path = "etc" },
     { path = "var" },  # Some processes depend on this tree existing.
 ]
+packages = [
+    { include = "rockstor", from = "src" },
+    { include = "storageadmin", from = "src/rockstor" },
+    { include = "smart_manager", from = "src/rockstor" },
+]
 
 [tool.poetry.dependencies]
 # We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
