@@ -15,7 +15,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 2 :: Only",  # at least initially
+    "Programming Language :: Python :: 2 :: Only", # at least initially
     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
 ]
 authors = [
@@ -25,8 +25,11 @@ maintainers = [
     "Philip Paul Guyton <support@linuxlines.com>",
 ]
 license = "GPL-2.0-or-later"
-exclude = [
-    {path = "test"},
+include = [
+    "COPYING",  # Our GPL 3 file, but this may be redundant.
+    { path = "conf" },  # Configuration directories
+    { path = "etc" },
+    { path = "var" },  # Some processes depend on this tree existing.
 ]
 
 [tool.poetry.dependencies]
