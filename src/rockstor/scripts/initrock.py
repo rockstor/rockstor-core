@@ -37,7 +37,7 @@ SYSCTL = "/usr/bin/systemctl"
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
 BASE_BIN = "{}.venv/bin".format(BASE_DIR)
 CONF_DIR = "{}conf".format(BASE_DIR)
-DJANGO = "{}/django".format(BASE_BIN)
+DJANGO = "{}/django-admin".format(BASE_BIN)
 STAMP = "{}/.initrock".format(BASE_DIR)
 FLASH_OPTIMIZE = "{}/flash-optimize".format(BASE_BIN)
 DJANGO_PREP_DB = "{}/prep_db".format(BASE_BIN)
@@ -286,7 +286,7 @@ def establish_rockstor_nginx_overide_conf():
     :rtype: Boolean
     """
     logger.info("Establishing nginx sevice override file")
-    overide_path = "{}/nginx.service.d/".format(SYSTEMD_DIR)
+    overide_path = "{}/nginx.service.d".format(SYSTEMD_DIR)
     return install_or_update_systemd_service("rockstor-nginx-override.conf", "nginx", overide_path)
 
 
@@ -343,7 +343,7 @@ def install_or_update_systemd_service(filename, service_name=None, target_direct
             os.mkdir(target_directory)
         shutil.copyfile(source_with_path, target_with_path)
         logger.info("{} updated.".format(target_with_path))
-        run_command([SYSCTL, "enable", filename])
+        run_command([SYSCTL, "enable", service_name])
         return True
     logger.info("{} up-to-date.".format(target_with_path))
     return False
