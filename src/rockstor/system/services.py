@@ -234,7 +234,7 @@ def update_nginx(ip, port):
             if http_server is True and lines[i].strip() == "}":
                 http_server = False
     shutil.move(npath, conf)
-    superctl("nginx", "restart")
+    run_command([SYSTEMCTL_BIN, "restart", "nginx"])
 
 
 def define_avahi_service(service_name, share_names=None):

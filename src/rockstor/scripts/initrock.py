@@ -41,7 +41,6 @@ DJANGO = "{}/django".format(BASE_BIN)
 STAMP = "{}/.initrock".format(BASE_DIR)
 FLASH_OPTIMIZE = "{}/flash-optimize".format(BASE_BIN)
 DJANGO_PREP_DB = "{}/prep_db".format(BASE_BIN)
-SUPERCTL = "{}/supervisorctl".format(BASE_BIN)
 OPENSSL = "/usr/bin/openssl"
 RPM = "/usr/bin/rpm"
 YUM = "/usr/bin/yum"
@@ -279,14 +278,28 @@ def establish_shellinaboxd_service():
         logger.info("- established shellinaboxd.service file")
         return True
 
+def establish_rockstor_nginx_overide_conf():
+    """
+    We use a systemd drop-in override configuration file to to have nginx configured
+    as we required.
+    :return: Indication of action taken
+    :rtype: Boolean
+    """
+    logger.info("Establishing nginx sevice override file")
+    overide_path = "{}/nginx.service.d/".format(SYSTEMD_DIR)
+    return install_or_update_systemd_service("rockstor-nginx-override.conf", "nginx", overide_path)
+
 
 def establish_systemd_services():
     """
     Wrapper to establish our various systemd services.
     """
     conf_altered = establish_shellinaboxd_service()
+    if establish_rockstor_nginx_overide_conf():
+        conf_altered = True
     for service_file_name in ROCKSTOR_SYSTEMD_SERVICES:
-        conf_altered = install_or_update_systemd_service(service_file_name)
+        if install_or_update_systemd_service(service_file_name):
+            conf_altered = True
     # Make systemd aware of our changes, if any:
     # See: https://www.freedesktop.org/software/systemd/man/systemd.generator.html
     if conf_altered:
@@ -294,16 +307,18 @@ def establish_systemd_services():
         run_command([SYSCTL, "daemon-reload"])
 
 
-def install_or_update_systemd_service(filename):
+def install_or_update_systemd_service(filename, service_name=None, target_directory=SYSTEMD_DIR):
     """
     Generic systemd service file installer/updater.
     Uses file existence and checksums to establish if install or an update is required.
     :return: Indication of action taken
     :rtype: Boolean
     """
+    if service_name is None:
+        service_name = filename
     target_csum = "na"
     source_with_path = "{}/{}".format(CONF_DIR, filename)
-    target_with_path = "{}/{}".format(SYSTEMD_DIR, filename)
+    target_with_path = "{}/{}".format(target_directory, filename)
     if not os.path.isfile(source_with_path):
         if os.path.isfile(target_with_path):
             logger.info(
@@ -311,8 +326,8 @@ def install_or_update_systemd_service(filename):
                     target_with_path
                 )
             )
-            run_command([SYSCTL, "stop", filename], throw=False)  # allow for not loaded
-            run_command([SYSCTL, "disable", filename])
+            run_command([SYSCTL, "stop", service_name], throw=False)  # allow for not loaded
+            run_command([SYSCTL, "disable", service_name])
             os.remove(target_with_path)
             logger.info("{} removed.".format(filename))
             return True
@@ -323,6 +338,9 @@ def install_or_update_systemd_service(filename):
     if os.path.isfile(target_with_path):
         target_csum = md5sum(target_with_path)
     if not (source_csum == target_csum):
+        # create our target_directory if it doesn't exist.
+        if not os.path.isdir(target_directory):
+            os.mkdir(target_directory)
         shutil.copyfile(source_with_path, target_with_path)
         logger.info("{} updated.".format(target_with_path))
         run_command([SYSCTL, "enable", filename])
@@ -437,7 +455,7 @@ def main():
         )
         logging.debug("cert signed.")
         logging.info("restarting nginx...")
-        run_command([SUPERCTL, "restart", "nginx"])
+        run_command([SYSCTL, "restart", "nginx"])
 
     logging.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
