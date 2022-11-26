@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 SYSCTL = "/usr/bin/systemctl"
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
-BASE_BIN = "{}bin".format(BASE_DIR)
+BASE_BIN = "{}.venv/bin".format(BASE_DIR)
 CONF_DIR = "{}conf".format(BASE_DIR)
 DJANGO = "{}/django".format(BASE_BIN)
 STAMP = "{}/.initrock".format(BASE_DIR)
