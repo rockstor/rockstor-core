@@ -4,7 +4,9 @@ After=rockstor.service
 Requires=rockstor.service
 
 [Service]
-ExecStart=/opt/rockstor/bin/bootstrap
+Environment="DJANGO_SETTINGS_MODULE=settings"
+WorkingDirectory=/opt/rockstor
+ExecStart=/opt/rockstor/.venv/bin/bootstrap
 Type=oneshot
 RemainAfterExit=yes
 
