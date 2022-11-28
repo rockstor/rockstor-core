@@ -280,14 +280,14 @@ def establish_shellinaboxd_service():
 
 def establish_rockstor_nginx_overide_conf():
     """
-    We use a systemd drop-in override configuration file to to have nginx configured
-    as we required.
+    We use a systemd drop-in override configuration file to have nginx configured
+    as we required via an ExecStart nginx configurastion file directive (-c).
     :return: Indication of action taken
     :rtype: Boolean
     """
-    logger.info("Establishing nginx sevice override file")
-    overide_path = "{}/nginx.service.d".format(SYSTEMD_DIR)
-    return install_or_update_systemd_service("rockstor-nginx-override.conf", "nginx", overide_path)
+    logger.info("Establishing nginx service override file")
+    override_path = "{}/nginx.service.d".format(SYSTEMD_DIR)
+    return install_or_update_systemd_service("rockstor-nginx-override.conf", "nginx", override_path)
 
 
 def establish_systemd_services():
