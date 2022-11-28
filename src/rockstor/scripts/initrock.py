@@ -555,10 +555,16 @@ def main():
     run_command([DJANGO_PREP_DB])
     logging.info("Done")
 
-    logging.info("stopping firewalld...")
+    logging.info("Stopping firewalld...")
     run_command([SYSCTL, "stop", "firewalld"])
     run_command([SYSCTL, "disable", "firewalld"])
-    logging.info("firewalld stopped and disabled")
+    logging.info("Firewalld stopped and disabled")
+
+    logging.info("Enabling and Starting atd...")
+    run_command([SYSCTL, "enable", "atd"])
+    run_command([SYSCTL, "start", "atd"])
+    logging.info("Atd enabled and started")
+
     update_nginx(logging)
 
     init_update_issue(logging)
