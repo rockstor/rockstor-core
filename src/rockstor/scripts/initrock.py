@@ -18,7 +18,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import logging
-import stat
 import os
 import re
 import shutil
@@ -349,46 +348,6 @@ def install_or_update_systemd_service(filename, service_name=None, target_direct
     return False
 
 
-def update_django_launcher(log):
-    """
-    We currently have a Django hack of sorts to help with enabling our eggs orientated
-    environment. The source file, distributed by our rpm, needs to be re-instantiated,
-    if needed, to the binary directory.
-    :param log: Handle used to provide debug logging.
-    :return: logging.info.
-    """
-    target_csum = "na"
-    source_name = "django-hack.py"
-    target_name = "django"
-    source_with_path = "{}/{}".format(CONF_DIR, source_name)
-    target_with_path = "{}/{}".format(BASE_BIN, target_name)
-    if not os.path.isfile(source_with_path):
-        return log.info(
-            "{} file not found. Not updating {}.".format(
-                source_with_path, target_with_path
-            )
-        )
-    source_csum = md5sum(source_with_path)
-    if os.path.isfile(target_with_path):
-        target_csum = md5sum(target_with_path)
-    if not (source_csum == target_csum):
-        log.info("Updating {}".format(target_with_path))
-        shutil.copyfile(source_with_path, target_with_path)
-        # Set execution writes on our target script file to "-rwxr-xr-x".
-        os.chmod(
-            target_with_path,
-            stat.S_IRUSR
-            | stat.S_IWUSR
-            | stat.S_IXUSR
-            | stat.S_IRGRP
-            | stat.S_IXGRP
-            | stat.S_IROTH
-            | stat.S_IXOTH,
-        )
-        return log.info("Done.")
-    return log.info("{} up-to-date.".format(target_with_path))
-
-
 def main():
     loglevel = logging.INFO
     if len(sys.argv) > 1 and sys.argv[1] == "-x":
@@ -471,8 +430,6 @@ def main():
         bootstrap_sshd_config(logging)
     except Exception as e:
         logging.error("Exception while updating sshd_config: {}".format(e.__str__()))
-
-    update_django_launcher(logging)
 
     db_already_setup = os.path.isfile(STAMP)
     for db_stage_name, db_stage_items in zip(
