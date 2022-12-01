@@ -85,16 +85,20 @@ STATIC_URL = '/static/'
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
 MEDIA_URL = '/media/'
 
+# Establish BASE_DIR from ourselves (./src/rockstor/settings.py)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# print "BASE_DIR={}".format(BASE_DIR)  # "/opt/rockstor" via 'django-admin runserver'
+
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.path.join('/opt/rockstor', 'static')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Absolute filesystem path where config backups are stored by default
 DEFAULT_CB_DIR = os.path.join(MEDIA_ROOT, 'config-backups')
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-   ('/opt/rockstor/jslibs',)
+    os.path.join(BASE_DIR, "jslibs"),
 )
 
 # List of finder classes that know how to find static files in
@@ -116,8 +120,8 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             # insert your TEMPLATE_DIRS here
-            '/opt/rockstor/src/rockstor/storageadmin/templates/storageadmin',
-            '/opt/rockstor/src/rockstor/templates/admin',
+            '{}/src/rockstor/storageadmin/templates/storageadmin'.format(BASE_DIR),
+            '{}/src/rockstor/templates/admin'.format(BASE_DIR),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -181,6 +185,8 @@ INSTALLED_APPS = (
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
+# Have django-pipeline collate storageadmin js/jst files into one storageadmin.js file
+# which is then referenced in setup.html and base.html templates.
 PIPELINE = {
     'DISABLE_WRAPPER': True,
     'JS_COMPRESSOR': None,
@@ -240,7 +246,7 @@ LOGGING = {
         'file': {
             'level': LOG_LEVEL,
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/opt/rockstor/var/log/rockstor.log',
+            'filename': '{}/var/log/rockstor.log'.format(BASE_DIR),
             'maxBytes': 1000000,
             'backupCount': 3,
             'formatter': 'standard',
@@ -289,14 +295,14 @@ SFTP_MNT_ROOT = '/mnt3/'
 # install: ie 'btrfs fi show' gives 'Label: none'
 SYS_VOL_LABEL = 'ROOT'
 
-TAP_DIR = '/opt/rockstor/src/rockstor/smart_manager/taplib'
+TAP_DIR = '{}/src/rockstor/smart_manager/taplib'.format(BASE_DIR)
 TAP_SERVER = ('127.0.0.1', 10000)
 MAX_TAP_WORKERS = 10
 SPROBE_SINK = ('127.0.0.1', 10001)
 
 SUPPORT = {
         'email': 'suman@rockstor.com',
-        'log_loc': '/opt/rockstor/var/log',
+        'log_loc': '{}/var/log'.format(BASE_DIR),
 }
 
 """
@@ -315,7 +321,7 @@ MAX_SHARE_SIZE = 18014398509481984L
 
 START_UID = 5000
 END_UID = 6000
-VALID_SHELLS = ('/opt/rockstor/bin/rcli', '/bin/bash', '/sbin/nologin',)
+VALID_SHELLS = ('{}/bin/rcli'.format(BASE_DIR), '/bin/bash', '/sbin/nologin',)
 
 SCHEDULER = ('127.0.0.1', 10001)
 REPLICATION = {
@@ -328,7 +334,7 @@ REPLICATION = {
 SHARE_REGEX = r'[A-Za-z0-9_.-]+'
 POOL_REGEX = SHARE_REGEX
 USERNAME_REGEX = r'[A-Za-z][-a-zA-Z0-9_]*$'
-ROOT_DIR = '/opt/rockstor/'
+ROOT_DIR = BASE_DIR + "/"
 
 #things get purged when they are > MAX_TS_RECORDS x MAX_TS_MULTIPLIER of if the service just
 #starts and they are > MAX_TS_RECORDS.
@@ -355,8 +361,8 @@ REST_FRAMEWORK = {
 	'MAX_LIMIT': 10000,
 }
 
-CONFROOT = '/opt/rockstor/conf'
-CERTDIR = '/opt/rockstor/certs'
+CONFROOT = '{}/conf'.format(BASE_DIR)
+CERTDIR = '{}/certs'.format(BASE_DIR)
 COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 
 SNAP_TS_FORMAT = '%Y%m%d%H%M'
@@ -418,10 +424,10 @@ UPDATE_CHANNELS = {
 ROCKONS = {
 	'remote_metastore': 'https://rockstor.com/rockons',
 	'remote_root': 'root.json',
-	'local_metastore': '/opt/rockstor/rockons-metastore',
+	'local_metastore': '{}/rockons-metastore'.format(BASE_DIR),
 }
 
-HUEY = SqliteHuey(filename='/opt/rockstor/rockstor-tasks-huey.db')
+HUEY = SqliteHuey(filename='{}/rockstor-tasks-huey.db'.format(BASE_DIR))
 
 TASK_SCHEDULER = {
 	       'max_log': 100 #max number of task log entries to keep
