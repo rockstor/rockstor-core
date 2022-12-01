@@ -27,6 +27,11 @@ maintainers = [
 license = "GPL-2.0-or-later"
 include = [
     "COPYING",  # Our GPL 3 file, but this may be redundant.
+    "rockstor-jslibs.tar.gz",  # https://github.com/rockstor/rockstor-jslibs
+    "rockstor-jslibs.tar.gz.sha256sum",  # sha256 of above tar.gz
+    "build.sh",  # master build script
+    "poetry.toml",  # poetry config
+    "poetry.lock",  # current poetry established dependency lock file.
     { path = "conf" },  # Configuration directories
     { path = "etc" },
     { path = "var" },  # Some processes depend on this tree existing.
@@ -36,6 +41,9 @@ packages = [
     { include = "storageadmin", from = "src/rockstor" },
     { include = "smart_manager", from = "src/rockstor" },
 ]
+
+[tool.poetry.build]
+generate-setup-file = false
 
 [tool.poetry.dependencies]
 # We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
