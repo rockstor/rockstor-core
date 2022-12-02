@@ -44,6 +44,9 @@ packages = [
 
 [tool.poetry.build]
 generate-setup-file = false
+# Future capability to run a python script first when 'poetry build' is called.
+# https://github.com/python-poetry/poetry/issues/2740
+# script = "build.py"
 
 [tool.poetry.dependencies]
 # We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
