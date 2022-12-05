@@ -63,7 +63,7 @@ setup(
 
     install_requires=[
         'URLObject == 2.1.1',
-        'chardet == 4.0.0',  # 5.0.0 requires Python3.
+        'chardet == 5.1.0',  # 5.0.0 requires Python3.
         # 'distribute >= 0.6.35',
         'django == 1.11.29',
         'django-oauth-toolkit == 1.1.2',
