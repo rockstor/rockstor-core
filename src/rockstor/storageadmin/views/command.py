@@ -25,7 +25,6 @@ from storageadmin.views import DiskMixin
 from system.osi import uptime, kernel_info, get_device_mapper_map
 from fs.btrfs import mount_share, mount_root, get_dev_pool_info, pool_raid, mount_snap
 from system.ssh import sftp_mount_map, sftp_mount
-from system.services import systemctl
 from system.osi import (
     system_shutdown,
     system_reboot,
@@ -230,22 +229,6 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             except Exception as e:
                 e_msg = ("Exception while bootstrapping NFS: ({}).").format(e.__str__())
                 logger.error(e_msg)
-
-            #  bootstrap services
-            try:
-                systemctl("firewalld", "stop")
-                systemctl("firewalld", "disable")
-                systemctl("nginx", "stop")
-                systemctl("nginx", "disable")
-                systemctl("atd", "enable")
-                systemctl("atd", "start")
-            except Exception as e:
-                e_msg = (
-                    "Exception while setting service statuses during "
-                    "bootstrap: ({})."
-                ).format(e.__str__())
-                logger.error(e_msg)
-                handle_exception(Exception(e_msg), request)
 
             logger.debug("Bootstrap operations completed")
             return Response()
