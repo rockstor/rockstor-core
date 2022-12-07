@@ -277,6 +277,7 @@ def establish_shellinaboxd_service():
         logger.info("- established shellinaboxd.service file")
         return True
 
+
 def establish_rockstor_nginx_overide_conf():
     """
     We use a systemd drop-in override configuration file to have nginx configured
@@ -286,7 +287,9 @@ def establish_rockstor_nginx_overide_conf():
     """
     logger.info("Establishing nginx service override file")
     override_path = "{}/nginx.service.d".format(SYSTEMD_DIR)
-    return install_or_update_systemd_service("rockstor-nginx-override.conf", "nginx", override_path)
+    return install_or_update_systemd_service(
+        "30-rockstor-nginx-override.conf", "nginx", override_path
+    )
 
 
 def establish_systemd_services():
@@ -306,7 +309,9 @@ def establish_systemd_services():
         run_command([SYSCTL, "daemon-reload"])
 
 
-def install_or_update_systemd_service(filename, service_name=None, target_directory=SYSTEMD_DIR):
+def install_or_update_systemd_service(
+    filename, service_name=None, target_directory=SYSTEMD_DIR
+):
     """
     Generic systemd service file installer/updater.
     Uses file existence and checksums to establish if install or an update is required.
@@ -325,7 +330,9 @@ def install_or_update_systemd_service(filename, service_name=None, target_direct
                     target_with_path
                 )
             )
-            run_command([SYSCTL, "stop", service_name], throw=False)  # allow for not loaded
+            run_command(
+                [SYSCTL, "stop", service_name], throw=False
+            )  # allow for not loaded
             run_command([SYSCTL, "disable", service_name])
             os.remove(target_with_path)
             logger.info("{} removed.".format(filename))
