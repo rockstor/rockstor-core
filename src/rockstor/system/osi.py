@@ -46,6 +46,7 @@ DNSDOMAIN = "/usr/bin/dnsdomainname"
 EXPORTFS = "/usr/sbin/exportfs"
 GRUBBY = "/usr/sbin/grubby"
 HDPARM = "/usr/sbin/hdparm"
+HDPARM_SERVICE_NAME = "rockstor-hdparm.service"
 HOSTID = "/usr/bin/hostid"
 HOSTNAMECTL = "/usr/bin/hostnamectl"
 LS = "/usr/bin/ls"
@@ -57,6 +58,7 @@ RMDIR = "/usr/bin/rmdir"
 SHUTDOWN = settings.SHUTDOWN
 SYSTEMCTL_BIN = "/usr/bin/systemctl"
 SYSTEMD_ESCAPE = "/usr/bin/systemd-escape"
+SYSTEMD_DIR = "/usr/lib/systemd/system"
 UDEVADM = settings.UDEVADM
 UMOUNT = "/usr/bin/umount"
 WIPEFS = "/usr/sbin/wipefs"
@@ -2095,14 +2097,14 @@ def get_devname(device_name, addPath=False):
 
 def update_hdparm_service(hdparm_command_list, comment):
     """
-    Updates or creates the /etc/systemd/system/rockstor-hdparm.service file for
+    Updates or creates the /usr/lib/systemd/system/rockstor-hdparm.service file for
     the device_name given. The creation of this file is based on the template
     file in conf named rockstor-hdparm.service.
     :param hdparm_command_list: list containing the hdparm command elements
     :param comment: test message to follow hdparm command on next line
     :return: None or the result of enabling the service via run_command which
     is only done when the service is freshly installed, ie when no existing
-    /etc/systemd/system/rockstor-hdparm.service file exists in the first place.
+    /usr/lib/systemd/system/rockstor-hdparm.service file exists in the first place.
     """
     # TODO: candidate for move to system/hdparm
     edit_done = False
@@ -2110,9 +2112,8 @@ def update_hdparm_service(hdparm_command_list, comment):
     clear_line_count = 0
     remove_entry = False
     # Establish our systemd_template, needed when no previous config exists.
-    service = "rockstor-hdparm.service"
-    systemd_template = "{}/{}".format(settings.CONFROOT, service)
-    systemd_target = "/etc/systemd/system/{}".format(service)
+    systemd_template = "{}/{}".format(settings.CONFROOT, HDPARM_SERVICE_NAME)
+    systemd_target = "{}/{}".format(SYSTEMD_DIR, HDPARM_SERVICE_NAME)
     # Check for the existence of this systemd template file.
     if not os.path.isfile(systemd_template):
         # We have no template file so log the error and return False.
@@ -2134,7 +2135,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         remove_entry = True
     # first create a temp file to use as our output until we are done editing.
     tfo, npath = mkstemp()
-    # If there is already a rockstor-hdparm.service file then we use that
+    # If there is already a HDPARM_SERVICE_NAME file then we use that
     # as our source file, otherwise use conf's empty template.
     if os.path.isfile(systemd_target):
         infile = systemd_target
@@ -2198,10 +2199,10 @@ def update_hdparm_service(hdparm_command_list, comment):
         # our proposed systemd file is the same length as our template and so
         # contains no ExecStart lines so we disable the rockstor-hdparm
         # service.
-        out, err, rc = run_command([SYSTEMCTL_BIN, "disable", service])
+        out, err, rc = run_command([SYSTEMCTL_BIN, "disable", HDPARM_SERVICE_NAME])
         if rc != 0:
             return False
-        # and remove our rockstor-hdparm.service file as it's absence indicates
+        # and remove our HDPARM_SERVICE_NAME file as it's absence indicates
         # a future need to restart this service via the update flag as not
         # True.
         if update:  # update was set true if file exists so we check first.
@@ -2221,7 +2222,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         # count (ie entries) is greater than the template file's line count.
         # N.B. can't use systemctl wrapper as then circular dependency ie:-
         # return systemctl('rockstor-hdparm', 'enable')
-        out, err, rc = run_command([SYSTEMCTL_BIN, "enable", service])
+        out, err, rc = run_command([SYSTEMCTL_BIN, "enable", HDPARM_SERVICE_NAME])
         if rc != 0:
             return False
     return True
@@ -2229,7 +2230,7 @@ def update_hdparm_service(hdparm_command_list, comment):
 
 def read_hdparm_setting(dev_byid):
     """
-    Looks through /etc/systemd/system/rockstor-hdparm service for any comment
+    Looks through /usr/lib/systemd/system/rockstor-hdparm.service for any comment
     following a matching device entry and returns it if found. Returns None if
     no file or no matching entry or comment there after was found.
     :param dev_byid: device name of by-id type without path
@@ -2239,7 +2240,7 @@ def read_hdparm_setting(dev_byid):
     # TODO: candidate for move to system/hdparm
     if dev_byid is None:
         return None
-    infile = "/etc/systemd/system/rockstor-hdparm.service"
+    infile = "{}/{}".format(SYSTEMD_DIR, HDPARM_SERVICE_NAME)
     if not os.path.isfile(infile):
         return None
     dev_byid_withpath = get_device_path(dev_byid)
