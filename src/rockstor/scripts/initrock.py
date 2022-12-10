@@ -333,7 +333,11 @@ def move_or_remove_legacy_rockstor_service_files():
                     "{}/{}".format(SYSTEMD_DIR, service_file_name),
                 )
             else:
-                logger.info("{} removing as legacy.".format(target_with_path))
+                logger.info("{} stop/disable/remove (LEGACY).".format(target_with_path))
+                run_command(
+                    [SYSCTL, "stop", service_file_name], throw=False
+                )  # allow for not loaded
+                run_command([SYSCTL, "disable", service_file_name])
                 os.remove(target_with_path)
             conf_altered = True
     return conf_altered
