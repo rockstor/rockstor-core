@@ -85,12 +85,21 @@ DB_SETUP["populate_smartdb"] = "psql smartdb -w -f {}/smartdb.sql.in".format(CON
 
 # List of systemd services to instantiate/update or remove, if required.
 # Service filenames that are not found in CONF_DIR will be removed from the system.
-SYSTEMD_DIR = "/etc/systemd/system"
+SYSTEMD_DIR = "/usr/lib/systemd/system"
+SYSTEMD_OVERRIDE_DIR = "/etc/systemd/system"
+
 ROCKSTOR_SYSTEMD_SERVICES = [
     "rockstor-pre.service",  # Loads us (initrock.py).
     "rockstor.service",
     "rockstor-bootstrap.service",
-    # "rockstor-hdparm.service",  # Managed by system.osi.update_hdparm_service()
+]
+# These services are added programatically outside initrock (rockstor-pre.service)
+ROCKSTOR_EXTRA_SYSTEMD_SERVICES = [
+    "rockstor-hdparm.service",  # Managed by system.osi.update_hdparm_service()
+    "rockstor-fstrim.service",  # fstrim service and timer setup conditionally by
+    "rockstor-fstrim.timer",  # scripts/flash_optimize.py
+]
+ROCKSTOR_LEGACY_SYSTEMD_SERVICES = [
     "rockstor-ipv6check.service",  # Legacy service from pre v4.1.0-0 development.
 ]
 
@@ -281,15 +290,57 @@ def establish_shellinaboxd_service():
 def establish_rockstor_nginx_overide_conf():
     """
     We use a systemd drop-in override configuration file to have nginx configured
-    as we required via an ExecStart nginx configurastion file directive (-c).
+    as we required via an ExecStart nginx configuration file directive (-c).
     :return: Indication of action taken
     :rtype: Boolean
     """
-    logger.info("Establishing nginx service override file")
-    override_path = "{}/nginx.service.d".format(SYSTEMD_DIR)
+    logger.info("Establishing Rockstor nginx service override file")
+    override_path = "{}/nginx.service.d".format(SYSTEMD_OVERRIDE_DIR)
     return install_or_update_systemd_service(
         "30-rockstor-nginx-override.conf", "nginx", override_path
     )
+
+
+def move_or_remove_legacy_rockstor_service_files():
+    """
+    Prior to v4.5.1-0 we placed rockstor* services in /etc/systemd/system which
+    as per https://en.opensuse.org/openSUSE:Systemd_packaging_guidelines#Unit_files
+    in incorrect. We now locate our unique rockstor* services in the recommended
+    /usr/lib/systemd/system and only use /etc/systemd/systemd for overrides.
+    #
+    Address update by moving all non legacy non-override rockstor* unit files.
+    Legacy rockstor* unit files are remove.
+    :return: Indication of action taken
+    :rtype: Boolean
+    """
+    conf_altered = False
+    # Base services plus extra/legacy services
+    for service_file_name in (
+        ROCKSTOR_SYSTEMD_SERVICES
+        + ROCKSTOR_EXTRA_SYSTEMD_SERVICES
+        + ROCKSTOR_LEGACY_SYSTEMD_SERVICES
+    ):
+        target_with_path = "{}/{}".format(SYSTEMD_OVERRIDE_DIR, service_file_name)
+        if os.path.isfile(target_with_path):
+            if service_file_name not in ROCKSTOR_LEGACY_SYSTEMD_SERVICES:
+                logger.info(
+                    "Moving {} from {} to {}".format(
+                        service_file_name, SYSTEMD_OVERRIDE_DIR, SYSTEMD_DIR
+                    )
+                )
+                shutil.move(
+                    target_with_path,
+                    "{}/{}".format(SYSTEMD_DIR, service_file_name),
+                )
+            else:
+                logger.info("{} stop/disable/remove (LEGACY).".format(target_with_path))
+                run_command(
+                    [SYSCTL, "stop", service_file_name], throw=False
+                )  # allow for not loaded
+                run_command([SYSCTL, "disable", service_file_name])
+                os.remove(target_with_path)
+            conf_altered = True
+    return conf_altered
 
 
 def establish_systemd_services():
@@ -297,6 +348,8 @@ def establish_systemd_services():
     Wrapper to establish our various systemd services.
     """
     conf_altered = establish_shellinaboxd_service()
+    if move_or_remove_legacy_rockstor_service_files():
+        conf_altered = True
     if establish_rockstor_nginx_overide_conf():
         conf_altered = True
     for service_file_name in ROCKSTOR_SYSTEMD_SERVICES:
