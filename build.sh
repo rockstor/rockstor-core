@@ -19,7 +19,7 @@ echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
 # Set jslibs_version of GitHub release:
-jslibs_version=4.5.1
+jslibs_version=4.5.2
 jslibs_url=https://github.com/rockstor/rockstor-jslibs/archive/refs/tags/"${jslibs_version}".tar.gz
 
 #  Check for rpm embedded, or previously downloaded jslibs.
