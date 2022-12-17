@@ -14,7 +14,13 @@ curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.1.15 python3 -
 # /opt/rockstor/.venv
 # poetry env remove --all  # removes all venvs associated with a pyproject.toml
 # rm -rf ~/.cache/pypoetry/virtualenvs/*  # to delete default location venvs.
-poetry install
+# ** --no-ansi avoids special characters **
+PATH="$HOME/.local/bin:$PATH"
+# Resolve Python 3.6 Poetry issue re char \u2022: (bullet)
+# https://github.com/python-poetry/poetry/issues/3078
+export LANG=C.UTF-8
+export PYTHONIOENCODING=utf8
+poetry install --no-interaction --no-ansi > poetry-install.txt 2>&1
 echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
@@ -57,8 +63,8 @@ echo
 echo "ROCKSTOR BUILD SCRIPT COMPLETED"
 echo
 echo "If installing from source, from scratch, for development:"
-echo "1. Run 'cd /opt/rockstor"
+echo "1. Run 'cd /opt/rockstor'."
 echo "2. Run 'systemctl start postgresql'."
 echo "3. Run 'export DJANGO_SETTINGS_MODULE=settings'."
 echo "4. Run 'poetry run initrock' as root (equivalent to rockstor-pre.service)."
-echo "5. Run 'systemctl start rockstor-bootstrap"
+echo "5. Run 'systemctl enable --now rockstor-bootstrap'."
