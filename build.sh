@@ -25,7 +25,7 @@ echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
 # Set jslibs_version of GitHub release:
-jslibs_version=4.5.2
+jslibs_version=4.5.4
 jslibs_url=https://github.com/rockstor/rockstor-jslibs/archive/refs/tags/"${jslibs_version}".tar.gz
 
 #  Check for rpm embedded, or previously downloaded jslibs.
@@ -47,7 +47,7 @@ if [ ! -d "jslibs" ]; then
   echo
   mkdir -p jslibs/js/lib
   # GitHub versioned archives have rockstor-jslibs-{jslibs_version} top directory,
-  # i.e. rockstor-jslibs-4.5.1, we strip this single top directory.
+  # i.e. rockstor-jslibs-#.#.#, we strip this single top directory.
   tar zxvf rockstor-jslibs.tar.gz --directory jslibs/js/lib --strip-components=1
   echo
 fi

@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "rockstor"
-version = "4.5.2"
+version = "4.5.4"
 description = "Btrfs Network Attached Storage (NAS) Appliance."
 homepage = "https://rockstor.com/"
 repository = "https://github.com/rockstor/rockstor-core"
@@ -16,7 +16,7 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 2 :: Only", # at least initially
-    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    # The "license" property should auto-invoke License classifier/classifiers.
 ]
 authors = [
     "The Rockstor Project <support@linuxlines.com>",
@@ -24,9 +24,10 @@ authors = [
 maintainers = [
     "Philip Paul Guyton <support@linuxlines.com>",
 ]
-license = "GPL-2.0-or-later"
+# Source0: (rockstor-core) is GPL-3.0-or-later, Source1: (rockstor-jslibs) has mixed licensing:
+license = "GPL-3.0-or-later AND (MIT AND Apache-2.0 AND GPL-3.0-or-later AND LGPL-3.0-or-later AND ISC)"
 include = [
-    "COPYING",  # Our GPL 3 file, but this may be redundant.
+    "COPYING",  # Our GPL 3 file from rockstor-core.
     "rockstor-jslibs.tar.gz",  # https://github.com/rockstor/rockstor-jslibs
     "rockstor-jslibs.tar.gz.sha256sum",  # sha256 of above tar.gz
     "build.sh",  # master build script
