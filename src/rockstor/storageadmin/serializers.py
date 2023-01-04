@@ -330,6 +330,7 @@ class RockOnEnvironmentSerializer(serializers.ModelSerializer):
 class RockOnDeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = DContainerDevice
+        fields = "__all__"
 
 
 class RockOnLabelSerializer(serializers.ModelSerializer):
