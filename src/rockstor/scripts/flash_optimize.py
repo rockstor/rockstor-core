@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,83 +13,33 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
-import os
 import re
 from tempfile import mkstemp
 from shutil import move
 import logging
 from system.osi import run_command, root_disk
-from system.services import systemctl
 
-HDPARM = "/usr/sbin/hdparm"
-SYSTEMD_DIR = "/usr/lib/systemd/system"
-FSTRIM_NAME = "rockstor-fstrim"
-FSTRIM_BASE = "{}/{}".format(SYSTEMD_DIR, FSTRIM_NAME)
-FSTRIM_SERVICE = "{}.service".format(FSTRIM_BASE)
-FSTRIM_TIMER = "{}.timer".format(FSTRIM_BASE)
 SYSCTL_CONF = "/etc/sysctl.d/99-rockstor.conf"
 ROOT_FS = [
     "/",
 ]
 
 
-def fstrim_systemd():
-    logging.debug("Setting up fstrim timer to run weekly once")
-    with open(FSTRIM_SERVICE, "w") as sfo:
-        sfo.write("[Unit]\n")
-        sfo.write("Description=Discard unused blocks\n\n")
-        sfo.write("[Service]\n")
-        sfo.write("Type=oneshot\n")
-        sfo.write("ExecStart=/usr/sbin/fstrim -v /\n")
-        sfo.write("ExecStart=/usr/sbin/fstrim -v /boot \n")
-    logging.debug("Created {}".format(FSTRIM_SERVICE))
-
-    with open(FSTRIM_TIMER, "w") as sto:
-        sto.write("[Unit]\n")
-        sto.write("Description=Discard unused blocks once a week\n")
-        sto.write("Documentation=man:fstrim\n\n")
-        sto.write("[Timer]\n")
-        sto.write("OnCalendar=weekly\n")
-        sto.write("AccuracySec=1h\n")
-        sto.write("Persistent=true\n\n")
-        sto.write("[Install]\n")
-        sto.write("WantedBy=multi-user.target\n")
-    logging.debug("Created {}".format(FSTRIM_TIMER))
-
-    systemctl(FSTRIM_NAME, "enable")
-    logging.info("Enabled {}".format(FSTRIM_NAME))
-
-
-def trim_support(disk):
-    # 1. trim support.
-    # verify if TRIM is supported
-    logging.debug("Checking for TRIM support on {}".format(disk))
-    if not os.path.exists(HDPARM):
-        logging.debug("hdparm not found.")
-        return False
-
-    o, e, rc = run_command(["hdparm", "-I", "{}".format(disk)])
-    for l in o:
-        if re.search("Data Set Management TRIM supported", l) is not None:
-            logging.debug("TRIM supported. info: {}".format(l))
-            return True
-    logging.info("TRIM not supported on {}".format(disk))
-    return False
-
-
 def is_flash(disk):
     flash = False
     o, e, rc = run_command(["udevadm", "info", "--name", disk])
-    for l in o:
-        if re.search("ID_BUS=", l) is not None:
-            if l.strip().split()[1].split("=")[1] != "usb":
-                logging.debug("drive({}) is not on usb bus. info: {}".format(disk, l))
+    for line in o:
+        if re.search("ID_BUS=", line) is not None:
+            if line.strip().split()[1].split("=")[1] != "usb":
+                logging.debug(
+                    "drive({}) is not on usb bus. info: {}".format(disk, line)
+                )
                 flash = flash and False
-        if re.search("ID_USB_DRIVER=usb-storage", l) is not None:
+        if re.search("ID_USB_DRIVER=usb-storage", line) is not None:
             logging.debug("usb-storage driver confirmed for {}".format(disk))
             flash = flash or True
     logging.info("usb flash drive validation from udevadm: {}".format(flash))
@@ -99,13 +49,13 @@ def is_flash(disk):
     disk = disk.split("/")[-1]  # strip off the path
     # Note that the following may fail for sys on luks dev.
     with open("/sys/block/{}/queue/scheduler".format(disk)) as sfo:
-        for l in sfo.readlines():
-            if re.search("\[deadline\]", l) is not None:
-                logging.debug("scheduler: {}".format(l))
+        for line in sfo.readlines():
+            if re.search("\[deadline\]", line) is not None:
+                logging.debug("scheduler: {}".format(line))
                 flash = flash and True
             else:
                 flash = flash or False
-                logging.debug("scheduler is not flash friendly. info: {}".format(l))
+                logging.debug("scheduler is not flash friendly. info: {}".format(line))
     logging.info("flashiness of the drive({}): {}".format(disk, flash))
     return flash
 
@@ -140,21 +90,21 @@ def update_fstab():
     fo, npath = mkstemp()
     FSTAB = "/etc/fstab"
     with open(FSTAB) as ffo, open(npath, "w") as tfo:
-        for l in ffo.readlines():
-            if re.match("UUID=", l) is not None:
-                fields = l.strip().split()
+        for line in ffo.readlines():
+            if re.match("UUID=", line) is not None:
+                fields = line.strip().split()
                 if fields[1] in ROOT_FS:
                     if re.search("noatime", fields[3]) is not None:
-                        tfo.write(l)
+                        tfo.write(line)
                     else:
                         fields[3] = "{},noatime".format(fields[3])
                         fields[4] = "{} {}\n".format(fields[4], fields[5])
                         fields.pop()
                         tfo.write("\t".join(fields))
                 else:
-                    tfo.write(l)
+                    tfo.write(line)
             else:
-                tfo.write(l)
+                tfo.write(line)
     move(npath, FSTAB)
     logging.info("moved {} to {}".format(npath, FSTAB))
 
@@ -166,15 +116,8 @@ def main():
     logging.basicConfig(format="%(asctime)s: %(message)s", level=loglevel)
     rd = root_disk()
     logging.debug("Root drive is {}".format(rd))
-    do_more = False
-    if trim_support(rd) is True:
-        do_more = True
-        logging.info("TRIM support is available for {}".format(rd))
-        fstrim_systemd()
-        logging.debug("Finished setting up fstrim timer")
-    do_more = do_more or is_flash(rd)
 
-    if do_more:
+    if is_flash(rd):
         update_sysctl()
         logging.info("updated sysctl")
         # emable tmpfs on /tmp
