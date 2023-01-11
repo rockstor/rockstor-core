@@ -272,7 +272,7 @@ def switch_repo(subscription, on=True):
                     log=True,
                     throw=False,
                 )
-        # N.B. for now we also use YUM (read only) on openSUSE
+        # N.B. for now we also use YUM (read only) on openSUSE to retrieve changelogs
         with open(yum_file, "w") as rfo:
             rfo.write("[Rockstor-{}]\n".format(subscription.name))
             rfo.write("name={}\n".format(subscription.description))
@@ -281,6 +281,7 @@ def switch_repo(subscription, on=True):
             rfo.write("gpgcheck=1\n")
             rfo.write("gpgkey=file://{}\n".format(rock_pub_key_file))
             rfo.write("metadata_expire=1h\n")
+            rfo.write("exclude=*.src\n")  # src changelogs = false positive update flag.
         # Set file to rw- --- --- (600) via stat constants.
         os.chmod(yum_file, stat.S_IRUSR | stat.S_IWUSR)
     else:
