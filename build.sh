@@ -20,7 +20,7 @@ PATH="$HOME/.local/bin:$PATH"
 # https://github.com/python-poetry/poetry/issues/3078
 export LANG=C.UTF-8
 export PYTHONIOENCODING=utf8
-poetry install --no-interaction --no-ansi > poetry-install.txt 2>&1
+/root/.local/bin/poetry install --no-interaction --no-ansi > poetry-install.txt 2>&1
 echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
