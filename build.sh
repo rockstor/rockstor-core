@@ -57,7 +57,7 @@ fi
 # Additional collectstatic options --clear --dry-run
 export DJANGO_SETTINGS_MODULE=settings
 # must be run in project root:
-poetry run django-admin collectstatic --no-input --verbosity 2
+/root/.local/bin/poetry run django-admin collectstatic --no-input --verbosity 2
 echo
 
 echo "ROCKSTOR BUILD SCRIPT COMPLETED"
