@@ -20,7 +20,7 @@ PATH="$HOME/.local/bin:$PATH"
 # https://github.com/python-poetry/poetry/issues/3078
 export LANG=C.UTF-8
 export PYTHONIOENCODING=utf8
-poetry install --no-interaction --no-ansi > poetry-install.txt 2>&1
+/root/.local/bin/poetry install --no-interaction --no-ansi > poetry-install.txt 2>&1
 echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
@@ -57,7 +57,7 @@ fi
 # Additional collectstatic options --clear --dry-run
 export DJANGO_SETTINGS_MODULE=settings
 # must be run in project root:
-poetry run django-admin collectstatic --no-input --verbosity 2
+/root/.local/bin/poetry run django-admin collectstatic --no-input --verbosity 2
 echo
 
 echo "ROCKSTOR BUILD SCRIPT COMPLETED"
