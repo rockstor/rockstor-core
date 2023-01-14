@@ -225,9 +225,9 @@ def update_nginx(ip, port):
                 not http_server
                 and re.search("listen.*default_server", lines[i]) is not None
             ):
-                substr = "listen {} default_server".format(port)
+                substr = "listen {} ssl default_server".format(port)
                 if ip is not None:
-                    substr = "listen {}:{} default_server".format(ip, port)
+                    substr = "listen {}:{} ssl default_server".format(ip, port)
                 lines[i] = re.sub(r"listen.* default_server", substr, lines[i])
             if not http_server:
                 tfo.write(lines[i])
