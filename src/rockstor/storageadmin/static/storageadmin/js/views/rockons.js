@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -580,15 +580,36 @@ RockonShareChoice = RockstorWizardPage.extend({
         }));
         //form validation
         this.volForm = this.$('#vol-select-form');
+
+        // Check for duplicate shares selected (one share selected multiple times)
+        $.validator.addMethod('isDuplicate', function (value, element) {
+            var selector = jQuery.validator.format("select[name!='{0}']", element.name);
+            var matches = [];
+            $(selector).each(function (index, item) {
+                if (value === $(item).val()) {
+                    matches.push(item);
+                }
+            });
+            return matches.length === 0;
+        });
+
         var rules = {};
         var messages = {};
         this.volumes.each(function(volume) {
             rules[volume.id] = {
-                required: true
+                required: true,
+                isDuplicate: true
             };
-            messages[volume.id] = 'Please read the tooltip and make the right selection';
+            messages[volume.id] = {
+                required: "Required. Please read the tooltip and make your selection.",
+                isDuplicate: "This share is already selected for another volume. This isn't supported yet."
+            };
         });
         this.validator = this.volForm.validate({
+            focusCleanup: false,
+            onclick: false,
+            onfocusout: false,
+            onkeyup: false,
             rules: rules,
             messages: messages
         });
