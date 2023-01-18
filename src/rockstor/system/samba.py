@@ -49,7 +49,7 @@ def test_parm(config="/etc/samba/smb.conf"):
 
 
 def rockstor_smb_config(fo, exports):
-    mnt_helper = os.path.join(settings.ROOT_DIR, "bin/mnt-share")
+    mnt_helper = os.path.join(settings.ROOT_DIR, ".venv/bin/mnt-share")
     fo.write("{}\n".format(RS_SHARES_HEADER))
     for e in exports:
         admin_users = ""
