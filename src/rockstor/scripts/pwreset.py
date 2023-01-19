@@ -47,7 +47,7 @@ def change_password(username, password):
         users.smbpasswd(username, password)
     except:
         sys.exit(
-            "Low level error occured while changing password of user: %s" % username
+            "Low level error occurred while changing password of user: %s" % username
         )
 
 
