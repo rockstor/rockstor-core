@@ -84,7 +84,7 @@ class OauthAppView(rfc.GenericView):
                     "it is "
                     "used internally by Rockstor. If you really need to "
                     "delete it, login as root and use "
-                    "{}bin/delete-api-key command. If you do delete it, "
+                    "{}.venv/bin/delete-api-key command. If you do delete it, "
                     "please create another one with the same name as it "
                     "is required by Rockstor "
                     "internally."
