@@ -48,9 +48,10 @@ class Pool(object):
 
 class BTRFSTests(unittest.TestCase):
     """
-    The tests in this suite can be run via the following command:
-    cd <root dir of rockstor ie /opt/rockstor>
-    ./bin/test --settings=test-settings -v 3 -p test_btrfs*
+    The tests in this suite can be run via the following commands:
+    N.B. 'root' dir of rockstor is normally /opt/rockstor
+    cd /opt/rockstor/src/rockstor/fs
+    poetry run django-admin test --settings=settings -v 3 -p test_btrfs*
     """
 
     def setUp(self):

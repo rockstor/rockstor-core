@@ -52,7 +52,7 @@ class ReplicaMixin(object):
             for replica in Replica.objects.filter(enabled=True):
                 if replica.crontab is not None:
                     cfo.write(
-                        "%s root %sbin/send-replica %d\n"
+                        "%s root %s.venv/bin/send-replica %d\n"
                         % (replica.crontab, settings.ROOT_DIR, replica.id)
                     )
 

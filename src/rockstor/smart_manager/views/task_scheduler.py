@@ -101,19 +101,19 @@ class TaskSchedulerMixin(object):
                 if td.crontab is not None:
                     tab = "%s root" % td.crontab
                     if td.task_type == "snapshot":
-                        tab = "%s %sbin/st-snapshot %d" % (
+                        tab = "%s %s.venv/bin/st-snapshot %d" % (
                             tab,
                             settings.ROOT_DIR,
                             td.id,
                         )
                     elif td.task_type == "scrub":
-                        tab = "%s %s/bin/st-pool-scrub %d" % (
+                        tab = "%s %s.venv/bin/st-pool-scrub %d" % (
                             tab,
                             settings.ROOT_DIR,
                             td.id,
                         )
                     elif td.task_type in ["reboot", "shutdown", "suspend"]:
-                        tab = "%s %s/bin/st-system-power %d" % (
+                        tab = "%s %s.venv/bin/st-system-power %d" % (
                             tab,
                             settings.ROOT_DIR,
                             td.id,

@@ -29,7 +29,7 @@ from system.osi import run_command
 
 
 SETTINGS_FILE = path.join(settings.ROOT_DIR, "src/rockstor/settings.py")
-SUPERCTL_BIN = path.join(settings.ROOT_DIR, "bin/supervisorctl")
+SUPERCTL_BIN = path.join(settings.ROOT_DIR, ".venv/bin/supervisorctl")
 
 
 def update_settings(debug_flag):
