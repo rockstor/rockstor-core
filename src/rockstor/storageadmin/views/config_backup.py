@@ -626,7 +626,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
 
 
 class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
-    parser_classes = (FileUploadParser, MultiPartParser)
+    parser_classes = [MultiPartParser]
 
     def get_queryset(self, *args, **kwargs):
         for cbo in ConfigBackup.objects.all():
