@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import re
+import fnmatch
 
 import requests
 from django.db import transaction
@@ -494,7 +495,7 @@ class RockOnView(rfc.GenericView):
 
         local_root = settings.ROCKONS.get("local_metastore")
         if os.path.isdir(local_root):
-            for f in os.listdir(local_root):
+            for f in fnmatch.filter(os.listdir(local_root), '*.json'):
                 fp = "{}/{}".format(local_root, f)
                 msg = "Error while processing Rock-on profile at ({}).".format(fp)
                 with self._handle_exception(self.request, msg=msg):
