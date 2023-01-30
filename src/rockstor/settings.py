@@ -421,12 +421,6 @@ UPDATE_CHANNELS = {
 		},
 }
 
-ROCKONS = {
-	'remote_metastore': 'https://rockstor.com/rockons',
-	'remote_root': 'root.json',
-	'local_metastore': '{}/rockons-metastore'.format(BASE_DIR),
-}
-
 HUEY = SqliteHuey(filename='{}/rockstor-tasks-huey.db'.format(BASE_DIR))
 
 TASK_SCHEDULER = {
