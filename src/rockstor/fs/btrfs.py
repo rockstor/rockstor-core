@@ -203,8 +203,7 @@ def is_pool_missing_dev(label):
     Simple and fast wrapper around 'btrfs fi show --raw label' to return True /
     False depending on if a device is reported missing from the given pool by
     label. Works by matching the end of output lines for the string 'missing',
-    which is either, post remount reboot (first and last populated line) or
-    the last line (dev removed and no remount).
+    after lower the case of the line.
     Label is used as this is preserved in our Pool db so will work if the pool
     fails to mount, and there by allows surfacing this as a potential reason
     for the mount failure.
@@ -216,8 +215,11 @@ def is_pool_missing_dev(label):
     # --raw used to minimise pre-processing of irrelevant 'used' info (units).
     cmd = [BTRFS, "fi", "show", "--raw", label]
     o, e, rc = run_command(cmd)
-    if o[-3].endswith("missing") or o[0].endswith("missing"):
-        return True
+    for line in o:
+        if not line:
+            continue
+        if line.lower().endswith("missing"):
+            return True
     return False
 
 
@@ -240,7 +242,8 @@ def degraded_pools_found():
         if not in_pool and line[0:3] == "Lab":
             in_pool = True
             continue
-        if in_pool and line.endswith("missing"):
+        # Account for older and newer kernels respectively:
+        if in_pool and line.lower().endswith("missing"):
             # we are in pool details and have found a missing device
             degraded_pool_count += 1
             # use in_pool switch to avoid counting this pool twice if it has

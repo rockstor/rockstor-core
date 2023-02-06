@@ -35,6 +35,7 @@ from fs.btrfs import (
     balance_status_internal,
     balance_status_all,
     BalanceStatusAll,
+    is_pool_missing_dev,
 )
 from mock import patch
 
@@ -1343,6 +1344,103 @@ class BTRFSTests(unittest.TestCase):
             msg="Failed to return results from non btrfs device.",
         )
 
+    def test_is_pool_missing_dev(self):
+        """
+        Test is_pool_missing_dev() across various pool specific btrfs fi show outputs.
+        """
+        # More modern output where MISSING is now in upper case, and no longer only
+        # appears on the first or 3rd-last line.
+        #
+        # Leap 15.4 with stable kernel backport to 6.1.9:
+        pool_label = ["test-pool-new-kernel"]
+        fi_show_out = [
+            [
+                "Label: 'test-pool-new-kernel'  uuid: 21345a94-f2bf-48d7-a2be-37734ffd2a48",
+                "\tTotal devices 4 FS bytes used 4508352512",
+                "\tdevid    1 size 0 used 0 path  MISSING",
+                "\tdevid    2 size 5368709120 used 5346689024 path /dev/sdc",
+                "\tdevid    3 size 5368709120 used 5346689024 path /dev/sdd",
+                "\tdevid    4 size 5368709120 used 0 path /dev/sde",
+                "",
+                "",
+            ]
+        ]
+        err = [[""]]
+        rc = [0]
+        expected_result = [True]
+
+        # Leap 15.4 with default kernel of 5.14.21-150400.24.41-default:
+        # unmounted degraded pool:
+        pool_label = ["test-pool-default-kernel"]
+        fi_show_out = [
+            [
+                "warning, device 1 is missing",
+                "Label: 'test-pool-default-kernel'  uuid: 21345a94-f2bf-48d7-a2be-37734ffd2a48",
+                "\tTotal devices 4 FS bytes used 4508352512",
+                "\tdevid    2 size 5368709120 used 5346689024 path /dev/sdc",
+                "\tdevid    3 size 5368709120 used 5346689024 path /dev/sdd",
+                "\tdevid    4 size 5368709120 used 0 path /dev/sde",
+                "\t*** Some devices missing",
+                "",
+                "",
+            ]
+        ]
+        err = [[""]]
+        rc = [0]
+        expected_result = [True]
+
+        # Leap 15.4 with default kernel of 5.14.21-150400.24.41-default:
+        # mounted -o ro,degraded
+        pool_label = ["test-pool-default-kernel"]
+        fi_show_out = [
+            [
+                "Label: 'test-pool-default-kernel'  uuid: 21345a94-f2bf-48d7-a2be-37734ffd2a48",
+                "\tTotal devices 4 FS bytes used 4508352512",
+                "\tdevid    2 size 5368709120 used 5346689024 path /dev/sdc",
+                "\tdevid    3 size 5368709120 used 5346689024 path /dev/sdd",
+                "\tdevid    4 size 5368709120 used 0 path /dev/sde",
+                "*** Some devices missing",
+                "",
+                "",
+            ]
+        ]
+        err = [[""]]
+        rc = [0]
+        expected_result = [True]
+
+        pool_label.append("ROOT")
+        fi_show_out.append(
+            [
+                "Label: 'ROOT'  uuid: 9ccfb511-b222-4528-944c-4837b9eb089a",
+                "\tTotal devices 1 FS bytes used 3272871936",
+                "\tdevid    1 size 19257077760 used 3808428032 path /dev/sdb4",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(False)
+
+        # Test for our return False on label = None.
+        pool_label.append(None)
+        fi_show_out.append([""])
+        err.append([""])
+        rc.append(0)
+        expected_result.append(False)
+
+        # Cycle through each of the above mock_run_command data sets.
+        for label, out, e, r, result in zip(
+            pool_label, fi_show_out, err, rc, expected_result
+        ):
+            self.mock_run_command.return_value = (out, e, r)
+            self.assertEqual(
+                is_pool_missing_dev(label),
+                result,
+                msg="Un-expected boolean returned: is_pool_missing_dev. Mock ({}) "
+                "return expected ({})".format(out, result),
+            )
+
     def test_degraded_pools_found(self):
         """
         Test degraded_pools_found() across various btrfs fi show outputs.
@@ -1612,6 +1710,29 @@ class BTRFSTests(unittest.TestCase):
         )
         rc.append(0)
 
+        # Example of newer kernels (6.1.9 Stable Backport installed on Leap 15.4)
+        # adoption of upper case "MISSING" with more dev info (if available) -
+        # Fresh boot with single MISSING device.
+        fi_show_out.append(
+            [
+                "Label: 'ROOT'  uuid: 9ccfb511-b222-4528-944c-4837b9eb089a",
+                "\tTotal devices 1 FS bytes used 3275034624",
+                "\tdevid    1 size 19257077760 used 3808428032 path /dev/sdb4",
+                "",
+                "Label: 'test-pool-new-kernel'  uuid: 21345a94-f2bf-48d7-a2be-37734ffd2a48",
+                "\tTotal devices 4 FS bytes used 4508352512",
+                "\tdevid    1 size 0 used 0 path  MISSING",
+                "\tdevid    2 size 5368709120 used 5346689024 path /dev/sdc",
+                "\tdevid    3 size 5368709120 used 5346689024 path /dev/sdd",
+                "\tdevid    4 size 5368709120 used 0 path /dev/sde",
+                "",
+                "",
+            ]
+        )
+        num_deg.append(1)
+        err.append([""])
+        rc.append(0)
+
         # Cycle through each of the above mock_run_command data sets.
         for out, e, r, count in zip(fi_show_out, err, rc, num_deg):
             self.mock_run_command.return_value = (out, e, r)
@@ -1624,7 +1745,7 @@ class BTRFSTests(unittest.TestCase):
 
     def test_snapshot_idmap_no_snaps(self):
         """
-         Tests for empty return when no snapshots found
+        Tests for empty return when no snapshots found
         """
         out = [""]
         err = [""]
@@ -2374,9 +2495,7 @@ class BTRFSTests(unittest.TestCase):
         """
         # example output from
         # get_snap() called with
-        subvol = (
-            "/mnt2/test-pool/.snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share"
-        )  # noqa E501
+        subvol = "/mnt2/test-pool/.snapshots/C583C37F-08AE-478B-A726-E95235D1712B_test-share"  # noqa E501
         oldest = True
         num_retain = 3
         regex = "_replication_"
