@@ -37,7 +37,6 @@ from huey.contrib.djhuey import task
 from django.conf import settings
 import logging
 from datetime import datetime
-from pkg_resources import parse_version
 
 """
 system level helper methods to interact with the btrfs filesystem
@@ -1659,24 +1658,95 @@ def scrub_start(pool, force=False):
     return p.pid
 
 
-def scrub_status(pool):
+def btrfsprogs_legacy():
+    """
+    Returns True if "btrfs version" considered legacy: i.e. < "v5.1.2" (approximately).
+    Previously used parse_version(btrfs_progs_version) < parse_version("v5.1.2"), this
+    was removed as it depended on setuptools and was overkill in this situation.
+    :return: Legacy status.
+    :rtype Boolean
+    """
+    legacy_version = [5, 1, 2]
+    out, err, rc = run_command([BTRFS, "version"])
+    # "btrfs-progs v5.14"
+    # e.g. v4.12 Leap 15.2, v4.19.1 Leap 15.3, v5.14 Leap 15.4 v6.1.3 Backports
+    btrfs_progs_version = out[0].split()[1].strip(" v").split(".")
+    # ["4", "12"], ["4", "19", "1"], ["5", "14"], ["6","1", "3"]
+    for index, element in enumerate(btrfs_progs_version):
+        if int(element) < legacy_version[index]:
+            return True
+    return False
+
+
+def scrub_status_extra(mnt_pt):
+    """
+    Non legacy btrfs-progs returns (in default non -R form) time_left, ETA, and rate
+    during a scrub operation (status = "running").
+    Otherwise, only rate is available.
+    Collect and return these extra statistics (where available).
+    :param mnt_pt: pool mount point
+    :return: dictionary indexed by 'time_left', 'ETA', 'rate': where available.
+    from non legacy btrfs-progs versions.
+    """
+    stats = {}
+    out2, err2, rc2 = run_command([BTRFS, "scrub", "status", mnt_pt])
+    if re.search("running", out2[2]) is not None:
+        # time_left
+        fields2 = out2[4].split()[-1].split(":")
+        stats["time_left"] = (
+            (int(fields2[0]) * 60 * 60) + (int(fields2[1]) * 60) + int(fields2[2])
+        )
+        # eta
+        fields3 = out2[5].strip().split(": ")
+        dateFormat = "%a %b %d %H:%M:%S %Y"
+        stats["eta"] = datetime.strptime(fields3[1].strip(), dateFormat)
+        # rate
+        fields4 = out2[8].strip().split(": ")
+        stats["rate"] = fields4[1].strip()
+    else:  # status not running:
+        fields5 = out2[5].strip().split(": ")
+        stats["rate"] = fields5[1].strip()
+    return stats
+
+
+def scrub_status(pool, legacy=False):
+    """
+    Wrapper for scrub_status_raw(), and if (status not conn-reset or unknown) and
+    btrfsprogs_legacy() False, add scrub_status_extra() to the results.
+    :param pool: pool object
+    :param legacy: btrfsprogs_legacy()
+    :return: dictionary indexed by scrub 'status' and various statistics.
+    """
+    mnt_pt = mount_root(pool)
+    stats_raw = scrub_status_raw(mnt_pt, legacy)
+    if (
+        legacy  # legacy btrfs has no extra eta etc info
+        or stats_raw["status"] == "conn-reset"
+        or stats_raw["status"] == "unknown"
+    ):
+        return stats_raw
+    stats_extra = scrub_status_extra(mnt_pt)
+    total_status = stats_raw.copy()
+    total_status.update(stats_extra)
+    return total_status
+
+
+def scrub_status_raw(mnt_pt, legacy=False):
     """
     Returns the raw statistics per-device (-R option) of the ongoing or last
     known btrfs scrub. Works by parsing the output of the following command:
     btrfs scrub status -R <mount-point>
-    :param pool: pool object
+    :param mnt_pt: pool mount point.
+    :param legacy: Boolean indicating legacy btrfs-progs: see btrfsprogs_legacy().
     :return: dictionary indexed via 'status' and if a finished or halted, or
-    cancelld scrub is indicated then the duration of that scrub is added as
+    cancelled scrub is indicated then the duration of that scrub is added as
     value to added index 'duration'. In all 'status' cases bar 'unknown',
     data_bytes_scrubbed is passed as value to index 'kb_scrubbed' and all
     other -R invoked details are returned as key value pairs.
     """
     stats = {"status": "unknown"}
-    mnt_pt = mount_root(pool)
-    out3, err3, rc3 = run_command([BTRFS, "version"])
-    btrfsProgsVers = out3[0].strip().split()[1]
     # Based on version of btrfs progs, set the offset to parse properly
-    if parse_version(btrfsProgsVers) < parse_version("v5.1.2"):
+    if legacy:
         statOffset = 1
         durOffset = 1
         fieldOffset = 2
@@ -1723,31 +1793,12 @@ def scrub_status(pool):
             return stats
     else:  # we have an unknown status as out is 0 or 1 lines long.
         return stats
-    for l in out[fieldOffset:-1]:
-        fields = l.strip().split(": ")
+    for line in out[fieldOffset:-1]:
+        fields = line.strip().split(": ")
         if fields[0] == "data_bytes_scrubbed":
             stats["kb_scrubbed"] = int(fields[1]) / 1024
         else:
             stats[fields[0]] = int(fields[1])
-    # If we are on the newer version of btrfs-progs, pull additional stats
-    if parse_version(btrfsProgsVers) >= parse_version("v5.1.2"):
-        out2, err2, rc2 = run_command([BTRFS, "scrub", "status", mnt_pt])
-        if re.search("running", out2[2]) is not None:
-            # time_left
-            fields2 = out2[4].split()[-1].split(":")
-            stats["time_left"] = (
-                (int(fields2[0]) * 60 * 60) + (int(fields2[1]) * 60) + int(fields2[2])
-            )
-            # eta
-            fields3 = out2[5].strip().split(": ")
-            dateFormat = "%a %b %d %H:%M:%S %Y"
-            stats["eta"] = datetime.strptime(fields3[1].strip(), dateFormat)
-            # rate
-            fields4 = out2[8].strip().split(": ")
-            stats["rate"] = fields4[1].strip()
-        else:
-            fields5 = out2[5].strip().split(": ")
-            stats["rate"] = fields5[1].strip()
     return stats
 
 

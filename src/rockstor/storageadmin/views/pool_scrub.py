@@ -22,7 +22,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolScrubSerializer
 from storageadmin.models import Pool, PoolScrub
 import rest_framework_custom as rfc
-from fs.btrfs import scrub_start, scrub_status
+from fs.btrfs import scrub_start, scrub_status, btrfsprogs_legacy
 from datetime import timedelta
 
 import logging
@@ -56,7 +56,7 @@ class PoolScrubView(rfc.GenericView):
         except:
             return Response()
         if ps.status == "started" or ps.status == "running":
-            cur_status = scrub_status(pool)
+            cur_status = scrub_status(pool, btrfsprogs_legacy())
             if (
                 cur_status["status"] == "finished"
                 or cur_status["status"] == "halted"

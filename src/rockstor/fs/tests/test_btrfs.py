@@ -14,6 +14,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import json
 import unittest
+from datetime import datetime
 from fs.btrfs import (
     pool_raid,
     is_subvol,
@@ -21,7 +22,6 @@ from fs.btrfs import (
     balance_status,
     share_id,
     device_scan,
-    scrub_status,
     degraded_pools_found,
     snapshot_idmap,
     get_property,
@@ -36,6 +36,9 @@ from fs.btrfs import (
     balance_status_all,
     BalanceStatusAll,
     is_pool_missing_dev,
+    btrfsprogs_legacy,
+    scrub_status_raw,
+    scrub_status_extra,
 )
 from mock import patch
 
@@ -896,11 +899,38 @@ class BTRFSTests(unittest.TestCase):
         self.mock_balance_status.stop()
         self.mock_balance_status_internal.stop()
 
-    def test_scrub_status_running(self):
+    def test_btrfsprogs_legacy(self):
         """
-        Test to see if scrub_status correctly identifies running status
+        Test btrfsprogs_legacy for expected function, of boolean return on depricated
+        btrfs version.
         """
-        pool = Pool(raid="raid0", name="test-pool")
+        err = [""]
+        rc = 0
+        # btrfs-progs v4.12
+        outset = [["btrfs-progs v4.12 ", ""]]  # e.g. Leap 15.2
+        is_legacy = [True]
+        outset.append(["btrfs-progs v4.19.1 ", ""])  # e.g. Leap 15.3
+        is_legacy.append(True)
+        outset.append(["btrfs-progs v5.14 ", ""])  # e.g. Leap 15.4
+        is_legacy.append(False)
+        outset.append(
+            ["btrfs-progs v6.1.8 ", ""]
+        )  # e.g. Leap 15.4 Stable Kernel Backports
+        is_legacy.append(False)
+        for out, expected_result in zip(outset, is_legacy):
+            self.mock_run_command.return_value = (out, err, rc)
+            result = btrfsprogs_legacy()
+            self.assertEqual(
+                result,
+                expected_result,
+                msg="Un-expected boolean returned: btrfsprogs_legacy. Mock ({}) "
+                "return expected ({})".format(out, result),
+            )
+
+    def test_scrub_status_raw_running_legacy(self):
+        """
+        Test to see if scrub_status_raw correctly identifies running status
+        """
         out = [
             "scrub status for 030baa1c-faab-4599-baa4-6077f7f6451b",
             "\tscrub started at Sun Aug  6 15:08:37 2017, running for 00:00:05",
@@ -943,18 +973,71 @@ class BTRFSTests(unittest.TestCase):
             "corrected_errors": 0,
         }
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = "/mnt2/test-mount"
         self.assertEqual(
-            scrub_status(pool),
+            scrub_status_raw("/mnt2/test-mount", legacy=True),
             expected_results,
             msg=("Failed to identify scrub running state."),
         )
 
-    def test_scrub_status_finished(self):
+    def test_scrub_status_raw_running(self):
         """
-        Test to see if scrub_status correctly identifies finished status
+        Test to see if scrub_status_raw correctly identifies running status
         """
-        pool = Pool(raid="raid0", name="test-pool")
+        out = [
+            "UUID:             2c680ff8-9687-4356-87db-e48d23749d80",
+            "Scrub started:    Thu Feb  9 18:30:21 2023",
+            "Status:           running",
+            "Duration:         0:00:00",
+            "\tdata_extents_scrubbed: 147",
+            "\ttree_extents_scrubbed: 4179",
+            "\tdata_bytes_scrubbed: 6397952",
+            "\ttree_bytes_scrubbed: 68468736",
+            "\tread_errors: 0",
+            "\tcsum_errors: 0",
+            "\tverify_errors: 0",
+            "\tno_csum: 0",
+            "\tcsum_discards: 1520",
+            "\tsuper_errors: 0",
+            "\tmalloc_errors: 0",
+            "\tuncorrectable_errors: 0",
+            "\tunverified_errors: 0",
+            "\tcorrected_errors: 0",
+            "\tlast_physical: 29753344",
+            "",
+        ]
+        # scrub_status_extra(pool, legacy=False) returned
+        # {'rate': '0.00B/s', 'eta': datetime.datetime(2023, 2, 9, 18, 30, 21), 'time_left': 0}
+        err = [""]
+        rc = 0
+        expected_results = {
+            "status": "running",
+            "malloc_errors": 0,
+            "data_extents_scrubbed": 147,
+            "tree_bytes_scrubbed": 68468736,
+            "no_csum": 0,
+            "uncorrectable_errors": 0,
+            "unverified_errors": 0,
+            "csum_discards": 1520,
+            "last_physical": 29753344,
+            "super_errors": 0,
+            "read_errors": 0,
+            "verify_errors": 0,
+            "corrected_errors": 0,
+            "tree_extents_scrubbed": 4179,
+            "kb_scrubbed": 6248,
+            "csum_errors": 0,
+        }
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(
+            scrub_status_raw("/mnt2/test-mount", legacy=False),
+            expected_results,
+            msg=("Failed to identify scrub running state."),
+        )
+
+    def test_scrub_status_raw_finished_legacy(self):
+        """
+        Test to see if scrub_status_raw correctly identifies finished status
+        """
         out = [
             "scrub status for 030baa1c-faab-4599-baa4-6077f7f6451b",
             "\tscrub started at Sun Aug  6 16:39:43 2017 and finished after 00:00:16",
@@ -998,18 +1081,70 @@ class BTRFSTests(unittest.TestCase):
             "corrected_errors": 0,
         }
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = "/mnt2/test-mount"
         self.assertEqual(
-            scrub_status(pool),
+            scrub_status_raw("/mnt2/test-mount", legacy=True),
             expected_results,
             msg=("Failed to identify scrub finished state."),
         )
 
-    def test_scrub_status_halted(self):
+    def test_scrub_status_raw_finished(self):
         """
-        Test to see if scrub_status correctly identifies interrupted status
+        Test to see if scrub_status_raw correctly identifies finished status
         """
-        pool = Pool(raid="raid0", name="test-pool")
+        out = [
+            "UUID:             2c680ff8-9687-4356-87db-e48d23749d80",
+            "Scrub started:    Thu Feb  9 14:54:32 2023",
+            "Status:           finished",
+            "Duration:         0:00:04",
+            "\tdata_extents_scrubbed: 102618",
+            "\ttree_extents_scrubbed: 4182",
+            "\tdata_bytes_scrubbed: 4384448512",
+            "\ttree_bytes_scrubbed: 68517888",
+            "\tread_errors: 0",
+            "\tcsum_errors: 0",
+            "\tverify_errors: 0",
+            "\tno_csum: 544",
+            "\tcsum_discards: 1069878",
+            "\tsuper_errors: 0",
+            "\tmalloc_errors: 0",
+            "\tuncorrectable_errors: 0",
+            "\tunverified_errors: 0",
+            "\tcorrected_errors: 0",
+            "\tlast_physical: 3297771520",
+            "",
+        ]
+        err = [""]
+        rc = 0
+        expected_results = {
+            "status": "finished",
+            "malloc_errors": 0,
+            "data_extents_scrubbed": 102618,
+            "tree_bytes_scrubbed": 68517888,
+            "no_csum": 544,
+            "uncorrectable_errors": 0,
+            "unverified_errors": 0,
+            "duration": 4,
+            "csum_discards": 1069878,
+            "last_physical": 3297771520,
+            "super_errors": 0,
+            "read_errors": 0,
+            "verify_errors": 0,
+            "corrected_errors": 0,
+            "tree_extents_scrubbed": 4182,
+            "kb_scrubbed": 4281688,
+            "csum_errors": 0,
+        }
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(
+            scrub_status_raw("/mnt2/test-mount", legacy=False),
+            expected_results,
+            msg=("Failed to identify scrub finished state."),
+        )
+
+    def test_scrub_status_raw_halted_legacy(self):
+        """
+        Test to see if scrub_status_raw correctly identifies interrupted status
+        """
         out = [
             "scrub status for 8adf7f0b-65ec-4e00-83cc-7f5855201185",
             "\tscrub started at Sun Aug  6 12:18:39 2017, interrupted after 00:00:09, not running",
@@ -1053,19 +1188,73 @@ class BTRFSTests(unittest.TestCase):
             "corrected_errors": 0,
         }
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = "/mnt2/test-mount"
         self.assertEqual(
-            scrub_status(pool),
+            scrub_status_raw("/mnt2/test-mount", legacy=True),
             expected_results,
             msg=("Failed to identify scrub halted state."),
         )
 
-    def test_scrub_status_conn_reset(self):
+    def test_scrub_status_raw_halted(self):
         """
-        Test to see if scrub_status correctly identifies 'no stats available'
+        Test to see if scrub_status_raw correctly identifies interrupted status.
+        Reproducer for interupted (halted in Rockstor speak) is a reboot during scrub.
+        """
+        out = [
+            "UUID:             2c680ff8-9687-4356-87db-e48d23749d80",
+            "Scrub started:    Thu Feb  9 19:10:15 2023",
+            "Status:           interrupted",
+            "Duration:         0:00:00",
+            "\tdata_extents_scrubbed: 7601",
+            "\ttree_extents_scrubbed: 4182",
+            "\tdata_bytes_scrubbed: 415387648",
+            "\ttree_bytes_scrubbed: 68517888",
+            "\tread_errors: 0",
+            "\tcsum_errors: 0",
+            "\tverify_errors: 0",
+            "\tno_csum: 288",
+            "\tcsum_discards: 101104",
+            "\tsuper_errors: 0",
+            "\tmalloc_errors: 0",
+            "\tuncorrectable_errors: 0",
+            "\tunverified_errors: 0",
+            "\tcorrected_errors: 0",
+            "\tlast_physical: 206110720",
+            "",
+        ]
+        err = [""]
+        rc = 0
+        # scrub_status_extra(pool, legacy=False) returned {'rate': '0.00B/s'}
+        expected_results = {
+            "status": "halted",
+            "malloc_errors": 0,
+            "data_extents_scrubbed": 7601,
+            "tree_bytes_scrubbed": 68517888,
+            "no_csum": 288,
+            "uncorrectable_errors": 0,
+            "unverified_errors": 0,
+            "duration": 0,
+            "csum_discards": 101104,
+            "last_physical": 206110720,
+            "super_errors": 0,
+            "read_errors": 0,
+            "verify_errors": 0,
+            "corrected_errors": 0,
+            "tree_extents_scrubbed": 4182,
+            "kb_scrubbed": 405652,
+            "csum_errors": 0,
+        }
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(
+            scrub_status_raw("/mnt2/test-mount", legacy=False),
+            expected_results,
+            msg=("Failed to identify scrub halted state."),
+        )
+
+    def test_scrub_status_raw_conn_reset_legacy(self):
+        """
+        Test to see if scrub_status_raw correctly identifies 'no stats available'
         :return:
         """
-        pool = Pool(raid="raid0", name="test-pool")
         out = [
             "scrub status for 8adf7f0b-65ec-4e00-83cc-7f5855201185",
             "\tno stats available",
@@ -1090,19 +1279,17 @@ class BTRFSTests(unittest.TestCase):
         rc = 0
         expected_results = {"status": "conn-reset"}
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = "/mnt2/test-mount"
         self.assertEqual(
-            scrub_status(pool),
+            scrub_status_raw("/mnt2/test-mount", legacy=True),
             expected_results,
             msg=("Failed to identify conn-reset state."),
         )
 
-    def test_scrub_status_cancelled(self):
+    def test_scrub_status_raw_cancelled_legacy(self):
         """
-        Test to see if scrub_status correctly identifies cancelled status
+        Test to see if scrub_status_raw correctly identifies cancelled status
         :return:
         """
-        pool = Pool(raid="raid0", name="test-pool")
         out = [
             "scrub status for 8adf7f0b-65ec-4e00-83cc-7f5855201185",
             "\tscrub started at Mon Aug  7 15:29:52 2017 and was aborted after 00:04:56",
@@ -1146,11 +1333,145 @@ class BTRFSTests(unittest.TestCase):
             "corrected_errors": 0,
         }
         self.mock_run_command.return_value = (out, err, rc)
-        self.mock_mount_root.return_value = "/mnt2/test-mount"
         self.assertEqual(
-            scrub_status(pool),
+            scrub_status_raw("/mnt2/test-mount", legacy=True),
             expected_results,
             msg=("Failed to identify cancelled state."),
+        )
+
+    def test_scrub_status_raw_cancelled(self):
+        """
+        Test to see if scrub_status_raw correctly identifies cancelled status
+        :return:
+        """
+        out = [
+            "UUID:             9ccfb511-b222-4528-944c-4837b9eb089a",
+            "Scrub started:    Thu Feb  9 18:52:08 2023",
+            "Status:           aborted",
+            "Duration:         0:00:01",
+            "\tdata_extents_scrubbed: 34718",
+            "\ttree_extents_scrubbed: 3753",
+            "\tdata_bytes_scrubbed: 1206571008",
+            "\ttree_bytes_scrubbed: 61489152",
+            "\tread_errors: 0",
+            "\tcsum_errors: 0",
+            "\tverify_errors: 0",
+            "\tno_csum: 3306",
+            "\tcsum_discards: 291267",
+            "\tsuper_errors: 0",
+            "\tmalloc_errors: 0",
+            "\tuncorrectable_errors: 0",
+            "\tunverified_errors: 0",
+            "\tcorrected_errors: 0",
+            "\tlast_physical: 1488781312",
+            "",
+        ]
+        err = [""]
+        rc = 0
+        # scrub_status_extra(pool, legacy=False) returned {'rate': '1.18GiB/s'}
+        expected_results = {
+            "status": "cancelled",
+            "malloc_errors": 0,
+            "data_extents_scrubbed": 34718,
+            "tree_bytes_scrubbed": 61489152,
+            "no_csum": 3306,
+            "uncorrectable_errors": 0,
+            "unverified_errors": 0,
+            "duration": 1,
+            "csum_discards": 291267,
+            "last_physical": 1488781312,
+            "super_errors": 0,
+            "read_errors": 0,
+            "verify_errors": 0,
+            "corrected_errors": 0,
+            "tree_extents_scrubbed": 3753,
+            "kb_scrubbed": 1178292,
+            "csum_errors": 0,
+        }
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(
+            scrub_status_raw("/mnt2/test-mount", legacy=False),
+            expected_results,
+            msg=("Failed to identify cancelled state."),
+        )
+
+    def test_scrub_status_extra_running(self):
+        """
+        Test to see if scrub_status_extra correctly retrieves extra running info
+        """
+        out = [
+            "UUID:             2c680ff8-9687-4356-87db-e48d23749d80",
+            "Scrub started:    Fri Feb 10 11:47:14 2023",
+            "Status:           running",
+            "Duration:         0:00:01",
+            "Time left:        0:00:09",
+            "ETA:              Fri Feb 10 11:47:24 2023",
+            "Total to scrub:   4.15GiB",
+            "Bytes scrubbed:   404.88MiB  (9.53%)",
+            "Rate:             404.88MiB/s",
+            "Error summary:    no errors found",
+            "",
+        ]
+        err = [""]
+        rc = 0
+        expected_results = {
+            "rate": "404.88MiB/s",
+            "eta": datetime(2023, 2, 10, 11, 47, 24),
+            "time_left": 9,
+        }
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(
+            scrub_status_extra("/mnt2/test-mount"),
+            expected_results,
+            msg=("Failed to parse extra running state info."),
+        )
+
+    def test_scrub_status_extra_halted(self):
+        """
+        Test to see if scrub_status_extra correctly retrieves extra halted info
+        """
+        out = [
+            "UUID:             2c680ff8-9687-4356-87db-e48d23749d80",
+            "Scrub started:    Fri Feb 10 12:00:28 2023",
+            "Status:           interrupted",
+            "Duration:         0:00:00",
+            "Total to scrub:   4.15GiB",
+            "Rate:             0.00B/s",
+            "Error summary:    no errors found",
+            "",
+        ]
+        err = [""]
+        rc = 0
+        expected_results = {"rate": "0.00B/s"}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(
+            scrub_status_extra("/mnt2/test-mount"),
+            expected_results,
+            msg=("Failed to parse extra halted state info."),
+        )
+
+    def test_scrub_status_extra_finished(self):
+        """
+        Test to see if scrub_status_extra correctly retrieves extra finished info
+        """
+        out = [
+            "UUID:             2c680ff8-9687-4356-87db-e48d23749d80",
+            "Scrub started:    Fri Feb 10 11:16:30 2023",
+            "Status:           finished",
+            "Duration:         0:00:08",
+            "Total to scrub:   4.15GiB",
+            "Rate:             530.83MiB/s",
+            "Error summary:    no errors found",
+            "",
+        ]
+        err = [""]
+        rc = 0
+        expected_results = {"rate": "530.83MiB/s"}
+        self.mock_run_command.return_value = (out, err, rc)
+        self.assertEqual(
+            scrub_status_extra("/mnt2/test-mount"),
+            expected_results,
+            msg=("Failed to parse extra finished state info."),
         )
 
     def test_share_id(self):
