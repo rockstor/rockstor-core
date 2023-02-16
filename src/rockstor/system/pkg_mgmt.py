@@ -453,10 +453,9 @@ def update_run(subscription=None, update_all_other=False):
     with open(npath, "w") as atfo:
         if not update_all_other:
             atfo.write("sleep 10\n")
-            atfo.write("{} stop rockstor\n".format(SYSTEMCTL))
-            # rockstor-pre stop ensures initrock re-run on next rockstor start
-            atfo.write("{} stop rockstor-pre\n".format(SYSTEMCTL))
-            # Exclude eggs subdir, as these are in rpm so will be deleted
+            # stop rockstor* services: rockstor-bootstrap, via Requires, restarts them.
+            atfo.write("{} stop rockstor*\n".format(SYSTEMCTL))
+            # Exclude eggs subdir (pre-v4.5.4-0), as these are in rpm so will be deleted
             # as otherwise floods YUM log with "No such file or directory"
             atfo.write(
                 '/usr/bin/find {} -name "*.pyc" -not -path "*/eggs/*" -type f -delete\n'.format(
@@ -466,8 +465,8 @@ def update_run(subscription=None, update_all_other=False):
             atfo.write(pkg_refresh_cmd)
             # account for moving from dev/source to package type install:
             atfo.write(pkg_in_up_rockstor)
-            # the following rockstor start invokes rockstor-pre (initrock) also
-            atfo.write("{} start rockstor\n".format(SYSTEMCTL))
+            # rockstor-bootstrap Requires rockstor which Requires rockstor-pre (initrock)
+            atfo.write("{} start rockstor-bootstrap\n".format(SYSTEMCTL))
         else:  # update_all_other True so update all bar the rockstor package.
             logger.info(
                 "Updating all but rockstor package for distro {}".format(distro_id)
