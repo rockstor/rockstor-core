@@ -43,6 +43,9 @@ bin/django dumpdata storageadmin.pool storageadmin.disk storageadmin.share \
 --natural-foreign --indent 4 > \
 src/rockstor/storageadmin/fixtures/test_pools.json
 
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE=settings
+poetry run django-admin test -p test_pools.py -v 2
 ./bin/test -v 2 -p test_pools.py
 """
 
@@ -107,7 +110,6 @@ class PoolTests(APITestMixin):
         cls.patch_balance_status = patch("fs.btrfs.balance_status")
         cls.mock_balance_status = cls.patch_balance_status.start()
         cls.mock_balance_status.return_value = cls.default_balance_status
-
 
     @classmethod
     def tearDownClass(cls):
@@ -706,12 +708,16 @@ class PoolTests(APITestMixin):
         Btrfs-single can be used to create a pool with 1 or more drives.
         - create a pool with 0 disks
         - create a pool with 1 disk
+        - remove 1 of 1 disks from single pool - reducing below minimum dev count of 1
         - create a pool with 2 disks
         TODO - add a disk that already belongs to pool
         - add a disk that already belongs to another pool
         - remove disk that doesn't belong to pool
         - delete pool
         """
+        # Establish our id references, once we have moved to
+        # disk id for POST calls they will all be needed.
+        virtio_2_id = Disk.objects.get(name="virtio-2").id
 
         # create pool with 0 disks
         data = {"pname": "singlepool", "raid_level": "single"}
@@ -733,6 +739,29 @@ class PoolTests(APITestMixin):
         self.assertEqual(response2.data["raid"], "single")
         self.mock_btrfs_uuid.assert_called_with("virtio-2")
         self.assertEqual(len(response2.data["disks"]), 1)
+
+        temp_pool = Pool.objects.get(name="singlepool")
+        pId = temp_pool.id
+
+        # remove 1 of 1 disks from single pool - reducing below minimum dev count of 1
+        data = {
+            "disks": (
+                "{}".format(virtio_2_id),
+            )
+        }
+        response3 = self.client.put(
+            "{}/{}/remove".format(self.BASE_URL, pId), data=data
+        )
+        self.assertEqual(
+            response3.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response3.data,
+        )
+        e_msg = (
+            "Disks cannot be removed from this pool because its raid "
+            "configuration (single) requires a minimum of 1 disk/s."
+        )
+        self.assertEqual(response3.data[0], e_msg)
 
         # create pool with 2 disks
         data = {
@@ -781,12 +810,12 @@ class PoolTests(APITestMixin):
         """
         CRUD = Create Read Update Delete
         test pool crud ops with 'raid0' raid config. Raid0 can be used to
-        create a pool with at least 2 disks (we currently do not allow removal):
-        - atempt to create a pool with 1 disk
+        create a pool with at least 2 disks:
+        - attempt to create a pool with 1 disk
         - create a pool with 2 disks
         - get pool
         - add one disk to pool
-        - attempt to remove one disk from pool (two after #2385)
+        - remove 2 of 3 disks from raid0 pool - reducing below minimum dev count of 2
         - attempt to add 3 disks & change raid_level from raid0 to raid1
         -- (set PoolBalance for temp_pool to have "finished" status)
         - retry add 3 disks & change raid_level from raid0 to raid1
@@ -805,7 +834,7 @@ class PoolTests(APITestMixin):
         data = {"disks": ("virtio-1",), "pname": "raid0pool", "raid_level": "raid0"}
 
         # attempt to create pool with 1 disk
-        e_msg = "At least 2 disks are required for the raid level: raid0."
+        e_msg = "2 or more disks are required for the raid level: raid0."
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
             response.status_code,
@@ -837,11 +866,15 @@ class PoolTests(APITestMixin):
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(len(response2.data["disks"]), 3)
 
-        # attempt to remove one disk from pool (two after #2385)
-        # TODO This test passes to prove our intended function.
-        #  however our tested code intention (current behaviour) is up for review #2385
+        # remove 2 of 3 disks from raid0 pool - reducing below minimum dev count of 2
+        data3 = {
+            "disks": (
+                "{}".format(virtio_1_id),
+                "{}".format(virtio_2_id),
+            )
+        }
         response3 = self.client.put(
-            "{}/{}/remove".format(self.BASE_URL, pId), data=data2
+            "{}/{}/remove".format(self.BASE_URL, pId), data=data3
         )
         self.assertEqual(
             response3.status_code,
@@ -849,8 +882,8 @@ class PoolTests(APITestMixin):
             msg=response3.data,
         )
         e_msg = (
-            "Disks cannot be removed from a pool with this raid (raid0) "
-            "configuration."
+            "Disks cannot be removed from this pool because its raid "
+            "configuration (raid0) requires a minimum of 2 disk/s."
         )
         self.assertEqual(response3.data[0], e_msg)
 
@@ -932,7 +965,7 @@ class PoolTests(APITestMixin):
         data = {"disks": ("virtio-1",), "pname": "raid1pool", "raid_level": "raid1"}
 
         # Attempt to create a btrfs-raid1 pool with 1 disk.
-        e_msg = "At least 2 disks are required for the raid level: raid1."
+        e_msg = "2 or more disks are required for the raid level: raid1."
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
             response.status_code,
@@ -1020,7 +1053,7 @@ class PoolTests(APITestMixin):
         }
         e_msg = (
             "Disks cannot be removed from this pool because its raid "
-            "configuration (raid1) requires a minimum of 2 disks."
+            "configuration (raid1) requires a minimum of 2 disk/s."
         )
         response4 = self.client.put(
             "{}/{}/remove".format(self.BASE_URL, pId), data=data3
@@ -1122,7 +1155,7 @@ class PoolTests(APITestMixin):
             "pname": "raid10pool",
             "raid_level": "raid10",
         }
-        e_msg = "A minimum of 4 drives are required for the raid level: raid10."
+        e_msg = "4 or more disks are required for the raid level: raid10."
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
             response.status_code,
@@ -1167,7 +1200,7 @@ class PoolTests(APITestMixin):
         )
         e_msg = (
             "Disks cannot be removed from this pool because its raid "
-            "configuration (raid10) requires a minimum of 4 disks."
+            "configuration (raid10) requires a minimum of 4 disk/s."
         )
         self.assertEqual(response.data[0], e_msg)
 
@@ -1256,7 +1289,7 @@ class PoolTests(APITestMixin):
         )
         e_msg = (
             "Disks cannot be removed from this pool because its raid "
-            "configuration (raid5) requires a minimum of 2 disks."
+            "configuration (raid5) requires a minimum of 2 disk/s."
         )
         self.assertEqual(response.data[0], e_msg)
 
@@ -1345,7 +1378,7 @@ class PoolTests(APITestMixin):
         )
         e_msg = (
             "Disks cannot be removed from this pool because its raid "
-            "configuration (raid6) requires a minimum of 3 disks."
+            "configuration (raid6) requires a minimum of 3 disk/s."
         )
         self.assertEqual(response.data[0], e_msg)
 
@@ -1595,4 +1628,3 @@ class PoolTests(APITestMixin):
         self.assertEqual(len(response.data["disks"]), 1)
         # TODO the following should be assured by our setUpClass() but it is not.
         self.mock_balance_status.return_value = self.default_balance_status
-
