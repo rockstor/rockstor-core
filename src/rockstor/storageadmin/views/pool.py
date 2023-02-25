@@ -15,8 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
-
+import collections
 import re
 from rest_framework.response import Response
 from rest_framework import status
@@ -53,7 +52,25 @@ logger = logging.getLogger(__name__)
 
 class PoolMixin(object):
     serializer_class = PoolInfoSerializer
-    RAID_LEVELS = ("single", "raid0", "raid1", "raid10", "raid5", "raid6")
+    SUPPORTED_PROFILES = ("single", "raid0", "raid1", "raid10", "raid5", "raid6")
+    # Named Tuple to define raid profile limits
+    btrfs_profile = collections.namedtuple(
+        "btrfs_profile", "min_dev_count max_dev_missing"
+    )
+    # List of profiles indexed by their name.
+    # I.e. PROFILE[raid_level].min_disk_count
+    PROFILE = {
+        "single": btrfs_profile(min_dev_count=1, max_dev_missing=0),
+        "raid0": btrfs_profile(min_dev_count=2, max_dev_missing=0),
+        # Mirrored profiles:
+        "raid1": btrfs_profile(min_dev_count=2, max_dev_missing=1),
+        "raid1c3": btrfs_profile(min_dev_count=3, max_dev_missing=2),
+        "raid1c4": btrfs_profile(min_dev_count=4, max_dev_missing=3),
+        "raid10": btrfs_profile(min_dev_count=4, max_dev_missing=1),
+        # Parity raid levels
+        "raid5": btrfs_profile(min_dev_count=2, max_dev_missing=1),
+        "raid6": btrfs_profile(min_dev_count=3, max_dev_missing=2),
+    }
 
     @staticmethod
     def _validate_disk(d, request):
@@ -410,32 +427,19 @@ class PoolListView(PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
             raid_level = request.data["raid_level"]
-            if raid_level not in self.RAID_LEVELS:
+            # Reject creation of unsupported raid_level:
+            if raid_level not in self.SUPPORTED_PROFILES:
                 e_msg = ("Unsupported raid level. Use one of: {}.").format(
-                    self.RAID_LEVELS
+                    self.SUPPORTED_PROFILES
                 )
                 handle_exception(Exception(e_msg), request)
-            # consolidated raid0 & raid 1 disk check
-            if raid_level in self.RAID_LEVELS[1:3] and len(disks) <= 1:
+
+            # Reject below minium device count for selected profile
+            profile_min_dev_count = self.PROFILE[raid_level].min_dev_count
+            if len(disks) < profile_min_dev_count:
                 e_msg = (
-                    "At least 2 disks are required for the raid level: {}."
-                ).format(raid_level)
-                handle_exception(Exception(e_msg), request)
-            if raid_level == self.RAID_LEVELS[3]:
-                if len(disks) < 4:
-                    e_msg = (
-                        "A minimum of 4 drives are required for the raid level: {}."
-                    ).format(raid_level)
-                    handle_exception(Exception(e_msg), request)
-            if raid_level == self.RAID_LEVELS[4] and len(disks) < 2:
-                e_msg = ("2 or more disks are required for the raid level: {}.").format(
-                    raid_level
-                )
-                handle_exception(Exception(e_msg), request)
-            if raid_level == self.RAID_LEVELS[5] and len(disks) < 3:
-                e_msg = ("3 or more disks are required for the raid level: {}.").format(
-                    raid_level
-                )
+                    "{} or more disks are required for the raid level: {}."
+                ).format(profile_min_dev_count, raid_level)
                 handle_exception(Exception(e_msg), request)
 
             compression = self._validate_compression(request)
@@ -577,32 +581,20 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                         ).format(d.name)
                         handle_exception(Exception(e_msg), request)
 
+                # Avoid extreme raid level change upwards (space issues).
+                # TODO: Consider removing once we have better space calc.
                 if pool.raid == "single" and new_raid == "raid10":
-                    # TODO: Consider removing once we have better space calc.
-                    # Avoid extreme raid level change upwards (space issues).
                     e_msg = ("Pool migration from {} to {} is not supported.").format(
                         pool.raid, new_raid
                     )
                     handle_exception(Exception(e_msg), request)
 
-                if new_raid == "raid10" and num_total_attached_disks < 4:
+                # Avoid add if to-be attached < minium device count for proposed profile
+                profile_min_dev_count = self.PROFILE[new_raid].min_dev_count
+                if num_total_attached_disks < profile_min_dev_count:
                     e_msg = (
-                        "A minimum of 4 drives are required for the "
-                        "raid level: raid10."
-                    )
-                    handle_exception(Exception(e_msg), request)
-
-                if new_raid == "raid6" and num_total_attached_disks < 3:
-                    e_msg = (
-                        "A minimum of 3 drives are required for the "
-                        "raid level: raid6."
-                    )
-                    handle_exception(Exception(e_msg), request)
-
-                if new_raid == "raid5" and num_total_attached_disks < 2:
-                    e_msg = (
-                        "A minimum of 2 drives are required for the "
-                        "raid level: raid5."
+                        "A minimum of {} drives are required for the "
+                        "raid level: {}.".format(profile_min_dev_count, new_raid)
                     )
                     handle_exception(Exception(e_msg), request)
 
@@ -683,6 +675,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 remaining_attached_disks = (
                     pool.disk_set.attached().count() - attached_disks_selected
                 )
+
                 # Add check for attempt to remove detached & attached disks concurrently
                 if detached_disks_selected > 0 and attached_disks_selected > 0:
                     e_msg = (
@@ -693,42 +686,15 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
                 # Skip all further sanity checks when all members are detached.
                 if not all_members_detached:
-                    if pool.raid == "raid0":
-                        e_msg = (
-                            "Disks cannot be removed from a pool with this "
-                            "raid ({}) configuration."
-                        ).format(pool.raid)
-                        handle_exception(Exception(e_msg), request)
-
-                    if pool.raid == "raid1" and remaining_attached_disks < 2:
+                    # Avoid remove if to-be attached < minium device count for profile
+                    profile_min_dev_count = self.PROFILE[pool.raid].min_dev_count
+                    if remaining_attached_disks < profile_min_dev_count:
                         e_msg = (
                             "Disks cannot be removed from this pool "
-                            "because its raid configuration (raid1) "
-                            "requires a minimum of 2 disks."
-                        )
-                        handle_exception(Exception(e_msg), request)
-
-                    if pool.raid == "raid10" and remaining_attached_disks < 4:
-                        e_msg = (
-                            "Disks cannot be removed from this pool "
-                            "because its raid configuration (raid10) "
-                            "requires a minimum of 4 disks."
-                        )
-                        handle_exception(Exception(e_msg), request)
-
-                    if pool.raid == "raid5" and remaining_attached_disks < 2:
-                        e_msg = (
-                            "Disks cannot be removed from this pool because "
-                            "its raid configuration (raid5) requires a "
-                            "minimum of 2 disks."
-                        )
-                        handle_exception(Exception(e_msg), request)
-
-                    if pool.raid == "raid6" and remaining_attached_disks < 3:
-                        e_msg = (
-                            "Disks cannot be removed from this pool because "
-                            "its raid configuration (raid6) requires a "
-                            "minimum of 3 disks."
+                            "because its raid configuration ({}) "
+                            "requires a minimum of {} disk/s.".format(
+                                pool.raid, profile_min_dev_count
+                            )
                         )
                         handle_exception(Exception(e_msg), request)
 
