@@ -23,12 +23,30 @@ from storageadmin.views.config_backup import (
     validate_install_config,
     validate_update_config,
     validate_service_status,
+    validate_taskdef_meta,
+    validate_task_definitions,
 )
+
+"""
+Fixture creation instructions:
+
+System needs 1 non system pool 'rock-pool', at any raid level.
+
+- Create 1 share named 'test_share01'
+- Create 1 share named 'test_share02'
+
+poetry run django-admin dumpdata storageadmin.pool storageadmin.share \
+--natural-foreign --indent 4 > \
+src/rockstor/storageadmin/fixtures/test_config_backup.json
+
+To run the tests:
+export DJANGO_SETTINGS_MODULE="settings"
+cd src/rockstor && poetry run django-admin test -v 2 -p test_config_backup.py
+"""
 
 
 class ConfigBackupTests(APITestMixin):
-    # Proposed fixture = "test_config-backup" was "fix2.json"
-    fixtures = ["test_api.json"]
+    fixtures = ["test_api.json", "test_config_backup.json"]
     BASE_URL = "/api/config-backup"
     sa_ml = [
         {
@@ -1138,6 +1156,42 @@ class ConfigBackupTests(APITestMixin):
             "model": "smart_manager.servicestatus",
             "pk": 32,
         },
+        {
+            "fields": {
+                "name": "snap_daily_ts01",
+                "task_type": "snapshot",
+                "json_meta": '{"writable": true, "visible": true, "prefix": "snap_daily_ts01", "share": "2", "max_count": "4"}',
+                "enabled": False,
+                "crontab": "42 3 * * *",
+                "crontabwindow": "*-*-*-*-*-*",
+            },
+            "model": "smart_manager.taskdefinition",
+            "pk": 1,
+        },
+        {
+            "fields": {
+                "name": "snap_daily_ts02",
+                "task_type": "snapshot",
+                "json_meta": '{"writable": true, "visible": true, "prefix": "snap_daily_ts02", "share": "33", "max_count": "4"}',
+                "enabled": False,
+                "crontab": "42 3 * * *",
+                "crontabwindow": "*-*-*-*-*-*",
+            },
+            "model": "smart_manager.taskdefinition",
+            "pk": 2,
+        },
+        {
+            "fields": {
+                "name": "snap_daily_ts04",
+                "task_type": "snapshot",
+                "json_meta": '{"writable": true, "visible": true, "prefix": "snap_daily_ts04", "share": "5", "max_count": "4"}',
+                "enabled": False,
+                "crontab": "42 3 * * *",
+                "crontabwindow": "*-*-*-*-*-*",
+            },
+            "model": "smart_manager.taskdefinition",
+            "pk": 3,
+        },
     ]
 
     @classmethod
@@ -1793,3 +1847,71 @@ class ConfigBackupTests(APITestMixin):
                 "returned = {}.\n "
                 "expected = {}.".format(ret, o),
             )
+
+    def test_validate_taskdef_meta(self):
+        """
+        Input as per sm_ml above:
+        The share in question is test_share01, which has:
+          - an ID of 2 in sa_ml above
+          - an ID of 3 in the test_config_backup.json fixture
+        """
+        task_type = ["snapshot"]  # list as will receive appends later on
+        taskdef_meta = [
+            {
+                "writable": True,
+                "visible": True,
+                "prefix": "snap_daily_ts01",
+                "share": "2",
+                "max_count": "4",
+            }
+        ]
+
+        out = [
+            {
+                "writable": True,
+                "visible": True,
+                "prefix": "snap_daily_ts01",
+                "share": "3",
+                "max_count": "4",
+            }
+        ]
+
+        for t, m, o in zip(task_type, taskdef_meta, out):
+            ret = validate_taskdef_meta(self.sa_ml, m, t)
+            self.assertEqual(
+                ret,
+                o,
+                msg="Unexpected validate_taskdef_meta() result:\n "
+                "returned = {}.\n "
+                "expected = {}.".format(ret, o),
+            )
+
+    def test_validate_task_definitions(self):
+        """
+        Test:
+        - valid metadata (snap_daily_ts01 in sm_ml)
+        - invalid metadata: wrong share ID in backup file (snap_daily_ts02 in sm_ml)
+        - invalid metadata: share does not exist on target system (snap_daily_ts04 in sm_ml)
+        """
+        out = [{
+            "task_type": "snapshot",
+            "name": "snap_daily_ts01",
+            "crontabwindow": "*-*-*-*-*-*",
+            "enabled": False,
+            "crontab": "42 3 * * *",
+            "meta": {
+                "writable": True,
+                "visible": True,
+                "prefix": "snap_daily_ts01",
+                "share": "3",
+                "max_count": "4",
+            },
+        }]
+        ret = validate_task_definitions(self.sm_ml, self.sa_ml)
+        self.assertEqual(
+            ret,
+            out,
+            msg="Unexpected validate_task_definitions() result:\n "
+            "returned = {}.\n "
+            "expected = {}.".format(ret, out),
+        )
