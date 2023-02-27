@@ -1,6 +1,6 @@
 <h3>Disks
     {{#if pool.has_missing_dev}}
-    &nbsp;(<strong><span style="color:red">Some Missing</span></strong>)
+    &nbsp;(<strong><span style="color:red">{{pool.dev_missing_count}} Missing</span></strong>)
     {{/if}}
     {{#unless pool.dev_stats_ok}}
     (<strong><span style="color:red">Device errors detected</span></strong>)
@@ -9,27 +9,39 @@
 
 {{#if pool.has_missing_dev}}
     <h4><u>Maintenance required</u></h4>
-    {{#unless (isDegradedRw pool.mount_status)}}
-    Missing disk removal requires <strong>degraded,rw</strong> mount options.
-    {{/unless}}
-    {{#if pool.is_mounted}}
-        {{#if (isWritable pool.mount_status)}}
-            {{#if (isDegradedRw pool.mount_status)}}
-                <a href="#" class="js-delete-missing" data-pool-id="{{pool.id}}" title="If detached members listed use - Resize/ReRaid 'Remove disks' - instead." rel="tooltip">
-                <i class="glyphicon glyphicon-erase"></i> Delete a missing disk if pool has no detached members.</a><br>
-                <strong>Header "Pool Degraded Alert" persists during delete process (can take several hours).</strong><br>
-            {{else}}
-                Consider <strong>degraded,ro</strong> to refresh backups first.<br>
-            {{/if}}
-        {{else}}
-            Pool is read only (<strong>ro</strong>).<br> Refresh backups before using <strong>degraded,rw</strong>.
-        {{/if}}
-        Active 'degraded' option is sticky: once unset a reboot is required to deactivate it.<br>
+    See: <a href="https://rockstor.com/docs/data_loss.html" target="_blank">Data Loss-prevention and Recovery in Rockstor</a><br>
+    {{#if pool.redundancy_exceeded}}
+        <span style="color:red">Btrfs-raid level <strong>({{pool.raid}})</strong> redundancy exceeded:
+            <strong>too many missing devices ({{pool.dev_missing_count}})</strong>.</span><br>
+        <strong>If possible reattach a sufficient number of the missing devices and refresh this page.</strong><br>
+        This sections advice should change according to findings.
+        A scrub must be performed as soon as rw access is established.<br>
+        <strong>If reattachment is NOT possible, this pool is beyond repair: delete, re-create, and restore from backup.</strong><br>
     {{else}}
-        Pool is currently (<strong>unmounted</strong>).<br>
-        Consider <strong>degraded,ro</strong> to refresh backups first.<br>
+        {{#unless (isDegradedRw pool.mount_status)}}
+            Missing disk removal requires <strong>degraded,rw</strong> mount options.
+        {{/unless}}
+        {{#if pool.is_mounted}}
+            {{#if (isWritable pool.mount_status)}}
+                {{#if (isDegradedRw pool.mount_status)}}
+                    <a href="#" class="js-delete-missing" data-pool-id="{{pool.id}}" title="If detached members listed use - Resize/ReRaid 'Remove disks' - instead." rel="tooltip">
+                    <i class="glyphicon glyphicon-erase"></i> Delete a missing disk if pool has no detached members.</a><br>
+                    <strong>Header "Pool Degraded Alert" persists during delete process (can take several hours).</strong><br>
+                {{else}}
+                    Consider <strong>degraded,ro</strong> to refresh backups first.<br>
+                {{/if}}
+            {{else}}
+                Pool is read only (<strong>ro</strong>).<br> Refresh backups before using <strong>degraded,rw</strong>.
+            {{/if}}
+            Active 'degraded' option is sticky: once unset a reboot is required to deactivate it.<br>
+        {{else}}
+            Pool is currently (<strong>unmounted</strong>).<br>
+            {{#unless pool.redundancy_exceeded}}
+                Consider <strong>degraded,ro</strong> to refresh backups first.<br>
+            {{/unless}}
+        {{/if}}
     {{/if}}
-    Reload page to refresh active mount options.
+    Reload page (twice) to refresh active mount options.
     <br><br>
 {{/if}}
 

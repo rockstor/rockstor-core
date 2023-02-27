@@ -88,6 +88,8 @@ class PoolInfoSerializer(serializers.ModelSerializer):
     quotas_enabled = serializers.BooleanField()
     has_missing_dev = serializers.BooleanField()
     dev_stats_ok = serializers.BooleanField()
+    dev_missing_count = serializers.IntegerField()
+    redundancy_exceeded = serializers.BooleanField()
 
     class Meta:
         model = Pool
