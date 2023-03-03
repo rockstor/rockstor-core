@@ -113,7 +113,7 @@
                     {{/each}}
                 {{/if}}
                 {{#if this.has_missing_dev}}
-                    <strong><span style="color:red">(SOME MISSING) </span></strong>
+                    <strong><span style="color:red">({{this.dev_missing_count}} MISSING) </span></strong>
                 {{/if}}
                 {{#unless this.dev_stats_ok}}
                     <strong><span style="color:red">(DEV ERRORS DETECTED)</span></strong>

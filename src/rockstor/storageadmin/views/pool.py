@@ -15,7 +15,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-import collections
 import re
 from rest_framework.response import Response
 from rest_framework import status
@@ -38,6 +37,7 @@ from fs.btrfs import (
     rescan_quotas,
     start_resize_pool,
     balance_status_all,
+    PROFILE,
 )
 from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
@@ -53,24 +53,6 @@ logger = logging.getLogger(__name__)
 class PoolMixin(object):
     serializer_class = PoolInfoSerializer
     SUPPORTED_PROFILES = ("single", "raid0", "raid1", "raid10", "raid5", "raid6")
-    # Named Tuple to define raid profile limits
-    btrfs_profile = collections.namedtuple(
-        "btrfs_profile", "min_dev_count max_dev_missing"
-    )
-    # List of profiles indexed by their name.
-    # I.e. PROFILE[raid_level].min_disk_count
-    PROFILE = {
-        "single": btrfs_profile(min_dev_count=1, max_dev_missing=0),
-        "raid0": btrfs_profile(min_dev_count=2, max_dev_missing=0),
-        # Mirrored profiles:
-        "raid1": btrfs_profile(min_dev_count=2, max_dev_missing=1),
-        "raid1c3": btrfs_profile(min_dev_count=3, max_dev_missing=2),
-        "raid1c4": btrfs_profile(min_dev_count=4, max_dev_missing=3),
-        "raid10": btrfs_profile(min_dev_count=4, max_dev_missing=1),
-        # Parity raid levels
-        "raid5": btrfs_profile(min_dev_count=2, max_dev_missing=1),
-        "raid6": btrfs_profile(min_dev_count=3, max_dev_missing=2),
-    }
 
     @staticmethod
     def _validate_disk(d, request):
@@ -435,7 +417,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             # Reject below minium device count for selected profile
-            profile_min_dev_count = self.PROFILE[raid_level].min_dev_count
+            profile_min_dev_count = PROFILE[raid_level].min_dev_count
             if len(disks) < profile_min_dev_count:
                 e_msg = (
                     "{} or more disks are required for the raid level: {}."
@@ -590,7 +572,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
                 # Avoid add if to-be attached < minium device count for proposed profile
-                profile_min_dev_count = self.PROFILE[new_raid].min_dev_count
+                profile_min_dev_count = PROFILE[new_raid].min_dev_count
                 if num_total_attached_disks < profile_min_dev_count:
                     e_msg = (
                         "A minimum of {} drives are required for the "
@@ -687,7 +669,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 # Skip all further sanity checks when all members are detached.
                 if not all_members_detached:
                     # Avoid remove if to-be attached < minium device count for profile
-                    profile_min_dev_count = self.PROFILE[pool.raid].min_dev_count
+                    profile_min_dev_count = PROFILE[pool.raid].min_dev_count
                     if remaining_attached_disks < profile_min_dev_count:
                         e_msg = (
                             "Disks cannot be removed from this pool "

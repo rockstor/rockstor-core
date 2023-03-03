@@ -96,6 +96,35 @@ DevUsageInfo = collections.namedtuple("DevUsageInfo", "temp_name size allocated"
 DefaultSubvol = collections.namedtuple("DefaultSubvol", "id path boot_to_snap")
 # Named Tuple for balance status: active (boolean) internal (boolean) status (dict)
 BalanceStatusAll = collections.namedtuple("BalanceStatusAll", "active internal status")
+# Named Tuple to define raid profile limits
+btrfs_profile = collections.namedtuple("btrfs_profile", "min_dev_count max_dev_missing")
+# List of profiles indexed by their name.
+# I.e. PROFILE[raid_level].min_dev_count
+# N.B. Mixed profiles indicated by "-" i.e. DATA-METADATA
+PROFILE = {
+    # non redundant profiles!
+    "single": btrfs_profile(min_dev_count=1, max_dev_missing=0),
+    "raid0": btrfs_profile(min_dev_count=2, max_dev_missing=0),
+    # Mirrored profiles:
+    "raid1": btrfs_profile(min_dev_count=2, max_dev_missing=1),
+    "raid1c3": btrfs_profile(min_dev_count=3, max_dev_missing=2),
+    "raid1c4": btrfs_profile(min_dev_count=4, max_dev_missing=3),
+    "raid10": btrfs_profile(min_dev_count=4, max_dev_missing=1),
+    # Parity raid levels
+    "raid5": btrfs_profile(min_dev_count=2, max_dev_missing=1),
+    "raid6": btrfs_profile(min_dev_count=3, max_dev_missing=2),
+    # ------- MIXED PROFILES DATA-METADATA (max 10 chars) -------
+    # Mixed Mirrored profiles:
+    "raid1-1c3": btrfs_profile(min_dev_count=3, max_dev_missing=1),
+    "raid1-1c4": btrfs_profile(min_dev_count=4, max_dev_missing=1),
+    "raid10-1c3": btrfs_profile(min_dev_count=4, max_dev_missing=1),
+    "raid10-1c4": btrfs_profile(min_dev_count=4, max_dev_missing=1),
+    # Parity data - Mirrored metadata
+    "raid5-1": btrfs_profile(min_dev_count=2, max_dev_missing=1),
+    "raid5-1c3": btrfs_profile(min_dev_count=3, max_dev_missing=1),
+    "raid6-1c3": btrfs_profile(min_dev_count=3, max_dev_missing=2),
+    "raid6-1c4": btrfs_profile(min_dev_count=4, max_dev_missing=2),
+}
 
 
 def add_pool(pool, disks):
@@ -197,29 +226,46 @@ def get_dev_io_error_stats(target, json_format=True):
     return json.dumps(stats)
 
 
-def is_pool_missing_dev(label):
+def pool_missing_dev_count(label):
     """
-    Simple and fast wrapper around 'btrfs fi show --raw label' to return True /
-    False depending on if a device is reported missing from the given pool by
-    label. Works by matching the end of output lines for the string 'missing',
-    after lower the case of the line.
+    Parses 'btrfs fi show --raw label' to return number of missing devices.
+    Extracts vol total dev count from e.g.: "\tTotal devices 3 FS bytes used 2.63GiB".
+    And counts the number of lines there-after beginning "\tdevid" and not ending
+    in "SING" or "sing" (for "MISSING"/"missing").
+
     Label is used as this is preserved in our Pool db so will work if the pool
     fails to mount, and there by allows surfacing this as a potential reason
     for the mount failure.
     :param label: Pool label.
-    :return: True if at least one device was found to be missing, False if not.
+    :return: int for number of missing devices (total - attached).
     """
     if label is None:
-        return False
+        return 0
     # --raw used to minimise pre-processing of irrelevant 'used' info (units).
     cmd = [BTRFS, "fi", "show", "--raw", label]
     o, e, rc = run_command(cmd)
+    total_devices = 0
+    attached_devids = 0
     for line in o:
         if not line:
             continue
-        if line.lower().endswith("missing"):
-            return True
-    return False
+        # Skip "Label:" line as it has no 'missing' info.
+        # Skip "warning, device 8 is missing" lines as they only appear when unmounted.
+        # Skip "(TAB)*** Some devices missing" we count devid lines no ending in MISSING
+        if line.startswith(("Lab", "war", "\t**")):
+            continue
+        if line.startswith("\tTotal"):
+            total_devices = int(line.split()[2])
+            continue
+        if not total_devices == 0:
+            # Leap 15.4 default & backport kernels (not missing)
+            # devid    5 size 5.00GiB used 2.12GiB path /dev/sda
+            # Newer Stable Kernel Backport (e.g. 6.2.0+) add a MISSING:
+            # older kernels do not have entries for missing devices.
+            # devid    1 size 0 used 0 path  MISSING
+            if line.startswith("\tdev") and not line.endswith(("SING", "sing")):
+                attached_devids += 1
+    return total_devices - attached_devids
 
 
 def degraded_pools_found():
@@ -1896,7 +1942,7 @@ def balance_status(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    stats = {"status": u"unknown"}
+    stats = {"status": "unknown"}
     # The balance status of an umounted pool is undetermined / unknown, ie it
     # could still be mid balance: our balance status command requires a
     # relevant active mount path.
@@ -1914,13 +1960,13 @@ def balance_status(pool):
     if len(out) > 0:
         if re.match("Balance", out[0]) is not None:
             if re.search("cancel requested", out[0]) is not None:
-                stats["status"] = u"cancelling"
+                stats["status"] = "cancelling"
             elif re.search("pause requested", out[0]) is not None:
-                stats["status"] = u"pausing"
+                stats["status"] = "pausing"
             elif re.search("paused", out[0]) is not None:
-                stats["status"] = u"paused"
+                stats["status"] = "paused"
             else:
-                stats["status"] = u"running"
+                stats["status"] = "running"
             # make sure we have a second line before parsing it.
             if len(out) > 1 and re.search("chunks balanced", out[1]) is not None:
                 percent_left = out[1].split()[-2][:-1]
@@ -1930,7 +1976,7 @@ def balance_status(pool):
                 except:
                     pass
         elif re.match("No balance", out[0]) is not None:
-            stats["status"] = u"finished"
+            stats["status"] = "finished"
             stats["percent_done"] = 100
     return stats
 
@@ -2000,7 +2046,7 @@ def balance_status_internal(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    stats = {"status": u"unknown"}
+    stats = {"status": "unknown"}
     try:
         mnt_pt = mount_root(pool)
     except Exception as e:
@@ -2020,12 +2066,12 @@ def balance_status_internal(pool):
         if fields[0] == "Unallocated:":
             unallocated = int(fields[1])
             if unallocated < 0:
-                stats["status"] = u"running"
+                stats["status"] = "running"
                 break
     if unallocated >= 0:
         # We have no 'tell' so report a finished balance as there is no
         # evidence of one happening.
-        stats["status"] = u"finished"
+        stats["status"] = "finished"
         stats["percent_done"] = 100
     return stats
 
@@ -2044,10 +2090,10 @@ def balance_status_all(pool):
     active = False
     internal = False
     status = balance_status(pool)
-    if status["status"] in [u"unknown", u"finished"]:
+    if status["status"] in ["unknown", "finished"]:
         # Try internal balance detection as we don't have regular balance in-flight.
         status_internal = balance_status_internal(pool)
-        if status_internal["status"] not in [u"unknown", u"finished"]:
+        if status_internal["status"] not in ["unknown", "finished"]:
             internal = active = True
             status = status_internal
     else:

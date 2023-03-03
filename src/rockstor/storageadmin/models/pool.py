@@ -22,9 +22,10 @@ from fs.btrfs import (
     pool_usage,
     usage_bound,
     are_quotas_enabled,
-    is_pool_missing_dev,
+    pool_missing_dev_count,
     dev_stats_zero,
     default_subvol,
+    PROFILE,
 )
 from system.osi import mount_status
 
@@ -47,22 +48,38 @@ class Pool(models.Model):
 
     def __init__(self, *args, **kwargs):
         super(Pool, self).__init__(*args, **kwargs)
-        self.update_missing_dev()
+        self.update_missing_dev_count()
         self.update_mnt_pt_var()
         self.update_device_stats()
 
-    def update_missing_dev(self, *args, **kwargs):
-        # Establish an instance variable to track missing device status.
-        # Currently Boolean and may be updated during instance life by
-        # calling this method again or directly setting the field.
+    def update_missing_dev_count(self, *args, **kwargs):
+        # Establish instance variable to track missing device count (Int).
+        # May be updated during instance life by calling this method again,
+        # or by directly setting the instance variables.
         try:
-            self.missing_dev = is_pool_missing_dev(self.name)
+            self.missing_dev_count = pool_missing_dev_count(self.name)
         except:
-            self.missing_dev = False
+            self.missing_dev_count = 0
 
     @property
     def has_missing_dev(self, *args, **kwargs):
-        return self.missing_dev
+        return self.missing_dev_count != 0
+
+    @property
+    def dev_missing_count(self, *args, **kwargs):
+        return self.missing_dev_count
+
+    @property
+    def redundancy_exceeded(self, *args, **kwargs):
+        # Establish if redundancy is exceeded. Returns Boolean.
+        # Use instance var 'missing_dev_count' to preserve fs tools as source of truth.
+        # But we could use db via:
+        # self.disk_set.count() - self.disk_set.attached().count()
+        #
+        # Fast return if no missing devices
+        if self.missing_dev_count == 0:
+            return False
+        return self.missing_dev_count > PROFILE[self.raid].max_dev_missing
 
     def update_mnt_pt_var(self, *args, **kwargs):
         # Establish an instance variable of our mnt_pt. Primarily, at least initially,
@@ -140,4 +157,4 @@ class Pool(models.Model):
 
     class Meta:
         app_label = "storageadmin"
-        ordering = ['-id']
+        ordering = ["-id"]

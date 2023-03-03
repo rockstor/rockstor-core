@@ -35,7 +35,7 @@ from fs.btrfs import (
     balance_status_internal,
     balance_status_all,
     BalanceStatusAll,
-    is_pool_missing_dev,
+    pool_missing_dev_count,
     btrfsprogs_legacy,
     scrub_status_raw,
     scrub_status_extra,
@@ -1665,9 +1665,9 @@ class BTRFSTests(unittest.TestCase):
             msg="Failed to return results from non btrfs device.",
         )
 
-    def test_is_pool_missing_dev(self):
+    def test_pool_missing_dev_count(self):
         """
-        Test is_pool_missing_dev() across various pool specific btrfs fi show outputs.
+        Test pool_missing_dev_count() across various pool specific btrfs fi show outputs.
         """
         # More modern output where MISSING is now in upper case, and no longer only
         # appears on the first or 3rd-last line.
@@ -1688,12 +1688,83 @@ class BTRFSTests(unittest.TestCase):
         ]
         err = [[""]]
         rc = [0]
-        expected_result = [True]
+        expected_result = [1]
+
+        # Leap 15.4 stable kernel backport 6.2.0-lp154.6.g09a9a65-default
+        # raid0 0 missing mounted:
+        pool_label.append("test-pool-new-kernel")
+        fi_show_out.append(
+            [
+                "Label: 'test-pool-new-kernel'  uuid: 2c680ff8-9687-4356-87db-e48d23749d80",
+                "\tTotal devices 3 FS bytes used 2829742080",
+                "\tdevid    5 size 5368709120 used 1207959552 path /dev/sda",
+                "\tdevid    7 size 5368709120 used 1207959552 path /dev/vdb",
+                "\tdevid    8 size 5368709120 used 1207959552 path /dev/vda",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(0)
+
+        # raid0 1 missing mounted (as dev removed live via virtio):
+        # Note: we have a path entry for the missing device on live removal.
+        pool_label.append("test-pool-new-kernel")
+        fi_show_out.append(
+            [
+                "Label: 'test-pool-new-kernel'  uuid: 2c680ff8-9687-4356-87db-e48d23749d80",
+                "\tTotal devices 3 FS bytes used 2829742080",
+                "\tdevid    5 size 5368709120 used 1207959552 path /dev/sda",
+                "\tdevid    7 size 5368709120 used 1207959552 path /dev/vdb",
+                "\tdevid    8 size 0 used 0 path /dev/vda MISSING",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(1)
+
+        # raid0 2 missing mounted (as devs removed live via virtio):
+        pool_label.append("test-pool-new-kernel")
+        fi_show_out.append(
+            [
+                "Label: 'test-pool-new-kernel'  uuid: 2c680ff8-9687-4356-87db-e48d23749d80",
+                "\tTotal devices 3 FS bytes used 2829742080",
+                "\tdevid    5 size 5368709120 used 1207959552 path /dev/sda",
+                "\tdevid    7 size 0 used 0 path /dev/vdb MISSING",
+                "\tdevid    8 size 0 used 0 path /dev/vda MISSING",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(2)
+
+        # raid0 2 missing unmounted (after a reboot of the last example of the same)
+        pool_label.append("test-pool-new-kernel")
+        fi_show_out.append(
+            [
+                "warning, device 7 is missing",
+                "warning, device 8 is missing",
+                "Label: 'test-pool-new-kernel'  uuid: 2c680ff8-9687-4356-87db-e48d23749d80",
+                "\tTotal devices 3 FS bytes used 2829742080",
+                "\tdevid    5 size 5368709120 used 1207959552 path /dev/sda",
+                "\t*** Some devices missing",
+                "",
+                "",
+            ]
+        )
+        err.append(["ERROR: cannot read chunk root", ""])
+        rc.append(0)
+        expected_result.append(2)
 
         # Leap 15.4 with default kernel of 5.14.21-150400.24.41-default:
         # unmounted degraded pool:
-        pool_label = ["test-pool-default-kernel"]
-        fi_show_out = [
+        pool_label.append("test-pool-default-kernel")
+        fi_show_out.append(
             [
                 "warning, device 1 is missing",
                 "Label: 'test-pool-default-kernel'  uuid: 21345a94-f2bf-48d7-a2be-37734ffd2a48",
@@ -1705,15 +1776,40 @@ class BTRFSTests(unittest.TestCase):
                 "",
                 "",
             ]
-        ]
-        err = [[""]]
-        rc = [0]
-        expected_result = [True]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(1)
+
+        # Leap 15.4 with default kernel of 5.14.21-150400.24.41-default:
+        # unmounted degraded pool with redundancy exceeded
+        pool_label.append("test-pool-default-kernel")
+        fi_show_out.append(
+            [
+                "warning, device 8 is missing",
+                "warning, device 7 is missing",
+                "Label: 'test-pool-default-kernel'  uuid: 2c680ff8-9687-4356-87db-e48d23749d80",
+                "\tTotal devices 3 FS bytes used 2829807616",
+                "\tdevid    5 size 5368709120 used 2281701376 path /dev/sda",
+                "\t*** Some devices missing",
+                "",
+                "",
+            ]
+        )
+        err.append(
+            [
+                "bad tree block 41142992896, bytenr mismatch, want=41142992896, have=0",
+                "ERROR: cannot read chunk root",
+                "",
+            ]
+        )
+        rc.append(0)
+        expected_result.append(2)
 
         # Leap 15.4 with default kernel of 5.14.21-150400.24.41-default:
         # mounted -o ro,degraded
-        pool_label = ["test-pool-default-kernel"]
-        fi_show_out = [
+        pool_label.append("test-pool-default-kernel")
+        fi_show_out.append(
             [
                 "Label: 'test-pool-default-kernel'  uuid: 21345a94-f2bf-48d7-a2be-37734ffd2a48",
                 "\tTotal devices 4 FS bytes used 4508352512",
@@ -1724,10 +1820,28 @@ class BTRFSTests(unittest.TestCase):
                 "",
                 "",
             ]
-        ]
-        err = [[""]]
-        rc = [0]
-        expected_result = [True]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(1)
+
+        # 6.2.0 raid1 1 missing live removed still mounted rw and no degraded.
+        pool_label.append("test-pool-new-kernel")
+        fi_show_out.append(
+            [
+                "Label: 'test-pool-new-kernel'  uuid: 2c680ff8-9687-4356-87db-e48d23749d80",
+                "\tTotal devices 4 FS bytes used 2829578240",
+                "\tdevid    5 size 5368709120 used 1342177280 path /dev/sda",
+                "\tdevid    7 size 5368709120 used 1342177280 path /dev/vdb",
+                "\tdevid    8 size 0 used 0 path /dev/vda MISSING",
+                "\tdevid    9 size 5368709120 used 3254779904 path /dev/sdc",
+                "",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(1)
 
         pool_label.append("ROOT")
         fi_show_out.append(
@@ -1741,14 +1855,14 @@ class BTRFSTests(unittest.TestCase):
         )
         err.append([""])
         rc.append(0)
-        expected_result.append(False)
+        expected_result.append(0)
 
-        # Test for our return False on label = None.
+        # Test for our return 0 on label = None.
         pool_label.append(None)
         fi_show_out.append([""])
         err.append([""])
         rc.append(0)
-        expected_result.append(False)
+        expected_result.append(0)
 
         # Cycle through each of the above mock_run_command data sets.
         for label, out, e, r, result in zip(
@@ -1756,9 +1870,9 @@ class BTRFSTests(unittest.TestCase):
         ):
             self.mock_run_command.return_value = (out, e, r)
             self.assertEqual(
-                is_pool_missing_dev(label),
+                pool_missing_dev_count(label),
                 result,
-                msg="Un-expected boolean returned: is_pool_missing_dev. Mock ({}) "
+                msg="Un-expected boolean returned: pool_missing_dev_count. Mock ({}) "
                 "return expected ({})".format(out, result),
             )
 
@@ -1958,7 +2072,7 @@ class BTRFSTests(unittest.TestCase):
         # A non degraded mount of rock-pool-3 was then successfully achieved
         # the the output there after showed no signs of issue.
         # So we don't count this pool as degraded in degraded_pools_found().
-        # But it would still be counted as degraded by is_pool_missing_dev()!!
+        # But it would still be counted as degraded by pool_missing_dev_count()!!
         # This diversity in degraded pool assessment may prove useful later.
         fi_show_out.append(
             [
