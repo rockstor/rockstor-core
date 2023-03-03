@@ -33,7 +33,7 @@ from rest_framework.response import Response
 import rest_framework_custom as rfc
 from cli.rest_util import api_call
 from smart_manager.models.service import Service, ServiceStatus
-from storageadmin.models import ConfigBackup, RockOn, Share
+from storageadmin.models import ConfigBackup, RockOn, Pool, Share
 from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
 from storageadmin.views.rockon_helpers import rockon_tasks_pending
@@ -214,6 +214,12 @@ def validate_taskdef_meta(sa_ml, taskdef_meta, task_type):
         target_share_id = get_target_share_id(source_name)
         # Update taskdef_meta (needs to be a unicode object)
         taskdef_meta["share"] = unicode(target_share_id)
+    if task_type == "scrub":
+        # get ID of pool name in the target system
+        target_pool_id = get_target_pool_id(taskdef_meta["pool_name"])
+        # Update taskdef_meta (needs to be a unicode object)
+        taskdef_meta["pool"] = unicode(target_pool_id)
+
     return taskdef_meta
 
 
@@ -556,6 +562,14 @@ def get_target_share_id(source_name):
     """
     so = Share.objects.get(name=source_name)
     return so.id
+
+
+def get_target_pool_id(source_name):
+    """
+    Takes a pool name and returns its ID from the database.
+    """
+    po = Pool.objects.get(name=source_name)
+    return po.id
 
 
 @db_task()

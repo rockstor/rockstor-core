@@ -30,11 +30,14 @@ from storageadmin.views.config_backup import (
 """
 Fixture creation instructions:
 
-System needs 1 non system pool 'rock-pool', at any raid level.
+System needs 2 non system pools:
+- 'rock-pool', at any raid level.
+- 'rock-pool2', at any raid level.
 
 - Create 1 share named 'test_share01'
 - Create 1 share named 'test_share02'
 
+export DJANGO_SETTINGS_MODULE="settings"
 poetry run django-admin dumpdata storageadmin.pool storageadmin.share \
 --natural-foreign --indent 4 > \
 src/rockstor/storageadmin/fixtures/test_config_backup.json
@@ -1192,6 +1195,42 @@ class ConfigBackupTests(APITestMixin):
             "model": "smart_manager.taskdefinition",
             "pk": 3,
         },
+        {
+            "model": "smart_manager.taskdefinition",
+            "pk": 4,
+            "fields": {
+                "name": "rockpool_scrub",
+                "task_type": "scrub",
+                "json_meta": '{"pool_name": "rock-pool", "pool": "2"}',
+                "enabled": False,
+                "crontab": "42 3 * * 5",
+                "crontabwindow": "*-*-*-*-*-*",
+            },
+        },
+        {
+            "model": "smart_manager.taskdefinition",
+            "pk": 5,
+            "fields": {
+                "name": "boguspool_scrub",
+                "task_type": "scrub",
+                "json_meta": '{"pool_name": "bogus-pool", "pool": "99"}',
+                "enabled": False,
+                "crontab": "42 3 * * 5",
+                "crontabwindow": "*-*-*-*-*-*",
+            },
+        },
+        {
+            "model": "smart_manager.taskdefinition",
+            "pk": 6,
+            "fields": {
+                "name": "rockpool2_scrub",
+                "task_type": "scrub",
+                "json_meta": '{"pool_name": "rock-pool2", "pool": "3"}',
+                "enabled": False,
+                "crontab": "42 3 * * 5",
+                "crontabwindow": "*-*-*-*-*-*",
+            },
+        },
     ]
 
     @classmethod
@@ -1865,7 +1904,6 @@ class ConfigBackupTests(APITestMixin):
                 "max_count": "4",
             }
         ]
-
         out = [
             {
                 "writable": True,
@@ -1875,6 +1913,14 @@ class ConfigBackupTests(APITestMixin):
                 "max_count": "4",
             }
         ]
+
+        task_type.append("scrub")
+        taskdef_meta.append({"pool_name": "rock-pool", "pool": "2"})
+        out.append({"pool_name": "rock-pool", "pool": "2"})
+
+        task_type.append("scrub")
+        taskdef_meta.append({"pool_name": "rock-pool2", "pool": "3"})
+        out.append({"pool_name": "rock-pool2", "pool": "4"})
 
         for t, m, o in zip(task_type, taskdef_meta, out):
             ret = validate_taskdef_meta(self.sa_ml, m, t)
@@ -1888,25 +1934,49 @@ class ConfigBackupTests(APITestMixin):
 
     def test_validate_task_definitions(self):
         """
-        Test:
+        Test the correct parsing
+        Snapshot:
         - valid metadata (snap_daily_ts01 in sm_ml)
         - invalid metadata: wrong share ID in backup file (snap_daily_ts02 in sm_ml)
         - invalid metadata: share does not exist on target system (snap_daily_ts04 in sm_ml)
+
+        Scrub:
+        - valid metadata: no pool ID change (rockpool_scrub in sm_ml)
+        - valid metadata: with pool ID change (rockpool2_scrub in sm_ml)
+        - invalid metadata: pool does not exist on target system (boguspool_scrub in sm_ml)
         """
-        out = [{
-            "task_type": "snapshot",
-            "name": "snap_daily_ts01",
-            "crontabwindow": "*-*-*-*-*-*",
-            "enabled": False,
-            "crontab": "42 3 * * *",
-            "meta": {
-                "writable": True,
-                "visible": True,
-                "prefix": "snap_daily_ts01",
-                "share": "3",
-                "max_count": "4",
+        out = [
+            {
+                "task_type": "snapshot",
+                "name": "snap_daily_ts01",
+                "crontabwindow": "*-*-*-*-*-*",
+                "enabled": False,
+                "crontab": "42 3 * * *",
+                "meta": {
+                    "writable": True,
+                    "visible": True,
+                    "prefix": "snap_daily_ts01",
+                    "share": "3",
+                    "max_count": "4",
+                },
             },
-        }]
+            {
+                "task_type": "scrub",
+                "name": "rockpool_scrub",
+                "crontabwindow": "*-*-*-*-*-*",
+                "enabled": False,
+                "crontab": "42 3 * * 5",
+                "meta": {"pool_name": "rock-pool", "pool": "2"},
+            },
+            {
+                "task_type": "scrub",
+                "name": "rockpool2_scrub",
+                "crontabwindow": "*-*-*-*-*-*",
+                "enabled": False,
+                "crontab": "42 3 * * 5",
+                "meta": {"pool_name": "rock-pool2", "pool": "4"},
+            },
+        ]
         ret = validate_task_definitions(self.sm_ml, self.sa_ml)
         self.assertEqual(
             ret,
