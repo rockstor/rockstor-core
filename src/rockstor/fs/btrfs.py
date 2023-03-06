@@ -687,14 +687,23 @@ def subvol_info(mnt_pt):
 
 def add_share(pool, share_name, qid):
     """
-    share is a subvolume in btrfs.
+    Wrapper for 'btrfs subvol create' pool_mnt/share_name that will contextually also
+    include a Rockstor native qgroup option, e.g. '-i 2015/6', if our -1/-1 flag value
+    for quotas disabled is not found.
+    A Rockstor 'share' is a btrfs 'subvolume'.
+    :param pool: pool object
+    :param share_name: string for proposed share (btrfs subvol) name.
+    :return run_command(generated_command) or True if given pool subvol already exists.
     """
     root_pool_mnt = mount_root(pool)
     subvol_mnt_pt = root_pool_mnt + "/" + share_name
     # Ensure our root_pool_mnt is not immutable, see: remove_share()
     toggle_path_rw(root_pool_mnt, rw=True)
     if not is_subvol(subvol_mnt_pt):
-        sub_vol_cmd = [BTRFS, "subvolume", "create", "-i", qid, subvol_mnt_pt]
+        if qid == PQGROUP_DEFAULT:  # Quotas disabled
+            sub_vol_cmd = [BTRFS, "subvolume", "create", subvol_mnt_pt]
+        else:
+            sub_vol_cmd = [BTRFS, "subvolume", "create", "-i", qid, subvol_mnt_pt]
         return run_command(sub_vol_cmd)
     return True
 
@@ -1223,7 +1232,7 @@ def qgroup_max(mnt_pt):
         ):
             logger.info(
                 "Mount Point: {} has indeterminate quota status, skipping "
-                "qgroup show.\nTry 'btrfs qgroup disable {}'.".format(mnt_pt, mnt_pt)
+                "qgroup show.\nTry 'btrfs quota disable {}'.".format(mnt_pt, mnt_pt)
             )
             return -1
         # otherwise we raise an exception as normal.
@@ -1316,7 +1325,7 @@ def qgroup_destroy(qid, mnt_pt):
         ):
             logger.info(
                 "Mount Point: {} has indeterminate quota status, skipping "
-                "qgroup show.\nTry 'btrfs qgroup disable {}'.".format(mnt_pt, mnt_pt)
+                "qgroup show.\nTry 'btrfs quota disable {}'.".format(mnt_pt, mnt_pt)
             )
             return False
         # otherwise we raise an exception as normal
