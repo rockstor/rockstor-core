@@ -635,3 +635,4 @@ class SystemPackageTests(unittest.TestCase):
     #  test_auto_update(self)
     #  Related additional low level test:
     #  test_auto_update_status(self)
+    #  Add test for rockstor_pkg_update_check()

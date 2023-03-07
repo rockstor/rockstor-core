@@ -321,7 +321,7 @@ def rockstor_pkg_update_check(subscription=None):
     machine_arch = platform.machine()
     if subscription is not None:
         switch_repo(subscription)
-    pkg = "rockstor"
+    pkg = "rockstor*{}".format(machine_arch)
     version, date = rpm_build_info(pkg)
     if date is None:
         # None date signifies no rpm installed so list all changelog entries.
