@@ -14,6 +14,20 @@
     }
 },
 {
+    "model": "storageadmin.pool",
+    "pk": 4,
+    "fields": {
+        "name": "rock-pool2",
+        "uuid": "3176aa98-a939-4f7b-aa6c-70c18570fc8e",
+        "size": 5242880,
+        "raid": "single",
+        "toc": "2023-03-03T21:21:14.952Z",
+        "compression": "no",
+        "mnt_options": "",
+        "role": null
+    }
+},
+{
     "model": "storageadmin.share",
     "pk": 3,
     "fields": {
