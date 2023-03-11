@@ -22,11 +22,11 @@ from scripts.scheduled_tasks.reboot_shutdown import (
 )
 
 
-class ScriptTests(unittest.TestCase):
+class RebootShutdownScriptTests(unittest.TestCase):
     """
-    The tests in this suite can be run via the following command:
-    cd <root dir of rockstor ie /opt/rockstor>
-    ./bin/test --settings=test-settings -v 3 -p test_system_network*
+    To run the tests:
+    export DJANGO_SETTINGS_MODULE="settings"
+    cd src/rockstor && poetry run django-admin test -v 2 -p test_reboot_shutdown.py
     """
 
     def setUp(self):
