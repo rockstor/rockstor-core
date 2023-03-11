@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 def validate_reboot_shutdown_meta(meta):
     if type(meta) != dict:
-        raise Exception("meta must be a dictionary, not %s" % type(meta))
+        raise Exception("meta must be a dictionary, not {}".format(type(meta)))
     return meta
 
 
@@ -99,8 +99,8 @@ def main():
         aw = APIWrapper()
         if tdo.task_type not in ["reboot", "shutdown", "suspend"]:
             logger.error(
-                "task_type(%s) is not a system reboot, "
-                "shutdown or suspend." % tdo.task_type
+                "task_type({}) is not a system reboot, "
+                "shutdown or suspend.".format(tdo.task_type)
             )
             return
         meta = json.loads(tdo.json_meta)
@@ -119,7 +119,7 @@ def main():
         try:
             # set default command url before checking if it's a shutdown
             # and if we have an rtc wake up
-            url = "commands/%s" % tdo.task_type
+            url = "commands/{}".format(tdo.task_type)
 
             # if task_type is shutdown and rtc wake up true
             # parse crontab hour & minute vs rtc hour & minute to state
@@ -144,15 +144,15 @@ def main():
                     epoch += timedelta(days=1)
 
                 epoch = epoch.strftime("%s")
-                url = "%s/%s" % (url, epoch)
+                url = "{}/{}".format(url, epoch)
 
             aw.api_call(url, data=None, calltype="post", save_error=False)
-            logger.debug("System %s scheduled" % tdo.task_type)
+            logger.debug("System {} scheduled".format(tdo.task_type))
             t.state = "finished"
 
         except Exception as e:
             t.state = "failed"
-            logger.error("Failed to schedule system %s" % tdo.task_type)
+            logger.error("Failed to schedule system {}".format(tdo.task_type))
             logger.exception(e)
 
         finally:
