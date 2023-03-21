@@ -1871,6 +1871,11 @@ def get_byid_name_map():
     was encountered by run_command or no by-id type names were encountered.
     """
     byid_name_map = {}
+    if not os.path.isdir("/dev/disk/by-id"):
+        logger.info(
+            "-- /dev/disk/by-id missing. See 'Minimum system requirements' in docs. --"
+        )
+        return byid_name_map
     out, err, rc = run_command([LS, "-lr", "/dev/disk/by-id"], throw=True)
     if rc == 0:
         for each_line in out:
