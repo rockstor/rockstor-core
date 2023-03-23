@@ -16,7 +16,7 @@ import json
 import unittest
 from datetime import datetime
 from fs.btrfs import (
-    pool_raid,
+    get_pool_raid_levels,
     is_subvol,
     volume_usage,
     balance_status,
@@ -39,6 +39,7 @@ from fs.btrfs import (
     btrfsprogs_legacy,
     scrub_status_raw,
     scrub_status_extra,
+    get_pool_raid_profile,
 )
 from mock import patch
 
@@ -84,7 +85,7 @@ class BTRFSTests(unittest.TestCase):
     def test_get_pool_raid_levels_identification(self):
         """
         Presents the raid identification function with example data & compares
-        it's return dict to that expected for the given input.  :return: 'ok'
+        its return dict to that expected for the given input.  :return: 'ok'
         if all is as expected or a message indicating which raid level was
         incorrectly identified given the test data.  N.B. Only the first raid
         level fail is indicated, however all are expected to pass anyway so we
@@ -111,6 +112,19 @@ class BTRFSTests(unittest.TestCase):
             "system": "single",
             "globalreserve": "single",
             "metadata": "single",
+        }
+        single_dup_fi_df = [
+            "Data, single: total=3.00GiB, used=0.00B",
+            "System, DUP: total=32.00MiB, used=16.00KiB",
+            "Metadata, DUP: total=768.00MiB, used=144.00KiB",
+            "GlobalReserve, single: total=3.50MiB, used=0.00B",
+            "",
+        ]
+        single_dup_return = {
+            "data": "single",
+            "system": "dup",
+            "globalreserve": "single",
+            "metadata": "dup",
         }
         raid0_fi_df = [
             "Data, RAID0: total=512.00MiB, used=256.00KiB",
@@ -208,9 +222,38 @@ class BTRFSTests(unittest.TestCase):
             "globalreserve": "single",
             "metadata": "dup",
         }
+        # N.B. observer output after multiple balance events.
+        #  We currently ignore "GlobalReserve"
+        raid1_1c3_fi_df = [
+            "Data, RAID1: total=3.00GiB, used=0.00B",
+            "System, RAID1C3: total=32.00MiB, used=16.00KiB",
+            "Metadata, RAID1C3: total=768.00MiB, used=144.00KiB",
+            "GlobalReserve, single: total=3.50MiB, used=0.00B",
+            "",
+        ]
+        raid1_1c3_return = {
+            "data": "raid1",
+            "system": "raid1c3",
+            "globalreserve": "single",
+            "metadata": "raid1c3",
+        }
+        raid6_1c4_fi_df = [
+            "Data, RAID6: total=4.00GiB, used=0.00B",
+            "System, RAID1C4: total=32.00MiB, used=16.00KiB",
+            "Metadata, RAID1C4: total=768.00MiB, used=144.00KiB",
+            "GlobalReserve, single: total=3.50MiB, used=0.00B",
+            "",
+        ]
+        raid6_1c4_return = {
+            "data": "raid6",
+            "system": "raid1c4",
+            "globalreserve": "single",
+            "metadata": "raid1c4",
+        }
         # list used to report what raid level is currently under test.
         raid_levels_tested = [
             "single",
+            "single-dup",
             "raid0",
             "raid1",
             "raid10",
@@ -218,10 +261,13 @@ class BTRFSTests(unittest.TestCase):
             "raid6",
             "raid1_some_single_chunks",
             "default_sys_pool",
+            "raid1-1c3",
+            "raid6-1c4",
         ]
         # list of example fi_df outputs in raid_levels_tested order
         btrfs_fi_di = [
             single_fi_df,
+            single_dup_fi_df,
             raid0_fi_df,
             raid1_fi_df,
             raid10_fi_df,
@@ -229,10 +275,13 @@ class BTRFSTests(unittest.TestCase):
             raid6_fi_df,
             raid1_fi_df_some_single_chunks,
             default_sys_fi_df,
+            raid1_1c3_fi_df,
+            raid6_1c4_fi_df,
         ]
         # list of correctly parsed return dictionaries
         return_dict = [
             single_return,
+            single_dup_return,
             raid0_return,
             raid1_return,
             raid10_return,
@@ -240,6 +289,8 @@ class BTRFSTests(unittest.TestCase):
             raid6_return,
             raid1_return,
             default_sys_return,
+            raid1_1c3_return,
+            raid6_1c4_return,
         ]
         # simple iteration over above example inputs to expected outputs.
         for raid_level, fi_df, expected_result in map(
@@ -249,11 +300,58 @@ class BTRFSTests(unittest.TestCase):
             self.mock_run_command.return_value = (fi_df, cmd_e, cmd_rc)
             # assert get_pool_raid_level returns what we expect.
             self.assertEqual(
-                pool_raid(mount_point),
+                get_pool_raid_levels(mount_point),
                 expected_result,
-                msg="get_pool_raid_level() miss identified raid "
+                msg="get_pool_raid_levels() miss identified raid "
                 "level {}".format(raid_level),
             )
+
+    def test_get_pool_raid_profile(self):
+        """
+        Present get_pool_raid_profile() with example output from get_pool_raid_levels()
+        and ensure it returns the appropriate profile
+        """
+        # N.B. dict limits test data to unique indexes (expected profiles).
+        test_raid_levels = {
+            "raid6-1c4": {
+                "data": "raid6",
+                "system": "raid1c4",
+                "globalreserve": "single",
+                "metadata": "raid1c4",
+            },
+            "single": {
+                "data": "single",
+                "system": "single",
+                "globalreserve": "single",
+                "metadata": "single",
+            },
+            "single-dup": {
+                "data": "single",
+                "system": "dup",
+                "globalreserve": "single",
+                "metadata": "dup",
+            },
+            "unknown": {},
+        }
+        for profile, raid_levels in test_raid_levels.items():
+            self.assertEqual(
+                get_pool_raid_profile(raid_levels),
+                profile,
+                msg="get_pool_raid_profile() failed for profile {}".format(profile),
+            )
+
+    def test_get_pool_raid_profile_unknown_matched(self):
+        fake_levels = {
+            "data": "fakelevel",
+            "system": "fakelevelmeta",
+            "globalreserve": "yaf",
+            "metadata": "fakelevel",
+        }
+        self.assertEqual(
+            get_pool_raid_profile(fake_levels),
+            "unknown",
+            msg="matching unknown data-metadata, should return unknown",
+        )
 
     def test_is_subvol_exists(self):
         mount_point = "/mnt2/test-pool/test-share"

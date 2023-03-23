@@ -37,12 +37,7 @@
                 <label class="col-sm-4 control-label" for="raid_level">Raid configuration<span class="required"> *</span></label>
                 <div class="col-sm-6">
                     <select class="form-control" id="raid_level" name="raid_level">
-                        <option value="single">Single</option>
-                        <option value="raid0">Raid0</option>
-                        <option value="raid1">Raid1</option>
-                        <option value="raid10">Raid10</option>
-                        <option value="raid5">Raid5</option>
-                        <option value="raid6">Raid6</option>
+                        {{display_all_raid_levels}}
                     </select>
                 </div>
             </div>

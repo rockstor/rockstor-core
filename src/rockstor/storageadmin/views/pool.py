@@ -52,7 +52,24 @@ logger = logging.getLogger(__name__)
 
 class PoolMixin(object):
     serializer_class = PoolInfoSerializer
-    SUPPORTED_PROFILES = ("single", "raid0", "raid1", "raid10", "raid5", "raid6")
+    SUPPORTED_PROFILES = (
+        "single",
+        "raid0",
+        "raid1",
+        "raid10",
+        "raid5",
+        "raid6",
+        "raid1c3",
+        "raid1c4",
+        "raid1-1c3",
+        "raid1-1c4",
+        "raid10-1c3",
+        "raid10-1c4",
+        "raid5-1",
+        "raid5-1c3",
+        "raid6-1c3",
+        "raid6-1c4",
+    )
 
     @staticmethod
     def _validate_disk(d, request):
