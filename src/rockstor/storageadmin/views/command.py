@@ -23,7 +23,8 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from storageadmin.views import DiskMixin
 from system.osi import uptime, kernel_info, get_device_mapper_map
-from fs.btrfs import mount_share, mount_root, get_dev_pool_info, pool_raid, mount_snap
+from fs.btrfs import mount_share, mount_root, get_dev_pool_info, get_pool_raid_levels, mount_snap, \
+    get_pool_raid_profile
 from system.ssh import sftp_mount_map, sftp_mount
 from system.osi import (
     system_shutdown,
@@ -125,7 +126,8 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 p.uuid = pool_info.uuid
                 p.save()
                 mount_root(p)
-                p.raid = pool_raid(p.mnt_pt)["data"]
+                pool_raid_info = get_pool_raid_levels(p.mnt_pt)
+                p.raid = get_pool_raid_profile(pool_raid_info)
                 p.size = p.usage_bound()
                 # Consider using mount_status() parse to update root pool db on
                 # active (fstab initiated) compression setting.

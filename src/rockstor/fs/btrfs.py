@@ -96,49 +96,98 @@ DevUsageInfo = collections.namedtuple("DevUsageInfo", "temp_name size allocated"
 DefaultSubvol = collections.namedtuple("DefaultSubvol", "id path boot_to_snap")
 # Named Tuple for balance status: active (boolean) internal (boolean) status (dict)
 BalanceStatusAll = collections.namedtuple("BalanceStatusAll", "active internal status")
-# Named Tuple to define raid profile limits
-btrfs_profile = collections.namedtuple("btrfs_profile", "min_dev_count max_dev_missing")
-# List of profiles indexed by their name.
+# Named Tuple to define raid profile limits and data/metadata
+btrfs_profile = collections.namedtuple(
+    "btrfs_profile", "min_dev_count max_dev_missing data_raid metadata_raid"
+)
+# List of Rockstor btrfs raid profiles indexed by their name.
 # I.e. PROFILE[raid_level].min_dev_count
 # N.B. Mixed profiles indicated by "-" i.e. DATA-METADATA
+# https://btrfs.readthedocs.io/en/latest/Kernel-by-version.html#jan-2020
+# RAID1C34 along with incompatible flag added in kernel 5.5.
+# https://btrfs.readthedocs.io/en/latest/Kernel-by-version.html#nov-2021 kernel 5.15
+# enabled running raid0 and 10 with a minimum of 1 & 2 devices respectively.
+# https://btrfs.readthedocs.io/en/latest/mkfs.btrfs.html
+# "It's recommended to use specific profiles ..."
+# The following are Rockstor's specifics:
 PROFILE = {
+    # Fail through profile to account catch unknown raid levels/combinations.
+    # We specify a min dev count of 4 to account for any raid level,
+    # and likewise play safe by allowing for no missing devices.
+    "unknown": btrfs_profile(
+        min_dev_count=4, max_dev_missing=0, data_raid="unknown", metadata_raid="unknown"
+    ),
     # non redundant profiles!
-    "single": btrfs_profile(min_dev_count=1, max_dev_missing=0),
-    "raid0": btrfs_profile(min_dev_count=2, max_dev_missing=0),
+    "single": btrfs_profile(
+        min_dev_count=1, max_dev_missing=0, data_raid="single", metadata_raid="single"
+    ),
+    "single-dup": btrfs_profile(
+        min_dev_count=1, max_dev_missing=0, data_raid="single", metadata_raid="dup"
+    ),
+    "raid0": btrfs_profile(
+        min_dev_count=2, max_dev_missing=0, data_raid="raid0", metadata_raid="raid0"
+    ),
     # Mirrored profiles:
-    "raid1": btrfs_profile(min_dev_count=2, max_dev_missing=1),
-    "raid1c3": btrfs_profile(min_dev_count=3, max_dev_missing=2),
-    "raid1c4": btrfs_profile(min_dev_count=4, max_dev_missing=3),
-    "raid10": btrfs_profile(min_dev_count=4, max_dev_missing=1),
-    # Parity raid levels
-    "raid5": btrfs_profile(min_dev_count=2, max_dev_missing=1),
-    "raid6": btrfs_profile(min_dev_count=3, max_dev_missing=2),
+    "raid1": btrfs_profile(
+        min_dev_count=2, max_dev_missing=1, data_raid="raid1", metadata_raid="raid1"
+    ),
+    "raid1c3": btrfs_profile(
+        min_dev_count=3, max_dev_missing=2, data_raid="raid1c3", metadata_raid="raid1c3"
+    ),
+    "raid1c4": btrfs_profile(
+        min_dev_count=4, max_dev_missing=3, data_raid="raid1c4", metadata_raid="raid1c4"
+    ),
+    "raid10": btrfs_profile(
+        min_dev_count=4, max_dev_missing=1, data_raid="raid10", metadata_raid="raid10"
+    ),
+    # Parity raid levels (recommended min_dev_count is 3 & 4 respectively)
+    "raid5": btrfs_profile(
+        min_dev_count=2, max_dev_missing=1, data_raid="raid5", metadata_raid="raid5"
+    ),
+    "raid6": btrfs_profile(
+        min_dev_count=3, max_dev_missing=2, data_raid="raid6", metadata_raid="raid6"
+    ),
     # ------- MIXED PROFILES DATA-METADATA (max 10 chars) -------
     # Mixed Mirrored profiles:
-    "raid1-1c3": btrfs_profile(min_dev_count=3, max_dev_missing=1),
-    "raid1-1c4": btrfs_profile(min_dev_count=4, max_dev_missing=1),
-    "raid10-1c3": btrfs_profile(min_dev_count=4, max_dev_missing=1),
-    "raid10-1c4": btrfs_profile(min_dev_count=4, max_dev_missing=1),
+    "raid1-1c3": btrfs_profile(
+        min_dev_count=3, max_dev_missing=1, data_raid="raid1", metadata_raid="raid1c3"
+    ),
+    "raid1-1c4": btrfs_profile(
+        min_dev_count=4, max_dev_missing=1, data_raid="raid1", metadata_raid="raid1c4"
+    ),
+    "raid10-1c3": btrfs_profile(
+        min_dev_count=4, max_dev_missing=1, data_raid="raid10", metadata_raid="raid1c3"
+    ),
+    "raid10-1c4": btrfs_profile(
+        min_dev_count=4, max_dev_missing=1, data_raid="raid10", metadata_raid="raid1c4"
+    ),
     # Parity data - Mirrored metadata
-    "raid5-1": btrfs_profile(min_dev_count=2, max_dev_missing=1),
-    "raid5-1c3": btrfs_profile(min_dev_count=3, max_dev_missing=1),
-    "raid6-1c3": btrfs_profile(min_dev_count=3, max_dev_missing=2),
-    "raid6-1c4": btrfs_profile(min_dev_count=4, max_dev_missing=2),
+    "raid5-1": btrfs_profile(
+        min_dev_count=2, max_dev_missing=1, data_raid="raid5", metadata_raid="raid1"
+    ),
+    "raid5-1c3": btrfs_profile(
+        min_dev_count=3, max_dev_missing=1, data_raid="raid5", metadata_raid="raid1c3"
+    ),
+    "raid6-1c3": btrfs_profile(
+        min_dev_count=3, max_dev_missing=2, data_raid="raid6", metadata_raid="raid1c3"
+    ),
+    "raid6-1c4": btrfs_profile(
+        min_dev_count=4, max_dev_missing=2, data_raid="raid6", metadata_raid="raid1c4"
+    ),
 }
 
 
 def add_pool(pool, disks):
     """
     Makes a btrfs pool (filesystem) of name 'pool' using the by-id disk names
-    provided, then attempts to enables quotas for this pool.
-    :param pool: name of pool to create.
+    provided, then attempts to enable quotas for this pool.
+    :param pool: Pool object.
     :param disks: list of by-id disk names without paths to make the pool from.
     :return o, err, rc from last command executed.
     """
     disks_fp = [get_device_path(d) for d in disks]
-    draid = mraid = pool.raid
-    if pool.raid == "single":
-        mraid = "dup"
+    draid = PROFILE[pool.raid].data_raid
+    mraid = PROFILE[pool.raid].metadata_raid
     cmd = [MKFS_BTRFS, "-f", "-d", draid, "-m", mraid, "-L", pool.name]
     cmd.extend(disks_fp)
     # Run the create pool command, any exceptions are logged and raised by
@@ -452,8 +501,7 @@ def get_pool_info(disk):
     return pool_info
 
 
-def pool_raid(mnt_pt):
-    # TODO: propose name change to get_pool_raid_levels(mnt_pt)
+def get_pool_raid_levels(mnt_pt):
     o, e, rc = run_command([BTRFS, "fi", "df", mnt_pt])
     # data, system, metadata, globalreserve
     raid_d = {}
@@ -464,9 +512,33 @@ def pool_raid(mnt_pt):
             raid = fields[1][:-1].lower()
             if block not in raid_d:
                 raid_d[block] = raid
-    if raid_d["metadata"] == "single":
-        raid_d["data"] = raid_d["metadata"]
     return raid_d
+
+
+def get_pool_raid_profile(raid_levels):
+    """
+    Abstracts raid_levels from get_pool_raid_levels(mnt_pt) to a Rockstor raid Profile.
+    See PROFILES const.
+    :param raid_levels: dict returned by get_pool_raid_levels()
+    :return: a PROFILE index.
+    """
+    # dict.get returns None if key not found.
+    data_raid = raid_levels.get("data")
+    metadata_raid = raid_levels.get("metadata")
+    raid_profile = "unknown"
+    if data_raid is None or metadata_raid is None:
+        return raid_profile
+    if data_raid == metadata_raid:
+        raid_profile = data_raid
+    else:
+        # Post Python >= 3.9 use removeprefix("raid")
+        if metadata_raid.startswith("raid"):  # 4 characters
+            raid_profile = data_raid + "-" + metadata_raid[4:]
+        else:
+            raid_profile = data_raid + "-" + metadata_raid
+    if raid_profile not in PROFILE:
+        return "unknown"
+    return raid_profile
 
 
 def cur_devices(mnt_pt):
@@ -1905,11 +1977,8 @@ def balance_pool_cmd(mnt_pt, force=False, convert=None):
     if force:
         cmd.insert(3, "-f")
     if convert is not None:
-        cmd.insert(3, "-dconvert={}".format(convert))
-        # Override metadata on single pools to be dup, as per btrfs default.
-        if convert == "single":
-            convert = "dup"
-        cmd.insert(3, "-mconvert={}".format(convert))
+        cmd.insert(3, "-dconvert={}".format(PROFILE[convert].data_raid))
+        cmd.insert(3, "-mconvert={}".format(PROFILE[convert].metadata_raid))
     else:
         # As we are running with no convert filters a warning and 10 second
         # countdown with ^C prompt will result unless we use "--full-balance".

@@ -46,7 +46,7 @@ class DiskTests(APITestMixin):
         cls.patch_mount_root = patch("storageadmin.views.disk.mount_root")
         cls.mock_mount_root = cls.patch_mount_root.start()
 
-        cls.patch_pool_raid = patch("storageadmin.views.disk.pool_raid")
+        cls.patch_pool_raid = patch("storageadmin.views.disk.get_pool_raid_levels")
         cls.mock_pool_raid = cls.patch_pool_raid.start()
         cls.mock_pool_raid.return_value = {"data": "single", "metadata": "single"}
 

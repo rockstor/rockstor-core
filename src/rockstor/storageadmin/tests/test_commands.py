@@ -32,7 +32,7 @@ class CommandTests(APITestMixin):
         cls.mock_get_pool_info = cls.patch_get_pool_info.start()
         cls.mock_get_pool_info.return_value = {"disks": [], "label": "pool2"}
 
-        cls.patch_pool_raid = patch("storageadmin.views.command.pool_raid")
+        cls.patch_pool_raid = patch("storageadmin.views.command.get_pool_raid_levels")
         cls.mock_pool_raid = cls.patch_pool_raid.start()
 
         cls.patch_mount_share = patch("storageadmin.views.command.mount_share")
