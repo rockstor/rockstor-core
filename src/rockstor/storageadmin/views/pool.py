@@ -49,28 +49,31 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Currently supported Rockstor btrfs raid profiles.
+# See fs.btrfs.PROFILE for all definitions.
+SUPPORTED_PROFILES = (
+    "single",
+    "single-dup",
+    "raid0",
+    "raid1",
+    "raid10",
+    "raid5",
+    "raid6",
+    "raid1c3",
+    "raid1c4",
+    "raid1-1c3",
+    "raid1-1c4",
+    "raid10-1c3",
+    "raid10-1c4",
+    "raid5-1",
+    "raid5-1c3",
+    "raid6-1c3",
+    "raid6-1c4",
+)
+
 
 class PoolMixin(object):
     serializer_class = PoolInfoSerializer
-    SUPPORTED_PROFILES = (
-        "single",
-        "single-dup",
-        "raid0",
-        "raid1",
-        "raid10",
-        "raid5",
-        "raid6",
-        "raid1c3",
-        "raid1c4",
-        "raid1-1c3",
-        "raid1-1c4",
-        "raid10-1c3",
-        "raid10-1c4",
-        "raid5-1",
-        "raid5-1c3",
-        "raid6-1c3",
-        "raid6-1c4",
-    )
 
     @staticmethod
     def _validate_disk(d, request):
@@ -428,9 +431,9 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             raid_level = request.data["raid_level"]
             # Reject creation of unsupported raid_level:
-            if raid_level not in self.SUPPORTED_PROFILES:
-                e_msg = ("Unsupported raid level. Use one of: {}.").format(
-                    self.SUPPORTED_PROFILES
+            if raid_level not in SUPPORTED_PROFILES:
+                e_msg = "Unsupported raid level. Use one of: {}.".format(
+                    SUPPORTED_PROFILES
                 )
                 handle_exception(Exception(e_msg), request)
 
