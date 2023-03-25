@@ -54,6 +54,7 @@ class PoolMixin(object):
     serializer_class = PoolInfoSerializer
     SUPPORTED_PROFILES = (
         "single",
+        "single-dup"
         "raid0",
         "raid1",
         "raid10",
