@@ -90,6 +90,9 @@ class PoolInfoSerializer(serializers.ModelSerializer):
     dev_stats_ok = serializers.BooleanField()
     dev_missing_count = serializers.IntegerField()
     redundancy_exceeded = serializers.BooleanField()
+    data_raid = serializers.CharField()
+    metadata_raid = serializers.CharField()
+
 
     class Meta:
         model = Pool

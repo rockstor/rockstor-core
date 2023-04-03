@@ -77,7 +77,10 @@ PoolRaidChange = RockstorWizardPage.extend({
         Handlebars.registerHelper('display_raid_levels', function() {
             var html = '';
             var _this = this;
-            var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6'];
+            // var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6'];
+            var levels = ['single', 'single-dup', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6',
+                'raid1c3', 'raid1c4', "raid1-1c3", "raid1-1c4", "raid10-1c3",
+                "raid10-1c4", "raid5-1", "raid5-1c3", "raid6-1c3", "raid6-1c4"];
             _.each(levels, function(level) {
                 if (_this.raidLevel != level) {
                     html += '<option value="' + level + '">' + level + '</option>';

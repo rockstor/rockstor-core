@@ -39,6 +39,7 @@ class Pool(models.Model):
     uuid = models.CharField(max_length=100, null=True)
     """size of the pool in KB"""
     size = models.BigIntegerField(default=0)
+    """raid expected values defined in PROFILE dict"""
     raid = models.CharField(max_length=10)
     toc = models.DateTimeField(auto_now=True)
     compression = models.CharField(max_length=256, null=True)
@@ -154,6 +155,22 @@ class Pool(models.Model):
             return are_quotas_enabled(self.mnt_pt_var)
         except:
             return False
+
+    @property
+    def data_raid(self, *args, **kwargs):
+        # Convenience property to return data_raid from self.raid
+        try:
+            return PROFILE[self.raid].data_raid
+        except:
+            return "unknown"
+
+    @property
+    def metadata_raid(self, *args, **kwargs):
+        # Convenience property to return metadata_raid from self.raid
+        try:
+            return PROFILE[self.raid].metadata_raid
+        except:
+            return "unknown"
 
     class Meta:
         app_label = "storageadmin"

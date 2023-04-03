@@ -22,6 +22,7 @@ from mock import patch
 import fs.btrfs
 from storageadmin.models import Disk, Pool, PoolBalance
 from storageadmin.tests.test_api import APITestMixin
+from storageadmin.views.pool import SUPPORTED_PROFILES
 
 """
 Fixture creation instructions:
@@ -193,10 +194,7 @@ class PoolTests(APITestMixin):
             "pname": "invalid-raid-level",
             "raid_level": "derp",
         }
-        e_msg = (
-            "Unsupported raid level. Use one of: "
-            "('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')."
-        )
+        e_msg = "Unsupported raid level. Use one of: {}.".format(SUPPORTED_PROFILES)
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
             response.status_code,

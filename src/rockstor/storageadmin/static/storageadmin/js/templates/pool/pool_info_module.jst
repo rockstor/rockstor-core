@@ -23,7 +23,8 @@
 <div class="module-content">
   <h3>Details</h3>
   Created on: <strong>{{getPoolCreationDate model.toc}}</strong><br/>
-  Raid configuration: <strong>{{model.raid}}</strong><br/>
+  Btrfs Raid configuration: <strong>{{model.raid}}</strong>
+  (Data: {{model.data_raid}} - Metadata: {{model.metadata_raid}})<br/>
   Active mount options / Status: <strong>
   {{#if model.is_mounted}}
     {{model.mount_status}}

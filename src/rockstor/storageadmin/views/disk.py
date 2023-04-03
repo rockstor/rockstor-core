@@ -24,10 +24,10 @@ from fs.btrfs import (
     enable_quota,
     mount_root,
     get_pool_info,
-    pool_raid,
+    get_pool_raid_levels,
     get_dev_pool_info,
     set_pool_label,
-    get_devid_usage,
+    get_devid_usage, get_pool_raid_profile,
 )
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
@@ -414,7 +414,8 @@ class DiskMixin(object):
                 if pool_name is not None:
                     logger.debug("++++ Creating special system pool db entry.")
                     root_compression = "no"
-                    root_raid = pool_raid("/")["data"]
+                    pool_raid_info = get_pool_raid_levels("/")
+                    root_raid = get_pool_raid_profile(pool_raid_info)
                     # scan_disks() has already acquired our fs uuid so inherit.
                     # We have already established btrfs as the fs type.
                     p = Pool(
@@ -867,7 +868,8 @@ class DiskDetailView(rfc.GenericView):
                         do.role = '{"redirect": "%s"}' % device.name
                 do.save()
                 mount_root(po)
-            po.raid = pool_raid("%s%s" % (settings.MNT_PT, po.name))["data"]
+            pool_raid_info = get_pool_raid_levels("{}{}".format(settings.MNT_PT, po.name))
+            po.raid = get_pool_raid_profile(pool_raid_info)
             po.size = po.usage_bound()
             po.save()
             enable_quota(po)
