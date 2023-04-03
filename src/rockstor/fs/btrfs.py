@@ -98,7 +98,8 @@ DefaultSubvol = collections.namedtuple("DefaultSubvol", "id path boot_to_snap")
 BalanceStatusAll = collections.namedtuple("BalanceStatusAll", "active internal status")
 # Named Tuple to define raid profile limits and data/metadata
 btrfs_profile = collections.namedtuple(
-    "btrfs_profile", "min_dev_count max_dev_missing data_raid metadata_raid"
+    "btrfs_profile",
+    "min_dev_count max_dev_missing data_raid metadata_raid data_copies data_parity",
 )
 # List of Rockstor btrfs raid profiles indexed by their name.
 # I.e. PROFILE[raid_level].min_dev_count
@@ -115,64 +116,154 @@ PROFILE = {
     # We specify a min dev count of 4 to account for any raid level,
     # and likewise play safe by allowing for no missing devices.
     "unknown": btrfs_profile(
-        min_dev_count=4, max_dev_missing=0, data_raid="unknown", metadata_raid="unknown"
+        min_dev_count=4,
+        max_dev_missing=0,
+        data_raid="unknown",
+        metadata_raid="unknown",
+        data_copies=1,
+        data_parity=0,
     ),
     # non redundant profiles!
     "single": btrfs_profile(
-        min_dev_count=1, max_dev_missing=0, data_raid="single", metadata_raid="single"
+        min_dev_count=1,
+        max_dev_missing=0,
+        data_raid="single",
+        metadata_raid="single",
+        data_copies=1,
+        data_parity=0,
     ),
     "single-dup": btrfs_profile(
-        min_dev_count=1, max_dev_missing=0, data_raid="single", metadata_raid="dup"
+        min_dev_count=1,
+        max_dev_missing=0,
+        data_raid="single",
+        metadata_raid="dup",
+        data_copies=1,
+        data_parity=0,
     ),
     "raid0": btrfs_profile(
-        min_dev_count=2, max_dev_missing=0, data_raid="raid0", metadata_raid="raid0"
+        min_dev_count=2,
+        max_dev_missing=0,
+        data_raid="raid0",
+        metadata_raid="raid0",
+        data_copies=1,
+        data_parity=0,
     ),
     # Mirrored profiles:
     "raid1": btrfs_profile(
-        min_dev_count=2, max_dev_missing=1, data_raid="raid1", metadata_raid="raid1"
+        min_dev_count=2,
+        max_dev_missing=1,
+        data_raid="raid1",
+        metadata_raid="raid1",
+        data_copies=2,
+        data_parity=0,
     ),
     "raid1c3": btrfs_profile(
-        min_dev_count=3, max_dev_missing=2, data_raid="raid1c3", metadata_raid="raid1c3"
+        min_dev_count=3,
+        max_dev_missing=2,
+        data_raid="raid1c3",
+        metadata_raid="raid1c3",
+        data_copies=3,
+        data_parity=0,
     ),
     "raid1c4": btrfs_profile(
-        min_dev_count=4, max_dev_missing=3, data_raid="raid1c4", metadata_raid="raid1c4"
+        min_dev_count=4,
+        max_dev_missing=3,
+        data_raid="raid1c4",
+        metadata_raid="raid1c4",
+        data_copies=4,
+        data_parity=0,
     ),
     "raid10": btrfs_profile(
-        min_dev_count=4, max_dev_missing=1, data_raid="raid10", metadata_raid="raid10"
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid10",
+        metadata_raid="raid10",
+        data_copies=2,
+        data_parity=0,
     ),
     # Parity raid levels (recommended min_dev_count is 3 & 4 respectively)
     "raid5": btrfs_profile(
-        min_dev_count=2, max_dev_missing=1, data_raid="raid5", metadata_raid="raid5"
+        min_dev_count=2,
+        max_dev_missing=1,
+        data_raid="raid5",
+        metadata_raid="raid5",
+        data_copies=1,
+        data_parity=1,
     ),
     "raid6": btrfs_profile(
-        min_dev_count=3, max_dev_missing=2, data_raid="raid6", metadata_raid="raid6"
+        min_dev_count=3,
+        max_dev_missing=2,
+        data_raid="raid6",
+        metadata_raid="raid6",
+        data_copies=1,
+        data_parity=2,
     ),
     # ------- MIXED PROFILES DATA-METADATA (max 10 chars) -------
     # Mixed Mirrored profiles:
     "raid1-1c3": btrfs_profile(
-        min_dev_count=3, max_dev_missing=1, data_raid="raid1", metadata_raid="raid1c3"
+        min_dev_count=3,
+        max_dev_missing=1,
+        data_raid="raid1",
+        metadata_raid="raid1c3",
+        data_copies=2,
+        data_parity=0,
     ),
     "raid1-1c4": btrfs_profile(
-        min_dev_count=4, max_dev_missing=1, data_raid="raid1", metadata_raid="raid1c4"
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid1",
+        metadata_raid="raid1c4",
+        data_copies=2,
+        data_parity=0,
     ),
     "raid10-1c3": btrfs_profile(
-        min_dev_count=4, max_dev_missing=1, data_raid="raid10", metadata_raid="raid1c3"
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid10",
+        metadata_raid="raid1c3",
+        data_copies=2,
+        data_parity=0,
     ),
     "raid10-1c4": btrfs_profile(
-        min_dev_count=4, max_dev_missing=1, data_raid="raid10", metadata_raid="raid1c4"
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid10",
+        metadata_raid="raid1c4",
+        data_copies=2,
+        data_parity=0,
     ),
     # Parity data - Mirrored metadata
     "raid5-1": btrfs_profile(
-        min_dev_count=2, max_dev_missing=1, data_raid="raid5", metadata_raid="raid1"
+        min_dev_count=2,
+        max_dev_missing=1,
+        data_raid="raid5",
+        metadata_raid="raid1",
+        data_copies=1,
+        data_parity=1,
     ),
     "raid5-1c3": btrfs_profile(
-        min_dev_count=3, max_dev_missing=1, data_raid="raid5", metadata_raid="raid1c3"
+        min_dev_count=3,
+        max_dev_missing=1,
+        data_raid="raid5",
+        metadata_raid="raid1c3",
+        data_copies=1,
+        data_parity=1,
     ),
     "raid6-1c3": btrfs_profile(
-        min_dev_count=3, max_dev_missing=2, data_raid="raid6", metadata_raid="raid1c3"
+        min_dev_count=3,
+        max_dev_missing=2,
+        data_raid="raid6",
+        metadata_raid="raid1c3",
+        data_copies=1,
+        data_parity=2,
     ),
     "raid6-1c4": btrfs_profile(
-        min_dev_count=4, max_dev_missing=2, data_raid="raid6", metadata_raid="raid1c4"
+        min_dev_count=4,
+        max_dev_missing=2,
+        data_raid="raid6",
+        metadata_raid="raid1c4",
+        data_copies=1,
+        data_parity=2,
     ),
 }
 
@@ -1713,38 +1804,37 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     """Return the total amount of storage possible within this pool's set
     of disks, in bytes.
 
-    Algorithm adapted from Hugo Mills' implementation at:
+    Algorithm adapted from Hugo Mills' implementation previously at:
     http://carfax.org.uk/btrfs-usage/js/btrfs-usage.js
+    and replaced by the elm generated: https://carfax.org.uk/btrfs-usage/elm.js
     """
     # Determine RAID parameters
-    data_ratio = 1
-    stripes = 1
-    parity = 0
+    data_copies = PROFILE[raid_level].data_copies
+    data_parity = PROFILE[raid_level].data_parity
 
+    # TODO: As stripes/chunks depend on pool geometry we cannot use PROFILE.
+    #  Once we are Python 3 compatible, re-assess our size calculation in light of
+    #  https://github.com/knorrie/python-btrfs i.e.:
+    #  btrfs-space-calculator
+    stripes = 1
     # Number of chunks to write at a time: as many as possible within the
     # number of stripes
     chunks = num_devices
 
-    if raid_level == "single":
+    if raid_level in ["unknown", "single", "single-dup"]:
         chunks = 1
     elif raid_level == "raid0":
         stripes = 2
-    elif raid_level == "raid1":
-        data_ratio = 2
+    elif raid_level in ["raid1", "raid1-1c3", "raid1-1c4"]:
         chunks = 2
-    elif raid_level == "raid10":
-        data_ratio = 2
+    elif raid_level in ["raid10", "raid10-1c3", "raid10-1c4"]:
         stripes = max(2, int(num_devices / 2))
-    elif raid_level == "raid5":
-        parity = 1
-    elif raid_level == "raid6":
-        parity = 2
 
     # Round down so that we have an exact number of duplicate copies
-    chunks -= chunks % data_ratio
+    chunks -= chunks % data_copies
 
     # Check for feasibility at the lower end
-    if num_devices < data_ratio * (stripes + parity):
+    if num_devices < data_copies * (stripes + data_parity):
         return 0
 
     # Compute the trivial bound
@@ -1754,8 +1844,8 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     # modify the trivial bound if it passes.
     bounding_q = -1
     for q in range(chunks - 1):
-        slice = sum(disk_sizes[q + 1 :])
-        b = int(slice / (chunks - q - 1))
+        slice_value = sum(disk_sizes[q + 1 :])
+        b = int(slice_value / (chunks - q - 1))
         if disk_sizes[q] >= b and b < bound:
             bound = b
             bounding_q = q
@@ -1764,7 +1854,7 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     # have no bounding_q, then we have hit the trivial bound, and exhausted
     # all space, so we can return immediately.
     if bounding_q == -1:
-        return bound * ((chunks / data_ratio) - parity)
+        return bound * ((chunks / data_copies) - data_parity)
 
     # If we have a bounding_q, then all the devices past q are full, and
     # we can remove them. The devices up to q have been used in every one
@@ -1775,7 +1865,7 @@ def usage_bound(disk_sizes, num_devices, raid_level):
 
     new_bound = usage_bound(disk_sizes, bounding_q + 1, raid_level)
 
-    return bound * ((chunks / data_ratio) - parity) + new_bound
+    return bound * ((chunks / data_copies) - data_parity) + new_bound
 
 
 def scrub_start(pool, force=False):
