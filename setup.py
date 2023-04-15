@@ -65,7 +65,7 @@ setup(
         'URLObject == 2.1.1',
         'chardet == 2.3.0',
         'distribute >= 0.6.35',
-        'django == 1.8.16',
+        'django == 2.2.28',
         'django-oauth-toolkit == 0.9.0',
         'django-pipeline == 1.6.9',
         'huey == 2.3.0',
