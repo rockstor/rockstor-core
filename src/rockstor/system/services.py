@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -37,15 +37,16 @@ REALM = "/usr/sbin/realm"
 
 
 def init_service_op(service_name, command, throw=True):
-    """
+    """Run systemctl commands
+
     Wrapper for run_command calling systemctl, hardwired filter on service_name
     and will raise Exception on failed match. Enables run_command exceptions
     by default.
     https://www.freedesktop.org/software/systemd/man/systemctl.html for rc return codes.
     0 = unit is active, 3 = unit is not active, 4 = no such unit
-    :param service_name:
-    :param command:
-    :param throw:
+    :param str service_name:
+    :param str command:
+    :param bool throw:
     :return: out err rc
     """
     # TODO: Consider speed-up by removing hardwired 'native' check and replacing by
@@ -77,6 +78,22 @@ def init_service_op(service_name, command, throw=True):
         arg_list.append("--lines=0")
 
     return run_command(arg_list, throw=throw)
+
+
+def is_systemd_service_active(service_name):
+    """Returns boolean for active status of a systemd service
+
+    Uses init_service_op() to return a boolean for the status of a systemd service.
+    Use service_status() to get status information for a Rockstor service.
+    :param str service_name: name of the systemd service
+    :return: True if the service is active
+    :rtype: bool
+    """
+    _, _, rc = init_service_op(service_name=service_name, command="status", throw=False)
+    if rc == 0:
+        return True
+    else:
+        return False
 
 
 def systemctl(service_name, switch):
@@ -138,7 +155,8 @@ def service_status(service_name, config=None):
     systemctl, init_service_op, or superctl to assess status accordingly.
     Note some sanity checks for some services.
     :param service_name:
-    :return:
+    :param config:
+    :return: out, err, rc
     """
     if service_name == "nis" or service_name == "nfs":
         out, err, rc = init_service_op("rpcbind", "status", throw=False)
@@ -185,7 +203,9 @@ def service_status(service_name, config=None):
     elif service_name in ("replication", "data-collector", "ztask-daemon"):
         return superctl(service_name, "status")
     elif service_name == "smb":
-        out, err, rc = run_command([SYSTEMCTL_BIN, "--lines=0", "status", "smb"], throw=False)
+        out, err, rc = run_command(
+            [SYSTEMCTL_BIN, "--lines=0", "status", "smb"], throw=False
+        )
         if rc != 0:
             return out, err, rc
         return run_command([SYSTEMCTL_BIN, "--lines=0", "status", "nmb"], throw=False)
@@ -193,11 +213,19 @@ def service_status(service_name, config=None):
         # Establish if nut is running by lowest common denominator nut-monitor
         # In netclient mode it is all that is required, however we don't then
         # reflect the state of the other services of nut-server and nut-driver.
-        return run_command([SYSTEMCTL_BIN, "--lines=0", "status", "nut-monitor"], throw=False)
+        return run_command(
+            [SYSTEMCTL_BIN, "--lines=0", "status", "nut-monitor"], throw=False
+        )
     elif service_name == "active-directory":
         if config is not None:
             active_directory_rc = 1
-            o, e, rc = run_command([REALM, "list", "--name-only",])
+            o, e, rc = run_command(
+                [
+                    REALM,
+                    "list",
+                    "--name-only",
+                ]
+            )
             if config["domain"] in o:
                 active_directory_rc = 0
             return "", "", active_directory_rc
