@@ -1821,13 +1821,15 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     # number of stripes
     chunks = num_devices
 
-    if raid_level in ["unknown", "single", "single-dup"]:
+    if raid_level.startwith(("unknown", "single")):
         chunks = 1
-    elif raid_level == "raid0":
+    # We have no mixed raid levels with raid0, but in case we encounter them:
+    elif raid_level.startwith("raid0"):
         stripes = 2
-    elif raid_level in ["raid1", "raid1-1c3", "raid1-1c4"]:
+    # Take care not to match raid10 before its time:
+    elif raid_level == "raid1" or raid_level.startwith("raid1-"):
         chunks = 2
-    elif raid_level in ["raid10", "raid10-1c3", "raid10-1c4"]:
+    elif raid_level.startwith("raid10"):
         stripes = max(2, int(num_devices / 2))
 
     # Round down so that we have an exact number of duplicate copies
