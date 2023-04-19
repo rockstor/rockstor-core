@@ -522,6 +522,11 @@ table.tablesorter thead tr .headerSortDown {
   padding: 0 20px 20px 20px;
 }
 
+#install-rockon-overlay > .overlay-content {
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
 #pool-quick-details {
   background: #fff;
 }
