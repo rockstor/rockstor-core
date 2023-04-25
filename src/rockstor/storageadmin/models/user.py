@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@ from django.core.validators import validate_email
 from django.db import models
 
 from storageadmin.models import Group
-from system.users import ifp_get_groupname
+from system.users import ifp_get_properties_from_name_or_id
 
 
 class User(models.Model):
@@ -46,6 +46,13 @@ class User(models.Model):
 
     @property
     def groupname(self, *args, **kwargs):
+        """Get user's groupname
+
+        Get the user's groupname from the following sources, in order:
+          - linked Group model entry
+          - from the system, using `grp`
+          - from InfoPipe: useful for domain users
+        """
         if self.group is not None:
             return self.group.groupname
         if self.gid is not None:
@@ -54,9 +61,13 @@ class User(models.Model):
                 charset = chardet.detect(groupname)
                 groupname = groupname.decode(charset["encoding"])
                 return groupname
-            except Exception:
-                # Failed to fetch user using grp, so let's try with infofipe
-                return ifp_get_groupname(self.gid)
+            except KeyError:
+                # Failed to fetch user using grp, so let's try with InfoPipe
+                ifp_res = ifp_get_properties_from_name_or_id(
+                    "ifp_groups", int(self.gid), "name"
+                )
+                if ifp_res is not None:
+                    return str(ifp_res["name"])
         return None
 
     @property

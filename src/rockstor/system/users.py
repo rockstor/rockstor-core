@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ from dbus import DBusException
 
 from exceptions import CommandException
 from osi import run_command
-from system.services import init_service_op
+from system.services import is_systemd_service_active
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,19 @@ GROUPDEL = "/usr/sbin/groupdel"
 USERMOD = "/usr/sbin/usermod"
 SMBPASSWD = "/usr/bin/smbpasswd"
 CHOWN = "/usr/bin/chown"
+
+IFP_CONSTANTS = {
+    "ifp_users": {
+        "obj_path": "/org/freedesktop/sssd/infopipe/Users",
+        "main_iface": "org.freedesktop.sssd.infopipe.Users",
+        "sub_iface": "org.freedesktop.sssd.infopipe.Users.User",
+    },
+    "ifp_groups": {
+        "obj_path": "/org/freedesktop/sssd/infopipe/Groups",
+        "main_iface": "org.freedesktop.sssd.infopipe.Groups",
+        "sub_iface": "org.freedesktop.sssd.infopipe.Groups.Group",
+    },
+}
 
 
 # this is a hack for AD to get as many users as possible within 90 seconds.  If
@@ -96,10 +109,25 @@ def get_groups(*gids):
     groups = {}
     if len(gids) > 0:
         for g in gids:
-            entry = grp.getgrgid(g)
-            charset = chardet.detect(entry.gr_name)
-            gr_name = entry.gr_name.decode(charset["encoding"])
-            groups[gr_name] = entry.gr_gid
+            try:
+                entry = grp.getgrgid(g)
+                charset = chardet.detect(entry.gr_name)
+                gr_name = entry.gr_name.decode(charset["encoding"])
+                groups[gr_name] = entry.gr_gid
+            except KeyError:
+                # The block above can sometimes fail for domain users (AD/LDAP)
+                # as grp may not see them freshly after joining the domain.
+                # Try to fetch requested info from InfoPipe as a fallback
+                ifp_res = ifp_get_properties_from_name_or_id(
+                    "ifp_groups", int(g), "name", "gidNumber"
+                )
+                groups[ifp_res["name"]] = int(ifp_res["gidNumber"])
+                logger.debug(
+                    "InfoPipe was used to fetch info for gid {}"
+                    "name: {}, gid: {}".format(
+                        g, ifp_res["name"], int(ifp_res["gidNumber"])
+                    )
+                )
     else:
         for g in grp.getgrall():
             charset = chardet.detect(g.gr_name)
@@ -108,8 +136,7 @@ def get_groups(*gids):
 
         # If sssd.service is running:
         # Fetch remote groups from InfoPipe and add missing ones to dict
-        out, err, rc = init_service_op("sssd", "status", throw=False)
-        if rc != 0:
+        if not is_systemd_service_active("sssd"):
             return groups
         try:
             ifp_groups = ifp_get_groups()
@@ -271,29 +298,44 @@ def add_ssh_key(username, key, old_key=None):
     run_command([CHOWN, "%s:%s" % (username, groupname), AUTH_KEYS])
 
 
-def ifp_get_groupname(gid):
-    """
-    Uses InfoPipe (SSSD D-Bus responder) to get groupname from a gid
-    :param gid: Int
-    :return: String - name of the group identified by gid
+def ifp_get_properties_from_name_or_id(iface_type, target, *obj_properties):
+    """Get user of group properties from InfoPipe
+
+    Uses InfoPipe (SSSD D-Bus responder) to get desired properties
+    from either a username/uid, or from a group name/gid.
+    :param str iface_type: ifp_users or ifp_groups
+    :param target: username/uid or groupname/gid
+    :type target: str or int
+    :param str obj_properties: properties to fetch
+    :return: Dict of property name:value
+    :raises Exception: if target is not a str or int
     """
     # InfoPipe depends on the sssd service running:
-    out, err, rc = init_service_op("sssd", "status", throw=False)
-    if rc != 0:
+    if not is_systemd_service_active("sssd"):
         return None
     bus = dbus.SystemBus()
-    groups_obj = bus.get_object(
-        "org.freedesktop.sssd.infopipe", "/org/freedesktop/sssd/infopipe/Groups"
-    )
-    groups_iface = dbus.Interface(groups_obj, "org.freedesktop.sssd.infopipe.Groups")
+    ifp_bus_name = "org.freedesktop.sssd.infopipe"
 
-    my_obj = bus.get_object("org.freedesktop.sssd.infopipe", groups_iface.FindByID(gid))
+    ifp_obj = bus.get_object(ifp_bus_name, IFP_CONSTANTS[iface_type]["obj_path"])
+    ifp_iface = dbus.Interface(ifp_obj, IFP_CONSTANTS[iface_type]["main_iface"])
+
+    if isinstance(target, str):
+        my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByName(target))
+    elif isinstance(target, int):
+        my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByID(target))
+    else:
+        raise Exception(
+            "Incompatible type for target {}: {}.".format(target, type(target))
+        )
+
     my_iface_properties = dbus.Interface(my_obj, "org.freedesktop.DBus.Properties")
 
-    gpname = my_iface_properties.Get(
-        "org.freedesktop.sssd.infopipe.Groups.Group", "name"
-    )
-    return str(gpname)
+    ifp_res = {}
+    for obj_property in obj_properties:
+        ifp_res[obj_property] = my_iface_properties.Get(
+            IFP_CONSTANTS[iface_type]["sub_iface"], obj_property
+        )
+    return ifp_res
 
 
 def ifp_get_groups():

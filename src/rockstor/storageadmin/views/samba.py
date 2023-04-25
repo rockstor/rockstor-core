@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import logging
-import pwd
 
 from django.conf import settings
 from django.db import transaction
@@ -30,12 +29,14 @@ from share import ShareMixin
 from storageadmin.models import SambaShare, User, SambaCustomConfig
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
+from storageadmin.views.ug_helpers import combined_users
 from system.samba import (
     refresh_smb_config,
     status,
     restart_samba,
     refresh_smb_discovery,
 )
+from system.users import ifp_get_properties_from_name_or_id
 
 logger = logging.getLogger(__name__)
 
@@ -116,27 +117,51 @@ class SambaMixin(object):
 
     @staticmethod
     def _set_admin_users(admin_users, smb_share):
+        """Add selected users to User and SambaShare tables
+
+        Fetch user's uid and gid and save a corresponding User model entry
+        if needed. Then, link the corresponding SambaShare model entry.
+        To retrieve user information, the following logic is followed:
+          - get from User table
+          - if not in User table, get list of all system users
+          - if not listed as system user, try InfoPipe (used for domain users)
+
+        :param list admin_users: List of unicode strings
+        :param smb_share: SambaShare object
+        :raises Exception: if the admin_user does not exist
+        """
+        logger.debug("Set the following Samba admin_users: {}".format(admin_users))
+        sysusers = combined_users()
         for au in admin_users:
             try:
                 auo = User.objects.get(username=au)
             except User.DoesNotExist:
-                # check if the user is a system user, then create a temp user
-                # object.
-                try:
-                    system_user = pwd.getpwnam(au)
+                # check if the user is a system user, then save the temp user object.
+                list_auo = [uo for uo in sysusers if uo.username == au]
+                if len(list_auo) == 1:
+                    logger.debug("The user {} was found on the system.".format(au))
+                    auo = list_auo[0]
+                elif len(list_auo) == 0:
+                    logger.debug(
+                        "The user {} was not found on the system, try InfoPipe.".format(
+                            au
+                        )
+                    )
+                    # Fetch from InfoPipe
+                    ifp_res = ifp_get_properties_from_name_or_id(
+                        "ifp_users", str(au), "uidNumber", "gidNumber"
+                    )
                     auo = User(
                         username=au,
-                        uid=system_user.pw_uid,
-                        gid=system_user.pw_gid,
+                        uid=ifp_res["uidNumber"],
+                        gid=ifp_res["gidNumber"],
                         admin=False,
                     )
-                    auo.save()
-                except KeyError:
-                    # raise the outer exception as it's more meaningful to the
-                    # user.
+                else:
                     raise Exception(
-                        "Requested admin user({}) does not exist.".format(au)
+                        "Requested admin user ({}) does not exist.".format(au)
                     )
+                auo.save()
             finally:
                 auo.smb_shares.add(smb_share)
 
