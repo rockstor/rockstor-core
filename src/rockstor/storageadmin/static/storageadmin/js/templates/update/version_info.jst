@@ -10,14 +10,14 @@ $(document).ready(function(){
     {{#is_sub_active defaultSub}}
     <div class="alert alert-danger">
       <p>
-        <a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a>
+        <a href="https://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a>
         are <strong>activated</strong>. These are cutting edge updates that should
         be applied only after careful consideration. When an update is released,
         read the changelog and proceed with caution.
       </p>
       <p>
         Alternatively,
-        <a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a>
+        <a href="https://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a>
         are generally recommended as shown below.
       </p>
     </div>
@@ -27,10 +27,10 @@ $(document).ready(function(){
     <div class="alert alert-success">
       <p>
         Rockstor package
-        <a href="http://rockstor.com/docs/update-channels/update_channels.html" target="_blank"> update channels. </a>
+        <a href="https://rockstor.com/docs/update-channels/update_channels.html" target="_blank"> update channels. </a>
         Please activate appropriately for your needs.
         <br>- <strong>Stable updates</strong>: recommended for production use (paid) -
-        <a href="http://rockstor.com/commercial_support.html" target="_blank"><i>Commercial Support</i></a> eligible.
+        <a href="https://rockstor.com/commercial_support.html" target="_blank"><i>Paid Support</i></a> eligible.
         <br>- <strong>Testing updates</strong>: for development / actively testing latest code (free).
         <br>See our <a href="https://forum.rockstor.com/" target="_blank">friendly forum</a> for advise.
       </p>
@@ -43,15 +43,15 @@ $(document).ready(function(){
       <thead>
 	<tr class="active">
           <th>Feature</th>
-          <th><a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a></th>
-          <th><a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a></th>
+          <th><a href="https://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a></th>
+          <th><a href="https://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a></th>
 	</tr>
       </thead>
       <tbody>
 	<tr>
           <td>Update Frequency</td>
-          <td>1-2 Months</td>
-          <td>1-2 Weeks</td>
+          <td>2-4 Months</td>
+          <td>2-4 Weeks</td>
 	</tr>
 	<tr>
           <td>Priority of bug fixes</td>
@@ -84,7 +84,7 @@ $(document).ready(function(){
           <td><i class="fa fa-times"></i></td>
 	</tr>
   <tr>
-          <td>Commercial Support available</td>
+          <td>Paid Support available</td>
           <td><i class="fa fa-check"></i></td>
           <td><i class="fa fa-times"></i></td>
   </tr>
@@ -134,13 +134,13 @@ $(document).ready(function(){
   {{#is_sub_active defaultSub}}
   <div class="alert alert-success" id="contrib-alert">
     <h4>Our Open Source development is dependant upon active
-      <a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates </a>
+      <a href="https://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates </a>
       participation,
-      <a href="https://www.paypal.me/rockstor" target="_blank"> donations (paypal.me)</a>
+      <a href="https://opencollective.com/the-rockstor-project/contribute" target="_blank"> donations (Open Collective)</a>
       , and
-      <a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates </a>
+      <a href="https://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates </a>
       subscriptions with their associated
-      <a href="http://rockstor.com/commercial_support.html" target="_blank"><i>Commercial Support</i></a> options.
+      <a href="https://rockstor.com/commercial_support.html" target="_blank"><i>Paid Support</i></a> option.
     </h4>
   </div>
   {{/is_sub_active}}
@@ -167,12 +167,12 @@ $(document).ready(function(){
   <div id="updateInfo" class="alert alert-success">
     <p></p>
     <p>
-      <a href="http://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a>
+      <a href="https://rockstor.com/docs/update-channels/update_channels.html#stable-channel" target="_blank">Stable Updates</a>
       are <strong>activated</strong> - install eligible for
-      <a href="http://rockstor.com/commercial_support.html" target="_blank"><i>Commercial Support.</i></a>
+      <a href="https://rockstor.com/commercial_support.html" target="_blank"><i>Paid Support.</i></a>
       <br><br>
       While it's not recommended, if you are absolutely sure,
-      <a href="http://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a>
+      <a href="https://rockstor.com/docs/update-channels/update_channels.html#testing-channel" target="_blank">Testing Updates</a>
       can be activated by clicking <a id="testing-modal"> here.</a>
     </p>
   </div>
@@ -204,14 +204,21 @@ $(document).ready(function(){
       </div>
       <div style="font-size: 13px" class="modal-body">
 	<p>
-	  Please follow these steps to activate Stable updates.
+	  Please follow these steps to activate Stable Updates.<br>
+    <div style="text-align: center;">
+         <i>Steps 2 & 3 will be automated away as we integrate with our new Open Collective.</i>
+      </div>
 	</p>
 	<ol>
-	  <li>Purchase the Activation code by clicking <a href="http://shop.rockstor.com/products/stable-release-channel-subscription#applianceid={{applianceId}}" target="_blank">here.</a>
-	  <li>The Activation code will be sent to you via email.</li>
-	  <li>Come back to this screen and enter the Activation code.</li>
+    <li>Become a "Stable Updates subscription" contributor/member at our
+        <a href="https://opencollective.com/the-rockstor-project/contribute" target="_blank">Open Collective.</a></li>
+    <li>Enter the password emailed in step 1 <a href="https://shop.rockstor.com/pages/frontpage" target="_blank">to open our shop.</a></li>
+	  <li>Order your Activation code
+        <a href="https://shop.rockstor.com/products/stable-release-channel-subscription#applianceid={{applianceId}}" target="_blank">here</a>
+        - sent via email within 5 minutes.</li>
+	  <li>Enter your Activation code below.</li>
 	</ol>
-        Thanks for helping to support Rockstor's development.
+        Thank you for helping to support Rockstor's development.
 	<form id="activate-stable-form" name="aform" class="form-horizontal">
 	  <div class="form-group">
 	    <label class="col-sm-4 control-label" for="activation-code">Activation Code <span class="required">*</span></label>
