@@ -136,7 +136,7 @@ def luks_format_disk(disk_byid, passphrase):
     """
     Formats disk_byid using supplied passphrase for master key encryption.
     Simple run_command wrapper to execute 'cryptsetup luksFormat <dev> path'
-    Care is taken to immediately remove our temporary key-file (in ram) even 
+    Care is taken to immediately remove our temporary key-file (in ram) even
     in the event of an Exception.
     :param disk_byid: by-id type name without path as found in db Disks.name.
     :param passphrase: luks passphrase used to encrypt master key.
@@ -168,22 +168,43 @@ def luks_format_disk(disk_byid, passphrase):
     return out, err, rc
 
 
+def get_luks_container_uuid(disk_byid):
+    """
+    Returns the uuid of a LUKS container.
+    Simple wrapper for: 'cryptsetup luksUUID dev_byid_withpath'
+    :param str disk_byid: disk_byid as last element of by-id device path.
+    :returns: uuid of passed LUKS container.
+    :rtype: str
+    """
+    dev_uuid = ""
+    dev_byid_withpath = get_device_path(disk_byid)
+    cmd = [CRYPTSETUP, "luksUUID", dev_byid_withpath]
+    out, err, rc = run_command(cmd, log=True, throw=False)
+    if rc != 0:
+        logger.debug("Unexpected return code from {}: returning empty uuid".format(cmd))
+        return dev_uuid
+    if len(out) > 0:
+        # we have at least a single line of output and rc = 0
+        dev_uuid = out[0]
+    return dev_uuid
+
+
 def get_unlocked_luks_containers_uuids():
     """
-    Returns a list of LUKS container uuids backing open LUKS volumes. 
+    Returns a list of LUKS container uuids backing open LUKS volumes.
     The method used is to first run:
     'dmsetup info --columns --noheadings -o name --target crypt' eg output:
     luks-82fd9db1-e1c1-488d-9b42-536d0a82caeb
     luks-3efb3830-fee1-4a9e-a5c6-ea456bfc269e
     luks-a47f4950-3296-4504-b9a4-2dc75681a6ad
-    to get a list of open LUKS containers (--target crypt). If the usual naming 
+    to get a list of open LUKS containers (--target crypt). If the usual naming
     convention is followed we have a name format of luks-<uuid> with len = 41
     and we can extract the uuid of the LUKS container from it syntactically.
     If this naming convention is not matched then we fail over to calling:
     get_open_luks_container_dev() and then looking up that devices uuid via
     our uuid_name_map dictionary.
     :return: list containing the uuids of LUKS containers that have currently
-    open volumes, or empty list if none open or an error occurred. 
+    open volumes, or empty list if none open or an error occurred.
     """
     open_luks_container_uuids = []
     # flag to minimise calls to get_uuid_name_map()
@@ -242,9 +263,9 @@ def get_crypttab_entries():
     A typical entry is as follows:
     luks-<uuid> UUID=<uuid> none
     N.B. a fourth column can be used to specify additional options ie "luks"
-    but this column is redundant in the case of luks.  
-    :return: dictionary indexed by the uuids of LUKS containers that have a 
-    current crypttab entry where the value represents column 3, ie none for 
+    but this column is redundant in the case of luks.
+    :return: dictionary indexed by the uuids of LUKS containers that have a
+    current crypttab entry where the value represents column 3, ie none for
     password on boot, or the full path of a keyfile.
     """
     in_crypttab = {}
@@ -273,10 +294,10 @@ def get_crypttab_entries():
 
 def update_crypttab(uuid, keyfile_entry):
     """
-    If no existing /etc/crypttab we call a simplified function specific to new 
-    single entry crypttab creation: new_crypttab_single_entry(), otherwise we 
-    read the existing crypttab file and replace, wipe, or create a relevant 
-    entry for our passed device by uuid info. All commented entries are 
+    If no existing /etc/crypttab we call a simplified function specific to new
+    single entry crypttab creation: new_crypttab_single_entry(), otherwise we
+    read the existing crypttab file and replace, wipe, or create a relevant
+    entry for our passed device by uuid info. All commented entries are
     removed, as are entries deemed non valid. New entries are of a single
     format:
     luks-<uuid> UUID=<uuid> /root/keyfile-<uuid> luks
@@ -285,7 +306,7 @@ def update_crypttab(uuid, keyfile_entry):
     :param uuid: uuid of the associated LUKS container such as is returned by:
     cryptsetup luksUUID <LUKS-container-dev>
     :param keyfile_entry: the literal intended contents of the 3rd column.
-    :return: False or exception raised if crypttab edit failed or no uuid 
+    :return: False or exception raised if crypttab edit failed or no uuid
     passed, True otherwise.
     """
     # Deal elegantly with null or '' uuid
@@ -470,7 +491,7 @@ def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
     :param keyfile_withpath: the intended keyfile with full path.
     :param passphrase: LUKS passphrase: any current key slot passphrase. If
     an empty passphrase is passed then 'cryptsetup luksAddKey' is skipped.
-    :return: True if keyfile successfully registered. False or an Exception 
+    :return: True if keyfile successfully registered. False or an Exception
     is raised in all other instances.
     """
     fresh_keyfile = False  # Until we find otherwise.
@@ -546,14 +567,14 @@ def establish_keyfile(dev_byid, keyfile_withpath, passphrase):
 
 def create_keyfile(keyfile_withpath):
     """
-    Function to create a random keyfile appropriate for LUKS use. Works by 
+    Function to create a random keyfile appropriate for LUKS use. Works by
     initially creating a temp file with the appropriate contents and then
-    copying the file over. This minimises lock time on our target keyfile. 
+    copying the file over. This minimises lock time on our target keyfile.
     Currently hardwired to make 2048 byte /dev/urandom sourced keyfiles.
     This is equivalent to a 2^14bit keyfile.
     :param keyfile_withpath: full path and name of the intended keyfile.
     :return: True on success, or if the keyfile_with_path exists, False
-    otherwise.  
+    otherwise.
     """
     # If our target file exists we are done and return True (no overwriting).
     if os.path.isfile(keyfile_withpath):
@@ -597,7 +618,7 @@ def create_keyfile(keyfile_withpath):
 def native_keyfile_exists(uuid):
     """
     Simple wrapper around os.path.isfile(/root/keyfile-<uuid>) to establish if
-    a Rockstor native keyfile exists. 
+    a Rockstor native keyfile exists.
     :return: True if /root/keyfile-<uuid> exists, False otherwise.
     """
     try:

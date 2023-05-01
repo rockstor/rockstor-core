@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import os
 import re
@@ -27,7 +27,8 @@ from fs.btrfs import (
     get_pool_raid_levels,
     get_dev_pool_info,
     set_pool_label,
-    get_devid_usage, get_pool_raid_profile,
+    get_devid_usage,
+    get_pool_raid_profile,
 )
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
@@ -43,6 +44,7 @@ from system.luks import (
     native_keyfile_exists,
     establish_keyfile,
     get_open_luks_volume_status,
+    get_luks_container_uuid,
 )
 from system.osi import (
     set_disk_spindown,
@@ -51,7 +53,6 @@ from system.osi import (
     wipe_disk,
     blink_disk,
     scan_disks,
-    get_whole_dev_uuid,
     get_byid_name_map,
     trigger_systemd_update,
     systemd_name_escape,
@@ -772,8 +773,7 @@ class DiskDetailView(rfc.GenericView):
             ).format(disk.name, disk.name, disk_name, reverse_name)
             raise Exception(e_msg)
         # Check if we are a partition as we don't support LUKS in partition.
-        # Front end should filter this out as an presented option but be
-        # should block at this level as well.
+        # Front end should filter this out, but be should block at this level as well.
         if isPartition:
             e_msg = (
                 "A LUKS format was requested on device name ({}) which "
@@ -797,8 +797,7 @@ class DiskDetailView(rfc.GenericView):
             roles = json.loads(disk.role)
         # Now we assert what we know given our above LUKS format operation.
         # Not unlocked and no keyfile (as we have a fresh uuid from format)
-        # TODO: Might be better to use cryptset luksUUID <dev-name>
-        dev_uuid = get_whole_dev_uuid(disk.name)
+        dev_uuid = get_luks_container_uuid(disk.name)
         # update or create a basic LUKS role entry.
         # Although we could use native_keyfile_exists(dev_uuid) we can be
         # pretty sure there is no keyfile with our new uuid.
@@ -809,7 +808,7 @@ class DiskDetailView(rfc.GenericView):
         }
         # now we return our updated roles
         disk.role = json.dumps(roles)
-        disk.save()
+        disk.save(update_fields=["parted", "btrfs_uuid", "devid", "allocated", "role"])
         return Response(DiskInfoSerializer(disk).data)
 
     @transaction.atomic
@@ -868,7 +867,9 @@ class DiskDetailView(rfc.GenericView):
                         do.role = '{"redirect": "%s"}' % device.name
                 do.save()
                 mount_root(po)
-            pool_raid_info = get_pool_raid_levels("{}{}".format(settings.MNT_PT, po.name))
+            pool_raid_info = get_pool_raid_levels(
+                "{}{}".format(settings.MNT_PT, po.name)
+            )
             po.raid = get_pool_raid_profile(pool_raid_info)
             po.size = po.usage_bound()
             po.save()
