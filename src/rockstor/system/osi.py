@@ -1951,6 +1951,7 @@ def get_device_path(by_id):
 
 def get_whole_dev_uuid(dev_byid):
     """
+    N.B. Currently unused, previously used for locked LUKS containers only.
     Simple wrapper around "lsblk -n -o uuid <dev_name>" to retrieve a device's
     whole disk uuid. Where there are partitions multiple lines are output but
     the first is for the whole disk uuid if it exists eg (with headers):
@@ -1968,9 +1969,12 @@ def get_whole_dev_uuid(dev_byid):
     dev_uuid = ""
     dev_byid_withpath = get_device_path(dev_byid)
     out, err, rc = run_command(
-        [LSBLK, "-n", "-o", "uuid", dev_byid_withpath], throw=False
+        [LSBLK, "-n", "-o", "uuid", dev_byid_withpath],
+        throw=False,
+        log=True,
     )
     if rc != 0:
+        logger.debug("get_whole_dev_uuid() returning empty uuid")
         return dev_uuid
     if len(out) > 0:
         # we have at least a single line of output and rc = 0
