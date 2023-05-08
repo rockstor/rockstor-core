@@ -22,16 +22,23 @@ import platform
 from shutil import move, copy
 from tempfile import mkstemp
 
+import distro
 from django.conf import settings
 
 from services import systemctl, service_status
 from system.osi import run_command
 
-SSHD_CONFIG = "/etc/ssh/sshd_config"
 MKDIR = "/usr/bin/mkdir"
 MOUNT = "/usr/bin/mount"
 USERMOD = "/usr/sbin/usermod"
 
+# Dict of sshd_config indexed by distro.id
+SSHD_CONFIG = {
+    # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
+    "opensuse": "/etc/ssh/sshd_config",  # pre-existing in base OS
+    "opensuse-leap": "/etc/ssh/sshd_config",  # pre-existing in base OS
+    "opensuse-tumbleweed": "/etc/ssh/sshd_config.d/rockstor-sshd.conf",  # we create this
+}
 
 def update_sftp_config(input_map):
     """
@@ -42,7 +49,8 @@ def update_sftp_config(input_map):
     """
     fo, npath = mkstemp()
     userstr = "AllowUsers root {}".format(" ".join(input_map.keys()))
-    with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
+    distro_id = distro.id()
+    with open(SSHD_CONFIG[distro_id]) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
             if re.match(settings.SSHD_HEADER, line) is None:
                 tfo.write(line)
@@ -64,7 +72,7 @@ def update_sftp_config(input_map):
             tfo.write("\tX11Forwarding no\n")
             tfo.write("\tAllowTcpForwarding no\n")
 
-    move(npath, SSHD_CONFIG)
+    move(npath, SSHD_CONFIG[distro_id])
     try:
         systemctl("sshd", "reload")
     except:
@@ -80,7 +88,8 @@ def toggle_sftp_service(switch=True):
     """
     fo, npath = mkstemp()
     written = False
-    with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
+    distro_id = distro.id()
+    with open(SSHD_CONFIG[distro_id]) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
             if re.match(settings.SFTP_STR, line) is not None:
                 if switch and not written:
@@ -93,7 +102,7 @@ def toggle_sftp_service(switch=True):
                     written = True
             else:
                 tfo.write(line)
-    move(npath, SSHD_CONFIG)
+    move(npath, SSHD_CONFIG[distro_id])
     try:
         systemctl("sshd", "reload")
     except:

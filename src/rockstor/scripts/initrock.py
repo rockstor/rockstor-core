@@ -24,11 +24,14 @@ import shutil
 import sys
 from tempfile import mkstemp
 
+import distro
 from django.conf import settings
 
 from system import services
 from system.osi import run_command, md5sum, replace_line_if_found
+from system.ssh import SSHD_CONFIG
 from collections import OrderedDict
+
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +228,7 @@ def bootstrap_sshd_config(log):
     :param log:
     :return:
     """
-    sshd_config = "/etc/ssh/sshd_config"
+    sshd_config = SSHD_CONFIG[distro.id()]
 
     # Comment out default sftp subsystem
     fh, npath = mkstemp()
@@ -242,7 +245,7 @@ def bootstrap_sshd_config(log):
 
     # Set AllowUsers and Subsystem if needed
     with open(sshd_config, "a+") as sfo:
-        log.info("SSHD_CONFIG Customization")
+        log.info("SSHD_CONFIG ({}) Customization".format(sshd_config))
         found = False
         for line in sfo.readlines():
             if (
