@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 Rockstor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 Rockstor, Inc. <https://rockstor.com>
 This file is part of Rockstor.
 
 Rockstor is free software; you can redistribute it and/or modify
@@ -13,50 +13,132 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import collections
+import logging
 import os
 import re
 import platform
+import shutil
 from shutil import move, copy
 from tempfile import mkstemp
 
+import distro
 from django.conf import settings
 
-from services import systemctl, service_status
 from system.osi import run_command
+from system.constants import (
+    MKDIR,
+    MOUNT,
+    USERMOD,
+    SYSTEMCTL,
+)
 
-SSHD_CONFIG = "/etc/ssh/sshd_config"
-MKDIR = "/usr/bin/mkdir"
-MOUNT = "/usr/bin/mount"
-USERMOD = "/usr/sbin/usermod"
+logger = logging.getLogger(__name__)
+
+# Begin SFTP-related constants
+SSHD_HEADER = "###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###"
+INTERNAL_SFTP_STR = "Subsystem\tsftp\tinternal-sftp"
+
+# Named Tuple to define sshd files according to their purpose.
+# sshd - rockstor-target for sshd config additions.
+# sshd_os - OS default config file we may have to edit (see sftp-server disablement)
+# sftp - rockstor-target for sftp config additions.
+# AllowUsers - rockstor-target for AllowUsers config - NOT CURRENTLY IMPLEMENTED
+sshd_files = collections.namedtuple("sshd_files", "sshd sshd_os sftp AllowUsers")
+
+# Dict of sshd_files indexed by distro.id
+SSHD_CONFIG = {
+    # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
+    "opensuse": sshd_files(
+        sshd="/etc/ssh/sshd_config",
+        sshd_os="/etc/ssh/sshd_config",
+        sftp="/etc/ssh/sshd_config",
+        AllowUsers="/etc/ssh/sshd_config",
+    ),
+    "opensuse-leap": sshd_files(
+        sshd="/etc/ssh/sshd_config",
+        sshd_os="/etc/ssh/sshd_config",
+        sftp="/etc/ssh/sshd_config",
+        AllowUsers="/etc/ssh/sshd_config",
+    ),
+    # Newer overload  - type files
+    "opensuse-tumbleweed": sshd_files(
+        sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
+        sshd_os="/usr/etc/ssh/sshd_config",
+        sftp="/etc/ssh/sshd_config.d/rockstor-sftp.conf",
+        AllowUsers="/etc/ssh/sshd_config.d/rockstor-AllowUsers.conf",
+    ),
+}
 
 
-def update_sftp_config(input_map):
+def init_sftp_config(sshd_config=None):
     """
-    Fetch sftp-related customization settings from database
-    and writes them to SSHD_CONFIG.
+    Establish our default sftp configuration within the distro specific file
+    or a file passed by full path.
+    :param sshd_config:
+    :return: True if file found and alterations were made, False otherwise.
+    :rtype boolean:
+    """
+    if sshd_config is None:
+        sshd_config = SSHD_CONFIG[distro.id()].sftp
+    sshd_restart = False
+    if not os.path.isfile(sshd_config):
+        logger.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
+    # Set AllowUsers and Subsystem sftp-internal if not already in-place.
+    # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
+    with open(sshd_config, "a+") as sfo:
+        found = False
+        for line in sfo.readlines():
+            if (
+                re.match(SSHD_HEADER, line) is not None
+                or re.match("AllowUsers ", line) is not None
+                or re.match(INTERNAL_SFTP_STR, line) is not None
+            ):
+                found = True
+                logger.info("SSHD ({}) already initialised".format(sshd_config))
+                break
+        if not found:
+            sshd_restart = True
+            sfo.write("{}\n".format(SSHD_HEADER))
+            sfo.write("{}\n".format(INTERNAL_SFTP_STR))
+            # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
+            if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
+                sfo.write("AllowUsers root\n")
+            logger.info("SSHD ({}) initialised".format(sshd_config))
+    return sshd_restart
+
+
+def update_sftp_user_share_config(input_map):
+    """
+    Receives sftp-related customization settings and writes them to SSHD_CONFIG.
     :param input_map: dictionary of user,directory pairs.
     :return:
     """
     fo, npath = mkstemp()
-    userstr = "AllowUsers root {}".format(" ".join(input_map.keys()))
-    with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
+    # TODO: Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
+    userstr = "AllowUsers"
+    if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
+        userstr += " root {}".format(" ".join(input_map.keys()))
+    else:
+        userstr += " {}".format(" ".join(input_map.keys()))
+    distro_id = distro.id()
+    with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
-            if re.match(settings.SSHD_HEADER, line) is None:
+            if re.match(SSHD_HEADER, line) is None:
                 tfo.write(line)
             else:
                 break
-        tfo.write("{}\n".format(settings.SSHD_HEADER))
+        tfo.write("{}\n".format(SSHD_HEADER))
         # Detect sftp service status and ensure we maintain it
         if is_sftp_running():
-            tfo.write("{}\n".format(settings.SFTP_STR))
+            tfo.write("{}\n".format(INTERNAL_SFTP_STR))
         tfo.write("{}\n".format(userstr))
         # Set options for each user according to openSUSE's defaults:
         # https://en.opensuse.org/SDB:SFTP_server_with_Chroot#Match_rule_block
         # TODO: implement webUI element to re-enable rsync over ssh by omitting
-        #   the `ForceCommand internal sftp` line below.
+        #   the `ForceCommand internal-sftp` line below.
         for user in input_map:
             tfo.write("Match User {}\n".format(user))
             tfo.write("\tForceCommand internal-sftp\n")
@@ -64,40 +146,41 @@ def update_sftp_config(input_map):
             tfo.write("\tX11Forwarding no\n")
             tfo.write("\tAllowTcpForwarding no\n")
 
-    move(npath, SSHD_CONFIG)
+    move(npath, SSHD_CONFIG[distro_id].sftp)
     try:
-        systemctl("sshd", "reload")
+        run_command([SYSTEMCTL, "reload", "sshd"], log=True)
     except:
-        return systemctl("sshd", "restart")
+        return run_command([SYSTEMCTL, "restart", "sshd"], log=True)
 
 
 def toggle_sftp_service(switch=True):
     """
     Toggles the SFTP service on/off by writing or not the
-    `Subsystem sftp internal-sftp` (settings.SFTP_STR) declaration in SSHD_CONFIG.
+    `Subsystem sftp internal-sftp` (INTERNAL_SFTP_STR) declaration in SSHD_CONFIG.
     :param switch:
     :return:
     """
     fo, npath = mkstemp()
     written = False
-    with open(SSHD_CONFIG) as sfo, open(npath, "w") as tfo:
+    distro_id = distro.id()
+    with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
-            if re.match(settings.SFTP_STR, line) is not None:
+            if re.match(INTERNAL_SFTP_STR, line) is not None:
                 if switch and not written:
-                    tfo.write("{}\n".format(settings.SFTP_STR))
+                    tfo.write("{}\n".format(INTERNAL_SFTP_STR))
                     written = True
-            elif re.match(settings.SSHD_HEADER, line) is not None:
+            elif re.match(SSHD_HEADER, line) is not None:
                 tfo.write(line)
                 if switch and not written:
-                    tfo.write("{}\n".format(settings.SFTP_STR))
+                    tfo.write("{}\n".format(INTERNAL_SFTP_STR))
                     written = True
             else:
                 tfo.write(line)
-    move(npath, SSHD_CONFIG)
+    move(npath, SSHD_CONFIG[distro_id].sftp)
     try:
-        systemctl("sshd", "reload")
+        run_command([SYSTEMCTL, "reload", "sshd"], log=True)
     except:
-        return systemctl("sshd", "restart")
+        return run_command([SYSTEMCTL, "restart", "sshd"], log=True)
 
 
 def sftp_mount_map(mnt_prefix):
@@ -167,6 +250,21 @@ def rsync_for_sftp(chroot_loc):
             "/lib64/libpopt.so.0",
             "/lib64/libtinfo.so.5",
         ],
+        # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
+        "opensuse": [
+            "/lib64/libacl.so.1",
+            "/lib64/libz.so.1",
+            "/usr/lib64/libpopt.so.0",
+            "/usr/lib64/libslp.so.1",
+            "/lib64/libc.so.6",
+            "/lib64/libattr.so.1",
+            "/usr/lib64/libcrypto.so.1.1",
+            "/lib64/libpthread.so.0",
+            ld_linux_so,
+            "/lib64/libdl.so.2",
+            "/lib64/libreadline.so.7",
+            "/lib64/libtinfo.so.6",
+        ],
         "opensuse-leap": [
             "/lib64/libacl.so.1",
             "/lib64/libz.so.1",
@@ -215,14 +313,81 @@ def is_pub_key(key):
     return True
 
 
-def is_sftp_running():
+def is_sftp_running(return_boolean=True):
     """
-    Simple wrapper around system.services.service_status()
+    Wrapper around system.osi.run_command() for parent sshd service status,
+    followed by a check of is_sftp_subsystem_internal()
     to return a boolean for the SFTP service status
-    :return: True if running, False otherwise/
+    which is a subsystem of the sshd systemd service.
+    :return: status info of sftp sshd subsystem
+    :rtype boolean or (out, err, rc
     """
-    _, _, sftp_rc = service_status("sftp")
-    if sftp_rc == 0:
-        return True
+    # Avoid potentially circular dependency on system.service by direct run_command use.
+    out, err, rc = run_command(
+        [SYSTEMCTL, "--lines=0", "status", "sshd"], throw=False, log=True
+    )
+    sftp_subsytem_found = False
+    if rc == 0:
+        sftp_subsytem_found = is_sftp_subsystem_internal()
+        if not sftp_subsytem_found:
+            rc = 1  # arbitrary rc value to indicate subsystem missing.
+    if return_boolean:
+        return sftp_subsytem_found
     else:
+        return out, err, rc
+
+
+def is_sftp_subsystem_internal(sshd_config=None):
+    """
+    Searches passed config file, or distro specific sftp file, for INTERNAL_SFTP_STR.
+    :return: True if found
+    :rtype Boolean:
+    """
+    # Default to the distro specific sshd sftp file
+    if sshd_config is None:
+        sshd_config = SSHD_CONFIG[distro.id()].sftp
+    if not os.path.isfile(sshd_config):
+        # a non existent file cannot contain our INTERNAL_SFTP_STR
         return False
+    with open(sshd_config) as sfo:
+        for line in sfo.readlines():
+            if re.match(INTERNAL_SFTP_STR, line) is not None:
+                return True
+    return False
+
+
+def remove_sftp_server_subsystem(sshd_config=None):
+    """
+    Basic search and remark out (in given file, or distro specific sshd default file),
+    of 'Subsystem *sftp-server' line. Returning sshd to openssh defaults of no enabled
+    Subsystem: enabling our consequent use of the sftp-internal subsystem.
+    sftp-internal needs no additional configuration files when using chroot.
+    :param sshd_config: Full path of sshd_config file.
+    :return: True on replacement, False otherwise.
+    :rtype boolean:
+    """
+    # Comment out OS default sftp subsystem (if sftp-server).
+    # Default to the distro specific sshd OS default config.
+    if sshd_config is None:
+        sshd_config = SSHD_CONFIG[distro.id()].sshd_os
+    found_and_replaced = False
+    if os.path.isfile(sshd_config):
+        fh, npath = mkstemp()
+        with open(npath, "w+") as temp_file:
+            # Original opened in 'r' (default) in text mode.
+            with open(sshd_config) as original_file:
+                for line in original_file.readlines():
+                    if line.startswith("Subsystem") and line.endswith("sftp-server\n"):
+                        temp_file.write("#{}\n".format(line))
+                        found_and_replaced = True
+                    else:
+                        temp_file.write(line)
+        if found_and_replaced:
+            shutil.move(npath, sshd_config)
+            logger.info("SSHD ({}) sftp-server disabled".format(sshd_config))
+        else:
+            logger.info("SSHD ({}) sftp-server already disabled".format(sshd_config))
+            os.remove(npath)
+    else:
+        logger.info("SSHD file ({}) does not exist".format(sshd_config))
+    return found_and_replaced

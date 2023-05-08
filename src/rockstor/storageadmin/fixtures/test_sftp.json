@@ -1,0 +1,121 @@
+[
+{
+    "model": "storageadmin.pool",
+    "pk": 3,
+    "fields": {
+        "name": "rock-pool",
+        "uuid": "203ce52b-e73e-4faa-a27b-553fb3501529",
+        "size": 5242880,
+        "raid": "single",
+        "toc": "2023-05-21T15:50:01.365Z",
+        "compression": "no",
+        "mnt_options": "",
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 3,
+    "fields": {
+        "pool": 3,
+        "qgroup": "0/256",
+        "pqgroup": "2015/1",
+        "name": "share_root_owned",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2023-05-21T15:50:01.615Z",
+        "subvol_name": "share_root_owned",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 4,
+    "fields": {
+        "pool": 3,
+        "qgroup": "0/257",
+        "pqgroup": "2015/2",
+        "name": "share_user_owned",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "admin",
+        "group": "admin",
+        "perms": "755",
+        "toc": "2023-05-21T15:50:01.519Z",
+        "subvol_name": "share_user_owned",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 5,
+    "fields": {
+        "pool": 3,
+        "qgroup": "0/258",
+        "pqgroup": "2015/3",
+        "name": "share_sftp",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "admin",
+        "group": "admin",
+        "perms": "755",
+        "toc": "2023-05-21T15:50:01.567Z",
+        "subvol_name": "share_sftp",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
+},
+{
+    "model": "storageadmin.sftp",
+    "pk": 2,
+    "fields": {
+        "share": 5,
+        "editable": "rw"
+    }
+},
+{
+    "model": "storageadmin.user",
+    "pk": 1,
+    "fields": {
+        "user": [
+            "admin"
+        ],
+        "username": "admin",
+        "uid": 1000,
+        "gid": 1000,
+        "public_key": null,
+        "shell": "/bin/bash",
+        "homedir": "/home/admin",
+        "email": null,
+        "admin": true,
+        "group": 1,
+        "smb_shares": []
+    }
+},
+{
+    "model": "storageadmin.group",
+    "pk": 1,
+    "fields": {
+        "gid": 1000,
+        "groupname": "admin",
+        "admin": true
+    }
+}
+]

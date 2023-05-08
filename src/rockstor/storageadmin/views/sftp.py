@@ -30,7 +30,7 @@ from share_helpers import helper_mount_share, validate_share, sftp_snap_toggle
 from storageadmin.models import SFTP
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.util import handle_exception
-from system.ssh import update_sftp_config, sftp_mount_map, sftp_mount, rsync_for_sftp
+from system.ssh import update_sftp_user_share_config, sftp_mount_map, sftp_mount, rsync_for_sftp
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class SFTPListView(rfc.GenericView):
                     input_map[sftpo.share.owner] = "{}{}".format(
                         settings.SFTP_MNT_ROOT, sftpo.share.owner,
                     )
-            update_sftp_config(input_map)
+            update_sftp_user_share_config(input_map)
             return Response()
 
 
@@ -123,5 +123,5 @@ class SFTPDetailView(rfc.GenericView):
                     input_map[so.share.owner] = "{}{}".format(
                         settings.SFTP_MNT_ROOT, so.share.owner,
                     )
-            update_sftp_config(input_map)
+            update_sftp_user_share_config(input_map)
             return Response()
