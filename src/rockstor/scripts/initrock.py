@@ -239,13 +239,15 @@ def bootstrap_sshd_config(log):
     )
     if replaced:
         shutil.move(npath, sshd_config)
-        log.info("updated sshd_config: commented out default Subsystem")
+        log.info(
+            "SSHD updated via (): commented out default Subsystem".format(sshd_config)
+        )
     else:
         os.remove(npath)
 
     # Set AllowUsers and Subsystem if needed
     with open(sshd_config, "a+") as sfo:
-        log.info("SSHD_CONFIG ({}) Customization".format(sshd_config))
+        log.info("SSHD via ({}) Customization".format(sshd_config))
         found = False
         for line in sfo.readlines():
             if (
@@ -255,7 +257,11 @@ def bootstrap_sshd_config(log):
             ):
                 # if header is found,
                 found = True
-                log.info("sshd_config already has the updates. Leaving it unchanged.")
+                log.info(
+                    "SSHD via ({}) already has the updates. Leaving unchanged.".format(
+                        sshd_config
+                    )
+                )
                 break
         if not found:
             sfo.write("{}\n".format(settings.SSHD_HEADER))
