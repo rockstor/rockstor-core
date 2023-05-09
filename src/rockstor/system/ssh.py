@@ -65,7 +65,12 @@ def update_sftp_config(input_map):
     :return:
     """
     fo, npath = mkstemp()
-    userstr = "AllowUsers root {}".format(" ".join(input_map.keys()))
+    # TODO: Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
+    userstr = "AllowUsers"
+    if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
+        userstr += " root {}".format(" ".join(input_map.keys()))
+    else:
+        userstr += " {}".format(" ".join(input_map.keys()))
     distro_id = distro.id()
     with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():

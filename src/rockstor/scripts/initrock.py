@@ -266,8 +266,10 @@ def bootstrap_sshd_config(log):
         if not found:
             sfo.write("{}\n".format(settings.SSHD_HEADER))
             sfo.write("{}\n".format(settings.SFTP_STR))
-            sfo.write("AllowUsers root\n")
-            log.info("updated sshd_config.")
+            # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
+            if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
+                sfo.write("AllowUsers root\n")
+            log.info("SSHD updated via ({})".format(sshd_config))
             run_command([SYSCTL, "restart", "sshd"])
 
 

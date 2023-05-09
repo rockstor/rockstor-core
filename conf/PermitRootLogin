@@ -1,0 +1,3 @@
+# Allow root login on ssh - Delete this file to disable root ssh login.
+# "PermitRootLogin yes" is overridden by "AllowUsers ..." which Rockstor uses.
+# This is a 'Flag file'. Its existence enables root ssh login via AllowUsers.
