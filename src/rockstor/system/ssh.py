@@ -193,6 +193,21 @@ def rsync_for_sftp(chroot_loc):
             "/lib64/libpopt.so.0",
             "/lib64/libtinfo.so.5",
         ],
+        # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
+        "opensuse": [
+            "/lib64/libacl.so.1",
+            "/lib64/libz.so.1",
+            "/usr/lib64/libpopt.so.0",
+            "/usr/lib64/libslp.so.1",
+            "/lib64/libc.so.6",
+            "/lib64/libattr.so.1",
+            "/usr/lib64/libcrypto.so.1.1",
+            "/lib64/libpthread.so.0",
+            ld_linux_so,
+            "/lib64/libdl.so.2",
+            "/lib64/libreadline.so.7",
+            "/lib64/libtinfo.so.6",
+        ],
         "opensuse-leap": [
             "/lib64/libacl.so.1",
             "/lib64/libz.so.1",
