@@ -30,12 +30,12 @@ from django.conf import settings
 from system import services
 from system.osi import run_command, md5sum, replace_line_if_found
 from system.ssh import SSHD_CONFIG
+from system.constants import SYSTEMCTL
 from collections import OrderedDict
 
 
 logger = logging.getLogger(__name__)
 
-SYSCTL = "/usr/bin/systemctl"
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
 BASE_BIN = "{}.venv/bin".format(BASE_DIR)
 CONF_DIR = "{}conf".format(BASE_DIR)
@@ -270,7 +270,7 @@ def bootstrap_sshd_config(log):
             if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
                 sfo.write("AllowUsers root\n")
             log.info("SSHD updated via ({})".format(sshd_config))
-            run_command([SYSCTL, "restart", "sshd"])
+            run_command([SYSTEMCTL, "restart", "sshd"])
 
 
 def establish_shellinaboxd_service():
@@ -346,9 +346,9 @@ def move_or_remove_legacy_rockstor_service_files():
             else:
                 logger.info("{} stop/disable/remove (LEGACY).".format(target_with_path))
                 run_command(
-                    [SYSCTL, "stop", service_file_name], throw=False
+                    [SYSTEMCTL, "stop", service_file_name], throw=False
                 )  # allow for not loaded
-                run_command([SYSCTL, "disable", service_file_name])
+                run_command([SYSTEMCTL, "disable", service_file_name])
                 os.remove(target_with_path)
             conf_altered = True
     return conf_altered
@@ -370,7 +370,7 @@ def establish_systemd_services():
     # See: https://www.freedesktop.org/software/systemd/man/systemd.generator.html
     if conf_altered:
         logger.info("Systemd config altered, running daemon-reload")
-        run_command([SYSCTL, "daemon-reload"])
+        run_command([SYSTEMCTL, "daemon-reload"])
 
 
 def install_or_update_systemd_service(
@@ -395,9 +395,9 @@ def install_or_update_systemd_service(
                 )
             )
             run_command(
-                [SYSCTL, "stop", service_name], throw=False
+                [SYSTEMCTL, "stop", service_name], throw=False
             )  # allow for not loaded
-            run_command([SYSCTL, "disable", service_name])
+            run_command([SYSTEMCTL, "disable", service_name])
             os.remove(target_with_path)
             logger.info("{} removed.".format(filename))
             return True
@@ -413,7 +413,7 @@ def install_or_update_systemd_service(
             os.mkdir(target_directory)
         shutil.copyfile(source_with_path, target_with_path)
         logger.info("{} updated.".format(target_with_path))
-        run_command([SYSCTL, "enable", service_name])
+        run_command([SYSTEMCTL, "enable", service_name])
         return True
     logger.info("{} up-to-date.".format(target_with_path))
     return False
@@ -485,7 +485,7 @@ def main():
         )
         logging.debug("cert signed.")
         logging.info("restarting nginx...")
-        run_command([SYSCTL, "restart", "nginx"])
+        run_command([SYSTEMCTL, "restart", "nginx"])
 
     logging.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
@@ -584,13 +584,13 @@ def main():
     logging.info("Done")
 
     logging.info("Stopping firewalld...")
-    run_command([SYSCTL, "stop", "firewalld"])
-    run_command([SYSCTL, "disable", "firewalld"])
+    run_command([SYSTEMCTL, "stop", "firewalld"])
+    run_command([SYSTEMCTL, "disable", "firewalld"])
     logging.info("Firewalld stopped and disabled")
 
     logging.info("Enabling and Starting atd...")
-    run_command([SYSCTL, "enable", "atd"])
-    run_command([SYSCTL, "start", "atd"])
+    run_command([SYSTEMCTL, "enable", "atd"])
+    run_command([SYSTEMCTL, "start", "atd"])
     logging.info("Atd enabled and started")
 
     update_nginx(logging)

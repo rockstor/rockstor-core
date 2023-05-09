@@ -25,9 +25,8 @@ from tempfile import mkstemp
 import distro
 from django.conf import settings
 from osi import run_command
-from system.ssh import SSHD_CONFIG
+from system.constants import SYSTEMCTL, SSHD_CONFIG
 
-SYSTEMCTL_BIN = "/usr/bin/systemctl"
 SUPERCTL_BIN = "{}.venv/bin/supervisorctl".format(settings.ROOT_DIR)
 SUPERVISORD_CONF = "{}etc/supervisord.conf".format(settings.ROOT_DIR)
 SSSD_FILE = "/etc/sssd/sssd.conf"
@@ -73,7 +72,7 @@ def init_service_op(service_name, command, throw=True):
     if service_name not in supported_services:
         raise Exception("unknown service: {}".format(service_name))
 
-    arg_list = [SYSTEMCTL_BIN, command, service_name]
+    arg_list = [SYSTEMCTL, command, service_name]
     if command == "status":
         arg_list.append("--lines=0")
 
@@ -97,7 +96,7 @@ def is_systemd_service_active(service_name):
 
 
 def systemctl(service_name, switch):
-    arg_list = [SYSTEMCTL_BIN, switch, service_name]
+    arg_list = [SYSTEMCTL, switch, service_name]
     if switch == "status":
         arg_list.append("--lines=0")
 
@@ -204,17 +203,17 @@ def service_status(service_name, config=None):
         return superctl(service_name, "status")
     elif service_name == "smb":
         out, err, rc = run_command(
-            [SYSTEMCTL_BIN, "--lines=0", "status", "smb"], throw=False
+            [SYSTEMCTL, "--lines=0", "status", "smb"], throw=False
         )
         if rc != 0:
             return out, err, rc
-        return run_command([SYSTEMCTL_BIN, "--lines=0", "status", "nmb"], throw=False)
+        return run_command([SYSTEMCTL, "--lines=0", "status", "nmb"], throw=False)
     elif service_name == "nut":
         # Establish if nut is running by lowest common denominator nut-monitor
         # In netclient mode it is all that is required, however we don't then
         # reflect the state of the other services of nut-server and nut-driver.
         return run_command(
-            [SYSTEMCTL_BIN, "--lines=0", "status", "nut-monitor"], throw=False
+            [SYSTEMCTL, "--lines=0", "status", "nut-monitor"], throw=False
         )
     elif service_name == "active-directory":
         if config is not None:
@@ -262,7 +261,7 @@ def update_nginx(ip, port):
             if http_server is True and lines[i].strip() == "}":
                 http_server = False
     shutil.move(npath, conf)
-    run_command([SYSTEMCTL_BIN, "restart", "nginx"])
+    run_command([SYSTEMCTL, "restart", "nginx"])
 
 
 def define_avahi_service(service_name, share_names=None):

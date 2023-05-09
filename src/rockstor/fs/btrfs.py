@@ -32,6 +32,7 @@ from system.osi import (
     dev_mount_point,
 )
 from system.exceptions import CommandException
+from system.constants import MOUNT, UMOUNT, RMDIR, DEFAULT_MNT_DIR
 from pool_scrub import PoolScrub
 from huey.contrib.djhuey import task
 from django.conf import settings
@@ -46,10 +47,6 @@ logger = logging.getLogger(__name__)
 
 MKFS_BTRFS = "/usr/sbin/mkfs.btrfs"
 BTRFS = "/usr/sbin/btrfs"
-MOUNT = "/usr/bin/mount"
-UMOUNT = "/usr/bin/umount"
-DEFAULT_MNT_DIR = "/mnt2/"
-RMDIR = "/usr/bin/rmdir"
 QID = "2015"
 # The following model/db default setting is also used when quotas are disabled.
 PQGROUP_DEFAULT = settings.MODEL_DEFS["pqgroup"]

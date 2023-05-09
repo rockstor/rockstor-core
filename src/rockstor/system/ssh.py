@@ -27,34 +27,7 @@ from django.conf import settings
 
 from services import systemctl, service_status
 from system.osi import run_command
-
-MKDIR = "/usr/bin/mkdir"
-MOUNT = "/usr/bin/mount"
-USERMOD = "/usr/sbin/usermod"
-
-# Named Tuple to define sshd files according to their purpose.
-sshd_files = collections.namedtuple("sshd_files", "sshd sftp AllowUsers")
-
-# Dict of sshd_files indexed by distro.id
-SSHD_CONFIG = {
-    # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
-    "opensuse": sshd_files(
-        sshd="/etc/ssh/sshd_config",
-        sftp="/etc/ssh/sshd_config",
-        AllowUsers="/etc/ssh/sshd_config",
-    ),
-    "opensuse-leap": sshd_files(
-        sshd="/etc/ssh/sshd_config",
-        sftp="/etc/ssh/sshd_config",
-        AllowUsers="/etc/ssh/sshd_config",
-    ),
-    # Newer overload  - type files
-    "opensuse-tumbleweed": sshd_files(
-        sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
-        sftp="/etc/ssh/sshd_config.d/rockstor-sftp.conf",
-        AllowUsers="/etc/ssh/sshd_config.d/rockstor-AllowUsers.conf",
-    ),
-}
+from system.constants import MKDIR, MOUNT, USERMOD, SSHD_CONFIG
 
 
 def update_sftp_config(input_map):
