@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import collections
 import os
 import re
 import platform
@@ -32,13 +32,30 @@ MKDIR = "/usr/bin/mkdir"
 MOUNT = "/usr/bin/mount"
 USERMOD = "/usr/sbin/usermod"
 
-# Dict of sshd_config indexed by distro.id
+# Named Tuple to define sshd files according to their purpose.
+sshd_files = collections.namedtuple("sshd_files", "sshd sftp AllowUsers")
+
+# Dict of sshd_files indexed by distro.id
 SSHD_CONFIG = {
-    # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
-    "opensuse": "/etc/ssh/sshd_config",  # pre-existing in base OS
-    "opensuse-leap": "/etc/ssh/sshd_config",  # pre-existing in base OS
-    "opensuse-tumbleweed": "/etc/ssh/sshd_config.d/rockstor-sshd.conf",  # we create this
+    # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
+    "opensuse": sshd_files(
+        sshd="/etc/ssh/sshd_config",
+        sftp="/etc/ssh/sshd_config",
+        AllowUsers="/etc/ssh/sshd_config",
+    ),
+    "opensuse-leap": sshd_files(
+        sshd="/etc/ssh/sshd_config",
+        sftp="/etc/ssh/sshd_config",
+        AllowUsers="/etc/ssh/sshd_config",
+    ),
+    # Newer overload  - type files
+    "opensuse-tumbleweed": sshd_files(
+        sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
+        sftp="/etc/ssh/sshd_config.d/rockstor-sftp.conf",
+        AllowUsers="/etc/ssh/sshd_config.d/rockstor-AllowUsers.conf",
+    ),
 }
+
 
 def update_sftp_config(input_map):
     """
@@ -50,7 +67,7 @@ def update_sftp_config(input_map):
     fo, npath = mkstemp()
     userstr = "AllowUsers root {}".format(" ".join(input_map.keys()))
     distro_id = distro.id()
-    with open(SSHD_CONFIG[distro_id]) as sfo, open(npath, "w") as tfo:
+    with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
             if re.match(settings.SSHD_HEADER, line) is None:
                 tfo.write(line)
@@ -72,7 +89,7 @@ def update_sftp_config(input_map):
             tfo.write("\tX11Forwarding no\n")
             tfo.write("\tAllowTcpForwarding no\n")
 
-    move(npath, SSHD_CONFIG[distro_id])
+    move(npath, SSHD_CONFIG[distro_id].sftp)
     try:
         systemctl("sshd", "reload")
     except:
@@ -89,7 +106,7 @@ def toggle_sftp_service(switch=True):
     fo, npath = mkstemp()
     written = False
     distro_id = distro.id()
-    with open(SSHD_CONFIG[distro_id]) as sfo, open(npath, "w") as tfo:
+    with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
             if re.match(settings.SFTP_STR, line) is not None:
                 if switch and not written:
@@ -102,7 +119,7 @@ def toggle_sftp_service(switch=True):
                     written = True
             else:
                 tfo.write(line)
-    move(npath, SSHD_CONFIG[distro_id])
+    move(npath, SSHD_CONFIG[distro_id].sftp)
     try:
         systemctl("sshd", "reload")
     except:

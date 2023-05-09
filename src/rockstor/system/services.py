@@ -192,7 +192,7 @@ def service_status(service_name, config=None):
             return out, err, rc
         # sshd has sftp subsystem so we check for its config line which is
         # inserted or deleted to enable or disable the sftp service.
-        with open(SSHD_CONFIG[distro.id()]) as sfo:
+        with open(SSHD_CONFIG[distro.id()].sftp) as sfo:
             for line in sfo.readlines():
                 if re.match(settings.SFTP_STR, line) is not None:
                     return out, err, rc

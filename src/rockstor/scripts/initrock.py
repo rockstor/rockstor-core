@@ -228,7 +228,7 @@ def bootstrap_sshd_config(log):
     :param log:
     :return:
     """
-    sshd_config = SSHD_CONFIG[distro.id()]
+    sshd_config = SSHD_CONFIG[distro.id()].sftp
 
     # Comment out default sftp subsystem
     fh, npath = mkstemp()
