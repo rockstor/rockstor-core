@@ -497,7 +497,7 @@ def main():
         logging.exception(e)
 
     try:
-        logging.info("Updating sshd_config")
+        logging.info("Updating sshd config")
         bootstrap_sshd_config(logging)
     except Exception as e:
         logging.error("Exception while updating sshd_config: {}".format(e.__str__()))
