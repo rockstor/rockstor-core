@@ -220,7 +220,7 @@ def update_tz(log):
 
 def bootstrap_sshd_config(log):
     """
-    Setup sshd_config options for Rockstor:
+    Setup sshd config options for Rockstor:
     1. Switch from the default /usr/lib/ssh/sftp-server subsystem
         to the internal-sftp subsystem required for sftp access to work.
         Note that this turns the SFTP service ON by default.
@@ -231,21 +231,27 @@ def bootstrap_sshd_config(log):
     sshd_config = SSHD_CONFIG[distro.id()].sftp
 
     # Comment out default sftp subsystem
-    fh, npath = mkstemp()
+    # TODO Move default sftp removal to dedicated ssh.py procedure.
     sshdconf_source = "Subsystem\tsftp\t/usr/lib/ssh/sftp-server"
     sshdconf_target = "#{}".format(sshdconf_source)
-    replaced = replace_line_if_found(
-        sshd_config, npath, sshdconf_source, sshdconf_target
-    )
-    if replaced:
-        shutil.move(npath, sshd_config)
-        log.info(
-            "SSHD updated via (): commented out default Subsystem".format(sshd_config)
+    replaced = False
+    sshd_config_exists = os.path.isfile(sshd_config)
+    if sshd_config_exists:
+        fh, npath = mkstemp()
+        replaced = replace_line_if_found(
+            sshd_config, npath, sshdconf_source, sshdconf_target
         )
-    else:
+        if replaced:
+            shutil.move(npath, sshd_config)
+            log.info(
+                "SSHD updated via (): commented out default Subsystem".format(sshd_config)
+            )
         os.remove(npath)
+    else:
+        log.info("SSHD file ({}) does not exist - creating.".format(sshd_config))
 
     # Set AllowUsers and Subsystem if needed
+    # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
     with open(sshd_config, "a+") as sfo:
         log.info("SSHD via ({}) Customization".format(sshd_config))
         found = False
@@ -500,7 +506,7 @@ def main():
         logging.info("Updating sshd config")
         bootstrap_sshd_config(logging)
     except Exception as e:
-        logging.error("Exception while updating sshd_config: {}".format(e.__str__()))
+        logging.error("Exception while updating sshd config: {}".format(e.__str__()))
 
     db_already_setup = os.path.isfile(STAMP)
     for db_stage_name, db_stage_items in zip(
