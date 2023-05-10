@@ -27,7 +27,7 @@ from django.conf import settings
 
 from services import systemctl, service_status
 from system.osi import run_command
-from system.constants import MKDIR, MOUNT, USERMOD, SSHD_CONFIG
+from system.constants import MKDIR, MOUNT, USERMOD, SSHD_CONFIG, SSHD_HEADER, SFTP_STR
 
 
 def update_sftp_config(input_map):
@@ -47,14 +47,14 @@ def update_sftp_config(input_map):
     distro_id = distro.id()
     with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
-            if re.match(settings.SSHD_HEADER, line) is None:
+            if re.match(SSHD_HEADER, line) is None:
                 tfo.write(line)
             else:
                 break
-        tfo.write("{}\n".format(settings.SSHD_HEADER))
+        tfo.write("{}\n".format(SSHD_HEADER))
         # Detect sftp service status and ensure we maintain it
         if is_sftp_running():
-            tfo.write("{}\n".format(settings.SFTP_STR))
+            tfo.write("{}\n".format(SFTP_STR))
         tfo.write("{}\n".format(userstr))
         # Set options for each user according to openSUSE's defaults:
         # https://en.opensuse.org/SDB:SFTP_server_with_Chroot#Match_rule_block
@@ -77,7 +77,7 @@ def update_sftp_config(input_map):
 def toggle_sftp_service(switch=True):
     """
     Toggles the SFTP service on/off by writing or not the
-    `Subsystem sftp internal-sftp` (settings.SFTP_STR) declaration in SSHD_CONFIG.
+    `Subsystem sftp internal-sftp` (SFTP_STR) declaration in SSHD_CONFIG.
     :param switch:
     :return:
     """
@@ -86,14 +86,14 @@ def toggle_sftp_service(switch=True):
     distro_id = distro.id()
     with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
-            if re.match(settings.SFTP_STR, line) is not None:
+            if re.match(SFTP_STR, line) is not None:
                 if switch and not written:
-                    tfo.write("{}\n".format(settings.SFTP_STR))
+                    tfo.write("{}\n".format(SFTP_STR))
                     written = True
-            elif re.match(settings.SSHD_HEADER, line) is not None:
+            elif re.match(SSHD_HEADER, line) is not None:
                 tfo.write(line)
                 if switch and not written:
-                    tfo.write("{}\n".format(settings.SFTP_STR))
+                    tfo.write("{}\n".format(SFTP_STR))
                     written = True
             else:
                 tfo.write(line)

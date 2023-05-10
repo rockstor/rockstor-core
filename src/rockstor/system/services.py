@@ -25,7 +25,7 @@ from tempfile import mkstemp
 import distro
 from django.conf import settings
 from osi import run_command
-from system.constants import SYSTEMCTL, SSHD_CONFIG
+from system.constants import SYSTEMCTL, SSHD_CONFIG, SFTP_STR
 
 SUPERCTL_BIN = "{}.venv/bin/supervisorctl".format(settings.ROOT_DIR)
 SUPERVISORD_CONF = "{}etc/supervisord.conf".format(settings.ROOT_DIR)
@@ -193,7 +193,7 @@ def service_status(service_name, config=None):
         # inserted or deleted to enable or disable the sftp service.
         with open(SSHD_CONFIG[distro.id()].sftp) as sfo:
             for line in sfo.readlines():
-                if re.match(settings.SFTP_STR, line) is not None:
+                if re.match(SFTP_STR, line) is not None:
                     return out, err, rc
             # -1 not appropriate as inconsistent with bash return codes
             # Returning 1 as Catchall for general errors. The calling system

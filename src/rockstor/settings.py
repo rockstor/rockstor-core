@@ -371,9 +371,6 @@ MODEL_DEFS = {
 	   'pqgroup': '-1/-1',
 }
 
-# Begin SFTP-related variables
-SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
-SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
 
 OAUTH_INTERNAL_APP = 'cliapp'
 

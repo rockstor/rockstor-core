@@ -32,6 +32,11 @@ USERMOD = "/usr/sbin/usermod"
 
 SYSTEMCTL = "/usr/bin/systemctl"
 
+
+# Begin SFTP-related constants
+SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
+SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
+
 # Named Tuple to define sshd files according to their purpose.
 sshd_files = collections.namedtuple("sshd_files", "sshd sftp AllowUsers")
 
