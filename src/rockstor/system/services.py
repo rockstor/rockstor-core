@@ -22,10 +22,10 @@ import shutil
 import stat
 from tempfile import mkstemp
 
-import distro
 from django.conf import settings
 from osi import run_command
-from system.constants import SYSTEMCTL, SSHD_CONFIG, SFTP_STR
+from system.constants import SYSTEMCTL
+from system.ssh import is_sftp_running
 
 SUPERCTL_BIN = "{}.venv/bin/supervisorctl".format(settings.ROOT_DIR)
 SUPERVISORD_CONF = "{}etc/supervisord.conf".format(settings.ROOT_DIR)
@@ -185,20 +185,8 @@ def service_status(service_name, config=None):
                     return o, e, rc
             return o, e, 1
     elif service_name == "sftp":
-        out, err, rc = init_service_op("sshd", "status", throw=False)
-        # initial check on sshd status: 0 = OK 3 = stopped
-        if rc != 0:
-            return out, err, rc
-        # sshd has sftp subsystem so we check for its config line which is
-        # inserted or deleted to enable or disable the sftp service.
-        with open(SSHD_CONFIG[distro.id()].sftp) as sfo:
-            for line in sfo.readlines():
-                if re.match(SFTP_STR, line) is not None:
-                    return out, err, rc
-            # -1 not appropriate as inconsistent with bash return codes
-            # Returning 1 as Catchall for general errors. The calling system
-            # interprets -1 as enabled, 1 works for disabled.
-            return out, err, 1
+        # Delegate sshd's sftp subsystem status check to system.ssh.py call.
+        return is_sftp_running(return_boolean=False)
     elif service_name in ("replication", "data-collector", "ztask-daemon"):
         return superctl(service_name, "status")
     elif service_name == "smb":

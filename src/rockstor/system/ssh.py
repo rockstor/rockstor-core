@@ -15,7 +15,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-import collections
 import os
 import re
 import platform
@@ -25,7 +24,6 @@ from tempfile import mkstemp
 import distro
 from django.conf import settings
 
-from services import systemctl, service_status
 from system.osi import run_command
 from system.constants import (
     MKDIR,
@@ -34,6 +32,7 @@ from system.constants import (
     SSHD_CONFIG,
     SSHD_HEADER,
     INTERNAL_SFTP_STR,
+    SYSTEMCTL,
 )
 
 
@@ -75,9 +74,9 @@ def update_sftp_user_share_config(input_map):
 
     move(npath, SSHD_CONFIG[distro_id].sftp)
     try:
-        systemctl("sshd", "reload")
+        run_command([SYSTEMCTL, "reload", "sshd"], log=True)
     except:
-        return systemctl("sshd", "restart")
+        return run_command([SYSTEMCTL, "restart", "sshd"], log=True)
 
 
 def toggle_sftp_service(switch=True):
@@ -105,9 +104,9 @@ def toggle_sftp_service(switch=True):
                 tfo.write(line)
     move(npath, SSHD_CONFIG[distro_id].sftp)
     try:
-        systemctl("sshd", "reload")
+        run_command([SYSTEMCTL, "reload", "sshd"], log=True)
     except:
-        return systemctl("sshd", "restart")
+        return run_command([SYSTEMCTL, "restart", "sshd"], log=True)
 
 
 def sftp_mount_map(mnt_prefix):
@@ -240,14 +239,44 @@ def is_pub_key(key):
     return True
 
 
-def is_sftp_running():
+def is_sftp_running(return_boolean=True):
     """
-    Simple wrapper around system.services.service_status()
+    Wrapper around system.osi.run_command() for parent sshd service status,
+    followed by a check of is_sftp_subsystem_internal()
     to return a boolean for the SFTP service status
-    :return: True if running, False otherwise/
+    which is a subsystem of the sshd systemd service.
+    :return: status info of sftp sshd subsystem
+    :rtype boolean or (out, err, rc
     """
-    _, _, sftp_rc = service_status("sftp")
-    if sftp_rc == 0:
-        return True
+    # Avoid potentially circular dependency on system.service by direct run_command use.
+    out, err, rc = run_command(
+        [SYSTEMCTL, "--lines=0", "status", "sshd"], throw=False, log=True
+    )
+    sftp_subsytem_found = False
+    if rc == 0:
+        sftp_subsytem_found = is_sftp_subsystem_internal()
+        if not sftp_subsytem_found:
+            rc = 1  # arbitrary rc value to indicate subsystem missing.
+    if return_boolean:
+        return sftp_subsytem_found
     else:
+        return out, err, rc
+
+
+def is_sftp_subsystem_internal(sshd_config=None):
+    """
+    Searches passed config file, or distro specific sftp file, for INTERNAL_SFTP_STR.
+    :return: True if found
+    :rtype Boolean:
+    """
+    # Default to the distro specific sshd sftp file
+    if sshd_config is None:
+        sshd_config = SSHD_CONFIG[distro.id()].sftp
+    if not os.path.isfile(sshd_config):
+        # a non existent file cannot contain our INTERNAL_SFTP_STR
         return False
+    with open(sshd_config) as sfo:
+        for line in sfo.readlines():
+            if re.match(INTERNAL_SFTP_STR, line) is not None:
+                return True
+    return False
