@@ -30,7 +30,7 @@ from django.conf import settings
 from system import services
 from system.osi import run_command, md5sum, replace_line_if_found
 from system.ssh import SSHD_CONFIG
-from system.constants import SYSTEMCTL, SSHD_HEADER, SFTP_STR
+from system.constants import SYSTEMCTL, SSHD_HEADER, INTERNAL_SFTP_STR
 from collections import OrderedDict
 
 
@@ -253,7 +253,7 @@ def bootstrap_sshd_config(log):
             if (
                 re.match(SSHD_HEADER, line) is not None
                 or re.match("AllowUsers ", line) is not None
-                or re.match(SFTP_STR, line) is not None
+                or re.match(INTERNAL_SFTP_STR, line) is not None
             ):
                 # if header is found,
                 found = True
@@ -265,7 +265,7 @@ def bootstrap_sshd_config(log):
                 break
         if not found:
             sfo.write("{}\n".format(SSHD_HEADER))
-            sfo.write("{}\n".format(SFTP_STR))
+            sfo.write("{}\n".format(INTERNAL_SFTP_STR))
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
             if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
                 sfo.write("AllowUsers root\n")

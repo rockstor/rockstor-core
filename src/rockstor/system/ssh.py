@@ -27,13 +27,19 @@ from django.conf import settings
 
 from services import systemctl, service_status
 from system.osi import run_command
-from system.constants import MKDIR, MOUNT, USERMOD, SSHD_CONFIG, SSHD_HEADER, SFTP_STR
+from system.constants import (
+    MKDIR,
+    MOUNT,
+    USERMOD,
+    SSHD_CONFIG,
+    SSHD_HEADER,
+    INTERNAL_SFTP_STR,
+)
 
 
-def update_sftp_config(input_map):
+def update_sftp_user_share_config(input_map):
     """
-    Fetch sftp-related customization settings from database
-    and writes them to SSHD_CONFIG.
+    Receives sftp-related customization settings and writes them to SSHD_CONFIG.
     :param input_map: dictionary of user,directory pairs.
     :return:
     """
@@ -54,12 +60,12 @@ def update_sftp_config(input_map):
         tfo.write("{}\n".format(SSHD_HEADER))
         # Detect sftp service status and ensure we maintain it
         if is_sftp_running():
-            tfo.write("{}\n".format(SFTP_STR))
+            tfo.write("{}\n".format(INTERNAL_SFTP_STR))
         tfo.write("{}\n".format(userstr))
         # Set options for each user according to openSUSE's defaults:
         # https://en.opensuse.org/SDB:SFTP_server_with_Chroot#Match_rule_block
         # TODO: implement webUI element to re-enable rsync over ssh by omitting
-        #   the `ForceCommand internal sftp` line below.
+        #   the `ForceCommand internal-sftp` line below.
         for user in input_map:
             tfo.write("Match User {}\n".format(user))
             tfo.write("\tForceCommand internal-sftp\n")
@@ -77,7 +83,7 @@ def update_sftp_config(input_map):
 def toggle_sftp_service(switch=True):
     """
     Toggles the SFTP service on/off by writing or not the
-    `Subsystem sftp internal-sftp` (SFTP_STR) declaration in SSHD_CONFIG.
+    `Subsystem sftp internal-sftp` (INTERNAL_SFTP_STR) declaration in SSHD_CONFIG.
     :param switch:
     :return:
     """
@@ -86,14 +92,14 @@ def toggle_sftp_service(switch=True):
     distro_id = distro.id()
     with open(SSHD_CONFIG[distro_id].sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
-            if re.match(SFTP_STR, line) is not None:
+            if re.match(INTERNAL_SFTP_STR, line) is not None:
                 if switch and not written:
-                    tfo.write("{}\n".format(SFTP_STR))
+                    tfo.write("{}\n".format(INTERNAL_SFTP_STR))
                     written = True
             elif re.match(SSHD_HEADER, line) is not None:
                 tfo.write(line)
                 if switch and not written:
-                    tfo.write("{}\n".format(SFTP_STR))
+                    tfo.write("{}\n".format(INTERNAL_SFTP_STR))
                     written = True
             else:
                 tfo.write(line)
