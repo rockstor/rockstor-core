@@ -15,9 +15,11 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+import logging
 import os
 import re
 import platform
+import shutil
 from shutil import move, copy
 from tempfile import mkstemp
 
@@ -34,6 +36,8 @@ from system.constants import (
     INTERNAL_SFTP_STR,
     SYSTEMCTL,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def update_sftp_user_share_config(input_map):
@@ -280,3 +284,39 @@ def is_sftp_subsystem_internal(sshd_config=None):
             if re.match(INTERNAL_SFTP_STR, line) is not None:
                 return True
     return False
+
+
+def remove_sftp_server_subsystem(sshd_config=None):
+    """
+    Basic search and remark out (in given file, or distro specific sshd default file),
+    of 'Subsystem *sftp-server' line. Returning sshd to openssh defaults of no enabled
+    Subsystem: enabling our consequent use of the sftp-internal subsystem.
+    sftp-internal needs no additional configuration files when using chroot.
+    :param sshd_config: Full path of sshd_config file.
+    :return: True on replacement, False otherwise.
+    :rtype boolean:
+    """
+    # Comment out OS default sftp subsystem (if sftp-server).
+    # Default to the distro specific sshd OS default config.
+    if sshd_config is None:
+        sshd_config = SSHD_CONFIG[distro.id()].sshd_os
+    found_and_replaced = False
+    if os.path.isfile(sshd_config):
+        fh, npath = mkstemp()
+        with open(npath, "w+") as temp_file:
+            # Original opened in 'r' (default) in text mode.
+            with open(sshd_config) as original_file:
+                for line in original_file.readlines():
+                    if line.startswith("Subsystem") and line.endswith("sftp-server\n"):
+                        temp_file.write("#{}\n".format(line))
+                        found_and_replaced = True
+                    else:
+                        temp_file.write(line)
+        if found_and_replaced:
+            shutil.move(npath, sshd_config)
+            logger.info("SSHD ({}) sftp-server disabled".format(sshd_config))
+        else:
+            os.remove(npath)
+    else:
+        logger.info("SSHD file ({}) does not exist".format(sshd_config))
+    return found_and_replaced

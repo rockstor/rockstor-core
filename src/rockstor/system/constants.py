@@ -34,30 +34,36 @@ SYSTEMCTL = "/usr/bin/systemctl"
 
 
 # Begin SFTP-related constants
-SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
-INTERNAL_SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
+SSHD_HEADER = "###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###"
+INTERNAL_SFTP_STR = "Subsystem\tsftp\tinternal-sftp"
 
 # Named Tuple to define sshd files according to their purpose.
-sshd_files = collections.namedtuple("sshd_files", "sshd sftp AllowUsers")
+# sshd - rockstor-target for sshd config additions.
+# sshd_os - OS default config file we may have to edit (see sftp-server disablement)
+# sftp - rockstor-target for sftp config additions.
+# AllowUsers - rockstor-target for AllowUsers config - NOT CURRENTLY IMPLEMENTED
+sshd_files = collections.namedtuple("sshd_files", "sshd sshd_os sftp AllowUsers")
 
 # Dict of sshd_files indexed by distro.id
 SSHD_CONFIG = {
     # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
     "opensuse": sshd_files(
         sshd="/etc/ssh/sshd_config",
+        sshd_os="/etc/ssh/sshd_config",
         sftp="/etc/ssh/sshd_config",
         AllowUsers="/etc/ssh/sshd_config",
     ),
     "opensuse-leap": sshd_files(
         sshd="/etc/ssh/sshd_config",
+        sshd_os="/etc/ssh/sshd_config",
         sftp="/etc/ssh/sshd_config",
         AllowUsers="/etc/ssh/sshd_config",
     ),
     # Newer overload  - type files
     "opensuse-tumbleweed": sshd_files(
         sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
+        sshd_os="/usr/etc/ssh/sshd_config",
         sftp="/etc/ssh/sshd_config.d/rockstor-sftp.conf",
         AllowUsers="/etc/ssh/sshd_config.d/rockstor-AllowUsers.conf",
     ),
 }
-

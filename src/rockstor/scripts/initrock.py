@@ -28,9 +28,9 @@ import distro
 from django.conf import settings
 
 from system import services
-from system.osi import run_command, md5sum, replace_line_if_found
-from system.ssh import SSHD_CONFIG
-from system.constants import SYSTEMCTL, SSHD_HEADER, INTERNAL_SFTP_STR
+from system.osi import run_command, md5sum
+from system.ssh import remove_sftp_server_subsystem
+from system.constants import SYSTEMCTL, SSHD_CONFIG, SSHD_HEADER, INTERNAL_SFTP_STR
 from collections import OrderedDict
 
 
@@ -221,39 +221,25 @@ def update_tz(log):
 def bootstrap_sshd_config(log):
     """
     Setup sshd config options for Rockstor:
-    1. Switch from the default /usr/lib/ssh/sftp-server subsystem
-        to the internal-sftp subsystem required for sftp access to work.
+    1. Disable OS default (but not openssh default) of "Subsystem <path>sftp-server".
+    2. Install "Subsystem sftp sftp-internal" required for Rockstor sftp access.
         Note that this turns the SFTP service ON by default.
-    2. Add our customization header and allow only the root user to connect.
+    3. Add header line and AllowUsers entry for root if PermitRootLogin file exists.
     :param log:
-    :return:
     """
-    sshd_config = SSHD_CONFIG[distro.id()].sftp
-
-    # Comment out default sftp subsystem
-    # TODO Move default sftp removal to dedicated ssh.py procedure.
-    sshdconf_source = "Subsystem\tsftp\t/usr/lib/ssh/sftp-server"
-    sshdconf_target = "#{}".format(sshdconf_source)
-    replaced = False
-    sshd_config_exists = os.path.isfile(sshd_config)
-    if sshd_config_exists:
-        fh, npath = mkstemp()
-        replaced = replace_line_if_found(
-            sshd_config, npath, sshdconf_source, sshdconf_target
-        )
-        if replaced:
-            shutil.move(npath, sshd_config)
-            log.info(
-                "SSHD updated via (): commented out default Subsystem".format(sshd_config)
-            )
-        os.remove(npath)
+    sshd_restart = False
+    if remove_sftp_server_subsystem():
+        sshd_restart = True
+        log.info("SSHD OS default sftp-server disabled")
     else:
-        log.info("SSHD file ({}) does not exist - creating.".format(sshd_config))
-
-    # Set AllowUsers and Subsystem if needed
+        log.info("SSHD OS default sftp-server already disabled")
+    sshd_config = SSHD_CONFIG[distro.id()].sftp
+    if not os.path.isfile(sshd_config):
+        log.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
+    # Set AllowUsers and Subsystem sftp-internal if not already in-place.
     # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
     with open(sshd_config, "a+") as sfo:
-        log.info("SSHD via ({}) Customization".format(sshd_config))
+        log.info("SSHD customization via ({})".format(sshd_config))
         found = False
         for line in sfo.readlines():
             if (
@@ -261,22 +247,19 @@ def bootstrap_sshd_config(log):
                 or re.match("AllowUsers ", line) is not None
                 or re.match(INTERNAL_SFTP_STR, line) is not None
             ):
-                # if header is found,
                 found = True
-                log.info(
-                    "SSHD via ({}) already has the updates. Leaving unchanged.".format(
-                        sshd_config
-                    )
-                )
+                log.info("SSHD already customized")
                 break
         if not found:
+            sshd_restart = True
             sfo.write("{}\n".format(SSHD_HEADER))
             sfo.write("{}\n".format(INTERNAL_SFTP_STR))
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
             if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
                 sfo.write("AllowUsers root\n")
-            log.info("SSHD updated via ({})".format(sshd_config))
-            run_command([SYSTEMCTL, "restart", "sshd"])
+            log.info("SSHD updated")
+    if sshd_restart:
+        run_command([SYSTEMCTL, "restart", "sshd"])
 
 
 def establish_shellinaboxd_service():
@@ -503,7 +486,7 @@ def main():
         logging.exception(e)
 
     try:
-        logging.info("Updating sshd config")
+        logging.info("Updating SSHD config")
         bootstrap_sshd_config(logging)
     except Exception as e:
         logging.error("Exception while updating sshd config: {}".format(e.__str__()))
