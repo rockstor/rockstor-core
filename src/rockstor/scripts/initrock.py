@@ -24,13 +24,12 @@ import shutil
 import sys
 from tempfile import mkstemp
 
-import distro
 from django.conf import settings
 
 from system import services
 from system.osi import run_command, md5sum
-from system.ssh import remove_sftp_server_subsystem
-from system.constants import SYSTEMCTL, SSHD_CONFIG, SSHD_HEADER, INTERNAL_SFTP_STR
+from system.ssh import remove_sftp_server_subsystem, init_sftp_config
+from system.constants import SYSTEMCTL
 from collections import OrderedDict
 
 
@@ -224,43 +223,15 @@ def bootstrap_sshd_config(log):
     1. Disable OS default (but not openssh default) of "Subsystem <path>sftp-server".
     2. Install "Subsystem sftp sftp-internal" required for Rockstor sftp access.
         Note that this turns the SFTP service ON by default.
-    3. Add header line and AllowUsers entry for root if PermitRootLogin file exists.
+    3. Add header line & "AllowUsers root" if conf/PermitRootLogin file exists.
     :param log:
     """
-    sshd_restart = False
-    if remove_sftp_server_subsystem():
-        sshd_restart = True
-        log.info("SSHD OS default sftp-server disabled")
-    else:
-        log.info("SSHD OS default sftp-server already disabled")
-    sshd_config = SSHD_CONFIG[distro.id()].sftp
-    if not os.path.isfile(sshd_config):
-        log.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
-    # Set AllowUsers and Subsystem sftp-internal if not already in-place.
-    # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
-    with open(sshd_config, "a+") as sfo:
-        log.info("SSHD customization via ({})".format(sshd_config))
-        found = False
-        for line in sfo.readlines():
-            if (
-                re.match(SSHD_HEADER, line) is not None
-                or re.match("AllowUsers ", line) is not None
-                or re.match(INTERNAL_SFTP_STR, line) is not None
-            ):
-                found = True
-                log.info("SSHD already customized")
-                break
-        if not found:
-            sshd_restart = True
-            sfo.write("{}\n".format(SSHD_HEADER))
-            sfo.write("{}\n".format(INTERNAL_SFTP_STR))
-            # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
-            if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
-                sfo.write("AllowUsers root\n")
-            log.info("SSHD updated")
-    if sshd_restart:
+    conf_altered = remove_sftp_server_subsystem()
+    if init_sftp_config():
+        conf_altered = True
+    if conf_altered:
+        logger.info("SSHD config altered, restarting service")
         run_command([SYSTEMCTL, "restart", "sshd"])
-
 
 def establish_shellinaboxd_service():
     """
@@ -486,7 +457,7 @@ def main():
         logging.exception(e)
 
     try:
-        logging.info("Updating SSHD config")
+        logging.info("Initialising SSHD config")
         bootstrap_sshd_config(logging)
     except Exception as e:
         logging.error("Exception while updating sshd config: {}".format(e.__str__()))

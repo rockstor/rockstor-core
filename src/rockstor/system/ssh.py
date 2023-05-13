@@ -39,6 +39,42 @@ from system.constants import (
 
 logger = logging.getLogger(__name__)
 
+def init_sftp_config(sshd_config=None):
+    """
+    Establish our default sftp configuration within the distro specific file
+    or a file passed by full path.
+    :param sshd_config:
+    :return: True if file found and alterations were made, False otherwise.
+    :rtype boolean:
+    """
+    if sshd_config is None:
+        sshd_config = SSHD_CONFIG[distro.id()].sftp
+    sshd_restart = False
+    if not os.path.isfile(sshd_config):
+        logger.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
+    # Set AllowUsers and Subsystem sftp-internal if not already in-place.
+    # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
+    with open(sshd_config, "a+") as sfo:
+        found = False
+        for line in sfo.readlines():
+            if (
+                re.match(SSHD_HEADER, line) is not None
+                or re.match("AllowUsers ", line) is not None
+                or re.match(INTERNAL_SFTP_STR, line) is not None
+            ):
+                found = True
+                logger.info("SSHD ({}) already initialised".format(sshd_config))
+                break
+        if not found:
+            sshd_restart = True
+            sfo.write("{}\n".format(SSHD_HEADER))
+            sfo.write("{}\n".format(INTERNAL_SFTP_STR))
+            # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
+            if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
+                sfo.write("AllowUsers root\n")
+            logger.info("SSHD ({}) initialised")
+    return sshd_restart
+
 
 def update_sftp_user_share_config(input_map):
     """
@@ -316,6 +352,7 @@ def remove_sftp_server_subsystem(sshd_config=None):
             shutil.move(npath, sshd_config)
             logger.info("SSHD ({}) sftp-server disabled".format(sshd_config))
         else:
+            logger.info("SSHD ({}) sftp-server already disabled".format(sshd_config))
             os.remove(npath)
     else:
         logger.info("SSHD file ({}) does not exist".format(sshd_config))
