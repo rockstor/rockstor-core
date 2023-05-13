@@ -72,7 +72,7 @@ def init_sftp_config(sshd_config=None):
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
             if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
                 sfo.write("AllowUsers root\n")
-            logger.info("SSHD ({}) initialised")
+            logger.info("SSHD ({}) initialised".format(sshd_config))
     return sshd_restart
 
 
