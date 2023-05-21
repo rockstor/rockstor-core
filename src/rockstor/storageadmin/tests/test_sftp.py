@@ -12,7 +12,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-import mock
 from rest_framework import status
 from mock import patch
 
@@ -60,14 +59,12 @@ class SFTPTests(APITestMixin):
 
         # post mocks
 
-        cls.patch_is_share_mounted = patch(
-            "storageadmin.views.sftp." "is_share_mounted"
-        )
+        cls.patch_is_share_mounted = patch("storageadmin.views.sftp.is_share_mounted")
         cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
         cls.mock_is_share_mounted.return_value = True
 
         cls.patch_helper_mount_share = patch(
-            "storageadmin.views.sftp." "helper_mount_share"
+            "storageadmin.views.sftp.helper_mount_share"
         )
         cls.mock_helper_mount_share = cls.patch_helper_mount_share.start()
         cls.mock_helper_mount_share.return_value = True
@@ -75,6 +72,19 @@ class SFTPTests(APITestMixin):
         cls.patch_sftp_mount = patch("storageadmin.views.sftp.sftp_mount")
         cls.mock_sftp_mount = cls.patch_sftp_mount.start()
         cls.mock_sftp_mount.return_value = True
+
+        # Avoid low-level chmod/rsync/sftp_user filesystem/sshd prep by mocking.
+        cls.patch_rsync_for_sftp = patch("storageadmin.views.sftp.rsync_for_sftp")
+        cls.mock_rsync_for_sftp = cls.patch_rsync_for_sftp.start()
+        cls.mock_rsync_for_sftp.return_value = True
+
+        cls.patch_update_sftp_user_share_config = patch(
+            "storageadmin.views.sftp.update_sftp_user_share_config"
+        )
+        cls.mock_update_sftp_user_share_config = (
+            cls.patch_update_sftp_user_share_config.start()
+        )
+        cls.mock_update_sftp_user_share_config.return_value = True
 
     @classmethod
     def tearDownClass(cls):
@@ -116,11 +126,11 @@ class SFTPTests(APITestMixin):
     def test_post_requests_2(self):
         """
         . Create sftp for root-owned share - should fail as not supported.
-        . Create sftp for the share that is already exported
+        . Create sftp for the share that is already sftp exported
         . Create sftp for user-owned share
         """
 
-        # create sftp with share owned by root
+        # Create sftp for root-owned share - should fail as not supported.
         data = {"shares": ("share_root_owned",)}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -134,32 +144,24 @@ class SFTPTests(APITestMixin):
         )
         self.assertEqual(response.data[0], e_msg)
 
-        # TODO: the rest of this test fails with
-        # 'Share matching query does not exist.'
-        # and later:
-        # AssertionError: "[Errno 2] No such file or directory:
-        # '/lib64/libpopt.so.0'" != 'Share (share-sftp) is already exported via SFTP.'
+        # Create sftp for the share that is already sftp exported
+        data = {"shares": ("share_sftp",)}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Share (share_sftp) is already exported via SFTP."
+        self.assertEqual(response.data[0], e_msg)
 
-        # mock_share.objects.get.return_value = self.temp_share_sftp
-        #
-        # # create sftp with already existing and sftp exported share.
-        # data = {'shares': ('share-sftp',)}
-        # response = self.client.post(self.BASE_URL, data=data)
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #                  msg=response.data)
-        # e_msg = 'Share (share-sftp) is already exported via SFTP.'
-        # self.assertEqual(response.data[0], e_msg)
-
-        # # TODO: FAIL:
-        # #  stderr = ["usermod: user \'admin\' does not exist", \'\']\n']
-        # mock_share.objects.get.return_value = self.temp_share_user_owned
-        #
-        # # happy path
-        # data = {'shares': ('share-user-owned',), 'read_only': 'true', }
-        # response = self.client.post(self.BASE_URL, data=data)
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK, msg=response.data)
+        # Create sftp for user-owned share - happy path
+        data = {
+            "shares": ("share_user_owned",),
+            "read_only": "true",
+        }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_delete_requests_1(self):
         """
