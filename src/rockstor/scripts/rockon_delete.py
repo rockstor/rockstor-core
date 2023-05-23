@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -26,34 +26,41 @@ from system.osi import run_command
 DOCKER = "/usr/bin/docker"
 
 
-# Console script to delete containers, images and rockstor-db metadata of a
-# Rock-on.
+# Console script to delete containers, images and rockstor-db metadata of a Rock-on.
 def delete_rockon():
     try:
         name = sys.argv[1]
     except IndexError:
         sys.exit(
-            "Delete metadata, containers and images of a "
-            "Rock-on\n\tUsage: %s <rockon name>" % sys.argv[0]
+            "Delete metadata, containers and images of a Rock-On"
+            "\n\tUsage: {} <Rock-On name>"
+            "\n"
+            "\nNOTE: the Rock-On name is case sensitive; use quotes if it includes spaces."
+            '\nexample: {} "Rock-On Name"'.format(sys.argv[0], sys.argv[0])
         )
 
-    try:
-        ro = RockOn.objects.get(name=name)
-    except RockOn.DoesNotExist:
-        sys.exit("Rock-On(%s) does not exist" % name)
+    ros = RockOn.objects.filter(name=name)
+    if len(ros) > 0:
+        for ro in ros:
+            ro_id = ro.id
+            for c in DContainer.objects.filter(rockon=ro).order_by("-launch_order"):
+                # We don't throw any exceptions because we want to ensure metadata is
+                # deleted for sure. It would be nice to fully delete containers and
+                # images, but that's not a hard requirement.
+                run_command([DOCKER, "stop", c.name], throw=False, log=True)
+                run_command([DOCKER, "rm", c.name], throw=False, log=True)
+                # Get image name with tag information
+                img_plus_tag = "{}:{}".format(c.dimage.name, c.dimage.tag)
+                run_command([DOCKER, "rmi", img_plus_tag], throw=False, log=True)
 
-    for c in DContainer.objects.filter(rockon=ro).order_by("-launch_order"):
-        # We don't throw any exceptions because we want to ensure metadata is
-        # deleted for sure. It would be nice to fully delete containers and
-        # images, but that's not a hard requirement.
-        run_command([DOCKER, "stop", c.name], throw=False, log=True)
-        run_command([DOCKER, "rm", c.name], throw=False, log=True)
-        # Get image name with tag information
-        img_plus_tag = "{}:{}".format(c.dimage.name, c.dimage.tag)
-        run_command([DOCKER, "rmi", img_plus_tag], throw=False, log=True)
-
-    ro.delete()
-    print("Rock-On(%s) metadata in the db is deleted" % name)
+            ro.delete()
+            print(
+                "The metadata for the Rock-On named {} (id: {}) has been deleted from the database".format(
+                    name, ro_id
+                )
+            )
+    else:
+        sys.exit("No Rock-On named {} was found in the database".format(name))
 
 
 if __name__ == "__main__":
