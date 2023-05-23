@@ -15,7 +15,10 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import os
+import shutil
+import stat
+from tempfile import mkstemp
 
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
@@ -42,7 +45,8 @@ class ReplicaMixin(object):
         if EmailClient.objects.filter().exists():
             eco = EmailClient.objects.filter().order_by("-id")[0]
             mail_from = eco.sender
-        with open("/etc/cron.d/replicationtab", "w") as cfo:
+        fh, npath = mkstemp()
+        with open(npath, "w") as cfo:
             cfo.write("SHELL=/bin/bash\n")
             cfo.write("PATH=/sbin:/bin:/usr/sbin:/usr/bin\n")
             cfo.write("MAILTO=root\n")
@@ -55,6 +59,9 @@ class ReplicaMixin(object):
                         "%s root %s.venv/bin/send-replica %d\n"
                         % (replica.crontab, settings.ROOT_DIR, replica.id)
                     )
+        # Set file to rw- --- --- (600) via stat constants
+        os.chmod(npath, stat.S_IRUSR | stat.S_IWUSR)
+        shutil.move(npath, "/etc/cron.d/replicationtab")
 
     @staticmethod
     def _validate_port(port, request):

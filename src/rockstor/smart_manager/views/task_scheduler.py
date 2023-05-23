@@ -18,6 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import logging
+import os
+import shutil
+import stat
+from tempfile import mkstemp
 
 from django.conf import settings
 from django.db import transaction
@@ -90,7 +94,8 @@ class TaskSchedulerMixin(object):
         if EmailClient.objects.filter().exists():
             eco = EmailClient.objects.filter().order_by("-id")[0]
             mail_from = eco.sender
-        with open("/etc/cron.d/rockstortab", "w") as cfo:
+        fh, npath = mkstemp()
+        with open(npath, "w") as cfo:
             cfo.write("SHELL=/bin/bash\n")
             cfo.write("PATH=/sbin:/bin:/usr/sbin:/usr/bin\n")
             cfo.write("MAILTO=root\n")
@@ -129,6 +134,9 @@ class TaskSchedulerMixin(object):
                         logger.error("missing crontab window value")
                         continue
                     cfo.write(tab)
+        # Set file to rw- --- --- (600) via stat constants.
+        os.chmod(npath, stat.S_IRUSR | stat.S_IWUSR)
+        shutil.move(npath, "/etc/cron.d/rockstortab")
 
 
 class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
