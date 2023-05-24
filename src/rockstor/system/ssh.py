@@ -21,6 +21,7 @@ import os
 import re
 import platform
 import shutil
+import stat
 from shutil import move, copy
 from tempfile import mkstemp
 
@@ -88,7 +89,10 @@ def init_sftp_config(sshd_config=None):
         logger.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
     # Set AllowUsers and Subsystem sftp-internal if not already in-place.
     # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
-    with open(sshd_config, "a+") as sfo:
+    # Post Python 3, consider build-in open with custom opener.
+    with os.fdopen(
+        os.open(sshd_config, os.O_RDWR | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), "a+"
+    ) as sfo:
         found = False
         for line in sfo.readlines():
             if (
