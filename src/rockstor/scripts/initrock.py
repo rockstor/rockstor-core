@@ -27,12 +27,14 @@ from tempfile import mkstemp
 from django.conf import settings
 
 from system import services
-from system.osi import run_command, md5sum, replace_line_if_found
+from system.osi import run_command, md5sum
+from system.ssh import remove_sftp_server_subsystem, init_sftp_config
+from system.constants import SYSTEMCTL
 from collections import OrderedDict
+
 
 logger = logging.getLogger(__name__)
 
-SYSCTL = "/usr/bin/systemctl"
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
 BASE_BIN = "{}.venv/bin".format(BASE_DIR)
 CONF_DIR = "{}conf".format(BASE_DIR)
@@ -217,50 +219,19 @@ def update_tz(log):
 
 def bootstrap_sshd_config(log):
     """
-    Setup sshd_config options for Rockstor:
-    1. Switch from the default /usr/lib/ssh/sftp-server subsystem
-        to the internal-sftp subsystem required for sftp access to work.
+    Setup sshd config options for Rockstor:
+    1. Disable OS default (but not openssh default) of "Subsystem <path>sftp-server".
+    2. Install "Subsystem sftp sftp-internal" required for Rockstor sftp access.
         Note that this turns the SFTP service ON by default.
-    2. Add our customization header and allow only the root user to connect.
+    3. Add header line & "AllowUsers root" if conf/PermitRootLogin file exists.
     :param log:
-    :return:
     """
-    sshd_config = "/etc/ssh/sshd_config"
-
-    # Comment out default sftp subsystem
-    fh, npath = mkstemp()
-    sshdconf_source = "Subsystem\tsftp\t/usr/lib/ssh/sftp-server"
-    sshdconf_target = "#{}".format(sshdconf_source)
-    replaced = replace_line_if_found(
-        sshd_config, npath, sshdconf_source, sshdconf_target
-    )
-    if replaced:
-        shutil.move(npath, sshd_config)
-        log.info("updated sshd_config: commented out default Subsystem")
-    else:
-        os.remove(npath)
-
-    # Set AllowUsers and Subsystem if needed
-    with open(sshd_config, "a+") as sfo:
-        log.info("SSHD_CONFIG Customization")
-        found = False
-        for line in sfo.readlines():
-            if (
-                re.match(settings.SSHD_HEADER, line) is not None
-                or re.match("AllowUsers ", line) is not None
-                or re.match(settings.SFTP_STR, line) is not None
-            ):
-                # if header is found,
-                found = True
-                log.info("sshd_config already has the updates. Leaving it unchanged.")
-                break
-        if not found:
-            sfo.write("{}\n".format(settings.SSHD_HEADER))
-            sfo.write("{}\n".format(settings.SFTP_STR))
-            sfo.write("AllowUsers root\n")
-            log.info("updated sshd_config.")
-            run_command([SYSCTL, "restart", "sshd"])
-
+    conf_altered = remove_sftp_server_subsystem()
+    if init_sftp_config():
+        conf_altered = True
+    if conf_altered:
+        logger.info("SSHD config altered, restarting service")
+        run_command([SYSTEMCTL, "restart", "sshd"])
 
 def establish_shellinaboxd_service():
     """
@@ -335,9 +306,9 @@ def move_or_remove_legacy_rockstor_service_files():
             else:
                 logger.info("{} stop/disable/remove (LEGACY).".format(target_with_path))
                 run_command(
-                    [SYSCTL, "stop", service_file_name], throw=False
+                    [SYSTEMCTL, "stop", service_file_name], throw=False
                 )  # allow for not loaded
-                run_command([SYSCTL, "disable", service_file_name])
+                run_command([SYSTEMCTL, "disable", service_file_name])
                 os.remove(target_with_path)
             conf_altered = True
     return conf_altered
@@ -359,7 +330,7 @@ def establish_systemd_services():
     # See: https://www.freedesktop.org/software/systemd/man/systemd.generator.html
     if conf_altered:
         logger.info("Systemd config altered, running daemon-reload")
-        run_command([SYSCTL, "daemon-reload"])
+        run_command([SYSTEMCTL, "daemon-reload"])
 
 
 def install_or_update_systemd_service(
@@ -384,9 +355,9 @@ def install_or_update_systemd_service(
                 )
             )
             run_command(
-                [SYSCTL, "stop", service_name], throw=False
+                [SYSTEMCTL, "stop", service_name], throw=False
             )  # allow for not loaded
-            run_command([SYSCTL, "disable", service_name])
+            run_command([SYSTEMCTL, "disable", service_name])
             os.remove(target_with_path)
             logger.info("{} removed.".format(filename))
             return True
@@ -402,7 +373,7 @@ def install_or_update_systemd_service(
             os.mkdir(target_directory)
         shutil.copyfile(source_with_path, target_with_path)
         logger.info("{} updated.".format(target_with_path))
-        run_command([SYSCTL, "enable", service_name])
+        run_command([SYSTEMCTL, "enable", service_name])
         return True
     logger.info("{} up-to-date.".format(target_with_path))
     return False
@@ -474,7 +445,7 @@ def main():
         )
         logging.debug("cert signed.")
         logging.info("restarting nginx...")
-        run_command([SYSCTL, "restart", "nginx"])
+        run_command([SYSTEMCTL, "restart", "nginx"])
 
     logging.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
@@ -486,10 +457,10 @@ def main():
         logging.exception(e)
 
     try:
-        logging.info("Updating sshd_config")
+        logging.info("Initialising SSHD config")
         bootstrap_sshd_config(logging)
     except Exception as e:
-        logging.error("Exception while updating sshd_config: {}".format(e.__str__()))
+        logging.error("Exception while updating sshd config: {}".format(e.__str__()))
 
     db_already_setup = os.path.isfile(STAMP)
     for db_stage_name, db_stage_items in zip(
@@ -573,13 +544,13 @@ def main():
     logging.info("Done")
 
     logging.info("Stopping firewalld...")
-    run_command([SYSCTL, "stop", "firewalld"])
-    run_command([SYSCTL, "disable", "firewalld"])
+    run_command([SYSTEMCTL, "stop", "firewalld"])
+    run_command([SYSTEMCTL, "disable", "firewalld"])
     logging.info("Firewalld stopped and disabled")
 
     logging.info("Enabling and Starting atd...")
-    run_command([SYSCTL, "enable", "atd"])
-    run_command([SYSCTL, "start", "atd"])
+    run_command([SYSTEMCTL, "enable", "atd"])
+    run_command([SYSTEMCTL, "start", "atd"])
     logging.info("Atd enabled and started")
 
     update_nginx(logging)

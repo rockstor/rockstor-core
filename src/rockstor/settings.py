@@ -371,9 +371,6 @@ MODEL_DEFS = {
 	   'pqgroup': '-1/-1',
 }
 
-# Begin SFTP-related variables
-SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
-SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
 
 OAUTH_INTERNAL_APP = 'cliapp'
 
@@ -441,7 +438,7 @@ SHUTDOWN = subprocess.check_output(["which", "shutdown"]).rstrip()
 # Establish our OS base id, name, and version:
 # Use id for code path decisions. Others are for Web-UI display purposes.
 # Examples given are for CentOS Rockstor variant, Leap 15, and Tumblweed.
-OS_DISTRO_ID = distro.id()  # rockstor, opensuse-leap, opensuse-tumbleweed
+OS_DISTRO_ID = distro.id()  # rockstor, opensuse-leap/opensuse, opensuse-tumbleweed
 OS_DISTRO_NAME = distro.name()  # Rockstor, openSUSE Leap, openSUSE Tumbleweed
 # Note that the following will capture the build os version.
 # For live updates (running system) we call distro.version() directly in code.

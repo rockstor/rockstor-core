@@ -35,13 +35,13 @@ from distutils.util import strtobool
 from django.conf import settings
 
 from exceptions import CommandException, NonBTRFSRootException
+from system.constants import SYSTEMCTL, MKDIR, RMDIR, MOUNT, UMOUNT, DEFAULT_MNT_DIR
 
 logger = logging.getLogger(__name__)
 
 CAT = "/usr/bin/cat"
 CHATTR = "/usr/bin/chattr"
 DD = "/usr/bin/dd"
-DEFAULT_MNT_DIR = "/mnt2/"
 DNSDOMAIN = "/usr/bin/dnsdomainname"
 EXPORTFS = "/usr/sbin/exportfs"
 GRUBBY = "/usr/sbin/grubby"
@@ -51,16 +51,11 @@ HOSTID = "/usr/bin/hostid"
 HOSTNAMECTL = "/usr/bin/hostnamectl"
 LS = "/usr/bin/ls"
 LSBLK = "/usr/bin/lsblk"
-MKDIR = "/usr/bin/mkdir"
-MOUNT = "/usr/bin/mount"
 NMCLI = "/usr/bin/nmcli"
-RMDIR = "/usr/bin/rmdir"
 SHUTDOWN = settings.SHUTDOWN
-SYSTEMCTL_BIN = "/usr/bin/systemctl"
 SYSTEMD_ESCAPE = "/usr/bin/systemd-escape"
 SYSTEMD_DIR = "/usr/lib/systemd/system"
 UDEVADM = settings.UDEVADM
-UMOUNT = "/usr/bin/umount"
 WIPEFS = "/usr/sbin/wipefs"
 RTC_WAKE_FILE = "/sys/class/rtc/rtc0/wakealarm"
 PING = "/usr/bin/ping"
@@ -1363,7 +1358,7 @@ def system_suspend():
     # This function perform system suspend to RAM via systemctl
     # while reboot and shutdown, both via shutdown command, can be delayed
     # systemctl suspend miss this option
-    return run_command([SYSTEMCTL_BIN, "suspend"])
+    return run_command([SYSTEMCTL, "suspend"])
 
 
 def clean_system_rtc_wake():
@@ -2208,7 +2203,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         # our proposed systemd file is the same length as our template and so
         # contains no ExecStart lines so we disable the rockstor-hdparm
         # service.
-        out, err, rc = run_command([SYSTEMCTL_BIN, "disable", HDPARM_SERVICE_NAME])
+        out, err, rc = run_command([SYSTEMCTL, "disable", HDPARM_SERVICE_NAME])
         if rc != 0:
             return False
         # and remove our HDPARM_SERVICE_NAME file as it's absence indicates
@@ -2231,7 +2226,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         # count (ie entries) is greater than the template file's line count.
         # N.B. can't use systemctl wrapper as then circular dependency ie:-
         # return systemctl('rockstor-hdparm', 'enable')
-        out, err, rc = run_command([SYSTEMCTL_BIN, "enable", HDPARM_SERVICE_NAME])
+        out, err, rc = run_command([SYSTEMCTL, "enable", HDPARM_SERVICE_NAME])
         if rc != 0:
             return False
     return True
@@ -2361,7 +2356,7 @@ def trigger_systemd_update():
     updated to freshly represent the new state of the associated config files.
     :return: o, e, rc as returned by run_command
     """
-    return run_command([SYSTEMCTL_BIN, "daemon-reload"])
+    return run_command([SYSTEMCTL, "daemon-reload"])
 
 
 def systemd_name_escape(original_sting, template=""):
