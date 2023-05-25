@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 Rockstor, Inc. <https://rockstor.com>
+Copyright (c) 2012-2023 Rockstor, Inc. <https://rockstor.com>
 This file is part of Rockstor.
 
 Rockstor is free software; you can redistribute it and/or modify
@@ -114,19 +114,15 @@ ROCKSTOR_LEGACY_SYSTEMD_SERVICES = [
 LocalFile = namedtuple("LocalFile", "path mask services")
 LOCAL_FILES = {
     "samba_config": LocalFile(
-        path="/etc/samba/smb.conf",
-        mask=None,
-        services=["nmb", "smb"]
+        path="/etc/samba/smb.conf", mask=None, services=["nmb", "smb"]
     ),
     "rockstor_crontab": LocalFile(
-        path="/etc/cron.d/rockstortab",
-        mask=stat.S_IRUSR | stat.S_IWUSR,
-        services=None
+        path="/etc/cron.d/rockstortab", mask=stat.S_IRUSR | stat.S_IWUSR, services=None
     ),
     "replication_crontab": LocalFile(
         path="/etc/cron.d/replicationtab",
         mask=stat.S_IRUSR | stat.S_IWUSR,
-        services=None
+        services=None,
     ),
 }
 
@@ -257,6 +253,7 @@ def bootstrap_sshd_config(log):
     if conf_altered:
         logger.info("SSHD config altered, restarting service")
         run_command([SYSTEMCTL, "restart", "sshd"])
+
 
 def establish_shellinaboxd_service():
     """
@@ -427,22 +424,38 @@ def establish_poetry_paths():
             )
             if altered:
                 if LOCAL_FILES[local_file].mask is not None:
-                    logger.debug("Set {} to mask {}".format(local_file, oct(LOCAL_FILES[local_file].mask)))
+                    logger.debug(
+                        "Set {} to mask {}".format(
+                            local_file, oct(LOCAL_FILES[local_file].mask)
+                        )
+                    )
                     os.chmod(npath, LOCAL_FILES[local_file].mask)
                 else:
                     shutil.copystat(LOCAL_FILES[local_file].path, npath)
                 shutil.move(npath, LOCAL_FILES[local_file].path)
-                logger.info("The path to binaries in {} ({}) has been updated.".format(local_file, LOCAL_FILES[local_file].path))
+                logger.info(
+                    "The path to binaries in {} ({}) has been updated.".format(
+                        local_file, LOCAL_FILES[local_file].path
+                    )
+                )
                 if LOCAL_FILES[local_file].services is not None:
                     for service in LOCAL_FILES[local_file].services:
                         if services.is_systemd_service_active(service):
-                            logger.info("The {} service is currently active... restart it".format(service))
+                            logger.info(
+                                "The {} service is currently active... restart it".format(
+                                    service
+                                )
+                            )
                             run_command([SYSTEMCTL, "restart", service], log=True)
             else:
                 os.remove(npath)
                 logger.info("{} already looks good.".format(local_file))
         else:
-            logger.info("The {} ({}) could not be found".format(local_file, LOCAL_FILES[local_file].path))
+            logger.info(
+                "The {} ({}) could not be found".format(
+                    local_file, LOCAL_FILES[local_file].path
+                )
+            )
     logger.info("### DONE establishing poetry path to binaries in local files.")
 
 
