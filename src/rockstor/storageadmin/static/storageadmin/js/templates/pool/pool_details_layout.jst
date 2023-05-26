@@ -119,7 +119,9 @@
       </div>
       <div class="modal-body">
         <div class="messages"></div>
-        <h4>{{poolName}} will be deleted including it's Shares listed below and their Snapshots, NFS exports, Samba and SFTP config and Replicas. Are you sure?</h4>
+        <h4>Pool and all associated Shares, Snapshots, NFS/Samba/SFTP exports, and Replicas, will be deleted.</h4>
+        <div class="alert alert-danger">Are you sure? DATA WILL BE LOST!</div>
+        Rockstor managed Shares:
         <ul>
         {{#each share}}
         <li>{{this.name}} ({{this.size_gb}} GB)</li>

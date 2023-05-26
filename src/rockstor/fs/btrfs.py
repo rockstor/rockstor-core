@@ -805,7 +805,7 @@ def umount_root(root_pool_mnt):
         if ce.rc == 32:
             for l in ce.err:
                 l = l.strip()
-                if re.search("not mounted$", l) is not None:
+                if re.search("not mounted\.$", l) is not None:
                     return
             raise ce
     for i in range(20):
@@ -1149,8 +1149,8 @@ def share_id(pool, share_name):
 
 def remove_share(pool, share_name, pqgroup, force=False):
     """
-    umount share if its mounted.
-    unsures given pool is mounted.
+    umount share if it's mounted.
+    ensures given pool is mounted.
     if force flag set then first delete all share's subvolumes.
     btrfs subvolume delete root_mnt/vol_name.
     destroy shares qgroup and associated pqgroup.

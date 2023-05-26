@@ -772,7 +772,17 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 ).format(pool.name)
                 handle_exception(Exception(e_msg), request)
 
-            if Share.objects.filter(pool=pool).exists():
+            if not pool.is_mounted:
+                logger.info(
+                    "Pool ({}) to be deleted is not mounted. "
+                    "Proceeding with database removal only.".format(pool.name)
+                )
+            elif pool.redundancy_exceeded:
+                logger.info(
+                    "Pool ({}) to be deleted has exceeded its redundancy limits. "
+                    "Proceeding with database removal only.".format(pool.name)
+                )
+            elif Share.objects.filter(pool=pool).exists():
                 if not force:
                     e_msg = (
                         "Pool ({}) is not empty. Delete is not allowed "
@@ -785,14 +795,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             pool_path = "{}{}".format(settings.MNT_PT, pool.name)
             umount_root(pool_path)
             pool.delete()
-            try:
-                # TODO: this call fails as the inheritance of disks was removed
-                # We need another method to invoke this as self no good now.
-                self._update_disk_state()
-            except Exception as e:
-                logger.error(
-                    ("Exception while updating disk state: ({}).").format(e.__str__())
-                )
+            # We may need to update disk state here.
             return Response()
 
 
