@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 Rockstor, Inc. <https://rockstor.com>
+Copyright (c) 2012-2023 Rockstor, Inc. <https://rockstor.com>
 This file is part of Rockstor.
 
 Rockstor is free software; you can redistribute it and/or modify
@@ -21,16 +21,17 @@ import logging
 import os
 import re
 import shutil
+import stat
 import sys
 from tempfile import mkstemp
 
 from django.conf import settings
 
 from system import services
-from system.osi import run_command, md5sum
+from system.osi import run_command, md5sum, replace_pattern_inline
 from system.ssh import remove_sftp_server_subsystem, init_sftp_config
 from system.constants import SYSTEMCTL
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,26 @@ ROCKSTOR_EXTRA_SYSTEMD_SERVICES = [
 ROCKSTOR_LEGACY_SYSTEMD_SERVICES = [
     "rockstor-ipv6check.service",  # Legacy service from pre v4.1.0-0 development.
 ]
+
+# Local files that need checking
+# path: path to file.
+# mask: use constants from the stat module to apply desired permissions to file.
+#       use None to use the current mask of the target file defined at <path>.
+# services: Python List of service(s) to restart, if any, after modifying the file.
+LocalFile = namedtuple("LocalFile", "path mask services")
+LOCAL_FILES = {
+    "samba_config": LocalFile(
+        path="/etc/samba/smb.conf", mask=None, services=["nmb", "smb"]
+    ),
+    "rockstor_crontab": LocalFile(
+        path="/etc/cron.d/rockstortab", mask=stat.S_IRUSR | stat.S_IWUSR, services=None
+    ),
+    "replication_crontab": LocalFile(
+        path="/etc/cron.d/replicationtab",
+        mask=stat.S_IRUSR | stat.S_IWUSR,
+        services=None,
+    ),
+}
 
 
 def inet_addrs(interface=None):
@@ -232,6 +253,7 @@ def bootstrap_sshd_config(log):
     if conf_altered:
         logger.info("SSHD config altered, restarting service")
         run_command([SYSTEMCTL, "restart", "sshd"])
+
 
 def establish_shellinaboxd_service():
     """
@@ -377,6 +399,64 @@ def install_or_update_systemd_service(
         return True
     logger.info("{} up-to-date.".format(target_with_path))
     return False
+
+
+def establish_poetry_paths():
+    """Ensure path to Rockstor's binaries point to Poetry venv
+
+    Before our move to Poetry, our binaries lived in /opt/rockstor/bin.
+    After our move to Poetry, these now reside in /opt/rockstor/.venv/bin.
+    While the generation of new local files using these paths account for these
+    new paths, pre-existing files still use the non-existent old paths.
+    This function checks for these local files and changes them accordingly. If one
+    or more systemd service is associated to these files, it restarts it/them if the
+    given service(s) is/are currently active.
+    The local files in questions are defined in the LOCAL_FILES constant.
+    """
+    logger.info("### BEGIN Establishing poetry path to binaries in local files...")
+    pattern = "/opt/rockstor/bin/"
+    replacement = "/opt/rockstor/.venv/bin/"
+    for local_file in LOCAL_FILES:
+        if os.path.isfile(LOCAL_FILES[local_file].path):
+            fh, npath = mkstemp()
+            altered = replace_pattern_inline(
+                LOCAL_FILES[local_file].path, npath, pattern, replacement
+            )
+            if altered:
+                if LOCAL_FILES[local_file].mask is not None:
+                    logger.debug(
+                        "Set {} to mask {}".format(
+                            local_file, oct(LOCAL_FILES[local_file].mask)
+                        )
+                    )
+                    os.chmod(npath, LOCAL_FILES[local_file].mask)
+                else:
+                    shutil.copystat(LOCAL_FILES[local_file].path, npath)
+                shutil.move(npath, LOCAL_FILES[local_file].path)
+                logger.info(
+                    "The path to binaries in {} ({}) has been updated.".format(
+                        local_file, LOCAL_FILES[local_file].path
+                    )
+                )
+                if LOCAL_FILES[local_file].services is not None:
+                    for service in LOCAL_FILES[local_file].services:
+                        if services.is_systemd_service_active(service):
+                            logger.info(
+                                "The {} service is currently active... restart it".format(
+                                    service
+                                )
+                            )
+                            run_command([SYSTEMCTL, "restart", service], log=True)
+            else:
+                os.remove(npath)
+                logger.info("{} already looks good.".format(local_file))
+        else:
+            logger.info(
+                "The {} ({}) could not be found".format(
+                    local_file, LOCAL_FILES[local_file].path
+                )
+            )
+    logger.info("### DONE establishing poetry path to binaries in local files.")
 
 
 def main():
@@ -558,6 +638,8 @@ def main():
     init_update_issue(logging)
 
     establish_systemd_services()
+
+    establish_poetry_paths()
 
 
 if __name__ == "__main__":

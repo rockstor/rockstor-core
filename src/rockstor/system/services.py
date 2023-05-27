@@ -54,6 +54,7 @@ def init_service_op(service_name, command, throw=True):
     #  to be used in for example model properties etc, where we need only a boolean.
     supported_services = (
         "nfs-server",
+        "nmb",
         "smb",
         "sshd",
         "ypbind",

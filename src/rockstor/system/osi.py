@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -180,6 +180,30 @@ def append_to_line(original_file, new_file, regexes, new_content, sep, remove=Fa
                     tfo.write(line)
             else:
                 tfo.write(line)
+
+
+def replace_pattern_inline(source_file, target_file, pattern, replacement):
+    """Replace a regex pattern with a string inline
+
+    Similar to `sed`, this function will search for the presence of the regex
+    pattern (re module) in a given line, and replace it with the `replacement`
+    string.
+
+    @param source_file: path to source file
+    @param target_file: path to target file
+    @param pattern: regex pattern
+    @param replacement: string
+    @return: boolean; True if pattern was found and replaced
+    """
+    altered = False
+    with open(source_file) as sfo, open(target_file, "w") as tfo:
+        for line in sfo.readlines():
+            if re.search(pattern, line) is not None:
+                tfo.write(re.sub(pattern, replacement, line))
+                altered = True
+            else:
+                tfo.write(line)
+    return altered
 
 
 def run_command(
