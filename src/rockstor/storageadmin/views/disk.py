@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import os
 import re
@@ -24,10 +24,11 @@ from fs.btrfs import (
     enable_quota,
     mount_root,
     get_pool_info,
-    pool_raid,
+    get_pool_raid_levels,
     get_dev_pool_info,
     set_pool_label,
     get_devid_usage,
+    get_pool_raid_profile,
 )
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
@@ -43,6 +44,7 @@ from system.luks import (
     native_keyfile_exists,
     establish_keyfile,
     get_open_luks_volume_status,
+    get_luks_container_uuid,
 )
 from system.osi import (
     set_disk_spindown,
@@ -51,7 +53,6 @@ from system.osi import (
     wipe_disk,
     blink_disk,
     scan_disks,
-    get_whole_dev_uuid,
     get_byid_name_map,
     trigger_systemd_update,
     systemd_name_escape,
@@ -63,6 +64,16 @@ import json
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Minimum disk size. Smaller disks will be ignored. Recommended minimum = 16 GiB.
+# Btrfs works in chunks (units) of 1 GiB for data, and 256 MiB for metadata.
+# Using very small disks requires mixed data/metadata chunks of 256 MiB.
+# If a device is less than 16 GiB, the mixed (--mixed) mode is recommended.
+# https://btrfs.wiki.kernel.org/index.php/FAQ
+# https://btrfs.wiki.kernel.org/index.php/Glossary
+# Rockstor does not enforce --mixed for any drive size.
+# 5 GiB = (5 * 1024 * 1024) = 5242880 KiB
+MIN_DISK_SIZE = 5242880
 
 # A list of scan_disks() assigned roles: ie those that can be identified from
 # the output of lsblk with the following switches:
@@ -102,7 +113,7 @@ class DiskMixin(object):
         :return: serialized models of attached and missing disks via serial num
         """
         # Acquire a list (namedtupil collection) of attached drives > min size
-        disks = scan_disks(settings.MIN_DISK_SIZE)
+        disks = scan_disks(MIN_DISK_SIZE)
         # Acquire a list of uuid's for currently unlocked LUKS containers.
         # Although we could tally these as we go by noting fstype crypt_LUKS
         # and then loop through our db Disks again updating all matching
@@ -127,6 +138,7 @@ class DiskMixin(object):
             # to a non refreshed webui acting upon an entry that is different
             # from that shown to the user.
             do.name = "detached-" + str(uuid.uuid4()).replace("-", "")
+            do.save(update_fields=["name"])
             # Delete duplicate or fake by serial number db disk entries.
             # It makes no sense to save fake serial number drives between scans
             # as on each scan the serial number is re-generated (fake) anyway.
@@ -140,6 +152,7 @@ class DiskMixin(object):
                     "Deleting duplicate or fake (by serial) disk db "
                     "entry. Serial = ({}).".format(do.serial)
                 )
+                # TODO: Post django update retrieve items deleted and log.
                 do.delete()  # django >=1.9 returns a dict of deleted items.
                 # Continue onto next db disk object as nothing more to process.
                 continue
@@ -174,6 +187,7 @@ class DiskMixin(object):
             if Disk.objects.filter(serial=d.serial).exists():
                 dob = Disk.objects.get(serial=d.serial)
                 dob.name = byid_disk_name
+                dob.save(update_fields=["name"])
             else:
                 # We have an assumed new disk entry as no serial match in db.
                 # Build a new entry for this disk.  N.B. we may want to force a
@@ -204,6 +218,7 @@ class DiskMixin(object):
                 dob.btrfs_uuid = None
                 dob.devid = 0
                 dob.allocated = 0
+            dob.save()
             # ### BEGINNING OF ROLE FIELD UPDATE ###
             # Update the role field with scan_disks findings.
             # SCAN_DISKS_KNOWN_ROLES a list of scan_disks identifiable roles.
@@ -221,6 +236,7 @@ class DiskMixin(object):
                 # existing mdraid members will be re-assigned if appropriate
                 # using the new json format.
                 dob.role = None
+                dob.save(update_fields=["role"])
             # First extract all non scan_disks assigned roles so we can add
             # them back later; all scan_disks assigned roles will be identified
             # from our recent scan_disks data so we assert the new truth.
@@ -343,6 +359,7 @@ class DiskMixin(object):
                 dob.role = json.dumps(combined_roles)
             else:
                 dob.role = None
+            dob.save(update_fields=["role"])
             # ### END OF ROLE FIELD UPDATE ###
             # Does our existing Pool db know of this disk's pool?
             # Find pool association, if any, of the current disk:
@@ -398,7 +415,8 @@ class DiskMixin(object):
                 if pool_name is not None:
                     logger.debug("++++ Creating special system pool db entry.")
                     root_compression = "no"
-                    root_raid = pool_raid("/")["data"]
+                    pool_raid_info = get_pool_raid_levels("/")
+                    root_raid = get_pool_raid_profile(pool_raid_info)
                     # scan_disks() has already acquired our fs uuid so inherit.
                     # We have already established btrfs as the fs type.
                     p = Pool(
@@ -755,8 +773,7 @@ class DiskDetailView(rfc.GenericView):
             ).format(disk.name, disk.name, disk_name, reverse_name)
             raise Exception(e_msg)
         # Check if we are a partition as we don't support LUKS in partition.
-        # Front end should filter this out as an presented option but be
-        # should block at this level as well.
+        # Front end should filter this out, but be should block at this level as well.
         if isPartition:
             e_msg = (
                 "A LUKS format was requested on device name ({}) which "
@@ -780,8 +797,7 @@ class DiskDetailView(rfc.GenericView):
             roles = json.loads(disk.role)
         # Now we assert what we know given our above LUKS format operation.
         # Not unlocked and no keyfile (as we have a fresh uuid from format)
-        # TODO: Might be better to use cryptset luksUUID <dev-name>
-        dev_uuid = get_whole_dev_uuid(disk.name)
+        dev_uuid = get_luks_container_uuid(disk.name)
         # update or create a basic LUKS role entry.
         # Although we could use native_keyfile_exists(dev_uuid) we can be
         # pretty sure there is no keyfile with our new uuid.
@@ -792,7 +808,7 @@ class DiskDetailView(rfc.GenericView):
         }
         # now we return our updated roles
         disk.role = json.dumps(roles)
-        disk.save()
+        disk.save(update_fields=["parted", "btrfs_uuid", "devid", "allocated", "role"])
         return Response(DiskInfoSerializer(disk).data)
 
     @transaction.atomic
@@ -851,7 +867,10 @@ class DiskDetailView(rfc.GenericView):
                         do.role = '{"redirect": "%s"}' % device.name
                 do.save()
                 mount_root(po)
-            po.raid = pool_raid("%s%s" % (settings.MNT_PT, po.name))["data"]
+            pool_raid_info = get_pool_raid_levels(
+                "{}{}".format(settings.MNT_PT, po.name)
+            )
+            po.raid = get_pool_raid_profile(pool_raid_info)
             po.size = po.usage_bound()
             po.save()
             enable_quota(po)

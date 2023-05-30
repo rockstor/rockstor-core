@@ -38,6 +38,7 @@ from fs.btrfs import start_resize_pool, start_balance
 from smart_manager.views.ztask_helpers import restart_rockstor
 from storageadmin.views.rockon_helpers import start, stop, update, install, uninstall
 from storageadmin.views.config_backup import restore_config, restore_rockons
+from storageadmin.views.pool_balance import update_end_time
 
 import logging
 
@@ -60,10 +61,25 @@ def task_completed(signal, task):
     # Task completed OK.
     # Could do clean if task name begins with rockon_helper:
     # removing all key,value pairs where value = task.id
-    logger.info("Task [{}] completed OK".format(task.name))
+    logger.info("Task [{}], id: {} completed OK".format(task.name, task.id))
+    time_now = timezone.now()
     if task.name == "start_balance" or task.name == "start_resize_pool":
-        logger.info("Updating end_time accordingly")
-        PoolBalance.objects.filter(tid=task.id).update(end_time=timezone.now())
+        logger.info("Updating end_time accordingly to {}".format(time_now))
+        # We now abstract db end_time update to an appropriately decorated task.
+        try:
+            task_result_handle = update_end_time(task.id, time_now)
+            db_update_end_time_task_id = task_result_handle.id
+            logger.debug(
+                "Initiated Huey db_task id ({}) to update end_time from task_completed() id ({})".format(
+                    db_update_end_time_task_id, task.id
+                )
+            )
+        except Exception as e:
+            logger.error(
+                "Exception while updating PoolBalance end_time from Huey.signal: {}".format(
+                    e.__str__()
+                )
+            )
 
 
 @HUEY.signal(SIGNAL_ERROR, SIGNAL_LOCKED)
@@ -79,8 +95,11 @@ def task_failed(signal, task, exc=None):
     # Only log the final failure, once all retries are exhausted.
     if task.retries > 0:
         return
-    message = "Task [{}] failed, Task ID: {} Args: {}, Kwargs: {}, Exception{}".format(
+    message = "Task [{}], id: {} failed, Args: {}, Kwargs: {}, Exception{}".format(
         task.name, task.id, task.args, task.kwargs, exc
     )
     logger.error(message)
     # mail_admins(subject, message)
+    if task.name == "start_balance" or task.name == "start_resize_pool":
+        logger.info("Updating status accordingly")
+        PoolBalance.objects.filter(tid=task.id).latest().update(status="failed")

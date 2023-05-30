@@ -26,9 +26,9 @@ from storageadmin.models import Setup
 
 
 BASE_DIR = settings.ROOT_DIR
-BASE_BIN = "%sbin" % BASE_DIR
-QGROUP_CLEAN = "%s/qgroup-clean" % BASE_BIN
-QGROUP_MAXOUT_LIMIT = "%s/qgroup-maxout-limit" % BASE_BIN
+BASE_BIN = "{}.venv/bin".format(BASE_DIR)
+QGROUP_CLEAN = "{}/qgroup-clean".format(BASE_BIN)
+QGROUP_MAXOUT_LIMIT = "{}/qgroup-maxout-limit".format(BASE_BIN)
 
 
 def main():

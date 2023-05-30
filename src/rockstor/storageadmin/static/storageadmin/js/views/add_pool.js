@@ -363,6 +363,20 @@ AddPoolView = Backbone.View.extend({
         Handlebars.registerHelper('humanReadableSize', function (diskSize) {
             return humanize.filesize(diskSize * 1024);
         });
+
+        Handlebars.registerHelper('display_all_raid_levels', function () {
+            var html = '';
+            // Before 6.2.0 kernel
+            // var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6'];
+            // After 6.2.0 kernel
+            var levels = ['single', 'single-dup', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6',
+                'raid1c3', 'raid1c4', "raid1-1c3", "raid1-1c4", "raid10-1c3",
+                "raid10-1c4", "raid5-1", "raid5-1c3", "raid6-1c3", "raid6-1c4"];
+            _.each(levels, function (level) {
+                html += '<option value="' + level + '">' + level + '</option>';
+            });
+            return new Handlebars.SafeString(html);
+        });
     }
 });
 

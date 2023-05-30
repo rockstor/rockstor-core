@@ -16,21 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from rest_framework import status
-from rest_framework.test import APITestCase
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
 
 
-class OauthAppTests(APITestMixin, APITestCase):
-    fixtures = ['fix1.json']
-    BASE_URL = '/api/oauth_app'
+class OauthAppTests(APITestMixin):
+    # Proposed fixture "test_oauth_app.json" was "fix1.json"
+    fixtures = ["test_api.json"]
+    BASE_URL = "/api/oauth_app"
 
     @classmethod
     def setUpClass(cls):
         super(OauthAppTests, cls).setUpClass()
 
         # post mocks
-        cls.patch_set_token = patch('storageadmin.views.appliances.set_token')
+        cls.patch_set_token = patch("storageadmin.views.appliances.set_token")
         cls.mock_set_token = cls.patch_set_token.start()
         cls.mock_set_token.return_value = {}
 
@@ -42,13 +42,11 @@ class OauthAppTests(APITestMixin, APITestCase):
 
         # get base URL
         response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # get base URL
         response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     # def test_post_requests(self):
     #

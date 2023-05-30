@@ -113,7 +113,7 @@
                     {{/each}}
                 {{/if}}
                 {{#if this.has_missing_dev}}
-                    <strong><span style="color:red">(SOME MISSING) </span></strong>
+                    <strong><span style="color:red">({{this.dev_missing_count}} MISSING) </span></strong>
                 {{/if}}
                 {{#unless this.dev_stats_ok}}
                     <strong><span style="color:red">(DEV ERRORS DETECTED)</span></strong>
@@ -136,7 +136,9 @@
            </div>
            <div class="modal-body">
             <div class="messages"></div>
-            <h4>{{this.name}} will be deleted including it's Shares listed below and their Snapshots, NFS exports, Samba and SFTP config and Replics. Are you sure?</h4>
+            <h4>Pool and all associated Shares, Snapshots, NFS/Samba/SFTP exports, and Replicas, will be deleted.</h4>
+            <div class="alert alert-danger">Are you sure? DATA WILL BE LOST!</div>
+            Rockstor managed Shares:
             <ul id="pool-shares"></ul>
            </div>
            <div class="modal-footer">

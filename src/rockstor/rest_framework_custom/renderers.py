@@ -19,11 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.renderers import JSONRenderer
 from rest_framework.negotiation import DefaultContentNegotiation
 from rest_framework.utils import encoders
-from django.http.multipartparser import parse_header
+import django.http.multipartparser
 import json
 from rest_framework.utils.mediatypes import (order_by_precedence,
                                              media_type_matches)
-from rest_framework.utils.mediatypes import _MediaType
+import rest_framework.utils.mediatypes
 from rest_framework import exceptions
 
 
@@ -43,7 +43,7 @@ class DownloadRenderer(JSONRenderer):
         if accepted_media_type:
             # If the media type looks like 'application/json; indent=4',
             # then pretty print the result.
-            base_media_type, params = parse_header(accepted_media_type)
+            base_media_type, params = django.http.multipartparser.parse_header(accepted_media_type)
             indent = params.get('indent', indent)
             try:
                 indent = max(min(int(indent), 8), 0)
@@ -83,8 +83,8 @@ class IgnoreClient(DefaultContentNegotiation):
                 for media_type in media_type_set:
                     if media_type_matches(renderer.media_type, media_type):
                         # Return the most specific media type as accepted.
-                        if (_MediaType(renderer.media_type).precedence >
-                                _MediaType(media_type).precedence):
+                        if (rest_framework.utils.mediatypes._MediaType(renderer.media_type).precedence >
+                                rest_framework.utils.mediatypes._MediaType(media_type).precedence):
                             # Eg client requests '*/*'
                             # Accepted media type is 'application/json'
                             return renderer, renderer.media_type

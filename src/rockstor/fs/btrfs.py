@@ -32,12 +32,12 @@ from system.osi import (
     dev_mount_point,
 )
 from system.exceptions import CommandException
+from system.constants import MOUNT, UMOUNT, RMDIR, DEFAULT_MNT_DIR
 from pool_scrub import PoolScrub
 from huey.contrib.djhuey import task
 from django.conf import settings
 import logging
 from datetime import datetime
-from pkg_resources import parse_version
 
 """
 system level helper methods to interact with the btrfs filesystem
@@ -47,10 +47,6 @@ logger = logging.getLogger(__name__)
 
 MKFS_BTRFS = "/usr/sbin/mkfs.btrfs"
 BTRFS = "/usr/sbin/btrfs"
-MOUNT = "/usr/bin/mount"
-UMOUNT = "/usr/bin/umount"
-DEFAULT_MNT_DIR = "/mnt2/"
-RMDIR = "/usr/bin/rmdir"
 QID = "2015"
 # The following model/db default setting is also used when quotas are disabled.
 PQGROUP_DEFAULT = settings.MODEL_DEFS["pqgroup"]
@@ -95,20 +91,191 @@ DevPoolInfo = collections.namedtuple("DevPoolInfo", "devid size allocated uuid l
 DevUsageInfo = collections.namedtuple("DevUsageInfo", "temp_name size allocated")
 # Named Tuple for default_subvol info: id (string) path (string) boot_to_snap (boolean)
 DefaultSubvol = collections.namedtuple("DefaultSubvol", "id path boot_to_snap")
+# Named Tuple for balance status: active (boolean) internal (boolean) status (dict)
+BalanceStatusAll = collections.namedtuple("BalanceStatusAll", "active internal status")
+# Named Tuple to define raid profile limits and data/metadata
+btrfs_profile = collections.namedtuple(
+    "btrfs_profile",
+    "min_dev_count max_dev_missing data_raid metadata_raid data_copies data_parity",
+)
+# List of Rockstor btrfs raid profiles indexed by their name.
+# I.e. PROFILE[raid_level].min_dev_count
+# N.B. Mixed profiles indicated by "-" i.e. DATA-METADATA
+# https://btrfs.readthedocs.io/en/latest/Kernel-by-version.html#jan-2020
+# RAID1C34 along with incompatible flag added in kernel 5.5.
+# https://btrfs.readthedocs.io/en/latest/Kernel-by-version.html#nov-2021 kernel 5.15
+# enabled running raid0 and 10 with a minimum of 1 & 2 devices respectively.
+# https://btrfs.readthedocs.io/en/latest/mkfs.btrfs.html
+# "It's recommended to use specific profiles ..."
+# The following are Rockstor's specifics:
+PROFILE = {
+    # Fail through profile to account catch unknown raid levels/combinations.
+    # We specify a min dev count of 4 to account for any raid level,
+    # and likewise play safe by allowing for no missing devices.
+    "unknown": btrfs_profile(
+        min_dev_count=4,
+        max_dev_missing=0,
+        data_raid="unknown",
+        metadata_raid="unknown",
+        data_copies=1,
+        data_parity=0,
+    ),
+    # non redundant profiles!
+    "single": btrfs_profile(
+        min_dev_count=1,
+        max_dev_missing=0,
+        data_raid="single",
+        metadata_raid="single",
+        data_copies=1,
+        data_parity=0,
+    ),
+    "single-dup": btrfs_profile(
+        min_dev_count=1,
+        max_dev_missing=0,
+        data_raid="single",
+        metadata_raid="dup",
+        data_copies=1,
+        data_parity=0,
+    ),
+    "raid0": btrfs_profile(
+        min_dev_count=2,
+        max_dev_missing=0,
+        data_raid="raid0",
+        metadata_raid="raid0",
+        data_copies=1,
+        data_parity=0,
+    ),
+    # Mirrored profiles:
+    "raid1": btrfs_profile(
+        min_dev_count=2,
+        max_dev_missing=1,
+        data_raid="raid1",
+        metadata_raid="raid1",
+        data_copies=2,
+        data_parity=0,
+    ),
+    "raid1c3": btrfs_profile(
+        min_dev_count=3,
+        max_dev_missing=2,
+        data_raid="raid1c3",
+        metadata_raid="raid1c3",
+        data_copies=3,
+        data_parity=0,
+    ),
+    "raid1c4": btrfs_profile(
+        min_dev_count=4,
+        max_dev_missing=3,
+        data_raid="raid1c4",
+        metadata_raid="raid1c4",
+        data_copies=4,
+        data_parity=0,
+    ),
+    "raid10": btrfs_profile(
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid10",
+        metadata_raid="raid10",
+        data_copies=2,
+        data_parity=0,
+    ),
+    # Parity raid levels (recommended min_dev_count is 3 & 4 respectively)
+    "raid5": btrfs_profile(
+        min_dev_count=2,
+        max_dev_missing=1,
+        data_raid="raid5",
+        metadata_raid="raid5",
+        data_copies=1,
+        data_parity=1,
+    ),
+    "raid6": btrfs_profile(
+        min_dev_count=3,
+        max_dev_missing=2,
+        data_raid="raid6",
+        metadata_raid="raid6",
+        data_copies=1,
+        data_parity=2,
+    ),
+    # ------- MIXED PROFILES DATA-METADATA (max 10 chars) -------
+    # Mixed Mirrored profiles:
+    "raid1-1c3": btrfs_profile(
+        min_dev_count=3,
+        max_dev_missing=1,
+        data_raid="raid1",
+        metadata_raid="raid1c3",
+        data_copies=2,
+        data_parity=0,
+    ),
+    "raid1-1c4": btrfs_profile(
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid1",
+        metadata_raid="raid1c4",
+        data_copies=2,
+        data_parity=0,
+    ),
+    "raid10-1c3": btrfs_profile(
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid10",
+        metadata_raid="raid1c3",
+        data_copies=2,
+        data_parity=0,
+    ),
+    "raid10-1c4": btrfs_profile(
+        min_dev_count=4,
+        max_dev_missing=1,
+        data_raid="raid10",
+        metadata_raid="raid1c4",
+        data_copies=2,
+        data_parity=0,
+    ),
+    # Parity data - Mirrored metadata
+    "raid5-1": btrfs_profile(
+        min_dev_count=2,
+        max_dev_missing=1,
+        data_raid="raid5",
+        metadata_raid="raid1",
+        data_copies=1,
+        data_parity=1,
+    ),
+    "raid5-1c3": btrfs_profile(
+        min_dev_count=3,
+        max_dev_missing=1,
+        data_raid="raid5",
+        metadata_raid="raid1c3",
+        data_copies=1,
+        data_parity=1,
+    ),
+    "raid6-1c3": btrfs_profile(
+        min_dev_count=3,
+        max_dev_missing=2,
+        data_raid="raid6",
+        metadata_raid="raid1c3",
+        data_copies=1,
+        data_parity=2,
+    ),
+    "raid6-1c4": btrfs_profile(
+        min_dev_count=4,
+        max_dev_missing=2,
+        data_raid="raid6",
+        metadata_raid="raid1c4",
+        data_copies=1,
+        data_parity=2,
+    ),
+}
 
 
 def add_pool(pool, disks):
     """
     Makes a btrfs pool (filesystem) of name 'pool' using the by-id disk names
-    provided, then attempts to enables quotas for this pool.
-    :param pool: name of pool to create.
+    provided, then attempts to enable quotas for this pool.
+    :param pool: Pool object.
     :param disks: list of by-id disk names without paths to make the pool from.
     :return o, err, rc from last command executed.
     """
     disks_fp = [get_device_path(d) for d in disks]
-    draid = mraid = pool.raid
-    if pool.raid == "single":
-        mraid = "dup"
+    draid = PROFILE[pool.raid].data_raid
+    mraid = PROFILE[pool.raid].metadata_raid
     cmd = [MKFS_BTRFS, "-f", "-d", draid, "-m", mraid, "-L", pool.name]
     cmd.extend(disks_fp)
     # Run the create pool command, any exceptions are logged and raised by
@@ -196,27 +363,46 @@ def get_dev_io_error_stats(target, json_format=True):
     return json.dumps(stats)
 
 
-def is_pool_missing_dev(label):
+def pool_missing_dev_count(label):
     """
-    Simple and fast wrapper around 'btrfs fi show --raw label' to return True /
-    False depending on if a device is reported missing from the given pool by
-    label. Works by matching the end of output lines for the string 'missing',
-    which is either, post remount reboot (first and last populated line) or
-    the last line (dev removed and no remount).
+    Parses 'btrfs fi show --raw label' to return number of missing devices.
+    Extracts vol total dev count from e.g.: "\tTotal devices 3 FS bytes used 2.63GiB".
+    And counts the number of lines there-after beginning "\tdevid" and not ending
+    in "SING" or "sing" (for "MISSING"/"missing").
+
     Label is used as this is preserved in our Pool db so will work if the pool
     fails to mount, and there by allows surfacing this as a potential reason
     for the mount failure.
     :param label: Pool label.
-    :return: True if at least one device was found to be missing, False if not.
+    :return: int for number of missing devices (total - attached).
     """
     if label is None:
-        return False
+        return 0
     # --raw used to minimise pre-processing of irrelevant 'used' info (units).
     cmd = [BTRFS, "fi", "show", "--raw", label]
     o, e, rc = run_command(cmd)
-    if o[-3].endswith("missing") or o[0].endswith("missing"):
-        return True
-    return False
+    total_devices = 0
+    attached_devids = 0
+    for line in o:
+        if not line:
+            continue
+        # Skip "Label:" line as it has no 'missing' info.
+        # Skip "warning, device 8 is missing" lines as they only appear when unmounted.
+        # Skip "(TAB)*** Some devices missing" we count devid lines no ending in MISSING
+        if line.startswith(("Lab", "war", "\t**")):
+            continue
+        if line.startswith("\tTotal"):
+            total_devices = int(line.split()[2])
+            continue
+        if not total_devices == 0:
+            # Leap 15.4 default & backport kernels (not missing)
+            # devid    5 size 5.00GiB used 2.12GiB path /dev/sda
+            # Newer Stable Kernel Backport (e.g. 6.2.0+) add a MISSING:
+            # older kernels do not have entries for missing devices.
+            # devid    1 size 0 used 0 path  MISSING
+            if line.startswith("\tdev") and not line.endswith(("SING", "sing")):
+                attached_devids += 1
+    return total_devices - attached_devids
 
 
 def degraded_pools_found():
@@ -238,7 +424,8 @@ def degraded_pools_found():
         if not in_pool and line[0:3] == "Lab":
             in_pool = True
             continue
-        if in_pool and line.endswith("missing"):
+        # Account for older and newer kernels respectively:
+        if in_pool and line.lower().endswith("missing"):
             # we are in pool details and have found a missing device
             degraded_pool_count += 1
             # use in_pool switch to avoid counting this pool twice if it has
@@ -402,8 +589,7 @@ def get_pool_info(disk):
     return pool_info
 
 
-def pool_raid(mnt_pt):
-    # TODO: propose name change to get_pool_raid_levels(mnt_pt)
+def get_pool_raid_levels(mnt_pt):
     o, e, rc = run_command([BTRFS, "fi", "df", mnt_pt])
     # data, system, metadata, globalreserve
     raid_d = {}
@@ -414,9 +600,33 @@ def pool_raid(mnt_pt):
             raid = fields[1][:-1].lower()
             if block not in raid_d:
                 raid_d[block] = raid
-    if raid_d["metadata"] == "single":
-        raid_d["data"] = raid_d["metadata"]
     return raid_d
+
+
+def get_pool_raid_profile(raid_levels):
+    """
+    Abstracts raid_levels from get_pool_raid_levels(mnt_pt) to a Rockstor raid Profile.
+    See PROFILES const.
+    :param raid_levels: dict returned by get_pool_raid_levels()
+    :return: a PROFILE index.
+    """
+    # dict.get returns None if key not found.
+    data_raid = raid_levels.get("data")
+    metadata_raid = raid_levels.get("metadata")
+    raid_profile = "unknown"
+    if data_raid is None or metadata_raid is None:
+        return raid_profile
+    if data_raid == metadata_raid:
+        raid_profile = data_raid
+    else:
+        # Post Python >= 3.9 use removeprefix("raid")
+        if metadata_raid.startswith("raid"):  # 4 characters
+            raid_profile = data_raid + "-" + metadata_raid[4:]
+        else:
+            raid_profile = data_raid + "-" + metadata_raid
+    if raid_profile not in PROFILE:
+        return "unknown"
+    return raid_profile
 
 
 def cur_devices(mnt_pt):
@@ -595,7 +805,7 @@ def umount_root(root_pool_mnt):
         if ce.rc == 32:
             for l in ce.err:
                 l = l.strip()
-                if re.search("not mounted$", l) is not None:
+                if re.search("not mounted\.$", l) is not None:
                     return
             raise ce
     for i in range(20):
@@ -637,14 +847,23 @@ def subvol_info(mnt_pt):
 
 def add_share(pool, share_name, qid):
     """
-    share is a subvolume in btrfs.
+    Wrapper for 'btrfs subvol create' pool_mnt/share_name that will contextually also
+    include a Rockstor native qgroup option, e.g. '-i 2015/6', if our -1/-1 flag value
+    for quotas disabled is not found.
+    A Rockstor 'share' is a btrfs 'subvolume'.
+    :param pool: pool object
+    :param share_name: string for proposed share (btrfs subvol) name.
+    :return run_command(generated_command) or True if given pool subvol already exists.
     """
     root_pool_mnt = mount_root(pool)
     subvol_mnt_pt = root_pool_mnt + "/" + share_name
     # Ensure our root_pool_mnt is not immutable, see: remove_share()
     toggle_path_rw(root_pool_mnt, rw=True)
     if not is_subvol(subvol_mnt_pt):
-        sub_vol_cmd = [BTRFS, "subvolume", "create", "-i", qid, subvol_mnt_pt]
+        if qid == PQGROUP_DEFAULT:  # Quotas disabled
+            sub_vol_cmd = [BTRFS, "subvolume", "create", subvol_mnt_pt]
+        else:
+            sub_vol_cmd = [BTRFS, "subvolume", "create", "-i", qid, subvol_mnt_pt]
         return run_command(sub_vol_cmd)
     return True
 
@@ -930,8 +1149,8 @@ def share_id(pool, share_name):
 
 def remove_share(pool, share_name, pqgroup, force=False):
     """
-    umount share if its mounted.
-    unsures given pool is mounted.
+    umount share if it's mounted.
+    ensures given pool is mounted.
     if force flag set then first delete all share's subvolumes.
     btrfs subvolume delete root_mnt/vol_name.
     destroy shares qgroup and associated pqgroup.
@@ -1173,7 +1392,7 @@ def qgroup_max(mnt_pt):
         ):
             logger.info(
                 "Mount Point: {} has indeterminate quota status, skipping "
-                "qgroup show.\nTry 'btrfs qgroup disable {}'.".format(mnt_pt, mnt_pt)
+                "qgroup show.\nTry 'btrfs quota disable {}'.".format(mnt_pt, mnt_pt)
             )
             return -1
         # otherwise we raise an exception as normal.
@@ -1266,7 +1485,7 @@ def qgroup_destroy(qid, mnt_pt):
         ):
             logger.info(
                 "Mount Point: {} has indeterminate quota status, skipping "
-                "qgroup show.\nTry 'btrfs qgroup disable {}'.".format(mnt_pt, mnt_pt)
+                "qgroup show.\nTry 'btrfs quota disable {}'.".format(mnt_pt, mnt_pt)
             )
             return False
         # otherwise we raise an exception as normal
@@ -1582,38 +1801,39 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     """Return the total amount of storage possible within this pool's set
     of disks, in bytes.
 
-    Algorithm adapted from Hugo Mills' implementation at:
+    Algorithm adapted from Hugo Mills' implementation previously at:
     http://carfax.org.uk/btrfs-usage/js/btrfs-usage.js
+    and replaced by the elm generated: https://carfax.org.uk/btrfs-usage/elm.js
     """
     # Determine RAID parameters
-    data_ratio = 1
-    stripes = 1
-    parity = 0
+    data_copies = PROFILE[raid_level].data_copies
+    data_parity = PROFILE[raid_level].data_parity
 
+    # TODO: As stripes/chunks depend on pool geometry we cannot use PROFILE.
+    #  Once we are Python 3 compatible, re-assess our size calculation in light of
+    #  https://github.com/knorrie/python-btrfs i.e.:
+    #  btrfs-space-calculator
+    stripes = 1
     # Number of chunks to write at a time: as many as possible within the
     # number of stripes
     chunks = num_devices
 
-    if raid_level == "single":
+    if raid_level.startswith(("unknown", "single")):
         chunks = 1
-    elif raid_level == "raid0":
+    # We have no mixed raid levels with raid0, but in case we encounter them:
+    elif raid_level.startswith("raid0"):
         stripes = 2
-    elif raid_level == "raid1":
-        data_ratio = 2
+    # Take care not to match raid10 before its time:
+    elif raid_level == "raid1" or raid_level.startswith("raid1-"):
         chunks = 2
-    elif raid_level == "raid10":
-        data_ratio = 2
+    elif raid_level.startswith("raid10"):
         stripes = max(2, int(num_devices / 2))
-    elif raid_level == "raid5":
-        parity = 1
-    elif raid_level == "raid6":
-        parity = 2
 
     # Round down so that we have an exact number of duplicate copies
-    chunks -= chunks % data_ratio
+    chunks -= chunks % data_copies
 
     # Check for feasibility at the lower end
-    if num_devices < data_ratio * (stripes + parity):
+    if num_devices < data_copies * (stripes + data_parity):
         return 0
 
     # Compute the trivial bound
@@ -1623,8 +1843,8 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     # modify the trivial bound if it passes.
     bounding_q = -1
     for q in range(chunks - 1):
-        slice = sum(disk_sizes[q + 1 :])
-        b = int(slice / (chunks - q - 1))
+        slice_value = sum(disk_sizes[q + 1 :])
+        b = int(slice_value / (chunks - q - 1))
         if disk_sizes[q] >= b and b < bound:
             bound = b
             bounding_q = q
@@ -1633,7 +1853,7 @@ def usage_bound(disk_sizes, num_devices, raid_level):
     # have no bounding_q, then we have hit the trivial bound, and exhausted
     # all space, so we can return immediately.
     if bounding_q == -1:
-        return bound * ((chunks / data_ratio) - parity)
+        return bound * ((chunks / data_copies) - data_parity)
 
     # If we have a bounding_q, then all the devices past q are full, and
     # we can remove them. The devices up to q have been used in every one
@@ -1644,7 +1864,7 @@ def usage_bound(disk_sizes, num_devices, raid_level):
 
     new_bound = usage_bound(disk_sizes, bounding_q + 1, raid_level)
 
-    return bound * ((chunks / data_ratio) - parity) + new_bound
+    return bound * ((chunks / data_copies) - data_parity) + new_bound
 
 
 def scrub_start(pool, force=False):
@@ -1654,24 +1874,95 @@ def scrub_start(pool, force=False):
     return p.pid
 
 
-def scrub_status(pool):
+def btrfsprogs_legacy():
+    """
+    Returns True if "btrfs version" considered legacy: i.e. < "v5.1.2" (approximately).
+    Previously used parse_version(btrfs_progs_version) < parse_version("v5.1.2"), this
+    was removed as it depended on setuptools and was overkill in this situation.
+    :return: Legacy status.
+    :rtype Boolean
+    """
+    legacy_version = [5, 1, 2]
+    out, err, rc = run_command([BTRFS, "version"])
+    # "btrfs-progs v5.14"
+    # e.g. v4.12 Leap 15.2, v4.19.1 Leap 15.3, v5.14 Leap 15.4 v6.1.3 Backports
+    btrfs_progs_version = out[0].split()[1].strip(" v").split(".")
+    # ["4", "12"], ["4", "19", "1"], ["5", "14"], ["6","1", "3"]
+    for index, element in enumerate(btrfs_progs_version):
+        if int(element) < legacy_version[index]:
+            return True
+    return False
+
+
+def scrub_status_extra(mnt_pt):
+    """
+    Non legacy btrfs-progs returns (in default non -R form) time_left, ETA, and rate
+    during a scrub operation (status = "running").
+    Otherwise, only rate is available.
+    Collect and return these extra statistics (where available).
+    :param mnt_pt: pool mount point
+    :return: dictionary indexed by 'time_left', 'ETA', 'rate': where available.
+    from non legacy btrfs-progs versions.
+    """
+    stats = {}
+    out2, err2, rc2 = run_command([BTRFS, "scrub", "status", mnt_pt])
+    if re.search("running", out2[2]) is not None:
+        # time_left
+        fields2 = out2[4].split()[-1].split(":")
+        stats["time_left"] = (
+            (int(fields2[0]) * 60 * 60) + (int(fields2[1]) * 60) + int(fields2[2])
+        )
+        # eta
+        fields3 = out2[5].strip().split(": ")
+        dateFormat = "%a %b %d %H:%M:%S %Y"
+        stats["eta"] = datetime.strptime(fields3[1].strip(), dateFormat)
+        # rate
+        fields4 = out2[8].strip().split(": ")
+        stats["rate"] = fields4[1].strip()
+    else:  # status not running:
+        fields5 = out2[5].strip().split(": ")
+        stats["rate"] = fields5[1].strip()
+    return stats
+
+
+def scrub_status(pool, legacy=False):
+    """
+    Wrapper for scrub_status_raw(), and if (status not conn-reset or unknown) and
+    btrfsprogs_legacy() False, add scrub_status_extra() to the results.
+    :param pool: pool object
+    :param legacy: btrfsprogs_legacy()
+    :return: dictionary indexed by scrub 'status' and various statistics.
+    """
+    mnt_pt = mount_root(pool)
+    stats_raw = scrub_status_raw(mnt_pt, legacy)
+    if (
+        legacy  # legacy btrfs has no extra eta etc info
+        or stats_raw["status"] == "conn-reset"
+        or stats_raw["status"] == "unknown"
+    ):
+        return stats_raw
+    stats_extra = scrub_status_extra(mnt_pt)
+    total_status = stats_raw.copy()
+    total_status.update(stats_extra)
+    return total_status
+
+
+def scrub_status_raw(mnt_pt, legacy=False):
     """
     Returns the raw statistics per-device (-R option) of the ongoing or last
     known btrfs scrub. Works by parsing the output of the following command:
     btrfs scrub status -R <mount-point>
-    :param pool: pool object
+    :param mnt_pt: pool mount point.
+    :param legacy: Boolean indicating legacy btrfs-progs: see btrfsprogs_legacy().
     :return: dictionary indexed via 'status' and if a finished or halted, or
-    cancelld scrub is indicated then the duration of that scrub is added as
+    cancelled scrub is indicated then the duration of that scrub is added as
     value to added index 'duration'. In all 'status' cases bar 'unknown',
     data_bytes_scrubbed is passed as value to index 'kb_scrubbed' and all
     other -R invoked details are returned as key value pairs.
     """
     stats = {"status": "unknown"}
-    mnt_pt = mount_root(pool)
-    out3, err3, rc3 = run_command([BTRFS, "version"])
-    btrfsProgsVers = out3[0].strip().split()[1]
     # Based on version of btrfs progs, set the offset to parse properly
-    if parse_version(btrfsProgsVers) < parse_version("v5.1.2"):
+    if legacy:
         statOffset = 1
         durOffset = 1
         fieldOffset = 2
@@ -1718,31 +2009,12 @@ def scrub_status(pool):
             return stats
     else:  # we have an unknown status as out is 0 or 1 lines long.
         return stats
-    for l in out[fieldOffset:-1]:
-        fields = l.strip().split(": ")
+    for line in out[fieldOffset:-1]:
+        fields = line.strip().split(": ")
         if fields[0] == "data_bytes_scrubbed":
             stats["kb_scrubbed"] = int(fields[1]) / 1024
         else:
             stats[fields[0]] = int(fields[1])
-    # If we are on the newer version of btrfs-progs, pull additional stats
-    if parse_version(btrfsProgsVers) >= parse_version("v5.1.2"):
-        out2, err2, rc2 = run_command([BTRFS, "scrub", "status", mnt_pt])
-        if re.search("running", out2[2]) is not None:
-            # time_left
-            fields2 = out2[4].split()[-1].split(":")
-            stats["time_left"] = (
-                (int(fields2[0]) * 60 * 60) + (int(fields2[1]) * 60) + int(fields2[2])
-            )
-            # eta
-            fields3 = out2[5].strip().split(": ")
-            dateFormat = "%a %b %d %H:%M:%S %Y"
-            stats["eta"] = datetime.strptime(fields3[1].strip(), dateFormat)
-            # rate
-            fields4 = out2[8].strip().split(": ")
-            stats["rate"] = fields4[1].strip()
-        else:
-            fields5 = out2[5].strip().split(": ")
-            stats["rate"] = fields5[1].strip()
     return stats
 
 
@@ -1787,19 +2059,15 @@ def start_resize_pool(cmd):
         raise e
 
 
-@task()
-def start_balance(mnt_pt, force=False, convert=None):
+def balance_pool_cmd(mnt_pt, force=False, convert=None):
     cmd = ["btrfs", "balance", "start", mnt_pt]
     # With no filters we also get a warning that block some balances due to
     # expected long execution time, in this case "--full-balance" is required.
     if force:
         cmd.insert(3, "-f")
     if convert is not None:
-        cmd.insert(3, "-dconvert={}".format(convert))
-        # Override metadata on single pools to be dup, as per btrfs default.
-        if convert == "single":
-            convert = "dup"
-        cmd.insert(3, "-mconvert={}".format(convert))
+        cmd.insert(3, "-dconvert={}".format(PROFILE[convert].data_raid))
+        cmd.insert(3, "-mconvert={}".format(PROFILE[convert].metadata_raid))
     else:
         # As we are running with no convert filters a warning and 10 second
         # countdown with ^C prompt will result unless we use "--full-balance".
@@ -1807,7 +2075,30 @@ def start_balance(mnt_pt, force=False, convert=None):
         # button tooltip.
         cmd.insert(3, "--full-balance")
     logger.debug("Balance command ({}).".format(cmd))
-    run_command(cmd)
+    return cmd
+
+
+@task()
+def start_balance(cmd):
+    """
+    Simple named wrapper to run balance command via Huey with logging and possible
+    exception filtering in case we need to improve error messaging.
+    See: start_resize_pool as counterpart wrapper.
+
+    https://www.untangled.dev/2020/07/01/huey-minimal-task-queue-django/
+    "... avoid passing a Django model instance or queryset as parameter."
+    "Instead pass the object id, which is an int..."
+    and retrieve the Django object a-fresh in the task function.
+    :param cmd: btrfs dev add/delete command in run_command() format (ie list).
+    :param cmd:
+    :return:
+    """
+    logger.debug("Balance pool command ({}).".format(cmd))
+    try:
+        run_command(cmd)
+    except CommandException as e:
+        # We may need additional exception filtering/altering here.
+        raise e
 
 
 def balance_status(pool):
@@ -1818,7 +2109,7 @@ def balance_status(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    stats = {"status": u"unknown"}
+    stats = {"status": "unknown"}
     # The balance status of an umounted pool is undetermined / unknown, ie it
     # could still be mid balance: our balance status command requires a
     # relevant active mount path.
@@ -1836,13 +2127,13 @@ def balance_status(pool):
     if len(out) > 0:
         if re.match("Balance", out[0]) is not None:
             if re.search("cancel requested", out[0]) is not None:
-                stats["status"] = u"cancelling"
+                stats["status"] = "cancelling"
             elif re.search("pause requested", out[0]) is not None:
-                stats["status"] = u"pausing"
+                stats["status"] = "pausing"
             elif re.search("paused", out[0]) is not None:
-                stats["status"] = u"paused"
+                stats["status"] = "paused"
             else:
-                stats["status"] = u"running"
+                stats["status"] = "running"
             # make sure we have a second line before parsing it.
             if len(out) > 1 and re.search("chunks balanced", out[1]) is not None:
                 percent_left = out[1].split()[-2][:-1]
@@ -1852,7 +2143,7 @@ def balance_status(pool):
                 except:
                     pass
         elif re.match("No balance", out[0]) is not None:
-            stats["status"] = u"finished"
+            stats["status"] = "finished"
             stats["percent_done"] = 100
     return stats
 
@@ -1922,7 +2213,7 @@ def balance_status_internal(pool):
     :return: dictionary containing parsed info about the balance status,
     ie indexed by 'status' and 'percent_done'.
     """
-    stats = {"status": u"unknown"}
+    stats = {"status": "unknown"}
     try:
         mnt_pt = mount_root(pool)
     except Exception as e:
@@ -1942,14 +2233,44 @@ def balance_status_internal(pool):
         if fields[0] == "Unallocated:":
             unallocated = int(fields[1])
             if unallocated < 0:
-                stats["status"] = u"running"
+                stats["status"] = "running"
                 break
     if unallocated >= 0:
-        # We have not 'tell' so report a finished balance as there is no
+        # We have no 'tell' so report a finished balance as there is no
         # evidence of one happening.
-        stats["status"] = u"finished"
+        stats["status"] = "finished"
         stats["percent_done"] = 100
     return stats
+
+
+def balance_status_all(pool):
+    """
+    Wrapper/meta caller of balance_status() and balance_status_internal().
+    If the former reports no live balance the latter is checked.
+    Used to inform the caller of the current or last know status as reported
+    by a call to 'btfs balance status' (balance_status()) or an implied
+    internal balance as repoted by balance_status_internal().
+    For status dict see called functions.
+    param pool: Pool db object.
+    :return: named tupil: active:boolean, internal:boolean, status:dict
+    """
+    active = False
+    internal = False
+    status = balance_status(pool)
+    if status["status"] in ["unknown", "finished"]:
+        # Try internal balance detection as we don't have regular balance in-flight.
+        status_internal = balance_status_internal(pool)
+        if status_internal["status"] not in ["unknown", "finished"]:
+            internal = active = True
+            status = status_internal
+    else:
+        active = True
+    logger.debug(
+        "Balance active: ({}), Internal: ({}), Live Status: ({})".format(
+            active, internal, status
+        )
+    )
+    return BalanceStatusAll(active=active, internal=internal, status=status)
 
 
 def device_scan(dev_byid_list=["all"]):

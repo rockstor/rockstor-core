@@ -21,29 +21,6 @@
     "fields": {
       "pqgroup_rusage": 16,
       "group": "root",
-      "name": "home",
-      "perms": "755",
-      "pqgroup": "2015/1",
-      "eusage": 16,
-      "uuid": null,
-      "pqgroup_eusage": 16,
-      "compression_algo": null,
-      "owner": "root",
-      "replica": false,
-      "qgroup": "0/257",
-      "toc": "2019-07-30T17:27:39.474Z",
-      "subvol_name": "home",
-      "rusage": 16,
-      "pool": 1,
-      "size": 7035904
-    },
-    "model": "storageadmin.share",
-    "pk": 1
-  },
-  {
-    "fields": {
-      "pqgroup_rusage": 16,
-      "group": "root",
       "name": "test_share01",
       "perms": "755",
       "pqgroup": "2015/34",
@@ -62,34 +39,6 @@
     },
     "model": "storageadmin.share",
     "pk": 4
-  },
-  {
-    "fields": {
-      "raid": "single",
-      "compression": "no",
-      "uuid": "cc05c31d-6a89-47cd-bbba-c8f4419d9a9b",
-      "name": "rockstor_rockstor",
-      "mnt_options": null,
-      "role": "root",
-      "toc": "2019-07-30T17:27:39.257Z",
-      "size": 7035904
-    },
-    "model": "storageadmin.pool",
-    "pk": 1
-  },
-  {
-    "fields": {
-      "raid": "single",
-      "compression": "no",
-      "uuid": "56395eae-ab39-4649-85d4-072847eb56a2",
-      "name": "main_pool",
-      "mnt_options": null,
-      "role": null,
-      "toc": "2019-07-30T17:27:39.276Z",
-      "size": 5242880
-    },
-    "model": "storageadmin.pool",
-    "pk": 2
   },
   {
     "fields": {

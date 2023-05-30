@@ -1,0 +1,234 @@
+[
+{
+    "model": "storageadmin.pool",
+    "pk": 1,
+    "fields": {
+        "name": "ROOT",
+        "uuid": "475bbc39-01c8-4cdd-bb22-de07b40f7e13",
+        "size": 23000044,
+        "raid": "single",
+        "toc": "2022-07-05T11:31:43.490Z",
+        "compression": "no",
+        "mnt_options": null,
+        "role": "root"
+    }
+},
+{
+    "model": "storageadmin.pool",
+    "pk": 2,
+    "fields": {
+        "name": "test-pool-balance",
+        "uuid": "aec1ed53-4796-4ea5-93f1-33acfa5e3e3f",
+        "size": 5242880,
+        "raid": "single",
+        "toc": "2022-07-05T11:31:43.468Z",
+        "compression": "no",
+        "mnt_options": "",
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 1,
+    "fields": {
+        "pool": null,
+        "name": "virtio-3",
+        "devid": 0,
+        "size": 5242880,
+        "allocated": 0,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": null,
+        "model": null,
+        "serial": "3",
+        "transport": null,
+        "vendor": "0x1af4",
+        "smart_available": false,
+        "smart_enabled": false,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 2,
+    "fields": {
+        "pool": null,
+        "name": "virtio-2",
+        "devid": 0,
+        "size": 5242880,
+        "allocated": 0,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": null,
+        "model": null,
+        "serial": "2",
+        "transport": null,
+        "vendor": "0x1af4",
+        "smart_available": false,
+        "smart_enabled": false,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 3,
+    "fields": {
+        "pool": 2,
+        "name": "virtio-1",
+        "devid": 1,
+        "size": 5242880,
+        "allocated": 1114112,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": "aec1ed53-4796-4ea5-93f1-33acfa5e3e3f",
+        "model": null,
+        "serial": "1",
+        "transport": null,
+        "vendor": "0x1af4",
+        "smart_available": false,
+        "smart_enabled": false,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 4,
+    "fields": {
+        "pool": null,
+        "name": "virtio-7",
+        "devid": 0,
+        "size": 5242880,
+        "allocated": 0,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": null,
+        "model": null,
+        "serial": "7",
+        "transport": null,
+        "vendor": "0x1af4",
+        "smart_available": false,
+        "smart_enabled": false,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 5,
+    "fields": {
+        "pool": null,
+        "name": "virtio-6",
+        "devid": 0,
+        "size": 5242880,
+        "allocated": 0,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": null,
+        "model": null,
+        "serial": "6",
+        "transport": null,
+        "vendor": "0x1af4",
+        "smart_available": false,
+        "smart_enabled": false,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 6,
+    "fields": {
+        "pool": null,
+        "name": "virtio-5",
+        "devid": 0,
+        "size": 5242880,
+        "allocated": 0,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": null,
+        "model": null,
+        "serial": "5",
+        "transport": null,
+        "vendor": "0x1af4",
+        "smart_available": false,
+        "smart_enabled": false,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 7,
+    "fields": {
+        "pool": null,
+        "name": "virtio-4",
+        "devid": 0,
+        "size": 5242880,
+        "allocated": 0,
+        "offline": false,
+        "parted": false,
+        "btrfs_uuid": null,
+        "model": null,
+        "serial": "4",
+        "transport": null,
+        "vendor": "0x1af4",
+        "smart_available": false,
+        "smart_enabled": false,
+        "smart_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.disk",
+    "pk": 8,
+    "fields": {
+        "pool": 1,
+        "name": "ata-QEMU_HARDDISK_QM00001-part4",
+        "devid": 1,
+        "size": 23000044,
+        "allocated": 7372800,
+        "offline": false,
+        "parted": true,
+        "btrfs_uuid": "475bbc39-01c8-4cdd-bb22-de07b40f7e13",
+        "model": "QEMU_HARDDISK",
+        "serial": "QM00001",
+        "transport": "sata",
+        "vendor": "ATA",
+        "smart_available": true,
+        "smart_enabled": true,
+        "smart_options": null,
+        "role": "{\"root\": \"btrfs\"}"
+    }
+},
+{
+    "model": "storageadmin.poolbalance",
+    "pk": 1,
+    "fields": {
+        "pool": 2,
+        "status": "finished",
+        "tid": "599915a8-1st--poolbalance-in-fixture",
+        "message": null,
+        "start_time": "2022-07-05T10:53:06.218Z",
+        "end_time": "2022-07-05T10:53:12.921Z",
+        "percent_done": 100,
+        "internal": false
+    }
+},
+{
+    "model": "storageadmin.poolbalance",
+    "pk": 2,
+    "fields": {
+        "pool": 2,
+        "status": "finished",
+        "tid": "1d9aa3bc-last-poolbalance-in-fixture",
+        "message": null,
+        "start_time": "2022-07-05T10:57:19.906Z",
+        "end_time": "2022-07-05T10:57:23.170Z",
+        "percent_done": 100,
+        "internal": false
+    }
+}
+]

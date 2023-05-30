@@ -33,7 +33,7 @@ from rest_framework.response import Response
 import rest_framework_custom as rfc
 from cli.rest_util import api_call
 from smart_manager.models.service import Service, ServiceStatus
-from storageadmin.models import ConfigBackup, RockOn
+from storageadmin.models import ConfigBackup, RockOn, Pool, Share
 from storageadmin.serializers import ConfigBackupSerializer
 from storageadmin.util import handle_exception
 from storageadmin.views.rockon_helpers import rockon_tasks_pending
@@ -185,12 +185,65 @@ def validate_service_status(ml, pkid):
             return m["fields"]["status"]
 
 
-def restore_scheduled_tasks(ml):
+def validate_taskdef_meta(sa_ml, taskdef_meta, task_type):
+    """
+    Task definition of type snapshot include a share ID in their
+    json_meta field (taskdef_meta). The share ID for the share in question
+    is most likely different in the new system on which the config backup
+    is to be restored. We thus need to fetch the new share ID for the share
+    in question.
+    Example input taskdef_meta:
+    json_meta: {
+        "writable": true,
+        "visible": true,
+        "prefix": "snap_daily_ts01",
+        "share": "77",
+        "max_count": "4"
+    }
+
+    :param sa_ml: list of storageadmin models of interest as parsed by restore_config()
+    :param taskdef_meta: dict loaded from validate_task_definitions()
+    :param task_type: string, can be "snapshot" or "scrub"
+    :return: dict
+    """
+    if task_type == "snapshot":
+        # get source share name from config backup based on its ID
+        source_id = int(taskdef_meta["share"])
+        source_name = get_sname(sa_ml, source_id)
+        # get ID of source share name in the target system
+        target_share_id = get_target_share_id(source_name)
+        # Update taskdef_meta (needs to be a unicode object)
+        taskdef_meta["share"] = unicode(target_share_id)
+    if task_type == "scrub":
+        # get ID of pool name in the target system
+        target_pool_id = get_target_pool_id(taskdef_meta["pool_name"])
+        # Update taskdef_meta (needs to be a unicode object)
+        taskdef_meta["pool"] = unicode(target_pool_id)
+
+    return taskdef_meta
+
+
+def restore_scheduled_tasks(ml, sa_ml):
+    """
+    Simple wrapper to trigger the preparation of the list of scheduled tasks
+    to be restored, followed by the actual API request.
+
+    :param ml: list of smart_manager models of interest as parsed by restore_config()
+    :param sa_ml: list of storageadmin models of interest as parsed by restore_config()
+    """
+    logger.info("Started restoring scheduled tasks.")
+    tasks = validate_task_definitions(ml, sa_ml)
+    for t in tasks:
+        generic_post("{}/sm/tasks".format(BASE_URL), t)
+    logger.info("Finished restoring scheduled tasks.")
+
+
+def validate_task_definitions(ml, sa_ml):
     """
     Parses the config backup to re-create a valid POST request to be sent to the
     sm/tasks API in order to re-create the scheduled task(s) in question.
     If multiple tasks are to be re-created, the config for each one is stored
-    inside a list that is then looped through to send an api request for each task.
+    inside a list that is then looped through to send an API request for each task.
     Need the following info for each request:
         - name
         - task_type
@@ -198,32 +251,40 @@ def restore_scheduled_tasks(ml):
         - crontabwindow
         - meta
         - enabled
+
     :param ml: list of smart_manager models of interest as parsed by restore_config()
+    :param sa_ml: list of storageadmin models of interest as parsed by restore_config()
+    :return: list of tasks to restore
     """
-    logger.info("Started restoring scheduled tasks.")
     tasks = []
     for m in ml:
         if m["model"] == "smart_manager.taskdefinition":
-            name = m["fields"]["name"]
-            task_type = m["fields"]["task_type"]
-            crontab = m["fields"]["crontab"]
-            crontabwindow = m["fields"]["crontabwindow"]
-            enabled = m["fields"]["enabled"]
-            json_meta = m["fields"]["json_meta"]
-            if json_meta is not None:
-                jmeta = json.loads(json_meta)
-            taskdef = {
-                "name": name,
-                "task_type": task_type,
-                "crontab": crontab,
-                "crontabwindow": crontabwindow,
-                "enabled": enabled,
-                "meta": jmeta,
-            }
-            tasks.append(taskdef)
-    for t in tasks:
-        generic_post("{}/sm/tasks/".format(BASE_URL), t)
-    logger.info("Finished restoring scheduled tasks.")
+            try:
+                name = m["fields"]["name"]
+                task_type = m["fields"]["task_type"]
+                crontab = m["fields"]["crontab"]
+                crontabwindow = m["fields"]["crontabwindow"]
+                enabled = m["fields"]["enabled"]
+                json_meta = m["fields"]["json_meta"]
+                if json_meta is not None:
+                    jmeta = json.loads(json_meta)
+                    jmeta = validate_taskdef_meta(sa_ml, jmeta, task_type)
+                taskdef = {
+                    "name": name,
+                    "task_type": task_type,
+                    "crontab": crontab,
+                    "crontabwindow": crontabwindow,
+                    "enabled": enabled,
+                    "meta": jmeta,
+                }
+                tasks.append(taskdef)
+            except Exception as e:
+                logger.info(
+                    "An unexpected error occurred while trying to restore a task ({}): {}".format(
+                        name, e
+                    )
+                )
+    return tasks
 
 
 @db_task()
@@ -495,6 +556,22 @@ def get_sname(ml, share_id):
     return sname
 
 
+def get_target_share_id(source_name):
+    """
+    Takes a share name and returns its ID from the database.
+    """
+    so = Share.objects.get(name=source_name)
+    return so.id
+
+
+def get_target_pool_id(source_name):
+    """
+    Takes a pool name and returns its ID from the database.
+    """
+    po = Pool.objects.get(name=source_name)
+    return po.id
+
+
 @db_task()
 @lock_task("restore_config_lock")
 def restore_config(cbid):
@@ -512,8 +589,8 @@ def restore_config(cbid):
     # restore_dashboard(ml)
     # restore_appliances(ml)
     # restore_network(sa_ml)
-    restore_scheduled_tasks(sm_ml)
-    # N.B. the following is also a Huey task in it's own right.
+    restore_scheduled_tasks(sm_ml, sa_ml)
+    # N.B. the following is also a Huey task in its own right.
     restore_rockons(sa_ml)
 
 
@@ -626,7 +703,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
 
 
 class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
-    parser_classes = (FileUploadParser, MultiPartParser)
+    parser_classes = [MultiPartParser]
 
     def get_queryset(self, *args, **kwargs):
         for cbo in ConfigBackup.objects.all():

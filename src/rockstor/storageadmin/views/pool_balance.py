@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from huey.exceptions import TaskException
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework import status
 from rest_framework.response import Response
 from django.db import transaction
 from huey.contrib.djhuey import HUEY
@@ -23,12 +25,86 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import Pool, PoolBalance
 import rest_framework_custom as rfc
-from fs.btrfs import balance_status, balance_status_internal
+from fs.btrfs import balance_status_all
 from pool import PoolMixin
+from huey.contrib.djhuey import db_task
 
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def balance_status_filter(prior_status, live_status):
+    """
+    Perform contextual modification on live_status given prior_status content.
+    I.e. our live_status may be finished, but our prior status was failed.
+    or our live_status is finished but our prior status was cancelling.
+    For these examples we preserve the prior status to not lose information.
+    E.g. a finished balance that was previously recorded as caneclling has its
+    live_status updated to 'cancelled'.
+    :param prior_status: status dict from last PoolBalance instance
+    :param live_status: status dict form balance_status_internal() or balance_status()
+    :return: The proposed state (edited live state).
+    The proposed status is intended for Web-UI / api consumption.
+    """
+    logger.debug("PRIOR_STATUS = {}".format(prior_status))
+    logger.debug("LIVE_STATUS = {}".format(live_status))
+    if live_status["status"] == u"finished":
+        if prior_status["status"] == u"cancelling":
+            # Override live status as 'cancelled' and add message with prior % complete,
+            logger.debug("Overide 'finished' as 'cancelled'")
+            live_status["status"] = u"cancelled"
+            live_status["message"] = u"cancelled at {}% complete".format(
+                prior_status["percent_done"]
+            )
+            live_status["percent_done"] = prior_status["percent_done"]
+        elif prior_status["status"] == u"failed":
+            logger.debug("Overide 'finished' as 'failed'")
+            # Override live status as 'failed', preserving the failed % complete.
+            live_status["status"] = u"failed"
+            live_status["percent_done"] = prior_status["percent_done"]
+    logger.debug("PROPOSED STATUS = {}".format(live_status))
+    return live_status
+
+
+def is_pending_balance_task(Huey_handle, tid):
+    """
+    Boolean indicator of task id pending status.
+    :param Huey_handle: Huey instance.
+    :param tid: task_id
+    :return: Boolean, true if tid is pending
+    """
+    pending_balance_task_ids = [
+        task.id
+        for task in Huey_handle.pending()
+        if task.name in ["start_balance", "start_resize_pool"]
+    ]
+    if tid in pending_balance_task_ids:
+        logger.debug("Pending task id found ({})".format(tid))
+        return True
+    logger.debug("Pending task id NOT found ({})".format(tid))
+    return False
+
+
+@db_task()
+def update_end_time(tid, end_time):
+    """
+    Used by @HUEY.signal(SIGNAL_COMPLETE) task_completed() to update a PoolBalance
+    record.
+    :param tid: Huey task id
+    :param end_time: timezone() format for balance end time.
+    """
+    try:
+        pb = PoolBalance.objects.get(tid=tid)
+        logger.debug(
+            "update_end_time for balance id ({}) on Pool ({})".format(tid, pb.pool.name)
+        )
+        pb.end_time = end_time
+        pb.save(update_fields=["end_time"])
+    except Exception as e:
+        logger.error(
+            "Exception while updating PoolBalance end_time: {}".format(e.__str__())
+        )
 
 
 class PoolBalanceView(PoolMixin, rfc.GenericView):
@@ -38,104 +114,122 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
     def _validate_pool(pid, request):
         try:
             return Pool.objects.get(id=pid)
-        except:
+        except ObjectDoesNotExist as e:
             e_msg = "Pool ({}) does not exist.".format(pid)
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
+            logger.debug("PoolBalanceView get_queryset() called")
             pool = self._validate_pool(self.kwargs["pid"], self.request)
             self._balance_status(pool)
-            return PoolBalance.objects.filter(pool=pool).order_by("-id")
+            return PoolBalance.objects.filter(pool=pool).order_by("start_time")
 
     @staticmethod
     @transaction.atomic
     def _balance_status(pool):
+        """
+        Retrieves and updates the last relevant PoolBalance entry for the given Pool.
+        Assuming that entry, if it exists, has not already been marked as:
+        'finished', 'cancelled', or 'failed' i.e. terminal end states.
+        N.B. Works along-side Huey task events in the case of non cli initiated balance.
+        Intended primarily for Web-UI (Huey task run) balance event monitoring.
+        But when an ongoing balance is sensed, and there are no associated (via tid)
+        pending or ongoing Huey tasks a new PoolBalance entry is created with tid=None.
+        N.B. Future "Balance Cancel" button should call us to update balance status.
+        :param pool: Pool db object
+        :return: Empty response if no PoolBalance entry and no cli balance is detected.
+        Other-wise an updated or freshly created PoolBalance is returned.
+        """
+        bstatus = balance_status_all(pool)
+        balance_active = bstatus.active
+        internal = bstatus.internal
+        live_status = bstatus.status
+        return_empty = False  # Default to empty response
+        msg_new_cli = "Suspected cli balance detected. New entry created."
         try:
-            # acquire a handle on the last pool balance status db entry
-            ps = PoolBalance.objects.filter(pool=pool).order_by("-id")[0]
-        except:
-            # return empty handed if we have no 'last entry' to update
-            return Response()
-        # Check if we have a pending task which matches our tid.
-        logger.debug("POOLS BALANCE MODEL PS.TID = {}".format(ps.tid))
-        hi = HUEY
-        logger.debug("HUEY.pending() {}".format(hi.pending()))
-        # Pending balance tasks. N.B. Executing tasks are no longer pending.
-        # There is a 1 to 3 second 'pending" status for Huey tasks.
-        pending_task_ids = [
-            task.id
-            for task in hi.pending()
-            if task.name in ["start_balance", "start_resize_pool"]
-        ]
-        logger.debug("Pending balance task.ids = {}".format(pending_task_ids))
-        try:
-            # https://huey.readthedocs.io/en/latest/api.html#Huey.get
-            # The following does a destructive read unless preserve=True.
-            # This read will also throw the TaskException which is our interest here.
-            # https://huey.readthedocs.io/en/latest/api.html#Huey.result
-            # https://github.com/coleifer/huey/issues/449#issuecomment-535028271
-            # Syntax requires huey 2.1.3
-            hi.result(ps.tid)
-        except TaskException as e:
-            ps.status = "failed"
-            # N.B. metadata indexes: retries, traceback, task_id, error
-            ps.message = e.metadata.get("traceback", "missing 'traceback' key")
-            # TODO: Consider a huey signal to triggered the addition of end time
-            #  currently no SIGNAL_ERROR is seen to be active (see task.py)
-            # ps.end_time = to.failed  # defaults to Null in model.
-            # https://docs.djangoproject.com/en/1.8/ref/models/instances
-            #  /#specifying-which-fields-to-save
-            ps.save(update_fields=["status", "message"])
-            return ps
-        if ps.status == u"started" and ps.tid in pending_task_ids:
-            # Model default (i.e. a new balance) defaults to status "started".
-            # Preserve this state while we await our pending task (1 to 3 seconds).
-            logger.debug("WE CAN LEAVE OUR MODEL AS IS SO RETURN WITH IT")
-            return ps
-        # Get the current status of balance on this pool, irrespective of
-        # a running balance task, ie command line intervention.
-        if ps.internal:
-            cur_status = balance_status_internal(pool)
-        else:
-            cur_status = balance_status(pool)
-        previous_status = {"status": ps.status, "percent_done": ps.percent_done}
-        logger.debug("PREVIOUS_STATUS = {}".format(previous_status))
-        logger.debug("CURRENT STATUS = {}".format(cur_status))
-        # TODO: future "Balance Cancel" button should call us to have these
-        #  values updated in the db table ready for display later.
-        # Update cur_state to become preferred proposed state.
-        if (
-            previous_status["status"] == u"cancelling"
-            and cur_status["status"] == u"finished"
-        ):
-            # override current status as 'cancelled'
-            cur_status["status"] = u"cancelled"
-            cur_status["message"] = u"cancelled at {}% complete".format(ps.percent_done)
-            # and retain prior percent finished value
-            cur_status["percent_done"] = ps.percent_done
-        elif (
-            previous_status["status"] == u"failed"
-            and cur_status["status"] == u"finished"
-        ):
-            # override current status as 'failed'
-            cur_status["status"] = u"failed"
-            # and retain prior percent finished value
-            cur_status["percent_done"] = ps.percent_done
-        logger.debug("PROPOSED STATUS = {}".format(cur_status))
-        if cur_status == previous_status:
-            logger.debug("PROPOSED STATUS = MODEL STATUS: NO UPDATE REQUIRED")
-            return ps
-        if (
-            previous_status["status"] != u"finished"
-            and previous_status["status"] != u"cancelled"
-        ):
-            # update the last pool balance status with current status info.
+            ps = PoolBalance.objects.filter(pool=pool).latest()
+        except ObjectDoesNotExist as e:
+            if not balance_active:  # No past record and no ongoing balance.
+                return_empty = True
+                return Response()
+            else:  # Active balance but no existing PoolBalance record for this Pool.
+                # Web-UI initiated balances always have an existing PoolBalance record.
+                ps = PoolBalance(
+                    pool=pool, internal=internal, message=msg_new_cli, **live_status
+                )
+                ps.save()
+                logger.debug(
+                    "++++++ "
+                    + msg_new_cli
+                    + " Pool name {}, PoolBalance ID {}.".format(pool.name, ps.id)
+                )
+                return ps
+        else:  # We have a prior entry, check for Huey task id and matching task:
             logger.debug(
-                "UPDATING BALANCE STATUS ID {} WITH {}".format(ps.id, cur_status)
+                "Latest PoolBalance: TID = {} Pool ({}) End_time ({})".format(
+                    ps.tid, pool.name, ps.end_time
+                )
             )
-            PoolBalance.objects.filter(id=ps.id).update(**cur_status)
-        return ps
+            if ps.tid is not None:  # latest balance record has Huey task id (tid)
+                hi = HUEY
+                task_result = None
+                try:
+                    # https://huey.readthedocs.io/en/latest/api.html#Huey.get
+                    # The following does a destructive read unless preserve=True.
+                    # This read will also throw the TaskException which is our interest here.
+                    # https://huey.readthedocs.io/en/latest/api.html#Huey.result
+                    # https://github.com/coleifer/huey/issues/449#issuecomment-535028271
+                    # Syntax requires huey 2.1.3
+                    task_result = hi.result(ps.tid)
+                except TaskException as e:
+                    ps.status = "failed"
+                    # N.B. metadata indexes: retries, traceback, task_id, error
+                    ps.message = e.metadata.get("traceback", "missing 'traceback' key")
+                    # TODO: Consider a huey signal to triggered the addition of end time
+                    #  currently no SIGNAL_ERROR is seen to be active (see task.py)
+                    ps.save(update_fields=["status", "message"])
+                    return ps
+                else:  # task has not failed
+                    logger.debug("Matching task result = {}".format(task_result))
+                    if task_result is None:  # Check for pending task.
+                        # Pending balance tasks. Executing tasks are no longer pending.
+                        # There is a 1 to 3 second 'pending" status for Huey tasks.
+                        if ps.status == u"started" and is_pending_balance_task(
+                            hi, ps.tid
+                        ):
+                            # Model default - new balance record has status "started".
+                            # Preserve pending/"started" state until we know better.
+                            logger.debug(
+                                "DB STATUS STARTED + PENDING HUEY TASK - RETURN DB ENTRY"
+                            )
+                            return ps
+            else:  # Latest balance record is cli generated
+                pass
+            # irrespective of Huey or cli run, we update and return what we now have:
+            prior_status = {"status": ps.status, "percent_done": ps.percent_done}
+            if live_status == prior_status:
+                logger.debug("PROPOSED STATUS = MODEL STATUS: NO UPDATE REQUIRED")
+                return ps
+            proposed_status = balance_status_filter(prior_status, live_status)
+            # We don't want to update finished or cancelled entries.
+            if prior_status["status"] in [u"finished", u"cancelled"]:
+                if live_status["status"] not in [u"unknown", u"finished"]:
+                    # Create new PoolBalance record:
+                    ps = PoolBalance(pool=pool, message=msg_new_cli, **proposed_status)
+                    ps.save()
+                    logger.debug(
+                        "++++++ "
+                        + msg_new_cli
+                        + " Pool name {}, PoolBalance ID {}.".format(pool.name, ps.id)
+                    )
+            else:  # prior_status is neither finished nor cancelled, so we update it.
+                logger.debug(
+                    "UPDATING RECORD ID {} WITH {}.".format(ps.id, proposed_status)
+                )
+                PoolBalance.objects.filter(id=ps.id).update(**proposed_status)
+                ps.refresh_from_db()
+            return ps
 
     @transaction.atomic
     def post(self, request, pid, command=None):
@@ -147,7 +241,16 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
         with self._handle_exception(request):
             ps = self._balance_status(pool)
             if command == "status":
-                return Response(PoolBalanceSerializer(ps).data)
+                if isinstance(ps, PoolBalance):
+                    logger.debug(
+                        "====== Returning PoolBalance serialized - status command. ======"
+                    )
+                    return Response(PoolBalanceSerializer(ps).data)
+                else:
+                    logger.debug(
+                        "====== Returning Empty as no PoolBalance - status command. ======"
+                    )
+                    return Response(status=status.HTTP_204_NO_CONTENT)
             force = request.data.get("force", False)
             if PoolBalance.objects.filter(
                 pool=pool, status__regex=r"(started|running)"
@@ -155,7 +258,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                 if force:
                     p = PoolBalance.objects.filter(
                         pool=pool, status__regex=r"(started|running)"
-                    ).order_by("-id")[0]
+                    ).latest()
                     p.status = "terminated"
                     p.save(update_fields=["status"])
                 else:

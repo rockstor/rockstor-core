@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import re
+import fnmatch
 
 import requests
 from django.db import transaction
@@ -48,6 +49,12 @@ from huey.contrib.djhuey import HUEY
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+ROCKONS = {
+    "remote_metastore": "https://rockstor.com/rockons",
+    "remote_root": "root.json",
+    "local_metastore": "{}/rockons-metastore".format(settings.BASE_DIR),
+}
 
 
 class RockOnView(rfc.GenericView):
@@ -473,8 +480,8 @@ class RockOnView(rfc.GenericView):
             # don't fetch if service is not configured.
             return {}
 
-        url_root = settings.ROCKONS.get("remote_metastore")
-        remote_root = "{}/{}".format(url_root, settings.ROCKONS.get("remote_root"))
+        url_root = ROCKONS.get("remote_metastore")
+        remote_root = "{}/{}".format(url_root, ROCKONS.get("remote_root"))
         msg = "Error while processing remote metastore at ({}).".format(remote_root)
         with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
@@ -492,9 +499,9 @@ class RockOnView(rfc.GenericView):
                     cur_res.raise_for_status()
                 meta_cfg.update(cur_res.json())
 
-        local_root = settings.ROCKONS.get("local_metastore")
+        local_root = ROCKONS.get("local_metastore")
         if os.path.isdir(local_root):
-            for f in os.listdir(local_root):
+            for f in fnmatch.filter(os.listdir(local_root), '*.json'):
                 fp = "{}/{}".format(local_root, f)
                 msg = "Error while processing Rock-on profile at ({}).".format(fp)
                 with self._handle_exception(self.request, msg=msg):

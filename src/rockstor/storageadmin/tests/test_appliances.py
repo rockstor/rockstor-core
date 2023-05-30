@@ -17,46 +17,46 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient
 from mock import patch
-from storageadmin.models import Appliance
 from storageadmin.tests.test_api import APITestMixin
 
 
-class AppliancesTests(APITestMixin, APITestCase):
-    fixtures = ['test_appliances.json']
-    BASE_URL = '/api/appliances'
+class AppliancesTests(APITestMixin):
+    # Fixture expected to contain appliance self reference (created during setup)
+    # and a remote (replication) appliance ("current_appliance": False).
+    #
+    # bin/django dumpdata storageadmin.appliance --natural-foreign --indent 4 >
+    # src/rockstor/storageadmin/fixtures/test_appliances.json
+    #
+    # ./bin/test -v 2 -p test_appliances.py
+    fixtures = ["test_api.json", "test_appliances.json"]
+    BASE_URL = "/api/appliances"
+    client = APIClient()
 
     @classmethod
     def setUpClass(cls):
         super(AppliancesTests, cls).setUpClass()
 
         # post mocks
-        cls.patch_set_token = patch('storageadmin.views.appliances.set_token')
+        cls.patch_set_token = patch("storageadmin.views.appliances.set_token")
         cls.mock_set_token = cls.patch_set_token.start()
         cls.mock_set_token.return_value = {}
 
-        cls.patch_api_call = patch('storageadmin.views.appliances.api_call')
+        cls.patch_api_call = patch("storageadmin.views.appliances.api_call")
         cls.mock_api_call = cls.patch_api_call.start()
-        cls.mock_api_call.return_value = {'uuid': '01'}
+        cls.mock_api_call.return_value = {"uuid": "01"}
 
         # Mock gethostname() to return hostname under our control,
         # _update_hostname() uses gethostname to update the db.
-        cls.patch_gethostname = patch(
-            'storageadmin.views.appliances.gethostname')
+        cls.patch_gethostname = patch("storageadmin.views.appliances.gethostname")
         cls.mock_gethostname = cls.patch_gethostname.start()
-        cls.mock_gethostname.return_value = 'test-host'
+        cls.mock_gethostname.return_value = "test-host"
 
         # Mock sethostname() so we don't actually set our host's hostname.
-        cls.patch_sethostname = patch(
-            'storageadmin.views.appliances.sethostname')
+        cls.patch_sethostname = patch("storageadmin.views.appliances.sethostname")
         cls.mock_sethostname = cls.patch_sethostname.start()
-        cls.mock_sethostname.return_value = [''], [''], 0
-
-        # all values as per fixture
-        cls.temp_appliance = \
-            Appliance(id=1, uuid='679E27FE-EB1A-4DE4-98EF-D9416830C4F5',
-                      ip='', current_appliance=True, mgmt_port=443)
+        cls.mock_sethostname.return_value = [""], [""], 0
 
     @classmethod
     def tearDownClass(cls):
@@ -64,103 +64,116 @@ class AppliancesTests(APITestMixin, APITestCase):
 
     def test_get(self):
 
-        ######################
-        # TODO: We should not have to do this as in fixtures so remove once
-        # proper appliance instance is sorted.
-        # add appliance
-        data = {'ip': '', 'mgmt_port': '443', 'client_id': '',
-                'client_secret': '', 'current_appliance': True}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-        ######################
-
-        # now on to our actual test for this section.
-
         # get base URL
         response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_post_requests_1(self):
 
         # failed set_token
-        data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
-                'client_secret': '', 'current_appliance': False}
+        data = {
+            "ip": "1.1.1.1",
+            "mgmt_port": "443",
+            "client_id": "",
+            "client_secret": "",
+            "current_appliance": False,
+        }
         self.mock_set_token.side_effect = Exception()
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = ('Failed to authenticate on remote appliance. Verify port '
-                 'number, id and secret are correct and try again.')
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = (
+            "Failed to authenticate on remote appliance. Verify port "
+            "number, id and secret are correct and try again."
+        )
         self.assertEqual(response.data[0], e_msg)
         self.mock_set_token.side_effect = None
 
         # failed api_call
-        data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
-                'client_secret': '', 'current_appliance': False}
+        data = {
+            "ip": "1.1.1.1",
+            "mgmt_port": "443",
+            "client_id": "",
+            "client_secret": "",
+            "current_appliance": False,
+        }
         self.mock_api_call.side_effect = Exception()
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = ('Failed to get remote appliance information. Verify all '
-                 'inputs and try again.')
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = (
+            "Failed to get remote appliance information. Verify all "
+            "inputs and try again."
+        )
         self.assertEqual(response.data[0], e_msg)
         self.mock_api_call.side_effect = None
 
-    @mock.patch('storageadmin.views.appliances.Appliance')
-    def test_post_requests_2(self, mock_appliance):
+    def test_post_requests_2(self):
 
-        self.temp_appliance.ip = '192.168.124.235'
-
-        mock_appliance.objects.get.return_value = self.temp_appliance
-
-        # ip already exists
-        data = {'ip': '192.168.124.235', 'mgmt_port': '443', 'client_id': '',
-                'client_secret': '', 'current_appliance': False}
+        # ip/hostname already exists
+        data = {
+            "ip": "rleap15-3aarch64.lan",
+            "mgmt_port": "443",
+            "client_id": "",
+            "client_secret": "",
+            "current_appliance": False,
+        }
+        # N.B. if the following is set to follow=True we get infinite recursion !!
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = ('The appliance with ip = 192.168.124.235 already exists '
-                 'and cannot be added again.')
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = (
+            "The appliance with ip = rleap15-3aarch64.lan already exists "
+            "and cannot be added again."
+        )
         self.assertEqual(response.data[0], e_msg)
 
-        mock_appliance.objects.filter(ip='1.1.1.1').exists.\
-            return_value = False
-
         # invalid management port
-        data = {'ip': '1.1.1.1', 'mgmt_port': 'invalid', 'client_id': '',
-                'client_secret': '', 'current_appliance': False}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Invalid management port (invalid) supplied. Try again.'
+        data = {
+            "ip": "1.1.1.1",
+            "mgmt_port": "invalid",
+            "client_id": "",
+            "client_secret": "",
+            "current_appliance": False,
+        }
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Invalid management port (invalid) supplied. Try again."
         self.assertEqual(response.data[0], e_msg)
 
         # happy path
-        data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
-                'client_secret': '', 'current_appliance': False}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        data = {
+            "ip": "1.1.1.1",
+            "mgmt_port": "443",
+            "client_id": "",
+            "client_secret": "",
+            "current_appliance": False,
+        }
+        response = self.client.post(self.BASE_URL, data=data, follow=True)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_delete_requests(self):
-        # add appliance
-        data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id': '',
-                'client_secret': '', 'current_appliance': False}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
 
         # delete appliance that does not exists
         app_id = 99999
-        response = self.client.delete('{}/{}'.format(self.BASE_URL, app_id))
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'Appliance id ({}) does not exist.'.format(app_id)
+        response = self.client.delete("{}/{}".format(self.BASE_URL, app_id))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "Appliance id ({}) does not exist.".format(app_id)
         self.assertEqual(response.data[0], e_msg)

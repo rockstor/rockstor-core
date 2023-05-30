@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -23,13 +23,12 @@ import stat
 from tempfile import mkstemp
 
 from django.conf import settings
-
 from osi import run_command
+from system.constants import SYSTEMCTL
+from system.ssh import is_sftp_running
 
-SSHD_CONFIG = "/etc/ssh/sshd_config"
-SYSTEMCTL_BIN = "/usr/bin/systemctl"
-SUPERCTL_BIN = "%s/bin/supervisorctl" % settings.ROOT_DIR
-SUPERVISORD_CONF = "%s/etc/supervisord.conf" % settings.ROOT_DIR
+SUPERCTL_BIN = "{}.venv/bin/supervisorctl".format(settings.ROOT_DIR)
+SUPERVISORD_CONF = "{}etc/supervisord.conf".format(settings.ROOT_DIR)
 SSSD_FILE = "/etc/sssd/sssd.conf"
 NET = "/usr/bin/net"
 WBINFO = "/usr/bin/wbinfo"
@@ -37,17 +36,25 @@ REALM = "/usr/sbin/realm"
 
 
 def init_service_op(service_name, command, throw=True):
-    """
+    """Run systemctl commands
+
     Wrapper for run_command calling systemctl, hardwired filter on service_name
     and will raise Exception on failed match. Enables run_command exceptions
     by default.
-    :param service_name:
-    :param command:
-    :param throw:
+    https://www.freedesktop.org/software/systemd/man/systemctl.html for rc return codes.
+    0 = unit is active, 3 = unit is not active, 4 = no such unit
+    :param str service_name:
+    :param str command:
+    :param bool throw:
     :return: out err rc
     """
+    # TODO: Consider speed-up by removing hardwired 'native' check and replacing by
+    #  rc == 4 check for system unknown (not-installed) services ("no such unit").
+    #  We could also do with a lean Boolean wrapper i.e. service_status_boolean()
+    #  to be used in for example model properties etc, where we need only a boolean.
     supported_services = (
         "nfs-server",
+        "nmb",
         "smb",
         "sshd",
         "ypbind",
@@ -66,15 +73,31 @@ def init_service_op(service_name, command, throw=True):
     if service_name not in supported_services:
         raise Exception("unknown service: {}".format(service_name))
 
-    arg_list = [SYSTEMCTL_BIN, command, service_name]
+    arg_list = [SYSTEMCTL, command, service_name]
     if command == "status":
         arg_list.append("--lines=0")
 
     return run_command(arg_list, throw=throw)
 
 
+def is_systemd_service_active(service_name):
+    """Returns boolean for active status of a systemd service
+
+    Uses init_service_op() to return a boolean for the status of a systemd service.
+    Use service_status() to get status information for a Rockstor service.
+    :param str service_name: name of the systemd service
+    :return: True if the service is active
+    :rtype: bool
+    """
+    _, _, rc = init_service_op(service_name=service_name, command="status", throw=False)
+    if rc == 0:
+        return True
+    else:
+        return False
+
+
 def systemctl(service_name, switch):
-    arg_list = [SYSTEMCTL_BIN, switch, service_name]
+    arg_list = [SYSTEMCTL, switch, service_name]
     if switch == "status":
         arg_list.append("--lines=0")
 
@@ -132,7 +155,8 @@ def service_status(service_name, config=None):
     systemctl, init_service_op, or superctl to assess status accordingly.
     Note some sanity checks for some services.
     :param service_name:
-    :return:
+    :param config:
+    :return: out, err, rc
     """
     if service_name == "nis" or service_name == "nfs":
         out, err, rc = init_service_op("rpcbind", "status", throw=False)
@@ -144,7 +168,9 @@ def service_status(service_name, config=None):
             return init_service_op("nfs-server", "status", throw=False)
     elif service_name == "ldap":
         o, e, rc = init_service_op("sssd", "status", throw=False)
-        # initial check on sssd status: 0 = OK 3 = stopped
+        # initial check on sssd status: 0 = OK 3 = stopped 4 = no such unit
+        # TODO In the following we only check config on already running sssd service!
+        #  but with more modern instances, running is dependant on configuration.
         if rc != 0:
             return o, e, rc
         # check for service configuration
@@ -160,36 +186,34 @@ def service_status(service_name, config=None):
                     return o, e, rc
             return o, e, 1
     elif service_name == "sftp":
-        out, err, rc = init_service_op("sshd", "status", throw=False)
-        # initial check on sshd status: 0 = OK 3 = stopped
-        if rc != 0:
-            return out, err, rc
-        # sshd has sftp subsystem so we check for its config line which is
-        # inserted or deleted to enable or disable the sftp service.
-        with open(SSHD_CONFIG) as sfo:
-            for line in sfo.readlines():
-                if re.match(settings.SFTP_STR, line) is not None:
-                    return out, err, rc
-            # -1 not appropriate as inconsistent with bash return codes
-            # Returning 1 as Catchall for general errors. The calling system
-            # interprets -1 as enabled, 1 works for disabled.
-            return out, err, 1
+        # Delegate sshd's sftp subsystem status check to system.ssh.py call.
+        return is_sftp_running(return_boolean=False)
     elif service_name in ("replication", "data-collector", "ztask-daemon"):
         return superctl(service_name, "status")
     elif service_name == "smb":
-        out, err, rc = run_command([SYSTEMCTL_BIN, "--lines=0", "status", "smb"], throw=False)
+        out, err, rc = run_command(
+            [SYSTEMCTL, "--lines=0", "status", "smb"], throw=False
+        )
         if rc != 0:
             return out, err, rc
-        return run_command([SYSTEMCTL_BIN, "--lines=0", "status", "nmb"], throw=False)
+        return run_command([SYSTEMCTL, "--lines=0", "status", "nmb"], throw=False)
     elif service_name == "nut":
         # Establish if nut is running by lowest common denominator nut-monitor
         # In netclient mode it is all that is required, however we don't then
         # reflect the state of the other services of nut-server and nut-driver.
-        return run_command([SYSTEMCTL_BIN, "--lines=0", "status", "nut-monitor"], throw=False)
+        return run_command(
+            [SYSTEMCTL, "--lines=0", "status", "nut-monitor"], throw=False
+        )
     elif service_name == "active-directory":
         if config is not None:
             active_directory_rc = 1
-            o, e, rc = run_command([REALM, "list", "--name-only",])
+            o, e, rc = run_command(
+                [
+                    REALM,
+                    "list",
+                    "--name-only",
+                ]
+            )
             if config["domain"] in o:
                 active_directory_rc = 0
             return "", "", active_directory_rc
@@ -217,16 +241,16 @@ def update_nginx(ip, port):
                 not http_server
                 and re.search("listen.*default_server", lines[i]) is not None
             ):
-                substr = "listen {} default_server".format(port)
+                substr = "listen {} ssl default_server".format(port)
                 if ip is not None:
-                    substr = "listen {}:{} default_server".format(ip, port)
+                    substr = "listen {}:{} ssl default_server".format(ip, port)
                 lines[i] = re.sub(r"listen.* default_server", substr, lines[i])
             if not http_server:
                 tfo.write(lines[i])
             if http_server is True and lines[i].strip() == "}":
                 http_server = False
     shutil.move(npath, conf)
-    superctl("nginx", "restart")
+    run_command([SYSTEMCTL, "restart", "nginx"])
 
 
 def define_avahi_service(service_name, share_names=None):

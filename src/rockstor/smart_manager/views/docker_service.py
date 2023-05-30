@@ -139,7 +139,7 @@ class DockerServiceView(BaseServiceDetailView):
             handle_exception(IOError(e_msg), request)
 
     def _write_docker_service(self, distro_id, mnt_pt, conf_file):
-        docker_wrapper = "{}bin/docker-wrapper".format(settings.ROOT_DIR)
+        docker_wrapper = "{}.venv/bin/docker-wrapper".format(settings.ROOT_DIR)
         # If openSUSE, source conf file from docker package itself
         if re.match("opensuse", distro_id) is not None:
             inf = "/usr/lib/systemd/system/docker.service"

@@ -43,6 +43,11 @@ class OSITests(unittest.TestCase):
         self.patch_os_path_isfile = patch('os.path.isfile')
         self.mock_os_path_isfile = self.patch_os_path_isfile.start()
 
+        # some procedures use os.path.isdir so setup mock
+        self.patch_os_path_isdir = patch('os.path.isdir')
+        self.mock_os_path_isdir = self.patch_os_path_isdir.start()
+        self.mock_os_path_isdir.return_value = True
+
         # root_disk() default mock - return /dev/sda for /dev/sda3 '/'
         self.patch_root_disk = patch('system.osi.root_disk')
         self.mock_root_disk = self.patch_root_disk.start()
@@ -1789,6 +1794,13 @@ class OSITests(unittest.TestCase):
             returned = get_byid_name_map()
             self.maxDiff = None
             self.assertDictEqual(returned, expected)
+
+    def test_get_byid_name_map_no_byid_dir(self):
+        """
+        Test get_byid_name_map() for non-existent by-id dir behaviour.
+        """
+        self.mock_os_path_isdir.return_value = False
+        self.assertEqual(get_byid_name_map(), {}, msg="no by-id dir should return {}")
 
 #     def test_mount_status(self):
 #         """

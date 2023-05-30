@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
 from mock import patch
 
 from storageadmin.models import Disk
 from storageadmin.tests.test_api import APITestMixin
 
 
-class DiskTests(APITestMixin, APITestCase):
-    # fixtures = ['fix1.json']
-    fixtures = ["test_disks.json"]
+class DiskTests(APITestMixin):
+    # Proposed fixture = ['test_disks.json']
+    fixtures = ["test_api.json"]
     BASE_URL = "/api/disks"
 
     @classmethod
@@ -47,7 +46,7 @@ class DiskTests(APITestMixin, APITestCase):
         cls.patch_mount_root = patch("storageadmin.views.disk.mount_root")
         cls.mock_mount_root = cls.patch_mount_root.start()
 
-        cls.patch_pool_raid = patch("storageadmin.views.disk.pool_raid")
+        cls.patch_pool_raid = patch("storageadmin.views.disk.get_pool_raid_levels")
         cls.mock_pool_raid = cls.patch_pool_raid.start()
         cls.mock_pool_raid.return_value = {"data": "single", "metadata": "single"}
 

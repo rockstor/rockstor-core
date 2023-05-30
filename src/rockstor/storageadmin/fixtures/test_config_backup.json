@@ -1,0 +1,76 @@
+[
+{
+    "model": "storageadmin.pool",
+    "pk": 2,
+    "fields": {
+        "name": "rock-pool",
+        "uuid": "3d60105b-abae-456f-bbd1-a5f410295e9c",
+        "size": 5242880,
+        "raid": "single",
+        "toc": "2023-02-26T22:15:14.503Z",
+        "compression": "no",
+        "mnt_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.pool",
+    "pk": 4,
+    "fields": {
+        "name": "rock-pool2",
+        "uuid": "3176aa98-a939-4f7b-aa6c-70c18570fc8e",
+        "size": 5242880,
+        "raid": "single",
+        "toc": "2023-03-03T21:21:14.952Z",
+        "compression": "no",
+        "mnt_options": "",
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 3,
+    "fields": {
+        "pool": 2,
+        "qgroup": "0/301",
+        "pqgroup": "2015/136",
+        "name": "test_share01",
+        "uuid": null,
+        "size": 5242880,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2023-02-26T22:15:14.581Z",
+        "subvol_name": "test_share01",
+        "replica": false,
+        "compression_algo": null,
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 4,
+    "fields": {
+        "pool": 2,
+        "qgroup": "0/302",
+        "pqgroup": "2015/137",
+        "name": "test_share02",
+        "uuid": null,
+        "size": 5242880,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2023-02-26T22:15:14.606Z",
+        "subvol_name": "test_share02",
+        "replica": false,
+        "compression_algo": null,
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
+}
+]

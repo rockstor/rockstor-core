@@ -316,7 +316,7 @@ var Service = Backbone.Model.extend({
 
 var ServiceCollection = RockStorPaginatedCollection.extend({
     model: Service,
-    baseUrl: '/api/sm/services/'
+    baseUrl: '/api/sm/services'
 });
 
 var Appliance = Backbone.Model.extend({
@@ -458,7 +458,7 @@ var Replica = Backbone.Model.extend({
 });
 var ReplicaCollection = RockStorPaginatedCollection.extend({
     model: Replica,
-    baseUrl: '/api/sm/replicas/'
+    baseUrl: '/api/sm/replicas'
 });
 
 var ReplicaTrail = Backbone.Model.extend({
@@ -511,7 +511,7 @@ var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
 });
 
 var TaskDef = Backbone.Model.extend({
-    urlRoot: '/api/sm/tasks/',
+    urlRoot: '/api/sm/tasks',
     max_count: function() {
         if (this.get('json_meta') != null) {
             return JSON.parse(this.get('json_meta')).max_count;
@@ -607,7 +607,7 @@ var TaskDef = Backbone.Model.extend({
 
 var TaskDefCollection = RockStorPaginatedCollection.extend({
     model: TaskDef,
-    baseUrl: '/api/sm/tasks/'
+    baseUrl: '/api/sm/tasks'
 });
 
 var Task = Backbone.Model.extend({

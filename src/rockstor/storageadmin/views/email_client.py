@@ -164,7 +164,7 @@ def update_generic(sender, revert=False):
             fo.write("@{} {}\n".format(hostname, sender))
             fo.write("@{}.localdomain {}\n".format(hostname, sender))
             # add @<hostname>.<domain> if we can get a dnsdomain:
-            if dnsdomain != "":
+            if dnsdomain not in ("", "localdomain"):
                 fo.write("@{}.{} {}\n".format(hostname, dnsdomain, sender))
             # Add fall through entries for when the sending agent uses localhost.
             # This avoids some bounce scenarios when sender/from is root@localhost

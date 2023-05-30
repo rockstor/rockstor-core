@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2020 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
@@ -119,15 +119,15 @@ def rpm_build_info(pkg):
             return version, date
         # otherwise we raise an exception as normal.
         raise e
-    for l in o:
-        if re.match("Buildtime", l) is not None:
+    for line in o:
+        if re.match("Buildtime", line) is not None:
             # Legacy Rockstor (using original yum):
             #     "Buildtime   : Tue Dec  5 13:34:06 2017"
             # openSUSE Rocsktor (using dnf-yum):
             #     "Buildtime    : Fri 29 Nov 2019 18:34:43 GMT"
             # we return 2017-Dec-06 or 2019-Nov-29
-            # Note the one day on from retrieved Buildtime with zero padding.
-            dfields = l.strip().split()
+            # Note the plus-one day on from retrieved Buildtime with zero padding.
+            dfields = line.strip().split()
             if distro_id == "rockstor":  # CentOS based Rockstor conditional
                 dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
             else:  # Assuming we are openSUSE variant and so using dnf-yum
@@ -135,10 +135,10 @@ def rpm_build_info(pkg):
             bdate = datetime.strptime(dstr, "%Y %b %d")
             bdate += timedelta(days=1)
             date = bdate.strftime("%Y-%b-%d")
-        if re.match("Version ", l) is not None:
-            version = l.strip().split()[2]
-        if re.match("Release ", l) is not None:
-            version = "{}-{}".format(version, l.strip().split()[2])
+        if re.match("Version ", line) is not None:
+            version = line.strip().split()[2]
+        if re.match("Release ", line) is not None:
+            version = "{}-{}".format(version, line.strip().split()[2])
     return version, date
 
 
@@ -182,13 +182,15 @@ def create_credentials_file(user, password):
             temp_file.write("password={}\n".format(password))
         # shutil.copy2 is equivalent to cp -p (preserver attributes).
         # This preserves the secure defaults of the temp file without having
-        # to chmod there after. Result is the desired:
+        # to chmod thereafter. Result is the desired:
         # -rw------- 1 root root
         # ie rw to root only or 0600
         # and avoiding a window prior to a separate chmod command.
         shutil.copy2(npath, STABLE_CREDENTIALS_FILE)
     except Exception as e:
-        msg = "Exception while creating {}: {}".format(STABLE_CREDENTIALS_FILE, e.__str__())
+        msg = "Exception while creating {}: {}".format(
+            STABLE_CREDENTIALS_FILE, e.__str__()
+        )
         raise Exception(msg)
     finally:
         if os.path.exists(npath):
@@ -209,17 +211,20 @@ def switch_repo(subscription, on=True):
     # Historically our base subscription url denotes our CentOS rpm repo.
     subscription_distro_url = subscription.url
     distro_id = distro.id()
+    distro_version = distro.version()
     machine_arch = platform.machine()
     use_zypper = True
     repo_alias = "Rockstor-{}".format(subscription.name)
     logger.debug("########### SWITCH REPO repo-alias = {}".format(repo_alias))
-    if distro_id == "opensuse-leap":
-        subscription_distro_url += "/leap/{}".format(distro.version())
+    # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id.
+    if distro_id == "opensuse-leap" or distro_id == "opensuse":
+        subscription_distro_url += "/leap/{}".format(distro_version)
     elif distro_id == "opensuse-tumbleweed":
         subscription_distro_url += "/tumbleweed"
     else:
         use_zypper = False
-    if machine_arch != "x86_64":
+    # As from Leap15.4, update repositories are multi-arch. Maintain 15.3_aarch for now.
+    if distro_version == "15.3" and machine_arch != "x86_64":
         subscription_distro_url += "_{}".format(machine_arch)
     # Check if dir /etc/yum.repos.d exists and if not create.
     if not os.path.isdir(repos_dir):
@@ -267,7 +272,7 @@ def switch_repo(subscription, on=True):
                     log=True,
                     throw=False,
                 )
-        # N.B. for now we also use YUM (read only) on openSUSE
+        # N.B. for now we also use YUM (read only) on openSUSE to retrieve changelogs
         with open(yum_file, "w") as rfo:
             rfo.write("[Rockstor-{}]\n".format(subscription.name))
             rfo.write("name={}\n".format(subscription.description))
@@ -276,6 +281,7 @@ def switch_repo(subscription, on=True):
             rfo.write("gpgcheck=1\n")
             rfo.write("gpgkey=file://{}\n".format(rock_pub_key_file))
             rfo.write("metadata_expire=1h\n")
+            rfo.write("exclude=*.src\n")  # src changelogs = false positive update flag.
         # Set file to rw- --- --- (600) via stat constants.
         os.chmod(yum_file, stat.S_IRUSR | stat.S_IWUSR)
     else:
@@ -315,7 +321,7 @@ def rockstor_pkg_update_check(subscription=None):
     machine_arch = platform.machine()
     if subscription is not None:
         switch_repo(subscription)
-    pkg = "rockstor"
+    pkg = "rockstor*{}".format(machine_arch)
     version, date = rpm_build_info(pkg)
     if date is None:
         # None date signifies no rpm installed so list all changelog entries.
@@ -350,36 +356,36 @@ def rockstor_pkg_update_check(subscription=None):
             return version, new_version, updates
         # otherwise we raise an exception as normal.
         raise e
-    for l in o:
+    for line in o:
         # We have possible targets of:
         # "Listing changelogs since 2019-11-29" - legacy yum and dnf-yum
         # "Listing all changelogs" - legacy yum and dnf-yum with no --count=#
         # "Listing # latest changelogs" - dnf-yum with a --count=# options
-        if re.match("Listing", l) is not None:
+        if re.match("Listing", line) is not None:
             available = True
         if not available:
             continue
         if new_version is None:
-            if re.match("rockstor-", l) is not None:  # legacy yum
+            if re.match("rockstor-", line) is not None:  # legacy yum
                 # eg: "rockstor-3.9.2-51.2089.x86_64"
                 new_version = (
-                    l.split()[0]
+                    line.split()[0]
                     .split("rockstor-")[1]
                     .split(".{}".format(machine_arch))[0]
                 )
-            if re.match("Changelogs for rockstor-", l) is not None:  # dnf-yum
+            if re.match("Changelogs for rockstor-", line) is not None:  # dnf-yum
                 # eg: "Changelogs for rockstor-3.9.2-51.2089.x86_64"
                 new_version = (
-                    l.split()[2]
+                    line.split()[2]
                     .split("rockstor-")[1]
                     .split(".{}".format(machine_arch))[0]
                 )
         if log is True:
-            updates.append(l)
-            if len(l.strip()) == 0:
+            updates.append(line)
+            if len(line.strip()) == 0:
                 log = False
-        if re.match("\* ", l) is not None:
-            updates.append(l)
+        if re.match("\* ", line) is not None:
+            updates.append(line)
             log = True
     if new_version is None:
         logger.debug("No changelog found: trying yum update for info.")
@@ -394,7 +400,7 @@ def rockstor_pkg_update_check(subscription=None):
 def pkg_latest_available(pkg_name, arch, distro_id):
     """
     Simple wrapper around "yum update pkg_name --assumeno" to retrieve
-    latest version available from "Version" column
+    the latest version available from "Version" column
     :return:
     """
     new_version = None
@@ -403,18 +409,18 @@ def pkg_latest_available(pkg_name, arch, distro_id):
     #  Advantage: works with no rockstor version installed, no so dnf-yum
     o, e, rc = run_command([YUM, "update", pkg_name, "--assumeno"], throw=False)
     if rc == 1:
-        for l in o:
+        for line in o:
             if distro_id == "rockstor":
                 # Legacy Yum appropriate parsing, all info on one line.
                 # "Package rockstor.x86_64 0:3.9.2-51.2089 will be an update"
-                if re.search("will be an update", l) is not None:
-                    if re.search("rockstor.{}".format(arch), l) is not None:
-                        new_version = l.strip().split()[3].split(":")[1]
+                if re.search("will be an update", line) is not None:
+                    if re.search("rockstor.{}".format(arch), line) is not None:
+                        new_version = line.strip().split()[3].split(":")[1]
             else:  # We are assuming openSUSE with dnf-yum output format
                 # dnf-yum output line of interest; when presented:
                 #  " rockstor   x86_64   3.9.2-51.2089   localrepo   15 M"
-                if re.match(" rockstor", l) is not None:
-                    new_version = l.strip().split()[2]
+                if re.match(" rockstor", line) is not None:
+                    new_version = line.strip().split()[2]
     return new_version
 
 
@@ -427,7 +433,7 @@ def update_run(subscription=None, update_all_other=False):
         switch_repo(subscription)
     run_command([SYSTEMCTL, "start", "atd"])
     fh, npath = mkstemp()
-    # Set system wide package manager refresh command according to distro.
+    # Set system-wide package manager refresh command according to distro.
     distro_id = distro.id()
     pkg_refresh_cmd = "{} --non-interactive refresh\n".format(ZYPPER)
     if distro_id == "rockstor":  # CentOS based Rockstor conditional
@@ -437,7 +443,8 @@ def update_run(subscription=None, update_all_other=False):
     if distro_id == "rockstor":  # CentOS based Rockstor conditional
         pkg_in_up_rockstor = "{} --setopt=timeout=600 -y install rockstor\n".format(YUM)
     pkg_update_all = ""
-    if distro_id == "opensuse-leap":
+    # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id.
+    if distro_id == "opensuse-leap" or distro_id == "opensuse":
         pkg_update_all = "{} --non-interactive update --no-recommends\n".format(ZYPPER)
     if distro_id == "opensuse-tumbleweed":
         pkg_update_all = "{} --non-interactive dist-upgrade --no-recommends\n".format(
@@ -446,10 +453,9 @@ def update_run(subscription=None, update_all_other=False):
     with open(npath, "w") as atfo:
         if not update_all_other:
             atfo.write("sleep 10\n")
-            atfo.write("{} stop rockstor\n".format(SYSTEMCTL))
-            # rockstor-pre stop ensures initrock re-run on next rockstor start
-            atfo.write("{} stop rockstor-pre\n".format(SYSTEMCTL))
-            # Exclude eggs subdir, as these are in rpm so will be deleted
+            # stop rockstor* services: rockstor-bootstrap, via Requires, restarts them.
+            atfo.write("{} stop rockstor*\n".format(SYSTEMCTL))
+            # Exclude eggs subdir (pre-v4.5.4-0), as these are in rpm so will be deleted
             # as otherwise floods YUM log with "No such file or directory"
             atfo.write(
                 '/usr/bin/find {} -name "*.pyc" -not -path "*/eggs/*" -type f -delete\n'.format(
@@ -457,10 +463,10 @@ def update_run(subscription=None, update_all_other=False):
                 )
             )
             atfo.write(pkg_refresh_cmd)
-            # account for moving from dev/source to package install:
+            # account for moving from dev/source to package type install:
             atfo.write(pkg_in_up_rockstor)
-            # the following rockstor start invokes rockstor-pre (initrock) also
-            atfo.write("{} start rockstor\n".format(SYSTEMCTL))
+            # rockstor-bootstrap Requires rockstor which Requires rockstor-pre (initrock)
+            atfo.write("{} start rockstor-bootstrap\n".format(SYSTEMCTL))
         else:  # update_all_other True so update all bar the rockstor package.
             logger.info(
                 "Updating all but rockstor package for distro {}".format(distro_id)
@@ -484,6 +490,7 @@ def pkg_changelog(package, distro_id):
     info for that package by parsing the output from:
     yum changelog 1 package
     The result is formatted appropriate for display.
+
     :param package: A package name
     :param distro_id: System expected output from distro.id()
     :return: Dict indexed by 'name', 'installed', 'available' and 'description'

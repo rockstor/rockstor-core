@@ -1,0 +1,133 @@
+[build-system]
+requires = ["poetry-core=1.1.15"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "rockstor"
+version = "4.6.0"
+description = "Btrfs Network Attached Storage (NAS) Appliance."
+homepage = "https://rockstor.com/"
+repository = "https://github.com/rockstor/rockstor-core"
+documentation = "https://rockstor.com/docs/"
+readme = "README.md"
+keywords = ["linux", "NAS", "appliance", "btrfs"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 2 :: Only", # at least initially
+    # The "license" property should auto-invoke License classifier/classifiers.
+]
+authors = [
+    "The Rockstor Project <support@linuxlines.com>",
+]
+maintainers = [
+    "Philip Paul Guyton <support@linuxlines.com>",
+]
+# Source0: (rockstor-core) is GPL-3.0-or-later, Source1: (rockstor-jslibs) has mixed licensing:
+license = "GPL-3.0-or-later AND (MIT AND Apache-2.0 AND GPL-3.0-or-later AND LGPL-3.0-or-later AND ISC)"
+include = [
+    "COPYING",  # Our GPL 3 file from rockstor-core.
+    "rockstor-jslibs.tar.gz",  # https://github.com/rockstor/rockstor-jslibs
+    "rockstor-jslibs.tar.gz.sha256sum",  # sha256 of above tar.gz
+    "build.sh",  # master build script
+    "poetry.toml",  # poetry config
+    "poetry.lock",  # current poetry established dependency lock file.
+    { path = "conf" },  # Configuration directories
+    { path = "etc" },
+    { path = "var" },  # Some processes depend on this tree existing.
+]
+packages = [
+    { include = "rockstor", from = "src" },
+    { include = "storageadmin", from = "src/rockstor" },
+    { include = "smart_manager", from = "src/rockstor" },
+]
+
+[tool.poetry.build]
+generate-setup-file = false
+# Future capability to run a python script first when 'poetry build' is called.
+# https://github.com/python-poetry/poetry/issues/2740
+# script = "build.py"
+
+[tool.poetry.dependencies]
+# We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
+# We currently need Poetry 1.1.15 for it's Python 2.7 compatibility.
+# https://python-poetry.org/docs/managing-dependencies/#dependency-groups
+#
+# https://python-poetry.org/docs/1.1/dependency-specification/
+python = "~2.7"
+
+# [tool.poetry.group.django.dependencies]
+django = "==1.11.29"
+django-oauth-toolkit = "==1.1.2"
+djangorestframework = "==3.9.3"
+django-pipeline = "==1.6.9"
+django-braces = "==1.13.0"  # look to 1.14.0 (30 Dec 2019) as Django 1.11.0+ now
+oauthlib = "==3.1.0"  # Last Python 2.7 compat + 3.7 compat.
+python-engineio = "==2.3.2"  # Revisit version post 3.0.0
+python-socketio = "==1.6.0"
+dbus-python = "==1.2.18"
+# N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
+psycopg2 = "==2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
+psycogreen = "==1.0"
+gevent = "==1.1.2"
+gevent-websocket = "==0.9.5"
+# Python WSGI HTTP Server - 20.0 (2019/10/30) dropped Python 2.7.
+gunicorn = "==19.10.0"  # buildout previously used 19.7.1
+
+# [tool.poetry.group.requests.dependencies]
+requests = "==2.27.1"  # Last Python 2/3 version, requires chardet
+chardet = "==4.0.0"  # 5.0.0 requires Python3.
+idna = "==2.10"  # Requests (2.27.1) requires idna<3,>=2.5
+certifi = "==2021.10.8"  # Requests (2.27.1) requires certifi>=2017.4.17
+urllib3 = "==1.26.12"  # Requests (2.27.1) requires urllib3<1.27,>=1.21.1
+pytz = "==2022.6"
+
+# [tool.poetry.group.tools.dependencies]
+six = "==1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
+huey = "==2.3.0"
+psutil = "==5.9.4"
+mock = "==1.0.1"
+# pyzmq requires libzmq5 on system unless in wheel form.
+pyzmq = "==19.0.2"  # Last specifying Python 2 on PyPi page.
+distro = "==1.6.0"  # Last Python 2/3 version that works as we expect.
+URLObject = "==2.1.1"
+# https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
+supervisor = "==4.2.4"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+# https://python-poetry.org/docs/pyproject#scripts
+# script-name = package.module.function
+# -- Init and startup related --
+initrock = 'scripts.initrock:main'  # systemd rockstor-pre
+flash-optimize = 'scripts.flash_optimize:main'
+prep_db = 'scripts.prep_db:main'
+bootstrap = 'scripts.bootstrap:main'  # systemd rockstor-bootstrap
+qgroup-clean = 'scripts.qgroup_clean:main'
+qgroup-maxout-limit = 'scripts.qgroup_maxout_limit:main'
+# -- Web-UI --
+data-collector = 'smart_manager.data_collector:main'
+replicad = 'smart_manager.replication.listener_broker:main'
+send-replica = 'scripts.scheduled_tasks.send_replica:main'
+backup-config = 'scripts.config_backup:main'
+mnt-share = 'scripts.mount_share:mount_share'  # Samba mnt_helper
+st-pool-scrub = 'scripts.scheduled_tasks.pool_scrub:main'
+st-snapshot = 'scripts.scheduled_tasks.snapshot:main'
+st-system-power = 'scripts.scheduled_tasks.reboot_shutdown:main'
+delete-api-key = 'scripts.delete_api_key:main'
+pwreset = 'scripts.pwreset:main'
+ovpn-client-gen = 'scripts.ovpn_util:client_gen'
+ovpn-client-print = 'scripts.ovpn_util:client_retrieve'
+ovpn-initpki = 'scripts.ovpn_util:initpki'
+# -- CLI Utilities --
+debug-mode = 'scripts.debugmode:main'
+delete-rockon = 'scripts.rockon_delete:delete_rockon'
+# qgroup-test = 'scripts.qgroup_test:main'  # broken, in need of update/repair.
+
+# Legacy scripts
+# rcli = 'cli.rock_cli:main'
+# docker-wrapper = 'scripts.docker_wrapper:main'
+# rockon-json = 'scripts.rockon_util:main'
+

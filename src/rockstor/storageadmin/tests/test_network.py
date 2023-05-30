@@ -18,18 +18,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import mock
 from rest_framework import status
-from rest_framework.test import APITestCase
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.models import NetworkConnection, NetworkDevice
 
 
-class NetworkTests(APITestMixin, APITestCase):
+class NetworkTests(APITestMixin):
+    # TODO Move as many by-hand mocks to now functional fixture setup.
+    # TODO Provide command to create fixture
     # Fixture from single ethernet KVM instance for now to start off new
     # mocking required after recent api change.
-    # fixtures = ["test_network2.json"]
+    # Proposed fixture = "test_network.json"
     # TODO: Needs changing as API url different ie connection|devices|refresh
     # see referenced pr in setUpClass
+    # ./bin/test -v 2 -p test_network.py
+    fixtures = ["test_api.json"]
     BASE_URL = "/api/network"
 
     @classmethod

@@ -15,13 +15,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from rest_framework import status
-from rest_framework.test import APITestCase
 from storageadmin.tests.test_api import APITestMixin
 
 
-class DashboardConfigTests(APITestMixin, APITestCase):
-    fixtures = ['fix2.json']
-    BASE_URL = '/api/dashboardconfig'
+class DashboardConfigTests(APITestMixin):
+    # Proposed fixture "test_dashboardconfig.json" was "fix2.json"
+    fixtures = ["test_api.json"]
+    BASE_URL = "/api/dashboardconfig"
 
     @classmethod
     def setUpClass(cls):
@@ -34,19 +34,16 @@ class DashboardConfigTests(APITestMixin, APITestCase):
     def test_get_requests(self):
         # happy path
         response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_post_requests(self):
         # happy path
-        data = {'widgets': ''}
+        data = {"widgets": ""}
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_put_requests(self):
         # happy path
-        data = {'widgets': ''}
+        data = {"widgets": ""}
         response = self.client.put(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
