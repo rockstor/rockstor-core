@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "rockstor"
-version = "4.5.9"
+version = "4.6.0"
 description = "Btrfs Network Attached Storage (NAS) Appliance."
 homepage = "https://rockstor.com/"
 repository = "https://github.com/rockstor/rockstor-core"
