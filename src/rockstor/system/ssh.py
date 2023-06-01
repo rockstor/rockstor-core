@@ -74,43 +74,44 @@ SSHD_CONFIG = {
 }
 
 
+def sshd_config_opener(path, flags):
+    return os.open(path, flags, mode=stat.S_IRUSR | stat.S_IWUSR)
+
+
 def init_sftp_config(sshd_config=None):
     """
     Establish our default sftp configuration within the distro specific file
     or a file passed by full path.
     :param sshd_config:
-    :return: True if file found and alterations were made, False otherwise.
+    :return: True if sshd configuration was modified, False otherwise.
     :rtype boolean:
     """
     if sshd_config is None:
         sshd_config = SSHD_CONFIG[distro.id()].sftp
     sshd_restart = False
+    found = False
     if not os.path.isfile(sshd_config):
         logger.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
-    # Set AllowUsers and Subsystem sftp-internal if not already in-place.
-    # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
-    # Post Python 3, consider build-in open with custom opener.
-    with os.fdopen(
-        os.open(sshd_config, os.O_RDWR | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), "a+"
-    ) as sfo:
-        found = False
-        for line in sfo.readlines():
-            if (
-                re.match(SSHD_HEADER, line) is not None
-                or re.match("AllowUsers ", line) is not None
-                or re.match(INTERNAL_SFTP_STR, line) is not None
-            ):
-                found = True
-                logger.info("SSHD ({}) already initialised".format(sshd_config))
-                break
-        if not found:
+    else:
+        with open(sshd_config, encoding="utf-8") as sfo:
+            for line in sfo.readlines():
+                if line.startswith(SSHD_HEADER):
+                    found = True
+                    logger.info("SSHD ({}) already initialised".format(sshd_config))
+                    break
+    if not found:
+        # Set initial AllowUsers and Subsystem sftp-internal configuration.
+        # N.B. opening mode append with create-file if it doesn't exist.
+        with open(
+            sshd_config, mode="a+", encoding="utf-8", opener=sshd_config_opener
+        ) as sfo:
             sshd_restart = True
             sfo.write("{}\n".format(SSHD_HEADER))
             sfo.write("{}\n".format(INTERNAL_SFTP_STR))
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
             if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
                 sfo.write("AllowUsers root\n")
-            logger.info("SSHD ({}) initialised".format(sshd_config))
+        logger.info("SSHD ({}) initialised".format(sshd_config))
     return sshd_restart
 
 

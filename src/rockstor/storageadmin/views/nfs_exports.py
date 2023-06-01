@@ -27,7 +27,7 @@ from storageadmin.serializers import (
 )
 from fs.btrfs import mount_share
 from system.osi import refresh_nfs_exports, nfs4_mount_teardown
-from share_helpers import validate_share
+from storageadmin.views.share_helpers import validate_share
 import rest_framework_custom as rfc
 from rest_framework.exceptions import NotFound
 import logging

@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from user import User
+from storageadmin.models.user import User
 
 
 class SambaShare(models.Model):

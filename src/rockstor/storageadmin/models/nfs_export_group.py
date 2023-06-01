@@ -17,11 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from validators import (
-    validate_nfs_host_str,
-    validate_nfs_modify_str,
-    validate_nfs_sync_choice,
-)
+from storageadmin.models import validators
 
 
 class NFSExportGroup(models.Model):
@@ -33,7 +29,7 @@ class NFSExportGroup(models.Model):
     INSECURE = "insecure"
 
     """hostname string in /etc/exports"""
-    host_str = models.CharField(max_length=4096, validators=[validate_nfs_host_str])
+    host_str = models.CharField(max_length=4096, validators=[validators.validate_nfs_host_str])
     """mount options"""
     """mount read only by default"""
     MODIFY_CHOICES = (
@@ -44,7 +40,7 @@ class NFSExportGroup(models.Model):
         max_length=2,
         choices=MODIFY_CHOICES,
         default=READ_WRITE,
-        validators=[validate_nfs_modify_str],
+        validators=[validators.validate_nfs_modify_str],
     )
     """mount async by default"""
     SYNC_CHOICES = (
@@ -55,7 +51,7 @@ class NFSExportGroup(models.Model):
         max_length=5,
         choices=SYNC_CHOICES,
         default=ASYNC,
-        validators=[validate_nfs_sync_choice],
+        validators=[validators.validate_nfs_sync_choice],
     )
     """allow mounting from a >1024 port by default"""
     MSECURITY_CHOICES = (

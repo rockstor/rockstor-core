@@ -34,7 +34,7 @@ def combined_users():
             uo.uid = sys_users[u][0]
             uo.gid = sys_users[u][1]
             uo.shell = sys_users[u][2]
-            gname = get_groups(uo.gid).keys()[0]
+            gname = list(get_groups(uo.gid).keys())[0]
             create = True
             if uo.group is not None:
                 if uo.group.gid == uo.gid or uo.group.groupname == gname:
@@ -77,9 +77,7 @@ def combined_users():
     for u in User.objects.all():
         if u.username not in uname_list:
             users.append(u)
-    return sorted(
-        users, cmp=lambda x, y: cmp(x.username.lower(), y.username.lower())  # noqa F821
-    )
+    return sorted(users, key=lambda each: each.username.lower())
 
 
 def combined_groups():
@@ -97,7 +95,4 @@ def combined_groups():
     for g in Group.objects.all():
         if g.groupname not in gname_list:
             groups.append(g)
-    return sorted(
-        groups,
-        cmp=lambda x, y: cmp(x.groupname.lower(), y.groupname.lower()),  # noqa F821
-    )
+    return sorted(groups, key=lambda each: each.groupname.lower())

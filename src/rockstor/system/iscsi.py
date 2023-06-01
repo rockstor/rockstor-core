@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from osi import run_command
+from system.osi import run_command
 
 TGTADM_BIN = "/usr/sbin/tgtadm"
 DD_BIN = "/usr/bin/dd"

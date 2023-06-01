@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from advanced_sprobe import AdvancedSProbeView
+from smart_manager.views.advanced_sprobe import AdvancedSProbeView
 from smart_manager.models import NFSDUidGidDistribution
 from smart_manager.serializers import NFSDUidGidDistributionSerializer
 

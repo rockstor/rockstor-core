@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import superctl
 from django.db import transaction
-from base_service import BaseServiceDetailView
+from smart_manager.views.base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 

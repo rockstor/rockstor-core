@@ -23,7 +23,7 @@ import stat
 from tempfile import mkstemp
 
 from django.conf import settings
-from osi import run_command
+from system.osi import run_command
 from system.constants import SYSTEMCTL
 from system.ssh import is_sftp_running
 
