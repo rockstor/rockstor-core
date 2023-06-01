@@ -317,7 +317,7 @@ strictly required by btrfs. Similarly the maximum is 2^64 bytes which is more th
 enough for all practical purposes and also is the max allowed in btrfs.
 """
 MIN_SHARE_SIZE = 100
-MAX_SHARE_SIZE = 18014398509481984L
+MAX_SHARE_SIZE = 18014398509481984
 
 START_UID = 5000
 END_UID = 6000
