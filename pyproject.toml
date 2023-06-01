@@ -15,7 +15,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 2 :: Only", # at least initially
+    "Programming Language :: Python :: 3 :: Only", # at least initially
     # The "license" property should auto-invoke License classifier/classifiers.
 ]
 authors = [
@@ -55,7 +55,7 @@ generate-setup-file = false
 # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
 #
 # https://python-poetry.org/docs/1.1/dependency-specification/
-python = "~2.7"
+python = "~3.6"
 
 # [tool.poetry.group.django.dependencies]
 django = "==1.11.29"
