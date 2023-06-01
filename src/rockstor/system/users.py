@@ -34,8 +34,8 @@ import chardet
 import dbus
 from dbus import DBusException
 
-from exceptions import CommandException
-from osi import run_command
+from system.exceptions import CommandException
+from system.osi import run_command
 from system.services import is_systemd_service_active
 
 logger = logging.getLogger(__name__)

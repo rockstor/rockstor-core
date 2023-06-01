@@ -33,7 +33,7 @@ from system.osi import (
 )
 from system.exceptions import CommandException
 from system.constants import MOUNT, UMOUNT, RMDIR, DEFAULT_MNT_DIR
-from pool_scrub import PoolScrub
+from fs.pool_scrub import PoolScrub
 from huey.contrib.djhuey import task
 from django.conf import settings
 import logging
