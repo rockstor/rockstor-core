@@ -21,8 +21,8 @@ import platform
 import re
 import stat
 from tempfile import mkstemp
-from osi import run_command
-from services import systemctl
+from system.osi import run_command
+from system.services import systemctl
 import shutil
 import time
 from datetime import datetime, timedelta

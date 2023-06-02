@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from osi import inplace_replace
+from system.osi import inplace_replace
 from tempfile import mkstemp
 from shutil import move
 import logging

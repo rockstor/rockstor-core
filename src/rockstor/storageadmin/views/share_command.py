@@ -21,8 +21,8 @@ from storageadmin.models import Share, Snapshot, NFSExport, SambaShare
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from clone_helpers import create_clone, create_repclone
-from share import ShareMixin
+from storageadmin.views.clone_helpers import create_clone, create_repclone
+from storageadmin.views.share import ShareMixin
 from django.core.exceptions import ObjectDoesNotExist
 import logging
 

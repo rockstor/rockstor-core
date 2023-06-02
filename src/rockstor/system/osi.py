@@ -208,7 +208,7 @@ def replace_pattern_inline(source_file, target_file, pattern, replacement):
 
 def run_command(
     cmd,
-    shell=False,
+    shell=False,  ## Default
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
     stdin=subprocess.PIPE,
@@ -220,13 +220,20 @@ def run_command(
         # We force run_command to always use en_US
         # to avoid issues on date and number formats
         # on not Anglo-Saxon systems (ex. it, es, fr, de, etc)
-        fake_env = dict(os.environ)
-        fake_env["LANG"] = "en_US.UTF-8"
-        cmd = map(str, cmd)
+        # fake_env = dict(os.environ)
+        # fake_env["LANG"] = "en_US.UTF-8"
+        # cmd = map(str, cmd)
         if log:
             logger.debug("Running command: {}".format(" ".join(cmd)))
         p = subprocess.Popen(
-            cmd, shell=shell, stdout=stdout, stderr=stderr, stdin=stdin, env=fake_env
+            cmd,
+            shell=shell,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            encoding="utf-8",
+            # env=fake_env,
+            universal_newlines=True,  # 3.7 adds text parameter universal_newlines alias
         )
         out, err = p.communicate(input=input)
         out = out.split("\n")
@@ -244,7 +251,7 @@ def run_command(
             logger.error(e_msg)
         if throw:
             raise CommandException(cmd, out, err, rc)
-    return (out, err, rc)
+    return out, err, rc
 
 
 def scan_disks(min_size, test_mode=False):
@@ -1567,7 +1574,7 @@ def is_rotational(device_name, test=None):
     both often report usb sticks as 1 = rotational.  N.B. we use
     --query=property and so have only 2 fields rather than 3 and no spaces,
     only '=' this simplifies the parsing required.
-    :param device: string containing device name eg sda or /dev/sda, ie any
+    :param device_name: string containing device name eg sda or /dev/sda, ie any
     legal udevadm --name parameter. N.B. in the case of by-id type names they
     must contain a full path, by-id alone does not work.
     :return: True if rotational, false if error or unknown.

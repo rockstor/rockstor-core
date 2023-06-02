@@ -25,7 +25,7 @@ from storageadmin.models import Group
 import rest_framework_custom as rfc
 from system.users import groupadd, groupdel
 import grp
-from ug_helpers import combined_groups
+from storageadmin.views.ug_helpers import combined_groups
 import logging
 from django.conf import settings
 

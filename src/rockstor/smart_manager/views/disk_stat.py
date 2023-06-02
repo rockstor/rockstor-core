@@ -20,7 +20,7 @@ from operator import attrgetter
 from smart_manager.models import DiskStat
 from storageadmin.models import Disk
 from smart_manager.serializers import DiskStatSerializer
-from generic_sprobe import GenericSProbeView
+from smart_manager.views.generic_sprobe import GenericSProbeView
 
 
 class DiskStatView(GenericSProbeView):

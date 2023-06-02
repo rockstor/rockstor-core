@@ -25,7 +25,7 @@ from rest_framework.response import Response
 
 import rest_framework_custom as rfc
 from fs.btrfs import mount_share
-from share import ShareMixin
+from storageadmin.views.share import ShareMixin
 from storageadmin.models import SambaShare, User, SambaCustomConfig
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception

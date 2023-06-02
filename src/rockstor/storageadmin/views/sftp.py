@@ -26,7 +26,7 @@ from rest_framework.response import Response
 
 import rest_framework_custom as rfc
 from fs.btrfs import is_share_mounted, umount_root
-from share_helpers import helper_mount_share, validate_share, sftp_snap_toggle
+from storageadmin.views.share_helpers import helper_mount_share, validate_share, sftp_snap_toggle
 from storageadmin.models import SFTP
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.util import handle_exception

@@ -23,8 +23,8 @@ from tempfile import mkstemp
 
 from django.conf import settings
 
-from osi import run_command
-from services import service_status, define_avahi_service
+from system.osi import run_command
+from system.services import service_status, define_avahi_service
 from storageadmin.models import SambaCustomConfig
 
 TESTPARM = "/usr/bin/testparm"

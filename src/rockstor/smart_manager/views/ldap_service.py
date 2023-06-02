@@ -23,7 +23,7 @@ from os.path import dirname
 from django.db import transaction
 from rest_framework.response import Response
 
-from base_service import BaseServiceDetailView
+from smart_manager.views.base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.util import handle_exception
 from system.directory_services import (

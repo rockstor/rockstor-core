@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from smart_manager.models import CPUMetric
 from smart_manager.serializers import CPUMetricSerializer
-from generic_sprobe import GenericSProbeView
+from smart_manager.views.generic_sprobe import GenericSProbeView
 
 
 class CPUMetricView(GenericSProbeView):
