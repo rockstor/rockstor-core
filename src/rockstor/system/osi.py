@@ -1444,7 +1444,7 @@ def md5sum(fpath):
     md5 = hashlib.md5()
     with open(fpath) as tfo:
         for l in tfo.readlines():
-            md5.update(l)
+            md5.update(l.encode())
     return md5.hexdigest()
 
 
