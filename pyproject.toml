@@ -77,7 +77,6 @@ gunicorn = "==19.10.0"  # buildout previously used 19.7.1
 
 # [tool.poetry.group.requests.dependencies]
 requests = "==2.27.1"  # Last Python 2/3 version, requires chardet
-chardet = "==4.0.0"  # 5.0.0 requires Python3.
 idna = "==2.10"  # Requests (2.27.1) requires idna<3,>=2.5
 certifi = "==2021.10.8"  # Requests (2.27.1) requires certifi>=2017.4.17
 urllib3 = "==1.26.12"  # Requests (2.27.1) requires urllib3<1.27,>=1.21.1

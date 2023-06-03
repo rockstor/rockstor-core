@@ -30,7 +30,7 @@ import time
 from shutil import move
 from tempfile import mkstemp
 
-import chardet
+from charset_normalizer import from_bytes
 import dbus
 from dbus import DBusException
 
@@ -96,8 +96,8 @@ def get_users(max_wait=90):
         for u in uf[:-1]:
             ufields = u.split(":")
             if len(ufields) > 3:
-                charset = chardet.detect(ufields[0])
-                uname = ufields[0].decode(charset["encoding"])
+                charset = from_bytes(ufields[0]).best()
+                uname = ufields[0].decode(charset)
                 users[uname] = (int(ufields[2]), int(ufields[3]), str(ufields[6]))
             if time.time() - t0 > max_wait:
                 p.terminate()
@@ -111,8 +111,8 @@ def get_groups(*gids):
         for g in gids:
             try:
                 entry = grp.getgrgid(g)
-                charset = chardet.detect(entry.gr_name)
-                gr_name = entry.gr_name.decode(charset["encoding"])
+                # Assume utf-8 encoded gr_name str
+                gr_name = entry.gr_name
                 groups[gr_name] = entry.gr_gid
             except KeyError:
                 # The block above can sometimes fail for domain users (AD/LDAP)
@@ -130,8 +130,8 @@ def get_groups(*gids):
                 )
     else:
         for g in grp.getgrall():
-            charset = chardet.detect(g.gr_name)
-            gr_name = g.gr_name.decode(charset["encoding"])
+            # Assume utf-8 encoded gr_name str
+            gr_name = g.gr_name
             groups[gr_name] = g.gr_gid
 
         # If sssd.service is running:

@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import grp
 
-import chardet
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from django.core.validators import validate_email
@@ -58,8 +57,6 @@ class User(models.Model):
         if self.gid is not None:
             try:
                 groupname = grp.getgrgid(self.gid).gr_name
-                charset = chardet.detect(groupname)
-                groupname = groupname.decode(charset["encoding"])
                 return groupname
             except KeyError:
                 # Failed to fetch user using grp, so let's try with InfoPipe
