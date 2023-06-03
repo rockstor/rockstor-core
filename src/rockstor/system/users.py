@@ -164,24 +164,27 @@ def usermod(username, passwd):
     # TODO: 'salt = crypt.mksalt()' # Python 3.3 onwards provides system best.
     # Salt starting "$6$" & of 19 chars signifies SHA-512 current system best.
     # Salt must contain only [./a-zA-Z0-9] chars (bar first 3 if len > 2)
-    salt_header = "$6$"  # SHA-512
-    rnd = random.SystemRandom()
-    salt = "".join(
-        [rnd.choice(string.ascii_letters + string.digits + "./") for _ in range(16)]
-    )
-    crypted_passwd = crypt.crypt(passwd.encode("utf8"), salt_header + salt)
+    # salt_header = "$6$"  # SHA-512
+    # rnd = random.SystemRandom()
+    # salt = "".join(
+    #     [rnd.choice(string.ascii_letters + string.digits + "./") for _ in range(16)]
+    # )
+    # crypted_passwd = crypt.crypt(passwd.encode("utf8"), salt_header + salt)
+    salt = crypt.mksalt()
+    crypted_passwd = crypt.crypt(passwd, salt)
     cmd = [USERMOD, "-p", crypted_passwd, username]
-    p = subprocess.Popen(
-        cmd,
-        shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-    )
-    out, err = p.communicate(input=None)
-    rc = p.returncode
-    if rc != 0:
-        raise CommandException(cmd, out, err, rc)
+    out, err, rc = run_command(cmd, log=True)
+    # p = subprocess.Popen(
+    #     cmd,
+    #     shell=False,
+    #     stdout=subprocess.PIPE,
+    #     stderr=subprocess.PIPE,
+    #     stdin=subprocess.PIPE,
+    # )
+    # out, err = p.communicate(input=None)
+    # rc = p.returncode
+    # if rc != 0:
+    #     raise CommandException(cmd, out, err, rc)
     return out, err, rc
 
 
