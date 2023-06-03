@@ -90,9 +90,8 @@ class BaseServiceView(ServiceMixin, rfc.GenericView):
                 sos = []
                 for s in Service.objects.all():
                     sos.append(self._get_or_create_sso(s))
-                return sorted(
-                    sos, cmp=lambda x, y: cmp(x.display_name, y.display_name)
-                )  # noqa
+                # https://docs.python.org/3.6/howto/sorting.html#key-functions
+                return sorted(sos, key=lambda each: each.display_name)
 
 
 class BaseServiceDetailView(ServiceMixin, rfc.GenericView):
