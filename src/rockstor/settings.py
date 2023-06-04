@@ -426,15 +426,6 @@ TASK_SCHEDULER = {
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
-# Setup OS specific command paths via 'which cmd' calls
-# N.B. this method will not work with an alias, ie in CentOS
-# which ls
-# alias ls='ls --color=auto'
-#         /usr/bin/ls
-# The following have been tested in CentOS, openSUSE Leap15, and Tumbleweed
-UDEVADM = subprocess.check_output(["which", "udevadm"]).rstrip()
-SHUTDOWN = subprocess.check_output(["which", "shutdown"]).rstrip()
-
 # Establish our OS base id, name, and version:
 # Use id for code path decisions. Others are for Web-UI display purposes.
 # Examples given are for CentOS Rockstor variant, Leap 15, and Tumblweed.

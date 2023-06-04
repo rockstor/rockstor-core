@@ -35,7 +35,7 @@ from distutils.util import strtobool
 from django.conf import settings
 
 from system.exceptions import CommandException, NonBTRFSRootException
-from system.constants import SYSTEMCTL, MKDIR, RMDIR, MOUNT, UMOUNT, DEFAULT_MNT_DIR
+from system.constants import SYSTEMCTL, MKDIR, RMDIR, MOUNT, UMOUNT, DEFAULT_MNT_DIR, UDEVADM, SHUTDOWN
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +52,8 @@ HOSTNAMECTL = "/usr/bin/hostnamectl"
 LS = "/usr/bin/ls"
 LSBLK = "/usr/bin/lsblk"
 NMCLI = "/usr/bin/nmcli"
-SHUTDOWN = settings.SHUTDOWN
 SYSTEMD_ESCAPE = "/usr/bin/systemd-escape"
 SYSTEMD_DIR = "/usr/lib/systemd/system"
-UDEVADM = settings.UDEVADM
 WIPEFS = "/usr/sbin/wipefs"
 RTC_WAKE_FILE = "/sys/class/rtc/rtc0/wakealarm"
 PING = "/usr/bin/ping"
