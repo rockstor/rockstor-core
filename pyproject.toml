@@ -70,8 +70,8 @@ dbus-python = "==1.2.18"
 # N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
 psycopg2 = "==2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
 psycogreen = "==1.0"
-gevent = "==1.1.2"
-gevent-websocket = "==0.9.5"
+gevent = "*"  # can be an extra dependency to gunicorn.
+gevent-websocket = "*"
 # Python WSGI HTTP Server - 20.0 (2019/10/30) dropped Python 2.7.
 gunicorn = "==19.10.0"  # buildout previously used 19.7.1
 
