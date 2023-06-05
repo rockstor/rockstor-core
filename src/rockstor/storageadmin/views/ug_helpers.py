@@ -34,7 +34,7 @@ def combined_users():
             uo.uid = sys_users[u][0]
             uo.gid = sys_users[u][1]
             uo.shell = sys_users[u][2]
-            gname = get_groups(uo.gid).keys()[0]
+            gname = list(get_groups(uo.gid).keys())[0]
             create = True
             if uo.group is not None:
                 if uo.group.gid == uo.gid or uo.group.groupname == gname:
