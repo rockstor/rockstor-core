@@ -369,7 +369,7 @@ class DiskMixin(object):
                 dev_name = d.name
                 if d.partitions != {}:  # could have btrfs fs from a partition?
                     # d.partitions={'/dev/vdc1': 'vfat', '/dev/vdc2': 'btrfs'}
-                    for partition, fs in d.partitions.iteritems():
+                    for partition, fs in iter(d.partitions.items()):
                         if fs == "btrfs":  # We only allow one btrfs part / dev
                             dev_name = partition
                             break

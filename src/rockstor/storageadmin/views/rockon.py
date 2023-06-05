@@ -432,7 +432,7 @@ class RockOnView(rfc.GenericView):
         return sorted_keys
 
     def _update_model(self, modelinst, ad):
-        for k, v in ad.iteritems():
+        for k, v in iter(ad.items()):
             setattr(modelinst, k, v)
         modelinst.save()
 
