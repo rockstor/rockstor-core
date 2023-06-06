@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2017 RockStor, Inc. <https://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 RockStor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
