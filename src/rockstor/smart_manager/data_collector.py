@@ -739,13 +739,13 @@ class NetworkWidgetNamespace(RockstorIO):
                 results = []
                 for interface in cur_stats.keys():
                     if interface in prev_stats:
-                        data = map(
+                        data = list(map(
                             lambda x, y: float(x) / interval
                             if x < y
                             else (float(x) - float(y)) / interval,
                             cur_stats[interface],
                             prev_stats[interface],
-                        )
+                        ))
                         results.append(
                             {
                                 "device": interface,
