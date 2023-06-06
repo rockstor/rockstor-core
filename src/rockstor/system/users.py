@@ -16,26 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import crypt
-import fcntl
 import grp
 import logging
 import os
 import pwd
-import random
 import re
 import stat
-import string
-import subprocess
-import time
+from subprocess import run, Popen, PIPE
 from shutil import move
 from tempfile import mkstemp
 
-import chardet
 import dbus
 from dbus import DBusException
 
-from exceptions import CommandException
-from osi import run_command
+from system.exceptions import CommandException
+from system.osi import run_command
 from system.services import is_systemd_service_active
 
 logger = logging.getLogger(__name__)
@@ -62,46 +57,34 @@ IFP_CONSTANTS = {
 }
 
 
-# this is a hack for AD to get as many users as possible within 90 seconds.  If
+# this is a hack for AD to get as many users as possible within 60 seconds.  If
 # there are several thousands of domain users and AD isn't that fast, winbind
 # takes a long time to enumerate the users for getent. Subsequent queries
 # finish faster because of caching. But this prevents timing out.
-def get_users(max_wait=90):
-    t0 = time.time()
+def get_users(max_wait=60):
     users = {}
-    p = subprocess.Popen(
+    # TODO: In Python 3.7 we have a capture_output option.
+    result = run(
         ["/usr/bin/getent", "passwd"],
         shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        encoding="utf-8",
+        # stdout and stderr as string
+        universal_newlines=True,  # 3.7 adds text parameter universal_newlines alias
+        timeout=max_wait,
     )
-    fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-    alive = True
-    user_data = ""
-    while alive:
-        try:
-            if p.poll() is not None:
-                alive = False
-            user_data += p.stdout.read()
-        except IOError:
-            if time.time() - t0 < max_wait:
-                continue
-        except Exception as e:
-            logger.exception(e)
-            p.terminate()
-        uf = user_data.split("\n")
-        # If the feed ends in \n, the last element will be '', if not, it will
-        # be a partial line to be processed next time around.
-        user_data = uf[-1]
-        for u in uf[:-1]:
-            ufields = u.split(":")
-            if len(ufields) > 3:
-                charset = chardet.detect(ufields[0])
-                uname = ufields[0].decode(charset["encoding"])
-                users[uname] = (int(ufields[2]), int(ufields[3]), str(ufields[6]))
-            if time.time() - t0 > max_wait:
-                p.terminate()
-                break
+    out = result.stdout
+    # TODO: Report & handle exception reported via CompletedProcess (result)
+    out_list = out.split("\n")
+    # out_list looks like;
+    # ['root:x:0:0:root:/root:/bin/bash', ...
+    # 'radmin:x:1000:100::/home/radmin:/bin/bash', '']
+    for line in out_list[:-1]:  # skip empty last line.
+        fields = line.split(":")
+        if len(fields) > 3:
+            uname = fields[0]
+            users[uname] = (int(fields[2]), int(fields[3]), str(fields[6]))
     return users
 
 
@@ -111,8 +94,8 @@ def get_groups(*gids):
         for g in gids:
             try:
                 entry = grp.getgrgid(g)
-                charset = chardet.detect(entry.gr_name)
-                gr_name = entry.gr_name.decode(charset["encoding"])
+                # Assume utf-8 encoded gr_name str
+                gr_name = entry.gr_name
                 groups[gr_name] = entry.gr_gid
             except KeyError:
                 # The block above can sometimes fail for domain users (AD/LDAP)
@@ -130,8 +113,8 @@ def get_groups(*gids):
                 )
     else:
         for g in grp.getgrall():
-            charset = chardet.detect(g.gr_name)
-            gr_name = g.gr_name.decode(charset["encoding"])
+            # Assume utf-8 encoded gr_name str
+            gr_name = g.gr_name
             groups[gr_name] = g.gr_gid
 
         # If sssd.service is running:
@@ -181,42 +164,45 @@ def usermod(username, passwd):
     # TODO: 'salt = crypt.mksalt()' # Python 3.3 onwards provides system best.
     # Salt starting "$6$" & of 19 chars signifies SHA-512 current system best.
     # Salt must contain only [./a-zA-Z0-9] chars (bar first 3 if len > 2)
-    salt_header = "$6$"  # SHA-512
-    rnd = random.SystemRandom()
-    salt = "".join(
-        [rnd.choice(string.ascii_letters + string.digits + "./") for _ in range(16)]
-    )
-    crypted_passwd = crypt.crypt(passwd.encode("utf8"), salt_header + salt)
+    # salt_header = "$6$"  # SHA-512
+    # rnd = random.SystemRandom()
+    # salt = "".join(
+    #     [rnd.choice(string.ascii_letters + string.digits + "./") for _ in range(16)]
+    # )
+    # crypted_passwd = crypt.crypt(passwd.encode("utf8"), salt_header + salt)
+    salt = crypt.mksalt()
+    crypted_passwd = crypt.crypt(passwd, salt)
     cmd = [USERMOD, "-p", crypted_passwd, username]
-    p = subprocess.Popen(
-        cmd,
-        shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-    )
-    out, err = p.communicate(input=None)
-    rc = p.returncode
-    if rc != 0:
-        raise CommandException(cmd, out, err, rc)
+    out, err, rc = run_command(cmd, log=True)
+    # p = subprocess.Popen(
+    #     cmd,
+    #     shell=False,
+    #     stdout=subprocess.PIPE,
+    #     stderr=subprocess.PIPE,
+    #     stdin=subprocess.PIPE,
+    # )
+    # out, err = p.communicate(input=None)
+    # rc = p.returncode
+    # if rc != 0:
+    #     raise CommandException(cmd, out, err, rc)
     return out, err, rc
 
 
 def smbpasswd(username, passwd):
     cmd = [SMBPASSWD, "-s", "-a", username]
-    p = subprocess.Popen(
+    p = Popen(
         cmd,
         shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        stdin=PIPE,
     )
     pstr = "%s\n%s\n" % (passwd, passwd)
     out, err = p.communicate(input=pstr.encode("utf8"))
     rc = p.returncode
     if rc != 0:
         raise CommandException(cmd, out, err, rc)
-    return (out, err, rc)
+    return out, err, rc
 
 
 def update_shell(username, shell):
@@ -247,7 +233,7 @@ def useradd(username, shell, uid=None, gid=None):
                 "User({0}) already exists, but her shell({1}) is "
                 "different from the input({2}).".format(username, pw_entry.shell, shell)
             )
-        return ([""], [""], 0)
+        return [""], [""], 0
 
     cmd = [USERADD, "-s", shell, "-m", username]
     if uid is not None:

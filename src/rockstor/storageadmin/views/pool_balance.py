@@ -26,7 +26,7 @@ from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import Pool, PoolBalance
 import rest_framework_custom as rfc
 from fs.btrfs import balance_status_all
-from pool import PoolMixin
+from storageadmin.views.pool import PoolMixin
 from huey.contrib.djhuey import db_task
 
 import logging

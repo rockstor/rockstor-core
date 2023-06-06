@@ -25,7 +25,7 @@ from django.conf import settings
 from django.db import transaction
 from rest_framework.response import Response
 
-from base_service import BaseServiceDetailView
+from smart_manager.views.base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from smart_manager.serializers import ServiceStatusSerializer
 from storageadmin.util import handle_exception

@@ -23,7 +23,7 @@ import json
 import base64
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
-from base_console import BaseConsole
+from cli.base_console import BaseConsole
 from storageadmin.models import OauthApp
 from django.conf import settings
 

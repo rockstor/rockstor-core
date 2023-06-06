@@ -23,8 +23,8 @@ from tempfile import mkstemp
 
 from django.conf import settings
 
-from osi import run_command
-from services import service_status, define_avahi_service
+from system.osi import run_command
+from system.services import service_status, define_avahi_service
 from storageadmin.models import SambaCustomConfig
 
 TESTPARM = "/usr/bin/testparm"
@@ -129,7 +129,7 @@ def update_global_config(smb_config=None, ad_config=None):
             "printcap name": "/dev/null",
             "map to guest": "Bad User",
         }
-        for key, value in smb_default_options.iteritems():
+        for key, value in iter(smb_default_options.items()):
             if key not in smb_config:
                 tfo.write("    {} = {}\n".format(key, value))
 

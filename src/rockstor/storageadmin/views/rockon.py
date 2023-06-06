@@ -43,7 +43,7 @@ from storageadmin.models import (
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from rockon_helpers import rockon_status
+from storageadmin.views.rockon_helpers import rockon_status
 from system.docker import docker_status
 from huey.contrib.djhuey import HUEY
 from django.conf import settings
@@ -432,7 +432,7 @@ class RockOnView(rfc.GenericView):
         return sorted_keys
 
     def _update_model(self, modelinst, ad):
-        for k, v in ad.iteritems():
+        for k, v in iter(ad.items()):
             setattr(modelinst, k, v)
         modelinst.save()
 

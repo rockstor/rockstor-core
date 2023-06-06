@@ -29,7 +29,7 @@ from system.users import useradd, usermod, userdel, smbpasswd, add_ssh_key, upda
 import pwd
 from system.pinmanager import username_to_uid, flush_pincard
 from system.ssh import is_pub_key
-from ug_helpers import combined_users, combined_groups
+from storageadmin.views.ug_helpers import combined_users, combined_groups
 import logging
 import re
 

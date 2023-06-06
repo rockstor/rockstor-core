@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 # Django settings for Rockstor project.
 import os
-import subprocess, distro
+import distro
 from huey import SqliteHuey
 
 DEBUG = False
@@ -317,7 +317,7 @@ strictly required by btrfs. Similarly the maximum is 2^64 bytes which is more th
 enough for all practical purposes and also is the max allowed in btrfs.
 """
 MIN_SHARE_SIZE = 100
-MAX_SHARE_SIZE = 18014398509481984L
+MAX_SHARE_SIZE = 18014398509481984
 
 START_UID = 5000
 END_UID = 6000
@@ -425,15 +425,6 @@ TASK_SCHEDULER = {
 }
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
-
-# Setup OS specific command paths via 'which cmd' calls
-# N.B. this method will not work with an alias, ie in CentOS
-# which ls
-# alias ls='ls --color=auto'
-#         /usr/bin/ls
-# The following have been tested in CentOS, openSUSE Leap15, and Tumbleweed
-UDEVADM = subprocess.check_output(["which", "udevadm"]).rstrip()
-SHUTDOWN = subprocess.check_output(["which", "shutdown"]).rstrip()
 
 # Establish our OS base id, name, and version:
 # Use id for code path decisions. Others are for Web-UI display purposes.

@@ -32,7 +32,7 @@ from fs.btrfs import (
 )
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
-from share_helpers import import_shares, import_snapshots
+from storageadmin.views.share_helpers import import_shares, import_snapshots
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
@@ -369,7 +369,7 @@ class DiskMixin(object):
                 dev_name = d.name
                 if d.partitions != {}:  # could have btrfs fs from a partition?
                     # d.partitions={'/dev/vdc1': 'vfat', '/dev/vdc2': 'btrfs'}
-                    for partition, fs in d.partitions.iteritems():
+                    for partition, fs in iter(d.partitions.items()):
                         if fs == "btrfs":  # We only allow one btrfs part / dev
                             dev_name = partition
                             break

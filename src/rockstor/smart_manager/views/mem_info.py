@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from smart_manager.models import MemInfo
 from smart_manager.serializers import MemInfoSerializer
-from generic_sprobe import GenericSProbeView
+from smart_manager.views.generic_sprobe import GenericSProbeView
 
 
 class MemInfoView(GenericSProbeView):
