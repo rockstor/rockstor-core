@@ -2235,7 +2235,7 @@ def balance_status_internal(pool):
             if unallocated < 0:
                 stats["status"] = "running"
                 break
-    if unallocated >= 0:
+    if unallocated is not None and unallocated >= 0:
         # We have no 'tell' so report a finished balance as there is no
         # evidence of one happening.
         stats["status"] = "finished"
