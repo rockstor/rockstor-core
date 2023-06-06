@@ -446,8 +446,9 @@ def get_dev_options(dev_byid, custom_options=""):
         # target dev is not found, we can simply remove this option.
         # N.B. here we assume there is either 'autodev' or a specified target:
         # input validation was tested to reject both being entered.
+        # TODO: Needs validation post Preliminary python 3.6 port
         if "autodev" in dev_options:
-            dev_options.remove("autodev")
+            dev_options.remove(b"autodev")
         # If our custom options don't contain a raid controller target then add
         # the full path to our base device as our last device specific option.
         if re.search("/dev/tw|/dev/cciss/c|/dev/sg|/dev/sd", custom_options) is None:
