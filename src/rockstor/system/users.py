@@ -75,8 +75,6 @@ def get_users(max_wait=60):
         timeout=max_wait,
     )
     out = result.stdout
-    err = result.stderr
-    rc = result.returncode
     # TODO: Report & handle exception reported via CompletedProcess (result)
     out_list = out.split("\n")
     # out_list looks like;
@@ -204,7 +202,7 @@ def smbpasswd(username, passwd):
     rc = p.returncode
     if rc != 0:
         raise CommandException(cmd, out, err, rc)
-    return (out, err, rc)
+    return out, err, rc
 
 
 def update_shell(username, shell):
@@ -235,7 +233,7 @@ def useradd(username, shell, uid=None, gid=None):
                 "User({0}) already exists, but her shell({1}) is "
                 "different from the input({2}).".format(username, pw_entry.shell, shell)
             )
-        return ([""], [""], 0)
+        return [""], [""], 0
 
     cmd = [USERADD, "-s", shell, "-m", username]
     if uid is not None:

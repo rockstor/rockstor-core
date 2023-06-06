@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 # Django settings for Rockstor project.
 import os
-import subprocess, distro
+import distro
 from huey import SqliteHuey
 
 DEBUG = False

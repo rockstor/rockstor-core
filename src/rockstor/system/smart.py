@@ -97,7 +97,7 @@ def extended_info(device, custom_options="", test_mode=TESTMODE):
     Attribute name.
 
     :param device: disk device name
-    :param testmode: Not True causes cat from file rather than smartctl command
+    :param test_mode: Not True causes cat from file rather than smartctl command
     :return: dictionary of smart attributes extracted from device or test file
 
     """
@@ -440,9 +440,7 @@ def get_dev_options(dev_byid, custom_options=""):
         dev_options = [get_device_path(get_base_device_byid(dev_byid, TESTMODE))]
     else:
         # Convert string of custom options into a list ready for run_command
-        # TODO: think this ascii should be utf-8 as that's kernel standard
-        # TODO: or just use str(custom_options).split()
-        dev_options = custom_options.encode("ascii").split()
+        dev_options = custom_options.encode("utf-8").split()
         # Remove Rockstor native 'autodev' custom smart option raid dev target.
         # As we automatically add the full path by-id if a raid controller
         # target dev is not found, we can simply remove this option.
