@@ -14,7 +14,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import json
 import unittest
-from unittest import mock
 from unittest.mock import patch
 from datetime import datetime
 from fs.btrfs import (
@@ -75,7 +74,7 @@ class BTRFSTests(unittest.TestCase):
         self.mock_os_path_exists = self.patch_os_path_exists.start()
 
     def tearDown(self):
-        mock.patch.stopall()
+        patch.stopall()
 
     # # sample test
     # def test_add_pool_mkfs_fail(self):
