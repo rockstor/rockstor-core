@@ -86,7 +86,7 @@ pytz = "==2022.6"
 six = "==1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
 huey = "==2.3.0"
 psutil = "==5.9.4"
-mock = "==1.0.1"
+# mock = "==1.0.1" now part of std lib in Python 3.3 onwards as unittest.mock
 # pyzmq requires libzmq5 on system unless in wheel form.
 pyzmq = "==19.0.2"  # Last specifying Python 2 on PyPi page.
 distro = "==1.6.0"  # Last Python 2/3 version that works as we expect.

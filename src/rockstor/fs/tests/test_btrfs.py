@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2017 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 RockStor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -10,10 +10,12 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import json
 import unittest
+from unittest import mock
+from unittest.mock import patch
 from datetime import datetime
 from fs.btrfs import (
     get_pool_raid_levels,
@@ -41,7 +43,14 @@ from fs.btrfs import (
     scrub_status_extra,
     get_pool_raid_profile,
 )
-from mock import patch
+
+
+"""
+The tests in this suite can be run via the following commands:
+
+cd /opt/rockstor/src/rockstor/fs
+poetry run django-admin test --settings=settings -v 3 -p test_btrfs*
+"""
 
 
 class Pool(object):
@@ -52,13 +61,6 @@ class Pool(object):
 
 
 class BTRFSTests(unittest.TestCase):
-    """
-    The tests in this suite can be run via the following commands:
-    N.B. 'root' dir of rockstor is normally /opt/rockstor
-    cd /opt/rockstor/src/rockstor/fs
-    poetry run django-admin test --settings=settings -v 3 -p test_btrfs*
-    """
-
     def setUp(self):
         self.patch_run_command = patch("fs.btrfs.run_command")
         self.mock_run_command = self.patch_run_command.start()
@@ -73,7 +75,7 @@ class BTRFSTests(unittest.TestCase):
         self.mock_os_path_exists = self.patch_os_path_exists.start()
 
     def tearDown(self):
-        patch.stopall()
+        mock.patch.stopall()
 
     # # sample test
     # def test_add_pool_mkfs_fail(self):
@@ -293,8 +295,8 @@ class BTRFSTests(unittest.TestCase):
             raid6_1c4_return,
         ]
         # simple iteration over above example inputs to expected outputs.
-        for raid_level, fi_df, expected_result in map(
-            None, raid_levels_tested, btrfs_fi_di, return_dict
+        for raid_level, fi_df, expected_result in zip(
+            raid_levels_tested, btrfs_fi_di, return_dict
         ):
             # mock example command output with no error and rc=0
             self.mock_run_command.return_value = (fi_df, cmd_e, cmd_rc)
