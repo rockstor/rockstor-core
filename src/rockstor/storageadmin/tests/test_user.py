@@ -271,7 +271,7 @@ class UserTests(APITestMixin):
         )
         # N.B. in the above we are expecting 500 currently.
         self.assertEqual(
-            response.data[0], "{'email': [u'Enter a valid email address.']}"
+            response.data[0], "{'email': ['Enter a valid email address.']}"
         )
 
     def test_pubkey_validation(self):
