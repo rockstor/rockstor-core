@@ -18,7 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import sys
 import json
 from datetime import datetime, timedelta
-import crontabwindow  # load crontabwindow module
+from scripts.scheduled_tasks import crontabwindow
 from smart_manager.models import Task, TaskDefinition
 from cli.api_wrapper import APIWrapper
 from django.utils.timezone import utc
