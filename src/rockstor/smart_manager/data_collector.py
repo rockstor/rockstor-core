@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 # TODO: Let's deprecate gevent in favor of django channels and we won't need
@@ -44,6 +44,7 @@ from glob import glob  # noqa E402
 # https://docs.djangoproject.com/en/1.11/topics/settings/#calling-django-setup-is-required-for-standalone-django-usage
 import django
 from django.conf import settings  # noqa E402
+
 django.setup()
 
 from system.pinmanager import (
@@ -729,8 +730,8 @@ class NetworkWidgetNamespace(RockstorIO):
             with open("/proc/net/dev") as sfo:
                 sfo.readline()
                 sfo.readline()
-                for l in sfo.readlines():
-                    fields = l.split()
+                for line in sfo.readlines():
+                    fields = line.split()
                     if fields[0][:-1] not in interfaces:
                         continue
                     cur_stats[fields[0][:-1]] = fields[1:]
@@ -739,12 +740,14 @@ class NetworkWidgetNamespace(RockstorIO):
                 results = []
                 for interface in cur_stats.keys():
                     if interface in prev_stats:
-                        data = map(
-                            lambda x, y: float(x) / interval
-                            if x < y
-                            else (float(x) - float(y)) / interval,
-                            cur_stats[interface],
-                            prev_stats[interface],
+                        data = list(
+                            map(
+                                lambda x, y: float(x) / interval
+                                if x < y
+                                else (float(x) - float(y)) / interval,
+                                cur_stats[interface],
+                                prev_stats[interface],
+                            )
                         )
                         results.append(
                             {
