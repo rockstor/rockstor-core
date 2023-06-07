@@ -334,7 +334,8 @@ class ShareTests(APITestMixin):
             "size": 100,
             "replica": "non-bool",
         }
-        e_msg7 = "Replica must be a boolean, not (<type 'unicode'>)."
+        # Py3.6 defaults to class 'str' in our test data.
+        e_msg7 = "Replica must be a boolean, not (<class 'str'>)."
         response9 = self.client.post(self.BASE_URL, data=data5)
         self.assertEqual(
             response9.status_code,

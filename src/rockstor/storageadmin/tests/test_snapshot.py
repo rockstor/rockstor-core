@@ -152,7 +152,8 @@ class SnapshotTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = "Element 'uvisible' must be a boolean, not (<type 'unicode'>)."
+        # Py3.6 defaults to class 'str' in our test data.
+        e_msg = "Element 'uvisible' must be a boolean, not (<class 'str'>)."
         self.assertEqual(response.data[0], e_msg)
 
         # Invalid writable bool type
@@ -176,9 +177,9 @@ class SnapshotTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        # TODO consider changing tested code to unify quota types to single
-        #  as per "Invalid uvisible bool type" to remove need for escaping here.
-        e_msg = 'Element "writable" must be a boolean, not ' "(<type 'unicode'>)."
+        # Py3.6 defaults to class 'str' in our test data.
+        # Maintaining type/class report in tested code as this can help with debugging.
+        e_msg = 'Element "writable" must be a boolean, not ' "(<class 'str'>)."
         self.assertEqual(response.data[0], e_msg)
 
         # # Happy Path creating a snapshot by name snap3
