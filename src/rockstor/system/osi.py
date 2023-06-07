@@ -1440,9 +1440,9 @@ def md5sum(fpath):
     if not os.path.isfile(fpath):
         return None
     md5 = hashlib.md5()
-    with open(fpath) as tfo:
-        for l in tfo.readlines():
-            md5.update(l.encode())
+    with open(fpath, "rb") as tfo:
+        for line in tfo.readlines():
+            md5.update(line)
     return md5.hexdigest()
 
 
