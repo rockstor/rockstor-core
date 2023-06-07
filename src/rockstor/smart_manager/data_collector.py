@@ -428,7 +428,13 @@ class LogManagerNamespace(RockstorIO):
                 download_command.append(self.build_log_path(log))
 
             # Build download archive
-            download_process = Popen(download_command, bufsize=1, stdout=PIPE, encoding="utf-8", universal_newlines=True)
+            download_process = Popen(
+                download_command,
+                bufsize=1,
+                stdout=PIPE,
+                encoding="utf-8",
+                universal_newlines=True,
+            )
             download_process.communicate()
 
             # Return ready state for logs archive download specifying recipient
@@ -481,7 +487,13 @@ class LogManagerNamespace(RockstorIO):
                 read_command = build_reader_command(reader)
 
                 # Define popen process and once completed split stdout by lines
-                reader_process = Popen(read_command, bufsize=1, stdout=PIPE, encoding="utf-8", universal_newlines=True)
+                reader_process = Popen(
+                    read_command,
+                    bufsize=1,
+                    stdout=PIPE,
+                    encoding="utf-8",
+                    universal_newlines=True,
+                )
                 log_content = reader_process.communicate()[0]
                 log_contentsize = getsizeof(log_content)
                 log_content = log_content.splitlines(True)
@@ -542,7 +554,13 @@ class LogManagerNamespace(RockstorIO):
             else:
                 read_command = build_reader_command("tailf")
 
-            self.livereader_process = Popen(read_command, bufsize=1, stdout=PIPE, encoding="utf-8", universal_newlines=True)
+            self.livereader_process = Popen(
+                read_command,
+                bufsize=1,
+                stdout=PIPE,
+                encoding="utf-8",
+                universal_newlines=True,
+            )
             while self.livereading:
                 live_out = self.livereader_process.stdout.readline()
                 self.emit(
