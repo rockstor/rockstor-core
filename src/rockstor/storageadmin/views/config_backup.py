@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import gzip
@@ -185,7 +185,7 @@ def validate_service_status(ml, pkid):
             return m["fields"]["status"]
 
 
-def validate_taskdef_meta(sa_ml, taskdef_meta, task_type):
+def validate_taskdef_meta(sa_ml: list, taskdef_meta: dict, task_type: str) -> dict:
     """
     Task definition of type snapshot include a share ID in their
     json_meta field (taskdef_meta). The share ID for the share in question
@@ -213,17 +213,17 @@ def validate_taskdef_meta(sa_ml, taskdef_meta, task_type):
         # get ID of source share name in the target system
         target_share_id = get_target_share_id(source_name)
         # Update taskdef_meta (needs to be a unicode object)
-        taskdef_meta["share"] = unicode(target_share_id)
+        taskdef_meta["share"] = str(target_share_id)
     if task_type == "scrub":
         # get ID of pool name in the target system
         target_pool_id = get_target_pool_id(taskdef_meta["pool_name"])
         # Update taskdef_meta (needs to be a unicode object)
-        taskdef_meta["pool"] = unicode(target_pool_id)
+        taskdef_meta["pool"] = str(target_pool_id)
 
     return taskdef_meta
 
 
-def restore_scheduled_tasks(ml, sa_ml):
+def restore_scheduled_tasks(ml: list, sa_ml: list):
     """
     Simple wrapper to trigger the preparation of the list of scheduled tasks
     to be restored, followed by the actual API request.
@@ -238,7 +238,7 @@ def restore_scheduled_tasks(ml, sa_ml):
     logger.info("Finished restoring scheduled tasks.")
 
 
-def validate_task_definitions(ml, sa_ml):
+def validate_task_definitions(ml: list, sa_ml: list) -> list:
     """
     Parses the config backup to re-create a valid POST request to be sent to the
     sm/tasks API in order to re-create the scheduled task(s) in question.
@@ -542,11 +542,12 @@ def validate_rockons(ml):
     return rockons
 
 
-def get_sname(ml, share_id):
-    """
+def get_sname(ml: list, share_id: int) -> str:
+    """Return name of share from config backup
+
     Takes a share ID and a database backup list of models and returns the
     name of the share.
-    :param ml: dict of models from the config backup
+    :param ml: list of models (dict) from the config backup
     :param share_id: number ID of the share whose name is sought
     :return: string of the share name
     """
@@ -556,18 +557,14 @@ def get_sname(ml, share_id):
     return sname
 
 
-def get_target_share_id(source_name):
-    """
-    Takes a share name and returns its ID from the database.
-    """
+def get_target_share_id(source_name: str) -> int:
+    """Takes a share name and returns its ID from the database."""
     so = Share.objects.get(name=source_name)
     return so.id
 
 
-def get_target_pool_id(source_name):
-    """
-    Takes a pool name and returns its ID from the database.
-    """
+def get_target_pool_id(source_name: str) -> int:
+    """Takes a pool name and returns its ID from the database."""
     po = Pool.objects.get(name=source_name)
     return po.id
 
@@ -605,6 +602,8 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
             if not os.path.isfile(fp):
                 cbo.delete()
+                # TODO: add 'continue' to go to next iteration as all steps below
+                #  will fail if fp does not exist.
 
             try:
                 with gzip.open(fp, "rb") as f:
@@ -729,6 +728,9 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
                     "duplicate is not allowed."
                 ).format(filename)
                 handle_exception(Exception(msg), request)
+            # TODO: use ConfigBackup() instead to avoid creating the object directly and
+            #  save only once everything is successful.
+            #  Otherwise, we are left with a ghost model entry.
             cbo = ConfigBackup.objects.create(filename=filename, config_backup=file_obj)
             cb_dir = ConfigBackup.cb_dir()
             if not os.path.isdir(cb_dir):
