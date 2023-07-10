@@ -60,7 +60,6 @@ python = "~3.6"
 # [tool.poetry.group.django.dependencies]
 django = "==1.11.29"
 django-oauth-toolkit = "==1.1.2"
-pytz = "==2022.6"
 djangorestframework = "==3.9.3"
 django-pipeline = "==1.6.9"
 django-braces = "==1.13.0"  # look to 1.14.0 (30 Dec 2019) as Django 1.11.0+ now

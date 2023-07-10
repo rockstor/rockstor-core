@@ -246,7 +246,7 @@ six = ">=1.9.0"
 
 [[package]]
 name = "pytz"
-version = "2022.6"
+version = "2023.3"
 description = "World timezone definitions, modern and historical"
 category = "main"
 optional = false
@@ -346,7 +346,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.6"
-content-hash = "73604f05077875739bb3783394e2ed10fd8263a8c43f354a52759ea89292d060"
+content-hash = "a6453052ab301486bdd4e821d0eea7186083112517cb51847c6f69dc18f2ce8e"
 
 [metadata.files]
 certifi = [
@@ -633,8 +633,8 @@ python-socketio = [
     {file = "python-socketio-1.6.0.tar.gz", hash = "sha256:8b325e095b64675b00c05ca7072f4cd1a05054058feacbb8f7003ba72c60f076"},
 ]
 pytz = [
-    {file = "pytz-2022.6-py2.py3-none-any.whl", hash = "sha256:222439474e9c98fced559f1709d89e6c9cbf8d79c794ff3eb9f8800064291427"},
-    {file = "pytz-2022.6.tar.gz", hash = "sha256:e89512406b793ca39f5971bc999cc538ce125c0e51c27941bef4568b460095e2"},
+    {file = "pytz-2023.3-py2.py3-none-any.whl", hash = "sha256:a151b3abb88eda1d4e34a9814df37de2a80e301e68ba0fd856fb9b46bfbbbffb"},
+    {file = "pytz-2023.3.tar.gz", hash = "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588"},
 ]
 pyzmq = [
     {file = "pyzmq-19.0.2-cp27-cp27m-macosx_10_9_intel.whl", hash = "sha256:59f1e54627483dcf61c663941d94c4af9bf4163aec334171686cdaee67974fe5"},
