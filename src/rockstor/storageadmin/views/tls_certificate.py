@@ -26,7 +26,7 @@ from system.osi import run_command
 from shutil import move
 from tempfile import mkstemp
 from django.conf import settings
-from system.services import superctl
+from system.services import systemctl
 import logging
 
 logger = logging.getLogger(__name__)
@@ -89,5 +89,5 @@ class TLSCertificateView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             move(cpath, "%s/rockstor.cert" % settings.CERTDIR)
             move(kpath, "%s/rockstor.key" % settings.CERTDIR)
-            superctl("nginx", "restart")
+            systemctl("nginx", "reload")
             return Response(TLSCertificateSerializer(co).data)
