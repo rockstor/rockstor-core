@@ -20,6 +20,11 @@ from rest_framework import status
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
 
+"""
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE=settings
+poetry run django-admin test -p test_tls_certificate.py -v 2
+"""
 
 class TlscertificateTests(APITestMixin):
     # Proposed fixture "test_tls_certificate.json" was "fix1.json"
@@ -35,10 +40,10 @@ class TlscertificateTests(APITestMixin):
         cls.patch_move = patch("storageadmin.views.tls_certificate.move")
         cls.mock_move = cls.patch_move.start()
 
-        cls.patch_superctl = patch(
-            "storageadmin.views.tls_certificate.superctl"
+        cls.patch_systemctl = patch(
+            "storageadmin.views.tls_certificate.systemctl"
         )  # noqa E501
-        cls.mock_superctl = cls.patch_superctl.start()
+        cls.mock_systemctl = cls.patch_systemctl.start()
 
         cls.patch_run_command = patch(
             "storageadmin.views.tls_certificate.run_command"
