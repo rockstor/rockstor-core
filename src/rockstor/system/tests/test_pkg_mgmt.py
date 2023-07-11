@@ -27,8 +27,9 @@ from system.pkg_mgmt import (
 class SystemPackageTests(unittest.TestCase):
     """
     The tests in this suite can be run via the following command:
-    cd <root dir of rockstor ie /opt/rockstor-dev>
-    ./bin/test --settings=test-settings -v 3 -p test_pkg_mgmt*
+    cd /opt/rockstor/src/rockstor
+    export DJANGO_SETTINGS_MODULE=settings
+    poetry run django-admin test -p test_pkg_mgmt.py -v 2
     """
 
     def setUp(self):
@@ -36,7 +37,7 @@ class SystemPackageTests(unittest.TestCase):
         self.mock_run_command = self.patch_run_command.start()
 
         # We need to test the conditions of distro.id() returning one of:
-        # rockstor, opensuse-leap, opensuse-tumbleweed
+        # rockstor, opensuse, (was opensuse-leap), opensuse-tumbleweed
         self.patch_distro = patch("system.pkg_mgmt.distro")
         self.mock_distro = self.patch_distro.start()
 
@@ -106,15 +107,16 @@ class SystemPackageTests(unittest.TestCase):
         yum check-update -q -x rock*
         and:
         output format of:
-        distro.id = "opensuse-leap"
+        distro.id = "opensuse" N.B. this was "opensuse-leap" in distro <= 1.6.0
         zypper -q list-updates
         and:
         distro.id = "opensuse-tumbleweed"
-        same command as for opensuse-leap
+        same command as for "opensuse"
         """
         # Mock pkg_changelog to allow for isolated testing of yum_check
         self.patch_pkg_changelog = patch("system.pkg_mgmt.pkg_changelog")
         self.mock_pkg_changelog = self.patch_pkg_changelog.start()
+        # TODO:
 
         def fake_pkg_changelog(*args, **kwargs):
             """
@@ -265,7 +267,7 @@ class SystemPackageTests(unittest.TestCase):
             ]
         )
         rc.append(106)
-        dist_id.append("opensuse-leap")
+        dist_id.append("opensuse")
         #
         for o, e, r, expected, distro in zip(out, err, rc, expected_result, dist_id):
             self.mock_run_command.return_value = (o, e, r)
@@ -382,7 +384,7 @@ class SystemPackageTests(unittest.TestCase):
         rc = [0]
         expected_results = [("3.9.2-50.2093", "2019-Nov-30")]
         # Leap15.1 dnf-yum
-        dist_id.append("opensuse-leap")
+        dist_id.append("opensuse")
         out.append(
             [
                 "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
@@ -594,7 +596,7 @@ class SystemPackageTests(unittest.TestCase):
         rc.append(1)
         expected_result.append(None)
         # Leap15.1 dnf-yum - rockstor package installed with update available:
-        dist_id.append("opensuse-leap")
+        dist_id.append("opensuse")
         out.append(
             [
                 "Last metadata expiration check: 0:00:10 ago on Mon 02 Dec 2019 06:22:10 PM GMT.",
