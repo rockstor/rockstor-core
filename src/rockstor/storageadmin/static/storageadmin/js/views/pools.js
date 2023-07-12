@@ -95,6 +95,7 @@ PoolsView = RockstorLayoutView.extend({
             source: [
                      {value: 'no', text: 'no'},
                      {value: 'zlib', text: 'zlib'},
+                     {value: 'zstd', text: 'zstd'},
                      {value: 'lzo', text: 'lzo'}
             ],
             success: function(response, newCompr){
