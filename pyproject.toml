@@ -51,11 +51,11 @@ generate-setup-file = false
 
 [tool.poetry.dependencies]
 # We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
-# We currently need Poetry 1.1.15 for it's Python 2.7 compatibility.
+# We currently need Poetry 1.1.15 for it's Python 2.7/3.6 compatibility.
 # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
 #
-# https://python-poetry.org/docs/1.1/dependency-specification/
-python = "~3.6"
+# https://python-poetry.org/docs/dependency-specification
+python = ">= 3.6, < 3.9"
 
 # [tool.poetry.group.django.dependencies]
 django = "==1.11.29"
