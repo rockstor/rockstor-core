@@ -87,7 +87,7 @@ MEDIA_URL = '/media/'
 
 # Establish BASE_DIR from ourselves (./src/rockstor/settings.py)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# print "BASE_DIR={}".format(BASE_DIR)  # "/opt/rockstor" via 'django-admin runserver'
+# print("BASE_DIR={}".format(BASE_DIR))  # "/opt/rockstor" via 'django-admin runserver'
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"

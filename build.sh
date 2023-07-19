@@ -3,10 +3,13 @@
 set -o errexit
 
 # Install Poetry, a dependency management, packaging, and build system.
-# We currently require Python 2.7 compatibility which was last in v1.1.15.
+# We currently require Python 3.6 compatibility which was last in v1.1.15.
 # We use the official installer which installs to: ~/.local/share/pypoetry.
 # The installer is python 3 only: https://python-poetry.org/docs/#installation
 # N.B. there is no harm in re-running this installer.
+# For first-install on Tumbleweed instances with Py3.11 as default:
+# 1. uninstall vai: curl -sSL https://install.python-poetry.org | python3 - --uninstall
+# 2. change 3 to 3.8 in the following:
 curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.1.15 python3 -
 
 # Install project dependencies defined in cwd pyproject.toml using poetry.toml
