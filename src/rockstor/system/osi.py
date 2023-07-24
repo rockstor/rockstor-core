@@ -218,8 +218,8 @@ def run_command(
         # We force run_command to always use en_US
         # to avoid issues on date and number formats
         # on not Anglo-Saxon systems (ex. it, es, fr, de, etc)
-        # fake_env = dict(os.environ)
-        # fake_env["LANG"] = "en_US.UTF-8"
+        fake_env = dict(os.environ)
+        fake_env["LANG"] = "en_US.UTF-8"
         # cmd = map(str, cmd)
         if log:
             logger.debug("Running command: {}".format(" ".join(cmd)))
@@ -230,7 +230,7 @@ def run_command(
             stdout=stdout,
             stderr=stderr,
             encoding="utf-8",
-            # env=fake_env,
+            env=fake_env,
             universal_newlines=True,  # 3.7 adds text parameter universal_newlines alias
         )
         out, err = p.communicate(input=input)
