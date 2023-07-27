@@ -1,0 +1,35 @@
+name: Test
+on:
+  - push
+  - pull_request
+
+env:
+  DJANGO_SETTINGS_MODULE: settings
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.6" # OpenSUSE Leap 15.4
+          - "3.11" # OpenSUSE Tumbleweed
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      # The below should be handled by ./build.sh, but we may shift to breaking it out here
+      # - name: Install Poetry
+      #   run: curl -sSL https://install.python-poetry.org | python - -y
+      - name: Build Rockstor
+        run: ./build.sh
+      - name: Start PostgreSQL
+        run: sudo systemctl start postgresql.service
+      - name: Run Tests
+        run: |
+          cd ./src/rockstor
+          poetry run django-admin test -v 2
