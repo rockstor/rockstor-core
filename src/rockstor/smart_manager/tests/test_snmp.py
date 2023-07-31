@@ -15,9 +15,18 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+from unittest.mock import patch
 
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_snmp.py
+"""
 
 
 class SNMPTests(APITestCase):
@@ -41,6 +50,11 @@ class SNMPTests(APITestCase):
         """
         config happy path
         """
+        self.patch_configure_snmp = patch(
+            "smart_manager.views.snmp_service.configure_snmp"
+        )
+        self.mock_configure_snmp = self.patch_configure_snmp.start()
+
         config = {
             "syslocation": "Rockstor Labs",
             "syscontact": "rocky@rockstor.com",
@@ -159,6 +173,10 @@ class SNMPTests(APITestCase):
         """
         start/stop tests
         """
+        self.patch_systemctl = patch("smart_manager.views.snmp_service.systemctl")
+        self.mock_systemctl = self.patch_systemctl.start()
+        self.mock_systemctl.return_value = [""], [""], 0
+
         self.session_login()
         response = self.client.post("%s/start" % self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.content)

@@ -19,15 +19,32 @@ along with this program. If not, see <https://www.gnu.org/licenses/>
 from rest_framework import status
 from unittest.mock import patch
 
-# the following settings should be test variant.
 from django.conf import settings
 from storageadmin.tests.test_api import APITestMixin
 
 
+"""
+Fixture creation instructions:
+
+We have need for a created "testuser" (uid 1004) see also: 
+exclude_list within src/rockstor/storageadmin/views/user.py
+
+cd /opt/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin dumpdata storageadmin.user storageadmin.group
+--natural-foreign --indent 4 >
+src/rockstor/storageadmin/fixtures/test_user.json
+
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_user.py
+"""
+
+
 class UserTests(APITestMixin):
     # multi_db = True
-    # Proposed fixture "test_user.json" was "fix3.json"
-    fixtures = ["test_api.json"]
+    fixtures = ["test_api.json", "test_user.json"]
     BASE_URL = "/api/users"
     valid_pubkey = "ssh-dss AAAAB3NzaC1kc3MAAACBAIo+KNTMOS6H9slesrwgSsqp+hxJUDxTT3uy5/LLBDPHRxUz+OR5jcbk/CvgbZsDE3Q7iAIlN8w2bM/L/CG4AwT90f4vFf783QJK9gRxqZmgrPb7Ey88EIeb7UN3+nhc754IEl28y82Rqnq/gtQveSB3aQIWdEIdw17ToLsN5dDPAAAAFQDQ+005d8pBpJSuwH5T7n/xhI6s5wAAAIBJP0okYMbFrYWBfPJvi+WsLHw1tqRerX7bteVmN4IcIlDDtSTaQV7DOAl5B+iMPciRGaixtParUPk8oTew/MY1rECfIBs5wt+3hns4XDcsrXDTNyFDx9qYDtI3Fxt0+2f8k58Ym622Pqq1TZ09IBX7hEZH2EB0dUvxsUOf/4cUNAAAAIEAh3IpPoHWodVQpCalZ0AJXub9hJtOWWke4v4l8JL5w5hNlJwUmAPGuJHZq5GC511hg/7r9PqOk3KnSVp9Jsya6DrtJAxr/8JjAd0fqQjDsWXQRLONgcMfH24ciuFLyIWgDprTWmEWekyFF68vEwd4Jpnd4CiDbZjxc44xBnlbPEI= suman@Learnix"  # noqa E501
 
@@ -80,12 +97,12 @@ class UserTests(APITestMixin):
         """
         Test GET request
         1. Get base URL
-         """
+        """
         # get base URL
         self.get_base(self.BASE_URL)
 
         # get list of all users:
-        response = self.client.get("%s" % self.BASE_URL)
+        response = self.client.get(f"{self.BASE_URL}")
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
     def test_post_requests(self):
@@ -138,8 +155,8 @@ class UserTests(APITestMixin):
         self.assertEqual(
             response.status_code, status.HTTP_400_BAD_REQUEST, msg=response.data
         )
-        e_msg = "Element shell (Y) is not valid. Valid shells are " "{}.".format(
-            settings.VALID_SHELLS
+        e_msg = (
+            f"Element shell (Y) is not valid. Valid shells are {settings.VALID_SHELLS}."
         )
         self.assertEqual(response.data[0], e_msg)
 
@@ -156,25 +173,22 @@ class UserTests(APITestMixin):
         #          "username.")
         # self.assertEqual(response.data, e_msg)
 
-        # # TODO: FAIL AssertionError: ['UID (0) already exists.
-        # #  Please choose a different one.', 'None\n']
-        # # create user with existing username admin2 and uid
-        # data = {'username': 'admin2', 'password': 'pwadmin2', 'uid': '0000'}
-        # response = self.client.post(self.BASE_URL, data=data)
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_400_BAD_REQUEST,
-        #                  msg=response.data)
-        # e_msg = ("User (admin2) already exists. Please choose a different "
-        #          "username.")
-        # self.assertEqual(response.data[0], e_msg)
+        # Create user with existing username and uid (in fixture).
+        data = {"username": "testuser", "password": "fakepassword", "uid": "1004"}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(
+            response.status_code, status.HTTP_400_BAD_REQUEST, msg=response.data
+        )
+        e_msg = f"User ({data['username']}) already exists. Please choose a different username."
+        self.assertEqual(response.data[0], e_msg)
 
-        # create a user with existing uid ('nobody' has a uid 65534)
+        # create a user with existing uid ('testuser' in fixture has a uid 1004)
         # TODO: We are not limiting user id to >= 1000.
         data = {
             "username": "newUser",
             "password": "pwuser2",
-            "group": "admin",
-            "uid": "65534",
+            "group": "users",
+            "uid": "1004",
             "pubic_key": "xxx",
         }
         response = self.client.post(self.BASE_URL, data=data)
@@ -183,19 +197,10 @@ class UserTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = "UID (65534) already exists. Please choose a different one."
+        e_msg = f"UID ({data['uid']}) already exists. Please choose a different one."
         self.assertEqual(response.data[0], e_msg)
 
-        # create a user that is already a system user(eg: root)
-        data = {"username": "root", "password": "rootpw"}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(
-            response.status_code, status.HTTP_400_BAD_REQUEST, msg=response.data
-        )
-        e_msg = "User (root) already exists. Please choose a different " "username."
-        self.assertEqual(response.data[0], e_msg)
-
-        # happy path
+        # happy path create user: "newUser" with explicit group & public key.
         data = {
             "username": "newUser",
             "password": "pwuser2",
@@ -206,6 +211,7 @@ class UserTests(APITestMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data["username"], "newUser")
 
+        # happy path create another user "newUser2" with explicit uid and user
         data = {
             "username": "newUser2",
             "password": "pwuser2",
@@ -234,30 +240,28 @@ class UserTests(APITestMixin):
         )
         self.assertEqual(response.data[0], e_msg)
 
-    def test_duplicate_name2(self):
+    def test_duplicate_system_username(self):
 
-        # create user with existing user with name exists in system user
-        data = {"username": "chrony", "password": "pwadmin2"}
+        # create a user that is already a system user(eg: root)
+        data = {"username": "root", "password": "rootpw"}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
             response.status_code, status.HTTP_400_BAD_REQUEST, msg=response.data
         )
-        e_msg = "User (chrony) already exists. Please choose a different " "username."
+        e_msg = f"User ({data['username']}) already exists. Please choose a different username."
         self.assertEqual(response.data[0], e_msg)
 
-    # # TODO: FAIL: We look to have a mocking issue hear as response is a normal page.
-    # def test_duplicate_name1(self):
-    #
-    #     # create user with existing username admin2 (throwing appropriate error
-    #     # if uid sent in data)
-    #     data = {'username': 'admin2', 'password': 'pwadmin2'}
-    #     response = self.client.post(self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_400_BAD_REQUEST,
-    #                      msg=response.data)
-    #     e_msg = ("User (admin2) already exists. Please choose a different "
-    #              "username.")
-    #     self.assertEqual(response.data[0], e_msg)
+    def test_duplicate_managed_username(self):
+
+        # create user with existing rockstor username ("testuser" in fixtures).
+        # N.B. no uid specified.
+        data = {"username": "testuser", "password": "pwadmin2"}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(
+            response.status_code, status.HTTP_400_BAD_REQUEST, msg=response.data
+        )
+        e_msg = f"User ({data['username']}) already exists. Please choose a different username."
+        self.assertEqual(response.data[0], e_msg)
 
     def test_email_validation(self):
 
@@ -303,9 +307,9 @@ class UserTests(APITestMixin):
 
     def test_put_requests(self):
 
-        # Edit user that does not exists
+        # Edit user that does not exist
         data = {"group": "admin"}
-        response = self.client.put("{}/admin99".format(self.BASE_URL), data=data)
+        response = self.client.put(f"{self.BASE_URL}/admin99", data=data)
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -315,95 +319,104 @@ class UserTests(APITestMixin):
         self.assertEqual(response.data[0], e_msg)
 
         data = {"password": "admin2", "group": "admin"}
-        response = self.client.put("{}/bin".format(self.BASE_URL), data=data)
+        response = self.client.put(f"{self.BASE_URL}/bin", data=data)
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
+        # for restricted users see exclude_list in src/rockstor/storageadmin/views/user.py
         e_msg = "Editing restricted user (bin) is not supported."
         self.assertEqual(response.data[0], e_msg)
 
-        # TODO: Edit a user that does exist and enable admin to check pw reset
-        # # The intended function of this test does work as expected in the
-        # # current UI (Feb 2018).
-        # data = {'admin': True}
-        # response = self.client.put('%s/test-user' % self.BASE_URL, data=data)
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK,
-        #                  msg=response.data)
-        # e_msg = ("Password reset is required to enable admin access. Please "
-        #          "provide a new password.")
-        # self.assertEqual(response.data[0], e_msg)
+    def test_enable_admin_without_pw_change(self):
+        # Edit existing user to enable admin: check pw reset prompt
+        data = {"admin": True}
+        response = self.client.put(f"{self.BASE_URL}/testuser", data=data)
+        self.assertEqual(
+            response.status_code, status.HTTP_400_BAD_REQUEST, msg=response.data
+        )
+        e_msg = (
+            "Password reset is required to enable admin access. Please "
+            "provide a new password."
+        )
+        self.assertEqual(response.data[0], e_msg)
 
-        # # TODO: FAIL AssertionError: ['User (admin2) does not exist.', 'None\n']
-        # # happy path
-        # data = {'password': 'admin2', 'group': 'admin', 'admin': True}
-        # response = self.client.put('{}/admin2'.format(self.BASE_URL),
-        #                            data=data)
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK, msg=response.data)
+    def test_enable_admin_existing_user(self):
+        # happy path - enable admin on existing user with password change
+        data = {"password": "admin2", "group": "users", "admin": True}
+        response = self.client.put(f"{self.BASE_URL}/testuser", data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
-        # # TODO: FAIL:AssertionError: ['User (admin2) does not exist.', 'None\n']
-        # data = {'password': 'admin2', 'group': 'admin', 'admin': True,
-        #         'user': 'uadmin2', 'public_key': self.valid_pubkey}
-        # response = self.client.put('{}/admin2'.format(self.BASE_URL),
-        #                            data=data)
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK, msg=response.data)
+    def test_enable_admin_plus_public_key(self):
+        data = {
+            "password": "admin2",
+            "group": "users",
+            "admin": True,
+            "user": "testuser",
+            "public_key": self.valid_pubkey,
+        }
+        response = self.client.put(f"{self.BASE_URL}/testuser", data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
-        # # TODO: FAIL: AssertionError: ['User (admin2) does not exist.', 'None\n']
-        # data = {'password': 'admin2', 'group': 'admin', 'user': 'uadmin2',
-        #         'shell': '/bin/xyz', 'email': 'admin2@xyz.com'}
-        # # TODO: note user: uadmin2 yet we access /admin2 here !!
-        # response = self.client.put('{}/admin2'.format(self.BASE_URL),
-        #                            data=data)
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK, msg=response.data)
+    def test_change_existing_user_various(self):
+        # change password, group, shell, and email.
+        data = {
+            "password": "newpass",
+            "group": "newgroup",
+            "user": "testuser",
+            "shell": "/bin/xyz",
+            "email": "admin2@xyz.com",
+        }
+        response = self.client.put(f"{self.BASE_URL}/testuser", data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
-    def test_delete_requests(self):
+    def test_delete_nonexistent_user(self):
 
         # As we now have a pincard mechanism which will attempt to flush
         # pincards of non existent users we mock it's output to avoid
         # real system calls to the passwd db.
 
         # delete user that does not exists
-        username = "admin100"
-        response = self.client.delete("{}/{}".format(self.BASE_URL, username))
+        username = "non-existent"
+        response = self.client.delete(f"{self.BASE_URL}/{username}")
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = "User (admin100) does not exist."
+        e_msg = f"User ({username}) does not exist."
         self.assertEqual(response.data[0], e_msg)
 
+    def test_delete_system_user(self):
         # delete preexisting restricted system user
         username = "bin"
-        response = self.client.delete("{}/{}".format(self.BASE_URL, username))
+        response = self.client.delete(f"{self.BASE_URL}/{username}")
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = "Delete of restricted user (bin) is not supported."
+        e_msg = f"Delete of restricted user ({username}) is not supported."
         self.assertEqual(response.data[0], e_msg)
 
-        # # TODO: AssertionError: 'User (admin2) does not exist.' !=
-        # #  'A low level error occurred while deleting the user (admin2).'
-        # username = 'admin2'
-        # self.mock_userdel.side_effect = KeyError('error')
-        # response = self.client.delete('{}/{}'.format(self.BASE_URL, username))
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #                  msg=response.data)
-        # e_msg = "A low level error occurred while deleting the user (admin2)."
-        # self.assertEqual(response.data[0], e_msg)
+    def test_low_level_error_on_delete(self):
+        username = "testuser"
+        self.mock_userdel.side_effect = KeyError("error")
+        response = self.client.delete(f"{self.BASE_URL}/{username}")
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = f"A low level error occurred while deleting the user ({username})."
+        self.assertEqual(response.data[0], e_msg)
 
-        # delete currently logged in user (admin44) from APITestMixin
+    def test_logged_in_user_delete(self):
+        # delete currently logged in user (admin) from APITestMixin
         self.mock_userdel.side_effect = None
         username = "admin"
-        response = self.client.delete("{}/{}".format(self.BASE_URL, username))
+        response = self.client.delete(f"{self.BASE_URL}/{username}")
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -412,25 +425,8 @@ class UserTests(APITestMixin):
         e_msg = "Cannot delete the currently logged in user."
         self.assertEqual(response.data[0], e_msg)
 
-        # # happy path
-        # # TODO: AssertionError: ['User (admin2) does not exist.', 'None\n']
-        # # delete user
-        # username = 'admin2'
-        # response = self.client.delete('{}/{}'.format(self.BASE_URL, username))
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK, msg=response.data)
-
-        username = "admin3"
-        response = self.client.delete("{}/{}".format(self.BASE_URL, username))
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            msg=response.data,
-        )
-
-        # Hack fix as lp exists as real system user but is currently, incorrectly, not
-        # included in the exclude_list within src/rockstor/storageadmin/views/user.py
-        # Proper approach would be to setup a User.objects mock
-        username = "lp"
-        response = self.client.delete("{}/{}".format(self.BASE_URL, username))
+    def test_delete_existing_user(self):
+        # Happy path of deleting an in-fixture, Web-UI created user "testuser".
+        username = "testuser"
+        response = self.client.delete(f"{self.BASE_URL}/{username}")
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)

@@ -17,6 +17,14 @@ from rest_framework import status
 from storageadmin.tests.test_api import APITestMixin
 
 
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_commands.py
+"""
+
+
 class CommandTests(APITestMixin):
     # Proposed fixture = "test_commands.json" was "fix5.json"
     fixtures = ["test_api.json"]
@@ -73,6 +81,18 @@ class CommandTests(APITestMixin):
             "storageadmin.views.command.import_snapshots"
         )
         cls.mock_import_snapshots = cls.patch_import_snapshots.start()
+
+        cls.patch_get_unlocked_luks_containers_uuids = patch(
+            "storageadmin.views.disk.get_unlocked_luks_containers_uuids"
+        )
+        cls.mock_get_unlocked_luks_containers_uuids = (
+            cls.patch_get_unlocked_luks_containers_uuids.start()
+        )
+        cls.mock_get_unlocked_luks_containers_uuids.return_value = []
+
+        cls.patch_enable_quota = patch("storageadmin.views.disk.enable_quota")
+        cls.mock_enable_quota = cls.patch_enable_quota.start()
+        cls.mock_enable_quota.return_value = [""], [""], 0
 
     @classmethod
     def tearDownClass(cls):

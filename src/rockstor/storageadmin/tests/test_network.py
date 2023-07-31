@@ -23,6 +23,13 @@ from storageadmin.tests.test_api import APITestMixin
 from storageadmin.models import NetworkConnection, NetworkDevice
 
 
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_network.py
+"""
+
 class NetworkTests(APITestMixin):
     # TODO Move as many by-hand mocks to now functional fixture setup.
     # TODO Provide command to create fixture
@@ -31,7 +38,6 @@ class NetworkTests(APITestMixin):
     # Proposed fixture = "test_network.json"
     # TODO: Needs changing as API url different ie connection|devices|refresh
     # see referenced pr in setUpClass
-    # ./bin/test -v 2 -p test_network.py
     fixtures = ["test_api.json"]
     BASE_URL = "/api/network"
 
@@ -91,6 +97,11 @@ class NetworkTests(APITestMixin):
                 "ipv4_dns_search": None,
             }
         }
+
+        # system.network.get_con_list()
+        cls.patch_get_con_list = patch("system.network.get_con_list")
+        cls.mock_get_con_list = cls.patch_get_con_list.start()
+        cls.mock_get_con_list.return_value = []
 
         # valid_connection
         cls.patch_valid_connection = patch("system.network.valid_connection")

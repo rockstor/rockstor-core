@@ -25,36 +25,46 @@ from storageadmin.models import Pool, Share, SambaShare, User
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.views.samba import SambaListView
 
+"""
+fixture with:
+1 pool:
+  - id=11
+  - name="rock-pool"
+1 share:
+  - pool: "rock-pool" above
+  - name: share-smb
+  - exported with defaults:
+      - comment: "Samba-Export"
+      - admin_users: None
+      - browsable: 'yes'
+      - guest_ok: 'no'
+      - read_only: 'no'
+1 share:
+  - name: share2 - no SMB export
+1 User:
+  - id: 1
+  - name: admin
+  - group: 1
+1 Group:
+  - pk: 1
+
+proposed fixture = "test_smb.json"
+
+cd /opt/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin dumpdata storageadmin.pool storageadmin.share
+storageadmin.sambashare storageadmin.user storageadmin.group
+--natural-foreign --indent 4 >
+src/rockstor/storageadmin/fixtures/test_smb.json
+
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_samba.py
+"""
+
 
 class SambaTests(APITestMixin, SambaListView):
-    # fixture with:
-    # 1 pool:
-    #   - id=11
-    #   - name="rock-pool"
-    # 1 share:
-    #   - pool: "rock-pool" above
-    #   - name: share-smb
-    #   - exported with defaults:
-    #       - comment: "Samba-Export"
-    #       - admin_users: None
-    #       - browsable: 'yes'
-    #       - guest_ok: 'no'
-    #       - read_only: 'no'
-    # 1 share:
-    #   - name: share2 - no SMB export
-    # 1 User:
-    #   - id: 1
-    #   - name: admin
-    #   - group: 1
-    # 1 Group:
-    #   - pk: 1
-
-    # proposed fixture = "test_smb.json"
-    # bin/django dumpdata storageadmin.pool storageadmin.share
-    # storageadmin.sambashare storageadmin.user storageadmin.group
-    # --natural-foreign --indent 4 >
-    # src/rockstor/storageadmin/fixtures/test_smb.json
-    # ./bin/test -v 2 -p test_samba.py
     fixtures = ["test_api.json", "test_smb.json"]
     BASE_URL = "/api/samba"
 
@@ -84,6 +94,11 @@ class SambaTests(APITestMixin, SambaListView):
         )
         cls.mock_refresh_smb_config = cls.patch_refresh_smb_config.start()
         cls.mock_refresh_smb_config.return_value = "smbconfig"
+
+        cls.patch_refresh_smb_discovery = patch(
+            "storageadmin.views.samba.refresh_smb_discovery"
+        )
+        cls.mock_refresh_smb_discovery = cls.patch_refresh_smb_discovery.start()
 
     @classmethod
     def tearDownClass(cls):

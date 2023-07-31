@@ -26,11 +26,16 @@ Fixture creation instructions:
 - Create snapshot snap1 from share1 with uvisible False
 - Created snapshot snap2 from share2 with uvisible True
 
-bin/django dumpdata storageadmin.pool storageadmin.share storageadmin.snapshot \
+cd /opt/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin dumpdata storageadmin.pool storageadmin.share storageadmin.snapshot \
 --natural-foreign --indent 4 > \
 src/rockstor/storageadmin/fixtures/test_snapshot.json
 
-./bin/test -v 2 -p test_snapshot.py
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_snapshot.py
 """
 
 
@@ -81,6 +86,12 @@ class SnapshotTests(APITestMixin):
         cls.patch_create_clone = patch("storageadmin.views.snapshot." "create_clone")
         cls.mock_create_clone = cls.patch_create_clone.start()
 
+        cls.patch_refresh_nfs_exports = patch(
+            "storageadmin.views.snapshot.refresh_nfs_exports"
+        )
+        cls.mock_refresh_nfs_exports = cls.patch_refresh_nfs_exports.start()
+        cls.mock_refresh_nfs_exports.return_value = [""], [""], 0
+
     @classmethod
     def tearDownClass(cls):
         super(SnapshotTests, cls).tearDownClass()
@@ -121,7 +132,6 @@ class SnapshotTests(APITestMixin):
         )
         e_msg = "Share with id ({}) does not exist.".format(share_id)
         self.assertEqual(response.data[0], e_msg)
-
 
     def test_post_requests_2(self):
         """
@@ -226,7 +236,6 @@ class SnapshotTests(APITestMixin):
         )
         self.assertEqual(response.data[0], e_msg)
 
-
     def test_clone_command(self):
 
         data = {"name": "clonesnap2"}
@@ -241,7 +250,6 @@ class SnapshotTests(APITestMixin):
             command="clone",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-
 
     def test_delete_requests(self):
         """
@@ -270,9 +278,9 @@ class SnapshotTests(APITestMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Delete snapshot in fixture - happy path
-        snap_name = 'snap2'
+        snap_name = "snap2"
         share_id = 3  # from fixture share_name = "share2"
         response = self.client.delete(
-            '{}/{}/snapshots/{}'.format(self.BASE_URL, share_id, snap_name))
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+            "{}/{}/snapshots/{}".format(self.BASE_URL, share_id, snap_name)
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)

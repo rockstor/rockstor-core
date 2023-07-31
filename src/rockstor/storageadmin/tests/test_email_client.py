@@ -20,6 +20,14 @@ from storageadmin.models import Appliance
 from storageadmin.tests.test_api import APITestMixin
 
 
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_email_client.py
+"""
+
+
 class EmailTests(APITestMixin):
     # Proposed fixture "test_appliances.json"
     fixtures = ["test_api.json"]
@@ -54,6 +62,9 @@ class EmailTests(APITestMixin):
 
         cls.patch_update_sasl = patch("storageadmin.views.email_client.update_sasl")
         cls.mock_update_sasl = cls.patch_update_sasl.start()
+
+        cls.patch_update_master = patch("storageadmin.views.email_client.update_master")
+        cls.mock_update_master = cls.patch_update_master.start()
 
         # all values as per fixture
         cls.temp_appliance = Appliance(
