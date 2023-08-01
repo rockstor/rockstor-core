@@ -257,7 +257,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                                 "enable admin access. Please provide "
                                 "a new password."
                             )
-                            handle_exception(Exception(e_msg), request)
+                            handle_exception(Exception(e_msg), request, status_code=400)
                         auser = DjangoUser.objects.create_user(username, None, new_pw)
                         auser.is_active = True
                         auser.save()
