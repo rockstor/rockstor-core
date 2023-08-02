@@ -442,6 +442,7 @@ class PoolTests(APITestMixin):
         - enable zlib
         - disable lzo - compression-test-pool
         - enable lzo
+        - change compression from lzo to zstd - compression-test-pool
         """
 
         # create pool with invalid compression
@@ -453,7 +454,7 @@ class PoolTests(APITestMixin):
         }
         e_msg = (
             "Unsupported compression algorithm (derp). "
-            "Use one of ('lzo', 'zlib', 'no')."
+            "Use one of ('lzo', 'zlib', 'zstd', 'no')."
         )
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -541,6 +542,15 @@ class PoolTests(APITestMixin):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data["compression"], "lzo")
+
+        # change compression from lzo to zstd on compression-test-pool
+        comp_zstd = {"compression": "zstd"}
+        # call remount pool command with new compression setting request (put)
+        response = self.client.put(
+            "{}/{}/remount".format(self.BASE_URL, pId), data=comp_zstd
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data["compression"], "zstd")
 
     def test_mount_options(self):
         """
@@ -658,7 +668,7 @@ class PoolTests(APITestMixin):
 
         # test invalid compress-force applied via remount command
         data2 = {"mnt_options": "compress-force=1"}
-        e_msg = "compress-force is only allowed with ('lzo', 'zlib', 'no')."
+        e_msg = "compress-force is only allowed with ('lzo', 'zlib', 'zstd', 'no')."
         response = self.client.put(
             "{}/{}/remount".format(self.BASE_URL, pId), data=data2
         )

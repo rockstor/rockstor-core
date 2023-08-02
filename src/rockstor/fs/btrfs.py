@@ -2333,7 +2333,7 @@ def get_property(mnt_pt, prop_name=None):
     properties. But if called with a single property then the value and type
     appropriate for that property ie:
     string for label (in presented in properties),
-    string for compression ie: lzo, zlib (if presented in properties),
+    string for compression ie: lzo, zlib (if presented in properties), zstd,
     and Boolean for prop_name='ro'
     If prop_name specified but not found then None is returned.
     N.B. compression property for subvol only, vol/pool uses mount option.

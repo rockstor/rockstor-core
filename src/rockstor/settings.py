@@ -363,7 +363,7 @@ REST_FRAMEWORK = {
 
 CONFROOT = '{}/conf'.format(BASE_DIR)
 CERTDIR = '{}/certs'.format(BASE_DIR)
-COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
+COMPRESSION_TYPES = ('lzo', 'zlib', 'zstd', 'no',)
 
 SNAP_TS_FORMAT = '%Y%m%d%H%M'
 

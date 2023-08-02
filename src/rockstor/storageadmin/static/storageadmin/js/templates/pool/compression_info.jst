@@ -6,12 +6,14 @@
                 {{pool.compression}}
             {{else}}
             <strong>
-            <a href="#" id="comprOptn" data-type="select"
-            data-title="Pool compression algorithm.<br><strong>zlib: </strong>
-            slower than lzo but higher compression ratio.<br><strong>lzo: </strong>faster than zlib but lower compression ratio.<br>
-            Pool level compression applies to all it's Shares.<br>Alternatively: consider Share level compression.
-            <br>Unchanged data remains at prior setting until balanced."
-            >{{pool.compression}}
+            <a href="#" id="comprOptn" data-type="select" data-title="Pool compression algorithm.<br>
+            <strong>zlib: </strong>slower than LZO but higher compression ratio.<br>
+            <strong>lzo:</strong>faster compression and decompression than ZLIB, worse compression ratio, designed to be fast.<br>
+            <strong>zstd: </strong>compression comparable to ZLIB with higher compression/decompression speeds and different ratio.<br>
+            Pool level compression applies to all it's Shares.<br>
+            Alternatively: consider Share level compression.<br>
+            Unchanged data remains at prior setting until balanced.">
+                {{pool.compression}}
             </a>
             </strong>
             {{/if}}

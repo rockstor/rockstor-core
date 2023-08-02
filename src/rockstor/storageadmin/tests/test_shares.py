@@ -260,7 +260,7 @@ class ShareTests(APITestMixin):
         data["compression"] = "invalid"
         e_msg2 = (
             "Unsupported compression algorithm (invalid). Use one of "
-            "('lzo', 'zlib', 'no')."
+            "('lzo', 'zlib', 'zstd', 'no')."
         )
         response3 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -447,6 +447,7 @@ class ShareTests(APITestMixin):
         - enable zlib
         - disable lzo
         - enable lzo
+        - change compression from lzo to zstd
         """
 
         # create share with invalid compression
@@ -458,7 +459,7 @@ class ShareTests(APITestMixin):
         }
         e_msg = (
             "Unsupported compression algorithm (derp). "
-            "Use one of ('lzo', 'zlib', 'no')."
+            "Use one of ('lzo', 'zlib', 'zstd', 'no')."
         )
         response = self.client.post(self.BASE_URL, data=compression_test_share)
         self.assertEqual(
@@ -531,6 +532,14 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data["compression_algo"], "lzo")
+
+        # change compression from lzo to zstd
+        compression_zstd = {"compression": "zstd"}
+        response9 = self.client.put(
+            "{}/{}".format(self.BASE_URL, sId), data=compression_zstd
+        )
+        self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response9.data["compression_algo"], "zstd")
 
     def test_delete_exported_replicated(self):
         """

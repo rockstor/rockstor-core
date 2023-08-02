@@ -99,6 +99,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         this.cOpts = {
             'no': 'Dont enable compression',
             'zlib': 'zlib',
+            'zstd': 'zstd',
             'lzo': 'lzo'
         };
         this.cView = this.options.cView;
@@ -348,7 +349,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-compression-info #compression').tooltip({
             html: true,
             placement: 'top',
-            title: 'Choose a compression algorithm for this Share. By default, parent pool\'s compression algorithm is applied.<br> If you like to set pool wide compression, don\'t choose anything here. If you want finer control of this particular Share\'s compression algorithm, you can set it here.<br><strong>zlib: </strong>slower than lzo but higher compression ratio.<br><strong>lzo: </strong>faster than zlib but lower compression ratio.'
+            title: 'Choose a compression algorithm for this Share. By default, parent pool\'s compression algorithm is applied.<br> If you like to set pool wide compression, don\'t choose anything here. If you want finer control of this particular Share\'s compression algorithm, you can set it here.<br><strong>zlib: </strong>slower than LZO but higher compression ratio.<br><strong>lzo:</strong>faster compression and decompression than ZLIB, worse compression ratio, designed to be fast.<br><strong>zstd: </strong>compression comparable to ZLIB with higher compression/decompression speeds and different ratio.'
         });
     },
 
