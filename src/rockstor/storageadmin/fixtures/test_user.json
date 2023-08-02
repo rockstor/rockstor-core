@@ -1,0 +1,47 @@
+[
+{
+    "model": "storageadmin.user",
+    "pk": 1,
+    "fields": {
+        "user": [
+            "admin"
+        ],
+        "username": "admin",
+        "uid": 1003,
+        "gid": 100,
+        "public_key": null,
+        "shell": "/bin/bash",
+        "homedir": "/home/radmin",
+        "email": null,
+        "admin": true,
+        "group": 1,
+        "smb_shares": []
+    }
+},
+{
+    "model": "storageadmin.user",
+    "pk": 2,
+    "fields": {
+        "user": null,
+        "username": "testuser",
+        "uid": 1004,
+        "gid": 100,
+        "public_key": null,
+        "shell": "/bin/bash",
+        "homedir": "/home/testuser",
+        "email": null,
+        "admin": false,
+        "group": 1,
+        "smb_shares": []
+    }
+},
+{
+    "model": "storageadmin.group",
+    "pk": 1,
+    "fields": {
+        "gid": 100,
+        "groupname": "users",
+        "admin": true
+    }
+}
+]

@@ -23,6 +23,14 @@ from storageadmin.models import Disk
 from storageadmin.tests.test_api import APITestMixin
 
 
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_disks.py
+"""
+
+
 class DiskTests(APITestMixin):
     # Proposed fixture = ['test_disks.json']
     fixtures = ["test_api.json"]
@@ -39,6 +47,14 @@ class DiskTests(APITestMixin):
 
         cls.patch_scan_disks = patch("storageadmin.views.disk.scan_disks")
         cls.mock_scan_disks = cls.patch_scan_disks.start()
+
+        cls.patch_get_unlocked_luks_containers_uuids = patch(
+            "storageadmin.views.disk.get_unlocked_luks_containers_uuids"
+        )
+        cls.mock_get_unlocked_luks_containers_uuids = (
+            cls.patch_get_unlocked_luks_containers_uuids.start()
+        )
+        cls.mock_get_unlocked_luks_containers_uuids.return_value = []
 
         cls.patch_blink_disk = patch("storageadmin.views.disk.blink_disk")
         cls.mock_blink_disk = cls.patch_blink_disk.start()
