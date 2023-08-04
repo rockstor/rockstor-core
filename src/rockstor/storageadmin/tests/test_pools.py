@@ -454,7 +454,7 @@ class PoolTests(APITestMixin):
         }
         e_msg = (
             "Unsupported compression algorithm (derp). "
-            "Use one of ('lzo', 'zlib', 'zstd', 'no')."
+            "Use one of ('zlib', 'lzo', 'zstd', 'no')."
         )
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -668,7 +668,7 @@ class PoolTests(APITestMixin):
 
         # test invalid compress-force applied via remount command
         data2 = {"mnt_options": "compress-force=1"}
-        e_msg = "compress-force is only allowed with ('lzo', 'zlib', 'zstd', 'no')."
+        e_msg = "compress-force is only allowed with ('zlib', 'lzo', 'zstd', 'no')."
         response = self.client.put(
             "{}/{}/remount".format(self.BASE_URL, pId), data=data2
         )

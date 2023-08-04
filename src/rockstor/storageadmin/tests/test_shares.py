@@ -260,7 +260,7 @@ class ShareTests(APITestMixin):
         data["compression"] = "invalid"
         e_msg2 = (
             "Unsupported compression algorithm (invalid). Use one of "
-            "('lzo', 'zlib', 'zstd', 'no')."
+            "('zlib', 'lzo', 'zstd', 'no')."
         )
         response3 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -459,7 +459,7 @@ class ShareTests(APITestMixin):
         }
         e_msg = (
             "Unsupported compression algorithm (derp). "
-            "Use one of ('lzo', 'zlib', 'zstd', 'no')."
+            "Use one of ('zlib', 'lzo', 'zstd', 'no')."
         )
         response = self.client.post(self.BASE_URL, data=compression_test_share)
         self.assertEqual(

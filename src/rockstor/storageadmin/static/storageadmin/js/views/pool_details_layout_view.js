@@ -57,8 +57,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         this.cOpts = {
             'no': 'Dont enable compression',
             'zlib': 'zlib',
-            'zstd': 'zstd',
-            'lzo': 'lzo'
+            'lzo': 'lzo',
+            'zstd': 'zstd'
         };
         this.initHandlebarHelpers();
         this.poolShares = new PoolShareCollection([], {
@@ -156,8 +156,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
             source: [
                 {value: 'no', text: 'no'},
                 {value: 'zlib', text: 'zlib'},
-                {value: 'zstd', text: 'zstd'},
-                {value: 'lzo', text: 'lzo'}
+                {value: 'lzo', text: 'lzo'},
+                {value: 'zstd', text: 'zstd'}
             ],
             success: function(response, newCompr) {
                 $.ajax({
