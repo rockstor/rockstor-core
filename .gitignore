@@ -42,3 +42,13 @@ node_modules/
 
 # VS Code
 .vscode
+
+# Rockstor build
+.initrock
+PKG-INFO
+certs/
+jslibs/
+poetry-install.txt
+rockstor-jslibs.tar.gz*
+rockstor-tasks-huey.db*
+static/
