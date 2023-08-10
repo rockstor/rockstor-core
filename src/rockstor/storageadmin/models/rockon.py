@@ -97,8 +97,8 @@ class DImage(models.Model):
 
 
 class DContainer(models.Model):
-    rockon = models.ForeignKey(RockOn)
-    dimage = models.ForeignKey(DImage)
+    rockon = models.ForeignKey(RockOn, on_delete=models.CASCADE)
+    dimage = models.ForeignKey(DImage, on_delete=models.CASCADE)
     name = models.CharField(max_length=1024, unique=True)
     launch_order = models.IntegerField(default=1)
     # if uid is None, container's owner is not set. defaults to root.  if it's
@@ -111,8 +111,8 @@ class DContainer(models.Model):
 
 
 class DContainerLink(models.Model):
-    source = models.OneToOneField(DContainer)
-    destination = models.ForeignKey(DContainer, related_name="destination_container")
+    source = models.OneToOneField(DContainer, on_delete=models.CASCADE)
+    destination = models.ForeignKey(DContainer, related_name="destination_container", on_delete=models.CASCADE)
     name = models.CharField(max_length=64, null=True)
 
     class Meta:
@@ -121,8 +121,8 @@ class DContainerLink(models.Model):
 
 
 class DContainerNetwork(models.Model):
-    container = models.ForeignKey(DContainer)
-    connection = models.ForeignKey(BridgeConnection)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
+    connection = models.ForeignKey(BridgeConnection, on_delete=models.CASCADE)
 
     @property
     def docker_name(self):
@@ -146,7 +146,7 @@ class DPort(models.Model):
     hostp = models.IntegerField(unique=True)
     hostp_default = models.IntegerField(null=True)
     containerp = models.IntegerField()
-    container = models.ForeignKey(DContainer)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
     protocol = models.CharField(max_length=32, null=True)
     uiport = models.BooleanField(default=False)
     label = models.CharField(max_length=1024, null=True)
@@ -167,8 +167,8 @@ class DPort(models.Model):
 
 
 class DVolume(models.Model):
-    container = models.ForeignKey(DContainer)
-    share = models.ForeignKey(Share, null=True)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
+    share = models.ForeignKey(Share, null=True, on_delete=models.CASCADE)
     dest_dir = models.CharField(max_length=1024)
     uservol = models.BooleanField(default=False)
     description = models.CharField(max_length=1024, null=True)
@@ -190,7 +190,7 @@ class DVolume(models.Model):
 
 
 class ContainerOption(models.Model):
-    container = models.ForeignKey(DContainer)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     val = models.CharField(max_length=1024, blank=True)
 
@@ -199,7 +199,7 @@ class ContainerOption(models.Model):
 
 
 class DContainerArgs(models.Model):
-    container = models.ForeignKey(DContainer)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     val = models.CharField(max_length=1024, blank=True)
 
@@ -208,7 +208,7 @@ class DContainerArgs(models.Model):
 
 
 class DCustomConfig(models.Model):
-    rockon = models.ForeignKey(RockOn)
+    rockon = models.ForeignKey(RockOn, on_delete=models.CASCADE)
     key = models.CharField(max_length=1024)
     val = models.CharField(max_length=1024, null=True)
     description = models.CharField(max_length=2048, null=True)
@@ -223,7 +223,7 @@ class DCustomConfig(models.Model):
 
 
 class DContainerEnv(models.Model):
-    container = models.ForeignKey(DContainer)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
     key = models.CharField(max_length=1024)
     val = models.CharField(max_length=1024, null=True)
     description = models.CharField(max_length=2048, null=True)
@@ -231,7 +231,7 @@ class DContainerEnv(models.Model):
 
 
 class DContainerDevice(models.Model):
-    container = models.ForeignKey(DContainer)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
     dev = models.CharField(max_length=1024, null=True)
     val = models.CharField(max_length=1024, null=True)
     description = models.CharField(max_length=2048, null=True)
@@ -243,7 +243,7 @@ class DContainerDevice(models.Model):
 
 
 class DContainerLabel(models.Model):
-    container = models.ForeignKey(DContainer)
+    container = models.ForeignKey(DContainer, on_delete=models.CASCADE)
     key = models.CharField(max_length=1024, null=True)
     val = models.CharField(max_length=1024, null=True)
 

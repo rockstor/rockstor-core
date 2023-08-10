@@ -21,7 +21,7 @@ from storageadmin.models import SambaShare
 
 
 class SambaCustomConfig(models.Model):
-    smb_share = models.ForeignKey(SambaShare)
+    smb_share = models.ForeignKey(SambaShare, on_delete=models.CASCADE)
     custom_config = models.CharField(max_length=1024, null=True)
 
     class Meta:

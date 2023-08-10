@@ -22,7 +22,7 @@ from storageadmin.models import Pool
 
 class PoolBalance(models.Model):
 
-    pool = models.ForeignKey(Pool)
+    pool = models.ForeignKey(Pool, on_delete=models.CASCADE)
     # started|running|cancelling|cancelled|pausing|paused|finished|failed|terminated
     status = models.CharField(max_length=10, default="started")
     # huey uuid

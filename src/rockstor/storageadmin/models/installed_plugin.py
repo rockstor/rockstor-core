@@ -21,7 +21,7 @@ from storageadmin.models import Plugin
 
 
 class InstalledPlugin(models.Model):
-    plugin_meta = models.ForeignKey(Plugin)
+    plugin_meta = models.ForeignKey(Plugin, on_delete=models.CASCADE)
     install_date = models.DateTimeField(auto_now=True)
 
     class Meta:

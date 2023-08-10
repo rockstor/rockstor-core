@@ -24,7 +24,7 @@ class SambaShare(models.Model):
     YES = "yes"
     NO = "no"
     """share that is exported"""
-    share = models.OneToOneField("Share", related_name="sambashare")
+    share = models.OneToOneField("Share", related_name="sambashare", on_delete=models.CASCADE)
     """mount point of the share"""
     path = models.CharField(max_length=4096, unique=True)
     comment = models.CharField(max_length=100, default="foo bar")

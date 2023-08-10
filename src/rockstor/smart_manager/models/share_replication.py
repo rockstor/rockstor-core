@@ -48,7 +48,7 @@ class ReplicaTrail(models.Model):
     3. snapshot_created -> send_pending -> send_failed (error)
     """
 
-    replica = models.ForeignKey(Replica)
+    replica = models.ForeignKey(Replica, on_delete=models.CASCADE)
     snap_name = models.CharField(max_length=1024)
     kb_sent = models.BigIntegerField(default=0)
     snapshot_created = models.DateTimeField(null=True)
@@ -92,7 +92,7 @@ class ReceiveTrail(models.Model):
     3. snapshot_created -> send_pending -> send_failed (error)
     """
 
-    rshare = models.ForeignKey(ReplicaShare)
+    rshare = models.ForeignKey(ReplicaShare, on_delete=models.CASCADE)
     snap_name = models.CharField(max_length=1024)
     kb_received = models.BigIntegerField(default=0)
     receive_pending = models.DateTimeField(null=True)
