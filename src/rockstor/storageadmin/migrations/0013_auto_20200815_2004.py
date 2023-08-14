@@ -25,15 +25,15 @@ class Migration(migrations.Migration):
                 ('ip_masquerade', models.BooleanField(default=False)),
                 ('ip_range', models.CharField(max_length=64, null=True)),
                 ('subnet', models.CharField(max_length=64, null=True)),
-                ('connection', models.ForeignKey(to='storageadmin.NetworkConnection', null=True)),
+                ('connection', models.ForeignKey(to='storageadmin.NetworkConnection', null=True, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
             name='DContainerNetwork',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('connection', models.ForeignKey(to='storageadmin.BridgeConnection')),
-                ('container', models.ForeignKey(to='storageadmin.DContainer')),
+                ('connection', models.ForeignKey(to='storageadmin.BridgeConnection', on_delete=models.CASCADE)),
+                ('container', models.ForeignKey(to='storageadmin.DContainer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AddField(

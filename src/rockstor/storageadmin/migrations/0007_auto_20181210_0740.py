@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('key', models.CharField(max_length=1024, null=True)),
                 ('val', models.CharField(max_length=1024, null=True)),
-                ('container', models.ForeignKey(to='storageadmin.DContainer')),
+                ('container', models.ForeignKey(to='storageadmin.DContainer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AlterUniqueTogether(

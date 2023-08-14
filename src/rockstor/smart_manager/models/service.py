@@ -31,7 +31,7 @@ class Service(models.Model):
 
 class ServiceStatus(models.Model):
 
-    service = models.ForeignKey(Service)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
     count = models.BigIntegerField(default=1)
     ts = models.DateTimeField(auto_now=True, db_index=True)

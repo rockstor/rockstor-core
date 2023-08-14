@@ -22,7 +22,7 @@ from django.db import models
 class Snapshot(models.Model):
     """share which this snapshot belongs to"""
 
-    share = models.ForeignKey("Share")  # Resolve circular dependency
+    share = models.ForeignKey("Share", on_delete=models.CASCADE)  # Resolve circular dependency
     """display name of the snapshot"""
     name = models.CharField(max_length=4096)
     """real name of the snapshot"""
