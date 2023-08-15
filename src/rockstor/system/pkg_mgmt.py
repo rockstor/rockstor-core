@@ -453,19 +453,9 @@ def update_run(subscription=None, update_all_other=False):
     with open(npath, "w") as atfo:
         if not update_all_other:
             atfo.write("sleep 10\n")
-            # stop rockstor* services: rockstor-bootstrap, via Requires, restarts them.
-            atfo.write("{} stop rockstor*\n".format(SYSTEMCTL))
-            # Exclude eggs subdir (pre-v4.5.4-0), as these are in rpm so will be deleted
-            # as otherwise floods YUM log with "No such file or directory"
-            atfo.write(
-                '/usr/bin/find {} -name "*.pyc" -not -path "*/eggs/*" -type f -delete\n'.format(
-                    settings.ROOT_DIR
-                )
-            )
             atfo.write(pkg_refresh_cmd)
             # Unset inherited VIRTUAL_ENV environmental variable before invoking rpm/zypper
             atfo.write('unset VIRTUAL_ENV\n')
-            # account for moving from dev/source to package type install:
             atfo.write(pkg_in_up_rockstor)
             # rockstor-bootstrap Requires rockstor which Requires rockstor-pre (initrock)
             atfo.write("{} start rockstor-bootstrap\n".format(SYSTEMCTL))
