@@ -7,6 +7,10 @@ Requires=rockstor-pre.service
 Environment="DJANGO_SETTINGS_MODULE=settings"
 WorkingDirectory=/opt/rockstor
 ExecStart=/root/.local/bin/poetry run supervisord -c /opt/rockstor/etc/supervisord.conf
+ExecStop=/root/.local/bin/poetry run supervisorctl shutdown
+ExecReload=/root/.local/bin/poetry run supervisorctl reload
+# Generally not recommended but used here to honour supervisord's remit re process management.
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target
