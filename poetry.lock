@@ -1,6 +1,6 @@
 [[package]]
 name = "certifi"
-version = "2023.5.7"
+version = "2023.7.22"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
@@ -82,7 +82,7 @@ requests = ">=2.13.0"
 
 [[package]]
 name = "django-pipeline"
-version = "1.6.9"
+version = "1.7.0"
 description = "Pipeline is an asset packaging library for Django."
 category = "main"
 optional = false
@@ -346,12 +346,12 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">= 3.6, < 3.9"
-content-hash = "19dc63a5e62eb552b7207bde82a139b0038ecadadfa71ea3b6f2e56af0448b9c"
+content-hash = "fb6e94460ce403d35e64a5408875a38149fc392847e38d36fe6962da1ed31ef6"
 
 [metadata.files]
 certifi = [
-    {file = "certifi-2023.5.7-py3-none-any.whl", hash = "sha256:c6c2e98f5c7869efca1f8916fed228dd91539f9f1b444c314c06eef02980c716"},
-    {file = "certifi-2023.5.7.tar.gz", hash = "sha256:0f0d56dc5a6ad56fd4ba36484d6cc34451e1c6548c61daad8c320169f91eddc7"},
+    {file = "certifi-2023.7.22-py3-none-any.whl", hash = "sha256:92d6037539857d8206b8f6ae472e8b77db8058fec5937a1ef3f54304089edbb9"},
+    {file = "certifi-2023.7.22.tar.gz", hash = "sha256:539cc1d13202e33ca466e88b2807e29f4c13049d6d87031a3c110744495cb082"},
 ]
 cffi = [
     {file = "cffi-1.15.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:a66d3508133af6e8548451b25058d5812812ec3798c886bf38ed24a98216fab2"},
@@ -443,8 +443,8 @@ django-oauth-toolkit = [
     {file = "django_oauth_toolkit-1.1.2-py2.py3-none-any.whl", hash = "sha256:c006e804ecfdc98ffeb943100dbb0b5e6d82c969c7cb672bc999f1f3a403cb01"},
 ]
 django-pipeline = [
-    {file = "django-pipeline-1.6.9.tar.gz", hash = "sha256:3eb391e59525beedf0a45d4b6ef7e6a3e69f720b7560a1a305e115eb33d5fb6c"},
-    {file = "django_pipeline-1.6.9-py2.py3-none-any.whl", hash = "sha256:3ed7e5913c521a568ab3a9866d83b239b8c8c2e03a4d99689a87788aec3fa256"},
+    {file = "django-pipeline-1.7.0.tar.gz", hash = "sha256:0ded22b974e3d627c27fc490ef5b23fcdcf0cdb00b704d628b5ca6d0b010d6fe"},
+    {file = "django_pipeline-1.7.0-py2.py3-none-any.whl", hash = "sha256:f7da70f00aa4baea3e0811f88927a116425deee05871fa2bfd2f8247f42d8847"},
 ]
 djangorestframework = [
     {file = "djangorestframework-3.9.3-py2.py3-none-any.whl", hash = "sha256:1d22971a5fc98becdbbad9710ca2a9148dd339f6cbea4c3ddbed2cb84bab94e1"},
