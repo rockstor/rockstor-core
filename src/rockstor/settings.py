@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012 RockStor, Inc. <https://rockstor.com>
+Copyright (c) 2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -145,7 +145,7 @@ TEMPLATES = [
     },
 ]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     # New in 1.8, 1.11 newly sets Content-Length header.
     # 'django.middleware.common.CommonMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
