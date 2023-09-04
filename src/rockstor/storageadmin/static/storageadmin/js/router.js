@@ -979,8 +979,7 @@ $(document).ready(function() {
     };
 
     var distroInfo = function(data) {
-        $('#distro-info').text("Uses " + data.distro);
-        $('#distro-info').attr('title', data.version);
+        $('#distro-info').text("Uses " + data.distro + ": " + data.version);
     };
 
     var displayLocaleTime = function(data) {
