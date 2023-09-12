@@ -22,8 +22,9 @@ from system.directory_services import domain_workgroup
 class SystemDirectoryServicesTests(unittest.TestCase):
     """
     The tests in this suite can be run via the following command:
-    cd <root dir of rockstor ie /opt/rockstor>
-    ./bin/test --settings=test-settings -v 3 -p test_directory_services*
+    cd /opt/rockstor/src/rockstor
+    export DJANGO_SETTINGS_MODULE=settings
+    poetry run django-admin test -p test_directory_services.py -v 2
     """
 
     def setUp(self):
@@ -50,8 +51,8 @@ class SystemDirectoryServicesTests(unittest.TestCase):
             returned,
             expected,
             msg="Un-expected domain_workgroup() result:\n "
-            "returned = ({}).\n "
-            "expected = ({}).".format(returned, expected),
+            f"returned = {returned}.\n "
+            f"expected = {expected}.",
         )
 
     def test_domain_workgroup_invalid(self):
@@ -62,7 +63,7 @@ class SystemDirectoryServicesTests(unittest.TestCase):
         domain = "bogusad.bogusdomain.com"
         self.mock_run_command.side_effect = CommandException(
             err=["Didn't find the cldap server!", ""],
-            cmd=["/usr/bin/net", "ads", "workgroup", "-S", domain],
+            cmd=["/usr/bin/net", "ads", "workgroup", f"--realm={domain.upper()}"],
             out=[""],
             rc=255,
         )
