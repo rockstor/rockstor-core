@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,21 +13,21 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import crypt
-import grp
 import logging
 import os
 import pwd
 import re
 import stat
-from subprocess import run, Popen, PIPE
 from shutil import move
+from subprocess import run, Popen, PIPE
 from tempfile import mkstemp
+from typing import Union, Optional, Dict, Any
 
 import dbus
-from dbus import DBusException
+import grp
 
 from system.exceptions import CommandException
 from system.osi import run_command
@@ -126,7 +126,8 @@ def get_groups(*gids):
             for ifp_gp, ifp_gid in ifp_groups.items():
                 if ifp_gp not in groups:
                     groups[ifp_gp] = ifp_gid
-        except DBusException:
+        except dbus.DBusException as e:
+            logger.debug(f"Exception while getting groups from InfoPipe: {e}")
             pass
     return groups
 
@@ -284,7 +285,9 @@ def add_ssh_key(username, key, old_key=None):
     run_command([CHOWN, "%s:%s" % (username, groupname), AUTH_KEYS])
 
 
-def ifp_get_properties_from_name_or_id(iface_type, target, *obj_properties):
+def ifp_get_properties_from_name_or_id(
+    iface_type: str, target: Union[str, int], *obj_properties: str
+) -> Optional[Dict[str, Any]]:
     """Get user of group properties from InfoPipe
 
     Uses InfoPipe (SSSD D-Bus responder) to get desired properties
@@ -299,29 +302,34 @@ def ifp_get_properties_from_name_or_id(iface_type, target, *obj_properties):
     # InfoPipe depends on the sssd service running:
     if not is_systemd_service_active("sssd"):
         return None
-    bus = dbus.SystemBus()
-    ifp_bus_name = "org.freedesktop.sssd.infopipe"
+    try:
+        bus = dbus.SystemBus()
+        ifp_bus_name = "org.freedesktop.sssd.infopipe"
+        ifp_obj = bus.get_object(ifp_bus_name, IFP_CONSTANTS[iface_type]["obj_path"])
+        ifp_iface = dbus.Interface(ifp_obj, IFP_CONSTANTS[iface_type]["main_iface"])
 
-    ifp_obj = bus.get_object(ifp_bus_name, IFP_CONSTANTS[iface_type]["obj_path"])
-    ifp_iface = dbus.Interface(ifp_obj, IFP_CONSTANTS[iface_type]["main_iface"])
+        if isinstance(target, str):
+            my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByName(target))
+        elif isinstance(target, int):
+            my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByID(target))
+        else:
+            raise Exception(
+                "Incompatible type for target {}: {}.".format(target, type(target))
+            )
 
-    if isinstance(target, str):
-        my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByName(target))
-    elif isinstance(target, int):
-        my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByID(target))
-    else:
-        raise Exception(
-            "Incompatible type for target {}: {}.".format(target, type(target))
+        my_iface_properties = dbus.Interface(my_obj, "org.freedesktop.DBus.Properties")
+
+        ifp_res = {}
+        for obj_property in obj_properties:
+            ifp_res[obj_property] = my_iface_properties.Get(
+                IFP_CONSTANTS[iface_type]["sub_iface"], obj_property
+            )
+        return ifp_res
+    except dbus.DBusException as e:
+        logger.debug(
+            f"Exception while getting {obj_properties} for {target} on {iface_type}: {e}"
         )
-
-    my_iface_properties = dbus.Interface(my_obj, "org.freedesktop.DBus.Properties")
-
-    ifp_res = {}
-    for obj_property in obj_properties:
-        ifp_res[obj_property] = my_iface_properties.Get(
-            IFP_CONSTANTS[iface_type]["sub_iface"], obj_property
-        )
-    return ifp_res
+        return None
 
 
 def ifp_get_groups():
