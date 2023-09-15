@@ -31,8 +31,6 @@ from system.osi import (
 class AttachedManager(models.Manager):
     """Manager subclass to return only attached disks"""
 
-    use_for_related_fields = True
-
     def attached(self):
         # Return default queryset after excluding name="detached-*" items.
         # Alternative lookup type __regex=r'^detached-'
@@ -151,3 +149,4 @@ class Disk(models.Model):
 
     class Meta:
         app_label = "storageadmin"
+        base_manager_name = "attached"
