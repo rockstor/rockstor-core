@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
@@ -295,7 +295,7 @@ def leave_domain(config, method="sssd"):
         run_command(cmd, log=True)
 
 
-def domain_workgroup(domain=None, method="sssd"):
+def domain_workgroup(domain: str, method: str = "sssd") -> str:
     """
     Fetches the Workgroup value from an Active Directory domain
     to be fed to Samba configuration.
@@ -303,20 +303,17 @@ def domain_workgroup(domain=None, method="sssd"):
     :param method: String - SSSD or Winbind (default is sssd)
     :return:
     """
-    cmd = [NET, "ads", "workgroup", "-S", domain]
-    if method == "winbind":
-        cmd = [ADCLI, "info", domain]
-    o, e, rc = run_command(cmd)
+    cmd = [NET, "ads", "workgroup", f"--realm={domain.upper()}"]
     match_str = "Workgroup:"
     if method == "winbind":
+        cmd = [ADCLI, "info", domain]
         match_str = "domain-short = "
-    for l in o:
-        l = l.strip()
-        if re.match(match_str, l) is not None:
-            return l.split(match_str)[1].strip()
-    raise Exception(
-        "Failed to retrieve Workgroup. out: {} err: {} rc: {}".format(o, e, rc)
-    )
+    o, e, rc = run_command(cmd, log=True)
+    for line in o:
+        line = line.strip()
+        if re.match(match_str, line) is not None:
+            return line.split(match_str)[1].strip()
+    raise Exception(f"Failed to retrieve Workgroup. out: {o} err: {e} rc: {rc}")
 
 
 def validate_idmap_range(config):
