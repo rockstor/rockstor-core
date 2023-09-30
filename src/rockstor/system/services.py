@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
@@ -21,10 +21,12 @@ import re
 import shutil
 import stat
 from tempfile import mkstemp
+from typing import Tuple, List
 
 from django.conf import settings
-from system.osi import run_command
+
 from system.constants import SYSTEMCTL
+from system.osi import run_command
 from system.ssh import is_sftp_running
 
 SUPERCTL_BIN = "{}.venv/bin/supervisorctl".format(settings.ROOT_DIR)
@@ -138,8 +140,10 @@ def set_autostart(service, switch):
     shutil.move(npath, SUPERVISORD_CONF)
 
 
-def superctl(service, switch):
-    out, err, rc = run_command([SUPERCTL_BIN, switch, service])
+def superctl(
+    service: str, switch: str, throw: bool = True
+) -> Tuple[List[str], List[str], int]:
+    out, err, rc = run_command([SUPERCTL_BIN, switch, service], throw=throw)
     set_autostart(service, switch)
     if switch == "status":
         status = out[0].split()[1]
@@ -189,7 +193,7 @@ def service_status(service_name, config=None):
         # Delegate sshd's sftp subsystem status check to system.ssh.py call.
         return is_sftp_running(return_boolean=False)
     elif service_name in ("replication", "data-collector", "ztask-daemon"):
-        return superctl(service_name, "status")
+        return superctl(service_name, "status", throw=False)
     elif service_name == "smb":
         out, err, rc = run_command(
             [SYSTEMCTL, "--lines=0", "status", "smb"], throw=False
