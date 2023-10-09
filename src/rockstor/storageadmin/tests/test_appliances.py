@@ -32,6 +32,7 @@ class AppliancesTests(APITestMixin):
     fixtures = ["test_api.json", "test_appliances.json"]
     BASE_URL = "/api/appliances"
     client = APIClient()
+    databases = '__all__'
 
     @classmethod
     def setUpClass(cls):
