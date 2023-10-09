@@ -1,0 +1,25 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="rock-tests" type="DjangoTestsConfigurationType" show_console_on_std_err="true" show_console_on_std_out="true">
+    <module name="rockstor" />
+    <option name="INTERPRETER_OPTIONS" value="-Wd" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="DJANGO_SETTINGS_MODULE" value="src.rockstor.settings" />
+      <env name="PYCHARM_DJANGO_MANAGE_MODULE" value="src.rockstor.manage" />
+      <env name="DJANGO_DEBUG" value="True" />
+    </envs>
+    <option name="SDK_HOME" value="" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="true" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="TARGET" value="rockstor" />
+    <option name="SETTINGS_FILE" value="" />
+    <option name="CUSTOM_SETTINGS" value="false" />
+    <option name="USE_OPTIONS" value="false" />
+    <option name="OPTIONS" value="" />
+    <method v="2" />
+  </configuration>
+</component>
