@@ -60,7 +60,7 @@ generate-setup-file = false
 python = ">= 3.6, < 3.9"
 
 # [tool.poetry.group.django.dependencies]
-django = "==1.11.29"
+django = "~2.2"
 django-oauth-toolkit = "==1.1.2"
 djangorestframework = "==3.9.3"
 django-pipeline = "==1.7.0" # last version listed with Python 3.6 and Django 1.11 compatibility
