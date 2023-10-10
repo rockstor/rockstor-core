@@ -30,7 +30,7 @@ poetry run django-admin test -v 2 -p test_snmp.py
 
 
 class SNMPTests(APITestCase):
-    multi_db = True
+    databases = '__all__'
     # TODO Requires command to reproduce minimal fixture:
     #  "services.json" fixture requires only the smart_manager.service model.
     fixtures = ["test_api.json", "services.json"]

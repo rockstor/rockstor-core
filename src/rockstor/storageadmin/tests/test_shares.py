@@ -61,7 +61,7 @@ src/rockstor/storageadmin/fixtures/test_shares-services.json
 
 
 class ShareTests(APITestMixin):
-    multi_db = True
+    databases = '__all__'
     fixtures = ["test_api.json", "test_shares.json", "test_shares-services.json"]
     BASE_URL = "/api/shares"
 
