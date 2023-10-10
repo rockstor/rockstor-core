@@ -38,7 +38,7 @@ class TaskSchedulerTests(APITestCase):
     # src/rockstor/storageadmin/fixtures/test_pool_scrub_balance_minimal.json
     #
     # ./bin/test -v 2 -p test_task_scheduler.py
-    multi_db = True
+    databases = '__all__'
     fixtures = ["scheduled_tasks.json"]
     BASE_URL = "/api/sm/tasks"
 
