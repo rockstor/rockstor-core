@@ -892,9 +892,6 @@ label.error { font-size: 12px; color: #b94a48; }
 hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
 }
 
-/* Services page */
-
-#services-table th { text-align: left; }
 
 /* Setup wizard */
 .step-titles {

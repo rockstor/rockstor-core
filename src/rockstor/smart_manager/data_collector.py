@@ -886,18 +886,15 @@ class ServicesNamespace(RockstorIO):
     start = False
 
     def on_connect(self, sid, environ):
-
         self.emit("connected", {"key": "services:connected", "data": "connected"})
         self.start = True
         self.spawn(self.send_service_statuses, sid)
 
     def on_disconnect(self, sid):
-
         self.cleanup(sid)
         self.start = False
 
     def send_service_statuses(self):
-
         while self.start:
 
             data = {}
@@ -914,7 +911,6 @@ class ServicesNamespace(RockstorIO):
                 data[service.name] = {}
                 output, error, return_code = service_status(service.name, config=config)
                 data[service.name]["running"] = return_code
-
             self.emit("get_services", {"data": data, "key": "services:get_services"})
             gevent.sleep(15)
 
@@ -1122,7 +1118,6 @@ class SysinfoNamespace(RockstorIO):
                 data["status"] = "errors"
                 data["message"] = "Pools found with device errors: "
                 data["message"] += "({})".format(", ".join(labels))
-
             self.emit("pool_dev_stats", {"key": "sysinfo:pool_dev_stats", "data": data})
 
             gevent.sleep(30)

@@ -20,7 +20,7 @@ from smart_manager.models import Service
 from storageadmin.models import Setup
 
 
-def register_services():
+def register_services() -> None:
     services = {
         "NFS": "nfs",
         "Samba": "smb",
@@ -39,6 +39,7 @@ def register_services():
         "Bootstrap": "rockstor-bootstrap",
         "Shell In A Box": "shellinaboxd",
         "Rockstor": "rockstor",
+        "Tailscale": "tailscaled",
     }
 
     # N.B. all other services have null as their default config with service.

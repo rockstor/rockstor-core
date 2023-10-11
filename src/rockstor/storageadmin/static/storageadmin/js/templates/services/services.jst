@@ -26,7 +26,7 @@
         <br>
         <div id="services-list">
             <div id="service">
-                <table id="services-table" class="table table-bordered table-striped table-condensed data-table" width="100%">
+                <table id="services-table" class="table table-bordered table-striped table-condensed data-table">
                     <thead>
                         <tr>
                             <th scope="col">Name</th>
@@ -43,11 +43,15 @@
                                 {{/ifTooltipExist}}
                             </td>
                             <td id="{{this.name}}-status">
+                                {{#if this.needs_auth}}
+                                    <button id="login" class="btn btn-primary actions-tailscale" data-service-name="{{this.name}}">Login</button>
+                                {{else}}
                                 <input type="checkbox" data-service-name="{{this.name}}" data-size="mini" {{#if this.status}} checked {{/if}}>
                                 <div class="command-status" data-service-name="{{this.name}}">&nbsp;</div>
                                 <div class="simple-overlay" id="{{this.name}}-err-popup">
                                     <div class="overlay-content"></div>
                                 </div>
+                                {{/if}}
                             </td>
                         </tr>
                         {{/each}}

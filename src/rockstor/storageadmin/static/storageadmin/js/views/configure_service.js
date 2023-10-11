@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
@@ -39,6 +39,18 @@ ConfigureServiceView = RockstorLayoutView.extend({
         this.adStatus = this.options.adStatus;
         // set template
         this.template = window.JST['services_configure_' + this.serviceName];
+
+        // Form validation for the Tailscale service
+        $.validator.addMethod('isExitNodeEnabled', function(element) {
+            console.log("isExitNodeEnabled is: ", _this.$('#exit_node').val() != '');
+            return (_this.$('#exit_node').val() != '');
+        }, 'An exit node must be specified above for this option to be enabled.')
+
+        $.validator.addMethod('isAlphanumericWithHyphens', function(value, element) {
+            var regExp = new RegExp(/^[A-Za-z0-9-]+$/);
+            return this.optional(element) || regExp.test(value);
+        }, 'The hostname can only contain alphanumeric characters or hyphens.')
+
         this.rules = {
             ntpd: {
                 server: 'required'
@@ -94,6 +106,25 @@ ConfigureServiceView = RockstorLayoutView.extend({
             },
             rockstor: {
                 listener_port: 'required'
+            },
+            tailscaled: {
+                exit_node_allow_lan_access: {
+                    isExitNodeEnabled: {
+                        depends: function (element) {
+                            return (_this.$('#exit_node_allow_lan_access').attr('checked'));
+                        }
+                    }
+                },
+                advertise_routes: {
+                    required: {
+                        depends: function (element) {
+                            return (_this.$('input[name="subnet_router"][value="yes"]').attr('checked'));
+                        }
+                    }
+                },
+                hostname: {
+                    isAlphanumericWithHyphens: true
+                }
             }
         };
 
@@ -107,6 +138,10 @@ ConfigureServiceView = RockstorLayoutView.extend({
         this.dependencies.push(this.shares);
         this.network = new NetworkConnectionCollection();
         this.dependencies.push(this.network);
+        this.yes_no_choices = [
+            {name: 'yes', value: 'yes'},
+            {name: 'no', value: 'no'},
+        ];
         this.initHandlebarHelpers();
     },
 
@@ -150,7 +185,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
             network: this.network,
             defaultPort: default_port,
             adStatus: this.adStatus,
-            nutShutdownTimes: nutShutdownTimes
+            nutShutdownTimes: nutShutdownTimes,
+            yes_no_choices: this.yes_no_choices
         }));
 
         this.$('#nis-form :input').tooltip({
@@ -305,6 +341,83 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             placement: 'left',
             title: 'Remember to allow Rockstor server on popup blockers to avoid annoying messages'
         });
+        // TAILSCALE service
+        this.$('#tailscaled-form #custom_config').tooltip({
+            html: true,
+            placement: 'right',
+            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div> \
+                    <div class="tooltip-inner size300"></div></div>',
+            title: 'These lines will be added as flags to the <code>tailscale up</code> command<br/><br/> \
+                    Please add each flag on its own line.<br/>\
+                    A flag will be ignored if it is a duplicate of one of the options listed in the form above.'
+        });
+        this.$('#tailscaled-form #advertise_routes').tooltip({
+            html: true,
+            placement: 'right',
+            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div> \
+                    <div class="tooltip-inner size300"></div></div>',
+            title: 'Subnet routes that will be exposed to your Tailscale network.<br/><br/>\
+                    Use a comma-separated list (no-space) such as: <code>192.168.0.0/24,192.168.1.0/24</code>.<br/>\
+                    This example will add the following flag to the <code>tailscale up</code> command: <code>--advertise-routes=192.168.0.0/24,192.168.1.0/24</code>'
+        });
+        this.$('#tailscaled-form label[for="accept_routes"]').tooltip({
+            html: true,
+            placement: 'left',
+            template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div> \
+                    <div class="tooltip-inner size300"></div></div>',
+            title: 'Accept subnet routes from <em>other machines</em>.<br/><br/>\
+                    Setting this to Yes will enable this machine to discover the routes from other machines used\
+                    as a subnet router on your Tailscale network.'
+        });
+        this.$('#tailscaled-form #hostname').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Provide a hostname to use for the device instead of the one provided by the OS.\
+                    Note that this will change the machine name used in <a href="https://tailscale.com/kb/1081/magicdns/" target="_blank">MagicDNS</a>.'
+        });
+
+        // Tailscaled form dynamic options
+        $('#tailscaled-form').change(function () {
+        // Enable the 'exit_node_allow_lan_access' checkbox only when an exit node is specified
+            if ($('#exit_node').val() != '') {
+                $('#exit_node_allow_lan_access').attr('disabled', false);
+                $('#exit_node_allow_lan_access').attr('title', '');
+                // If an exit node is specified, the current machine cannot be used
+                // as an exit node itself, so disable that option
+                $('input[name="advertise_exit_node"][value="yes"]').attr('disabled', true);
+                $('input[name="advertise_exit_node"][value="yes"]').attr('title', 'Cannot use that machine as an exit node as an external one is specified');
+            } else {
+                $('#exit_node_allow_lan_access').attr('disabled', true);
+                $('#exit_node_allow_lan_access').attr('title', 'Please enter an exit node first');
+                $('input[name="advertise_exit_node"][value="yes"]').attr('disabled', false);
+                $('input[name="advertise_exit_node"][value="yes"]').attr('title', '');
+            }
+        // Enable the 'advertise_routes' textInput when subnet_router checkbox is YES
+            if ($('input[name="subnet_router"][value="yes"]').attr('checked')) {
+                $('#advertise_routes').attr('disabled', false);
+                $('#advertise_routes').attr('placeholder', '192.168.0.0/24,192.168.1.0/24');
+            } else {
+                $('#advertise_routes').attr('disabled', true);
+                $('#advertise_routes').attr('placeholder', 'Click YES to enable this field');
+            }
+        // Disable setting an external exit node if the current machine will serve as exit node
+            if ($('input[name="advertise_exit_node"][value="yes"]').attr('checked')) {
+                $('#exit_node').attr('disabled', true);
+                $('#exit_node').attr('title', 'Cannot set an external exit node as this machine is set to be used as an exit node itself');
+            } else if ($('input[name="advertise_exit_node"][value="no"]').attr('checked')){
+                $('#exit_node').attr('disabled', false);
+                $('#exit_node').attr('title', 'Tailscale 100.x.y.z IP address of the exit node.');
+            }
+        // Show/Hide IP forwarding warning
+            if ($('input[name="advertise_exit_node"][value="yes"]').attr('checked') ||
+                $('input[name="subnet_router"][value="yes"]').attr('checked')) {
+                console.log("Subnet routing and/or exit node is enabled");
+                $('#ip-forwarding-warning').show();
+            } else {
+                $('#ip-forwarding-warning').hide();
+            }
+        });
+
 
         this.validator = this.$('#' + this.formName).validate({
             onfocusout: false,
@@ -324,6 +437,26 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
                     params.aux = entries;
                     data = JSON.stringify({
                         config: params
+                    });
+                } else if (_this.formName === 'tailscaled-form') {
+                    var entries = _this.$('#' + _this.formName).getJSON();
+                    // Filter out:
+                    //   - empty entries (example: "advertise_routes": "")
+                    //   - entries set to NO (example: "accept_routes": "no")
+                    //   - entries used only for form user-friendliness (example: "subnet_router": "yes")
+                    var toExclude = ["subnet_router"];
+                    for (var k in entries) {
+                        // need "==" and not "===" for entries[k] == ''
+                        // as the latter would return keys set to False
+                        // It's simpler to just remove those.
+                        if ( entries[k] == '' || entries[k] === "no" ) {
+                            delete entries[k];
+                        } else if (k.includes(toExclude)) {
+                            delete entries[k];
+                        }
+                    }
+                    data = JSON.stringify({
+                        config: entries
                     });
                 } else {
                     data = JSON.stringify({
@@ -572,6 +705,47 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
                 html += '</select>';
             }
             return new Handlebars.SafeString(html);
+        });
+
+        // Display YES/NO choices
+        Handlebars.registerHelper('display_options', function(inputOption){
+            var html = '';
+            var _this = this;
+
+            _.each(this.yes_no_choices, function(c) {
+                var choiceValue = c.value,
+                    choiceName = c.name;
+
+                html += '<label class="radio-inline"><input type="radio" name="'+ inputOption + '" value="' + choiceValue + '"';
+
+                if (_this.config.hasOwnProperty(inputOption)){ // edit an existing config for this inputOption
+                    if(choiceValue == _this.config[inputOption]){
+                        html += 'checked ';
+                    }
+                } else { // options with default set to YES
+                    if(inputOption == 'reset'){
+                        if(choiceValue == 'yes'){
+                            html += 'checked ';
+                        }
+                    } else if(choiceValue == 'no'){ // when the inputOptions have default of NO
+                        html += 'checked ';
+                    }
+                }
+                html += '>' + choiceName + '</label>';
+            });
+
+            return new Handlebars.SafeString(html);
+        });
+
+        // Tailscale custom config box
+        Handlebars.registerHelper('display_ts_custom_config', function() {
+
+            var params = [],
+                _this = this;
+            _.each(_this.config.custom_config, function(val, key) {
+                params.push(val);
+            });
+            return params.join('\n');
         });
     }
 });

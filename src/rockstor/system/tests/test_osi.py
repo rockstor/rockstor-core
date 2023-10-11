@@ -16,7 +16,8 @@ import operator
 import unittest
 from unittest.mock import patch
 
-from system.osi import get_dev_byid_name, Disk, scan_disks, get_byid_name_map
+from system.exceptions import CommandException
+from system.osi import get_dev_byid_name, Disk, scan_disks, get_byid_name_map, run_command
 
 
 class Pool(object):
@@ -1934,3 +1935,72 @@ class OSITests(unittest.TestCase):
 #                 # But readlines() != splitlines() on break !!! readlines splits on \n only.
 #                 # https://discuss.python.org/t/changing-str-splitlines-to-match-file-readlines/174
 #             self.mocked_open.assertEqual(returned, expected)
+
+    def test_run_command(self):
+        self.patch_popen = patch(
+            "system.osi.subprocess.Popen"
+        )
+
+        # Test successful command (rc = 0)
+        desired_rc = 0
+        self.mock_popen = self.patch_popen.start()
+        p_return_value = ('NAME="openSUSE Leap"\nVERSION="15.5"\nID="opensuse-leap"\nID_LIKE="suse opensuse"\nVERSION_ID="15.5"\nPRETTY_NAME="openSUSE Leap 15.5"\nANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:opensuse:leap:15.5"\nBUG_REPORT_URL="https://bugs.opensuse.org"\nHOME_URL="https://www.opensuse.org/"\nDOCUMENTATION_URL="https://en.opensuse.org/Portal:Leap"\nLOGO="distributor-logo-Leap"\n', '')
+        self.mock_popen.return_value.communicate.return_value = p_return_value
+        self.mock_popen.return_value.returncode = desired_rc
+
+        expected_out = ['NAME="openSUSE Leap"', 'VERSION="15.5"', 'ID="opensuse-leap"', 'ID_LIKE="suse opensuse"', 'VERSION_ID="15.5"', 'PRETTY_NAME="openSUSE Leap 15.5"', 'ANSI_COLOR="0;32"', 'CPE_NAME="cpe:/o:opensuse:leap:15.5"', 'BUG_REPORT_URL="https://bugs.opensuse.org"', 'HOME_URL="https://www.opensuse.org/"', 'DOCUMENTATION_URL="https://en.opensuse.org/Portal:Leap"', 'LOGO="distributor-logo-Leap"', '']
+        expected_err = [""]
+        expected = (expected_out, expected_err, desired_rc)
+        cmd = ["cat", "/etc/fake-os-release"]
+        returned = run_command(cmd)
+        self.assertEqual(
+            returned,
+            expected,
+            msg="Un-expected run_command() output:\n"
+            f"returned = {returned}.\n"
+            f"expected = {expected}.",
+        )
+
+        # Test failed command (rc = 1)
+        desired_rc = 1
+        self.mock_popen.return_value.returncode = desired_rc
+        expected_msg = f"Error running a command. cmd = {' '.join(cmd)}. rc = {desired_rc}. stdout = {expected_out}. stderr = {expected_err}"
+        with self.assertRaises(CommandException) as cm:
+            run_command(cmd)
+        # Verify the message returned by the Exception
+        returned_msg = str(cm.exception)
+        self.assertEqual(
+            returned_msg,
+            expected_msg,
+            msg="Un-expected exception message returned:\n"
+            f"returned = {returned_msg}.\n"
+            f"expected = {expected_msg}.",
+        )
+
+        # Test failed command (rc = 1) but throw=False
+        desired_rc = 1
+        self.mock_popen.return_value.returncode = desired_rc
+        expected = (expected_out, expected_err, desired_rc)
+        returned = run_command(cmd, throw=False)
+        self.assertEqual(
+            returned,
+            expected,
+            msg="Un-expected run_command() output:\n"
+            f"returned = {returned}.\n"
+            f"expected = {expected}.",
+        )
+
+        # Test successful command (rc = 0) with raw=True
+        desired_rc = 0
+        self.mock_popen.return_value.returncode = desired_rc
+        expected_out = 'NAME="openSUSE Leap"\nVERSION="15.5"\nID="opensuse-leap"\nID_LIKE="suse opensuse"\nVERSION_ID="15.5"\nPRETTY_NAME="openSUSE Leap 15.5"\nANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:opensuse:leap:15.5"\nBUG_REPORT_URL="https://bugs.opensuse.org"\nHOME_URL="https://www.opensuse.org/"\nDOCUMENTATION_URL="https://en.opensuse.org/Portal:Leap"\nLOGO="distributor-logo-Leap"\n'
+        expected_err = [""]
+        expected = (expected_out, expected_err, desired_rc)
+        returned = run_command(cmd, raw=True)
+        self.assertEqual(
+            returned,
+            expected,
+            msg="Un-expected run_command() output:\n"
+            f"returned = {returned}.\n"
+            f"expected = {expected}.",
+        )

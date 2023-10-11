@@ -13,17 +13,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, mock_open, call, MagicMock
 
 from system.exceptions import CommandException
-from system.network import get_dev_config, get_con_config
+from system.network import (
+    get_dev_config,
+    get_con_config,
+    enable_ip_forwarding,
+    SYSCTL_CONFD_PATH,
+    SYSCTL,
+    disable_ip_forwarding,
+)
 
 
 class SystemNetworkTests(unittest.TestCase):
     """
     The tests in this suite can be run via the following command:
-    cd <root dir of rockstor ie /opt/rockstor>
-    ./bin/test --settings=test-settings -v 3 -p test_system_network*
+    cd /opt/rockstor/src/rockstor
+    export DJANGO_SETTINGS_MODULE=settings
+    poetry run django-admin test -p test_system_network.py -v 2
     """
 
     def setUp(self):
@@ -480,13 +488,13 @@ class SystemNetworkTests(unittest.TestCase):
                 "7ffa9c37-4559-4608-80de-ea77a27876cd": {
                     "bridge": {
                         "aux_address": None,
-                        "subnet": u"172.17.0.0/16",
+                        "subnet": "172.17.0.0/16",
                         "internal": False,
-                        "host_binding": u"0.0.0.0",
+                        "host_binding": "0.0.0.0",
                         "docker_name": "docker0",
                         "icc": True,
                         "ip_masquerade": False,
-                        "dgateway": u"172.17.0.1",
+                        "dgateway": "172.17.0.1",
                         "ip_range": None,
                     },
                     "ctype": "bridge",
@@ -650,13 +658,13 @@ class SystemNetworkTests(unittest.TestCase):
                 "c344cf82-783e-420e-9d02-30980e058ae5": {
                     "bridge": {
                         "aux_address": None,
-                        "subnet": u"172.20.0.0/16",
+                        "subnet": "172.20.0.0/16",
                         "internal": False,
                         "host_binding": None,
                         "docker_name": "rocknet01",
                         "icc": True,
                         "ip_masquerade": False,
-                        "dgateway": u"172.20.0.1",
+                        "dgateway": "172.20.0.1",
                         "ip_range": None,
                     },
                     "ctype": "bridge",
@@ -732,3 +740,65 @@ class SystemNetworkTests(unittest.TestCase):
         )
         with self.assertRaises(CommandException):
             get_con_config(con_name)
+
+    def test_enable_ip_forwarding_write(self):
+        """enable_ip_forwarding() calls write with the correct contents
+        Enable_ip_forwarding should write to /etc/sysctl.d/99-tailscale.conf
+        with the following lines
+          - net.ipv4.ip_forward = 1
+          - net.ipv6.conf.all.forwarding = 1
+        """
+        priority = 99
+        name = "tailscale"
+        file_path = f"{SYSCTL_CONFD_PATH}{priority}-{name}.conf"
+        m = mock_open()
+        with patch("system.network.open", m):
+            enable_ip_forwarding(name=name, priority=priority)
+
+            # Test that the file was opened in 'w' mode
+            m.assert_called_once_with(file_path, "w")
+
+            # Test that 'write' was called with the correct content
+            calls = [
+                call("net.ipv4.ip_forward = 1\n"),
+                call("net.ipv6.conf.all.forwarding = 1\n"),
+            ]
+            m().write.assert_has_calls(calls, any_order=False)
+
+    def test_enable_ip_forwarding_syctl(self):
+        """enable_ip_forwarding() triggers sysctl config reload
+        Sysctl configuration should be reloaded for the contents of
+        the /etc/sysctl.d/99-tailscale.conf file.
+        """
+        priority = 99
+        name = "tailscale"
+        file_path = f"{SYSCTL_CONFD_PATH}{priority}-{name}.conf"
+
+        # Test that run_command was called as expected
+        enable_ip_forwarding(name=name, priority=priority)
+        self.mock_run_command.assert_called_once_with(
+            [SYSCTL, "-p", file_path], log=True
+        )
+
+    def test_disable_ip_forwarding(self):
+        """test proper call of os.remove() and final sysctl command"""
+        # mock os.scandir()
+        self.mock_os_scandir = MagicMock()
+        self.mock_os_scandir.return_value = ["70-yast.conf", "99-tailscale.conf"]
+        # mock os.remove()
+        self.patch_os_remove = patch("system.network.os.remove")
+        self.mock_os_remove = self.patch_os_remove.start()
+        # mock run_command()
+        self.mock_run_command.return_value = [""], [""], 0
+        disable_ip_forwarding(name="tailscale")
+        # test os.remove() was called
+        self.mock_os_remove.assert_called_once_with("/etc/sysctl.d/99-tailscale.conf")
+        cmd = [
+            SYSCTL,
+            "-w",
+            "net.ipv4.ip_forward=0",
+            "-w",
+            "net.ipv6.conf.all.forwarding=0",
+        ]
+        # test run_command() was called
+        self.mock_run_command.assert_called_once_with(cmd, log=True)

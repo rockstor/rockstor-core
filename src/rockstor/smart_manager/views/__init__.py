@@ -55,3 +55,4 @@ from smart_manager.views.ztaskd_service import ZTaskdServiceView  # noqa E501
 from smart_manager.views.bootstrap_service import BootstrapServiceView  # noqa E501
 from smart_manager.views.shellinaboxd_service import ShellInABoxServiceView  # noqa E501
 from smart_manager.views.rockstor_service import RockstorServiceView  # noqa E501
+from smart_manager.views.tailscaled_service import TailscaledServiceView  # noqa E501

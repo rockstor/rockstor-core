@@ -51,7 +51,7 @@ jslibs/
 poetry-install.txt
 rockstor-jslibs.tar.gz*
 rockstor-tasks-huey.db*
-static/
+/static/
 
 # Rockstor error tgz
 /src/rockstor/logs/error.tgz
