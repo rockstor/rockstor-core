@@ -186,7 +186,7 @@ INSTALLED_APPS = (
     "huey.contrib.djhuey",
 )
 
-STATICFILES_STORAGE = "pipeline.storage.PipelineCachedStorage"
+STATICFILES_STORAGE = "pipeline.storage.PipelineManifestStorage"
 
 # Have django-pipeline collate storageadmin js/jst files into one storageadmin.js file
 # which is then referenced in setup.html and base.html templates.
