@@ -83,7 +83,7 @@ requests = ">=2.13.0"
 
 [[package]]
 name = "django-pipeline"
-version = "1.7.0"
+version = "2.1.0"
 description = "Pipeline is an asset packaging library for Django."
 category = "main"
 optional = false
@@ -360,7 +360,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "8e18a72105cd808ebecc7ce5d27ff80d589dce456f52d4fb6520ecc5ab0c520d"
+content-hash = "37afad77b14f6565b073da72cf7a9e967455ae3e59beddbbe9c6b57c387c7815"
 
 [metadata.files]
 certifi = [
@@ -445,8 +445,8 @@ django-oauth-toolkit = [
     {file = "django_oauth_toolkit-1.1.2-py2.py3-none-any.whl", hash = "sha256:c006e804ecfdc98ffeb943100dbb0b5e6d82c969c7cb672bc999f1f3a403cb01"},
 ]
 django-pipeline = [
-    {file = "django-pipeline-1.7.0.tar.gz", hash = "sha256:0ded22b974e3d627c27fc490ef5b23fcdcf0cdb00b704d628b5ca6d0b010d6fe"},
-    {file = "django_pipeline-1.7.0-py2.py3-none-any.whl", hash = "sha256:f7da70f00aa4baea3e0811f88927a116425deee05871fa2bfd2f8247f42d8847"},
+    {file = "django-pipeline-2.1.0.tar.gz", hash = "sha256:36a6ce56fdf1d0811e4d51897f534acca35ebb35be699d9d0fd9970e634792a4"},
+    {file = "django_pipeline-2.1.0-py3-none-any.whl", hash = "sha256:e91627faee22c4c65eb7d134ef53a9d97253c99e4dd914af8ea9c8c58c01de93"},
 ]
 djangorestframework = [
     {file = "djangorestframework-3.9.3-py2.py3-none-any.whl", hash = "sha256:1d22971a5fc98becdbbad9710ca2a9148dd339f6cbea4c3ddbed2cb84bab94e1"},
