@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 # TODO: Let's deprecate gevent in favor of django channels and we won't need
-# monkey patching and flake8 exceptions.
+#  monkey patching and flake8 exceptions.
 import shutil
 from tempfile import mkstemp
 
@@ -33,7 +33,6 @@ import json  # noqa E402
 import gevent  # noqa E402
 import socketio  # noqa E402
 from gevent import pywsgi  # noqa E402
-from geventwebsocket.handler import WebSocketHandler  # noqa E402
 
 from gevent.subprocess import Popen, PIPE  # noqa E402
 from os import path  # noqa E402
@@ -1146,9 +1145,12 @@ def main():
         LogManagerNamespace("/logmanager"),
         PincardManagerNamespace("/pincardmanager"),
     ]
-    sio_server = socketio.Server(async_mode="gevent")
+    # async_mode "threading" invokes simple-websocket.
+    # https://python-socketio.readthedocs.io/en/latest/server.html#standard-threads
+    # This did not allow us to removes gevent's monkey patching.
+    sio_server = socketio.Server(async_mode="threading", cors_allowed_origins='*', logger=False, engineio_logger=False)
     for namespace in sio_namespaces:
         sio_server.register_namespace(namespace)
     app = socketio.Middleware(sio_server)
     logger.debug("Python-socketio listening on port http://127.0.0.1:8001")
-    pywsgi.WSGIServer(("", 8001), app, handler_class=WebSocketHandler).serve_forever()
+    pywsgi.WSGIServer(('', 8001), app).serve_forever()
