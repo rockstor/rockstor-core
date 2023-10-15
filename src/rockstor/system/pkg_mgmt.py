@@ -300,6 +300,7 @@ def repo_status(subscription):
         res = requests.get(
             "http://{}".format(subscription.url),
             auth=(subscription.appliance.uuid, subscription.password),
+            timeout=10,
         )
         if res.status_code == 401:
             return "inactive", res.text
@@ -455,7 +456,7 @@ def update_run(subscription=None, update_all_other=False):
             atfo.write("sleep 10\n")
             atfo.write(pkg_refresh_cmd)
             # Unset inherited VIRTUAL_ENV environmental variable before invoking rpm/zypper
-            atfo.write('unset VIRTUAL_ENV\n')
+            atfo.write("unset VIRTUAL_ENV\n")
             atfo.write(pkg_in_up_rockstor)
             # rockstor-bootstrap Requires rockstor which Requires rockstor-pre (initrock)
             atfo.write("{} start rockstor-bootstrap\n".format(SYSTEMCTL))
