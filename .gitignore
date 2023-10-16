@@ -55,3 +55,5 @@ static/
 
 # Rockstor error tgz
 /src/rockstor/logs/error.tgz
+# Rockstor docker
+/conf/docker-daemon.json

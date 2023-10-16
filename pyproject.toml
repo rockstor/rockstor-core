@@ -73,8 +73,7 @@ dbus-python = "==1.2.18"
 psycopg2 = "==2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
 psycogreen = "==1.0"
 gevent = "*"  # can be an extra dependency to gunicorn.
-# Python WSGI HTTP Server - 20.0 (2019/10/30) dropped Python 2.7.
-gunicorn = "==19.10.0"  # buildout previously used 19.7.1
+gunicorn = "*"
 
 # [tool.poetry.group.tools.dependencies]
 six = "==1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
