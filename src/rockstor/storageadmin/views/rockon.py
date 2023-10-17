@@ -21,6 +21,7 @@ import logging
 import os
 import re
 import fnmatch
+import time
 
 import requests
 from django.db import transaction
@@ -482,28 +483,32 @@ class RockOnView(rfc.GenericView):
 
         url_root = ROCKONS.get("remote_metastore")
         remote_root = "{}/{}".format(url_root, ROCKONS.get("remote_root"))
-        msg = "Error while processing remote metastore at ({}).".format(remote_root)
+        msg = f"Error while processing remote metastore at ({remote_root})."
         with self._handle_exception(self.request, msg=msg):
-            response = requests.get(remote_root, timeout=10)
+            response = requests.get(remote_root, timeout=5)
             if response.status_code != 200:
                 response.raise_for_status()
             root = response.json()
 
         meta_cfg = {}
-        for k, v in root.items():
-            cur_meta_url = "{}/{}".format(url_root, v)
-            msg = "Error while processing Rock-on profile at ({}).".format(cur_meta_url)
-            with self._handle_exception(self.request, msg=msg):
-                cur_res = requests.get(cur_meta_url, timeout=10)
-                if cur_res.status_code != 200:
-                    cur_res.raise_for_status()
-                meta_cfg.update(cur_res.json())
+        start_t = time.perf_counter()
+        with requests.Session() as session:
+            for k, v in root.items():
+                cur_meta_url = f"{url_root}/{v}"
+                msg = f"Error while processing Rock-on profile at ({cur_meta_url})."
+                with self._handle_exception(self.request, msg=msg):
+                    cur_res = session.get(cur_meta_url, timeout=5)
+                    if cur_res.status_code != 200:
+                        cur_res.raise_for_status()
+                    meta_cfg.update(cur_res.json())
+        end_t = time.perf_counter()
+        logger.info(f"Rock-on definitions retrieved in: {end_t - start_t:0.2f} seconds.")
 
         local_root = ROCKONS.get("local_metastore")
         if os.path.isdir(local_root):
             for f in fnmatch.filter(os.listdir(local_root), '*.json'):
-                fp = "{}/{}".format(local_root, f)
-                msg = "Error while processing Rock-on profile at ({}).".format(fp)
+                fp = f"{local_root}/{f}"
+                msg = f"Error while processing Rock-on profile at ({fp})."
                 with self._handle_exception(self.request, msg=msg):
                     with open(fp) as fo:
                         ds = json.load(fo)
