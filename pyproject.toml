@@ -64,7 +64,6 @@ django = "~2.2"
 django-oauth-toolkit = "==1.1.2"
 djangorestframework = "==3.13.1"  # Last version to support Django 2.2 (up to 4.0)
 django-pipeline = "*"
-django-braces = "==1.13.0"  # look to 1.14.0 (30 Dec 2019) as Django 1.11.0+ now
 oauthlib = "==3.1.0"  # Last Python 2.7 compat + 3.7 compat.
 python-engineio = "==4.8.0"
 python-socketio = "==5.9.0"
