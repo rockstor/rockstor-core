@@ -13,7 +13,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import unittest
-from unittest.mock import patch, mock_open, call, MagicMock
+from unittest.mock import patch, mock_open, call
 
 from system.exceptions import CommandException
 from system.network import (
@@ -24,6 +24,25 @@ from system.network import (
     SYSCTL,
     disable_ip_forwarding,
 )
+
+
+class MockDirEntry:
+    """Create a fake DirEntry object
+    A DirEntry object is what's os.scandir returns. To properly mock os.scandir,
+    we thus need to re-create what it would return. We currently only need some
+    of the attributes that a real DirEntry has, so let's include only these:
+    - name
+    - path
+    - is_file: bool
+    """
+
+    def __init__(self, name, path, is_file):
+        self.name = name
+        self.path = path
+        self._is_file = is_file
+
+    def is_file(self):
+        return self._is_file
 
 
 class SystemNetworkTests(unittest.TestCase):
@@ -741,7 +760,7 @@ class SystemNetworkTests(unittest.TestCase):
         with self.assertRaises(CommandException):
             get_con_config(con_name)
 
-    def test_enable_ip_forwarding_write(self):
+    def test_enable_ip_forwarding(self):
         """enable_ip_forwarding() calls write with the correct contents
         Enable_ip_forwarding should write to /etc/sysctl.d/99-tailscale.conf
         with the following lines
@@ -765,17 +784,7 @@ class SystemNetworkTests(unittest.TestCase):
             ]
             m().write.assert_has_calls(calls, any_order=False)
 
-    def test_enable_ip_forwarding_syctl(self):
-        """enable_ip_forwarding() triggers sysctl config reload
-        Sysctl configuration should be reloaded for the contents of
-        the /etc/sysctl.d/99-tailscale.conf file.
-        """
-        priority = 99
-        name = "tailscale"
-        file_path = f"{SYSCTL_CONFD_PATH}{priority}-{name}.conf"
-
         # Test that run_command was called as expected
-        enable_ip_forwarding(name=name, priority=priority)
         self.mock_run_command.assert_called_once_with(
             [SYSCTL, "-p", file_path], log=True
         )
@@ -783,8 +792,18 @@ class SystemNetworkTests(unittest.TestCase):
     def test_disable_ip_forwarding(self):
         """test proper call of os.remove() and final sysctl command"""
         # mock os.scandir()
-        self.mock_os_scandir = MagicMock()
-        self.mock_os_scandir.return_value = ["70-yast.conf", "99-tailscale.conf"]
+        self.patch_os_scandir = patch("system.network.os.scandir")
+        self.mock_os_scandir = self.patch_os_scandir.start()
+        self.mock_os_scandir.return_value.__enter__.return_value = [
+            MockDirEntry(
+                name="99-tailscale.conf",
+                path="/etc/sysctl.d/99-tailscale.conf",
+                is_file=True,
+            ),
+            MockDirEntry(
+                name="70-yast.conf", path="/etc/sysctl.d/70-yast.conf", is_file=True
+            ),
+        ]
         # mock os.remove()
         self.patch_os_remove = patch("system.network.os.remove")
         self.mock_os_remove = self.patch_os_remove.start()
