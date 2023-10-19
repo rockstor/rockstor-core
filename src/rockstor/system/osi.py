@@ -35,7 +35,16 @@ from distutils.util import strtobool
 from django.conf import settings
 
 from system.exceptions import CommandException, NonBTRFSRootException
-from system.constants import SYSTEMCTL, MKDIR, RMDIR, MOUNT, UMOUNT, DEFAULT_MNT_DIR, UDEVADM, SHUTDOWN
+from system.constants import (
+    SYSTEMCTL,
+    MKDIR,
+    RMDIR,
+    MOUNT,
+    UMOUNT,
+    DEFAULT_MNT_DIR,
+    UDEVADM,
+    SHUTDOWN,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +222,7 @@ def run_command(
     throw=True,
     log=False,
     input=None,
+    raw=False,
 ):
     try:
         # We force run_command to always use en_US
@@ -222,7 +232,7 @@ def run_command(
         fake_env["LANG"] = "en_US.UTF-8"
         # cmd = map(str, cmd)
         if log:
-            logger.debug("Running command: {}".format(" ".join(cmd)))
+            logger.debug(f"Running command: {' '.join(cmd)}")
         p = subprocess.Popen(
             cmd,
             shell=shell,
@@ -234,7 +244,9 @@ def run_command(
             universal_newlines=True,  # 3.7 adds text parameter universal_newlines alias
         )
         out, err = p.communicate(input=input)
-        out = out.split("\n")
+        # raw=True allows parsing of a JSON output directly, for instance
+        if not raw:
+            out = out.split("\n")
         err = err.split("\n")
         rc = p.returncode
     except Exception as e:

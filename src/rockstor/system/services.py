@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import json
 import os
 import re
 import shutil
@@ -25,7 +25,7 @@ from typing import Tuple, List
 
 from django.conf import settings
 
-from system.constants import SYSTEMCTL
+from system.constants import SYSTEMCTL, TAILSCALE
 from system.osi import run_command
 from system.ssh import is_sftp_running
 
@@ -71,6 +71,7 @@ def init_service_op(service_name, command, throw=True):
         "rockstor-bootstrap",
         "rockstor",
         "systemd-shutdownd",
+        "tailscaled",
     )
     if service_name not in supported_services:
         raise Exception("unknown service: {}".format(service_name))
@@ -109,7 +110,7 @@ def systemctl(service_name, switch):
 def set_autostart(service, switch):
     """
     Configure autostart setting for supervisord managed services eg:-
-    nginx, gunicorn, smart_manager daemon, replication daemon, data-collector,
+    gunicorn, smart_manager daemon, replication daemon, data-collector,
     and ztask-daemon. Works by rewriting autostart lines in  SUPERVISORD_CONF
     http://supervisord.org/
     :param service:
@@ -223,6 +224,11 @@ def service_status(service_name, config=None):
             return "", "", active_directory_rc
         # bootstrap switch subsystem interprets -1 as ON so returning 1 instead
         return "", "", 1
+    elif service_name == "tailscaled":
+        if config is not None:
+            return "", "", tailscale_service_status()
+        # Tailscale service is not configured: return 1
+        return "", "", 1
 
     return init_service_op(service_name, "status", throw=False)
 
@@ -329,3 +335,44 @@ def write_avahi_service(tfo, **kwargs):
         else:
             tfo.write("   <{}>{}</{}>\n".format(k, v, k))
     tfo.write(" </service>\n")
+
+
+def tailscale_service_status() -> int:
+    """Return granular status of the Tailscale service
+    The final Tailscale service can have the following states:
+      - Daemon OFF: return 1
+      - Daemon ON, Client not auth'd: return 5
+      - Daemon ON, Client auth started but not completed: return 5
+      - Daemon ON, Client auth'd: return 0
+      - Daemon ON, Client down: return 1
+
+    :return: int
+    """
+    systemd_service_name = "tailscaled"
+    if not is_systemd_service_active(systemd_service_name):
+        return 1
+    else:
+        ts_status_out = get_tailscale_status()
+        backend_state = ts_status_out["BackendState"]
+        if backend_state == "Running":
+            return 0
+        if backend_state == "Stopped":
+            return 1
+        if backend_state == "NeedsLogin":
+            return 5
+
+
+def get_tailscale_status() -> dict:
+    """Get full tailscale status JSON output"""
+    o, e, _ = run_command(
+        [
+            TAILSCALE,
+            "status",
+            "--json",
+        ],
+        # We need raw here to be able to load as JSON
+        raw=True,
+        log=True,
+    )
+    ts_status_out = json.loads(o)
+    return ts_status_out
