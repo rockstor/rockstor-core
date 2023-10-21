@@ -201,7 +201,7 @@ def update_postfix(smtp_server, port, revert=False):
                 # "inet_protocols = all" as we need this to be:
                 # "inet_protocols = ipv4" as our NetworkManager is ipv4 only.
                 # Or if we find duplicates of our to-be-installed settings;
-                if len(line) > 0 and line[0] is not "#":
+                if len(line) > 0 and line[0] != "#":
                     # TODO: Revert ipv4 only once network config is ipv6 aware.
                     if re.match("inet_protocols = all", line) is not None:
                         tfo.write("inet_protocols = ipv4\n")
