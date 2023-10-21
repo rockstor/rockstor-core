@@ -236,7 +236,7 @@ def uninstall(rid, new_state="available", task=None):
         if rockon is not None:
             # During non live update we do uninstall-install under task.name "update"
             # During this cycle we want to maintain our taskid stamp.
-            if new_state is not "pending_update" and task is not None:
+            if new_state != "pending_update" and task is not None:
                 rockon.taskid = None
             else:
                 logger.info(
@@ -376,7 +376,7 @@ def generic_install(rockon):
         cmd.extend(device_ops(c))
         if c.uid is not None:
             uid = c.uid
-            if c.uid is -1:
+            if c.uid == -1:
                 uid = vol_owner_uid(c)
             # @todo: what if the uid does not exist? Create a user with
             # username=container-name?
