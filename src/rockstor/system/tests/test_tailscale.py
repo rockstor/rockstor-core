@@ -60,14 +60,14 @@ class TailscaleTests(unittest.TestCase):
             )
 
     def test_tailscale_validate_hostname(self):
-        """Ensure alphanumeric and no underscore in hostname"""
+        """Ensure alphanumeric, no underscore, and no unicode in hostname"""
         test_config = {
             "accept_routes": "yes",
             "advertise_exit_node": "yes",
             "advertise_routes": "192.168.1.0/24",
             "exit_node": "100.1.1.1",
             "exit_node_allow_lan_access": "true",
-            "hostname": "rock-dev_@#~!$%^&*()+123",
+            "hostname": "rock-dev_@#~!$%^&*()+123ü",
             "reset": "yes",
             "ssh": "yes",
             "custom_config": "--shields-up\n--accept-risk=all",

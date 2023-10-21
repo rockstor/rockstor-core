@@ -104,32 +104,20 @@ def extract_param(param: str) -> str:
 
 
 def validate_ts_hostname(config: dict) -> dict:
-    """Ensure hostname is alphanumeric with hyphens only
-    No special character (including hyphens) is allowed as a custom hostname.
+    """Applies a set of rules to validate hostname
+    Keep each character in hostname only if:
+    - not a special character
+    - not a unicode character
+    - is hyphen
+    - replace underscore with hyphen
 
-    "hostname": "rock-dev_@#~!$%^&*()+123"
+    "hostname": "rock-dev_@#~!$%^&*()+123ü"
     should return
     "hostname": "rock-dev-123"
     """
     if "hostname" in config:
         config["hostname"] = re.sub("_", "-", config["hostname"])
-        to_exclude = [
-            "@",
-            "#",
-            "~",
-            "!",
-            "$",
-            "%",
-            "^",
-            "&",
-            "*",
-            "(",
-            ")",
-            "+",
-        ]
-        config["hostname"] = "".join(
-            c for c in config["hostname"] if not c in to_exclude
-        )
+        config["hostname"] = re.sub("[^a-zA-Z0-9-]", "", config["hostname"])
     return config
 
 
