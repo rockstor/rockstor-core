@@ -592,30 +592,14 @@ def main():
     run_command(migration_cmd + ["storageadmin"], log=True)
     run_command(migration_cmd + smartdb_opts, log=True)
 
-    # Avoid re-apply from our six days 0002_08_updates to oauth2_provider
-    # by faking so we can catch-up on remaining migrations.
-    # Only do this if not already done, however, as we would otherwise incorrectly reset
-    # the list of migrations applied (https://github.com/rockstor/rockstor-core/issues/2376).
-    oauth2_provider_faked = False
-    # Get current list of migrations
-    o, e, rc = run_command([DJANGO, "showmigrations", "--list", "oauth2_provider"])
-    for l in o:
-        if l.strip() == "[X] 0002_08_updates":
-            logger.debug(
-                "The 0002_08_updates migration seems already applied, so skip it"
-            )
-            oauth2_provider_faked = True
-            break
-    if not oauth2_provider_faked:
-        logger.debug(
-            "The 0002_08_updates migration is not already applied so fake apply it now"
-        )
-        run_command(
-            fake_migration_cmd + ["oauth2_provider", "0002_08_updates"], log=True
-        )
+    o, e, rc = run_command([DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True)
+    logger.info(f"Prior migrations for oauth2_provider are: {o}")
 
     # Run all migrations for oauth2_provider
     run_command(migration_cmd + ["oauth2_provider"], log=True)
+
+    o, e, rc = run_command([DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True)
+    logger.info(f"Post migrations for oauth2_provider are: {o}")
 
     logging.info("DB Migrations Done")
 
