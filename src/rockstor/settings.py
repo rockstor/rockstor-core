@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Django settings for Rockstor project.
 import os
 import distro
+import secrets
 from huey import SqliteHuey
 
 # By default, DEBUG = False, honour this by True only if env var == "True"
@@ -115,6 +116,9 @@ STATICFILES_FINDERS = (
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = "odk7(t)1y$ls)euj3$2xs7e^i=a9b&amp;xtf&amp;z=-2bz$687&amp;^q0+3"
+
+# API client secret
+CLIENT_SECRET = secrets.token_urlsafe()
 
 # New in Django 1.8 to cover all prior TEMPLATE_* settings.
 # https://docs.djangoproject.com/en/1.11/ref/templates/upgrading/
@@ -377,7 +381,12 @@ MODEL_DEFS = {
     "pqgroup": "-1/-1",
 }
 
+OAUTH2_PROVIDER = {
+    "PKCE_REQUIRED": False,
+}
+
 OAUTH_INTERNAL_APP = "cliapp"
+OAUTH2_PROVIDER_APPLICATION_MODEL = "oauth2_provider.Application"
 
 # Header string to separate auto config options from rest of config file.
 # this could be generalized across all Rockstor config files, problems during
@@ -426,8 +435,6 @@ UPDATE_CHANNELS = {
 HUEY = SqliteHuey(filename="{}/rockstor-tasks-huey.db".format(BASE_DIR))
 
 TASK_SCHEDULER = {"max_log": 100}  # max number of task log entries to keep
-
-OAUTH2_PROVIDER_APPLICATION_MODEL = "oauth2_provider.Application"
 
 # Establish our OS base id, name, and version:
 # Use id for code path decisions. Others are for Web-UI display purposes.
