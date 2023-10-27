@@ -43,13 +43,13 @@ def set_token(client_id=None, client_secret=None, url=None, logger=None):
         "client_id": client_id,
         "client_secret": client_secret,
     }
-    user_pass = "{0}:{1}".format(client_id, client_secret)
+    user_pass = f"{client_id}:{client_secret}"
     auth_string = base64.b64encode(user_pass.encode("utf-8"))
     auth_headers = {
         "HTTP_AUTHORIZATION": "Basic " + auth_string.decode("utf-8"),
     }
     response = requests.post(
-        "%s/o/token/" % url, data=token_request_data, headers=auth_headers, verify=False
+        "%s/o/token/" % url, data=token_request_data, headers=auth_headers, verify=False, timeout=5,
     )
     try:
         content = json.loads(response.content.decode("utf-8"))

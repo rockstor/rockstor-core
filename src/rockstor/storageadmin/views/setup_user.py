@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import transaction
+from settings import OAUTH_INTERNAL_APP, CLIENT_SECRET
 from storageadmin.models import User, Setup, OauthApp
 from storageadmin.views import UserListView
 from oauth2_provider.models import Application as OauthApplication
@@ -25,7 +26,6 @@ from rest_framework.response import Response
 
 
 class SetupUserView(UserListView):
-
     authentication_classes = ()
     permission_classes = ()
 
@@ -38,14 +38,16 @@ class SetupUserView(UserListView):
         # Create user
         res = super(SetupUserView, self).post(request)
         # Create cliapp id and secret for oauth
-        name = "cliapp"
+        name = OAUTH_INTERNAL_APP
         user = User.objects.get(username=request.data["username"])
         duser = DjangoUser.objects.get(username=request.data["username"])
         client_type = OauthApplication.CLIENT_CONFIDENTIAL
+        client_secret = CLIENT_SECRET
         auth_grant_type = OauthApplication.GRANT_CLIENT_CREDENTIALS
         app = OauthApplication(
             name=name,
             client_type=client_type,
+            client_secret=client_secret,
             authorization_grant_type=auth_grant_type,
             user=duser,
         )

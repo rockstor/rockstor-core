@@ -22,7 +22,7 @@ from cli.api_wrapper import APIWrapper
 from fs.btrfs import device_scan
 from system.osi import run_command
 from django.conf import settings
-from storageadmin.models import Setup
+from storageadmin.models import Setup, OauthApp
 
 
 BASE_DIR = settings.ROOT_DIR
@@ -32,7 +32,6 @@ QGROUP_MAXOUT_LIMIT = "{}/qgroup-maxout-limit".format(BASE_BIN)
 
 
 def main():
-
     try:
         device_scan()
     except Exception as e:
@@ -50,6 +49,19 @@ def main():
         print("Appliance is not yet setup.")
         return
 
+    try:
+        print("Refreshing client_secret for oauth2_provider app from settings")
+        app = OauthApp.objects.get(name=settings.OAUTH_INTERNAL_APP)
+        app.application.client_secret = settings.CLIENT_SECRET
+        app.application.save()
+        app.save()
+    except Exception as e:
+        print(
+            f"Failed client_secret update. Oauth internal App ({settings.OAUTH_INTERNAL_APP})"
+            f"Exception: {e.__str__()}"
+        )
+    print("Oauth internal App client_secret updated.")
+
     num_attempts = 0
     while True:
         try:
@@ -62,14 +74,14 @@ def main():
             # Retry on every exception, primarily because of django-oauth
             # related code behaving unpredictably while setting
             # tokens. Retrying is a decent workaround for now(11302015).
-            if num_attempts > 15:
+            if num_attempts > 10:
                 print(
-                    "Max attempts(15) reached. Connection errors persist. "
+                    "Max attempts(10) reached. Connection errors persist. "
                     "Failed to bootstrap. Error: %s" % e.__str__()
                 )
                 sys.exit(1)
             print(
-                "Exception occured while bootstrapping. This could be "
+                "Exception occurred while bootstrapping. This could be "
                 "because rockstor.service is still starting up. will "
                 "wait 2 seconds and try again. Exception: %s" % e.__str__()
             )
