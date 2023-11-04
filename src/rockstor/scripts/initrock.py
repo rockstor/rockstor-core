@@ -37,12 +37,14 @@ from collections import OrderedDict, namedtuple
 logger = logging.getLogger(__name__)
 
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
-BASE_BIN = "{}.venv/bin".format(BASE_DIR)
-CONF_DIR = "{}conf".format(BASE_DIR)
-DJANGO = "{}/django-admin".format(BASE_BIN)
-STAMP = "{}/.initrock".format(BASE_DIR)
-FLASH_OPTIMIZE = "{}/flash-optimize".format(BASE_BIN)
-DJANGO_PREP_DB = "{}/prep_db".format(BASE_BIN)
+BASE_BIN = f"{BASE_DIR}.venv/bin"
+CONF_DIR = f"{BASE_DIR}conf"
+DJANGO = f"{BASE_BIN}/django-admin"
+DJANGO_MIGRATE_CMD = [DJANGO, "migrate", "--noinput"]
+DJANGO_MIGRATE_SMART_MANAGER_CMD = DJANGO_MIGRATE_CMD + ["--database=smart_manager", "smart_manager"]
+STAMP = f"{BASE_DIR}/.initrock"
+FLASH_OPTIMIZE = f"{BASE_BIN}/flash-optimize"
+DJANGO_PREP_DB = f"{BASE_BIN}/prep_db"
 OPENSSL = "/usr/bin/openssl"
 RPM = "/usr/bin/rpm"
 YUM = "/usr/bin/yum"
@@ -63,7 +65,7 @@ IP = "/usr/sbin/ip"
 # su - postgres -c "psql -c \"SELECT ROLPASSWORD FROM pg_authid WHERE rolname = 'rocky'\""
 # su - postgres -c "psql -c \"ALTER ROLE rocky WITH PASSWORD 'rocky'\""
 
-OVERWRITE_PG_HBA = "cp -f {}/pg_hba.conf /var/lib/pgsql/data/".format(CONF_DIR)
+OVERWRITE_PG_HBA = f"cp -f {CONF_DIR}/pg_hba.conf /var/lib/pgsql/data/"
 PG_RELOAD = "pg_ctl reload"  # Does not require pg_hba.conf based authentication.
 RUN_SQL = "psql -w -f"  # Without password prompt and from file.
 #
@@ -74,17 +76,13 @@ RUN_SQL = "psql -w -f"  # Without password prompt and from file.
 DB_SYS_TUNE = OrderedDict()
 DB_SYS_TUNE["Setup_host_based_auth"] = OVERWRITE_PG_HBA
 DB_SYS_TUNE["Reload_config"] = PG_RELOAD  # Enables pg_hba for following psql access.
-DB_SYS_TUNE["PG_tune"] = "{} {}/postgresql_tune.sql".format(RUN_SQL, CONF_DIR)
+DB_SYS_TUNE["PG_tune"] = f"{RUN_SQL} {CONF_DIR}/postgresql_tune.sql"
 
-# Create and then populate our databases from scratch.
-# # {storageadmin,smartdb}.sql.in are created using:
-# `pg_dump --username=rocky <db_name> > <db_name>.sql.in
+# Create and then populate our databases (default & smart_manager) from scratch.
 DB_SETUP = OrderedDict()
-DB_SETUP["drop_and_recreate"] = "{} {}/postgresql_setup.sql".format(RUN_SQL, CONF_DIR)
-DB_SETUP[
-    "populate_storageadmin"
-] = "psql storageadmin -w -f {}/storageadmin.sql.in".format(CONF_DIR)
-DB_SETUP["populate_smartdb"] = "psql smartdb -w -f {}/smartdb.sql.in".format(CONF_DIR)
+DB_SETUP["drop_and_recreate"] = f"{RUN_SQL} {CONF_DIR}/postgresql_setup.sql"
+DB_SETUP["migrate_default"] = DJANGO_MIGRATE_CMD
+DB_SETUP["migrate_smart_manager"] = DJANGO_MIGRATE_SMART_MANAGER_CMD
 
 # List of systemd services to instantiate/update or remove, if required.
 # Service filenames that are not found in CONF_DIR will be removed from the system.
@@ -548,20 +546,21 @@ def main():
     ):
         if db_stage_name == "Setup Databases" and db_already_setup:
             continue
-        logging.info("--DB-- {} --DB--".format(db_stage_name))
+        logging.info(f"--DB-- {db_stage_name} --DB--")
         for action, command in db_stage_items.items():
-            logging.info("--DB-- Running - {}".format(action))
-            run_command(["su", "-", "postgres", "-c", command])
-            logging.info("--DB-- Done with {}.".format(action))
-        logging.info("--DB-- {} Done --DB--.".format(db_stage_name))
+            logging.info(f"--DB-- Running - {action}")
+            if action.startswith("migrate"):
+                run_command(command)
+            else:
+                run_command(["su", "-", "postgres", "-c", command])
+            logging.info(f"--DB-- Done with {action}.")
+        logging.info(f"--DB-- {db_stage_name} Done --DB--.")
         if db_stage_name == "Setup Databases":
             run_command(["touch", STAMP])  # file flag indicating db setup
 
     logging.info("Running app database migrations...")
-    migration_cmd = [DJANGO, "migrate", "--noinput"]
-    fake_migration_cmd = migration_cmd + ["--fake"]
-    fake_initial_migration_cmd = migration_cmd + ["--fake-initial"]
-    smartdb_opts = ["--database=smart_manager", "smart_manager"]
+    fake_migration_cmd = DJANGO_MIGRATE_CMD + ["--fake"]
+    fake_initial_migration_cmd = DJANGO_MIGRATE_CMD + ["--fake-initial"]
 
     # Migrate Content types before individual apps
     logger.debug("migrate (--fake-initial) contenttypes")
@@ -588,9 +587,9 @@ def main():
             )
             run_command(fake_migration_cmd + [db_arg, app, "0001_initial"], log=True)
 
-    run_command(migration_cmd + ["auth"], log=True)
-    run_command(migration_cmd + ["storageadmin"], log=True)
-    run_command(migration_cmd + smartdb_opts, log=True)
+    run_command(DJANGO_MIGRATE_CMD + ["auth"], log=True)
+    run_command(DJANGO_MIGRATE_CMD + ["storageadmin"], log=True)
+    run_command(DJANGO_MIGRATE_SMART_MANAGER_CMD, log=True)
 
     # Avoid re-apply from our six days 0002_08_updates to oauth2_provider
     # by faking so we can catch-up on remaining migrations.
@@ -615,7 +614,7 @@ def main():
         )
 
     # Run all migrations for oauth2_provider
-    run_command(migration_cmd + ["oauth2_provider"], log=True)
+    run_command(DJANGO_MIGRATE_CMD + ["oauth2_provider"], log=True)
 
     logging.info("DB Migrations Done")
 
