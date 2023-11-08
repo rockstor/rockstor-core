@@ -1007,8 +1007,8 @@ class SysinfoNamespace(RockstorIO):
                         r["url"], data=None, calltype="post", save_error=False
                     )
                 except Exception as e:
-                    logger.error("%s. exception: %s" % (r["error"], e.__str__()))
-            gevent.sleep(60)
+                    logger.error(f"{r['error']}. exception: {e.__str__()}")
+            gevent.sleep(20)
 
     def update_check(self):
 
