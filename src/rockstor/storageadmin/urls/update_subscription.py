@@ -16,10 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import url
+from django.urls import re_path
 from storageadmin.views import UpdateSubscriptionListView, UpdateSubscriptionDetailView
 
 urlpatterns = [
-    url(r"^(?P<id>\d+)$", UpdateSubscriptionDetailView.as_view()),
-    url(r"^(?P<command>.*)$", UpdateSubscriptionListView.as_view()),
+    re_path(r"^(?P<id>\d+)$", UpdateSubscriptionDetailView.as_view()),
+    re_path(r"^(?P<command>.*)$", UpdateSubscriptionListView.as_view()),
 ]
