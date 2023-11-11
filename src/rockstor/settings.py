@@ -388,6 +388,12 @@ OAUTH2_PROVIDER = {
 OAUTH_INTERNAL_APP = "cliapp"
 OAUTH2_PROVIDER_APPLICATION_MODEL = "oauth2_provider.Application"
 
+# Django 3.2 onwards requires explicitly AutoField defined:
+# The following is the prior default of 32bit for auto id fields, so no migrations.
+# https://docs.djangoproject.com/en/3.2/releases/3.2/#customizing-type-of-auto-created-primary-keys
+# if the new default of "django.db.models.BigAutoField" is configured, migrations are required.
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 # Header string to separate auto config options from rest of config file.
 # this could be generalized across all Rockstor config files, problems during
 # upgrades though

@@ -16,14 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import url
+from django.urls import re_path
 from storageadmin.views import DiskListView, DiskDetailView, DiskSMARTDetailView
 
 disk_regex = "[A-Za-z0-9]+[A-Za-z0-9:_-]*"
 
 urlpatterns = [
-    url(r"^smart/(?P<command>.+)/(?P<did>\d+)$", DiskSMARTDetailView.as_view()),
-    url(r"^(?P<command>scan)$", DiskListView.as_view()),
-    url(r"^(?P<did>\d+)$", DiskDetailView.as_view()),
-    url(r"^(?P<did>\d+)/(?P<command>.+)$", DiskDetailView.as_view()),
+    re_path(r"^smart/(?P<command>.+)/(?P<did>\d+)$", DiskSMARTDetailView.as_view()),
+    re_path(r"^(?P<command>scan)$", DiskListView.as_view()),
+    re_path(r"^(?P<did>\d+)$", DiskDetailView.as_view()),
+    re_path(r"^(?P<did>\d+)/(?P<command>.+)$", DiskDetailView.as_view()),
 ]

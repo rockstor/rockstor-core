@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import url
+from django.urls import re_path
 from django.conf import settings
 from smart_manager.views import (
     ReplicaTrailListView,
@@ -32,28 +32,28 @@ from smart_manager.views import (
 share_regex = settings.SHARE_REGEX
 
 urlpatterns = [
-    url(r"^(?P<rid>[0-9]+)$", ReplicaDetailView.as_view(), name="replica-view"),
-    url(
+    re_path(r"^(?P<rid>[0-9]+)$", ReplicaDetailView.as_view(), name="replica-view"),
+    re_path(
         r"^share/(?P<sname>%s)$" % share_regex,
         ReplicaDetailView.as_view(),
         name="replica-view",
     ),
-    url(r"^trail$", ReplicaTrailListView.as_view(), name="replica-view"),
-    url(
+    re_path(r"^trail$", ReplicaTrailListView.as_view(), name="replica-view"),
+    re_path(
         r"^trail/replica/(?P<rid>[0-9]+)",
         ReplicaTrailListView.as_view(),
         name="replica-view",
     ),
-    url(
+    re_path(
         r"^trail/(?P<rtid>[0-9]+)",
         ReplicaTrailDetailView.as_view(),
         name="replica-view",
     ),
-    url(r"^rshare$", ReplicaShareListView.as_view()),
-    url(r"^rshare/(?P<rid>[0-9]+)$", ReplicaShareDetailView.as_view()),
-    url(r"^rshare/(?P<sname>%s)$" % share_regex, ReplicaShareDetailView.as_view()),
-    url(r"^rtrail$", ReceiveTrailListView.as_view()),
-    url(r"^rtrail/rshare/(?P<rid>[0-9]+)$", ReceiveTrailListView.as_view()),
-    url(r"^rtrail/(?P<rtid>[0-9]+)", ReceiveTrailDetailView.as_view()),
-    url(r"^rpool/(?P<auuid>.*)$", ReceiverPoolListView.as_view()),
+    re_path(r"^rshare$", ReplicaShareListView.as_view()),
+    re_path(r"^rshare/(?P<rid>[0-9]+)$", ReplicaShareDetailView.as_view()),
+    re_path(r"^rshare/(?P<sname>%s)$" % share_regex, ReplicaShareDetailView.as_view()),
+    re_path(r"^rtrail$", ReceiveTrailListView.as_view()),
+    re_path(r"^rtrail/rshare/(?P<rid>[0-9]+)$", ReceiveTrailListView.as_view()),
+    re_path(r"^rtrail/(?P<rtid>[0-9]+)", ReceiveTrailDetailView.as_view()),
+    re_path(r"^rpool/(?P<auuid>.*)$", ReceiverPoolListView.as_view()),
 ]
