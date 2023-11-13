@@ -75,7 +75,7 @@ gunicorn = "*"
 
 # [tool.poetry.group.tools.dependencies]
 six = "==1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
-huey = "==2.3.0"
+huey = "*"
 psutil = "==5.9.4"
 # mock = "==1.0.1" now part of std lib in Python 3.3 onwards as unittest.mock
 # pyzmq requires libzmq5 on system unless in wheel form.

@@ -214,7 +214,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "huey"
-version = "2.3.0"
+version = "2.5.0"
 description = "huey, a little task queue"
 category = "main"
 optional = false
@@ -490,7 +490,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "b341f77df1a007c270dda140501a029d1552ccdebd07bd522f968fa14f5683c3"
+content-hash = "28c5c24e945abfc63c43909f38f1a1a4133ab052e431b5da9d2b6668f77de3d4"
 
 [metadata.files]
 asgiref = [
@@ -813,7 +813,7 @@ h11 = [
     {file = "h11-0.14.0.tar.gz", hash = "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d"},
 ]
 huey = [
-    {file = "huey-2.3.0.tar.gz", hash = "sha256:76978840a875607cd77c283c4ebf3ea5071b2ec06a1ac428d63be0d88f1e7070"},
+    {file = "huey-2.5.0.tar.gz", hash = "sha256:2ffb52fb5c46a1b0d53c79d59df3622312b27e2ab68d81a580985a8ea4ca3480"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
