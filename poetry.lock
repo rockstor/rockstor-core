@@ -75,11 +75,15 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "dbus-python"
-version = "1.2.18"
+version = "1.3.2"
 description = "Python bindings for libdbus"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
+
+[package.extras]
+doc = ["sphinx", "sphinx-rtd-theme"]
+test = ["tap.py"]
 
 [[package]]
 name = "deprecated"
@@ -489,7 +493,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "3945c028f79d1545841b01914769b58f8569449b8356fadacb692bd2006bcfdd"
+content-hash = "f1e5130a74f7f9c2c41e156881c1481dc52256d29a52b6998df95b4371a5953f"
 
 [metadata.files]
 asgiref = [
@@ -676,7 +680,7 @@ cryptography = [
     {file = "cryptography-41.0.5.tar.gz", hash = "sha256:392cb88b597247177172e02da6b7a63deeff1937fa6fec3bbf902ebd75d97ec7"},
 ]
 dbus-python = [
-    {file = "dbus-python-1.2.18.tar.gz", hash = "sha256:92bdd1e68b45596c833307a5ff4b217ee6929a1502f5341bae28fd120acf7260"},
+    {file = "dbus-python-1.3.2.tar.gz", hash = "sha256:ad67819308618b5069537be237f8e68ca1c7fcc95ee4a121fe6845b1418248f8"},
 ]
 deprecated = [
     {file = "Deprecated-1.2.14-py2.py3-none-any.whl", hash = "sha256:6fac8b097794a90302bdbb17b9b815e732d3c4720583ff1b198499d78470466c"},
