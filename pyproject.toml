@@ -79,7 +79,7 @@ huey = "*"
 psutil = "==5.9.4"
 # mock = "==1.0.1" now part of std lib in Python 3.3 onwards as unittest.mock
 # pyzmq requires libzmq5 on system unless in wheel form.
-pyzmq = "==19.0.2"  # Last specifying Python 2 on PyPi page.
+pyzmq = "*"
 distro = "*"
 URLObject = "==2.1.1"
 # https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
