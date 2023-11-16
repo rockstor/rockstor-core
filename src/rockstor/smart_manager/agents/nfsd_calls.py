@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from smart_manager.models import (
     NFSDCallDistribution,
     NFSDClientDistribution,
@@ -7,11 +7,10 @@ from smart_manager.models import (
     SProbe,
     NFSDUidGidDistribution,
 )
-from django.utils.timezone import utc
 
 
 def get_datetime(ts):
-    return datetime.datetime.utcfromtimestamp(float(ts)).replace(tzinfo=utc)
+    return datetime.datetime.utcfromtimestamp(float(ts)).replace(tzinfo=timezone.utc)
 
 
 def process_nfsd_calls(output, rid, l):

@@ -23,8 +23,7 @@ from storageadmin.models import Share, Appliance
 from smart_manager.models import ReplicaShare, ReceiveTrail
 from smart_manager.serializers import ReplicaShareSerializer
 from storageadmin.util import handle_exception
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 import rest_framework_custom as rfc
 
 
@@ -46,7 +45,7 @@ class ReplicaShareListView(rfc.GenericView):
         aip = request.data["appliance"]
         self._validate_appliance(aip, request)
         src_share = request.data["src_share"]
-        ts = datetime.utcnow().replace(tzinfo=utc)
+        ts = datetime.utcnow().replace(tzinfo=timezone.utc)
         r = ReplicaShare(
             share=sname, appliance=aip, pool=share.pool.name, src_share=src_share, ts=ts
         )

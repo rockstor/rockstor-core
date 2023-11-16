@@ -27,8 +27,7 @@ from storageadmin.models import Share, Appliance, EmailClient
 from smart_manager.models import Replica, ReplicaTrail
 from smart_manager.serializers import ReplicaSerializer
 from storageadmin.util import handle_exception
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 from django.conf import settings
 import rest_framework_custom as rfc
 import logging
@@ -111,7 +110,7 @@ class ReplicaListView(ReplicaMixin, rfc.GenericView):
             replication_ip = request.data.get("listener_ip", None)
             if replication_ip is not None and len(replication_ip.strip()) == 0:
                 replication_ip = None
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             r = Replica(
                 task_name=task_name,
                 share=sname,
@@ -177,7 +176,7 @@ class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
             r.data_port = self._validate_port(
                 request.data.get("listener_port", r.data_port), request
             )
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             r.ts = ts
             r.save()
             self._refresh_crontab()

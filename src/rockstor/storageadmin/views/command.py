@@ -42,8 +42,7 @@ from storageadmin.models import (
     AdvancedNFSExport,
 )
 from storageadmin.util import handle_exception
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 from django.conf import settings
 from django.db import transaction
 from storageadmin.views.share_helpers import sftp_snap_toggle, import_shares, import_snapshots
@@ -236,7 +235,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             return Response()
 
         if command == "utcnow":
-            return Response(datetime.utcnow().replace(tzinfo=utc))
+            return Response(datetime.utcnow().replace(tzinfo=timezone.utc))
 
         if command == "uptime":
             return Response(uptime())
