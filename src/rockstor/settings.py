@@ -99,6 +99,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "static")
 # Absolute filesystem path where config backups are stored by default
 DEFAULT_CB_DIR = os.path.join(MEDIA_ROOT, "config-backups")
 
+# Additional locations of static files
+# See build.sh for `tar zxvf` into "jslibs" dir of GitHub rockstor-jslibs release.
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "jslibs"),)
+
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
