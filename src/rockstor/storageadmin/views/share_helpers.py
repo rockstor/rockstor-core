@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import re
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 from django.conf import settings
 from storageadmin.models import Share, Snapshot, SFTP
 from smart_manager.models import ShareUsage
@@ -285,7 +284,7 @@ def update_shareusage_db(subvol_name, rusage, eusage, new_entry=True):
     :param new_entry: If True create a new entry with the passed params,
     otherwise attempt to update the latest (by id) entry with time and count.
     """
-    ts = datetime.utcnow().replace(tzinfo=utc)
+    ts = datetime.utcnow().replace(tzinfo=timezone.utc)
     if new_entry:
         su = ShareUsage(name=subvol_name, r_usage=rusage, e_usage=eusage, ts=ts)
         su.save()

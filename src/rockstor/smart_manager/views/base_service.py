@@ -24,8 +24,7 @@ import rest_framework_custom as rfc
 from rest_framework.response import Response
 from system.services import service_status
 from django.db import transaction
-from django.utils.timezone import utc
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,7 +42,7 @@ class ServiceMixin(object):
         return json.loads(service.config)
 
     def _get_or_create_sso(self, service):
-        ts = datetime.utcnow().replace(tzinfo=utc)
+        ts = datetime.utcnow().replace(tzinfo=timezone.utc)
         so = None
         if ServiceStatus.objects.filter(service=service).exists():
             so = ServiceStatus.objects.filter(service=service).order_by("-ts")[0]

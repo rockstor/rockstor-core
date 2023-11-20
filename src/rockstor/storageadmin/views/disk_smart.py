@@ -41,8 +41,7 @@ from system.smart import (
     test_logs,
     run_test,
 )
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 
 import logging
 
@@ -77,7 +76,7 @@ class DiskSMARTDetailView(rfc.GenericView):
         e_summary, e_lines = error_logs(disk.name, disk.smart_options)
         smartid = info(disk.name, disk.smart_options)
         test_d, log_lines = test_logs(disk.name, disk.smart_options)
-        ts = datetime.utcnow().replace(tzinfo=utc)
+        ts = datetime.utcnow().replace(tzinfo=timezone.utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()
         for k in sorted(attributes.keys(), reverse=True):

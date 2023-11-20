@@ -17,12 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import transaction
-from django.utils.timezone import utc
 from django.conf import settings
 from rest_framework.response import Response
 from smart_manager.models import ReplicaShare, ReceiveTrail
 from smart_manager.serializers import ReceiveTrailSerializer
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import rest_framework_custom as rfc
 
 
@@ -39,7 +38,7 @@ class ReceiveTrailListView(rfc.GenericView):
     def post(self, request, rid):
         with self._handle_exception(request):
             rs = ReplicaShare.objects.get(id=rid)
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             snap_name = request.data.get("snap_name")
             rt = ReceiveTrail(
                 rshare=rs, snap_name=snap_name, status="pending", receive_pending=ts
@@ -52,7 +51,7 @@ class ReceiveTrailListView(rfc.GenericView):
         with self._handle_exception(request):
             days = int(request.data.get("days", 30))
             rs = ReplicaShare.objects.get(id=rid)
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             ts0 = ts - timedelta(days=days)
             if ReceiveTrail.objects.filter(rshare=rs).count() > 100:
                 ReceiveTrail.objects.filter(rshare=rs, end_ts__lt=ts0).delete()
@@ -73,14 +72,14 @@ class ReceiveTrailDetailView(rfc.GenericView):
     def _convert_datestr(request, attr, default):
         val = request.data.get(attr, None)
         if val is not None:
-            return datetime.strptime(val, settings.SNAP_TS_FORMAT).replace(tzinfo=utc)
+            return datetime.strptime(val, settings.SNAP_TS_FORMAT).replace(tzinfo=timezone.utc)
         return default
 
     @transaction.atomic
     def put(self, request, rtid):
         with self._handle_exception(request):
             rt = ReceiveTrail.objects.get(id=rtid)
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             if "receive_succeeded" in request.data:
                 rt.receive_succeeded = ts
             rt.status = request.data.get("status", rt.status)

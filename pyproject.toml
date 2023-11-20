@@ -60,7 +60,7 @@ generate-setup-file = false
 python = "~3.9"
 
 # [tool.poetry.group.django.dependencies]
-django = "~3.2"
+django = "~4.2"
 django-oauth-toolkit = "*"
 djangorestframework = "*"
 django-pipeline = "*"

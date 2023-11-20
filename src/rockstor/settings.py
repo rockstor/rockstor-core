@@ -69,11 +69,8 @@ SITE_ID = 1
 # to load the internationalization machinery.
 USE_I18N = True
 
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale.
-USE_L10N = True
-
 # If you set this to False, Django will not use timezone-aware datetimes.
+# As from Django 5.0, the default is True.
 USE_TZ = True
 
 # Absolute path to the directory static files should be collected to.
@@ -103,6 +100,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "static")
 DEFAULT_CB_DIR = os.path.join(MEDIA_ROOT, "config-backups")
 
 # Additional locations of static files
+# See build.sh for `tar zxvf` into "jslibs" dir of GitHub rockstor-jslibs release.
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "jslibs"),)
 
 # List of finder classes that know how to find static files in
@@ -190,7 +188,12 @@ INSTALLED_APPS = (
     "huey.contrib.djhuey",
 )
 
-STATICFILES_STORAGE = "pipeline.storage.PipelineManifestStorage"
+# STATICFILES_STORAGE = "pipeline.storage.PipelineManifestStorage"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "pipeline.storage.PipelineManifestStorage",
+    },
+}
 
 # Have django-pipeline collate storageadmin js/jst files into one storageadmin.js file
 # which is then referenced in setup.html and base.html templates.
