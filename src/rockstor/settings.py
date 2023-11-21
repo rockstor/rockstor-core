@@ -32,7 +32,7 @@ ALLOWED_HOSTS = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": "storageadmin",  # Or path to database file if using sqlite3.
         "USER": "rocky",  # Not used with sqlite3.
         "PASSWORD": "rocky",  # Not used with sqlite3.
@@ -40,7 +40,7 @@ DATABASES = {
         "PORT": "",  # Set to empty string for default. Not used with sqlite3.
     },
     "smart_manager": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": "smartdb",
         "USER": "rocky",
         "PASSWORD": "rocky",

@@ -67,8 +67,7 @@ django-pipeline = "*"
 python-engineio = "==4.8.0"
 python-socketio = "==5.9.0"
 dbus-python = "*"
-# N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
-psycopg2 = "==2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
+psycopg = "~3"
 psycogreen = "==1.0"
 gevent = "*"  # can be an extra dependency to gunicorn.
 gunicorn = "*"
