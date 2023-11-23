@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core=1.1.15"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
@@ -57,7 +57,7 @@ generate-setup-file = false
 # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
 #
 # https://python-poetry.org/docs/dependency-specification
-python = "~3.9"
+python = "~3.11"
 
 # [tool.poetry.group.django.dependencies]
 django = "~4.2"

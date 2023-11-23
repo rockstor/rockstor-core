@@ -57,3 +57,6 @@ rockstor-tasks-huey.db*
 /src/rockstor/logs/error.tgz
 # Rockstor docker
 /conf/docker-daemon.json
+
+# Poetry error logs
+poetry-installer-error*
