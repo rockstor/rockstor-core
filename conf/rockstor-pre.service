@@ -6,7 +6,7 @@ Requires=postgresql.service
 [Service]
 Environment="DJANGO_SETTINGS_MODULE=settings"
 WorkingDirectory=/opt/rockstor
-ExecStart=/root/.local/bin/poetry run initrock
+ExecStart=/usr/local/bin/poetry run initrock
 Type=oneshot
 RemainAfterExit=yes
 
