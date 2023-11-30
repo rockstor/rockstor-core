@@ -21,7 +21,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import os
 import distro
 import secrets
+import keyring
+import keyring_pass
 from huey import SqliteHuey
+from keyring.errors import KeyringError
 
 # By default, DEBUG = False, honour this by True only if env var == "True"
 DEBUG = os.environ.get("DJANGO_DEBUG", "") == "True"
@@ -112,10 +115,25 @@ STATICFILES_FINDERS = (
     "pipeline.finders.PipelineFinder",
 )
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = "odk7(t)1y$ls)euj3$2xs7e^i=a9b&amp;xtf&amp;z=-2bz$687&amp;^q0+3"
+# Resource keyring for Django's cryptographic signing key.
+# https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key
+# Used for Sessions, Messages, PasswordResetView tokens.
+# "... not used for passwords of users and key rotation will not affect them."
+SECRET_KEY = keyring.get_password("rockstor", "SECRET_KEY")
+
+try:
+    secret_key_fallback = keyring.get_password("rockstor", "SECRET_KEY_FALLBACK")
+    if secret_key_fallback is not None:
+        # New in Django 4.1: https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key-fallbacks
+        SECRET_KEY_FALLBACKS = [secret_key_fallback]
+    else:
+        print("No SECRET_KEY_FALLBACK.")
+except keyring.errors.KeyringError:
+    print("KeyringError")
+
 
 # API client secret
+# TODO: move to install persistence and resourced from keyring.
 CLIENT_SECRET = secrets.token_urlsafe()
 
 # New in Django 1.8 to cover all prior TEMPLATE_* settings.

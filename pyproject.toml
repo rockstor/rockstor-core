@@ -81,6 +81,7 @@ psutil = "==5.9.4"
 pyzmq = "*"
 distro = "*"
 URLObject = "==2.1.1"
+keyring-pass = "*"
 # https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
 supervisor = "==4.2.4"
 

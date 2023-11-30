@@ -5,7 +5,17 @@ Requires=postgresql.service
 
 [Service]
 Environment="DJANGO_SETTINGS_MODULE=settings"
+Environment="PASSWORD_STORE_DIR=/root/.password-store"
 WorkingDirectory=/opt/rockstor
+# Avoid `pass` stdout leaking generated passwords (N.B. 2>&1 >/dev/null failed).
+StandardOutput=null
+# Idempotent: failure tolerated for pgp as key likely already exists (rc 2).
+ExecStartPre=-/usr/bin/gpg --quick-generate-key --batch --passphrase '' rockstor@localhost
+# Idempotent.
+ExecStartPre=/usr/bin/pass init rockstor@localhost
+# Rotate Django SECRET_KEY: failure tolerated in rename in case of no prior SECRET_KEY.
+ExecStartPre=-/usr/bin/pass rename --force python-keyring/rockstor/SECRET_KEY python-keyring/rockstor/SECRET_KEY_FALLBACK
+ExecStartPre=/usr/bin/pass generate --no-symbols --force python-keyring/rockstor/SECRET_KEY 100
 ExecStart=/usr/local/bin/poetry run initrock
 Type=oneshot
 RemainAfterExit=yes
