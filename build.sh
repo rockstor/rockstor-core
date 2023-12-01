@@ -67,8 +67,10 @@ echo
 echo "ROCKSTOR BUILD SCRIPT COMPLETED"
 echo
 echo "If installing from source, from scratch, for development; i.e. NOT via RPM:"
+echo "Note GnuPG & password-store ExecStartPre steps in /opt/rockstor/conf/rockstor-pre.service"
 echo "1. Run 'cd /opt/rockstor'."
 echo "2. Run 'systemctl start postgresql'."
 echo "3. Run 'export DJANGO_SETTINGS_MODULE=settings'."
-echo "4. Run 'poetry run initrock' as root (equivalent to rockstor-pre.service)."
-echo "5. Run 'systemctl enable --now rockstor-bootstrap'."
+echo "4. Run 'export PASSWORD_STORE_DIR=/root/.password-store'."
+echo "5. Run 'poetry run initrock' as root (equivalent to rockstor-pre.service ExecStart)."
+echo "6. Run 'systemctl enable --now rockstor-bootstrap'."

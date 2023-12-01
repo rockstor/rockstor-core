@@ -20,9 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Django settings for Rockstor project.
 import os
 import distro
-import secrets
 import keyring
-import keyring_pass
 from huey import SqliteHuey
 from keyring.errors import KeyringError
 
@@ -127,14 +125,13 @@ try:
         # New in Django 4.1: https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key-fallbacks
         SECRET_KEY_FALLBACKS = [secret_key_fallback]
     else:
-        print("No SECRET_KEY_FALLBACK.")
+        print("No SECRET_KEY_FALLBACK - rotated on reboot / rockstor services restart.")
 except keyring.errors.KeyringError:
     print("KeyringError")
 
 
 # API client secret
-# TODO: move to install persistence and resourced from keyring.
-CLIENT_SECRET = secrets.token_urlsafe()
+CLIENT_SECRET = keyring.get_password("rockstor", "CLIENT_SECRET")
 
 # New in Django 1.8 to cover all prior TEMPLATE_* settings.
 # https://docs.djangoproject.com/en/1.11/ref/templates/upgrading/
