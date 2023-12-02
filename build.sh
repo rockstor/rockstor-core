@@ -56,6 +56,13 @@ if [ ! -d "jslibs" ]; then
   echo
 fi
 
+# Ensure GNUPG is setup for 'pass' (Idempotent)
+/usr/bin/gpg --quick-generate-key --batch --passphrase '' rockstor@localhost || true
+# Init 'pass' in ~ using above GPG key, and generate Django SECRET_KEY
+export Environment="PASSWORD_STORE_DIR=/root/.password-store"
+/usr/bin/pass init rockstor@localhost
+/usr/bin/pass generate --no-symbols --force python-keyring/rockstor/SECRET_KEY 100
+
 # Collect all static files in the STATIC_ROOT subdirectory. See settings.py.
 # /opt/rockstor/static
 # Additional collectstatic options --clear --dry-run
