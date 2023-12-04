@@ -81,10 +81,16 @@ psutil = "==5.9.4"
 pyzmq = "*"
 distro = "*"
 URLObject = "==2.1.1"
+keyring-pass = "*"
 # https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
 supervisor = "==4.2.4"
 
-[tool.poetry.dev-dependencies]
+# `poetry install --with dev`
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
 
 [tool.poetry.scripts]
 # https://python-poetry.org/docs/pyproject#scripts

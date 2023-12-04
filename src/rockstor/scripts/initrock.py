@@ -24,7 +24,9 @@ import shutil
 import stat
 import sys
 from tempfile import mkstemp
-
+import secrets
+import keyring
+from keyring.errors import KeyringError
 from django.conf import settings
 
 from system import services
@@ -41,7 +43,10 @@ BASE_BIN = f"{BASE_DIR}.venv/bin"
 CONF_DIR = f"{BASE_DIR}conf"
 DJANGO = f"{BASE_BIN}/django-admin"
 DJANGO_MIGRATE_CMD = [DJANGO, "migrate", "--noinput"]
-DJANGO_MIGRATE_SMART_MANAGER_CMD = DJANGO_MIGRATE_CMD + ["--database=smart_manager", "smart_manager"]
+DJANGO_MIGRATE_SMART_MANAGER_CMD = DJANGO_MIGRATE_CMD + [
+    "--database=smart_manager",
+    "smart_manager",
+]
 STAMP = f"{BASE_DIR}/.initrock"
 FLASH_OPTIMIZE = f"{BASE_BIN}/flash-optimize"
 DJANGO_PREP_DB = f"{BASE_BIN}/prep_db"
@@ -210,10 +215,10 @@ def update_nginx(log):
         log.exception("Exception while updating nginx: {e}".format(e=e))
 
 
-def update_tz(log):
+def update_tz():
     # update timezone variable in settings.py
     zonestr = os.path.realpath("/etc/localtime").split("zoneinfo/")[1]
-    log.info("system timezone = {}".format(zonestr))
+    logger.info("system timezone = {}".format(zonestr))
     sfile = "{}/src/rockstor/settings.py".format(BASE_DIR)
     fo, npath = mkstemp()
     updated = False
@@ -226,7 +231,7 @@ def update_tz(log):
                 else:
                     tfo.write("TIME_ZONE = '{}'\n".format(zonestr))
                     updated = True
-                    log.info("Changed timezone from {} to {}".format(curzone, zonestr))
+                    logger.info("Changed timezone from {} to {}".format(curzone, zonestr))
             else:
                 tfo.write(line)
     if updated:
@@ -457,6 +462,19 @@ def establish_poetry_paths():
     logger.info("### DONE establishing poetry path to binaries in local files.")
 
 
+def set_api_client_secret():
+    """
+    Set/reset the API client secret which is used internally by OAUTH_INTERNAL_APP = "cliapp",
+    and the Replication service. Ultimately retrieved in setting.py and intended to be installed
+    instance stable. Resources OS package pass as python-keyring backend via interface project keyring-pass.
+    """
+    try:
+        keyring.set_password("rockstor", "CLIENT_SECRET", secrets.token_urlsafe(100))
+        logger.info("API CLIENT_SECRET set/reset successfully.")
+    except keyring.errors.PasswordSetError:
+        raise keyring.errors.PasswordSetError("Failed to set/reset API CLIENT_SECRET.")
+
+
 def main():
     loglevel = logging.INFO
     if len(sys.argv) > 1 and sys.argv[1] == "-x":
@@ -476,7 +494,7 @@ def main():
             "/C=US/ST=Rockstor user's state/L=Rockstor user's "
             "city/O=Rockstor user/OU=Rockstor dept/CN=rockstor.user"
         )
-        logging.info("Creating openssl cert...")
+        logger.info("Creating openssl cert...")
         run_command(
             [
                 OPENSSL,
@@ -492,8 +510,8 @@ def main():
                 dn,
             ]
         )
-        logging.debug("openssl cert created")
-        logging.info("Creating rockstor key...")
+        logger.debug("openssl cert created")
+        logger.info("Creating rockstor key...")
         run_command(
             [
                 OPENSSL,
@@ -504,8 +522,8 @@ def main():
                 "{}/rockstor.key".format(cert_loc),
             ]
         )
-        logging.debug("rockstor key created")
-        logging.info("Singing cert with rockstor key...")
+        logger.debug("rockstor key created")
+        logger.info("Singing cert with rockstor key...")
         run_command(
             [
                 OPENSSL,
@@ -521,44 +539,46 @@ def main():
                 "3650",
             ]
         )
-        logging.debug("cert signed.")
-        logging.info("restarting nginx...")
+        logger.debug("cert signed.")
+        logger.info("restarting nginx...")
         run_command([SYSTEMCTL, "restart", "nginx"])
 
-    logging.info("Checking for flash and Running flash optimizations if appropriate.")
+    logger.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
     try:
-        logging.info("Updating the timezone from the system")
-        update_tz(logging)
+        logger.info("Updating the timezone from the system")
+        update_tz()
     except Exception as e:
-        logging.error("Exception while updating timezone: {}".format(e.__str__()))
-        logging.exception(e)
+        logger.error("Exception while updating timezone: {}".format(e.__str__()))
+        logger.exception(e)
 
     try:
-        logging.info("Initialising SSHD config")
+        logger.info("Initialising SSHD config")
         bootstrap_sshd_config(logging)
     except Exception as e:
-        logging.error("Exception while updating sshd config: {}".format(e.__str__()))
+        logger.error("Exception while updating sshd config: {}".format(e.__str__()))
 
     db_already_setup = os.path.isfile(STAMP)
+    if not db_already_setup or keyring.get_password("rockstor", "CLIENT_SECRET") is None:
+        set_api_client_secret()
     for db_stage_name, db_stage_items in zip(
         ["Tune Postgres", "Setup Databases"], [DB_SYS_TUNE, DB_SETUP]
     ):
         if db_stage_name == "Setup Databases" and db_already_setup:
             continue
-        logging.info(f"--DB-- {db_stage_name} --DB--")
+        logger.info(f"--DB-- {db_stage_name} --DB--")
         for action, command in db_stage_items.items():
-            logging.info(f"--DB-- Running - {action}")
+            logger.info(f"--DB-- Running - {action}")
             if action.startswith("migrate"):
                 run_command(command)
             else:
                 run_command(["su", "-", "postgres", "-c", command])
-            logging.info(f"--DB-- Done with {action}.")
-        logging.info(f"--DB-- {db_stage_name} Done --DB--.")
+            logger.info(f"--DB-- Done with {action}.")
+        logger.info(f"--DB-- {db_stage_name} Done --DB--.")
         if db_stage_name == "Setup Databases":
             run_command(["touch", STAMP])  # file flag indicating db setup
 
-    logging.info("Running app database migrations...")
+    logger.info("Running app database migrations...")
     fake_migration_cmd = DJANGO_MIGRATE_CMD + ["--fake"]
     fake_initial_migration_cmd = DJANGO_MIGRATE_CMD + ["--fake-initial"]
 
@@ -591,30 +611,34 @@ def main():
     run_command(DJANGO_MIGRATE_CMD + ["storageadmin"], log=True)
     run_command(DJANGO_MIGRATE_SMART_MANAGER_CMD, log=True)
 
-    o, e, rc = run_command([DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True)
+    o, e, rc = run_command(
+        [DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True
+    )
     logger.info(f"Prior migrations for oauth2_provider are: {o}")
 
     # Run all migrations for oauth2_provider
     run_command(DJANGO_MIGRATE_CMD + ["oauth2_provider"], log=True)
 
-    o, e, rc = run_command([DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True)
+    o, e, rc = run_command(
+        [DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True
+    )
     logger.info(f"Post migrations for oauth2_provider are: {o}")
 
-    logging.info("DB Migrations Done")
+    logger.info("DB Migrations Done")
 
-    logging.info("Running Django prep_db.")
+    logger.info("Running Django prep_db.")
     run_command([DJANGO_PREP_DB])
-    logging.info("Done")
+    logger.info("Done")
 
-    logging.info("Stopping firewalld...")
+    logger.info("Stopping firewalld...")
     run_command([SYSTEMCTL, "stop", "firewalld"])
     run_command([SYSTEMCTL, "disable", "firewalld"])
-    logging.info("Firewalld stopped and disabled")
+    logger.info("Firewalld stopped and disabled")
 
-    logging.info("Enabling and Starting atd...")
+    logger.info("Enabling and Starting atd...")
     run_command([SYSTEMCTL, "enable", "atd"])
     run_command([SYSTEMCTL, "start", "atd"])
-    logging.info("Atd enabled and started")
+    logger.info("Atd enabled and started")
 
     update_nginx(logging)
 
