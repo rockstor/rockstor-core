@@ -1,7 +1,9 @@
 [Unit]
 Description=Tasks required prior to starting Rockstor
 After=postgresql.service
+After=NetworkManager.service
 Requires=postgresql.service
+Requires=NetworkManager.service
 
 [Service]
 Environment="DJANGO_SETTINGS_MODULE=settings"
