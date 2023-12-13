@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,12 +13,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import models
 from oauth2_provider.models import Application
 from storageadmin.models import User
+from settings import OAUTH_INTERNAL_APP, CLIENT_SECRET
 
 
 class OauthApp(models.Model):
@@ -30,7 +31,16 @@ class OauthApp(models.Model):
         return self.application.client_id
 
     def client_secret(self, *args, **kwargs):
+        # For our internal app, we return our 'pass' secret:
+        if self.application.name == OAUTH_INTERNAL_APP:
+            return CLIENT_SECRET
         return self.application.client_secret
+
+    @property
+    def is_internal(self, *args, **kwargs):
+        if self.application.name == OAUTH_INTERNAL_APP:
+            return True
+        return False
 
     class Meta:
         app_label = "storageadmin"
