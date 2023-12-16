@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from multiprocessing import Process
@@ -26,12 +26,11 @@ import time
 from django.conf import settings
 from django import db
 from contextlib import contextmanager
-from util import ReplicationMixin
+from smart_manager.replication.util import ReplicationMixin
 from fs.btrfs import get_oldest_snap, remove_share, set_property, is_subvol, mount_share
 from system.osi import run_command
 from storageadmin.models import Pool, Share, Appliance
 from smart_manager.models import ReplicaShare, ReceiveTrail
-import shutil
 from cli import APIWrapper
 import logging
 
@@ -92,7 +91,7 @@ class Receiver(ReplicationMixin, Process):
         try:
             yield
         except Exception as e:
-            logger.error("%s. Exception: %s" % (self.msg, e.__str__()))
+            logger.error(f"{self.msg}. Exception: {e.__str__()}")
             if self.rtid is not None:
                 try:
                     data = {
@@ -109,10 +108,10 @@ class Receiver(ReplicationMixin, Process):
 
             if self.ack is True:
                 try:
-                    command = "receiver-error"
+                    command = b"receiver-error"
                     self.dealer.send_multipart(
                         [
-                            "receiver-error",
+                            b"receiver-error",
                             b"%s. Exception: %s" % (str(self.msg), str(e.__str__())),
                         ]
                     )
@@ -130,11 +129,8 @@ class Receiver(ReplicationMixin, Process):
                             "the broker" % self.identity
                         )
                 except Exception as e:
-                    msg = (
-                        "Id: %s. Exception while sending %s back "
-                        "to the broker. Aborting" % (self.identity, command)
-                    )
-                    logger.error("%s. Exception: %s" % (msg, e.__str__()))
+                    msg = f"Id: {self.identity}. Exception while sending {command} back to the broker. Aborting"
+                    logger.error(f"{msg}. Exception: {e.__str__()}")
             self._sys_exit(3)
 
     def _delete_old_snaps(self, share_name, share_path, num_retain):
@@ -143,24 +139,24 @@ class Receiver(ReplicationMixin, Process):
             if self.delete_snapshot(share_name, oldest_snap):
                 return self._delete_old_snaps(share_name, share_path, num_retain)
 
-    def _send_recv(self, command, msg=""):
+    def _send_recv(self, command: bytes, msg: bytes = b""):
         rcommand = rmsg = None
         self.dealer.send_multipart([command, msg])
         # Retry logic doesn't make sense atm. So one long patient wait.
         socks = dict(self.poll.poll(60000))  # 60 seconds.
         if socks.get(self.dealer) == zmq.POLLIN:
             rcommand, rmsg = self.dealer.recv_multipart()
-        logger.debug(
-            "Id: %s command: %s rcommand: %s" % (self.identity, command, rcommand)
-        )
+        logger.debug(f"Id: {self.identity} command: {command} rcommand: {rcommand}")
         return rcommand, rmsg
 
     def _latest_snap(self, rso):
         for snap in ReceiveTrail.objects.filter(
             rshare=rso, status="succeeded"
         ).order_by("-id"):
-            if is_subvol("%s/%s" % (self.snap_dir, snap.snap_name)):
-                return str(snap.snap_name)  # cannot be unicode for zmq message
+            if is_subvol(f"{self.snap_dir}/{snap.snap_name}"):
+                return str(snap.snap_name).encode(
+                    "utf8"
+                )  # cannot be unicode for zmq message
         logger.error(
             "Id: %s. There are no replication snapshots on the "
             "system for "
@@ -171,30 +167,35 @@ class Receiver(ReplicationMixin, Process):
 
     def run(self):
         logger.debug(
-            "Id: %s. Starting a new Receiver for meta: %s" % (self.identity, self.meta)
+            f"Id: {self.identity}. Starting a new Receiver for meta: {self.meta}"
         )
-        self.msg = "Top level exception in receiver"
+        self.msg = b"Top level exception in receiver"
         latest_snap = None
         with self._clean_exit_handler():
             self.law = APIWrapper()
             self.poll = zmq.Poller()
             self.dealer = self.ctx.socket(zmq.DEALER)
-            self.dealer.setsockopt_string(zmq.IDENTITY, u"%s" % self.identity)
+            self.dealer.setsockopt_string(zmq.IDENTITY, "%s" % self.identity)
             self.dealer.set_hwm(10)
             self.dealer.connect("ipc://%s" % settings.REPLICATION.get("ipc_socket"))
             self.poll.register(self.dealer, zmq.POLLIN)
 
             self.ack = True
-            self.msg = "Failed to get the sender ip for appliance: %s" % self.sender_id
+            self.msg = (
+                f"Failed to get the sender ip for appliance: {self.sender_id}".encode(
+                    "utf-8"
+                )
+            )
             self.sender_ip = Appliance.objects.get(uuid=self.sender_id).ip
 
             if not self.incremental:
-                self.msg = "Failed to verify/create share: %s." % self.sname
+                self.msg = f"Failed to verify/create share: {self.sname}.".encode(
+                    "utf-8"
+                )
                 self.create_share(self.sname, self.dest_pool)
 
-                self.msg = (
-                    "Failed to create the replica metadata object "
-                    "for share: %s." % self.sname
+                self.msg = f"Failed to create the replica metadata object for share: {self.sname}.".encode(
+                    "utf-8"
                 )
                 data = {
                     "share": self.sname,
@@ -203,27 +204,28 @@ class Receiver(ReplicationMixin, Process):
                 }
                 self.rid = self.create_rshare(data)
             else:
-                self.msg = (
-                    "Failed to retreive the replica metadata "
-                    "object for share: %s." % self.sname
+                self.msg = f"Failed to retreive the replica metadata object for share: {self.sname}.".encode(
+                    "utf-8"
                 )
                 rso = ReplicaShare.objects.get(share=self.sname)
                 self.rid = rso.id
                 # Find and send the current snapshot to the sender. This will
                 # be used as the start by btrfs-send diff.
                 self.msg = (
-                    "Failed to verify latest replication snapshot on the system."
+                    b"Failed to verify latest replication snapshot on the system."
                 )
                 latest_snap = self._latest_snap(rso)
 
-            self.msg = "Failed to create receive trail for rid: %d" % self.rid
+            self.msg = f"Failed to create receive trail for rid: {self.rid}".encode(
+                "utf-8"
+            )
             data = {
                 "snap_name": self.snap_name,
             }
             self.rtid = self.create_receive_trail(self.rid, data)
 
             # delete the share, move the oldest snap to share
-            self.msg = "Failed to promote the oldest Snapshot to Share."
+            self.msg = b"Failed to promote the oldest Snapshot to Share."
             oldest_snap = get_oldest_snap(
                 self.snap_dir, self.num_retain_snaps, regex="_replication_"
             )
@@ -232,7 +234,7 @@ class Receiver(ReplicationMixin, Process):
                 self.refresh_share_state()
                 self.refresh_snapshot_state()
 
-            self.msg = "Failed to prune old Snapshots"
+            self.msg = b"Failed to prune old Snapshots"
             self._delete_old_snaps(self.sname, self.snap_dir, self.num_retain_snaps + 1)
 
             # TODO: The following should be re-instantiated once we have a
@@ -245,10 +247,14 @@ class Receiver(ReplicationMixin, Process):
 
             sub_vol = "%s%s/%s" % (settings.MNT_PT, self.dest_pool, self.sname)
             if not is_subvol(sub_vol):
-                self.msg = "Failed to create parent subvolume %s" % sub_vol
+                self.msg = f"Failed to create parent subvolume {sub_vol}".encode(
+                    "utf-8"
+                )
                 run_command([BTRFS, "subvolume", "create", sub_vol])
 
-            self.msg = "Failed to create snapshot directory: %s" % self.snap_dir
+            self.msg = f"Failed to create snapshot directory: {self.snap_dir}".encode(
+                "utf-8"
+            )
             run_command(["/usr/bin/mkdir", "-p", self.snap_dir])
             snap_fp = "%s/%s" % (self.snap_dir, self.snap_name)
 
@@ -261,13 +267,12 @@ class Receiver(ReplicationMixin, Process):
                     "exists. Not starting a new receive process"
                     % (self.identity, snap_fp)
                 )
-                self._send_recv("snap-exists")
+                self._send_recv(b"snap-exists")
                 self._sys_exit(0)
 
             cmd = [BTRFS, "receive", self.snap_dir]
-            self.msg = (
-                "Failed to start the low level btrfs receive "
-                "command(%s). Aborting." % cmd
+            self.msg = f"Failed to start the low level btrfs receive command({cmd}). Aborting.".encode(
+                "utf-8"
             )
             self.rp = subprocess.Popen(
                 cmd,
@@ -277,20 +282,14 @@ class Receiver(ReplicationMixin, Process):
                 stderr=subprocess.PIPE,
             )
 
-            self.msg = "Failed to send receiver-ready"
-            rcommand, rmsg = self._send_recv("receiver-ready", latest_snap or "")
+            self.msg = b"Failed to send receiver-ready"
+            rcommand, rmsg = self._send_recv(b"receiver-ready", latest_snap or b"")
             if rcommand is None:
                 logger.error(
-                    "Id: %s. No response from the broker for "
-                    "receiver-ready command. Aborting." % self.identity
+                    f"Id: {self.identity}. No response from the broker for receiver-ready command. Aborting."
                 )
                 self._sys_exit(3)
 
-            term_commands = (
-                "btrfs-send-init-error",
-                "btrfs-send-unexpected-termination-error",
-                "btrfs-send-nonzero-termination-error",
-            )
             num_tries = 10
             poll_interval = 6000  # 6 seconds
             num_msgs = 0
@@ -302,12 +301,13 @@ class Receiver(ReplicationMixin, Process):
                     # milliseconds) for every message
                     num_tries = 10
                     command, message = self.dealer.recv_multipart()
-                    if command == "btrfs-send-stream-finished":
+                    logger.debug(f"command = {command}, of type:", type(command))
+                    if command == b"btrfs-send-stream-finished":
                         # this command concludes fsdata transfer. After this,
                         # btrfs-recev process should be
                         # terminated(.communicate).
                         if self.rp.poll() is None:
-                            self.msg = "Failed to terminate btrfs-recv command"
+                            self.msg = b"Failed to terminate btrfs-recv command"
                             out, err = self.rp.communicate()
                             out = out.split("\n")
                             err = err.split("\n")
@@ -317,21 +317,20 @@ class Receiver(ReplicationMixin, Process):
                                 % (self.identity, cmd, out, err, self.rp.returncode)
                             )
                         if self.rp.returncode != 0:
-                            self.msg = (
-                                "btrfs-recv exited with unexpected "
-                                "exitcode(%s). " % self.rp.returncode
+                            self.msg = f"btrfs-recv exited with unexpected exitcode({self.rp.returncode}).".encode(
+                                "utf-8"
                             )
                             raise Exception(self.msg)
                         data = {
                             "status": "succeeded",
                             "kb_received": self.total_bytes_received / 1024,
                         }
-                        self.msg = (
-                            "Failed to update receive trail for rtid: %d" % self.rtid
+                        self.msg = f"Failed to update receive trail for rtid: {self.rtid}".encode(
+                            "utf-8"
                         )
                         self.update_receive_trail(self.rtid, data)
 
-                        self._send_recv("btrfs-recv-finished")
+                        self._send_recv(b"btrfs-recv-finished")
                         self.refresh_share_state()
                         self.refresh_snapshot_state()
 
@@ -343,10 +342,13 @@ class Receiver(ReplicationMixin, Process):
                         )
                         self._sys_exit(0)
 
-                    if command in term_commands:
-                        self.msg = (
-                            "Terminal command(%s) received from the "
-                            "sender. Aborting." % command
+                    if (
+                        command == b"btrfs-send-init-error"
+                        or command == b"btrfs-send-unexpected-termination-error"
+                        or command == b"btrfs-send-nonzero-termination-error"
+                    ):
+                        self.msg = f"Terminal command({command}) received from the sender. Aborting.".encode(
+                            "utf-8"
                         )
                         raise Exception(self.msg)
 
@@ -354,7 +356,7 @@ class Receiver(ReplicationMixin, Process):
                         self.rp.stdin.write(message)
                         self.rp.stdin.flush()
                         # @todo: implement advanced credit request system.
-                        self.dealer.send_multipart([b"send-more", ""])
+                        self.dealer.send_multipart([b"send-more", b""])
                         num_msgs += 1
                         self.total_bytes_received += len(message)
                         if num_msgs == 1000:
@@ -378,22 +380,20 @@ class Receiver(ReplicationMixin, Process):
                         out = out.split("\n")
                         err = err.split("\n")
                         logger.error(
-                            "Id: %s. btrfs-recv died unexpectedly. "
-                            "cmd: %s out: %s. err: %s" % (self.identity, cmd, out, err)
+                            f"Id: {self.identity}. btrfs-recv died unexpectedly. "
+                            f"cmd: {cmd} out: {out}. err: {err}"
                         )
                         msg = (
-                            "Low level system error from btrfs receive "
-                            "command. cmd: %s out: %s err: %s for rtid: %s"
-                            % (cmd, out, err, self.rtid)
-                        )
+                            f"Low level system error from btrfs receive command. "
+                            f"cmd: {cmd} out: {out} err: {err} for rtid: {self.rtid}"
+                        ).encode("utf-8")
                         data = {
                             "status": "failed",
                             "error": msg,
                         }
                         self.msg = (
-                            "Failed to update receive trail for "
-                            "rtid: %d." % self.rtid
-                        )
+                            f"Failed to update receive trail for rtid: {self.rtid}."
+                        ).encode("utf-8")
                         self.update_receive_trail(self.rtid, data)
                         self.msg = msg
                         raise Exception(self.msg)
@@ -405,5 +405,5 @@ class Receiver(ReplicationMixin, Process):
                     )
                     logger.error("Id: %s. %s" % (self.identity, msg))
                     if num_tries == 0:
-                        self.msg = "%s. Terminating the receiver." % msg
+                        self.msg = f"{msg}. Terminating the receiver.".encode("utf-8")
                         raise Exception(self.msg)

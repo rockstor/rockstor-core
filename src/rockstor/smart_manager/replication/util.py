@@ -26,58 +26,61 @@ logger = logging.getLogger(__name__)
 
 
 class ReplicationMixin(object):
-    def validate_src_share(self, sender_uuid, sname):
+    def validate_src_share(self, sender_uuid: str, sname: str):
         url = "https://"
         if self.raw is None:
             a = Appliance.objects.get(uuid=sender_uuid)
-            url = "%s%s:%s" % (url, a.ip, a.mgmt_port)
+            url = f"{url}{a.ip}:{a.mgmt_port}"
             self.raw = APIWrapper(
                 client_id=a.client_id, client_secret=a.client_secret, url=url
             )
         # TODO: update url to include senders shareId as sname is now invalid
         return self.raw.api_call(url="shares/%s" % sname)
 
-    def update_replica_status(self, rtid, data):
+    def update_replica_status(self, rtid: int, data):
         try:
-            url = "sm/replicas/trail/%d" % rtid
+            url = f"sm/replicas/trail/{rtid}"
             return self.law.api_call(url, data=data, calltype="put")
         except Exception as e:
-            msg = "Exception while updating replica(%s) status to %s: %s" % (
-                url,
-                data["status"],
-                e.__str__(),
-            )
+            msg = f"Exception while updating replica({url}) status to {data['status']}: {e.__str__()}"
             raise Exception(msg)
 
-    def disable_replica(self, rid):
+    def disable_replica(self, rid: int):
         try:
-            url = "sm/replicas/%d" % rid
+            url = f"sm/replicas/{rid}"
             headers = {
                 "content-type": "application/json",
             }
             return self.law.api_call(
                 url,
-                data={"enabled": False,},
+                data={
+                    "enabled": False,
+                },
                 calltype="put",
                 save_error=False,
                 headers=headers,
             )
         except Exception as e:
-            msg = "Exception while disabling replica(%s): %s" % (url, e.__str__())
+            msg = f"Exception while disabling replica({url}): {e.__str__()}"
             raise Exception(msg)
 
-    def create_replica_trail(self, rid, snap_name):
-        url = "sm/replicas/trail/replica/%d" % rid
+    def create_replica_trail(self, rid: int, snap_name: str):
+        url = f"sm/replicas/trail/replica/{rid}"
         return self.law.api_call(
-            url, data={"snap_name": snap_name,}, calltype="post", save_error=False
+            url,
+            data={
+                "snap_name": snap_name,
+            },
+            calltype="post",
+            save_error=False,
         )
 
-    def rshare_id(self, sname):
-        url = "sm/replicas/rshare/%s" % sname
+    def rshare_id(self, sname: str) -> int:
+        url = f"sm/replicas/rshare/{sname}"
         rshare = self.law.api_call(url, save_error=False)
         return rshare["id"]
 
-    def create_rshare(self, data):
+    def create_rshare(self, data) -> int:
         try:
             url = "sm/replicas/rshare"
             rshare = self.law.api_call(
@@ -92,20 +95,20 @@ class ReplicationMixin(object):
                 return self.rshare_id(data["share"])
             raise e
 
-    def create_receive_trail(self, rid, data):
-        url = "sm/replicas/rtrail/rshare/%d" % rid
+    def create_receive_trail(self, rid: int, data) -> int:
+        url = f"sm/replicas/rtrail/rshare/{rid}"
         rt = self.law.api_call(url, data=data, calltype="post", save_error=False)
         return rt["id"]
 
-    def update_receive_trail(self, rtid, data):
-        url = "sm/replicas/rtrail/%d" % rtid
+    def update_receive_trail(self, rtid: int, data):
+        url = f"sm/replicas/rtrail/{rtid}"
         try:
             return self.law.api_call(url, data=data, calltype="put", save_error=False)
         except Exception as e:
-            msg = "Exception while updating receive trail(%s): %s" % (url, e.__str__())
+            msg = f"Exception while updating receive trail({url}): {e.__str__()}"
             raise Exception(msg)
 
-    def prune_trail(self, url, days=7):
+    def prune_trail(self, url: str, days: int = 7):
         try:
             data = {
                 "days": days,
@@ -114,33 +117,39 @@ class ReplicationMixin(object):
                 url, data=data, calltype="delete", save_error=False
             )
         except Exception as e:
-            msg = "Exception while pruning trail for url(%s): %s" % (url, e.__str__())
+            msg = f"Exception while pruning trail for url({url}): {e.__str__()}"
             raise Exception(msg)
 
     def prune_receive_trail(self, ro):
-        url = "sm/replicas/rtrail/rshare/%d" % ro.id
+        url = f"sm/replicas/rtrail/rshare/{ro.id}"
         return self.prune_trail(url)
 
     def prune_replica_trail(self, ro):
-        url = "sm/replicas/trail/replica/%d" % ro.id
+        url = f"sm/replicas/trail/replica/{ro.id}"
         return self.prune_trail(url)
 
-    def create_snapshot(self, sname, snap_name, snap_type="replication"):
+    def create_snapshot(self, sname: str, snap_name: str, snap_type="replication"):
         try:
             share = Share.objects.get(name=sname)
-            url = "shares/%s/snapshots/%s" % (share.id, snap_name)
+            url = f"shares/{share.id}/snapshots/{snap_name}"
             return self.law.api_call(
-                url, data={"snap_type": snap_type,}, calltype="post", save_error=False
+                url,
+                data={
+                    "snap_type": snap_type,
+                },
+                calltype="post",
+                save_error=False,
             )
         except RockStorAPIException as e:
             # Note snapshot.py _create() generates this exception message.
-            if e.detail == (
-                "Snapshot ({}) already exists for the share ({})."
-            ).format(snap_name, sname):
+            if (
+                e.detail
+                == f"Snapshot ({snap_name}) already exists for the share ({sname})."
+            ):
                 return logger.debug(e.detail)
             raise e
 
-    def update_repclone(self, sname, snap_name):
+    def update_repclone(self, sname: str, snap_name: str):
         """
         Call the dedicated create_repclone via it's url to supplant our
         share with the given snapshot. Intended for use in receive.py to turn
@@ -152,32 +161,33 @@ class ReplicationMixin(object):
         """
         try:
             share = Share.objects.get(name=sname)
-            url = "shares/{}/snapshots/{}/repclone".format(share.id, snap_name)
+            url = f"shares/{share.id}/snapshots/{snap_name}/repclone"
             return self.law.api_call(url, calltype="post", save_error=False)
         except RockStorAPIException as e:
             # TODO: need to look further at the following as command repclone
-            # TODO: (snapshot.py post) catches Snapshot.DoesNotExist.
-            # TODO: and doesn't appear to call _delete_snapshot()
+            #  (snapshot.py post) catches Snapshot.DoesNotExist.
+            #  and doesn't appear to call _delete_snapshot()
             # Note snapshot.py _delete_snapshot() generates this exception msg.
-            if e.detail == "Snapshot name ({}) does not exist.".format(snap_name):
+            if e.detail == f"Snapshot name ({snap_name}) does not exist.":
                 logger.debug(e.detail)
                 return False
             raise e
 
-    def delete_snapshot(self, sname, snap_name):
+    def delete_snapshot(self, sname: str, snap_name: str):
         try:
             share = Share.objects.get(name=sname)
-            url = "shares/%s/snapshots/%s" % (share.id, snap_name)
+            url = f"shares/{share.id}/snapshots/{snap_name}"
             self.law.api_call(url, calltype="delete", save_error=False)
             return True
         except RockStorAPIException as e:
             # Note snapshot.py _delete_snapshot() generates this exception msg.
-            if e.detail == "Snapshot name ({}) does not exist.".format(snap_name):
+            if e.detail == f"Snapshot name ({snap_name}) does not exist.":
                 logger.debug(e.detail)
                 return False
             raise e
 
-    def create_share(self, sname, pool):
+    def create_share(self, sname: str, pool):
+        print("pool parameter is of type:", type(pool))
         try:
             url = "shares"
             data = {
@@ -193,10 +203,7 @@ class ReplicationMixin(object):
             )
         except RockStorAPIException as e:
             # Note share.py post() generates this exception message.
-            if (
-                e.detail == "Share ({}) already exists. Choose a different "
-                "name.".format(sname)
-            ):  # noqa E501
+            if e.detail == f"Share ({sname}) already exists. Choose a different name.":
                 return logger.debug(e.detail)
             raise e
 
@@ -209,7 +216,7 @@ class ReplicationMixin(object):
                 save_error=False,
             )
         except Exception as e:
-            logger.error("Exception while refreshing Snapshot state: %s" % e.__str__())
+            logger.error(f"Exception while refreshing Snapshot state: {e.__str__()}")
 
     def refresh_share_state(self):
         try:
@@ -220,9 +227,18 @@ class ReplicationMixin(object):
                 save_error=False,
             )
         except Exception as e:
-            logger.error("Exception while refreshing Share state: %s" % e.__str__())
+            logger.error(f"Exception while refreshing Share state: {e.__str__()}")
 
-    def humanize_bytes(self, num, units=("Bytes", "KB", "MB", "GB",)):
+    def humanize_bytes(
+        self,
+        num: int,
+        units=(
+            "Bytes",
+            "KB",
+            "MB",
+            "GB",
+        ),
+    ):
         """
         Recursive routine to establish and then return the most appropriate
         num expression given the contents of units. Ie 1023 Bytes or 4096 KB
@@ -234,7 +250,7 @@ class ReplicationMixin(object):
             return "%.2f %s" % (num, units[0])
         return self.humanize_bytes(num / 1024, units[1:])
 
-    def size_report(self, num, t0):
+    def size_report(self, num: int, t0):
         t1 = time.time()
         dsize = self.humanize_bytes(float(num))
         drate = self.humanize_bytes(float(num / (t1 - t0)))
