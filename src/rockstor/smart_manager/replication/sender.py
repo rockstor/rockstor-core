@@ -40,6 +40,8 @@ BTRFS = "/sbin/btrfs"
 
 class Sender(ReplicationMixin, Process):
     def __init__(self, uuid, receiver_ip, replica, rt=None):
+        self.law = None
+        self.poll = None
         self.uuid = uuid
         self.receiver_ip = receiver_ip
         self.receiver_port = replica.data_port
@@ -52,12 +54,12 @@ class Sender(ReplicationMixin, Process):
         self.rt2 = None
         self.rt2_id = None
         self.rid = replica.id
-        self.identity = u"%s-%s" % (self.uuid, self.rid)
+        self.identity = "%s-%s" % (self.uuid, self.rid)
         self.sp = None
         # Latest snapshot per Receiver(comes along with receiver-ready)
         self.rlatest_snap = None
         self.ctx = zmq.Context()
-        self.msg = ""
+        self.msg = b""
         self.update_trail = False
         self.total_bytes_sent = 0
         self.ppid = os.getpid()
@@ -105,12 +107,12 @@ class Sender(ReplicationMixin, Process):
             "uuid": self.uuid,
         }
         msg_str = json.dumps(msg)
-        self.send_req.send_multipart(["sender-ready", b"%s" % msg_str])
+        self.send_req.send_multipart([b"sender-ready", b"%s" % msg_str])
         logger.debug("Id: %s Initial greeting: %s" % (self.identity, msg))
         self.poll.register(self.send_req, zmq.POLLIN)
 
-    def _send_recv(self, command, msg=""):
-        self.msg = "Failed while send-recv-ing command(%s)" % command
+    def _send_recv(self, command: bytes, msg: bytes = b""):
+        self.msg = f"Failed while send-recv-ing command({command})".encode("utf-8")
         rcommand = rmsg = None
         self.send_req.send_multipart([command, b"%s" % msg])
         # There is no retry logic here because it's an overkill at the moment.
@@ -121,19 +123,12 @@ class Sender(ReplicationMixin, Process):
         if socks.get(self.send_req) == zmq.POLLIN:
             rcommand, rmsg = self.send_req.recv_multipart()
         if (
-            len(command) > 0 or (rcommand is not None and rcommand != "send-more")
+            len(command) > 0 or (rcommand is not None and rcommand != b"send-more")
         ) or (  # noqa E501
             len(command) > 0 and rcommand is None
         ):
             logger.debug(
-                "Id: %s Server: %s:%d scommand: %s rcommand: %s"
-                % (
-                    self.identity,
-                    self.receiver_ip,
-                    self.receiver_port,
-                    command,
-                    rcommand,
-                )
+                f"Id: {self.identity} Server: {self.receiver_ip}:{self.receiver_port} scommand: {command} rcommand: {rcommand}"
             )
         return rcommand, rmsg
 
@@ -142,10 +137,10 @@ class Sender(ReplicationMixin, Process):
             share_path, self.max_snap_retain, regex="_replication_"
         )
         if oldest_snap is not None:
-            logger.debug(
-                "Id: %s. Deleting old snapshot: %s" % (self.identity, oldest_snap)
+            logger.debug(f"Id: {self.identity}. Deleting old snapshot: {oldest_snap}")
+            self.msg = f"Failed to delete snapshot: {oldest_snap}. Aborting.".encode(
+                "utf-8"
             )
-            self.msg = "Failed to delete snapshot: %s. Aborting." % oldest_snap
             if self.delete_snapshot(self.replica.share, oldest_snap):
                 return self._delete_old_snaps(share_path)
 
@@ -155,7 +150,7 @@ class Sender(ReplicationMixin, Process):
         # it may not be the one refered by self.rt(latest) but a previous one.
         # We need to make sure to *only* send the incremental send that
         # receiver expects.
-        self.msg = "Failed to validate/refresh ReplicaTrail."
+        self.msg = "Failed to validate/refresh ReplicaTrail.".encode("utf-8")
         if self.rlatest_snap is None:
             # Validate/update self.rt to the one that has the expected Snapshot
             # on the system.
@@ -184,16 +179,15 @@ class Sender(ReplicationMixin, Process):
         if self.rt.snap_name != self.rlatest_snap:
             self.msg = (
                 "Mismatch on starting snapshot for "
-                "btrfs-send. Sender picked %s but Receiver wants "
-                "%s, which takes precedence." % (self.rt.snap_name, self.rlatest_snap)
-            )
+                f"btrfs-send. Sender picked {self.rt.snap_name} but Receiver wants "
+                f"{self.rlatest_snap}, which takes precedence."
+            ).encode("utf-8")
             for rt in ReplicaTrail.objects.filter(
                 replica=self.replica, status="succeeded"
             ).order_by("-id"):
                 if rt.snap_name == self.rlatest_snap:
-                    self.msg = "%s. successful trail found for %s" % (
-                        self.msg,
-                        self.rlatest_snap,
+                    self.msg = f"{self.msg}. successful trail found for {self.rlatest_snap}".encode(
+                        "utf-8"
                     )
                     snap_path = "%s%s/.snapshots/%s/%s" % (
                         settings.MNT_PT,
@@ -202,54 +196,44 @@ class Sender(ReplicationMixin, Process):
                         self.rlatest_snap,
                     )
                     if is_subvol(snap_path):
-                        self.msg = (
-                            "Snapshot(%s) exists in the system and "
-                            "will be used as the parent" % snap_path
+                        self.msg = f"Snapshot({snap_path}) exists in the system and will be used as the parent".encode(
+                            "utf-8"
                         )
-                        logger.debug("Id: %s. %s" % (self.identity, self.msg))
+                        logger.debug(f"Id: {self.identity}. {self.msg}")
                         return rt
-                    self.msg = (
-                        "Snapshot(%s) does not exist on the system. "
-                        "So cannot use it." % snap_path
+                    self.msg = f"Snapshot({snap_path}) does not exist on the system. So cannot use it.".encode(
+                        "utf-8"
                     )
                     raise Exception(self.msg)
             raise Exception(
-                "%s. No succeeded trail found for %s." % (self.msg, self.rlatest_snap)
+                f"{self.msg}. No succeeded trail found for {self.rlatest_snap}."
             )
 
-        snap_path = "%s%s/.snapshots/%s/%s" % (
-            settings.MNT_PT,
-            self.replica.pool,
-            self.replica.share,
-            self.rlatest_snap,
-        )
+        snap_path = f"{settings.MNT_PT}{self.replica.pool}/.snapshots/{self.replica.share}/{self.rlatest_snap}"
         if is_subvol(snap_path):
             return self.rt
         raise Exception(
-            "Parent Snapshot(%s) to use in btrfs-send does not "
-            "exist in the system." % snap_path
+            f"Parent Snapshot({snap_path}) to use in btrfs-send does not exist in the system."
         )
 
     def run(self):
-
-        self.msg = "Top level exception in sender: %s" % self.identity
+        self.msg = f"Top level exception in sender: {self.identity}".encode("utf-8")
         with self._clean_exit_handler():
             self.law = APIWrapper()
             self.poll = zmq.Poller()
             self._init_greeting()
 
-            #  create a new replica trail if it's the very first time
+            # Create a new replica trail if it's the very first time,
             # or if the last one succeeded
-            self.msg = (
-                "Failed to create local replica trail for snap_name:"
-                " %s. Aborting." % self.snap_name
+            self.msg = f"Failed to create local replica trail for snap_name: {self.snap_name}. Aborting.".encode(
+                "utf-8"
             )
             self.rt2 = self.create_replica_trail(self.replica.id, self.snap_name)
             self.rt2_id = self.rt2["id"]
 
             # prune old snapshots.
             self.update_trail = True
-            self.msg = "Failed to prune old snapshots"
+            self.msg = "Failed to prune old snapshots".encode("utf-8")
             share_path = "%s%s/.snapshots/%s" % (
                 settings.MNT_PT,
                 self.replica.pool,
@@ -265,7 +249,9 @@ class Sender(ReplicationMixin, Process):
             #  failed attempt.
             # TODO: If one does exist we fail which seems harsh as we may be
             # TODO: able to pickup where we left of depending on the failure.
-            self.msg = "Failed to create snapshot: %s. Aborting." % self.snap_name
+            self.msg = f"Failed to create snapshot: {self.snap_name}. Aborting.".encode(
+                "utf-8"
+            )
             self.create_snapshot(self.replica.share, self.snap_name)
 
             retries_left = settings.REPLICATION.get("max_send_attempts")
@@ -278,26 +264,22 @@ class Sender(ReplicationMixin, Process):
                     # now.
                     retries_left = settings.REPLICATION.get("max_send_attempts")
                     command, reply = self.send_req.recv_multipart()
-                    if command == "receiver-ready":
+                    if command == b"receiver-ready":
                         if self.rt is not None:
                             self.rlatest_snap = reply
                             self.rt = self._refresh_rt()
                         logger.debug(
-                            "Id: %s. command(%s) and message(%s) "
-                            "received. Proceeding to send fsdata."
-                            % (self.identity, command, reply)
+                            f"Id: {self.identity}. command({command}) and message({reply}) received. Proceeding to send fsdata."
                         )
                         break
                     else:
                         if command in "receiver-init-error":
-                            self.msg = (
-                                "%s received for %s. extended reply: "
-                                "%s. Aborting." % (command, self.identity, reply)
+                            self.msg = f"{command} received for {self.identity}. extended reply: {reply}. Aborting.".encode(
+                                "utf-8"
                             )
-                        elif command == "snap-exists":
+                        elif command == b"snap-exists":
                             logger.debug(
-                                "Id: %s. %s received. Not sending "
-                                "fsdata" % (self.identity, command)
+                                f"Id: {self.identity}. {command} received. Not sending fsdata"
                             )
                             data = {
                                 "status": "succeeded",
@@ -306,7 +288,7 @@ class Sender(ReplicationMixin, Process):
                             self.msg = (
                                 "Failed to  update replica status for "
                                 "%s" % self.snap_id
-                            )
+                            ).encode("utf-8")
                             self.update_replica_status(self.rt2_id, data)
                             self._sys_exit(0)
                         else:
@@ -314,18 +296,16 @@ class Sender(ReplicationMixin, Process):
                                 "unexpected reply(%s) for %s. "
                                 "extended reply: %s. Aborting"
                                 % (command, self.identity, reply)
-                            )
+                            ).encode("utf-8")
                         raise Exception(self.msg)
                 else:
                     retries_left -= 1
                     logger.debug(
-                        "Id: %s. No response from receiver. Number "
-                        "of retry attempts left: %d" % (self.identity, retries_left)
+                        f"Id: {self.identity}. No response from receiver. Number of retry attempts left: {retries_left}"
                     )
                     if retries_left == 0:
-                        self.msg = "Receiver(%s:%d) is unreachable. Aborting." % (
-                            self.receiver_ip,
-                            self.receiver_port,
+                        self.msg = f"Receiver({self.receiver_ip}:{self.receiver_port}) is unreachable. Aborting.".encode(
+                            "utf-8"
                         )
                         raise Exception(self.msg)
                     self.send_req.setsockopt(zmq.LINGER, 0)
@@ -365,10 +345,10 @@ class Sender(ReplicationMixin, Process):
             except Exception as e:
                 self.msg = (
                     "Failed to start the low level btrfs send "
-                    "command(%s). Aborting. Exception: " % (cmd, e.__str__())
-                )
-                logger.error("Id: %s. %s" % (self.identity, self.msg))
-                self._send_recv("btrfs-send-init-error")
+                    f"command({cmd}). Aborting. Exception: {e.__str__()}"
+                ).encode("utf-8")
+                logger.error(f"Id: {self.identity}. {self.msg}")
+                self._send_recv(b"btrfs-send-init-error")
                 self._sys_exit(3)
 
             alive = True
@@ -396,19 +376,18 @@ class Sender(ReplicationMixin, Process):
                         "Exception occurred while reading low "
                         "level btrfs "
                         "send data for %s. Aborting." % self.snap_id
-                    )
+                    ).encode("utf-8")
                     if alive:
                         self.sp.terminate()
                     self.update_trail = True
-                    self._send_recv("btrfs-send-unexpected-termination-error")
+                    self._send_recv(b"btrfs-send-unexpected-termination-error")
                     self._sys_exit(3)
 
-                self.msg = (
-                    "Failed to send fsdata to the receiver for %s. "
-                    "Aborting." % (self.snap_id)
+                self.msg = f"Failed to send fsdata to the receiver for {self.snap_id}. Aborting.".encode(
+                    "utf-8"
                 )
                 self.update_trail = True
-                command, message = self._send_recv("", fs_data)
+                command, message = self._send_recv(b"", fs_data)
                 self.total_bytes_sent += len(fs_data)
                 num_msgs += 1
                 if num_msgs == 1000:
@@ -418,23 +397,25 @@ class Sender(ReplicationMixin, Process):
                         "Id: %s Sender alive. Data transferred: "
                         "%s. Rate: %s/sec." % (self.identity, dsize, drate)
                     )
-                if command is None or command == "receiver-error":
+                if command is None or command == b"receiver-error":
                     # command is None when the remote side vanishes.
                     self.msg = (
-                        "Got null or error command(%s) message(%s) "
-                        "from the Receiver while"
-                        " transmitting fsdata. Aborting." % (command, message)
-                    )
+                        f"Got null or error command({command}) message({message}) "
+                        "from the Receiver while "
+                        "transmitting fsdata. Aborting."
+                    ).encode("utf-8")
                     raise Exception(message)
 
                 if not alive:
                     if self.sp.returncode != 0:
                         # do we mark failed?
                         command, message = self._send_recv(
-                            "btrfs-send-nonzero-termination-error"
+                            b"btrfs-send-nonzero-termination-error"
                         )
                     else:
-                        command, message = self._send_recv("btrfs-send-stream-finished")
+                        command, message = self._send_recv(
+                            b"btrfs-send-stream-finished"
+                        )
 
                 if os.getppid() != self.ppid:
                     logger.error(
@@ -448,14 +429,12 @@ class Sender(ReplicationMixin, Process):
                 "status": "succeeded",
                 "kb_sent": self.total_bytes_sent / 1024,
             }
-            self.msg = (
-                "Failed to update final replica status for %s"
-                ". Aborting." % self.snap_id
+            self.msg = f"Failed to update final replica status for {self.snap_id}. Aborting.".encode(
+                "utf-8"
             )
             self.update_replica_status(self.rt2_id, data)
             dsize, drate = self.size_report(self.total_bytes_sent, t0)
             logger.debug(
-                "Id: %s. Send complete. Total data transferred: %s."
-                " Rate: %s/sec." % (self.identity, dsize, drate)
+                f"Id: {self.identity}. Send complete. Total data transferred: {dsize}. Rate: {drate}/sec."
             )
             self._sys_exit(0)

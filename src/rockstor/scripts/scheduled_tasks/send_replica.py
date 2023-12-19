@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
@@ -28,17 +28,23 @@ def main():
     rid = int(sys.argv[1])
     ctx = zmq.Context()
     poll = zmq.Poller()
-    num_tries = 12
+    num_tries = 3
     while True:
         req = ctx.socket(zmq.DEALER)
+        print(f"req = {req}")
         poll.register(req, zmq.POLLIN)
-        req.connect("ipc://%s" % settings.REPLICATION.get("ipc_socket"))
-        req.send_multipart(["new-send", b"%d" % rid])
+        print(f"poll.register = {poll.register}")
+        ipc_socket = settings.REPLICATION.get('ipc_socket')
+        req.connect(f"ipc://{ipc_socket}")
+        print(f"req.connect = {req.connect}, ipc_socket = {ipc_socket}")
+        req.send_multipart([b"new-send", f"{rid}".encode('utf-8')])
 
         socks = dict(poll.poll(5000))
+        # print(f"socks.get(req) = {socks.get(req)}")
         if socks.get(req) == zmq.POLLIN:
             rcommand, reply = req.recv_multipart()
-            if rcommand == "SUCCESS":
+            print(f"rcommand={rcommand}, reply={reply}")
+            if rcommand == b"SUCCESS":
                 print(reply)
                 break
             ctx.destroy(linger=0)
@@ -46,7 +52,7 @@ def main():
         num_tries -= 1
         print(
             "No response from Replication service. Number of retry "
-            "attempts left: %d" % num_tries
+            f"attempts left: {num_tries}"
         )
         if num_tries == 0:
             ctx.destroy(linger=0)
