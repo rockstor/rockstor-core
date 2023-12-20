@@ -153,8 +153,10 @@ class Receiver(ReplicationMixin, Process):
         for snap in ReceiveTrail.objects.filter(
             rshare=rso, status="succeeded"
         ).order_by("-id"):
-            if is_subvol("%s/%s" % (self.snap_dir, snap.snap_name)):
-                return str(snap.snap_name)  # cannot be unicode for zmq message
+            if is_subvol(f"{self.snap_dir}/{snap.snap_name}"):
+                return str(snap.snap_name).encode(
+                    "utf8"
+                )  # cannot be unicode for zmq message
         logger.error(
             "Id: %s. There are no replication snapshots on the "
             "system for "
@@ -265,7 +267,7 @@ class Receiver(ReplicationMixin, Process):
                     "exists. Not starting a new receive process"
                     % (self.identity, snap_fp)
                 )
-                self._send_recv("snap-exists")
+                self._send_recv(b"snap-exists")
                 self._sys_exit(0)
 
             cmd = [BTRFS, "receive", self.snap_dir]
@@ -288,11 +290,6 @@ class Receiver(ReplicationMixin, Process):
                 )
                 self._sys_exit(3)
 
-            term_commands = (
-                b"btrfs-send-init-error",
-                b"btrfs-send-unexpected-termination-error",
-                b"btrfs-send-nonzero-termination-error",
-            )
             num_tries = 10
             poll_interval = 6000  # 6 seconds
             num_msgs = 0
@@ -304,6 +301,7 @@ class Receiver(ReplicationMixin, Process):
                     # milliseconds) for every message
                     num_tries = 10
                     command, message = self.dealer.recv_multipart()
+                    logger.debug(f"command = {command}, of type:", type(command))
                     if command == b"btrfs-send-stream-finished":
                         # this command concludes fsdata transfer. After this,
                         # btrfs-recev process should be
@@ -327,7 +325,9 @@ class Receiver(ReplicationMixin, Process):
                             "status": "succeeded",
                             "kb_received": self.total_bytes_received / 1024,
                         }
-                        self.msg = f"Failed to update receive trail for rtid: {self.rtid}".encode("utf-8")
+                        self.msg = f"Failed to update receive trail for rtid: {self.rtid}".encode(
+                            "utf-8"
+                        )
                         self.update_receive_trail(self.rtid, data)
 
                         self._send_recv(b"btrfs-recv-finished")
@@ -342,7 +342,11 @@ class Receiver(ReplicationMixin, Process):
                         )
                         self._sys_exit(0)
 
-                    if command in term_commands:
+                    if (
+                        command == b"btrfs-send-init-error"
+                        or command == b"btrfs-send-unexpected-termination-error"
+                        or command == b"btrfs-send-nonzero-termination-error"
+                    ):
                         self.msg = f"Terminal command({command}) received from the sender. Aborting.".encode(
                             "utf-8"
                         )

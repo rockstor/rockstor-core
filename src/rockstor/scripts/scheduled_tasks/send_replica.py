@@ -31,16 +31,12 @@ def main():
     num_tries = 3
     while True:
         req = ctx.socket(zmq.DEALER)
-        print(f"req = {req}")
         poll.register(req, zmq.POLLIN)
-        print(f"poll.register = {poll.register}")
-        ipc_socket = settings.REPLICATION.get('ipc_socket')
+        ipc_socket = settings.REPLICATION.get("ipc_socket")
         req.connect(f"ipc://{ipc_socket}")
-        print(f"req.connect = {req.connect}, ipc_socket = {ipc_socket}")
-        req.send_multipart([b"new-send", f"{rid}".encode('utf-8')])
+        req.send_multipart([b"new-send", f"{rid}".encode("utf-8")])
 
         socks = dict(poll.poll(5000))
-        # print(f"socks.get(req) = {socks.get(req)}")
         if socks.get(req) == zmq.POLLIN:
             rcommand, reply = req.recv_multipart()
             print(f"rcommand={rcommand}, reply={reply}")

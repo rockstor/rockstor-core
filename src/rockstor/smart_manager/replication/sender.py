@@ -72,9 +72,7 @@ class Sender(ReplicationMixin, Process):
         try:
             yield
         except Exception as e:
-            logger.error(
-                "Id: %s. %s. Exception: %s" % (self.identity, self.msg, e.__str__())
-            )
+            logger.error(f"Id: {self.identity}. {self.msg}. Exception: {e.__str__()}")
             if self.update_trail:
                 try:
                     data = {
@@ -84,8 +82,7 @@ class Sender(ReplicationMixin, Process):
                     self.update_replica_status(self.rt2_id, data)
                 except Exception as e:
                     logger.error(
-                        "Id: %s. Exception occured while updating "
-                        "replica status: %s" % (self.identity, e.__str__())
+                        f"Id: {self.identity}. Exception occurred while updating replica status: {e.__str__()}"
                     )
             self._sys_exit(3)
 
@@ -98,7 +95,7 @@ class Sender(ReplicationMixin, Process):
     def _init_greeting(self):
         self.send_req = self.ctx.socket(zmq.DEALER)
         self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
-        self.send_req.connect("tcp://%s:%d" % (self.receiver_ip, self.receiver_port))
+        self.send_req.connect(f"tcp://{self.receiver_ip}:{self.receiver_port}")
         msg = {
             "pool": self.replica.dpool,
             "share": self.replica.share,
@@ -107,8 +104,8 @@ class Sender(ReplicationMixin, Process):
             "uuid": self.uuid,
         }
         msg_str = json.dumps(msg)
-        self.send_req.send_multipart([b"sender-ready", b"%s" % msg_str])
-        logger.debug("Id: %s Initial greeting: %s" % (self.identity, msg))
+        self.send_req.send_multipart([b"sender-ready", msg_str.encode("utf-8")])
+        logger.debug(f"Id: {self.identity} Initial greeting: {msg}")
         self.poll.register(self.send_req, zmq.POLLIN)
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
@@ -132,7 +129,7 @@ class Sender(ReplicationMixin, Process):
             )
         return rcommand, rmsg
 
-    def _delete_old_snaps(self, share_path):
+    def _delete_old_snaps(self, share_path: str):
         oldest_snap = get_oldest_snap(
             share_path, self.max_snap_retain, regex="_replication_"
         )
@@ -248,7 +245,7 @@ class Sender(ReplicationMixin, Process):
             #  create a snapshot only if it's not already from a previous
             #  failed attempt.
             # TODO: If one does exist we fail which seems harsh as we may be
-            # TODO: able to pickup where we left of depending on the failure.
+            #  able to pickup where we left of depending on the failure.
             self.msg = f"Failed to create snapshot: {self.snap_name}. Aborting.".encode(
                 "utf-8"
             )
@@ -256,14 +253,20 @@ class Sender(ReplicationMixin, Process):
 
             retries_left = settings.REPLICATION.get("max_send_attempts")
 
+            self.msg = (
+                "Place-holder message just after sender snapshot creation".encode(
+                    "utf-8"
+                )
+            )
+
             poll_interval = 6000  # 6 seconds
             while True:
                 socks = dict(self.poll.poll(poll_interval))
                 if socks.get(self.send_req) == zmq.POLLIN:
                     # not really necessary because we just want one reply for
                     # now.
-                    retries_left = settings.REPLICATION.get("max_send_attempts")
                     command, reply = self.send_req.recv_multipart()
+                    logger.debug(f"command = {command}, of type", type(command))
                     if command == b"receiver-ready":
                         if self.rt is not None:
                             self.rlatest_snap = reply
@@ -273,7 +276,7 @@ class Sender(ReplicationMixin, Process):
                         )
                         break
                     else:
-                        if command in "receiver-init-error":
+                        if command == b"receiver-init-error":
                             self.msg = f"{command} received for {self.identity}. extended reply: {reply}. Aborting.".encode(
                                 "utf-8"
                             )
@@ -320,6 +323,7 @@ class Sender(ReplicationMixin, Process):
                 self.snap_name,
             )
             cmd = [BTRFS, "send", snap_path]
+            logger.debug(f"init btrfs 'send' cmd {cmd}")
             if self.rt is not None:
                 prev_snap = "%s%s/.snapshots/%s/%s" % (
                     settings.MNT_PT,
@@ -332,6 +336,7 @@ class Sender(ReplicationMixin, Process):
                     "%s -- %s" % (self.identity, prev_snap, snap_path)
                 )
                 cmd = [BTRFS, "send", "-p", prev_snap, snap_path]
+                logger.debug(f"differential btrfs 'send' cmd {cmd}")
             else:
                 logger.info(
                     "Id: %s. Sending full replica: %s" % (self.identity, snap_path)
