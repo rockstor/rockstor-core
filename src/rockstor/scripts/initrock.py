@@ -417,7 +417,7 @@ def establish_poetry_paths():
     The local files in questions are defined in the LOCAL_FILES constant.
     """
     logger.info("### BEGIN Establishing poetry path to binaries in local files...")
-    pattern = "/opt/rockstor/bin/"
+    pattern = "/opt/rockstor[/]+bin/"
     replacement = "/opt/rockstor/.venv/bin/"
     for local_file in LOCAL_FILES:
         if os.path.isfile(LOCAL_FILES[local_file].path):

@@ -14,10 +14,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import operator
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, mock_open, call
 
 from system.exceptions import CommandException
-from system.osi import get_dev_byid_name, Disk, scan_disks, get_byid_name_map, run_command
+from system.osi import get_dev_byid_name, Disk, scan_disks, get_byid_name_map, run_command, replace_pattern_inline
 
 
 class Pool(object):
@@ -2004,3 +2004,92 @@ class OSITests(unittest.TestCase):
             f"returned = {returned}.\n"
             f"expected = {expected}.",
         )
+
+    def test_replace_pattern_inline(self):
+        """
+        This function is only used during initrock.establish_poetry_paths() for now
+        so test using 'pattern' and 'replacement' as used during that call.
+        """
+        # Define vars
+        source_file = "/path/to/fake/source"
+        target_file = "/path/to/fake/target"
+        # Make sure `pattern` and `replacement` below match
+        # those defined in initrock.establish_poetry_paths()
+        # for this test to be meaningful
+        pattern = "/opt/rockstor[/]+bin/"
+        replacement = "/opt/rockstor/.venv/bin/"
+
+        source_contents = []
+        target_contents = []
+        outputs = []
+
+        # /etc/samba/smb.conf, True
+        source_contents.append(
+            '    root preexec = "/opt/rockstor/bin/mnt-share test_share01"'
+        )
+        target_contents.append(
+            '    root preexec = "/opt/rockstor/.venv/bin/mnt-share test_share01"'
+        )
+        outputs.append(True)
+
+        # /etc/cron.d/rockstortab, True
+        source_contents.append(
+            '42 3 * * 6 root /opt/rockstor/bin/st-system-power 1 \*-*-*-*-*-*'
+        )
+        target_contents.append(
+            '42 3 * * 6 root /opt/rockstor/.venv/bin/st-system-power 1 \*-*-*-*-*-*'
+        )
+        outputs.append(True)
+
+        # /etc/samba/smb.conf, False
+        source_contents.append(
+            '    root preexec = "/opt/rockstor/.venv/bin/mnt-share test_share01"'
+        )
+        target_contents.append(None)
+        outputs.append(False)
+
+        # /etc/cron.d/rockstortab, False
+        source_contents.append(
+            '42 3 * * 6 root /opt/rockstor/.venv/bin/st-system-power 1 \*-*-*-*-*-*'
+        )
+        target_contents.append(None)
+        outputs.append(False)
+
+        # /etc/cron.d/rockstortab, True
+        source_contents.append(
+            '42 3 * * 5 root /opt/rockstor//bin/st-pool-scrub 1 \*-*-*-*-*-*'
+        )
+        target_contents.append(
+            '42 3 * * 5 root /opt/rockstor/.venv/bin/st-pool-scrub 1 \*-*-*-*-*-*'
+        )
+        outputs.append(True)
+
+        for content, target, out in zip(source_contents, target_contents, outputs):
+            m = mock_open(read_data=content)
+            with patch("system.osi.open", m):
+                returned = replace_pattern_inline(
+                    source_file, target_file, pattern, replacement
+                )
+
+                # Test that open() was called twice
+                # (once for source_file, once for target_file)
+                self.assertEqual(m.call_count, 2)
+                calls = [
+                    call(source_file),
+                    call(target_file, "w"),
+                ]
+                m.assert_has_calls(calls, any_order=True)
+
+                if target is not None:
+                    # Write should be called
+                    m().write.assert_has_calls([call(target)])
+
+                # Test that the correct boolean is returned
+                expected = out
+                self.assertEqual(
+                    returned,
+                    expected,
+                    msg="Un-expected replace_pattern_inline() output:\n"
+                        f"returned = {returned}.\n"
+                        f"expected = {expected}.",
+                )
