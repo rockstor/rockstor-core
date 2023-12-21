@@ -35,7 +35,7 @@ class ReplicationMixin(object):
                 client_id=a.client_id, client_secret=a.client_secret, url=url
             )
         # TODO: update url to include senders shareId as sname is now invalid
-        return self.raw.api_call(url="shares/%s" % sname)
+        return self.raw.api_call(url=f"shares/{sname}")
 
     def update_replica_status(self, rtid: int, data):
         try:
@@ -89,9 +89,7 @@ class ReplicationMixin(object):
             return rshare["id"]
         except RockStorAPIException as e:
             # Note replica_share.py post() generates this exception message.
-            if (
-                e.detail == "Replicashare(%s) already exists." % data["share"]
-            ):  # noqa E501
+            if e.detail == f"Replicashare({data['share']}) already exists.":  # noqa E501
                 return self.rshare_id(data["share"])
             raise e
 
@@ -247,7 +245,7 @@ class ReplicationMixin(object):
         :return: "1023 Bytes" or "4.28 KB" etc given num=1023 or num=4384 )
         """
         if num < 1024 or len(units) == 1:
-            return "%.2f %s" % (num, units[0])
+            return f"{num:.2f} {units[0]}"
         return self.humanize_bytes(num / 1024, units[1:])
 
     def size_report(self, num: int, t0):

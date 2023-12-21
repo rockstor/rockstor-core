@@ -48,13 +48,8 @@ class Receiver(ReplicationMixin, Process):
         self.incremental = self.meta["incremental"]
         self.snap_name = self.meta["snap"]
         self.sender_id = self.meta["uuid"]
-        self.sname = "%s_%s" % (self.sender_id, self.src_share)
-        self.snap_dir = "%s%s/.snapshots/%s" % (
-            settings.MNT_PT,
-            self.dest_pool,
-            self.sname,
-        )
-
+        self.sname = f"{self.sender_id}_{self.src_share}"
+        self.snap_dir = f"{settings.MNT_PT}{self.dest_pool}/.snapshots/{self.sname}"
         self.ppid = os.getpid()
         self.kb_received = 0
         self.rid = None
@@ -76,14 +71,11 @@ class Receiver(ReplicationMixin, Process):
                 self.rp.terminate()
             except Exception as e:
                 logger.error(
-                    "Id: %s. Exception while terminating "
-                    "the btrfs-recv process: %s" % (self.identity, e.__str__())
+                    f"Id: {self.identity}. Exception while terminating the btrfs-recv process: {e.__str__()}"
                 )
         self.ctx.destroy(linger=0)
         if code == 0:
-            logger.debug(
-                "Id: %s. meta: %s Receive successful" % (self.identity, self.meta)
-            )
+            logger.debug(f"Id: {self.identity}. meta: {self.meta} Receive successful")
         sys.exit(code)
 
     @contextmanager
@@ -100,19 +92,15 @@ class Receiver(ReplicationMixin, Process):
                     }
                     self.update_receive_trail(self.rtid, data)
                 except Exception as e:
-                    msg = (
-                        "Id: %s. Exception while updating receive "
-                        "trail for rtid(%d)." % (self.identity, self.rtid)
-                    )
-                    logger.error("%s. Exception: %s" % (msg, e.__str__()))
-
+                    msg = f"Id: {self.identity}. Exception while updating receive trail for rtid({self.rtid})."
+                    logger.error(f"{msg}. Exception: {e.__str__()}")
             if self.ack is True:
                 try:
                     command = b"receiver-error"
                     self.dealer.send_multipart(
                         [
                             b"receiver-error",
-                            b"%s. Exception: %s" % (str(self.msg), str(e.__str__())),
+                            f"{self.msg}. Exception: {e.__str__()}".encode("utf-8"),
                         ]
                     )
                     # Retry logic here is overkill atm.
@@ -120,13 +108,11 @@ class Receiver(ReplicationMixin, Process):
                     if socks.get(self.dealer) == zmq.POLLIN:
                         msg = self.dealer.recv()
                         logger.debug(
-                            "Id: %s. Response from the broker: %s"
-                            % (self.identity, msg)
+                            f"Id: {self.identity}. Response from the broker: {msg}"
                         )
                     else:
                         logger.debug(
-                            "Id: %s. No response received from "
-                            "the broker" % self.identity
+                            f"Id: {self.identity}. No response received from the broker"
                         )
                 except Exception as e:
                     msg = f"Id: {self.identity}. Exception while sending {command} back to the broker. Aborting"
@@ -158,9 +144,7 @@ class Receiver(ReplicationMixin, Process):
                     "utf8"
                 )  # cannot be unicode for zmq message
         logger.error(
-            "Id: %s. There are no replication snapshots on the "
-            "system for "
-            "Share(%s)." % (self.identity, rso.share)
+            f"Id: {self.identity}. There are no replication snapshots on the system for Share({rso.share})."
         )
         # This would mean, a full backup transfer is required.
         return None
@@ -175,9 +159,10 @@ class Receiver(ReplicationMixin, Process):
             self.law = APIWrapper()
             self.poll = zmq.Poller()
             self.dealer = self.ctx.socket(zmq.DEALER)
-            self.dealer.setsockopt_string(zmq.IDENTITY, "%s" % self.identity)
+            self.dealer.setsockopt_string(zmq.IDENTITY, str(self.identity))
             self.dealer.set_hwm(10)
-            self.dealer.connect("ipc://%s" % settings.REPLICATION.get("ipc_socket"))
+            ipc_socket = settings.REPLICATION.get("ipc_socket")
+            self.dealer.connect(f"ipc://{ipc_socket}")
             self.poll.register(self.dealer, zmq.POLLIN)
 
             self.ack = True
@@ -238,14 +223,14 @@ class Receiver(ReplicationMixin, Process):
             self._delete_old_snaps(self.sname, self.snap_dir, self.num_retain_snaps + 1)
 
             # TODO: The following should be re-instantiated once we have a
-            # TODO: working method for doing so. see validate_src_share.
-            # self.msg = ('Failed to validate the source share(%s) on '
-            #             'sender(uuid: %s '
-            #             ') Did the ip of the sender change?' %
-            #             (self.src_share, self.sender_id))
+            #  working method for doing so. see validate_src_share.
+            # self.msg = (
+            #     f"Failed to validate the source share ({self.src_share}) on sender uuid: ({self.sender_id}). "
+            #     f"Did the ip of the sender change?"
+            # ).encode("utf-8")
             # self.validate_src_share(self.sender_id, self.src_share)
 
-            sub_vol = "%s%s/%s" % (settings.MNT_PT, self.dest_pool, self.sname)
+            sub_vol = f"{settings.MNT_PT}{self.dest_pool}/{self.sname}"
             if not is_subvol(sub_vol):
                 self.msg = f"Failed to create parent subvolume {sub_vol}".encode(
                     "utf-8"
@@ -256,16 +241,14 @@ class Receiver(ReplicationMixin, Process):
                 "utf-8"
             )
             run_command(["/usr/bin/mkdir", "-p", self.snap_dir])
-            snap_fp = "%s/%s" % (self.snap_dir, self.snap_name)
+            snap_fp = f"{self.snap_dir}/{self.snap_name}"
 
             # If the snapshot already exists, presumably from the previous
             # attempt and the sender tries to send the same, reply back with
             # snap_exists and do not start the btrfs-receive
             if is_subvol(snap_fp):
                 logger.debug(
-                    "Id: %s. Snapshot to be sent(%s) already "
-                    "exists. Not starting a new receive process"
-                    % (self.identity, snap_fp)
+                    f"Id: {self.identity}. Snapshot to be sent({snap_fp}) already exists. Not starting a new receive process"
                 )
                 self._send_recv(b"snap-exists")
                 self._sys_exit(0)
@@ -312,9 +295,7 @@ class Receiver(ReplicationMixin, Process):
                             out = out.split("\n")
                             err = err.split("\n")
                             logger.debug(
-                                "Id: %s. Terminated btrfs-recv. "
-                                "cmd = %s out = %s err: %s rc: %s"
-                                % (self.identity, cmd, out, err, self.rp.returncode)
+                                f"Id: {self.identity}. Terminated btrfs-recv. cmd = {cmd} out = {out} err: {err} rc: {self.rp.returncode}"
                             )
                         if self.rp.returncode != 0:
                             self.msg = f"btrfs-recv exited with unexpected exitcode({self.rp.returncode}).".encode(
@@ -336,9 +317,7 @@ class Receiver(ReplicationMixin, Process):
 
                         dsize, drate = self.size_report(self.total_bytes_received, t0)
                         logger.debug(
-                            "Id: %s. Receive complete. Total data "
-                            "transferred: %s. Rate: %s/sec."
-                            % (self.identity, dsize, drate)
+                            f"Id: {self.identity}. Receive complete. Total data transferred: {dsize}. Rate: {drate}/sec."
                         )
                         self._sys_exit(0)
 
@@ -371,9 +350,7 @@ class Receiver(ReplicationMixin, Process):
                                 self.total_bytes_received, t0
                             )
                             logger.debug(
-                                "Id: %s. Receiver alive. Data "
-                                "transferred: %s. Rate: %s/sec."
-                                % (self.identity, dsize, drate)
+                                f"Id: {self.identity}. Receiver alive. Data transferred: {dsize}. Rate: {drate}/sec."
                             )
                     else:
                         out, err = self.rp.communicate()
@@ -399,11 +376,8 @@ class Receiver(ReplicationMixin, Process):
                         raise Exception(self.msg)
                 else:
                     num_tries -= 1
-                    msg = (
-                        "No response received from the broker. "
-                        "remaining tries: %d" % num_tries
-                    )
-                    logger.error("Id: %s. %s" % (self.identity, msg))
+                    msg = f"No response received from the broker. remaining tries: {num_tries}"
+                    logger.error(f"Id: {self.identity}. {msg}")
                     if num_tries == 0:
                         self.msg = f"{msg}. Terminating the receiver.".encode("utf-8")
                         raise Exception(self.msg)
