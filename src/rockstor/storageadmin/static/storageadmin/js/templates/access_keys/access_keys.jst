@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
  * This file is part of RockStor.
  * 
  * RockStor is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  * General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  * 
  */
 </script>
@@ -26,7 +26,7 @@
     <!-- Content -->
     <div class="messages"></div>
     <div id="access-keys-table-ph">
-    {{#if collectionNotEmpty}}
+      {{#if collectionNotEmpty}}
         <table id="access-keys-table" class="table table-bordered table-striped data-table">
           <thead>
           <tr>
@@ -41,7 +41,11 @@
             <tr>
             <td>{{this.name}}</td>
             <td>{{this.client_id}}</td>
-            <td>{{this.client_secret}}</td>
+            {{#if this.is_internal}}
+                <td>{{this.client_secret}}</td>
+            {{else}}
+                <td>Secret encrypted: only available during creation</td>
+            {{/if}}
             <td><a id="delete-access-key" data-id="{{this.id}}" data-name="{{this.name}}" data-action="delete" rel="tooltip" title="Delete access key">
             <i class="glyphicon glyphicon-trash"></i></a>
             </td>

@@ -276,6 +276,7 @@ class SFTPSerializer(serializers.ModelSerializer):
 class OauthAppSerializer(serializers.ModelSerializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
+    is_internal = serializers.BooleanField()
 
     class Meta:
         model = OauthApp

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2023 RockStor, Inc. <https://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from rest_framework.response import Response
@@ -80,15 +80,12 @@ class OauthAppView(rfc.GenericView):
 
             if app.name == settings.OAUTH_INTERNAL_APP:
                 e_msg = (
-                    "Application with id ({}) cannot be deleted because "
-                    "it is "
-                    "used internally by Rockstor. If you really need to "
-                    "delete it, login as root and use "
-                    "{}.venv/bin/delete-api-key command. If you do delete it, "
-                    "please create another one with the same name as it "
-                    "is required by Rockstor "
-                    "internally."
-                ).format(id, settings.ROOT_DIR)
+                    f"Application name ({settings.OAUTH_INTERNAL_APP}), id ({id}) "
+                    "cannot be deleted because it is used internally by Rockstor. "
+                    "To force delete, run as root: "
+                    f"'{settings.ROOT_DIR}.venv/bin/delete-api-key'."
+                    "To avoid dysfunction, it must be recreated using the same name."
+                )
                 handle_exception(Exception(e_msg), request, status_code=400)
 
             app.application.delete()
