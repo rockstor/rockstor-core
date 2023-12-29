@@ -250,6 +250,7 @@ class Sender(ReplicationMixin, Process):
             poll_interval = 6000  # 6 seconds
             while True:
                 socks = dict(self.poll.poll(poll_interval))
+                logger.debug(f"Sender socks dict = {socks}")
                 if socks.get(self.send_req) == zmq.POLLIN:
                     # not really necessary because we just want one reply for
                     # now.

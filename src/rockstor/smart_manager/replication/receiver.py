@@ -126,6 +126,7 @@ class Receiver(ReplicationMixin, Process):
                 return self._delete_old_snaps(share_name, share_path, num_retain)
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
+        logger.debug(f"_send_recv called with command: {command}, msg: {msg}.")
         rcommand = rmsg = None
         self.dealer.send_multipart([command, msg])
         # Retry logic doesn't make sense atm. So one long patient wait.
@@ -133,6 +134,7 @@ class Receiver(ReplicationMixin, Process):
         if socks.get(self.dealer) == zmq.POLLIN:
             rcommand, rmsg = self.dealer.recv_multipart()
         logger.debug(f"Id: {self.identity} command: {command} rcommand: {rcommand}")
+        logger.debug((f"remote message: {rmsg}"))
         return rcommand, rmsg
 
     def _latest_snap(self, rso):
@@ -265,7 +267,7 @@ class Receiver(ReplicationMixin, Process):
             )
 
             self.msg = b"Failed to send receiver-ready"
-            rcommand, rmsg = self._send_recv(b"receiver-ready", latest_snap or b"")
+            rcommand, rmsg = self._send_recv(b"receiver-ready", b"")
             if rcommand is None:
                 logger.error(
                     f"Id: {self.identity}. No response from the broker for receiver-ready command. Aborting."
