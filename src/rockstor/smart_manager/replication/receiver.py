@@ -167,9 +167,8 @@ class Receiver(ReplicationMixin, Process):
 
             self.ack = True
             self.msg = (
-                f"Failed to get the sender ip for appliance: {self.sender_id}".encode(
-                    "utf-8"
-                )
+                f"Failed to get the sender ip for appliance: {self.sender_id}. "
+                "Ensure receiver has sender in System -> Appliances.".encode("utf-8")
             )
             self.sender_ip = Appliance.objects.get(uuid=self.sender_id).ip
 
