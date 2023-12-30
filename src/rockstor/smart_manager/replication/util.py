@@ -65,6 +65,7 @@ class ReplicationMixin(object):
             raise Exception(msg)
 
     def create_replica_trail(self, rid: int, snap_name: str):
+        logger.debug(f"Replication create_replica_trail(rid={rid}, snap_name={snap_name})")
         url = f"sm/replicas/trail/replica/{rid}"
         return self.law.api_call(
             url,
@@ -153,7 +154,7 @@ class ReplicationMixin(object):
         share with the given snapshot. Intended for use in receive.py to turn
         the oldest snapshot into an existing share via unmount, mv, mount
         cycle.
-        :param sname: Existing share name
+        :param sname: Existing share-name
         :param snap_name: Name of snapshot to supplant given share with.
         :return: False if there is a failure.
         """
@@ -184,8 +185,8 @@ class ReplicationMixin(object):
                 return False
             raise e
 
-    def create_share(self, sname: str, pool):
-        print("pool parameter is of type:", type(pool))
+    def create_share(self, sname: str, pool: str):
+        print(f"Replication 'create_share' called with sname {sname}, pool {pool}")
         try:
             url = "shares"
             data = {

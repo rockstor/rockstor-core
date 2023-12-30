@@ -40,7 +40,9 @@ BTRFS = "/sbin/btrfs"
 
 
 class Receiver(ReplicationMixin, Process):
-    def __init__(self, identity, meta):
+    sname: str
+
+    def __init__(self, identity: bytes, meta):
         self.identity = identity
         self.meta = json.loads(meta)
         self.src_share = self.meta["share"]
@@ -126,7 +128,7 @@ class Receiver(ReplicationMixin, Process):
                 return self._delete_old_snaps(share_name, share_path, num_retain)
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
-        logger.debug(f"_send_recv called with command: {command}, msg: {msg}.")
+        logger.debug(f"RECEIVER: _send_recv called with command: {command}, msg: {msg}.")
         rcommand = rmsg = None
         self.dealer.send_multipart([command, msg])
         # Retry logic doesn't make sense atm. So one long patient wait.
@@ -134,7 +136,7 @@ class Receiver(ReplicationMixin, Process):
         if socks.get(self.dealer) == zmq.POLLIN:
             rcommand, rmsg = self.dealer.recv_multipart()
         logger.debug(f"Id: {self.identity} command: {command} rcommand: {rcommand}")
-        logger.debug((f"remote message: {rmsg}"))
+        logger.debug(f"remote message: {rmsg}")
         return rcommand, rmsg
 
     def _latest_snap(self, rso):
@@ -285,7 +287,7 @@ class Receiver(ReplicationMixin, Process):
                     # milliseconds) for every message
                     num_tries = 10
                     command, message = self.dealer.recv_multipart()
-                    logger.debug(f"command = {command}, of type:", type(command))
+                    logger.debug(f"command = {command}, of type: {type(command)}")
                     if command == b"btrfs-send-stream-finished":
                         # this command concludes fsdata transfer. After this,
                         # btrfs-recev process should be

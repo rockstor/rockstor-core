@@ -93,6 +93,7 @@ class Sender(ReplicationMixin, Process):
         sys.exit(code)
 
     def _init_greeting(self):
+        logger.debug("_init_greeting CALLED")
         self.send_req = self.ctx.socket(zmq.DEALER)
         self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
         self.send_req.connect(f"tcp://{self.receiver_ip}:{self.receiver_port}")
@@ -109,6 +110,7 @@ class Sender(ReplicationMixin, Process):
         self.poll.register(self.send_req, zmq.POLLIN)
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
+        logger.debug(f"SENDER: _send_recv(command={command}, msg={msg})")
         self.msg = f"Failed while send-recv-ing command({command})".encode("utf-8")
         rcommand = rmsg = None
         self.send_req.send_multipart([command, msg])
@@ -130,6 +132,7 @@ class Sender(ReplicationMixin, Process):
         return rcommand, rmsg
 
     def _delete_old_snaps(self, share_path: str):
+
         oldest_snap = get_oldest_snap(
             share_path, self.max_snap_retain, regex="_replication_"
         )
@@ -251,11 +254,16 @@ class Sender(ReplicationMixin, Process):
             while True:
                 socks = dict(self.poll.poll(poll_interval))
                 logger.debug(f"Sender socks dict = {socks}")
+                if socks != {}:
+                    for key in socks:
+                        logger.debug(f"socks index ({key}), has value {socks[key]}")
+                else:
+                    logger.debug("SOCKS EMPTY")
                 if socks.get(self.send_req) == zmq.POLLIN:
                     # not really necessary because we just want one reply for
                     # now.
                     command, reply = self.send_req.recv_multipart()
-                    logger.debug(f"command = {command}, of type", type(command))
+                    logger.debug(f"command = {command}, of type {type(command)}")
                     if command == b"receiver-ready":
                         if self.rt is not None:
                             self.rlatest_snap = reply

@@ -213,7 +213,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         poller.register(backend, zmq.POLLIN)
         self.local_receivers = {}
 
-        iterations = 10
+        iterations = 3
         poll_interval = 6000  # 6 seconds
         msg_count = 0
         while True:
@@ -221,7 +221,12 @@ class ReplicaScheduler(ReplicationMixin, Process):
             # is terminated, as long as data is coming in.
             socks = dict(poller.poll(timeout=poll_interval))
             if frontend in socks and socks[frontend] == zmq.POLLIN:
+                # frontend.recv_multipart() returns all as type <class 'bytes'>
                 address, command, msg = frontend.recv_multipart()
+                logger.debug("frontend.recv_multipart() returns")
+                logger.debug(f"address = {address}, type {type(address)}")
+                logger.debug(f"command = {command}, type {type(command)}")
+                logger.debug(f"msg = {msg}, type {type(msg)}")
                 if address not in self.remote_senders:
                     self.remote_senders[address] = 1
                 else:
@@ -248,7 +253,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                                 )
                                 start_nr = True
                             else:
-                                msg = f"Receiver({address}) already exists. Will not start a new one."
+                                msg = f"Receiver({address}) already exists. Will not start a new one.".encode("utf-8")
                                 logger.error(msg)
                                 # TODO: There may be a different way to handle
                                 #  this. For example, we can pass the message to
@@ -258,7 +263,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                                     [
                                         address,
                                         b"receiver-init-error",
-                                        msg.encode("utf-8"),
+                                        msg,
                                     ]
                                 )
                         if start_nr:
