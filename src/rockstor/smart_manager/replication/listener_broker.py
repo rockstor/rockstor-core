@@ -201,7 +201,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
         ctx = zmq.Context()
         frontend = ctx.socket(zmq.ROUTER)
-        frontend.set_hwm(value=10)
+        # frontend.set_hwm(value=10)
         frontend.bind(f"tcp://{self.listener_interface}:{ self.listener_port}")
 
         backend = ctx.socket(zmq.ROUTER)

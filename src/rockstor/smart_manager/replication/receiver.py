@@ -164,7 +164,7 @@ class Receiver(ReplicationMixin, Process):
             self.poll = zmq.Poller()
             self.dealer = self.ctx.socket(zmq.DEALER)
             self.dealer.setsockopt_string(zmq.IDENTITY, str(self.identity))
-            self.dealer.set_hwm(10)
+            # self.dealer.set_hwm(10)
             ipc_socket = settings.REPLICATION.get("ipc_socket")
             self.dealer.connect(f"ipc://{ipc_socket}")
             self.poll.register(self.dealer, zmq.POLLIN)
@@ -269,7 +269,11 @@ class Receiver(ReplicationMixin, Process):
             )
 
             self.msg = b"Failed to send receiver-ready"
-            rcommand, rmsg = self._send_recv(b"receiver-ready", b"")
+            # Previously our second parameter was (latest_snap or b"")
+            snap = latest_snap
+            if snap is None:
+                snap = b"place-holder"
+            rcommand, rmsg = self._send_recv(b"receiver-ready", snap)
             if rcommand == b"":
                 logger.error(
                     f"Id: {self.identity}. No response from the broker for receiver-ready command. Aborting."
@@ -282,6 +286,12 @@ class Receiver(ReplicationMixin, Process):
             t0 = time.time()
             while True:
                 socks = dict(self.poll.poll(poll_interval))
+                logger.debug(f"RECEIVER socks dict = {socks}")
+                if socks != {}:
+                    for key in socks:
+                        logger.debug(f"socks index ({key}), has value {socks[key]}")
+                else:
+                    logger.debug("SOCKS EMPTY")
                 if socks.get(self.dealer) == zmq.POLLIN:
                     # reset to wait upto 60(poll_interval x num_tries
                     # milliseconds) for every message

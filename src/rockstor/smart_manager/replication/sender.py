@@ -250,10 +250,9 @@ class Sender(ReplicationMixin, Process):
                 )
             )
 
-            poll_interval = 6000  # 6 seconds
             while True:
-                socks = dict(self.poll.poll(poll_interval))
-                logger.debug(f"Sender socks dict = {socks}")
+                socks = dict(self.poll.poll(6000))
+                logger.debug(f"SENDER socks dict = {socks}")
                 if socks != {}:
                     for key in socks:
                         logger.debug(f"socks index ({key}), has value {socks[key]}")
