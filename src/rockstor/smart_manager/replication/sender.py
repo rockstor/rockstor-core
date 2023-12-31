@@ -93,7 +93,7 @@ class Sender(ReplicationMixin, Process):
         sys.exit(code)
 
     def _init_greeting(self):
-        logger.debug("_init_greeting CALLED")
+        logger.debug("_init_greeting() CALLED")
         self.send_req = self.ctx.socket(zmq.DEALER)
         self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
         self.send_req.connect(f"tcp://{self.receiver_ip}:{self.receiver_port}")
@@ -105,6 +105,7 @@ class Sender(ReplicationMixin, Process):
             "uuid": self.uuid,
         }
         msg_str = json.dumps(msg)
+        logger.debug("_init_greeting() sending 'sender-ready'")
         self.send_req.send_multipart([b"sender-ready", msg_str.encode("utf-8")])
         logger.debug(f"Id: {self.identity} Initial greeting: {msg}")
         self.poll.register(self.send_req, zmq.POLLIN)
@@ -112,7 +113,7 @@ class Sender(ReplicationMixin, Process):
     def _send_recv(self, command: bytes, msg: bytes = b""):
         logger.debug(f"SENDER: _send_recv(command={command}, msg={msg})")
         self.msg = f"Failed while send-recv-ing command({command})".encode("utf-8")
-        rcommand = rmsg = None
+        rcommand = rmsg = b""
         self.send_req.send_multipart([command, msg])
         # There is no retry logic here because it's an overkill at the moment.
         # If the stream is interrupted, we can only start from the beginning
@@ -121,10 +122,9 @@ class Sender(ReplicationMixin, Process):
         socks = dict(self.poll.poll(60000))  # 60 seconds.
         if socks.get(self.send_req) == zmq.POLLIN:
             rcommand, rmsg = self.send_req.recv_multipart()
-        if (
-            len(command) > 0 or (rcommand is not None and rcommand != b"send-more")
-        ) or (  # noqa E501
-            len(command) > 0 and rcommand is None
+        # len(b"") == 0 so change to test for command != b"" instead
+        if (len(command) > 0 or (rcommand != b"" and rcommand != b"send-more")) or (
+            len(command) > 0 and rcommand == b""
         ):
             logger.debug(
                 f"Id: {self.identity} Server: {self.receiver_ip}:{self.receiver_port} scommand: {command} rcommand: {rcommand}"
@@ -132,7 +132,7 @@ class Sender(ReplicationMixin, Process):
         return rcommand, rmsg
 
     def _delete_old_snaps(self, share_path: str):
-
+        logger.debug(f"Sender _delete_old_snaps(share_path={share_path})")
         oldest_snap = get_oldest_snap(
             share_path, self.max_snap_retain, regex="_replication_"
         )
@@ -373,12 +373,11 @@ class Sender(ReplicationMixin, Process):
                     logger.debug(
                         f"Id: {self.identity} Sender alive. Data transferred: {dsize}. Rate: {drate}/sec."
                     )
-                if command is None or command == b"receiver-error":
-                    # command is None when the remote side vanishes.
+                if command == b"" or command == b"receiver-error":
+                    # command is EMPTY when the remote side vanishes.
                     self.msg = (
-                        f"Got null or error command({command}) message({message}) "
-                        "from the Receiver while "
-                        "transmitting fsdata. Aborting."
+                        f"Got EMPTY or error command ({command}) message ({message}) "
+                        "from the Receiver while transmitting fsdata. Aborting."
                     ).encode("utf-8")
                     raise Exception(message)
 

@@ -239,7 +239,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                             f"Active Receiver: {rs}. Messages processed: {count}"
                         )
                 if command == b"sender-ready":
-                    logger.debug(f"initial greeting from {address}")
+                    logger.debug(f"initial greeting command '{command}' received from {address}")
                     # Start a new receiver and send the appropriate response
                     try:
                         start_nr = True

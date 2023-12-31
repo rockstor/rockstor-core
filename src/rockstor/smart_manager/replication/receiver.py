@@ -129,13 +129,13 @@ class Receiver(ReplicationMixin, Process):
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
         logger.debug(f"RECEIVER: _send_recv called with command: {command}, msg: {msg}.")
-        rcommand = rmsg = None
+        rcommand = rmsg = b""
         self.dealer.send_multipart([command, msg])
         # Retry logic doesn't make sense atm. So one long patient wait.
         socks = dict(self.poll.poll(60000))  # 60 seconds.
         if socks.get(self.dealer) == zmq.POLLIN:
             rcommand, rmsg = self.dealer.recv_multipart()
-        logger.debug(f"Id: {self.identity} command: {command} rcommand: {rcommand}")
+        logger.debug(f"Id: {self.identity} RECEIVER: _send_recv command: {command} rcommand: {rcommand}")
         logger.debug(f"remote message: {rmsg}")
         return rcommand, rmsg
 
@@ -270,7 +270,7 @@ class Receiver(ReplicationMixin, Process):
 
             self.msg = b"Failed to send receiver-ready"
             rcommand, rmsg = self._send_recv(b"receiver-ready", b"")
-            if rcommand is None:
+            if rcommand == b"":
                 logger.error(
                     f"Id: {self.identity}. No response from the broker for receiver-ready command. Aborting."
                 )

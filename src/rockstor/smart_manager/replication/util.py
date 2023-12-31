@@ -38,6 +38,7 @@ class ReplicationMixin(object):
         return self.raw.api_call(url=f"shares/{sname}")
 
     def update_replica_status(self, rtid: int, data):
+        logger.debug(f"update_replica_status(rtid={rtid}, data={data})")
         try:
             url = f"sm/replicas/trail/{rtid}"
             return self.law.api_call(url, data=data, calltype="put")
@@ -82,6 +83,7 @@ class ReplicationMixin(object):
         return rshare["id"]
 
     def create_rshare(self, data) -> int:
+        logger.debug(f"create_rshare(data={data})")
         try:
             url = "sm/replicas/rshare"
             rshare = self.law.api_call(
@@ -95,8 +97,10 @@ class ReplicationMixin(object):
             raise e
 
     def create_receive_trail(self, rid: int, data) -> int:
+        logger.debug(f"create_receive_trail(rid={rid}, data={data})")
         url = f"sm/replicas/rtrail/rshare/{rid}"
         rt = self.law.api_call(url, data=data, calltype="post", save_error=False)
+        logger.debug(f"create_receive_trail() -> {rt['id']}")
         return rt["id"]
 
     def update_receive_trail(self, rtid: int, data):
