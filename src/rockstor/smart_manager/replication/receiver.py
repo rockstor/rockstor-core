@@ -106,8 +106,8 @@ class Receiver(ReplicationMixin, Process):
                         ]
                     )
                     # Retry logic here is overkill atm.
-                    socks = dict(self.poll.poll(60000))  # 60 seconds
-                    if socks.get(self.dealer) == zmq.POLLIN:
+                    events = dict(self.poller.poll(60000))  # 60 seconds
+                    if events.get(self.dealer) == zmq.POLLIN:
                         msg = self.dealer.recv()
                         logger.debug(
                             f"Id: {self.identity}. Response from the broker: {msg}"
@@ -128,14 +128,18 @@ class Receiver(ReplicationMixin, Process):
                 return self._delete_old_snaps(share_name, share_path, num_retain)
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
-        logger.debug(f"RECEIVER: _send_recv called with command: {command}, msg: {msg}.")
+        logger.debug(
+            f"RECEIVER: _send_recv called with command: {command}, msg: {msg}."
+        )
         rcommand = rmsg = b""
         self.dealer.send_multipart([command, msg])
         # Retry logic doesn't make sense atm. So one long patient wait.
-        socks = dict(self.poll.poll(60000))  # 60 seconds.
-        if socks.get(self.dealer) == zmq.POLLIN:
+        events = dict(self.poller.poll(60000))  # 60 seconds.
+        if events.get(self.dealer) == zmq.POLLIN:
             rcommand, rmsg = self.dealer.recv_multipart()
-        logger.debug(f"Id: {self.identity} RECEIVER: _send_recv command: {command} rcommand: {rcommand}")
+        logger.debug(
+            f"Id: {self.identity} RECEIVER: _send_recv command: {command} rcommand: {rcommand}"
+        )
         logger.debug(f"remote message: {rmsg}")
         return rcommand, rmsg
 
@@ -161,13 +165,15 @@ class Receiver(ReplicationMixin, Process):
         latest_snap = None
         with self._clean_exit_handler():
             self.law = APIWrapper()
-            self.poll = zmq.Poller()
-            self.dealer = self.ctx.socket(zmq.DEALER)
+            self.poller = zmq.Poller()
+            self.dealer = self.ctx.socket(zmq.DEALER)  # Setup OUTPUT socket type.
             self.dealer.setsockopt_string(zmq.IDENTITY, str(self.identity))
             # self.dealer.set_hwm(10)
             ipc_socket = settings.REPLICATION.get("ipc_socket")
             self.dealer.connect(f"ipc://{ipc_socket}")
-            self.poll.register(self.dealer, zmq.POLLIN)
+            # Setup poller
+            # Register our poller, for OUTPUT socket, to monitor for POLLIN events.
+            self.poller.register(self.dealer, zmq.POLLIN)
 
             self.ack = True
             self.msg = (
@@ -281,18 +287,17 @@ class Receiver(ReplicationMixin, Process):
                 self._sys_exit(3)
 
             num_tries = 10
-            poll_interval = 6000  # 6 seconds
             num_msgs = 0
             t0 = time.time()
             while True:
-                socks = dict(self.poll.poll(poll_interval))
-                logger.debug(f"RECEIVER socks dict = {socks}")
-                if socks != {}:
-                    for key in socks:
-                        logger.debug(f"socks index ({key}), has value {socks[key]}")
+                events = dict(self.poller.poll(timeout=6000))  # 6 seconds
+                logger.debug(f"RECEIVER events dict = {events}")
+                if events != {}:
+                    for key in events:
+                        logger.debug(f"events index ({key}), has value {events[key]}")
                 else:
-                    logger.debug("SOCKS EMPTY")
-                if socks.get(self.dealer) == zmq.POLLIN:
+                    logger.debug("EVENTS EMPTY")
+                if events.get(self.dealer) == zmq.POLLIN:
                     # reset to wait upto 60(poll_interval x num_tries
                     # milliseconds) for every message
                     num_tries = 10

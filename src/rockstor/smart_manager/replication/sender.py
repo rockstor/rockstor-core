@@ -41,7 +41,7 @@ BTRFS = "/sbin/btrfs"
 class Sender(ReplicationMixin, Process):
     def __init__(self, uuid, receiver_ip, replica, rt=None):
         self.law = None
-        self.poll = None
+        self.poller = None
         self.uuid = uuid
         self.receiver_ip = receiver_ip
         self.receiver_port = replica.data_port
@@ -58,7 +58,8 @@ class Sender(ReplicationMixin, Process):
         self.sp = None
         # Latest snapshot per Receiver(comes along with receiver-ready)
         self.rlatest_snap = None
-        self.ctx = zmq.Context()
+        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Context
+        self.ctx = zmq.Context().instance()
         self.msg = b""
         self.update_trail = False
         self.total_bytes_sent = 0
@@ -94,8 +95,10 @@ class Sender(ReplicationMixin, Process):
 
     def _init_greeting(self):
         logger.debug("_init_greeting() CALLED")
+        # Create our send (DEALER) socket using our context (ctx)
         self.send_req = self.ctx.socket(zmq.DEALER)
         self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
+
         self.send_req.connect(f"tcp://{self.receiver_ip}:{self.receiver_port}")
         msg = {
             "pool": self.replica.dpool,
@@ -108,7 +111,8 @@ class Sender(ReplicationMixin, Process):
         logger.debug("_init_greeting() sending 'sender-ready'")
         self.send_req.send_multipart([b"sender-ready", msg_str.encode("utf-8")])
         logger.debug(f"Id: {self.identity} Initial greeting: {msg}")
-        self.poll.register(self.send_req, zmq.POLLIN)
+        # Register our poller to monitor for POLLIN events.
+        self.poller.register(self.send_req, zmq.POLLIN)
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
         logger.debug(f"SENDER: _send_recv(command={command}, msg={msg})")
@@ -119,8 +123,8 @@ class Sender(ReplicationMixin, Process):
         # If the stream is interrupted, we can only start from the beginning
         # again.  So we wait patiently, but only once. Perhaps we can implement
         # a buffering or temporary caching strategy to make this part robust.
-        socks = dict(self.poll.poll(60000))  # 60 seconds.
-        if socks.get(self.send_req) == zmq.POLLIN:
+        events = dict(self.poller.poller(60000))  # 60 seconds.
+        if events.get(self.send_req) == zmq.POLLIN:
             rcommand, rmsg = self.send_req.recv_multipart()
         # len(b"") == 0 so change to test for command != b"" instead
         if (len(command) > 0 or (rcommand != b"" and rcommand != b"send-more")) or (
@@ -210,7 +214,7 @@ class Sender(ReplicationMixin, Process):
         self.msg = f"Top level exception in sender: {self.identity}".encode("utf-8")
         with self._clean_exit_handler():
             self.law = APIWrapper()
-            self.poll = zmq.Poller()
+            self.poller = zmq.Poller()
             self._init_greeting()
 
             # Create a new replica trail if it's the very first time,
@@ -251,14 +255,14 @@ class Sender(ReplicationMixin, Process):
             )
 
             while True:
-                socks = dict(self.poll.poll(6000))
-                logger.debug(f"SENDER socks dict = {socks}")
-                if socks != {}:
-                    for key in socks:
-                        logger.debug(f"socks index ({key}), has value {socks[key]}")
+                events = dict(self.poller.poll(6000))
+                logger.debug(f"SENDER events dict = {events}")
+                if events != {}:
+                    for key in events:
+                        logger.debug(f"events index ({key}), has value {events[key]}")
                 else:
-                    logger.debug("SOCKS EMPTY")
-                if socks.get(self.send_req) == zmq.POLLIN:
+                    logger.debug("EVENTS EMPTY")
+                if events.get(self.send_req) == zmq.POLLIN:
                     # not really necessary because we just want one reply for
                     # now.
                     command, reply = self.send_req.recv_multipart()
@@ -306,7 +310,7 @@ class Sender(ReplicationMixin, Process):
                         raise Exception(self.msg)
                     self.send_req.setsockopt(zmq.LINGER, 0)
                     self.send_req.close()
-                    self.poll.unregister(self.send_req)
+                    self.poller.unregister(self.send_req)
                     self._init_greeting()
 
             snap_path = f"{settings.MNT_PT}{self.replica.pool}/.snapshots/{self.replica.share}/{self.snap_name}"

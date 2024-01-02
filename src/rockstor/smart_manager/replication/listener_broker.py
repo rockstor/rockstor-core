@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 from multiprocessing import Process
+from typing import Any
 import zmq
 import os
 import json
@@ -33,9 +34,11 @@ logger = logging.getLogger(__name__)
 
 
 class ReplicaScheduler(ReplicationMixin, Process):
+    local_receivers: dict[Any, Any]
+
     def __init__(self):
         self.law = None
-        self.local_receivers = None
+        self.local_receivers = {}
         self.ppid = os.getpid()
         self.senders = {}  # Active Sender(outgoing) process map.
         self.receivers = {}  # Active Receiver process map.
@@ -200,33 +203,45 @@ class ReplicaScheduler(ReplicationMixin, Process):
             return logger.error(msg)
 
         ctx = zmq.Context()
-        frontend = ctx.socket(zmq.ROUTER)
-        # frontend.set_hwm(value=10)
-        frontend.bind(f"tcp://{self.listener_interface}:{ self.listener_port}")
 
-        backend = ctx.socket(zmq.ROUTER)
-        ipc_socket = settings.REPLICATION.get("ipc_socket")
+        # FRONTEND: IP
+        frontend = ctx.socket(zmq.ROUTER)  # Sender socket.
+        # frontend.set_hwm(value=10)
+        # Bind to tcp://interface:port
+        frontend.bind(f"tcp://{self.listener_interface}:{self.listener_port}")
+
+        # BACKEND: IPC / UNIX SOCKET
+        backend = ctx.socket(zmq.ROUTER)  # Sender socket
+        ipc_socket = settings.REPLICATION.get("ipc_socket")  # /var/run/replication.sock
         backend.bind(f"ipc://{ipc_socket}")
 
+        # POLLER
+        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#polling
         poller = zmq.Poller()
+        # Register our poller, for both sockets, to monitor for POLLIN events.
         poller.register(frontend, zmq.POLLIN)
         poller.register(backend, zmq.POLLIN)
-        self.local_receivers = {}
 
         iterations = 3
-        poll_interval = 6000  # 6 seconds
         msg_count = 0
         while True:
             # This loop may still continue even if replication service
             # is terminated, as long as data is coming in.
-            socks = dict(poller.poll(timeout=poll_interval))
-            if frontend in socks and socks[frontend] == zmq.POLLIN:
+            # Get all events: returns imidiately if any exist, or waits for timeout.
+            # Event list of tuples of the form (socket, event_mask)):
+            events_list = poller.poll(timeout=2000)
+            logger.debug(f"LISTENER_BROKER: frontend & backend events_list poll = {events_list}")
+            # Dictionary mapping of socket : event_mask.
+            events = dict(events_list)  # Wait period in milliseconds
+            if frontend in events and events[frontend] == zmq.POLLIN:
                 # frontend.recv_multipart() returns all as type <class 'bytes'>
+                #
                 address, command, msg = frontend.recv_multipart()
                 logger.debug("frontend.recv_multipart() returns")
                 logger.debug(f"address = {address}, type {type(address)}")
                 logger.debug(f"command = {command}, type {type(command)}")
                 logger.debug(f"msg = {msg}, type {type(msg)}")
+                # Keep a numerical events tally of per remote sender's events:
                 if address not in self.remote_senders:
                     self.remote_senders[address] = 1
                 else:
@@ -243,7 +258,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     # Start a new receiver and send the appropriate response
                     try:
                         start_nr = True
-                        if address in self.local_receivers:
+                        if address in self.local_receivers.keys():
                             start_nr = False
                             ecode = self.local_receivers[address].exitcode
                             if ecode is not None:
@@ -283,7 +298,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     # do we hit hwm? is the dealer still connected?
                     backend.send_multipart([address, command, msg.encode("utf-8")])
 
-            elif backend in socks and socks[backend] == zmq.POLLIN:
+            elif backend in events and events[backend] == zmq.POLLIN:
                 address, command, msg = backend.recv_multipart()
                 if command == b"new-send":
                     rid = int(msg)
@@ -302,7 +317,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         logger.error(msg)
                     finally:
                         backend.send_multipart([address, rcommand, msg.encode("utf-8")])
-                elif address in self.remote_senders:
+                elif address in self.remote_senders.keys():
                     if (
                         command == b"receiver-ready"
                         or command == b"receiver-error"
