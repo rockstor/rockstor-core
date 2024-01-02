@@ -43,6 +43,10 @@ class Receiver(ReplicationMixin, Process):
     sname: str
 
     def __init__(self, identity: bytes, meta):
+        self.sender_ip = None
+        self.poller = None
+        self.dealer = None
+        self.law = None
         self.identity = identity
         self.meta = json.loads(meta)
         self.src_share = self.meta["share"]
@@ -59,6 +63,8 @@ class Receiver(ReplicationMixin, Process):
         # We mirror senders max_snap_retain via settings.REPLICATION
         self.num_retain_snaps = settings.REPLICATION.get("max_snap_retain")
         self.ctx = zmq.Context()
+        self.zmq_version = zmq.__version__
+        self.libzmq_version = zmq.zmq_version()
         self.rp = None
         self.raw = None
         self.ack = False
@@ -132,9 +138,12 @@ class Receiver(ReplicationMixin, Process):
             f"RECEIVER: _send_recv called with command: {command}, msg: {msg}."
         )
         rcommand = rmsg = b""
-        self.dealer.send_multipart([command, msg])
-        # Retry logic doesn't make sense atm. So one long patient wait.
-        events = dict(self.poller.poll(60000))  # 60 seconds.
+        tracker = self.dealer.send_multipart([command, msg], copy=False, track=True)
+        if not tracker.done:
+            logger.debug(f"Waiting 2 seconds for send of commmand ({command})")
+            tracker.wait(timeout=2)  # seconds as float
+            # Note: And exception here would inform the receiver within the WebUI record.
+        events = dict(self.poller.poll(timeout=5000))
         if events.get(self.dealer) == zmq.POLLIN:
             rcommand, rmsg = self.dealer.recv_multipart()
         logger.debug(
@@ -161,6 +170,10 @@ class Receiver(ReplicationMixin, Process):
         logger.debug(
             f"Id: {self.identity}. Starting a new Receiver for meta: {self.meta}"
         )
+        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Socket.send_multipart
+        logger.debug("DISABLING COPY_THESHOLD to enable message tracking.")
+        zmq.COPY_THRESHOLD = 0
+
         self.msg = b"Top level exception in receiver"
         latest_snap = None
         with self._clean_exit_handler():

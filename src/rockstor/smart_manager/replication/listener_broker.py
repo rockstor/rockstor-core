@@ -229,18 +229,14 @@ class ReplicaScheduler(ReplicationMixin, Process):
             # is terminated, as long as data is coming in.
             # Get all events: returns imidiately if any exist, or waits for timeout.
             # Event list of tuples of the form (socket, event_mask)):
-            events_list = poller.poll(timeout=2000)
-            logger.debug(f"LISTENER_BROKER: frontend & backend events_list poll = {events_list}")
+            events_list = poller.poll(timeout=2000)  # Wait period in milliseconds
+            logger.debug(f"EVENT_LIST poll = {events_list}")
             # Dictionary mapping of socket : event_mask.
-            events = dict(events_list)  # Wait period in milliseconds
+            events = dict(events_list)
             if frontend in events and events[frontend] == zmq.POLLIN:
                 # frontend.recv_multipart() returns all as type <class 'bytes'>
-                #
                 address, command, msg = frontend.recv_multipart()
-                logger.debug("frontend.recv_multipart() returns")
-                logger.debug(f"address = {address}, type {type(address)}")
-                logger.debug(f"command = {command}, type {type(command)}")
-                logger.debug(f"msg = {msg}, type {type(msg)}")
+                logger.debug(f"frontend.recv_multipart() -> command={command}, msg={msg}")
                 # Keep a numerical events tally of per remote sender's events:
                 if address not in self.remote_senders:
                     self.remote_senders[address] = 1
