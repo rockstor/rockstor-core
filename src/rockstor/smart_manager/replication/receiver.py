@@ -62,6 +62,7 @@ class Receiver(ReplicationMixin, Process):
         self.rtid = None
         # We mirror senders max_snap_retain via settings.REPLICATION
         self.num_retain_snaps = settings.REPLICATION.get("max_snap_retain")
+        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Context
         self.ctx = zmq.Context()
         self.zmq_version = zmq.__version__
         self.libzmq_version = zmq.zmq_version()
@@ -140,7 +141,7 @@ class Receiver(ReplicationMixin, Process):
         rcommand = rmsg = b""
         tracker = self.dealer.send_multipart([command, msg], copy=False, track=True)
         if not tracker.done:
-            logger.debug(f"Waiting 2 seconds for send of commmand ({command})")
+            logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
             tracker.wait(timeout=2)  # seconds as float
             # Note: And exception here would inform the receiver within the WebUI record.
         events = dict(self.poller.poll(timeout=5000))
@@ -170,16 +171,14 @@ class Receiver(ReplicationMixin, Process):
         logger.debug(
             f"Id: {self.identity}. Starting a new Receiver for meta: {self.meta}"
         )
-        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Socket.send_multipart
-        logger.debug("DISABLING COPY_THESHOLD to enable message tracking.")
-        zmq.COPY_THRESHOLD = 0
 
         self.msg = b"Top level exception in receiver"
         latest_snap = None
         with self._clean_exit_handler():
             self.law = APIWrapper()
             self.poller = zmq.Poller()
-            self.dealer = self.ctx.socket(zmq.DEALER)  # Setup OUTPUT socket type.
+            # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#socket
+            self.dealer = self.ctx.socket(zmq.DEALER, copy_threshold=0)  # Setup OUTPUT socket type.
             self.dealer.setsockopt_string(zmq.IDENTITY, str(self.identity))
             # self.dealer.set_hwm(10)
             ipc_socket = settings.REPLICATION.get("ipc_socket")

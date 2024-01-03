@@ -59,7 +59,9 @@ class Sender(ReplicationMixin, Process):
         # Latest snapshot per Receiver(comes along with receiver-ready)
         self.rlatest_snap = None
         # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Context
-        self.ctx = zmq.Context().instance()
+        self.ctx = zmq.Context()
+        self.zmq_version = zmq.__version__
+        self.libzmq_version = zmq.zmq_version()
         self.msg = b""
         self.update_trail = False
         self.total_bytes_sent = 0
@@ -96,7 +98,10 @@ class Sender(ReplicationMixin, Process):
     def _init_greeting(self):
         logger.debug("_init_greeting() CALLED")
         # Create our send (DEALER) socket using our context (ctx)
-        self.send_req = self.ctx.socket(zmq.DEALER)
+        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#socket
+        self.send_req = self.ctx.socket(zmq.DEALER, copy_threshold=0)
+        # Register our poller to monitor for POLLIN events.
+        self.poller.register(self.send_req, zmq.POLLIN)
         self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
 
         self.send_req.connect(f"tcp://{self.receiver_ip}:{self.receiver_port}")
@@ -108,22 +113,29 @@ class Sender(ReplicationMixin, Process):
             "uuid": self.uuid,
         }
         msg_str = json.dumps(msg)
-        logger.debug("_init_greeting() sending 'sender-ready'")
-        self.send_req.send_multipart([b"sender-ready", msg_str.encode("utf-8")])
-        logger.debug(f"Id: {self.identity} Initial greeting: {msg}")
-        # Register our poller to monitor for POLLIN events.
-        self.poller.register(self.send_req, zmq.POLLIN)
+        msg = msg_str.encode("utf-8")
+        command = b"sender-ready"
+        rcommand, rmsg = self._send_recv(command, msg, send_only=True)
+        logger.debug(f"_send_recv(command={command}, msg={msg}) -> {rcommand}, {rmsg}")
+        logger.debug(f"Id: {self.identity} Initial greeting Done")
 
-    def _send_recv(self, command: bytes, msg: bytes = b""):
+
+    def _send_recv(self, command: bytes, msg: bytes = b"", send_only: bool = False):
         logger.debug(f"SENDER: _send_recv(command={command}, msg={msg})")
         self.msg = f"Failed while send-recv-ing command({command})".encode("utf-8")
         rcommand = rmsg = b""
-        self.send_req.send_multipart([command, msg])
+        tracker = self.send_req.send_multipart([command, msg], copy=False, track=True)
+        if not tracker.done:
+            logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
+            # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
+            tracker.wait(timeout=2)  # seconds as float: raises zmq.NotDone
         # There is no retry logic here because it's an overkill at the moment.
         # If the stream is interrupted, we can only start from the beginning
         # again.  So we wait patiently, but only once. Perhaps we can implement
         # a buffering or temporary caching strategy to make this part robust.
-        events = dict(self.poller.poller(60000))  # 60 seconds.
+        if send_only:
+            return command, b"send_only-succeeded"
+        events = dict(self.poller.poll(60000))  # 60 seconds.
         if events.get(self.send_req) == zmq.POLLIN:
             rcommand, rmsg = self.send_req.recv_multipart()
         # len(b"") == 0 so change to test for command != b"" instead

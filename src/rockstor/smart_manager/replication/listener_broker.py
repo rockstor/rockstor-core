@@ -202,6 +202,11 @@ class ReplicaScheduler(ReplicationMixin, Process):
             msg = f"Failed to get uuid of current appliance. Aborting. Exception: {e.__str__()}"
             return logger.error(msg)
 
+        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Socket.send_multipart
+        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Socket.copy_threshold
+        logger.debug("DISABLING COPY_THRESHOLD to enable message tracking.")
+        zmq.COPY_THRESHOLD = 0
+
         ctx = zmq.Context()
 
         # FRONTEND: IP
@@ -222,14 +227,14 @@ class ReplicaScheduler(ReplicationMixin, Process):
         poller.register(frontend, zmq.POLLIN)
         poller.register(backend, zmq.POLLIN)
 
-        iterations = 3
+        iterations = 5
         msg_count = 0
         while True:
             # This loop may still continue even if replication service
             # is terminated, as long as data is coming in.
             # Get all events: returns imidiately if any exist, or waits for timeout.
             # Event list of tuples of the form (socket, event_mask)):
-            events_list = poller.poll(timeout=2000)  # Wait period in milliseconds
+            events_list = poller.poll(timeout=2000)  # Max wait period in milliseconds
             logger.debug(f"EVENT_LIST poll = {events_list}")
             # Dictionary mapping of socket : event_mask.
             events = dict(events_list)
@@ -328,7 +333,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
             else:
                 iterations -= 1
                 if iterations == 0:
-                    iterations = 10
+                    iterations = 5
                     self._prune_senders()
                     self._delete_receivers()
                     cur_time = time.time()
