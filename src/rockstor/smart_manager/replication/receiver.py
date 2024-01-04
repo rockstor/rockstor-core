@@ -42,12 +42,12 @@ BTRFS = "/sbin/btrfs"
 class Receiver(ReplicationMixin, Process):
     sname: str
 
-    def __init__(self, identity: bytes, meta):
+    def __init__(self, identity: bytes, meta: bytes):
         self.sender_ip = None
         self.poller = None
         self.dealer = None
         self.law = None
-        self.identity = identity
+        self.identity = identity  # Otherwise knows as address.
         self.meta = json.loads(meta)
         self.src_share = self.meta["share"]
         self.dest_pool = self.meta["pool"]
@@ -179,11 +179,11 @@ class Receiver(ReplicationMixin, Process):
             self.poller = zmq.Poller()
             # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#socket
             self.dealer = self.ctx.socket(zmq.DEALER, copy_threshold=0)  # Setup OUTPUT socket type.
-            self.dealer.setsockopt_string(zmq.IDENTITY, str(self.identity))
             # self.dealer.set_hwm(10)
             ipc_socket = settings.REPLICATION.get("ipc_socket")
+            # Identity must be set before connection.
+            self.dealer.setsockopt(zmq.IDENTITY, self.identity)
             self.dealer.connect(f"ipc://{ipc_socket}")
-            # Setup poller
             # Register our poller, for OUTPUT socket, to monitor for POLLIN events.
             self.poller.register(self.dealer, zmq.POLLIN)
 

@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class ReplicaScheduler(ReplicationMixin, Process):
+    uuid: str | None
     local_receivers: dict[Any, Any]
 
     def __init__(self):
@@ -44,7 +45,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.receivers = {}  # Active Receiver process map.
         self.remote_senders = {}  # Active incoming/remote Sender/client map.
         self.MAX_ATTEMPTS = settings.REPLICATION.get("max_send_attempts")
-        self.uuid = self.listener_interface = self.listener_port = None
+        self.uuid = None
+        self.listener_interface = None
+        self.listener_port = None
         self.trail_prune_time = None
         super(ReplicaScheduler, self).__init__()
 
@@ -197,6 +200,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
             return logger.error(msg)
 
         try:
+            # DB query returns type <class 'str'>
             self.uuid = Appliance.objects.get(current_appliance=True).uuid
         except Exception as e:
             msg = f"Failed to get uuid of current appliance. Aborting. Exception: {e.__str__()}"
@@ -300,6 +304,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     backend.send_multipart([address, command, msg.encode("utf-8")])
 
             elif backend in events and events[backend] == zmq.POLLIN:
+                # backend.recv_multipart() returns all as type <class 'bytes'>
                 address, command, msg = backend.recv_multipart()
                 if command == b"new-send":
                     rid = int(msg)
@@ -319,17 +324,26 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     finally:
                         backend.send_multipart([address, rcommand, msg.encode("utf-8")])
                 elif address in self.remote_senders.keys():
+                    logger.debug(f"Identity/address {address}, found in remove_senders.keys()")
                     if (
                         command == b"receiver-ready"
                         or command == b"receiver-error"
                         or command == b"btrfs-recv-finished"
                     ):
-                        logger.debug(f"Identity: {address} command: {command}")
-                        backend.send_multipart([address, b"ACK", b""])
+                        logger.debug(f"command: {command}, sending 'ACK' to backend.")
+                        tracker = backend.send_multipart([address, b"ACK", b""], copy=False, track=True)
+                        if not tracker.done:
+                            logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
+                            # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
+                            tracker.wait(timeout=2)  # seconds as float: raises zmq.NotDone
                         # a new receiver has started. reply to the sender that
                         # must be waiting
-                    frontend.send_multipart([address, command, msg.encode("utf-8")])
-
+                    logger.debug(f"command: {command}, sending to frontend.")
+                    tracker = frontend.send_multipart([address, command, msg.encode("utf-8")], copy=False, track=True)
+                    if not tracker.done:
+                        logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
+                        # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
+                        tracker.wait(timeout=2)  # seconds as float: raises zmq.NotDone
             else:
                 iterations -= 1
                 if iterations == 0:

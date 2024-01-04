@@ -39,7 +39,9 @@ BTRFS = "/sbin/btrfs"
 
 
 class Sender(ReplicationMixin, Process):
-    def __init__(self, uuid, receiver_ip, replica, rt=None):
+    identity: str
+
+    def __init__(self, uuid: str, receiver_ip, replica, rt: int | None = None):
         self.law = None
         self.poller = None
         self.uuid = uuid
@@ -100,11 +102,12 @@ class Sender(ReplicationMixin, Process):
         # Create our send (DEALER) socket using our context (ctx)
         # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#socket
         self.send_req = self.ctx.socket(zmq.DEALER, copy_threshold=0)
+        # Identity must be set before connection.
+        self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
+        self.send_req.connect(f"tcp://{self.receiver_ip}:{self.receiver_port}")
         # Register our poller to monitor for POLLIN events.
         self.poller.register(self.send_req, zmq.POLLIN)
-        self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
 
-        self.send_req.connect(f"tcp://{self.receiver_ip}:{self.receiver_port}")
         msg = {
             "pool": self.replica.dpool,
             "share": self.replica.share,
@@ -267,7 +270,9 @@ class Sender(ReplicationMixin, Process):
             )
 
             while True:
-                events = dict(self.poller.poll(6000))
+                events_list = self.poller.poll(6000)
+                logger.debug(f"Sender: EVENT_LIST poll = {events_list}")
+                events = dict(events_list)
                 logger.debug(f"SENDER events dict = {events}")
                 if events != {}:
                     for key in events:
