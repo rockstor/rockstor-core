@@ -306,6 +306,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
             elif backend in events and events[backend] == zmq.POLLIN:
                 # backend.recv_multipart() returns all as type <class 'bytes'>
                 address, command, msg = backend.recv_multipart()
+                # In the following conditional:
+                # if redefines msg as str
+                # elif leaves msg as bytes
                 if command == b"new-send":
                     rid = int(msg)
                     logger.debug(f"new-send request received for {rid}")
@@ -339,7 +342,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         # a new receiver has started. reply to the sender that
                         # must be waiting
                     logger.debug(f"command: {command}, sending to frontend.")
-                    tracker = frontend.send_multipart([address, command, msg.encode("utf-8")], copy=False, track=True)
+                    tracker = frontend.send_multipart([address, command, msg], copy=False, track=True)
                     if not tracker.done:
                         logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
                         # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
