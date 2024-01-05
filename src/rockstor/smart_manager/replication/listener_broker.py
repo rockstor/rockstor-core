@@ -258,6 +258,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         logger.debug(
                             f"Active Receiver: {rs}. Messages processed: {count}"
                         )
+
                 if command == b"sender-ready":
                     logger.debug(f"initial greeting command '{command}' received from {address}")
                     # Start a new receiver and send the appropriate response
@@ -294,14 +295,14 @@ class ReplicaScheduler(ReplicationMixin, Process):
                             self.local_receivers[address] = nr
                         continue
                     except Exception as e:
-                        msg = f"Exception while starting the new receiver for {address}: {e.__str__()}"
+                        msg = f"Exception while starting the new receiver for {address}: {e.__str__()}".encode("utf-8")
                         logger.error(msg)
                         frontend.send_multipart(
-                            [address, b"receiver-init-error", msg.encode("utf-8")]
+                            [address, b"receiver-init-error", msg]
                         )
                 else:
                     # do we hit hwm? is the dealer still connected?
-                    backend.send_multipart([address, command, msg.encode("utf-8")])
+                    backend.send_multipart([address, command, msg])
 
             elif backend in events and events[backend] == zmq.POLLIN:
                 # backend.recv_multipart() returns all as type <class 'bytes'>
@@ -327,7 +328,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     finally:
                         backend.send_multipart([address, rcommand, msg.encode("utf-8")])
                 elif address in self.remote_senders.keys():
-                    logger.debug(f"Identity/address {address}, found in remove_senders.keys()")
+                    logger.debug(f"Identity/address {address}, found in remote_senders.keys()")
                     if (
                         command == b"receiver-ready"
                         or command == b"receiver-error"
