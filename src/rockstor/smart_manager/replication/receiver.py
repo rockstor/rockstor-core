@@ -27,7 +27,14 @@ from django.conf import settings
 from django import db
 from contextlib import contextmanager
 from smart_manager.replication.util import ReplicationMixin
-from fs.btrfs import get_oldest_snap, remove_share, set_property, is_subvol, mount_share
+from fs.btrfs import (
+    get_oldest_snap,
+    remove_share,
+    set_property,
+    is_subvol,
+    mount_share,
+    BTRFS,
+)
 from system.osi import run_command
 from storageadmin.models import Pool, Share, Appliance
 from smart_manager.models import ReplicaShare, ReceiveTrail
@@ -36,10 +43,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-BTRFS = "/sbin/btrfs"
-
 
 class Receiver(ReplicationMixin, Process):
+    total_bytes_received: int
     sname: str
 
     def __init__(self, identity: bytes, meta: bytes):
@@ -178,7 +184,9 @@ class Receiver(ReplicationMixin, Process):
             self.law = APIWrapper()
             self.poller = zmq.Poller()
             # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#socket
-            self.dealer = self.ctx.socket(zmq.DEALER, copy_threshold=0)  # Setup OUTPUT socket type.
+            self.dealer = self.ctx.socket(
+                zmq.DEALER, copy_threshold=0
+            )  # Setup OUTPUT socket type.
             # self.dealer.set_hwm(10)
             ipc_socket = settings.REPLICATION.get("ipc_socket")
             # Identity must be set before connection.
@@ -300,7 +308,7 @@ class Receiver(ReplicationMixin, Process):
 
             num_tries = 10
             num_msgs = 0
-            t0 = time.time()
+            start_time = time.time()
             while True:
                 events = dict(self.poller.poll(timeout=6000))  # 6 seconds
                 logger.debug(f"RECEIVER events dict = {events}")
@@ -319,11 +327,12 @@ class Receiver(ReplicationMixin, Process):
                         # this command concludes fsdata transfer. After this,
                         # btrfs-recev process should be
                         # terminated(.communicate).
+                        # poll() returns None while process is running: rc otherwise.
                         if self.rp.poll() is None:
                             self.msg = b"Failed to terminate btrfs-recv command"
                             out, err = self.rp.communicate()
-                            out = out.split("\n")
-                            err = err.split("\n")
+                            out = out.split(b"\n")
+                            err = err.split(b"\n")
                             logger.debug(
                                 f"Id: {self.identity}. Terminated btrfs-recv. cmd = {cmd} out = {out} err: {err} rc: {self.rp.returncode}"
                             )
@@ -332,9 +341,10 @@ class Receiver(ReplicationMixin, Process):
                                 "utf-8"
                             )
                             raise Exception(self.msg)
+                        total_kb_received = int(self.total_bytes_received / 1024)
                         data = {
                             "status": "succeeded",
-                            "kb_received": self.total_bytes_received / 1024,
+                            "kb_received": total_kb_received,
                         }
                         self.msg = f"Failed to update receive trail for rtid: {self.rtid}".encode(
                             "utf-8"
@@ -345,7 +355,9 @@ class Receiver(ReplicationMixin, Process):
                         self.refresh_share_state()
                         self.refresh_snapshot_state()
 
-                        dsize, drate = self.size_report(self.total_bytes_received, t0)
+                        dsize, drate = self.size_report(
+                            self.total_bytes_received, start_time
+                        )
                         logger.debug(
                             f"Id: {self.identity}. Receive complete. Total data transferred: {dsize}. Rate: {drate}/sec."
                         )
@@ -361,6 +373,7 @@ class Receiver(ReplicationMixin, Process):
                         )
                         raise Exception(self.msg)
 
+                    # poll() returns None while process is running: return code otherwise.
                     if self.rp.poll() is None:
                         self.rp.stdin.write(message)
                         self.rp.stdin.flush()
@@ -370,22 +383,23 @@ class Receiver(ReplicationMixin, Process):
                         self.total_bytes_received += len(message)
                         if num_msgs == 1000:
                             num_msgs = 0
+                            total_kb_received = int(self.total_bytes_received / 1024)
                             data = {
                                 "status": "pending",
-                                "kb_received": self.total_bytes_received / 1024,
+                                "kb_received": total_kb_received,
                             }
                             self.update_receive_trail(self.rtid, data)
 
                             dsize, drate = self.size_report(
-                                self.total_bytes_received, t0
+                                self.total_bytes_received, start_time
                             )
                             logger.debug(
                                 f"Id: {self.identity}. Receiver alive. Data transferred: {dsize}. Rate: {drate}/sec."
                             )
-                    else:
+                    else:  # receive process has stopped:
                         out, err = self.rp.communicate()
-                        out = out.split("\n")
-                        err = err.split("\n")
+                        out = out.split(b"\n")
+                        err = err.split(b"\n")
                         logger.error(
                             f"Id: {self.identity}. btrfs-recv died unexpectedly. "
                             f"cmd: {cmd} out: {out}. err: {err}"

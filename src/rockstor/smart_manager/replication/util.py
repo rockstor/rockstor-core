@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import time
+from typing import Any
+
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Appliance, Share
 from cli import APIWrapper
@@ -232,29 +234,23 @@ class ReplicationMixin(object):
         except Exception as e:
             logger.error(f"Exception while refreshing Share state: {e.__str__()}")
 
-    def humanize_bytes(
-        self,
-        num: int,
-        units=(
-            "Bytes",
-            "KB",
-            "MB",
-            "GB",
-        ),
-    ):
+    def humanize_bytes(self, num: float, units=("Bytes", "KB", "MB", "GB")) -> str:
         """
         Recursive routine to establish and then return the most appropriate
         num expression given the contents of units. Ie 1023 Bytes or 4096 KB
         :param num: Assumed to be in Byte units.
         :param units: list of units to recurse through
-        :return: "1023 Bytes" or "4.28 KB" etc given num=1023 or num=4384 )
+        :return: "1023 Bytes" or "4.28 KB" etc. given num=1023 or num=4384
         """
         if num < 1024 or len(units) == 1:
             return f"{num:.2f} {units[0]}"
         return self.humanize_bytes(num / 1024, units[1:])
 
-    def size_report(self, num: int, t0):
-        t1 = time.time()
-        dsize = self.humanize_bytes(float(num))
-        drate = self.humanize_bytes(float(num / (t1 - t0)))
+    def size_report(self, num: int, time_started: float):
+        """
+        Takes num of bytes, and a start time, and returns humanized output.
+        """
+        time_now = time.time()
+        dsize: str = self.humanize_bytes(float(num))
+        drate: str = self.humanize_bytes(float(num / (time_now - time_started)))
         return dsize, drate

@@ -21,14 +21,12 @@ import os
 import sys
 import zmq
 import subprocess
-import io
-import fcntl
 import json
 import time
 from django.conf import settings
 from contextlib import contextmanager
 from smart_manager.replication.util import ReplicationMixin
-from fs.btrfs import get_oldest_snap, is_subvol
+from fs.btrfs import get_oldest_snap, is_subvol, BTRFS
 from smart_manager.models import ReplicaTrail
 from cli import APIWrapper
 from django import db
@@ -36,10 +34,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-BTRFS = "/sbin/btrfs"
-
 
 class Sender(ReplicationMixin, Process):
+    total_bytes_sent: int
     identity: str
 
     def __init__(self, uuid: str, receiver_ip, replica, rt: int | None = None):
@@ -370,10 +367,11 @@ class Sender(ReplicationMixin, Process):
 
             alive = True
             num_msgs = 0
-            t0 = time.time()
+            start_time = time.time()
             while alive:
                 try:
-                    if self.sp.poll() is not None:  # poll() returns None while process is running: rc otherwise.
+                    # poll() returns None while process is running: rc otherwise.
+                    if self.sp.poll() is not None:
                         logger.debug(
                             f"Id: {self.identity}. send process finished for {self.snap_id}. "
                             f"rc: {self.sp.returncode}. stderr: {self.sp.stderr.read()}"
@@ -409,7 +407,7 @@ class Sender(ReplicationMixin, Process):
                 num_msgs += 1
                 if num_msgs == 1000:
                     num_msgs = 0
-                    dsize, drate = self.size_report(self.total_bytes_sent, t0)
+                    dsize, drate = self.size_report(self.total_bytes_sent, start_time)
                     logger.debug(
                         f"Id: {self.identity} Sender alive. Data transferred: {dsize}. Rate: {drate}/sec."
                     )
@@ -437,16 +435,16 @@ class Sender(ReplicationMixin, Process):
                         f"Id: {self.identity}. Scheduler exited. Sender for {self.snap_id} cannot go on. Aborting."
                     )
                     self._sys_exit(3)
-
+            total_kb_sent = int(self.total_bytes_sent / 1024)
             data = {
                 "status": "succeeded",
-                "kb_sent": self.total_bytes_sent / 1024,
+                "kb_sent": total_kb_sent,
             }
             self.msg = f"Failed to update final replica status for {self.snap_id}. Aborting.".encode(
                 "utf-8"
             )
             self.update_replica_status(self.rt2_id, data)
-            dsize, drate = self.size_report(self.total_bytes_sent, t0)
+            dsize, drate = self.size_report(self.total_bytes_sent, start_time)
             logger.debug(
                 f"Id: {self.identity}. Send complete. Total data transferred: {dsize}. Rate: {drate}/sec."
             )
