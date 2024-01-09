@@ -245,7 +245,15 @@ class ReplicaScheduler(ReplicationMixin, Process):
             if frontend in events and events[frontend] == zmq.POLLIN:
                 # frontend.recv_multipart() returns all as type <class 'bytes'>
                 address, command, msg = frontend.recv_multipart()
-                logger.debug(f"frontend.recv_multipart() -> command={command}, msg={msg}")
+                # Limit debug msg to 180 chars to avoid MBs of btrfs-send-stream msg in log
+                if len(msg) > 180:
+                    logger.debug(
+                        f"frontend.recv_multipart() -> address= {address}, command={command}, msg={msg[0:180]} - log spam TRIMMED"
+                    )
+                else:
+                    logger.debug(
+                        f"frontend.recv_multipart() -> address= {address}, command={command}, msg={msg}"
+                    )
                 # Keep a numerical events tally of per remote sender's events:
                 if address not in self.remote_senders:
                     self.remote_senders[address] = 1
@@ -260,7 +268,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         )
 
                 if command == b"sender-ready":
-                    logger.debug(f"initial greeting command '{command}' received from {address}")
+                    logger.debug(
+                        f"initial greeting command '{command}' received from {address}"
+                    )
                     # Start a new receiver and send the appropriate response
                     try:
                         start_nr = True
@@ -274,7 +284,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
                                 )
                                 start_nr = True
                             else:
-                                msg = f"Receiver({address}) already exists. Will not start a new one.".encode("utf-8")
+                                msg = f"Receiver({address}) already exists. Will not start a new one.".encode(
+                                    "utf-8"
+                                )
                                 logger.error(msg)
                                 # TODO: There may be a different way to handle
                                 #  this. For example, we can pass the message to
@@ -295,11 +307,11 @@ class ReplicaScheduler(ReplicationMixin, Process):
                             self.local_receivers[address] = nr
                         continue
                     except Exception as e:
-                        msg = f"Exception while starting the new receiver for {address}: {e.__str__()}".encode("utf-8")
-                        logger.error(msg)
-                        frontend.send_multipart(
-                            [address, b"receiver-init-error", msg]
+                        msg = f"Exception while starting the new receiver for {address}: {e.__str__()}".encode(
+                            "utf-8"
                         )
+                        logger.error(msg)
+                        frontend.send_multipart([address, b"receiver-init-error", msg])
                 else:
                     # do we hit hwm? is the dealer still connected?
                     backend.send_multipart([address, command, msg])
@@ -328,24 +340,36 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     finally:
                         backend.send_multipart([address, rcommand, msg.encode("utf-8")])
                 elif address in self.remote_senders.keys():
-                    logger.debug(f"Identity/address {address}, found in remote_senders.keys()")
+                    logger.debug(
+                        f"Identity/address {address}, found in remote_senders.keys()"
+                    )
                     if (
                         command == b"receiver-ready"
                         or command == b"receiver-error"
                         or command == b"btrfs-recv-finished"
                     ):
                         logger.debug(f"command: {command}, sending 'ACK' to backend.")
-                        tracker = backend.send_multipart([address, b"ACK", b""], copy=False, track=True)
+                        tracker = backend.send_multipart(
+                            [address, b"ACK", b""], copy=False, track=True
+                        )
                         if not tracker.done:
-                            logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
+                            logger.debug(
+                                f"Waiting max 2 seconds for send of commmand ({command})"
+                            )
                             # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
-                            tracker.wait(timeout=2)  # seconds as float: raises zmq.NotDone
+                            tracker.wait(
+                                timeout=2
+                            )  # seconds as float: raises zmq.NotDone
                         # a new receiver has started. reply to the sender that
                         # must be waiting
                     logger.debug(f"command: {command}, sending to frontend.")
-                    tracker = frontend.send_multipart([address, command, msg], copy=False, track=True)
+                    tracker = frontend.send_multipart(
+                        [address, command, msg], copy=False, track=True
+                    )
                     if not tracker.done:
-                        logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
+                        logger.debug(
+                            f"Waiting max 2 seconds for send of commmand ({command})"
+                        )
                         # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
                         tracker.wait(timeout=2)  # seconds as float: raises zmq.NotDone
             else:

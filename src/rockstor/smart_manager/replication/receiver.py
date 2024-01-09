@@ -321,7 +321,7 @@ class Receiver(ReplicationMixin, Process):
                     # milliseconds) for every message
                     num_tries = 10
                     command, message = self.dealer.recv_multipart()
-                    logger.debug(f"command = {command}, of type: {type(command)}")
+                    logger.debug(f"command = {command}")
                     if command == b"btrfs-send-stream-finished":
                         # this command concludes fsdata transfer. After this,
                         # btrfs-recev process should be

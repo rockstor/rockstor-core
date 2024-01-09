@@ -123,7 +123,13 @@ class Sender(ReplicationMixin, Process):
         logger.debug(f"Id: {self.identity} Initial greeting Done")
 
     def _send_recv(self, command: bytes, msg: bytes = b"", send_only: bool = False):
-        logger.debug(f"SENDER: _send_recv(command={command}, msg={msg})")
+        # Limit debug msg to 180 chars to avoid MBs of btrfs-send-stream msg in log
+        if len(msg) > 180:
+            logger.debug(
+                f"_send_recv(command={command}, msg={msg[0:180]}) - log spam TRIMMED"
+            )
+        else:
+            logger.debug(f"_send_recv(command={command}, msg={msg})")
         self.msg = f"Failed while send-recv-ing command({command})".encode("utf-8")
         rcommand = rmsg = b""
         tracker = self.send_req.send_multipart([command, msg], copy=False, track=True)
@@ -282,13 +288,14 @@ class Sender(ReplicationMixin, Process):
                     # not really necessary because we just want one reply for
                     # now.
                     command, reply = self.send_req.recv_multipart()
-                    logger.debug(f"command = {command}, of type {type(command)}")
+                    logger.debug(f"command = {command}")
                     if command == b"receiver-ready":
                         if self.rt is not None:
                             self.rlatest_snap = reply.decode("utf-8")
                             self.rt = self._refresh_rt()
                         logger.debug(
-                            f"Id: {self.identity}. command({command}) and message({reply}) received. Proceeding to send fsdata."
+                            f"Id: {self.identity}. command({command}) & message({reply}) received. "
+                            "Proceed to send btrfs_send_stream."
                         )
                         break
                     else:
@@ -381,8 +388,11 @@ class Sender(ReplicationMixin, Process):
                         alive = False
                     # Read all available data from stdout without blocking (requires bytes stream).
                     # https://docs.python.org/3/library/io.html#io.BufferedIOBase.read1
-                    send_data = self.sp.stdout.read1()
-                    if send_data is None:
+                    # We limit/chunck this read1 to a set number of bytes per cycle.
+                    # Btrfs uses 256 MB chunk on disk
+                    # Arbitrarily chunking to 10MB
+                    btrfs_send_stream = self.sp.stdout.read1(10000000)
+                    if btrfs_send_stream is None:
                         logger.debug("sp.stdout empty")
                         continue
                 except IOError:  # TODO: Non functional in Py3 (Py2.7 behaviour)
@@ -400,12 +410,12 @@ class Sender(ReplicationMixin, Process):
                     )
                     self._sys_exit(3)
 
-                self.msg = f"Failed to send 'send_data' to the receiver for {self.snap_id}. Aborting.".encode(
+                self.msg = f"Failed to send 'btrfs_send_stream' to the receiver for {self.snap_id}. Aborting.".encode(
                     "utf-8"
                 )
                 self.update_trail = True
-                command, message = self._send_recv(b"", send_data)
-                self.total_bytes_sent += len(send_data)
+                command, message = self._send_recv(b"", btrfs_send_stream)
+                self.total_bytes_sent += len(btrfs_send_stream)
                 num_msgs += 1
                 if num_msgs == 1000:
                     num_msgs = 0
