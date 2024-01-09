@@ -159,14 +159,12 @@ class Receiver(ReplicationMixin, Process):
         logger.debug(f"remote message: {rmsg}")
         return rcommand, rmsg
 
-    def _latest_snap(self, rso):
+    def _latest_snap_name(self, rso) -> str | None:
         for snap in ReceiveTrail.objects.filter(
             rshare=rso, status="succeeded"
         ).order_by("-id"):
             if is_subvol(f"{self.snap_dir}/{snap.snap_name}"):
-                return str(snap.snap_name).encode(
-                    "utf8"
-                )  # cannot be unicode for zmq message
+                return str(snap.snap_name)
         logger.error(
             f"Id: {self.identity}. There are no replication snapshots on the system for Share({rso.share})."
         )
@@ -228,7 +226,7 @@ class Receiver(ReplicationMixin, Process):
                 self.msg = (
                     b"Failed to verify latest replication snapshot on the system."
                 )
-                latest_snap = self._latest_snap(rso)
+                latest_snap = self._latest_snap_name(rso)
 
             self.msg = f"Failed to create receive trail for rid: {self.rid}".encode(
                 "utf-8"
@@ -296,10 +294,11 @@ class Receiver(ReplicationMixin, Process):
 
             self.msg = b"Failed to send receiver-ready"
             # Previously our second parameter was (latest_snap or b"")
-            snap = latest_snap
-            if snap is None:
-                snap = b"place-holder"
-            rcommand, rmsg = self._send_recv(b"receiver-ready", snap)
+            if latest_snap is None:
+                snap_name = b""
+            else:
+                snap_name = latest_snap.encode("utf8")
+            rcommand, rmsg = self._send_recv(b"receiver-ready", snap_name)
             if rcommand == b"":
                 logger.error(
                     f"Id: {self.identity}. No response from the broker for receiver-ready command. Aborting."

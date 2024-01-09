@@ -36,8 +36,10 @@ logger = logging.getLogger(__name__)
 
 
 class Sender(ReplicationMixin, Process):
+    uuid: str
     total_bytes_sent: int
     identity: str
+    rlatest_snap: str | None
 
     def __init__(self, uuid: str, receiver_ip, replica, rt: int | None = None):
         self.law = None
@@ -283,7 +285,7 @@ class Sender(ReplicationMixin, Process):
                     logger.debug(f"command = {command}, of type {type(command)}")
                     if command == b"receiver-ready":
                         if self.rt is not None:
-                            self.rlatest_snap = reply
+                            self.rlatest_snap = reply.decode("utf-8")
                             self.rt = self._refresh_rt()
                         logger.debug(
                             f"Id: {self.identity}. command({command}) and message({reply}) received. Proceeding to send fsdata."
