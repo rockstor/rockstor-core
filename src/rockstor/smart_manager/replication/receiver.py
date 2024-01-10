@@ -142,7 +142,7 @@ class Receiver(ReplicationMixin, Process):
 
     def _send_recv(self, command: bytes, msg: bytes = b""):
         logger.debug(
-            f"RECEIVER: _send_recv called with command: {command}, msg: {msg}."
+            f"_send_recv called with command: {command}, msg: {msg}."
         )
         rcommand = rmsg = b""
         tracker = self.dealer.send_multipart([command, msg], copy=False, track=True)
@@ -154,7 +154,7 @@ class Receiver(ReplicationMixin, Process):
         if events.get(self.dealer) == zmq.POLLIN:
             rcommand, rmsg = self.dealer.recv_multipart()
         logger.debug(
-            f"Id: {self.identity} RECEIVER: _send_recv command: {command} rcommand: {rcommand}"
+            f"Id: {self.identity} _send_recv command: {command} rcommand: {rcommand}"
         )
         logger.debug(f"remote message: {rmsg}")
         return rcommand, rmsg
@@ -310,15 +310,8 @@ class Receiver(ReplicationMixin, Process):
             start_time = time.time()
             while True:
                 events = dict(self.poller.poll(timeout=6000))  # 6 seconds
-                logger.debug(f"RECEIVER events dict = {events}")
-                if events != {}:
-                    for key in events:
-                        logger.debug(f"events index ({key}), has value {events[key]}")
-                else:
-                    logger.debug("EVENTS EMPTY")
+                logger.debug(f"Events dict = {events}")
                 if events.get(self.dealer) == zmq.POLLIN:
-                    # reset to wait upto 60(poll_interval x num_tries
-                    # milliseconds) for every message
                     num_tries = 10
                     command, message = self.dealer.recv_multipart()
                     logger.debug(f"command = {command}")

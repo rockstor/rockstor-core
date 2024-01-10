@@ -123,18 +123,15 @@ class Sender(ReplicationMixin, Process):
         logger.debug(f"Id: {self.identity} Initial greeting Done")
 
     def _send_recv(self, command: bytes, msg: bytes = b"", send_only: bool = False):
-        # Limit debug msg to 180 chars to avoid MBs of btrfs-send-stream msg in log
-        if len(msg) > 180:
-            logger.debug(
-                f"_send_recv(command={command}, msg={msg[0:180]}) - log spam TRIMMED"
-            )
+        # Avoid debug logging the btrfs-send-stream contents.
+        if command == b"" and msg != b"":
+            logger.debug("_send_recv(command=b'', msg assumed BTRFS SEND BYTE STREAM)")
         else:
-            logger.debug(f"_send_recv(command={command}, msg={msg})")
+            logger.debug(f"_send_recv(command={command}, msg={msg}), send_only={send_only}")
         self.msg = f"Failed while send-recv-ing command({command})".encode("utf-8")
         rcommand = rmsg = b""
         tracker = self.send_req.send_multipart([command, msg], copy=False, track=True)
         if not tracker.done:
-            logger.debug(f"Waiting max 2 seconds for send of commmand ({command})")
             # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
             tracker.wait(timeout=2)  # seconds as float: raises zmq.NotDone
         # There is no retry logic here because it's an overkill at the moment.
@@ -276,14 +273,9 @@ class Sender(ReplicationMixin, Process):
 
             while True:
                 events_list = self.poller.poll(6000)
-                logger.debug(f"Sender: EVENT_LIST poll = {events_list}")
+                logger.debug(f"EVENT_LIST poll = {events_list}")
                 events = dict(events_list)
-                logger.debug(f"SENDER events dict = {events}")
-                if events != {}:
-                    for key in events:
-                        logger.debug(f"events index ({key}), has value {events[key]}")
-                else:
-                    logger.debug("EVENTS EMPTY")
+                logger.debug(f"Events dict = {events}")
                 if events.get(self.send_req) == zmq.POLLIN:
                     # not really necessary because we just want one reply for
                     # now.
@@ -390,8 +382,8 @@ class Sender(ReplicationMixin, Process):
                     # https://docs.python.org/3/library/io.html#io.BufferedIOBase.read1
                     # We limit/chunck this read1 to a set number of bytes per cycle.
                     # Btrfs uses 256 MB chunk on disk
-                    # Arbitrarily chunking to 10MB
-                    btrfs_send_stream = self.sp.stdout.read1(10000000)
+                    # Arbitrarily chunk send process stdout via read1() bytes argument
+                    btrfs_send_stream = self.sp.stdout.read1(100000000)
                     if btrfs_send_stream is None:
                         logger.debug("sp.stdout empty")
                         continue

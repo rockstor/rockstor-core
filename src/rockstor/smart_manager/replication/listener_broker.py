@@ -245,14 +245,12 @@ class ReplicaScheduler(ReplicationMixin, Process):
             if frontend in events and events[frontend] == zmq.POLLIN:
                 # frontend.recv_multipart() returns all as type <class 'bytes'>
                 address, command, msg = frontend.recv_multipart()
-                # Limit debug msg to 180 chars to avoid MBs of btrfs-send-stream msg in log
-                if len(msg) > 180:
-                    logger.debug(
-                        f"frontend.recv_multipart() -> address= {address}, command={command}, msg={msg[0:180]} - log spam TRIMMED"
-                    )
+                # Avoid debug logging the btrfs-send-stream contents.
+                if command == b"" and msg != b"":
+                    logger.debug("frontend.recv_multipart() -> command=b'', msg assumed BTRFS SEND BYTE STREAM")
                 else:
                     logger.debug(
-                        f"frontend.recv_multipart() -> address= {address}, command={command}, msg={msg}"
+                        f"frontend.recv_multipart() -> address={address}, command={command}, msg={msg}"
                     )
                 # Keep a numerical events tally of per remote sender's events:
                 if address not in self.remote_senders:
@@ -367,9 +365,6 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         [address, command, msg], copy=False, track=True
                     )
                     if not tracker.done:
-                        logger.debug(
-                            f"Waiting max 2 seconds for send of commmand ({command})"
-                        )
                         # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#notdone
                         tracker.wait(timeout=2)  # seconds as float: raises zmq.NotDone
             else:
