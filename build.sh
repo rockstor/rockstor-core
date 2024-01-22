@@ -4,10 +4,17 @@ set -o errexit
 
 # Install Poetry, a dependency management, packaging, and build system.
 # Uninstall legacy/transitional Poetry version of 1.1.15
+PATH="$HOME/.local/bin:$PATH"  # account for more constrained environments.
 if which poetry && poetry --version | grep -q "1.1.15"; then
   echo "Poetry version 1.1.15 found - UNINSTALLING"
   curl -sSL https://install.python-poetry.org | python3 - --uninstall
+  rm --force /root/.local/bin/poetry  # remove dangling dead link.
 fi
+PATH="${PATH//'/root/.local/bin:'/''}" # null all legacy poetry paths
+# We are run, outside of development, only by RPM's %posttrans.
+# As such our .venv dir has already been removed in %post (update mode).
+PATH="${PATH//'/opt/rockstor/.venv/bin:'/''}" # null now removed .venv from path.
+echo "build.sh has PATH=$PATH"
 # Install Poetry via PIPX as a global app
 # https://peps.python.org/pep-0668/#guide-users-towards-virtual-environments
 export PIPX_HOME=/opt/pipx  # virtual environment location, default ~/.local/pipx
@@ -24,6 +31,7 @@ python3.11 -m pipx install poetry==1.7.1
 # https://github.com/python-poetry/poetry/issues/3078
 export LANG=C.UTF-8
 export PYTHONIOENCODING=utf8
+# /usr/local/bin/poetry -> /opt/pipx/venvs/poetry
 /usr/local/bin/poetry install --no-interaction --no-ansi > poetry-install.txt 2>&1
 echo
 
