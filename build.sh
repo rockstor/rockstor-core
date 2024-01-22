@@ -4,6 +4,7 @@ set -o errexit
 
 # Install Poetry, a dependency management, packaging, and build system.
 # Uninstall legacy/transitional Poetry version of 1.1.15
+PATH="$HOME/.local/bin:$PATH"  # account for more constrained environments.
 if which poetry && poetry --version | grep -q "1.1.15"; then
   echo "Poetry version 1.1.15 found - UNINSTALLING"
   curl -sSL https://install.python-poetry.org | python3 - --uninstall
