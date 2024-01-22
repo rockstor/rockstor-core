@@ -8,6 +8,9 @@ PATH="$HOME/.local/bin:$PATH"  # account for more constrained environments.
 if which poetry && poetry --version | grep -q "1.1.15"; then
   echo "Poetry version 1.1.15 found - UNINSTALLING"
   curl -sSL https://install.python-poetry.org | python3 - --uninstall
+  rm --force /root/.local/bin/poetry  # remove dangling dead link.
+  # bash substring replace with "" our legacy poetry path.
+  PATH="${PATH//':/root/.local/bin'/''}"
 fi
 # Install Poetry via PIPX as a global app
 # https://peps.python.org/pep-0668/#guide-users-towards-virtual-environments
