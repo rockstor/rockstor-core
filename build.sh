@@ -10,8 +10,10 @@ if which poetry && poetry --version | grep -q "1.1.15"; then
   curl -sSL https://install.python-poetry.org | python3 - --uninstall
   rm --force /root/.local/bin/poetry  # remove dangling dead link.
 fi
-# bash substring replace with "" our temp legacy poetry path.
+# bash substring replace: null all legacy poetry paths - mid-instance
 PATH="${PATH//':/root/.local/bin'/''}"
+# bash substring remove (front): our above added temp legacy poetry path.
+PATH="${PATH#'/root/.local/bin:'}"
 echo "build.sh has PATH=$PATH"
 # Install Poetry via PIPX as a global app
 # https://peps.python.org/pep-0668/#guide-users-towards-virtual-environments
