@@ -87,12 +87,12 @@ pushd /var/lib/pgsql
 # initdb creates the --pgdata directory with its preferred rights if it does not exist.
 # initdb: https://www.postgresql.org/docs/13/app-initdb.html
 # encoding: https://docs.djangoproject.com/en/4.2/ref/databases/#encoding
-# --locale= OS available options via `locale -a`
+# `locale` https://man7.org/linux/man-pages/man1/locale.1.html has LC_COLLATE as implied/quoted from LANG.
 # Establish LANG from install.
 source /etc/locale.conf
 echo
 echo "Adopting installs' LANG=${LANG}"
-sudo -u postgres "${BIN_BASEDIR}${TO_VERSION}/bin/initdb" --encoding=UTF8 --pgdata="${DATA_BASEDIR}/data${TO_VERSION}"
+sudo -u postgres "${BIN_BASEDIR}${TO_VERSION}/bin/initdb" --locale="${LANG}" --encoding=UTF8 --pgdata="${DATA_BASEDIR}/data${TO_VERSION}"
 
 # Stop Postgres - may fail from within another systemd service.
 echo "Stopping postgresql"
