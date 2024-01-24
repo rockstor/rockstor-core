@@ -85,12 +85,17 @@ pushd /var/lib/pgsql
 # Initialise TO_VERSION database in "${DATA_BASEDIR}/data${TO_VERSION}" directory.
 # install -d -m 0700 -o postgres -g postgres "${DATA_BASEDIR}/data${TO_VERSION}"
 # initdb creates the --pgdata directory with its preferred rights if it does not exist.
-sudo -u postgres "${BIN_BASEDIR}${TO_VERSION}/bin/initdb" --pgdata="${DATA_BASEDIR}/data${TO_VERSION}"
+# initdb: https://www.postgresql.org/docs/13/app-initdb.html
+# encoding: https://docs.djangoproject.com/en/4.2/ref/databases/#encoding
+# --locale= OS available options via `locale -a`
+sudo -u postgres "${BIN_BASEDIR}${TO_VERSION}/bin/initdb" --encoding=UTF8 --pgdata="${DATA_BASEDIR}/data${TO_VERSION}"
 
 # Stop Postgres - may fail from within another systemd service.
+echo "Stopping postgresql"
 systemctl stop postgresql.service
 
 # Move default 'data' dir DB to version-specific dir:
+echo "mv ${DATA_BASEDIR}/data ${DATA_BASEDIR}/data${CURRENT_DATA_VERSION}"
 mv ${DATA_BASEDIR}/data ${DATA_BASEDIR}/data"${CURRENT_DATA_VERSION}"
 
 sudo -u postgres pg_upgrade \
@@ -98,7 +103,8 @@ sudo -u postgres pg_upgrade \
      --new-bindir="${BIN_BASEDIR}${TO_VERSION}/bin"       \
      --old-datadir="${DATA_BASEDIR}/data${CURRENT_DATA_VERSION}/" \
      --new-datadir="${DATA_BASEDIR}/data${TO_VERSION}/"
-
+echo
+echo "Linking data -> data${TO_VERSION}"
 # Restore default 'data' dir as symlink to the /data${TO_VERSION}
 # e.g. lrwxrwxrwx 1 postgres postgres ... data -> data13
 sudo -u postgres ln --force --symbolic data"${TO_VERSION}" data
@@ -107,15 +113,21 @@ sudo -u postgres ln --force --symbolic data"${TO_VERSION}" data
 # rm -rf "${DATA_BASEDIR}/data${CURRENT_DATA_VERSION}/"
 
 # Start Postgres to enable vacuumdb & reindexdb operations.
+echo "Starting postgresql"
 systemctl start postgresql.service
 
 # Vacuum & reindex new DB as per pg_upgrade recommendation:
+echo
 sudo -u postgres ${BIN_BASEDIR}"${TO_VERSION}"/bin/vacuumdb --all --analyze-in-stages
-sudo -u postgres ${BIN_BASEDIR}"${TO_VERSION}"/bin/reindexdb --all --concurrently
+# https://www.postgresql.org/docs/13/app-reindexdb.html
+# `--concurrently` slower but allows for concurrent user.
+sudo -u postgres ${BIN_BASEDIR}"${TO_VERSION}"/bin/reindexdb --all
 
 # Restore our prior pwd.
+echo "Restoring pior pwd"
 popd
 
+echo
 echo "All Rockstor services, if running, will have been stopped."
 echo "Restart via 'systemctl start rockstor-bootstrap.service'"
 
