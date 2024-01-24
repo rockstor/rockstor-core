@@ -88,6 +88,10 @@ pushd /var/lib/pgsql
 # initdb: https://www.postgresql.org/docs/13/app-initdb.html
 # encoding: https://docs.djangoproject.com/en/4.2/ref/databases/#encoding
 # --locale= OS available options via `locale -a`
+# Establish LANG from install.
+source /etc/locale.conf
+echo
+echo "Adopting installs' LANG=${LANG}"
 sudo -u postgres "${BIN_BASEDIR}${TO_VERSION}/bin/initdb" --encoding=UTF8 --pgdata="${DATA_BASEDIR}/data${TO_VERSION}"
 
 # Stop Postgres - may fail from within another systemd service.
@@ -95,9 +99,11 @@ echo "Stopping postgresql"
 systemctl stop postgresql.service
 
 # Move default 'data' dir DB to version-specific dir:
+echo
 echo "mv ${DATA_BASEDIR}/data ${DATA_BASEDIR}/data${CURRENT_DATA_VERSION}"
 mv ${DATA_BASEDIR}/data ${DATA_BASEDIR}/data"${CURRENT_DATA_VERSION}"
 
+echo
 sudo -u postgres pg_upgrade \
      --old-bindir="${BIN_BASEDIR}${CURRENT_DATA_VERSION}/bin"     \
      --new-bindir="${BIN_BASEDIR}${TO_VERSION}/bin"       \
@@ -113,6 +119,7 @@ sudo -u postgres ln --force --symbolic data"${TO_VERSION}" data
 # rm -rf "${DATA_BASEDIR}/data${CURRENT_DATA_VERSION}/"
 
 # Start Postgres to enable vacuumdb & reindexdb operations.
+echo
 echo "Starting postgresql"
 systemctl start postgresql.service
 
@@ -121,9 +128,11 @@ echo
 sudo -u postgres ${BIN_BASEDIR}"${TO_VERSION}"/bin/vacuumdb --all --analyze-in-stages
 # https://www.postgresql.org/docs/13/app-reindexdb.html
 # `--concurrently` slower but allows for concurrent user.
+echo
 sudo -u postgres ${BIN_BASEDIR}"${TO_VERSION}"/bin/reindexdb --all
 
 # Restore our prior pwd.
+echo
 echo "Restoring pior pwd"
 popd
 
