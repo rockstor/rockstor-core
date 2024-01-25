@@ -27,7 +27,10 @@ echo "Adopting installs' LANG=${LANG}"
 export PIPX_HOME=/opt/pipx  # virtual environment location, default ~/.local/pipx
 export PIPX_BIN_DIR=/usr/local/bin  # binary location for pipx-installed apps, default ~/.local/bin
 export PIPX_MAN_DIR=/usr/local/share/man  # manual page location for pipx-installed apps, default ~/.local/share/man
-python3.11 -m pipx install poetry==1.7.1
+# https://python-poetry.org/docs/#installing-with-pipx
+pipx ensurepath
+pipx install --python python3.11 poetry==1.7.1
+pipx list
 
 # Install project dependencies defined in cwd pyproject.toml using poetry.toml
 # specific configuration, i.e. virtualenv in cwd/.venv
@@ -38,7 +41,7 @@ python3.11 -m pipx install poetry==1.7.1
 echo "PATH=${PATH}" > poetry-install.txt
 poetry --version >> poetry-install.txt
 # /usr/local/bin/poetry -> /opt/pipx/venvs/poetry
-/usr/local/bin/poetry install --no-interaction --no-ansi >> poetry-install.txt 2>&1
+poetry install --no-interaction --no-ansi >> poetry-install.txt 2>&1
 echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
