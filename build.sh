@@ -14,11 +14,19 @@ PATH="${PATH//'/root/.local/bin:'/''}" # null all legacy poetry paths
 # We are run, outside of development, only by RPM's %posttrans.
 # As such our .venv dir has already been removed in %post (update mode).
 PATH="${PATH//'/opt/rockstor/.venv/bin:'/''}" # null now removed .venv from path.
+
 echo "build.sh has PATH=$PATH"
+echo
+# Establish LANG from install.
+source /etc/locale.conf
+echo "Adopting installs' LANG=${LANG}"
+
 # Install Poetry via PIPX as a global app
 # https://peps.python.org/pep-0668/#guide-users-towards-virtual-environments
+# https://pipx.pypa.io/stable/installation/
 export PIPX_HOME=/opt/pipx  # virtual environment location, default ~/.local/pipx
 export PIPX_BIN_DIR=/usr/local/bin  # binary location for pipx-installed apps, default ~/.local/bin
+export PIPX_MAN_DIR=/usr/local/share/man  # manual page location for pipx-installed apps, default ~/.local/share/man
 python3.11 -m pipx install poetry==1.7.1
 
 # Install project dependencies defined in cwd pyproject.toml using poetry.toml
@@ -27,12 +35,10 @@ python3.11 -m pipx install poetry==1.7.1
 # poetry env remove --all  # removes all venvs associated with a pyproject.toml
 # rm -rf ~/.cache/pypoetry/virtualenvs/*  # to delete default location venvs.
 # ** --no-ansi avoids special characters **
-# Resolve Python 3.6 Poetry issue re char \u2022: (bullet)
-# https://github.com/python-poetry/poetry/issues/3078
-export LANG=C.UTF-8
-export PYTHONIOENCODING=utf8
+echo "PATH=${PATH}" > poetry-install.txt
+poetry --version >> poetry-install.txt
 # /usr/local/bin/poetry -> /opt/pipx/venvs/poetry
-/usr/local/bin/poetry install --no-interaction --no-ansi > poetry-install.txt 2>&1
+/usr/local/bin/poetry install --no-interaction --no-ansi >> poetry-install.txt 2>&1
 echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
