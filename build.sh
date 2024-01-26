@@ -13,6 +13,9 @@ fi
 PATH="${PATH//'/root/.local/bin:'/''}" # null all legacy poetry paths
 # We are run, outside of development, only by RPM's %posttrans.
 # As such our .venv dir has already been removed in %post (update mode).
+echo "Unset VIRTUAL_ENV"
+# Redundant from rockstor 5.0.3-0 onwards: src/rockstor/system/pkg_mgmt.py
+unset VIRTUAL_ENV
 PATH="${PATH//'/opt/rockstor/.venv/bin:'/''}" # null now removed .venv from path.
 
 echo "build.sh has PATH=$PATH"
