@@ -38,10 +38,10 @@ pipx list
 # poetry env remove --all  # removes all venvs associated with a pyproject.toml
 # rm -rf ~/.cache/pypoetry/virtualenvs/*  # to delete default location venvs.
 # ** --no-ansi avoids special characters **
-echo "PATH=${PATH}" > poetry-install.txt
+env > poetry-install.txt
 poetry --version >> poetry-install.txt
 # /usr/local/bin/poetry -> /opt/pipx/venvs/poetry
-poetry install --no-interaction --no-ansi >> poetry-install.txt 2>&1
+poetry install -vvv --no-interaction --no-ansi >> poetry-install.txt 2>&1
 echo
 
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
