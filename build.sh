@@ -4,14 +4,14 @@ set -o errexit
 
 # Install Poetry, a dependency management, packaging, and build system.
 # Uninstall legacy/transitional Poetry version of 1.1.15
-PATH="$HOME/.local/bin:$PATH"  # account for more constrained environments.
+PATH="$HOME/.local/bin:$PATH"  # ensure legacy path.
 if which poetry && poetry --version | grep -q "1.1.15"; then
   echo "Poetry version 1.1.15 found - UNINSTALLING"
   curl -sSL https://install.python-poetry.org | python3 - --uninstall
   rm --force /root/.local/bin/poetry  # remove dangling dead link.
 fi
 PATH="${PATH//'/root/.local/bin:'/''}" # null all legacy poetry paths
-# We are run, outside of development, only by RPM's %posttrans.
+# We are run by rockstor-build.service.
 # As such our .venv dir has already been removed in %post (update mode).
 echo "Unset VIRTUAL_ENV"
 # Redundant when updating from rockstor 5.0.3-0 onwards: src/rockstor/system/pkg_mgmt.py
@@ -88,7 +88,7 @@ export Environment="PASSWORD_STORE_DIR=/root/.password-store"
 # Additional collectstatic options --clear --dry-run
 export DJANGO_SETTINGS_MODULE=settings
 # must be run in project root:
-/usr/local/bin/poetry run django-admin collectstatic --no-input --verbosity 2
+poetry run django-admin collectstatic --no-input --verbosity 2
 echo
 
 echo "ROCKSTOR BUILD SCRIPT COMPLETED"

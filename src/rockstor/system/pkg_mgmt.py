@@ -458,7 +458,7 @@ def update_run(subscription=None, update_all_other=False):
             # Unset inherited VIRTUAL_ENV environmental variable before invoking rpm/zypper
             atfo.write("unset VIRTUAL_ENV\n")
             atfo.write(pkg_in_up_rockstor)
-            # rockstor-bootstrap Requires rockstor which Requires rockstor-pre (initrock)
+            # rockstor-bootstrap Requires rockstor which Requires rockstor-pre (initrock) which Requires rockstor-build
             atfo.write("{} start rockstor-bootstrap\n".format(SYSTEMCTL))
         else:  # update_all_other True so update all bar the rockstor package.
             logger.info(
