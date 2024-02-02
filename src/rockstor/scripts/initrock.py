@@ -95,6 +95,7 @@ SYSTEMD_DIR = "/usr/lib/systemd/system"
 SYSTEMD_OVERRIDE_DIR = "/etc/systemd/system"
 
 ROCKSTOR_SYSTEMD_SERVICES = [
+    "rockstor-build.service",  # Build/Rebuild .venv & jslibs, init `pass`.
     "rockstor-pre.service",  # Loads us (initrock.py).
     "rockstor.service",
     "rockstor-bootstrap.service",
