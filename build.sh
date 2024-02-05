@@ -33,6 +33,9 @@ export PIPX_MAN_DIR=/usr/local/share/man  # manual page location for pipx-instal
 # https://python-poetry.org/docs/#installing-with-pipx
 pipx ensurepath
 pipx install --python python3.11 poetry==1.7.1
+# https://pypi.org/project/poetry-dotenv-plugin/
+# https://python-poetry.org/docs/master/plugins/#using-plugins
+pipx inject --verbose poetry poetry-plugin-dotenv==0.6.5
 pipx list
 
 # Install project dependencies defined in cwd pyproject.toml using poetry.toml
@@ -43,6 +46,7 @@ pipx list
 # ** --no-ansi avoids special characters **
 env > poetry-install.txt
 poetry --version >> poetry-install.txt
+poetry self show plugins >> poetry-install.txt
 # /usr/local/bin/poetry -> /opt/pipx/venvs/poetry
 poetry install -vvv --no-interaction --no-ansi >> poetry-install.txt 2>&1
 echo
@@ -79,7 +83,7 @@ fi
 # Ensure GNUPG is setup for 'pass' (Idempotent)
 /usr/bin/gpg --quick-generate-key --batch --passphrase '' rockstor@localhost || true
 # Init 'pass' in ~ using above GPG key, and generate Django SECRET_KEY
-export Environment="PASSWORD_STORE_DIR=/root/.password-store"
+export PASSWORD_STORE_DIR=/root/.password-store
 /usr/bin/pass init rockstor@localhost
 /usr/bin/pass generate --no-symbols --force python-keyring/rockstor/SECRET_KEY 100
 
