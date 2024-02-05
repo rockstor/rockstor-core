@@ -8,9 +8,8 @@ Requires=postgresql.service
 Requires=NetworkManager.service
 
 [Service]
-Environment="DJANGO_SETTINGS_MODULE=settings"
-Environment="PASSWORD_STORE_DIR=/root/.password-store"
 WorkingDirectory=/opt/rockstor
+EnvironmentFile=/opt/rockstor/.env
 # Avoid `pass` stdout leaking generated passwords (N.B. 2>&1 >/dev/null failed).
 StandardOutput=null
 # Idempotent: failure tolerated for pgp as key likely already exists (rc 2).

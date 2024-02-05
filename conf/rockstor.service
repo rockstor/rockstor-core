@@ -4,9 +4,8 @@ After=rockstor-pre.service
 Requires=rockstor-pre.service
 
 [Service]
-Environment="DJANGO_SETTINGS_MODULE=settings"
-Environment="PASSWORD_STORE_DIR=/root/.password-store"
 WorkingDirectory=/opt/rockstor
+EnvironmentFile=/opt/rockstor/.env
 ExecStart=/usr/local/bin/poetry run supervisord -c /opt/rockstor/etc/supervisord.conf
 ExecStop=/usr/local/bin/poetry run supervisorctl shutdown
 ExecReload=/usr/local/bin/poetry run supervisorctl reload
