@@ -35,7 +35,7 @@ pipx ensurepath
 pipx install --python python3.11 poetry==1.7.1
 # https://pypi.org/project/poetry-dotenv-plugin/
 # https://python-poetry.org/docs/master/plugins/#using-plugins
-pipx inject --verbose poetry poetry-plugin-dotenv==0.6.5
+pipx inject --verbose poetry poetry-plugin-dotenv==0.6.10
 pipx list
 
 # Install project dependencies defined in cwd pyproject.toml using poetry.toml
