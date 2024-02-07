@@ -33,7 +33,7 @@ export PIPX_MAN_DIR=/usr/local/share/man  # manual page location for pipx-instal
 # https://python-poetry.org/docs/#installing-with-pipx
 pipx ensurepath
 pipx install --python python3.11 poetry==1.7.1
-# https://pypi.org/project/poetry-dotenv-plugin/
+# https://pypi.org/project/poetry-plugin-dotenv/
 # https://python-poetry.org/docs/master/plugins/#using-plugins
 pipx inject --verbose poetry poetry-plugin-dotenv==0.6.10
 pipx list
