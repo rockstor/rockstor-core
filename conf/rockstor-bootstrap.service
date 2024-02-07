@@ -4,10 +4,9 @@ After=rockstor.service
 Requires=rockstor.service
 
 [Service]
-Environment="DJANGO_SETTINGS_MODULE=settings"
-Environment="PASSWORD_STORE_DIR=/root/.password-store"
 WorkingDirectory=/opt/rockstor
-ExecStart=/opt/rockstor/.venv/bin/bootstrap
+EnvironmentFile=/opt/rockstor/.env
+ExecStart=/usr/local/bin/poetry run bootstrap
 Type=oneshot
 RemainAfterExit=yes
 
