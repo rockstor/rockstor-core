@@ -463,6 +463,33 @@ def establish_poetry_paths():
     logger.info("### DONE establishing poetry path to binaries in local files.")
 
 
+def update_smb_conf_preexec():
+    """
+    5.0.8-0 onwards adopts a new smb.conf preexec command for all new Samba exports.
+    Modify existing shares accordingly. Example for test_share01:
+        root preexec = "/opt/rockstor/.venv/bin/mnt-share test_share01"
+        root preexec = sh -c "cd /opt/rockstor/ && poetry run mnt-share test_share01"
+    Avoids premature DB requirement re:
+    - refresh_smb_config(list(SambaShare.objects.all()))
+    - refresh_smb_discovery(list(SambaShare.objects.all()))
+    """
+    logger.info("### BEGIN Establishing SMB config preexec update...")
+    smb_conf = LOCAL_FILES["samba_config"]
+    pattern = f'"{BASE_DIR}.venv/bin/'
+    replacement = f'sh -c "cd {BASE_DIR} && poetry run '
+    if os.path.isfile(smb_conf.path):
+        fh, npath = mkstemp()
+        altered = replace_pattern_inline(smb_conf.path, npath, pattern, replacement)
+        if altered:  # smb_conf.mask assumed None
+            shutil.copystat(smb_conf.path, npath)
+            shutil.move(npath, smb_conf.path)
+            logger.info("smb.conf preexec format updated")
+        else:
+            os.remove(npath)
+            logger.info("smb.conf preexec already updated")
+    logger.info("### DONE Establishing SMB config preexec update...")
+
+
 def set_api_client_secret():
     """
     Set/reset the API client secret which is used internally by OAUTH_INTERNAL_APP = "cliapp",
@@ -648,6 +675,8 @@ def main():
     establish_systemd_services()
 
     establish_poetry_paths()
+
+    update_smb_conf_preexec()
 
 
 if __name__ == "__main__":

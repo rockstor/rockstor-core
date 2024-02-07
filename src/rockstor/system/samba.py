@@ -56,8 +56,8 @@ def rockstor_smb_config(fo, exports):
         for au in e.admin_users.all():
             admin_users = "{}{} ".format(admin_users, au.username)
         fo.write("[{}]\n".format(e.share.name))
-        # Requires `poetry run` in systemd directory
-        fo.write(f"    root preexec = sh -c 'cd {settings.ROOT_DIR} && {mnt_helper} {e.share.name}'\n")
+        # Requires `poetry run` in ROOT_DIR to gain .env defined environment.
+        fo.write(f"    root preexec = sh -c \"cd {settings.ROOT_DIR} && {mnt_helper} {e.share.name}\"\n")
         fo.write("    root preexec close = yes\n")
         fo.write("    comment = {}\n".format(e.comment.encode("utf-8")))
         fo.write("    path = {}\n".format(e.path))
