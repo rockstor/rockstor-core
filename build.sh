@@ -103,6 +103,6 @@ echo "If installing from source, from scratch, for development; i.e. NOT via RPM
 echo "Note GnuPG & password-store ExecStartPre steps in /opt/rockstor/conf/rockstor-pre.service"
 echo "1. Run 'systemctl start postgresql'."
 echo "2. Run 'cd /opt/rockstor'."
-ecjp "3. Run './build.sh'."
+echo "3. Run './build.sh'."
 echo "4. Run 'poetry run initrock' as root (equivalent to rockstor-pre.service ExecStart)."
 echo "5. Run 'systemctl enable --now rockstor-bootstrap'."
