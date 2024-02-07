@@ -116,9 +116,10 @@ ROCKSTOR_LEGACY_SYSTEMD_SERVICES = [
 #       use None to use the current mask of the target file defined at <path>.
 # services: Python List of service(s) to restart, if any, after modifying the file.
 LocalFile = namedtuple("LocalFile", "path mask services")
+# samba_config's "root preexec = ..." migrations do not required service restarts.
 LOCAL_FILES = {
     "samba_config": LocalFile(
-        path="/etc/samba/smb.conf", mask=None, services=["nmb", "smb"]
+        path="/etc/samba/smb.conf", mask=None, services=None
     ),
     "rockstor_crontab": LocalFile(
         path="/etc/cron.d/rockstortab", mask=stat.S_IRUSR | stat.S_IWUSR, services=None
