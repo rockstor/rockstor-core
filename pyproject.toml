@@ -33,6 +33,7 @@ include = [
     "build.sh",  # master build script
     "poetry.toml",  # poetry config
     "poetry.lock",  # current poetry established dependency lock file.
+    ".env",  # poetry-plugin-dotenv default source file.
     { path = "conf" },  # Configuration directories
     { path = "etc" },
     { path = "var" },  # Some processes depend on this tree existing.

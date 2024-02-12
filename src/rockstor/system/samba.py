@@ -49,14 +49,15 @@ def test_parm(config="/etc/samba/smb.conf"):
 
 
 def rockstor_smb_config(fo, exports):
-    mnt_helper = os.path.join(settings.ROOT_DIR, ".venv/bin/mnt-share")
+    mnt_helper = "poetry run mnt-share"
     fo.write("{}\n".format(RS_SHARES_HEADER))
     for e in exports:
         admin_users = ""
         for au in e.admin_users.all():
             admin_users = "{}{} ".format(admin_users, au.username)
         fo.write("[{}]\n".format(e.share.name))
-        fo.write('    root preexec = "{} {}"\n'.format(mnt_helper, e.share.name))
+        # Requires `poetry run` in ROOT_DIR to gain .env defined environment.
+        fo.write(f"    root preexec = sh -c \"cd {settings.ROOT_DIR} && {mnt_helper} {e.share.name}\"\n")
         fo.write("    root preexec close = yes\n")
         fo.write("    comment = {}\n".format(e.comment.encode("utf-8")))
         fo.write("    path = {}\n".format(e.path))

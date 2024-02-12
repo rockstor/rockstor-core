@@ -10,9 +10,8 @@ Requires=NetworkManager.service
 Requires=NetworkManager-wait-online.service
 
 [Service]
-Environment="DJANGO_SETTINGS_MODULE=settings"
-Environment="PASSWORD_STORE_DIR=/root/.password-store"
 WorkingDirectory=/opt/rockstor
+EnvironmentFile=/opt/rockstor/.env
 ExecStart=/opt/rockstor/build.sh
 Type=oneshot
 RemainAfterExit=yes
