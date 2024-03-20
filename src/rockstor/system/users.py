@@ -173,7 +173,7 @@ def usermod(username, passwd):
     # crypted_passwd = crypt.crypt(passwd.encode("utf8"), salt_header + salt)
     salt = crypt.mksalt()
     crypted_passwd = crypt.crypt(passwd, salt)
-    cmd = [USERMOD, "-p", crypted_passwd, username]
+    cmd: list[str] = [USERMOD, "-p", crypted_passwd, username]
     out, err, rc = run_command(cmd, log=True)
     # p = subprocess.Popen(
     #     cmd,
@@ -236,7 +236,7 @@ def useradd(username, shell, uid=None, gid=None):
             )
         return [""], [""], 0
 
-    cmd = [USERADD, "-s", shell, "-m", username]
+    cmd: list[str] = [USERADD, "-s", shell, "-m", username]
     if uid is not None:
         cmd.insert(-1, "-u")
         cmd.insert(-1, str(uid))
@@ -246,11 +246,11 @@ def useradd(username, shell, uid=None, gid=None):
     return run_command(cmd)
 
 
-def groupadd(groupname, gid=None):
-    cmd = [GROUPADD, groupname]
+def groupadd(groupname: str, gid: int | None = None):
+    cmd: list[str] = [GROUPADD, groupname]
     if gid is not None:
         cmd.insert(-1, "-g")
-        cmd.insert(-1, gid)
+        cmd.insert(-1, str(gid))
     return run_command(cmd)
 
 
