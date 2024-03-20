@@ -22,8 +22,8 @@ CHOWN = "/usr/bin/chown"
 CHMOD = "/usr/bin/chmod"
 
 
-def chown(share, owner, group=None, recursive=False):
-    cmd = [
+def chown(share: str, owner: str, group: str | None = None, recursive: bool = False):
+    cmd: list[str] = [
         CHOWN,
     ]
     if recursive is True:
@@ -34,8 +34,8 @@ def chown(share, owner, group=None, recursive=False):
     return run_command(cmd)
 
 
-def chmod(share, perm_bits, recursive=False):
-    cmd = [
+def chmod(share: str, perm_bits: str, recursive: bool = False):
+    cmd: list[str] = [
         CHMOD,
     ]
     if recursive is True:
