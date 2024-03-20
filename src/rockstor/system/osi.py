@@ -31,6 +31,7 @@ from socket import inet_ntoa
 from struct import pack
 from tempfile import mkstemp
 from distutils.util import strtobool
+from typing import AnyStr, IO
 
 from django.conf import settings
 
@@ -214,16 +215,16 @@ def replace_pattern_inline(source_file, target_file, pattern, replacement):
 
 
 def run_command(
-    cmd,
-    shell=False,  ## Default
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    stdin=subprocess.PIPE,
-    throw=True,
-    log=False,
-    input=None,
-    raw=False,
-):
+        cmd: list[str],
+        shell: bool = False,
+        stdout: None | int | IO = subprocess.PIPE,
+        stderr: None | int | IO = subprocess.PIPE,
+        stdin: None | int | IO = subprocess.PIPE,
+        throw: bool = True,
+        log: bool = False,
+        pinput: AnyStr | None = None,
+        raw: bool = False,
+) -> (list[str] | str, list[str], int):
     try:
         # We force run_command to always use en_US
         # to avoid issues on date and number formats
@@ -243,7 +244,7 @@ def run_command(
             env=fake_env,
             universal_newlines=True,  # 3.7 adds text parameter universal_newlines alias
         )
-        out, err = p.communicate(input=input)
+        out, err = p.communicate(input=pinput)
         # raw=True allows parsing of a JSON output directly, for instance
         if not raw:
             out = out.split("\n")

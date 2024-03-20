@@ -34,7 +34,7 @@ def main():
                 print("Quotas not enabled on pool(%s). Skipping it." % p.name)
                 continue
 
-            qgroup_ids = []
+            qgroup_ids: list[str] = []
             for l in o:
                 if (
                     re.match("qgroupid", l) is not None
