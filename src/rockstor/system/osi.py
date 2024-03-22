@@ -1363,11 +1363,11 @@ def get_virtio_disk_serial(device_name):
     return out[0]
 
 
-def system_shutdown(delta="now"):
+def system_shutdown(delta: str = "now"):
     # New delta param default to now used to pass a 2 min delay
     # for scheduled tasks reboot/shutdown
     try:
-        cmd = [SHUTDOWN, "-h", delta]
+        cmd: list[str] = [SHUTDOWN, "-h", delta]
         o, e, rc = run_command(cmd)
     except CommandException as e:
         # Catch / log harmless -15 return code - command executes as expected.
@@ -1379,11 +1379,11 @@ def system_shutdown(delta="now"):
     return o, e, rc
 
 
-def system_reboot(delta="now"):
+def system_reboot(delta: str = "now"):
     # New delta param default to now used to pass a 2 min delay
     # for scheduled tasks reboot/shutdown
     try:
-        cmd = [SHUTDOWN, "-r", delta]
+        cmd: list[str] = [SHUTDOWN, "-r", delta]
         o, e, rc = run_command(cmd)
     except CommandException as e:
         # Catch / log harmless -15 return code - command executes as expected.

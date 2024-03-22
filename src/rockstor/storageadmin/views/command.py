@@ -294,15 +294,14 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
                 ).format(e.__str__())
                 handle_exception(Exception(e_msg), request)
 
-        # default has shutdown and reboot with delay set to now
-        # having normal sytem power off with now = 1 min
-        # reboot and shutdown requests from WebUI don't have request.auth
-        # while same requests over rest api (ex. scheduled tasks) have
-        # an auth token, so if we detect a token we delay with 3 mins
-        # to grant connected WebUI user to close it or cancel shutdown/reboot
-        delay = "now"
+        # Default has shutdown and reboot with delay set to "now".
+        # Reboot and shutdown requests from WebUI don't have request.auth,
+        # while same requests over rest api (e.g. scheduled tasks) have
+        # an auth token, so if we detect a token we set delay to 3 minutes
+        # to notify cli users ahead of time.
+        delay: str = "now"
         if request.auth is not None:
-            delay = 3
+            delay = "3"
 
         if command == "shutdown":
             msg = "The system will now be shutdown."
