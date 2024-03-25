@@ -267,7 +267,7 @@ def join_domain(config, method="sssd"):
     cmd[-3:-3] = cmd_options
     if method == "winbind":
         cmd = [NET, "ads", "join", "-U", admin]
-    return run_command(cmd, input=("{}\n".format(config.get("password"))), log=True)
+    return run_command(cmd, pinput=("{}\n".format(config.get("password"))), log=True)
 
 
 def leave_domain(config, method="sssd"):
@@ -282,10 +282,10 @@ def leave_domain(config, method="sssd"):
     if method == "winbind":
         cmd = [NET, "ads", "leave", "-U", config.get("username")]
         try:
-            return run_command(cmd, input=pstr)
+            return run_command(cmd, pinput=pstr)
         except:
             status_cmd = [NET, "ads", "status", "-U", config.get("username")]
-            o, e, rc = run_command(status_cmd, input=pstr, throw=False)
+            o, e, rc = run_command(status_cmd, pinput=pstr, throw=False)
             if rc != 0:
                 return logger.debug(
                     "Status shows not joined. out: %s err: %s rc: %d" % (o, e, rc)

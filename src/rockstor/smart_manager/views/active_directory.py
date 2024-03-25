@@ -100,9 +100,9 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._resolve_check(config.get("domain"), request)
 
                 # 2. realm discover check?
-                domain = config.get("domain")
+                domain = str(config.get("domain"))
                 try:
-                    cmd = [REALM, "discover", "--name-only", domain]
+                    cmd: list[str] = [REALM, "discover", "--name-only", domain]
                     o, e, rc = run_command(cmd)
                 except Exception as e:
                     e_msg = (
@@ -117,14 +117,14 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
 
             elif command == "start":
                 config = self._config(service, request)
-                domain = config.get("domain")
+                domain = str(config.get("domain"))
                 # 1. make sure ntpd is running, or else, don't start.
                 self._ntp_check(request)
                 # 2. Name resolution check?
                 self._resolve_check(config.get("domain"), request)
 
                 if method == "winbind":
-                    cmd = [
+                    cmd: list[str] = [
                         "/usr/sbin/authconfig",
                     ]
                     # nss
