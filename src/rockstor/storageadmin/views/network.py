@@ -545,7 +545,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
     def delete(self, request, id):
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            if nco.bridgeconnection_set.first() > 0:  # If docker network
+            if nco.bridgeconnection_set.exists():  # If docker network
                 brco = nco.bridgeconnection_set.first()
                 # check for running containers and disconnect them first
                 clist = probe_containers(network=brco.docker_name)
