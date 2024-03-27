@@ -554,21 +554,32 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                         dnet_disconnect(c, brco.docker_name)
                 dnet_remove(network=brco.docker_name)
             else:
-                restricted = False
+                restricted: bool = False
+                unknown_restricted: bool = False
                 try:
                     so = Service.objects.get(name="rockstor")
-                    config = json.loads(so.config)
-                    if config["network_interface"] == nco.name:
-                        restricted = True
+                    if so.config is None:
+                        unknown_restricted = True
+                    else:
+                        config = json.loads(so.config)
+                        if config["network_interface"] == nco.name:
+                            restricted = True
                 except Exception as e:
                     logger.exception(e)
                 if restricted:
                     e_msg = (
-                        "This connection ({}) is designated for "
-                        "management and cannot be deleted. If you really "
+                        f"This connection ({nco.name}) is designated for "
+                        "management/Web-UI and cannot be deleted. If you really "
                         "need to delete it, change the Rockstor service "
                         "configuration and try again."
-                    ).format(nco.name)
+                    )
+                    handle_exception(Exception(e_msg), request)
+                if unknown_restricted:
+                    e_msg = (
+                        "No connection is yet designated for management/Web-UI. "
+                        "To avoid inadvertently deleting the Web-UI network connection, "
+                        "first configure the Rockstor service's 'Network Interface'."
+                    )
                     handle_exception(Exception(e_msg), request)
                 self._delete_connection(nco)
             return Response()
