@@ -60,3 +60,4 @@ rockstor-tasks-huey.db*
 
 # Poetry error logs
 poetry-installer-error*
+/build-output.txt
