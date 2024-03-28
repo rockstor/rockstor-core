@@ -3223,13 +3223,95 @@ class OSITests(unittest.TestCase):
         expected_result.sort(key=operator.itemgetter(0))
         returned = scan_disks(1048576, test_mode=True)
         returned.sort(key=operator.itemgetter(0))
+        self.maxDiff = None
         self.assertEqual(
             returned,
             expected_result,
-            msg="sda data member miss-attributerd to ROOT pool regression:\n "
-            f"returned = ({returned}).\n "
-            f"expected = ({expected_result}).",
+            msg="sda data member & sdag4 ROOT member confusion regression:\n ",
         )
+        for returned_disk, expected_disk in zip(returned, expected_result):
+            self.assertDictEqual(returned_disk, expected_disk)
+
+    def test_scan_disks_root_miss_attribution_min_reproducer(self):
+        """
+        Miss-attribution of a data drive to the ROOT pool.
+        Thanks to GitHub user ubenmackin for reporting & assisting.
+        36 drive (plus cdrom) system that fails to correctly attribute ROOT pool members:
+        - ROOT block device: /dev/sdag4 is incorrectly assigned as (root=False) but otherwise correctly as (partitions={"sdag4": "btrfs"})
+        - DATA pool whole drive member: /dev/sda labelled incorrectly as: (parted=True, root=False, partitions={"sdag4": "btrfs"}),
+        with the miss-assignments leading to a Web-UI confusion re both drives being associated with the ROOT pool!
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_root_miss_attribution_min_reproducer
+        """
+        # Reproducer output:
+        # lsblk -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
+        out = [
+            'NAME="sda" MODEL="WDC WD101EMAZ-11G7DA0" SERIAL="VCGRX3EN" SIZE="9.1T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="sdag" MODEL="PNY CS900 120GB SSD" SERIAL="PNY0520228055010CFE7" SIZE="111.8G" TRAN="sata" VENDOR="ATA     " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="sdag1" MODEL="" SERIAL="" SIZE="2M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="sdag2" MODEL="" SERIAL="" SIZE="64M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="EFI" UUID="A48E-EDBF"',  # noqa E501
+            'NAME="sdag3" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="SWAP" UUID="42d2c6da-102d-49f2-948e-817a10e61370"',  # noqa E501
+            'NAME="sdag4" MODEL="" SERIAL="" SIZE="109.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="ROOT" UUID="4ac51b0f-afeb-4946-aad1-975a2a26c941"',  # noqa E501
+            "",
+        ]
+        err = [""]
+        rc = 0
+        expected_result = [
+            Disk(
+                name="sda",
+                model="WDC WD101EMAZ-11G7DA0",
+                serial="VCGRX3EN",
+                size=9771050598,
+                transport="sas",
+                vendor="ATA",
+                hctl="0:0:1:0",
+                type="disk",
+                fstype="btrfs",
+                label="JBOD",
+                uuid="b86538f8-e447-48e5-84ec-b72a25c65282",
+                parted=False,
+                root=False,
+                partitions={},
+            ),
+            Disk(
+                name="sdag3",
+                model="PNY CS900 120GB SSD",
+                serial="PNY0520228055010CFE7",
+                size=115028787,
+                transport="sata",
+                vendor="ATA",
+                hctl="6:0:0:0",
+                type="disk",
+                fstype="btrfs",
+                label="ROOT",
+                uuid="4ac51b0f-afeb-4946-aad1-975a2a26c941",
+                parted=True,
+                root=True,
+                partitions={},
+            ),
+
+        ]
+        # As all serials are available via the lsblk we can avoid mocking
+        # get_device_serial()
+        # And given no bcache we can also avoid mocking
+        # get_bcache_device_type()
+        # We have the following root_disk discovery proven in test_root_disk() test data.
+        self.mock_root_disk.return_value = "/dev/sdag"
+        self.mock_run_command.return_value = (out, err, rc)
+        # itemgetter(0) referenced the first item within our Disk
+        # collection by which to sort (key) ie name. N.B. 'name' failed.
+        expected_result.sort(key=operator.itemgetter(0))
+        returned = scan_disks(1048576, test_mode=True)
+        returned.sort(key=operator.itemgetter(0))
+        self.maxDiff = None
+        self.assertEqual(
+            returned,
+            expected_result,
+            msg="sda data member & sdag4 ROOT member confusion regression:\n ",
+        )
+        for returned_disk, expected_disk in zip(returned, expected_result):
+            self.assertDictEqual(returned_disk, expected_disk)
 
     def test_get_byid_name_map_prior_command_mock(self):
         """
