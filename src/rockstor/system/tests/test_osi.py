@@ -2779,7 +2779,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdag3",
+                name="sdag4",
                 model="PNY CS900 120GB SSD",
                 serial="PNY0520228055010CFE7",
                 size=115028787,
@@ -3275,7 +3275,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdag3",
+                name="sdag4",
                 model="PNY CS900 120GB SSD",
                 serial="PNY0520228055010CFE7",
                 size=115028787,
