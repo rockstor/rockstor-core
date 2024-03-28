@@ -2598,6 +2598,9 @@ class OSITests(unittest.TestCase):
         - ROOT block device: /dev/sdag4 is incorrectly assigned as (root=False) but otherwise correctly as (partitions={"sdag4": "btrfs"})
         - DATA pool whole drive member: /dev/sda labelled incorrectly as: (parted=True, root=False, partitions={"sdag4": "btrfs"}),
         with the miss-assignments leading to a Web-UI confusion re both drives being associated with the ROOT pool!
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_root_miss_attribution
         """
         # Reproducer output:
         # lsblk -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
