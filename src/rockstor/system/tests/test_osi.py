@@ -2882,6 +2882,18 @@ class OSITests(unittest.TestCase):
         )
         expected_result.append("/dev/vda")
 
+        # Regular scsi device:
+        proc_mount_out.append(
+            "/dev/sda3 / btrfs rw,relatime,space_cache,subvolid=259,subvol=/@/.snapshots/1/snapshot 0 0\n"
+        )
+        expected_result.append("/dev/sda")
+
+        # Large drive count scsi device
+        proc_mount_out.append(
+            "/dev/sdag4 / btrfs rw,relatime,space_cache,subvolid=259,subvol=/@/.snapshots/1/snapshot 0 0\n"
+        )
+        expected_result.append("/dev/sdag")
+
         # root in luks device:
         proc_mount_out.append(
             "/dev/mapper/luks-705349f4-becf-4344-98a7-064ceba181e7 / btrfs rw,relatime,space_cache,subvolid=259,subvol=/@/.snapshots/1/snapshot 0 0\n"  # noqa E501
