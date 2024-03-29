@@ -108,12 +108,25 @@ EXCLUDED_SERIAL_NUMS = [
     "0123456789ABCDEF",  # No-name USB external multi-bay.
 ]
 
-Disk = collections.namedtuple(
-    "Disk",
-    "name model serial size transport vendor "
-    "hctl type fstype label uuid parted root "
-    "partitions",
-)
+# Requried to assist parsing of lsblk output to Disk field names.
+LSBLK_FIELD_NAMES = [
+    "NAME",
+    "MODEL",
+    "SERIAL",
+    "SIZE",
+    "TRAN",
+    "VENDOR",
+    "HCTL",
+    "TYPE",
+    "FSTYPE",
+    "LABEL",
+    "UUID",
+]
+DISK_FIELD_NAMES = [
+    item.lower() if item != "TRAN" else "transport" for item in LSBLK_FIELD_NAMES
+] + ["parted", "root", "partitions"]
+
+Disk = collections.namedtuple("Disk", DISK_FIELD_NAMES)
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -215,15 +228,15 @@ def replace_pattern_inline(source_file, target_file, pattern, replacement):
 
 
 def run_command(
-        cmd: list[str],
-        shell: bool = False,
-        stdout: None | int | IO = subprocess.PIPE,
-        stderr: None | int | IO = subprocess.PIPE,
-        stdin: None | int | IO = subprocess.PIPE,
-        throw: bool = True,
-        log: bool = False,
-        pinput: AnyStr | None = None,
-        raw: bool = False,
+    cmd: list[str],
+    shell: bool = False,
+    stdout: None | int | IO = subprocess.PIPE,
+    stderr: None | int | IO = subprocess.PIPE,
+    stdin: None | int | IO = subprocess.PIPE,
+    throw: bool = True,
+    log: bool = False,
+    pinput: AnyStr | None = None,
+    raw: bool = False,
 ) -> (list[str] | str, list[str], int):
     try:
         # We force run_command to always use en_US
@@ -265,7 +278,20 @@ def run_command(
     return out, err, rc
 
 
-def scan_disks(min_size, test_mode=False):
+# def lsblk_line_parse(line: str = "") -> Disk:
+#     """
+#     Parse single lsblk output line into a Disk named tupile
+#     @param line: string consisting of a single line of lsblk output.
+#     @return: Disk
+#     """
+#     # split line into list e.g. ['NAME="/dev/sdb"', 'MODEL="TOSHIBA MK1652GS"' ...]
+#     blk_dev_properties: Disk
+#     line_items = line.strip().split("\" ")
+#     for item in line_items:
+#         prop_value_pair = item.split("=")
+
+
+def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
     """
     Using lsblk we scan all attached disks and categorize them according to
     if they are partitioned, their file system, if the drive hosts our / mount
@@ -287,27 +313,34 @@ def scan_disks(min_size, test_mode=False):
         "NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID",
     ]
     o, e, rc = run_command(cmd)
-    dnames = {}  # Working dictionary of devices.
-    disks = []  # List derived from the final working dictionary of devices.
-    serials_seen = []  # List tally of serials seen during this scan.
+    dnames: dict = {}  # Working dictionary of devices.
+    disks: list[Disk] = []  # List derived from the final working dictionary of devices.
+    serials_seen: list[str] = []  # List tally of serials seen during this scan.
     # Stash variables to pass base info on root_disk to root device proper.
-    root_serial = root_model = root_transport = root_vendor = root_hctl = None
+    root_serial: str | None = None
+    root_model: str | None = None
+    root_transport: str | None = None
+    root_vendor: str | None = None
+    root_hctl: str | None = None
     # flag to indicate bcache backing device found.
-    bdev_flag = False
+    bdev_flag: bool = False
     # To use udevadm to retrieve serial number rather than lsblk, make this
     # True N.B. when lsblk returns no serial for a device then udev is used
     # anyway.
-    always_use_udev_serial = False
-    device_names_seen = []  # List tally of devices seen during this scan
+    always_use_udev_serial: bool = False
+    device_names_seen: list[str] = []  # List tally of devices seen during this scan
     for line in o:
         # skip processing of all lines that don't begin with "NAME"
         if re.match("NAME", line) is None:
             continue
-        # setup our line / dev name dependant variables
+        # Set up our line / dev name dependant variables
         # easy read categorization flags, all False until found otherwise.
-        is_root_disk = False  # base dev that / is mounted on ie system disk
-        is_partition = is_btrfs = False
-        dmap = {}  # to hold line info from lsblk output eg NAME: sda
+        is_root_disk: bool = False  # base dev that "/" is mounted on ie system disk
+        is_partition: bool = False
+        is_btrfs: bool = False
+        dev: dict = {}  # to hold line info from lsblk output eg NAME: sda
+        # dev: Disk  # device information built from each lsblk line in turn.
+
         # line parser variables
         cur_name = ""
         cur_val = ""
@@ -316,7 +349,7 @@ def scan_disks(min_size, test_mode=False):
         sl = line.strip()
         i = 0
         while i < len(sl):
-            # We iterate over the line to parse it's information char by char
+            # We iterate over the line to parse its information char by char
             # keeping track of name or value and adding the char accordingly
             if name_iter and sl[i] == "=" and sl[i + 1] == '"':
                 name_iter = False
@@ -326,7 +359,7 @@ def scan_disks(min_size, test_mode=False):
                 val_iter = False
                 name_iter = True
                 i = i + 2
-                dmap[cur_name.strip()] = cur_val.strip()
+                dev[cur_name.strip()] = cur_val.strip()
                 cur_name = ""
                 cur_val = ""
             elif name_iter:
@@ -337,28 +370,29 @@ def scan_disks(min_size, test_mode=False):
                 i = i + 1
             else:
                 raise Exception("Failed to parse lsblk output: {}".format(sl))
+
         # md devices, such as mdadmin software raid and some hardware raid
         # block devices show up in lsblk's output multiple times with identical
         # info.  Given we only need one copy of this info we remove duplicate
         # device name entries, also offers more sane output to views/disk.py
         # where name will be used as the index
-        if dmap["NAME"] in device_names_seen:
+        if dev["NAME"] in device_names_seen:
             continue
-        device_names_seen.append(dmap["NAME"])
+        device_names_seen.append(dev["NAME"])
         # We are not interested in CD / DVD rom devices so skip to next device
-        if dmap["TYPE"] == "rom":
+        if dev["TYPE"] == "rom":
             continue
         # We are not interested in swap partitions or devices so skip further
         # processing and move to next device.
         # N.B. this also facilitates a simpler mechanism of classification.
-        if dmap["FSTYPE"] == "swap":
+        if dev["FSTYPE"] == "swap":
             continue
         # convert size into KB
-        size_str = dmap["SIZE"]
+        size_str = dev["SIZE"]
         if size_str[-1] == "G":
-            dmap["SIZE"] = int(float(size_str[:-1]) * 1024 * 1024)
+            dev["SIZE"] = int(float(size_str[:-1]) * 1024 * 1024)
         elif size_str[-1] == "T":
-            dmap["SIZE"] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
+            dev["SIZE"] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
         else:
             # Move to next line if we don't understand the size as GB or TB
             # Note that this may cause an entry to be ignored if formatting
@@ -367,34 +401,34 @@ def scan_disks(min_size, test_mode=False):
             # swap but if swap was in GB and above min_size then it could
             # show up when not in a partition (the previous caveat clause).
             continue
-        if dmap["SIZE"] < min_size:
+        if dev["SIZE"] < min_size:
             continue
         # ----- Now we are done with easy exclusions we begin classification.
         # If md device populate unused MODEL with basic member/raid summary.
-        if re.match("/dev/md", dmap["NAME"]) is not None:
+        if re.match("/dev/md", dev["NAME"]) is not None:
             # cheap way to display our member drives
-            dmap["MODEL"] = get_md_members(dmap["NAME"])
+            dev["MODEL"] = get_md_members(dev["NAME"])
         # ------------ Start more complex classification -------------
-        if dmap["NAME"] == base_root_disk:  # as returned by root_disk()
+        if dev["NAME"] == base_root_disk:  # as returned by root_disk()
             # We are looking at the system drive that hosts, either
-            # directly or as a partition, the / mount point.
+            # directly or as a partition, the "/" mount point.
             # Given lsblk doesn't return serial, model, transport, vendor, hctl
             # when displaying partitions we grab and stash them while we are
-            # looking at the root drive directly, rather than the / partition.
+            # looking at the root drive directly, rather than the "/" partition.
             # N.B. assumption is lsblk first displays devices then partitions,
             # this is the observed behaviour so far.
-            root_serial = dmap["SERIAL"]
-            root_model = dmap["MODEL"]
-            root_transport = dmap["TRAN"]
-            root_vendor = dmap["VENDOR"]
-            root_hctl = dmap["HCTL"]
+            root_serial = dev["SERIAL"]
+            root_model = dev["MODEL"]
+            root_transport = dev["TRAN"]
+            root_vendor = dev["VENDOR"]
+            root_hctl = dev["HCTL"]
             # Set readability flag as base_dev identified.
             is_root_disk = True  # root as returned by root_disk()
             # And until we find a partition on this root disk we will label it
             # as our root, this then allows for non partitioned root devices
             # such as mdraid installs where root is directly on eg /dev/md126.
             # N.B. this assumes base devs are listed before their partitions.
-            dmap["root"] = True
+            dev["root"] = True
         # Normal partitions are of type 'part', md partitions are of type 'md'
         # normal disks are of type 'disk' md devices are of type eg 'raid1'.
         # Disk members of eg intel bios raid md devices
@@ -403,24 +437,24 @@ def scan_disks(min_size, test_mode=False):
         # partitions and devices.
         # ----- Begin readability variables assignment:
         # - is this a partition, regular or md type.
-        if dmap["TYPE"] == "part" or dmap["TYPE"] == "md":
+        if dev["TYPE"] == "part" or dev["TYPE"] == "md":
             is_partition = True
         # - is filesystem of type btrfs
-        if dmap["FSTYPE"] == "btrfs":
+        if dev["FSTYPE"] == "btrfs":
             is_btrfs = True
         # End readability variables assignment
 
         if is_partition:
-            dmap["parted"] = True
+            dev["parted"] = True
             # We don't account for partitions within partitions, but making
             # an empty dict here simplifies conditionals as always a dict then.
-            dmap["partitions"] = {}
+            dev["partitions"] = {}
             # Search our working dictionary of already scanned devices by name
             # We are assuming base devices are listed first and if of interest
             # we have recorded it and can now back port it's partitioned
             # status.
             for dname in dnames.keys():
-                if re.match(dname, dmap["NAME"]) is not None:
+                if re.match(dname, dev["NAME"]) is not None:
                     # Our device name has a base device entry of interest
                     # saved: ie we have scanned and saved sdb but looking at
                     # sdb3 now.  Given we have found a partition on an existing
@@ -443,7 +477,7 @@ def scan_disks(min_size, test_mode=False):
                     # FSTYPE="linux_raid_member"
                     # Add the same treatment for partitions hosting LUKS
                     # containers.
-                    if dmap["FSTYPE"] == "linux_raid_member" and (
+                    if dev["FSTYPE"] == "linux_raid_member" and (
                         dnames[dname][8] is None
                     ):
                         # N.B. 9th item (index 8) in dname = FSTYPE We are a
@@ -456,8 +490,8 @@ def scan_disks(min_size, test_mode=False):
                         # only need to have one partition identified as an
                         # mdraid member to classify the entire device (the base
                         # device) as a raid member, at least in part.
-                        dnames[dname][8] = dmap["FSTYPE"]
-                    if dmap["FSTYPE"] == "crypto_LUKS" and (dnames[dname][8] is None):
+                        dnames[dname][8] = dev["FSTYPE"]
+                    if dev["FSTYPE"] == "crypto_LUKS" and (dnames[dname][8] is None):
                         # As per mdraid we backport to the base device LUKS
                         # containers that live in partitions as the base device
                         # will have an FSTYPE="" and as per mdraid we classify
@@ -468,9 +502,9 @@ def scan_disks(min_size, test_mode=False):
                         # against fstype information loss on the base device.
                         # Please see mdraid partition treatment for additional
                         # comments on index number used.
-                        dnames[dname][8] = dmap["FSTYPE"]
+                        dnames[dname][8] = dev["FSTYPE"]
                         # and uuid backport
-                        dnames[dname][10] = dmap["UUID"]
+                        dnames[dname][10] = dev["UUID"]
                     # Akin to back porting a partitions FSTYPE to it's base
                     # device, as with 'linux_raid_member' above, we can do the
                     # same for btrfs if found in a partition.
@@ -483,17 +517,17 @@ def scan_disks(min_size, test_mode=False):
                         # We are a btrfs partition where the base device has no
                         # fstype entry: backport: fstype, label, uuid & size.
                         # fstype backport
-                        dnames[dname][8] = dmap["FSTYPE"]
+                        dnames[dname][8] = dev["FSTYPE"]
                         # label backport is at index 9
-                        dnames[dname][9] = dmap["LABEL"]
+                        dnames[dname][9] = dev["LABEL"]
                         # and uuid backport
-                        dnames[dname][10] = dmap["UUID"]
+                        dnames[dname][10] = dev["UUID"]
                         # and size backport
-                        dnames[dname][3] = dmap["SIZE"]
+                        dnames[dname][3] = dev["SIZE"]
                     # Build a dictionary of the partitions we find.
                     # Back port our current name as a partition entry in our
                     # base devices 'partitions' dictionary 14th item (index 13)
-                    dnames[dname][13][dmap["NAME"]] = dmap["FSTYPE"]
+                    dnames[dname][13][dev["NAME"]] = dev["FSTYPE"]
                     # This dict is intended for use later in roles such as
                     # import / export devices or external backup drives so
                     # that the role config mechanism can offer up the known
@@ -504,11 +538,11 @@ def scan_disks(min_size, test_mode=False):
                     # and underlying disk management simpler.
         else:
             # We are not a partition so record this.
-            dmap["parted"] = False
+            dev["parted"] = False
             # As we are not a partition it is assumed that we might hold a
             # partition so start an empty partition dictionary for this.
             # N.B. This assumes base devices are listed before their partitions
-            dmap["partitions"] = {}
+            dev["partitions"] = {}
             # This dict will be populated when we find our partitions and back
             # port their names and fstype (as values).
         if (not is_root_disk and not is_partition) or is_btrfs:
@@ -516,30 +550,30 @@ def scan_disks(min_size, test_mode=False):
             # or
             # We have a device that is btrfs formatted
             # Or we may just be a non system disk without partitions.
-            dmap["root"] = is_root_disk
+            dev["root"] = is_root_disk
             if is_btrfs:
                 # a btrfs file system
                 # Regex to identify a partition on the base_root_disk.
                 # Root on 'sda3' gives base_root_disk 'sda'.
-                if re.match("/dev/sd|/dev/vd", dmap["NAME"]) is not None:
+                if re.match("/dev/sd|/dev/vd", dev["NAME"]) is not None:
                     # eg 'sda' or 'vda' with >= one additional digit,
                     part_regex = base_root_disk + "\d+"
                 else:
                     # md126 or nvme0n1 with 'p' + >= one additional digit eg:
                     # md126p3 or nvme0n1p4; also mmcblk0p2 for base mmcblk0.
                     part_regex = base_root_disk + "p\d+"
-                if re.match(part_regex, dmap["NAME"]) is not None:
+                if re.match(part_regex, dev["NAME"]) is not None:
                     logger.debug("--- Inheriting base_root_disk info ---")
                     # We are assuming that a partition with a btrfs fs on is
                     # our root if it's name begins with our base system disk
                     # name. Now add the properties we stashed when looking at
                     # the base root disk rather than the root partition we see
                     # here.
-                    dmap["SERIAL"] = root_serial
-                    dmap["MODEL"] = root_model
-                    dmap["TRAN"] = root_transport
-                    dmap["VENDOR"] = root_vendor
-                    dmap["HCTL"] = root_hctl
+                    dev["SERIAL"] = root_serial
+                    dev["MODEL"] = root_model
+                    dev["TRAN"] = root_transport
+                    dev["VENDOR"] = root_vendor
+                    dev["HCTL"] = root_hctl
                     # As we have found root to be on a partition we can now un
                     # flag the base device as having been root prior to finding
                     # this partition on that base_root_disk N.B. Assumes base
@@ -555,7 +589,7 @@ def scan_disks(min_size, test_mode=False):
                     # And update this device as real root
                     # Note we may be looking at the base_root_disk or one of
                     # it's partitions there after.
-                    dmap["root"] = True
+                    dev["root"] = True
                 else:
                     # We have a non system disk btrfs filesystem.
                     # Ie we are a whole disk or a partition with btrfs on but
@@ -568,23 +602,23 @@ def scan_disks(min_size, test_mode=False):
                         continue
             # No more continues so the device we have is to be passed to our db
             # entry system views/disk.py ie _update_disk_state()
-            # Do final tidy of data in dmap and ready for entry in dnames dict.
+            # Do final tidy of data in dev and ready for entry in dnames dict.
             # db needs unique serial so provide one where there is none found.
             # First try harder with udev if lsblk failed on serial retrieval.
-            if dmap["SERIAL"] == "" or always_use_udev_serial:
+            if dev["SERIAL"] == "" or always_use_udev_serial:
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices and md devices so try specialized function.
-                dmap["SERIAL"] = get_disk_serial(dmap["NAME"], dmap["TYPE"])
+                dev["SERIAL"] = get_disk_serial(dev["NAME"], dev["TYPE"])
             # Now try specialized serial propagation methods:
             # Bcache virtual block devices get their backing devices uuid
             # We propagate the uuid for a bcache backing device to it's virtual
             # counterpart device for use as a serial number.
             # Note however that we are only interested in the 'backing device'
             # type of bcache as it has the counterpart virtual block device.
-            if dmap["FSTYPE"] == "bcache":
-                bcache_dev_type = get_bcache_device_type(dmap["NAME"])
+            if dev["FSTYPE"] == "bcache":
+                bcache_dev_type = get_bcache_device_type(dev["NAME"])
                 if bcache_dev_type == "bdev":
-                    bdev_uuid = dmap["UUID"]
+                    bdev_uuid = dev["UUID"]
                     # We set out bdev_flag to inform the next device
                     # interpretation.
                     bdev_flag = True
@@ -592,7 +626,7 @@ def scan_disks(min_size, test_mode=False):
                     # We have a bcache caching device, not a backing device.
                     # Change fstype as an indicator to _update_disk_state()
                     # role system. N.B. fstype bcachecdev is fictitious.
-                    dmap["FSTYPE"] = "bcachecdev"
+                    dev["FSTYPE"] = "bcachecdev"
             else:
                 # we are a non bcache bdev but we might be the virtual device
                 # if we are listed directly after a bcache bdev.
@@ -602,51 +636,51 @@ def scan_disks(min_size, test_mode=False):
                     # bdev. We are listed directly after a bcache bdev but
                     # could still be any device. As no cheap distinguishing
                     # properties we for now rely on device name:
-                    if re.match("bcache", dmap["NAME"]) is not None:
+                    if re.match("bcache", dev["NAME"]) is not None:
                         # We avoid overwriting any serial just in case, normal
                         # bcache virtual devices have no serial reported by
                         # lsblk but future lsblk versions may change this.
-                        if dmap["SERIAL"] == "":
+                        if dev["SERIAL"] == "":
                             # transfer our stashed bdev uuid as a serial.
-                            dmap["SERIAL"] = "bcache-{}".format(bdev_uuid)
+                            dev["SERIAL"] = "bcache-{}".format(bdev_uuid)
                 # reset the bdev_flag as we are only interested in devices
                 # listed directly after a bdev anyway.
                 bdev_flag = False
-            if (dmap["SERIAL"] in EXCLUDED_SERIAL_NUMS) or (
-                dmap["SERIAL"] in serials_seen
+            if (dev["SERIAL"] in EXCLUDED_SERIAL_NUMS) or (
+                dev["SERIAL"] in serials_seen
             ):
                 # No serial number still or its a repeat. Overwrite drive
-                # serial entry in dmap with fake-serial- + uuid4. See js/template/
+                # serial entry in dev with fake-serial- + uuid4. See js/template/
                 # disk/disks_table.jst for a use of this flag mechanism.
-                # Previously we did dmap['SERIAL'] = dmap['NAME'] which is less
+                # Previously we did dev['SERIAL'] = dev['NAME'] which is less
                 # robust as it can itself produce duplicate serial numbers.
                 if test_mode:
                     # required for reproducible output for repeatable tests
-                    dmap["SERIAL"] = "fake-serial-"
+                    dev["SERIAL"] = "fake-serial-"
                 else:
                     # 12 chars (fake-serial-) + 36 chars (uuid4) = 48 chars
-                    dmap["SERIAL"] = "fake-serial-" + str(uuid.uuid4())
-            serials_seen.append(dmap["SERIAL"])
-            # replace all dmap values of '' with None.
-            for key in dmap.keys():
-                if dmap[key] == "":
-                    dmap[key] = None
-            # transfer our device info as now parsed in dmap to the dnames dict
-            dnames[dmap["NAME"]] = [
-                dmap["NAME"],
-                dmap["MODEL"],
-                dmap["SERIAL"],
-                dmap["SIZE"],
-                dmap["TRAN"],
-                dmap["VENDOR"],
-                dmap["HCTL"],
-                dmap["TYPE"],
-                dmap["FSTYPE"],
-                dmap["LABEL"],
-                dmap["UUID"],
-                dmap["parted"],
-                dmap["root"],
-                dmap["partitions"],
+                    dev["SERIAL"] = "fake-serial-" + str(uuid.uuid4())
+            serials_seen.append(dev["SERIAL"])
+            # replace all dev values of '' with None.
+            for key in dev.keys():
+                if dev[key] == "":
+                    dev[key] = None
+            # transfer our device info as now parsed in dev to the dnames dict
+            dnames[dev["NAME"]] = [
+                dev["NAME"],
+                dev["MODEL"],
+                dev["SERIAL"],
+                dev["SIZE"],
+                dev["TRAN"],
+                dev["VENDOR"],
+                dev["HCTL"],
+                dev["TYPE"],
+                dev["FSTYPE"],
+                dev["LABEL"],
+                dev["UUID"],
+                dev["parted"],
+                dev["root"],
+                dev["partitions"],
             ]
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
