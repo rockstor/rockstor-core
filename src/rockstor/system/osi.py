@@ -108,26 +108,27 @@ EXCLUDED_SERIAL_NUMS = [
     "0123456789ABCDEF",  # No-name USB external multi-bay.
 ]
 
-# Requried to assist parsing of lsblk output to Disk field names.
-LSBLK_FIELD_NAMES = [
-    "NAME",
-    "MODEL",
-    "SERIAL",
-    "SIZE",
-    "TRAN",
-    "VENDOR",
-    "HCTL",
-    "TYPE",
-    "FSTYPE",
-    "LABEL",
-    "UUID",
-]
-DISK_FIELD_NAMES = [
-    item.lower() if item != "TRAN" else "transport" for item in LSBLK_FIELD_NAMES
-] + ["parted", "root", "partitions"]
-
-# Note that namedtuples are immutable
-Disk = collections.namedtuple("Disk", DISK_FIELD_NAMES, defaults=[False, False, {}])
+# Field_names correspond to all used lsblk properties.lower() bar 'TRANS' to 'transport'
+Disk = collections.namedtuple(
+    "Disk",
+    [
+        "name",
+        "model",
+        "serial",
+        "size",
+        "transport",
+        "vendor",
+        "hctl",
+        "type",
+        "fstype",
+        "label",
+        "uuid",
+        "parted",
+        "root",
+        "partitions",
+    ],
+    defaults=[False, False, {}],
+)
 
 
 def inplace_replace(of, nf, regex, nl):
