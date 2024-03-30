@@ -126,7 +126,8 @@ DISK_FIELD_NAMES = [
     item.lower() if item != "TRAN" else "transport" for item in LSBLK_FIELD_NAMES
 ] + ["parted", "root", "partitions"]
 
-Disk = collections.namedtuple("Disk", DISK_FIELD_NAMES)
+# Note that namedtuples are immutable
+Disk = collections.namedtuple("Disk", DISK_FIELD_NAMES, defaults=[False, False, {}])
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -278,19 +279,6 @@ def run_command(
     return out, err, rc
 
 
-# def lsblk_line_parse(line: str = "") -> Disk:
-#     """
-#     Parse single lsblk output line into a Disk named tupile
-#     @param line: string consisting of a single line of lsblk output.
-#     @return: Disk
-#     """
-#     # split line into list e.g. ['NAME="/dev/sdb"', 'MODEL="TOSHIBA MK1652GS"' ...]
-#     blk_dev_properties: Disk
-#     line_items = line.strip().split("\" ")
-#     for item in line_items:
-#         prop_value_pair = item.split("=")
-
-
 def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
     """
     Using lsblk we scan all attached disks and categorize them according to
@@ -330,47 +318,30 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
     always_use_udev_serial: bool = False
     device_names_seen: list[str] = []  # List tally of devices seen during this scan
     for line in o:
-        # skip processing of all lines that don't begin with "NAME"
-        if re.match("NAME", line) is None:
+        # skip processing of all empty lines or those that don't begin with "NAME"
+        if line == "" or re.match("NAME", line) is None:
             continue
-        # Set up our line / dev name dependant variables
+        # lsblk example line (incomplete): 'NAME="/dev/sdb" MODEL="TOSHIBA MK1652GS" VENDOR="ATA     " LABEL="" UUID=""'
+        # line.strip().split('" ') = ['NAME="/dev/sdb', 'MODEL="TOSHIBA MK1652GS', 'VENDOR="ATA     ', 'LABEL="', 'UUID=""']   # noqa E501
+        # dev: dict = {
+        #     key.lower()
+        #     if key != "TRAN"
+        #     else "transport": value.replace('"', "").strip()
+        #     for key, value in (
+        #         key_value.split("=") for key_value in line.strip().split('" ')
+        #     )
+        # }
+        # Set up our line / dev dependant variables
+        dev: dict = {  # device information built from each lsblk line in turn.
+            key: value.replace('"', "").strip()
+            for key, value in (
+                key_value.split("=") for key_value in line.strip().split('" ')
+            )
+        }
         # easy read categorization flags, all False until found otherwise.
         is_root_disk: bool = False  # base dev that "/" is mounted on ie system disk
         is_partition: bool = False
         is_btrfs: bool = False
-        dev: dict = {}  # to hold line info from lsblk output eg NAME: sda
-        # dev: Disk  # device information built from each lsblk line in turn.
-
-        # line parser variables
-        cur_name = ""
-        cur_val = ""
-        name_iter = True
-        val_iter = False
-        sl = line.strip()
-        i = 0
-        while i < len(sl):
-            # We iterate over the line to parse its information char by char
-            # keeping track of name or value and adding the char accordingly
-            if name_iter and sl[i] == "=" and sl[i + 1] == '"':
-                name_iter = False
-                val_iter = True
-                i = i + 2
-            elif val_iter and sl[i] == '"' and (i == (len(sl) - 1) or sl[i + 1] == " "):
-                val_iter = False
-                name_iter = True
-                i = i + 2
-                dev[cur_name.strip()] = cur_val.strip()
-                cur_name = ""
-                cur_val = ""
-            elif name_iter:
-                cur_name = cur_name + sl[i]
-                i = i + 1
-            elif val_iter:
-                cur_val = cur_val + sl[i]
-                i = i + 1
-            else:
-                raise Exception("Failed to parse lsblk output: {}".format(sl))
-
         # md devices, such as mdadmin software raid and some hardware raid
         # block devices show up in lsblk's output multiple times with identical
         # info.  Given we only need one copy of this info we remove duplicate
