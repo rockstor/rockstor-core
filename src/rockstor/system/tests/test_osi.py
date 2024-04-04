@@ -592,12 +592,15 @@ class OSITests(unittest.TestCase):
     def test_scan_disks_luks_on_bcache(self):
         """
         Test scan_disks() across a variety of mocked lsblk output.
+        collection of ata, virtio attached devices with bcache (cache and
+        backing) device formats as well as a number of LUKS containers on
+        bcache backing devices and an example of LUKS on virtio dev directly.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_luks_on_bcache
         """
-        # collection of ata, virtio driven devices with bcache (cache and
-        # backing) device formats as well as a number of LUKS containers on
-        # bcache backing devices and an example of LUKS on virtio dev directly.
         # Moc output for run_command with:
-        # lsblk -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID  # noqa E501
+        # lsblk -P -p -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
         out = [
             [
                 'NAME="/dev/sdd" MODEL="QEMU HARDDISK   " SERIAL="bcache-cdev" SIZE="2G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="bcache" LABEL="" UUID="6efd5476-77a9-4f57-97a5-fa1a37d4338b"',  # noqa E501
@@ -739,20 +742,20 @@ class OSITests(unittest.TestCase):
                     partitions={},
                 ),
                 Disk(
-                    name="/dev/sda3",
+                    name="/dev/sda",
                     model="QEMU HARDDISK",
                     serial="sys-drive-serial-num",
                     size=7025459,
                     transport="sata",
                     vendor="ATA",
                     hctl="0:0:0:0",
-                    type="part",
+                    type="disk",
                     fstype="btrfs",
                     label="rockstor_rockstor",
                     uuid="a98f88c2-2031-4bd3-9124-2f9d8a77987c",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/sda3": "btrfs"},
                 ),
                 Disk(
                     name="/dev/sdb",
@@ -853,9 +856,10 @@ class OSITests(unittest.TestCase):
         for o, e, r, expected in zip(out, err, rc, expected_result):
             self.mock_run_command.return_value = (o, e, r)
             expected.sort(key=operator.itemgetter(0))
-            returned = scan_disks(1048576)
+            # many of our devices are only 2GB, so have 1.5GB cut-off
+            returned = scan_disks(1572864)
             returned.sort(key=operator.itemgetter(0))
-            self.assertEqual(
+            self.assertListEqual(
                 returned,
                 expected,
                 msg="Un-expected scan_disks() result:\n "
@@ -873,6 +877,9 @@ class OSITests(unittest.TestCase):
         to a naive match to actual base system drive sda ('/' on sda3) which in
         turn resulted in serial=None and or fake-serial when all devices had
         accessible serial via lsblk output.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_dell_perk_h710_md1220_36_disks
         """
         # system as 36 disks sda-sdz (sda as partitioned sys disk) + sdaa-sdaj
         # N.B. listed in the order returned by lsblk.
@@ -926,20 +933,20 @@ class OSITests(unittest.TestCase):
         expected_result = [
             [
                 Disk(
-                    name="/dev/sda3",
+                    name="/dev/sda",
                     model="PERC H710",
                     serial="6848f690e936450018b7c3a11330997b",
                     size=277558067,
                     transport=None,
                     vendor="DELL",
                     hctl="0:2:0:0",
-                    type="part",
+                    type="disk",
                     fstype="btrfs",
                     label="rockstor_rockstor",
                     uuid="7f7acdd7-493e-4bb5-b801-b7b7dc289535",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/sda3": "btrfs"},
                 ),
                 Disk(
                     name="/dev/sdt",
@@ -1512,12 +1519,10 @@ class OSITests(unittest.TestCase):
         # Iterate the test data sets for run_command running lsblk.
         for o, e, r, expected in zip(out, err, rc, expected_result):
             self.mock_run_command.return_value = (o, e, r)
-            returned = scan_disks(1048576, test_mode=True)
-            # TODO: Would be nice to have differences found shown.
-            #
+            returned = scan_disks(5242880, test_mode=True)
             expected.sort(key=operator.itemgetter(0))
             returned.sort(key=operator.itemgetter(0))
-            self.assertEqual(
+            self.assertListEqual(
                 returned,
                 expected,
                 msg="Un-expected scan_disks() result:\n "
@@ -1540,6 +1545,9 @@ class OSITests(unittest.TestCase):
         the root cause of this bug, see issue #1925.
         N.B. an element of the trigger data is FSTYPE="btrfs" on the sda[a-z]
         devices: without this the issue does not present.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_27_plus_disks_regression_issue
         """
         out = [
             [
@@ -1557,54 +1565,54 @@ class OSITests(unittest.TestCase):
         expected_result = [
             [
                 Disk(
-                    name="/dev/sda3",
+                    name="/dev/sda",
                     model="PERC H710",
                     serial="6848f690e936450018b7c3a11330997b",
                     size=277558067,
                     transport=None,
                     vendor="DELL",
                     hctl="0:2:0:0",
-                    type="part",
+                    type="disk",
                     fstype="btrfs",
                     label="rockstor_rockstor",
                     uuid="7f7acdd7-493e-4bb5-b801-b7b7dc289535",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/sda3": "btrfs"},
                 ),
-                # N.B. we have sdab with serial=None, suspected due to first listed
+                # N.B. we had sdab with serial=None, suspected due to first listed
                 # matching base root device name of sda (sda3).
                 Disk(
                     name="/dev/sdab",
-                    model=None,
-                    serial=None,
+                    model="ST91000640SS",
+                    serial="5000c50063041947",
                     size=976748544,
-                    transport=None,
-                    vendor=None,
-                    hctl=None,
+                    transport="sas",
+                    vendor="SEAGATE",
+                    hctl="1:0:14:0",
                     type="disk",
                     fstype="btrfs",
                     label="SCRATCH",
                     uuid="a90e6787-1c45-46d6-a2ba-41017a17c1d5",
                     parted=False,
-                    root=True,
+                    root=False,
                     partitions={},
                 ),
-                # Subsequent sda[a-z] device receives 'fake-serial-'
+                # Subsequent sda[a-z] device receives 'fake-serial-' rather than
                 Disk(
                     name="/dev/sdai",
-                    model=None,
-                    serial="fake-serial-",
+                    model="ST91000640SS",
+                    serial="5000c5006303ea0f",
                     size=976748544,
-                    transport=None,
-                    vendor=None,
-                    hctl=None,
+                    transport="sas",
+                    vendor="SEAGATE",
+                    hctl="1:0:21:0",
                     type="disk",
                     fstype="btrfs",
                     label="SCRATCH",
                     uuid="a90e6787-1c45-46d6-a2ba-41017a17c1d5",
                     parted=False,
-                    root=True,
+                    root=False,
                     partitions={},
                 ),
             ]
@@ -1619,10 +1627,10 @@ class OSITests(unittest.TestCase):
             # itemgetter(0) referenced the first item within our Disk
             # collection by which to sort (key) ie name. N.B. 'name' failed.
             expected.sort(key=operator.itemgetter(0))
-            returned = scan_disks(1048576, test_mode=True)
+            returned = scan_disks(5242880, test_mode=True)
             returned.sort(key=operator.itemgetter(0))
             # TODO: Would be nice to have differences found shown.
-            self.assertNotEqual(
+            self.assertListEqual(
                 returned,
                 expected,
                 msg="Regression in sda[a-z] device:\n "
@@ -1636,11 +1644,14 @@ class OSITests(unittest.TestCase):
         encrypted system disk install "Encrypt this disk" installer setting
         which results in 2 luks volumes, one for swap and one for the btrfs
         volume; usually on sdX3. /boot (ie sdc1) is not encrypted.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_luks_sys_disk
         """
         # Example data for sdc system disk with 2 data disks. sdc has the 2
-        # luks containers created by the installer.
-        # Rockstor sees this install as system on hole disk dev (open luks dev)
-        # ie the system btrfs volume is on whole disk not within a partition.
+        # LUKS containers created by the installer.
+        # Rockstor sees this install as system on hole disk dev (open LUKS dev)
+        # i.e. the system btrfs volume is on whole disk not within a partition.
         out = [
             [
                 'NAME="/dev/sdb" MODEL="QEMU HARDDISK   " SERIAL="2" SIZE="5G" TRAN="sata" VENDOR="ATA     " HCTL="5:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="rock-pool" UUID="50b66542-9a19-4403-b5a0-cd22412d9ae9"',  # noqa E501
@@ -1753,7 +1764,7 @@ class OSITests(unittest.TestCase):
         # Ensure we correctly mock our root_disk value away from file default
         # of sda as we now have a root_disk on luks:
         self.mock_root_disk.return_value = (
-            "/dev/mapper/luks-315111a6-8d37-447a-8dbf-0c9026abc456"  # noqa E501
+            "/dev/mapper/luks-315111a6-8d37-447a-8dbf-0c9026abc456"
         )
 
         for o, e, r, expected in zip(out, err, rc, expected_result):
@@ -1761,10 +1772,9 @@ class OSITests(unittest.TestCase):
             # itemgetter(0) referenced the first item within our Disk
             # collection by which to sort (key) ie name. N.B. 'name' failed.
             expected.sort(key=operator.itemgetter(0))
-            returned = scan_disks(1048576, test_mode=True)
+            returned = scan_disks(5242880, test_mode=True)
             returned.sort(key=operator.itemgetter(0))
-            # TODO: Would be nice to have differences found shown.
-            self.assertEqual(
+            self.assertListEqual(
                 returned,
                 expected,
                 msg="LUKS sys disk id regression:\n "
@@ -1805,6 +1815,9 @@ class OSITests(unittest.TestCase):
 
         The second data set is to check for a regression re false positive when
         root on sda, ie 'Regex to identify a partition on the base_root_disk.'
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_btrfs_in_partition
         """
         out = [
             [
@@ -1852,23 +1865,23 @@ class OSITests(unittest.TestCase):
                     uuid="55284332-af66-4ca0-9647-99d9afbe0ec5",
                     parted=True,
                     root=False,
-                    partitions={"/dev/vda1": "vfat", "/dev/vda2": "btrfs"},
+                    partitions={"/dev/vda2": "btrfs", "/dev/vda1": "vfat"},
                 ),
                 Disk(
-                    name="/dev/sda3",
+                    name="/dev/sda",
                     model="QEMU HARDDISK",
                     serial="QM00005",
                     size=7025459,
                     transport="sata",
                     vendor="ATA",
                     hctl="2:0:0:0",
-                    type="part",
+                    type="disk",
                     fstype="btrfs",
                     label="rockstor_rockstor",
                     uuid="355f53a4-24e1-465e-95f3-7c422898f542",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/sda3": "btrfs"},
                 ),
             ],
             [
@@ -1890,20 +1903,20 @@ class OSITests(unittest.TestCase):
                     partitions={"/dev/sdap1": "vfat", "/dev/sdap2": "btrfs"},
                 ),
                 Disk(
-                    name="/dev/sda3",
+                    name="/dev/sda",
                     model="QEMU HARDDISK",
                     serial="QM00005",
                     size=7025459,
                     transport="sata",
                     vendor="ATA",
                     hctl="2:0:0:0",
-                    type="part",
+                    type="disk",
                     fstype="btrfs",
                     label="rockstor_rockstor",
                     uuid="355f53a4-24e1-465e-95f3-7c422898f542",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/sda3": "btrfs"},
                 ),
             ],
         ]
@@ -1934,10 +1947,10 @@ class OSITests(unittest.TestCase):
             # itemgetter(0) referenced the first item within our Disk
             # collection by which to sort (key) ie name. N.B. 'name' failed.
             expected.sort(key=operator.itemgetter(0))
-            returned = scan_disks(1048576, test_mode=True)
+            # N.B. 3GB min_size to not exclude our vfat partition blkdev of 4GB
+            returned = scan_disks(3145728, test_mode=True)
             returned.sort(key=operator.itemgetter(0))
-            # TODO: Would be nice to have differences found shown.
-            self.assertEqual(
+            self.assertListEqual(
                 returned,
                 expected,
                 msg="Btrfs in partition data disk regression:\n "
@@ -1969,8 +1982,9 @@ class OSITests(unittest.TestCase):
         ----md126   9:126  0  1.4G  0 raid1 [SWAP]
         --sda1      8:1    0  5.7G  0 part
         ----md127   9:127  0  5.7G  0 raid1 /mnt2/rockstor_rockstor
-
-
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_mdraid_sys_disk
         """
         out = [
             [
@@ -2094,10 +2108,10 @@ class OSITests(unittest.TestCase):
             # itemgetter(0) referenced the first item within our Disk
             # collection by which to sort (key) ie name. N.B. 'name' failed.
             expected.sort(key=operator.itemgetter(0))
+            # Maintain compatibility with test data derived from when min_size was 1G
             returned = scan_disks(1048576, test_mode=True)
             returned.sort(key=operator.itemgetter(0))
-            # TODO: Would be nice to have differences found shown.
-            self.assertEqual(
+            self.assertListEqual(
                 returned,
                 expected,
                 msg="mdraid under btrfs sys vol regression:\n "
@@ -2131,6 +2145,9 @@ class OSITests(unittest.TestCase):
 
         unused devices: <none>
 
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_intel_bios_raid_sys_disk
         """
         out = [
             [
@@ -2153,20 +2170,20 @@ class OSITests(unittest.TestCase):
         expected_result = [
             [
                 Disk(
-                    name="/dev/md126p3",
+                    name="/dev/md126",
                     model="[2] Z8A9CAZUT[0] S1WWJ9BZ408430[1] raid1",
                     serial="a300e6b0:5d69eee6:98a2354a:0ba1e1eb",
                     size=153721241,
                     transport=None,
                     vendor=None,
                     hctl=None,
-                    type="md",
+                    type="raid1",
                     fstype="btrfs",
                     label="rockstor_rockstor00",
                     uuid="1c59b842-5d08-4472-a731-c593ab0bff93",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/md126p3": "btrfs"},
                 ),
                 Disk(
                     name="/dev/sda",
@@ -2263,7 +2280,7 @@ class OSITests(unittest.TestCase):
             # itemgetter(0) referenced the first item within our Disk
             # collection by which to sort (key) ie name. N.B. 'name' failed.
             expected.sort(key=operator.itemgetter(0))
-            returned = scan_disks(1048576, test_mode=True)
+            returned = scan_disks(5242880, test_mode=True)
             returned.sort(key=operator.itemgetter(0))
             # TODO: Would be nice to have differences found shown.
             self.assertEqual(
@@ -2293,6 +2310,9 @@ class OSITests(unittest.TestCase):
 
         unused devices: <none>
 
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_intel_bios_raid_data_disk
         """
         # Out and expected_results have sda stripped for simplicity.
         out = [
@@ -2351,20 +2371,20 @@ class OSITests(unittest.TestCase):
                     partitions={},
                 ),
                 Disk(
-                    name="/dev/sdd3",
+                    name="/dev/sdd",
                     model="Extreme",
                     serial="AA010312161642210668",  # noqa E501
                     size=27996979,
                     transport="usb",
                     vendor="SanDisk",
                     hctl="6:0:0:0",
-                    type="part",
+                    type="disk",
                     fstype="btrfs",
                     label="rockstor_rockstor",
                     uuid="d030d7ee-4c85-4317-96bf-6ff766fec9ef",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/sdd3": "btrfs"},
                 ),
                 Disk(
                     name="/dev/md126",
@@ -2428,10 +2448,9 @@ class OSITests(unittest.TestCase):
             # itemgetter(0) referenced the first item within our Disk
             # collection by which to sort (key) ie name. N.B. 'name' failed.
             expected.sort(key=operator.itemgetter(0))
-            returned = scan_disks(1048576, test_mode=True)
+            returned = scan_disks(5242880, test_mode=True)
             returned.sort(key=operator.itemgetter(0))
-            # TODO: Would be nice to have differences found shown.
-            self.assertEqual(
+            self.assertListEqual(
                 returned,
                 expected,
                 msg="bios raid non sys disk regression:\n "
@@ -2447,6 +2466,9 @@ class OSITests(unittest.TestCase):
         return them. As a result they became detached on existing installs.
         Thanks to forum member Jorma_Tuomainen in the following forum thread
         for supplying this instance data to be used as a regression test set.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_nvme_sys_disk
         """
         # Test data based on 2 data drives (sda, sdb) and an nvme system drive
         # /dev/nvme0n1 as the base device.
@@ -2506,20 +2528,20 @@ class OSITests(unittest.TestCase):
             ],
             [
                 Disk(
-                    name="/dev/nvme0n1p4",
+                    name="/dev/nvme0n1",
                     model="INTEL SSDPEKKW128G7",
                     serial="BTPY72910KCW128A",
                     size=116182220,
                     transport=None,
                     vendor=None,
                     hctl=None,
-                    type="part",
+                    type="disk",
                     fstype="btrfs",
                     label="rockstor_rockstor00",
                     uuid="4a05477f-cd4a-4614-b264-d029d98928ab",
                     parted=True,
                     root=True,
-                    partitions={},
+                    partitions={"/dev/nvme0n1p4": "btrfs"},
                 ),
                 Disk(
                     name="/dev/sda",
@@ -2569,9 +2591,8 @@ class OSITests(unittest.TestCase):
             # itemgetter(0) referenced the first item within our Disk
             # collection by which to sort (key) ie name. N.B. 'name' failed.
             expected.sort(key=operator.itemgetter(0))
-            returned = scan_disks(1048576, test_mode=True)
+            returned = scan_disks(5242880, test_mode=True)
             returned.sort(key=operator.itemgetter(0))
-            # TODO: Would be nice to have differences found shown.
             if len(expected) == 2:  # no system disk only the 2 data disks
                 self.assertNotEqual(
                     returned,
@@ -2582,7 +2603,7 @@ class OSITests(unittest.TestCase):
                 )
             if len(expected) == 3:
                 # assumed to be our correctly reported 1 x sys + 2 x data disks
-                self.assertEqual(
+                self.assertListEqual(
                     returned,
                     expected,
                     msg="Un-expected scan_disks() result:\n "
@@ -2603,55 +2624,55 @@ class OSITests(unittest.TestCase):
         /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_root_miss_attribution
         """
         # Reproducer output:
-        # lsblk -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
+        # lsblk -P -p -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
         out = [
-            'NAME="sda" MODEL="WDC WD101EMAZ-11G7DA0" SERIAL="VCGRX3EN" SIZE="9.1T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdb" MODEL="WDC WD80EDAZ-11TA3A0" SERIAL="VDKN848K" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:3:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdc" MODEL="HUS72302CLAR2000" SERIAL="YGKU60YK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
-            'NAME="sdd" MODEL="WDC WD60EZRX-00MVLB1" SERIAL="WD-WX31D847K0HJ" SIZE="5.5T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:2:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sde" MODEL="WDC WD80EDAZ-11TA3A0" SERIAL="VDKN5U2K" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:4:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdf" MODEL="WDC WD40EZRZ-00GXCB0" SERIAL="WD-WCC7K4LZHN8U" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:5:0" TYPE="disk" FSTYPE="btrfs" LABEL="ExternalBackup" UUID="8c1423ff-78ec-4267-9d1c-e05268a60517"',  # noqa E501
-            'NAME="sdg" MODEL="ST4000VN008-2DR166" SERIAL="ZGY03QJ9" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:6:0" TYPE="disk" FSTYPE="btrfs" LABEL="ExternalBackup" UUID="8c1423ff-78ec-4267-9d1c-e05268a60517"',  # noqa E501
-            'NAME="sdh" MODEL="ST4000VN008-2DR166" SERIAL="ZGY03Q9C" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:7:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
-            'NAME="sdi" MODEL="WDC WD40EZRZ-00GXCB0" SERIAL="WD-WCC7K4HJ726U" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:8:0" TYPE="disk" FSTYPE="btrfs" LABEL="ExternalBackup" UUID="8c1423ff-78ec-4267-9d1c-e05268a60517"',  # noqa E501
-            'NAME="sdj" MODEL="WDC WD80EZZX-11CSGA0" SERIAL="VK0TZU1Y" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:9:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdk" MODEL="WDC WD80EZAZ-11TDBA0" SERIAL="1EKB60VZ" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:10:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdl" MODEL="WDC WD80EDAZ-11TA3A0" SERIAL="VGH41NAG" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:11:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdm" MODEL="WDC WD80EFAX-68LHPN0" SERIAL="7SGL9JSC" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:12:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdn" MODEL="WDC WD80EFAX-68LHPN0" SERIAL="7SGJWGTC" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:13:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdo" MODEL="WDC WD80EMAZ-00WJTA0" SERIAL="2TJ0YATD" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:14:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdp" MODEL="WDC WD80EZZX-11CSGA0" SERIAL="VK0RGYTY" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:15:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sr0" MODEL="CD-ROM Drive" SERIAL="CAFEBABE" SIZE="1024M" TRAN="usb" VENDOR="PiKVM   " HCTL="13:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdq" MODEL="ST10000NM0226" SERIAL="ZA22Q7W00000C8115CNQ" SIZE="9T" TRAN="sas" VENDOR="SEAGATE " HCTL="0:0:17:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
-            'NAME="sdr" MODEL="HUS72302CLAR2000" SERIAL="YGKWMWKK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:18:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
-            'NAME="sds" MODEL="HUS72302CLAR2000" SERIAL="YFKVTMNK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:19:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
-            'NAME="sdt" MODEL="HGST HUH721008ALE604" SERIAL="7SH27T6C" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:20:0" TYPE="disk" FSTYPE="btrfs" LABEL="NasBackup" UUID="03c59913-ceb6-4b2a-9a27-62707a9dd73d"',  # noqa E501
-            'NAME="sdu" MODEL="ST4000NM0043 E" SERIAL="Z1ZAY35T0000C643119P" SIZE="3.6T" TRAN="sas" VENDOR="IBM-ESXS" HCTL="0:0:21:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
-            'NAME="sdv" MODEL="ST4000DM000-1F2168" SERIAL="Z300WT54" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:22:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
-            'NAME="sdw" MODEL="HUS72302CLAR2000" SERIAL="YFKY4LKK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:23:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
-            'NAME="sdx" MODEL="WDC WD40EURX-64WRWY0" SERIAL="WD-WCC4E1746586" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:24:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
-            'NAME="sdy" MODEL="HGST HDS5C4040ALE630" SERIAL="PL2331LAGGUHRJ" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:25:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
-            'NAME="sdz" MODEL="ST10000NM0226" SERIAL="ZA22YJMW0000C8022Q3X" SIZE="9T" TRAN="sas" VENDOR="SEAGATE " HCTL="0:0:26:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
-            'NAME="sdaa" MODEL="ST4000NM0043 E" SERIAL="Z1ZANJ6J0000R631JFMH" SIZE="3.6T" TRAN="sas" VENDOR="IBM-ESXS" HCTL="0:0:27:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
-            'NAME="sdab" MODEL="HGST HUH721008ALE604" SERIAL="7SGHEMVC" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:29:0" TYPE="disk" FSTYPE="btrfs" LABEL="NasBackup" UUID="03c59913-ceb6-4b2a-9a27-62707a9dd73d"',  # noqa E501
-            'NAME="sdac" MODEL="HGST HUH721008ALE604" SERIAL="7SH26E3C" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:28:0" TYPE="disk" FSTYPE="btrfs" LABEL="ChiaPool" UUID="3effcc72-05a2-4394-b229-71042ac46956"',  # noqa E501
-            'NAME="sdad" MODEL="HGST HUH721008ALE604" SERIAL="7SGZJV0C" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:30:0" TYPE="disk" FSTYPE="btrfs" LABEL="NasBackup" UUID="03c59913-ceb6-4b2a-9a27-62707a9dd73d"',  # noqa E501
-            'NAME="sdae" MODEL="WDC WD140EDGZ-11B2DA2" SERIAL="2CGLYKDN" SIZE="12.7T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:31:0" TYPE="disk" FSTYPE="btrfs" LABEL="StorjPool" UUID="b8e4bea0-285d-460c-a8a3-816e00b596a8"',  # noqa E501
-            'NAME="sdaf" MODEL="CT500MX500SSD1" SERIAL="1906E1E91E57" SIZE="465.8G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="SSDPool" UUID="badb1a86-f340-406d-8ee0-162e3ec71140"',  # noqa E501
-            'NAME="sdag" MODEL="PNY CS900 120GB SSD" SERIAL="PNY0520228055010CFE7" SIZE="111.8G" TRAN="sata" VENDOR="ATA     " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdag1" MODEL="" SERIAL="" SIZE="2M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdag2" MODEL="" SERIAL="" SIZE="64M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="EFI" UUID="A48E-EDBF"',  # noqa E501
-            'NAME="sdag3" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="SWAP" UUID="42d2c6da-102d-49f2-948e-817a10e61370"',  # noqa E501
-            'NAME="sdag4" MODEL="" SERIAL="" SIZE="109.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="ROOT" UUID="4ac51b0f-afeb-4946-aad1-975a2a26c941"',  # noqa E501
-            'NAME="sdah" MODEL="CT500MX500SSD1" SERIAL="1906E1E92271" SIZE="465.8G" TRAN="sata" VENDOR="ATA     " HCTL="10:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="SSDPool" UUID="badb1a86-f340-406d-8ee0-162e3ec71140"',  # noqa E501
-            'NAME="nvme0n1" MODEL="SHGP31-1000GM-2" SERIAL="AS0BN60301030BE2O" SIZE="931.5G" TRAN="nvme" VENDOR="" HCTL="" TYPE="disk" FSTYPE="btrfs" LABEL="AppPool" UUID="2beebfa1-5ac3-4d2b-85ea-56225e0704ca"',  # noqa E501
+            'NAME="/dev/sda" MODEL="WDC WD101EMAZ-11G7DA0" SERIAL="VCGRX3EN" SIZE="9.1T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdb" MODEL="WDC WD80EDAZ-11TA3A0" SERIAL="VDKN848K" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:3:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdc" MODEL="HUS72302CLAR2000" SERIAL="YGKU60YK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
+            'NAME="/dev/sdd" MODEL="WDC WD60EZRX-00MVLB1" SERIAL="WD-WX31D847K0HJ" SIZE="5.5T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:2:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sde" MODEL="WDC WD80EDAZ-11TA3A0" SERIAL="VDKN5U2K" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:4:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdf" MODEL="WDC WD40EZRZ-00GXCB0" SERIAL="WD-WCC7K4LZHN8U" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:5:0" TYPE="disk" FSTYPE="btrfs" LABEL="ExternalBackup" UUID="8c1423ff-78ec-4267-9d1c-e05268a60517"',  # noqa E501
+            'NAME="/dev/sdg" MODEL="ST4000VN008-2DR166" SERIAL="ZGY03QJ9" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:6:0" TYPE="disk" FSTYPE="btrfs" LABEL="ExternalBackup" UUID="8c1423ff-78ec-4267-9d1c-e05268a60517"',  # noqa E501
+            'NAME="/dev/sdh" MODEL="ST4000VN008-2DR166" SERIAL="ZGY03Q9C" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:7:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
+            'NAME="/dev/sdi" MODEL="WDC WD40EZRZ-00GXCB0" SERIAL="WD-WCC7K4HJ726U" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:8:0" TYPE="disk" FSTYPE="btrfs" LABEL="ExternalBackup" UUID="8c1423ff-78ec-4267-9d1c-e05268a60517"',  # noqa E501
+            'NAME="/dev/sdj" MODEL="WDC WD80EZZX-11CSGA0" SERIAL="VK0TZU1Y" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:9:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdk" MODEL="WDC WD80EZAZ-11TDBA0" SERIAL="1EKB60VZ" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:10:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdl" MODEL="WDC WD80EDAZ-11TA3A0" SERIAL="VGH41NAG" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:11:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdm" MODEL="WDC WD80EFAX-68LHPN0" SERIAL="7SGL9JSC" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:12:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdn" MODEL="WDC WD80EFAX-68LHPN0" SERIAL="7SGJWGTC" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:13:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdo" MODEL="WDC WD80EMAZ-00WJTA0" SERIAL="2TJ0YATD" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:14:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdp" MODEL="WDC WD80EZZX-11CSGA0" SERIAL="VK0RGYTY" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:15:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sr0" MODEL="CD-ROM Drive" SERIAL="CAFEBABE" SIZE="1024M" TRAN="usb" VENDOR="PiKVM   " HCTL="13:0:0:0" TYPE="rom" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdq" MODEL="ST10000NM0226" SERIAL="ZA22Q7W00000C8115CNQ" SIZE="9T" TRAN="sas" VENDOR="SEAGATE " HCTL="0:0:17:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
+            'NAME="/dev/sdr" MODEL="HUS72302CLAR2000" SERIAL="YGKWMWKK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:18:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
+            'NAME="/dev/sds" MODEL="HUS72302CLAR2000" SERIAL="YFKVTMNK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:19:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
+            'NAME="/dev/sdt" MODEL="HGST HUH721008ALE604" SERIAL="7SH27T6C" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:20:0" TYPE="disk" FSTYPE="btrfs" LABEL="NasBackup" UUID="03c59913-ceb6-4b2a-9a27-62707a9dd73d"',  # noqa E501
+            'NAME="/dev/sdu" MODEL="ST4000NM0043 E" SERIAL="Z1ZAY35T0000C643119P" SIZE="3.6T" TRAN="sas" VENDOR="IBM-ESXS" HCTL="0:0:21:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
+            'NAME="/dev/sdv" MODEL="ST4000DM000-1F2168" SERIAL="Z300WT54" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:22:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
+            'NAME="/dev/sdw" MODEL="HUS72302CLAR2000" SERIAL="YFKY4LKK" SIZE="1.8T" TRAN="sas" VENDOR="HITACHI " HCTL="0:0:23:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
+            'NAME="/dev/sdx" MODEL="WDC WD40EURX-64WRWY0" SERIAL="WD-WCC4E1746586" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:24:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
+            'NAME="/dev/sdy" MODEL="HGST HDS5C4040ALE630" SERIAL="PL2331LAGGUHRJ" SIZE="3.6T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:25:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
+            'NAME="/dev/sdz" MODEL="ST10000NM0226" SERIAL="ZA22YJMW0000C8022Q3X" SIZE="9T" TRAN="sas" VENDOR="SEAGATE " HCTL="0:0:26:0" TYPE="disk" FSTYPE="btrfs" LABEL="SASPool" UUID="b3fa44e0-0a6f-4193-a1cf-2d0f248a64a8"',  # noqa E501
+            'NAME="/dev/sdaa" MODEL="ST4000NM0043 E" SERIAL="Z1ZANJ6J0000R631JFMH" SIZE="3.6T" TRAN="sas" VENDOR="IBM-ESXS" HCTL="0:0:27:0" TYPE="disk" FSTYPE="btrfs" LABEL="NAS" UUID="dac090f1-48b8-40a7-b333-a9813541f09b"',  # noqa E501
+            'NAME="/dev/sdab" MODEL="HGST HUH721008ALE604" SERIAL="7SGHEMVC" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:29:0" TYPE="disk" FSTYPE="btrfs" LABEL="NasBackup" UUID="03c59913-ceb6-4b2a-9a27-62707a9dd73d"',  # noqa E501
+            'NAME="/dev/sdac" MODEL="HGST HUH721008ALE604" SERIAL="7SH26E3C" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:28:0" TYPE="disk" FSTYPE="btrfs" LABEL="ChiaPool" UUID="3effcc72-05a2-4394-b229-71042ac46956"',  # noqa E501
+            'NAME="/dev/sdad" MODEL="HGST HUH721008ALE604" SERIAL="7SGZJV0C" SIZE="7.3T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:30:0" TYPE="disk" FSTYPE="btrfs" LABEL="NasBackup" UUID="03c59913-ceb6-4b2a-9a27-62707a9dd73d"',  # noqa E501
+            'NAME="/dev/sdae" MODEL="WDC WD140EDGZ-11B2DA2" SERIAL="2CGLYKDN" SIZE="12.7T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:31:0" TYPE="disk" FSTYPE="btrfs" LABEL="StorjPool" UUID="b8e4bea0-285d-460c-a8a3-816e00b596a8"',  # noqa E501
+            'NAME="/dev/sdaf" MODEL="CT500MX500SSD1" SERIAL="1906E1E91E57" SIZE="465.8G" TRAN="sata" VENDOR="ATA     " HCTL="3:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="SSDPool" UUID="badb1a86-f340-406d-8ee0-162e3ec71140"',  # noqa E501
+            'NAME="/dev/sdag" MODEL="PNY CS900 120GB SSD" SERIAL="PNY0520228055010CFE7" SIZE="111.8G" TRAN="sata" VENDOR="ATA     " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdag1" MODEL="" SERIAL="" SIZE="2M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdag2" MODEL="" SERIAL="" SIZE="64M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="EFI" UUID="A48E-EDBF"',  # noqa E501
+            'NAME="/dev/sdag3" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="SWAP" UUID="42d2c6da-102d-49f2-948e-817a10e61370"',  # noqa E501
+            'NAME="/dev/sdag4" MODEL="" SERIAL="" SIZE="109.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="ROOT" UUID="4ac51b0f-afeb-4946-aad1-975a2a26c941"',  # noqa E501
+            'NAME="/dev/sdah" MODEL="CT500MX500SSD1" SERIAL="1906E1E92271" SIZE="465.8G" TRAN="sata" VENDOR="ATA     " HCTL="10:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="SSDPool" UUID="badb1a86-f340-406d-8ee0-162e3ec71140"',  # noqa E501
+            'NAME="/dev/nvme0n1" MODEL="SHGP31-1000GM-2" SERIAL="AS0BN60301030BE2O" SIZE="931.5G" TRAN="nvme" VENDOR="" HCTL="" TYPE="disk" FSTYPE="btrfs" LABEL="AppPool" UUID="2beebfa1-5ac3-4d2b-85ea-56225e0704ca"',  # noqa E501
             "",
         ]
         err = [""]
         rc = 0
         expected_result = [
             Disk(
-                name="nvme0n1",
+                name="/dev/nvme0n1",
                 model="SHGP31-1000GM-2",
                 serial="AS0BN60301030BE2O",
                 size=976748544,
@@ -2667,7 +2688,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sda",
+                name="/dev/sda",
                 model="WDC WD101EMAZ-11G7DA0",
                 serial="VCGRX3EN",
                 size=9771050598,
@@ -2683,7 +2704,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdaa",
+                name="/dev/sdaa",
                 model="ST4000NM0043 E",
                 serial="Z1ZANJ6J0000R631JFMH",
                 size=3865470566,
@@ -2699,7 +2720,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdab",
+                name="/dev/sdab",
                 model="HGST HUH721008ALE604",
                 serial="7SGHEMVC",
                 size=7838315315,
@@ -2715,7 +2736,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdac",
+                name="/dev/sdac",
                 model="HGST HUH721008ALE604",
                 serial="7SH26E3C",
                 size=7838315315,
@@ -2731,7 +2752,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdad",
+                name="/dev/sdad",
                 model="HGST HUH721008ALE604",
                 serial="7SGZJV0C",
                 size=7838315315,
@@ -2747,7 +2768,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdae",
+                name="/dev/sdae",
                 model="WDC WD140EDGZ-11B2DA2",
                 serial="2CGLYKDN",
                 size=13636521164,
@@ -2763,7 +2784,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdaf",
+                name="/dev/sdaf",
                 model="CT500MX500SSD1",
                 serial="1906E1E91E57",
                 size=488426700,
@@ -2779,7 +2800,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdag4",
+                name="/dev/sdag",
                 model="PNY CS900 120GB SSD",
                 serial="PNY0520228055010CFE7",
                 size=115028787,
@@ -2792,10 +2813,10 @@ class OSITests(unittest.TestCase):
                 uuid="4ac51b0f-afeb-4946-aad1-975a2a26c941",
                 parted=True,
                 root=True,
-                partitions={},
+                partitions={"/dev/sdag4": "btrfs"},
             ),
             Disk(
-                name="sdah",
+                name="/dev/sdah",
                 model="CT500MX500SSD1",
                 serial="1906E1E92271",
                 size=488426700,
@@ -2811,7 +2832,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdb",
+                name="/dev/sdb",
                 model="WDC WD80EDAZ-11TA3A0",
                 serial="VDKN848K",
                 size=7838315315,
@@ -2827,7 +2848,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdc",
+                name="/dev/sdc",
                 model="HUS72302CLAR2000",
                 serial="YGKU60YK",
                 size=1932735283,
@@ -2843,7 +2864,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdd",
+                name="/dev/sdd",
                 model="WDC WD60EZRX-00MVLB1",
                 serial="WD-WX31D847K0HJ",
                 size=5905580032,
@@ -2859,7 +2880,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sde",
+                name="/dev/sde",
                 model="WDC WD80EDAZ-11TA3A0",
                 serial="VDKN5U2K",
                 size=7838315315,
@@ -2875,7 +2896,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdf",
+                name="/dev/sdf",
                 model="WDC WD40EZRZ-00GXCB0",
                 serial="WD-WCC7K4LZHN8U",
                 size=3865470566,
@@ -2891,7 +2912,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdg",
+                name="/dev/sdg",
                 model="ST4000VN008-2DR166",
                 serial="ZGY03QJ9",
                 size=3865470566,
@@ -2907,7 +2928,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdh",
+                name="/dev/sdh",
                 model="ST4000VN008-2DR166",
                 serial="ZGY03Q9C",
                 size=3865470566,
@@ -2923,7 +2944,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdi",
+                name="/dev/sdi",
                 model="WDC WD40EZRZ-00GXCB0",
                 serial="WD-WCC7K4HJ726U",
                 size=3865470566,
@@ -2939,7 +2960,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdj",
+                name="/dev/sdj",
                 model="WDC WD80EZZX-11CSGA0",
                 serial="VK0TZU1Y",
                 size=7838315315,
@@ -2955,7 +2976,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdk",
+                name="/dev/sdk",
                 model="WDC WD80EZAZ-11TDBA0",
                 serial="1EKB60VZ",
                 size=7838315315,
@@ -2971,7 +2992,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdl",
+                name="/dev/sdl",
                 model="WDC WD80EDAZ-11TA3A0",
                 serial="VGH41NAG",
                 size=7838315315,
@@ -2987,7 +3008,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdm",
+                name="/dev/sdm",
                 model="WDC WD80EFAX-68LHPN0",
                 serial="7SGL9JSC",
                 size=7838315315,
@@ -3003,7 +3024,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdn",
+                name="/dev/sdn",
                 model="WDC WD80EFAX-68LHPN0",
                 serial="7SGJWGTC",
                 size=7838315315,
@@ -3019,7 +3040,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdo",
+                name="/dev/sdo",
                 model="WDC WD80EMAZ-00WJTA0",
                 serial="2TJ0YATD",
                 size=7838315315,
@@ -3035,7 +3056,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdp",
+                name="/dev/sdp",
                 model="WDC WD80EZZX-11CSGA0",
                 serial="VK0RGYTY",
                 size=7838315315,
@@ -3051,7 +3072,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdq",
+                name="/dev/sdq",
                 model="ST10000NM0226",
                 serial="ZA22Q7W00000C8115CNQ",
                 size=9663676416,
@@ -3067,7 +3088,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdr",
+                name="/dev/sdr",
                 model="HUS72302CLAR2000",
                 serial="YGKWMWKK",
                 size=1932735283,
@@ -3083,7 +3104,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sds",
+                name="/dev/sds",
                 model="HUS72302CLAR2000",
                 serial="YFKVTMNK",
                 size=1932735283,
@@ -3099,7 +3120,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdt",
+                name="/dev/sdt",
                 model="HGST HUH721008ALE604",
                 serial="7SH27T6C",
                 size=7838315315,
@@ -3115,7 +3136,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdu",
+                name="/dev/sdu",
                 model="ST4000NM0043 E",
                 serial="Z1ZAY35T0000C643119P",
                 size=3865470566,
@@ -3131,7 +3152,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdv",
+                name="/dev/sdv",
                 model="ST4000DM000-1F2168",
                 serial="Z300WT54",
                 size=3865470566,
@@ -3147,7 +3168,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdw",
+                name="/dev/sdw",
                 model="HUS72302CLAR2000",
                 serial="YFKY4LKK",
                 size=1932735283,
@@ -3163,7 +3184,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdx",
+                name="/dev/sdx",
                 model="WDC WD40EURX-64WRWY0",
                 serial="WD-WCC4E1746586",
                 size=3865470566,
@@ -3179,7 +3200,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdy",
+                name="/dev/sdy",
                 model="HGST HDS5C4040ALE630",
                 serial="PL2331LAGGUHRJ",
                 size=3865470566,
@@ -3195,7 +3216,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdz",
+                name="/dev/sdz",
                 model="ST10000NM0226",
                 serial="ZA22YJMW0000C8022Q3X",
                 size=9663676416,
@@ -3221,16 +3242,14 @@ class OSITests(unittest.TestCase):
         # itemgetter(0) referenced the first item within our Disk
         # collection by which to sort (key) ie name. N.B. 'name' failed.
         expected_result.sort(key=operator.itemgetter(0))
-        returned = scan_disks(1048576, test_mode=True)
+        returned = scan_disks(5242880, test_mode=True)
         returned.sort(key=operator.itemgetter(0))
         self.maxDiff = None
-        self.assertEqual(
+        self.assertListEqual(
             returned,
             expected_result,
             msg="sda data member & sdag4 ROOT member confusion regression:\n ",
         )
-        for returned_disk, expected_disk in zip(returned, expected_result):
-            self.assertDictEqual(returned_disk, expected_disk)
 
     def test_scan_disks_root_miss_attribution_min_reproducer(self):
         """
@@ -3245,21 +3264,21 @@ class OSITests(unittest.TestCase):
         /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_root_miss_attribution_min_reproducer
         """
         # Reproducer output:
-        # lsblk -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
+        # lsblk -P -p -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
         out = [
-            'NAME="sda" MODEL="WDC WD101EMAZ-11G7DA0" SERIAL="VCGRX3EN" SIZE="9.1T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
-            'NAME="sdag" MODEL="PNY CS900 120GB SSD" SERIAL="PNY0520228055010CFE7" SIZE="111.8G" TRAN="sata" VENDOR="ATA     " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdag1" MODEL="" SERIAL="" SIZE="2M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="" LABEL="" UUID=""',  # noqa E501
-            'NAME="sdag2" MODEL="" SERIAL="" SIZE="64M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="EFI" UUID="A48E-EDBF"',  # noqa E501
-            'NAME="sdag3" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="SWAP" UUID="42d2c6da-102d-49f2-948e-817a10e61370"',  # noqa E501
-            'NAME="sdag4" MODEL="" SERIAL="" SIZE="109.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="ROOT" UUID="4ac51b0f-afeb-4946-aad1-975a2a26c941"',  # noqa E501
+            'NAME="/dev/sda" MODEL="WDC WD101EMAZ-11G7DA0" SERIAL="VCGRX3EN" SIZE="9.1T" TRAN="sas" VENDOR="ATA     " HCTL="0:0:1:0" TYPE="disk" FSTYPE="btrfs" LABEL="JBOD" UUID="b86538f8-e447-48e5-84ec-b72a25c65282"',  # noqa E501
+            'NAME="/dev/sdag" MODEL="PNY CS900 120GB SSD" SERIAL="PNY0520228055010CFE7" SIZE="111.8G" TRAN="sata" VENDOR="ATA     " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdag1" MODEL="" SERIAL="" SIZE="2M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+            'NAME="/dev/sdag2" MODEL="" SERIAL="" SIZE="64M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="EFI" UUID="A48E-EDBF"',  # noqa E501
+            'NAME="/dev/sdag3" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="SWAP" UUID="42d2c6da-102d-49f2-948e-817a10e61370"',  # noqa E501
+            'NAME="/dev/sdag4" MODEL="" SERIAL="" SIZE="109.7G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="ROOT" UUID="4ac51b0f-afeb-4946-aad1-975a2a26c941"',  # noqa E501
             "",
         ]
         err = [""]
         rc = 0
         expected_result = [
             Disk(
-                name="sda",
+                name="/dev/sda",
                 model="WDC WD101EMAZ-11G7DA0",
                 serial="VCGRX3EN",
                 size=9771050598,
@@ -3275,7 +3294,7 @@ class OSITests(unittest.TestCase):
                 partitions={},
             ),
             Disk(
-                name="sdag4",
+                name="/dev/sdag",
                 model="PNY CS900 120GB SSD",
                 serial="PNY0520228055010CFE7",
                 size=115028787,
@@ -3288,9 +3307,8 @@ class OSITests(unittest.TestCase):
                 uuid="4ac51b0f-afeb-4946-aad1-975a2a26c941",
                 parted=True,
                 root=True,
-                partitions={},
+                partitions={"/dev/sdag4": "btrfs"},
             ),
-
         ]
         # As all serials are available via the lsblk we can avoid mocking
         # get_device_serial()
@@ -3302,16 +3320,14 @@ class OSITests(unittest.TestCase):
         # itemgetter(0) referenced the first item within our Disk
         # collection by which to sort (key) ie name. N.B. 'name' failed.
         expected_result.sort(key=operator.itemgetter(0))
-        returned = scan_disks(1048576, test_mode=True)
+        returned = scan_disks(5242880, test_mode=True)
         returned.sort(key=operator.itemgetter(0))
         self.maxDiff = None
-        self.assertEqual(
+        self.assertListEqual(
             returned,
             expected_result,
             msg="sda data member & sdag4 ROOT member confusion regression:\n ",
         )
-        for returned_disk, expected_disk in zip(returned, expected_result):
-            self.assertDictEqual(returned_disk, expected_disk)
 
     def test_get_byid_name_map_prior_command_mock(self):
         """
@@ -3579,6 +3595,9 @@ class OSITests(unittest.TestCase):
         """
         Test root_disk() for expected function of identifying the base device name for the
         root mount point by mocking a range of builtins.open("/proc/mounts") returns.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_root_disk
         """
 
         # common SD/microSD card reader/driver device name:
