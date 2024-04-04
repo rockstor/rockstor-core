@@ -77,7 +77,7 @@ MIN_DISK_SIZE = 5242880
 
 # A list of scan_disks() assigned roles: ie those that can be identified from
 # the output of lsblk with the following switches:
-# -P -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
+# -P -p -o NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID
 # and the post processing present in scan_disks()
 # LUKS currently stands for full disk crypto container.
 SCAN_DISKS_KNOWN_ROLES = [
@@ -100,11 +100,11 @@ class DiskMixin(object):
     @transaction.atomic
     def _update_disk_state():
         """
-        A db atomic method to update the database of attached disks / drives.
-        Works only on device serial numbers for drive identification.
-        Calls scan_disks to establish the current connected drives info.
-        Initially removes duplicate by serial number db entries to deal
-        with legacy db states and obfuscates all previous device names as they
+        A DB atomic method to update the database from attached disks / drives.
+        Works only on device serial for drive identification.
+        Calls scan_disks() to establish the current connected drives info.
+        Initially removes duplicate by serial DB entries to deal
+        with legacy DB states and obfuscates all previous device names as they
         are transient. The drive database is then updated with the attached
         disks info and previously known drives no longer found attached are
         marked as offline. All offline drives have their SMART availability and
@@ -112,247 +112,221 @@ class DiskMixin(object):
         availability assessed and activated if available.
         :return: serialized models of attached and missing disks via serial num
         """
-        # Acquire a list (namedtupil collection) of attached drives > min size
-        disks = scan_disks(MIN_DISK_SIZE)
+        attached_disks = scan_disks(MIN_DISK_SIZE)
+        all_attached_serials: list[str] = [d.serial for d in attached_disks]
         # Acquire a list of uuid's for currently unlocked LUKS containers.
         # Although we could tally these as we go by noting fstype crypt_LUKS
-        # and then loop through our db Disks again updating all matching
+        # and then loop through our DB Disks again updating all matching
         # base device entries, this approach helps to abstract this component
-        # and to localise role based db manipulations to our second loop.
+        # and to localise role based DB manipulations to our second loop.
         unlocked_luks_containers_uuids = get_unlocked_luks_containers_uuids()
-        serial_numbers_seen = []
+        db_serial_numbers_seen = []
         # Acquire a dictionary of crypttab entries, dev uuid as indexed.
         dev_uuids_in_crypttab = get_crypttab_entries()
         # Acquire a dictionary of temp_names (no path) to /dev/disk/by-id names
         byid_name_map = get_byid_name_map()
-        # Make sane our db entries in view of what we know we have attached.
-        # Device serial number is only known external unique entry, scan_disks
-        # make this so in the case of empty or repeat entries by providing
-        # fake serial numbers which are flagged via WebUI as unreliable.
-        # 1) Scrub all device names with unique but nonsense uuid4.
-        # 2) Mark all offline disks as such via db flag.
+        # Make sane our DB entries in view of attached_disks.
+        # Device serial is only-known external unique entity, scan_disks()
+        # retrieves & reports these where possible, but otherwise substitutes a
+        # fake-serial-* as a flag for the WebUI to indicate an un-trackable disk.
+        # 1) Replace all device names with detached-uuid4: until established otherwise.
+        # 2) Mark all offline disks as such via DB flag.
         # 3) Mark all offline disks smart available and enabled flags as False.
-        for do in Disk.objects.all():
-            # Replace all device names with a unique placeholder on each scan
+        for db_disk in Disk.objects.all():
+            # Replace all device names with a unique placeholder on each scan.
             # N.B. do not optimize by re-using uuid index as this could lead
-            # to a non refreshed webui acting upon an entry that is different
+            # to a non-refreshed WebUi acting upon an entry that is different
             # from that shown to the user.
-            do.name = "detached-" + str(uuid.uuid4()).replace("-", "")
-            do.save(update_fields=["name"])
-            # Delete duplicate or fake by serial number db disk entries.
-            # It makes no sense to save fake serial number drives between scans
-            # as on each scan the serial number is re-generated (fake) anyway.
-            # Serial numbers beginning with 'fake-serial-' are from scan_disks.
+            db_disk.name = "detached-" + str(uuid.uuid4()).replace("-", "")
+            db_disk.save(update_fields=["name"])
+            # Delete duplicate or fake by serial DB disk entries.
+            # It makes no sense to save DB entries with fake serials between scans
+            # as on each scan the serial is re-generated (fake) anyway.
+            # Serials beginning with 'fake-serial-' are from scan_disks().
             if (
-                (do.serial in serial_numbers_seen)
-                or (do.serial is None)
-                or (re.match("fake-serial-", do.serial) is not None)
+                (db_disk.serial in db_serial_numbers_seen)
+                or (db_disk.serial is None)
+                or (re.match("fake-serial-", db_disk.serial) is not None)
             ):
                 logger.info(
-                    "Deleting duplicate or fake (by serial) disk db "
-                    "entry. Serial = ({}).".format(do.serial)
+                    "Deleting duplicate or fake (by serial) disk DB entry. "
+                    f"Serial = ({db_disk.serial})."
                 )
-                # TODO: Post django update retrieve items deleted and log.
-                do.delete()  # django >=1.9 returns a dict of deleted items.
-                # Continue onto next db disk object as nothing more to process.
+                db_disk.delete()
                 continue
-            # first encounter of this serial in the db so stash it for
-            # reference
-            serial_numbers_seen.append(deepcopy(do.serial))
-            # Look for devices (by serial number) that are in the db but not in
-            # our disk scan, ie offline / missing.
-            if do.serial not in [d.serial for d in disks]:
-                # update the db entry as offline
-                do.offline = True
-                # disable S.M.A.R.T available and enabled flags.
-                do.smart_available = do.smart_enabled = False
-            do.save()  # make sure all updates are flushed to db
-        # Our db now has no device name info: all dev names are place holders.
-        # Iterate over attached drives to update the db's knowledge of them.
+            db_serial_numbers_seen.append(deepcopy(db_disk.serial))
+            if db_disk.serial not in all_attached_serials:
+                db_disk.offline = True
+                db_disk.smart_available = db_disk.smart_enabled = False
+            db_disk.save()  # make sure all updates are flushed to DB
+        # Our DB now has no device name info: all dev names are detached-uuid4 placeholders.
+        # Iterate over attached drives to update the DB accordingly.
         # Get temp_name (kernel dev names) to btrfs pool info for all attached.
         dev_pool_info = get_dev_pool_info()
-        for d in disks:
-            # start with an empty disk object
-            dob = None
-            # an empty dictionary of non scan_disk() roles
+        for attached in attached_disks:
+            pool_name = None  # Until we find otherwise.
             non_scan_disks_roles = {}
-            # and an empty dictionary of discovered roles
             disk_roles_identified = {}
-            # Convert our transient but just scanned so current sda type name
-            # to a more useful by-id type name as found in /dev/disk/by-id
-            # Note path is removed as we store, ideally, byid in Disk.name.
-            byid_disk_name, is_byid = get_dev_byid_name(d.name, remove_path=True)
-            # If the db has an entry with this disk's serial number then
-            # use this db entry and update the device name from our new scan.
-            if Disk.objects.filter(serial=d.serial).exists():
-                dob = Disk.objects.get(serial=d.serial)
+            # Convert our transient, but just scanned so current, sda type name
+            # to a more useful by-id type name as found in /dev/disk/by-id.
+            # Note path is removed as we store, ideally, byid in DB Disk.name.
+            byid_disk_name, is_byid = get_dev_byid_name(attached.name, remove_path=True)
+            # Use an existing DB entry if attached serial match exists.
+            if Disk.objects.filter(serial=attached.serial).exists():
+                dob = Disk.objects.get(serial=attached.serial)
                 dob.name = byid_disk_name
                 dob.save(update_fields=["name"])
             else:
-                # We have an assumed new disk entry as no serial match in db.
-                # Build a new entry for this disk.  N.B. we may want to force a
-                # fake-serial here if is_byid False, that way we flag as
-                # unusable disk as no by-id type name found.  It may already
-                # have been set though as the only by-id failures so far are
-                # virtio disks with no serial so scan_disks will have already
-                # given it a fake serial in d.serial.
-                dob = Disk(name=byid_disk_name, serial=d.serial, role=None)
-            # Update the db disk object (existing or new) with our scanned info
-            dob.size = d.size
-            dob.parted = d.parted
+                dob = Disk(name=byid_disk_name, serial=attached.serial, role=None)
+            dob.size = attached.size
+            dob.parted = attached.parted
             dob.offline = False  # as we are iterating over attached devices
-            dob.model = d.model
-            dob.transport = d.transport
-            dob.vendor = d.vendor
+            dob.model = attached.model
+            dob.transport = attached.transport
+            dob.vendor = attached.vendor
             # N.B. The Disk.btrfs_uuid is in some senses becoming misleading
             # as we begin to deal with Disk.role managed drives such as mdraid
-            # members and full disk LUKS drives where we can make use of the
+            # members and full disk LUKS drives where we make use of
             # non btrfs uuids to track filesystems or LUKS containers.
-            # Leaving as is for now to avoid db changes.
-            dob.btrfs_uuid = d.uuid
-            # If attached disk isn't btrfs:
-            if d.fstype != "btrfs":
-                # blank any btrfs related info it may have had previously.
-                # Pool affiliation addressed later in this loop.
-                # TODO: Consider moving later 'else dob.pool = None' to here.
-                dob.btrfs_uuid = None
-                dob.devid = 0
-                dob.allocated = 0
+            # Leaving as-is to avoid Disk DB field name changes.
+            # Used within Web-UI front-end via Handlebars Helper
+            # ('isNullPoolBtrfs', function (btrfsUid, poolName) to inform:
+            # import icon / existing unmanaged pool association.
+            dob.btrfs_uuid = attached.uuid
+
+            if attached.fstype == "btrfs":
+                # Find pool association, if any, of attached disk
+                # Use canonical 'btrfs fi show' source via get_dev_pool_info()
+                dev_name = attached.name
+                if attached.partitions != {}:  # could have btrfs fs from a partition?
+                    # d.partitions={'/dev/vdc1': 'vfat', '/dev/vdc2': 'btrfs'}
+                    for partition, fs in iter(attached.partitions.items()):
+                        if fs == "btrfs":  # We only allow one btrfs part / dev
+                            dev_name = partition
+                            if attached.root:  # btrfs-in-partition, on system disk:
+                                part_byid_name, is_byid = get_dev_byid_name(
+                                    partition, True
+                                )
+                                if is_byid:
+                                    disk_roles_identified["redirect"] = part_byid_name
+                            break
+                pool_info = dev_pool_info[dev_name]
+                # TODO: pool_info.uuid should be canonical: not pool_info.label
+                #  As we move to this posture the following will need attention.
+                #  And we already have btrfs uuid from attached.uuid.
+                pool_name = pool_info.label
+                # TODO: First call we reset none pool label member-count times!
+                # Corner case but room for efficiency improvement.
+                # Consider building a list of pools relabeled to address issue.
+                # N.B. 'system' for early source to rpm installs - openSUSE
+                if pool_name == "none" or pool_name == "system":
+                    pool_name = set_pool_label(pool_info.uuid, dev_name, attached.root)
+                # Update our disk database entry with btrfs specific data.
+                dob.devid = pool_info.devid
+                dob.size = pool_info.size
+                dob.allocated = pool_info.allocated
             dob.save()
+
             # ### BEGINNING OF ROLE FIELD UPDATE ###
-            # Update the role field with scan_disks findings.
-            # SCAN_DISKS_KNOWN_ROLES a list of scan_disks identifiable roles.
-            # Deal with legacy non json role field contents by erasure.
-            # N.B. We have a minor legacy issue in that prior to using json
-            # format for the db role field we stored one of 2 strings.
-            # If either of these 2 strings are found reset to db default of
-            # None.
-            # TODO: Can be removed post openSUSE as then no legacy installs.
-            if dob.role == "isw_raid_member" or dob.role == "linux_raid_member":
-                # These are the only legacy non json formatted roles used.
-                # Erase legacy role entries as we are about to update the role
-                # anyway and new entries will then be in the new json format.
-                # This helps to keeps the following role logic cleaner and
-                # existing mdraid members will be re-assigned if appropriate
-                # using the new json format.
-                dob.role = None
-                dob.save(update_fields=["role"])
-            # First extract all non scan_disks assigned roles so we can add
-            # them back later; all scan_disks assigned roles will be identified
-            # from our recent scan_disks data so we assert the new truth.
-            if dob.role is not None:  # db default null=True so None here.
+            # Update the role field with scan_disks() findings.
+            # SCAN_DISKS_KNOWN_ROLES a list of scan_disks() identifiable roles.
+            # First extract all non scan_disks() assigned roles so we can add
+            # them back later; all scan_disks() assigned roles will be identified
+            # from our recent scan_disks() data so we assert as truth.
+            if dob.role is not None:  # DB default null=True so None here.
                 # Get our previous roles into a dictionary
                 previous_roles = json.loads(dob.role)
-                # Preserve non scan_disks identified roles for this db entry
+                # Preserve non scan_disks() identified roles for this DB entry
                 non_scan_disks_roles = {
                     role: v
                     for role, v in previous_roles.items()
                     if role not in SCAN_DISKS_KNOWN_ROLES
                 }
-            if d.fstype == "isw_raid_member" or d.fstype == "linux_raid_member":
-                # MDRAID MEMBER: scan_disks() can informs us of the truth
-                # regarding mdraid membership via d.fstype indicators.
-                # create or update an mdraid dictionary entry
-                disk_roles_identified["mdraid"] = str(d.fstype)
-            if d.fstype == "crypto_LUKS":
-                # LUKS FULL DISK: scan_disks() can inform us of the truth
-                # regarding full disk LUKS containers which on creation have a
-                # unique uuid. Stash this uuid so we might later work out our
-                # container mapping. Currently required as only btrfs uuids
-                # are stored in the Disk model field. Also flag if we are the
-                # container for a currently open LUKS volume.
-                is_unlocked = d.uuid in unlocked_luks_containers_uuids
-                disk_roles_identified["LUKS"] = {
-                    "uuid": str(d.uuid),
-                    "unlocked": is_unlocked,
-                }
-                # We also inform this role of the current crypttab status
-                # of this device, ie: no entry = no "crypttab" key.
-                # Device listed in crypttab = dict key entry of "crypttab".
-                # If crypttab key entry then it's value is 3rd column ie:
-                # 'none' = password on boot
-                # '/root/keyfile-<uuid>' = full path to keyfile
-                # Note that we also set a boolean in the LUKS disk role of
-                # 'keyfileExists' true if a crypttab entry exists or if our
-                # default /root/keyfile-<uuid> exists, false otherwise.
-                # So the current keyfile takes priority when setting this flag.
-                # This may have to be split out later to discern the two states
-                # separately.
-                if d.uuid in dev_uuids_in_crypttab.keys():
-                    # Our device has a UUID= match in crypttab so save as
-                    # value the current cryptfile 3rd column entry.
-                    disk_roles_identified["LUKS"]["crypttab"] = dev_uuids_in_crypttab[
-                        d.uuid
-                    ]
-                    # if crypttab 3rd column indicates keyfile: does that
-                    # keyfile exist. N.B. non 'none' entry assumed to be
-                    # keyfile. Allows for existing user created keyfiles.
-                    # TODO: could be problematic during crypttab rewrite where
-                    # keyfile is auto named but we should self correct on our
-                    # next run, ie new file entry is checked there after.
-                    if dev_uuids_in_crypttab[d.uuid] != "none":
-                        disk_roles_identified["LUKS"]["keyfileExists"] = os.path.isfile(
-                            dev_uuids_in_crypttab[d.uuid]
-                        )
-                if "keyfileExists" not in disk_roles_identified["LUKS"]:
-                    # We haven't yet set our keyfileExists flag: ie no entry,
-                    # custom or otherwise, in crypttab to check or the entry
-                    # was "none". Revert to defining this flag against the
-                    # existence or otherwise of our native keyfile:
-                    disk_roles_identified["LUKS"][
-                        "keyfileExists"
-                    ] = native_keyfile_exists(d.uuid)
-            if d.type == "crypt":
-                # OPEN LUKS DISK: scan_disks() can inform us of the truth
-                # regarding an opened LUKS container which appears as a mapped
-                # device.
-                # disk_roles_identified['openLUKS'] = 'dm-name-%s' % d.name
-                luks_volume_status = get_open_luks_volume_status(d.name, byid_name_map)
-                disk_roles_identified["openLUKS"] = luks_volume_status
-            if d.fstype == "bcache":
-                # BCACHE: scan_disks() can inform us of the truth regarding
-                # bcache "backing devices" so we assign a role to avoid these
-                # devices being seen as unused and accidentally deleted. Once
-                # formatted with make-bcache -B they are accessed via a virtual
-                # device which should end up with a serial of bcache-(d.uuid)
-                # here we tag our backing device with it's virtual counterparts
-                # serial number.
-                disk_roles_identified["bcache"] = "bcache-%s" % d.uuid
-            if d.fstype == "bcachecdev":
-                # BCACHE: continued; here we use the scan_disks() added info
-                # of this bcache device being a cache device not a backing
-                # device, so it will have no virtual block device counterpart
-                # but likewise must be specifically attributed (ie to fast
-                # ssd type drives) so we flag in the role system differently.
-                disk_roles_identified["bcachecdev"] = "bcache-%s" % d.uuid
-            if d.fstype == "LVM2_member":
-                # LVM2 Physical Volume: scan_disks() can inform us of the truth
-                # regarding whole disk physical volumes via their fstype.
-                # Assigning a role to avoid these devices being seen as unused.
-                # The current value of this role is a placeholder and unused.
-                disk_roles_identified["LVM2member"] = str(d.fstype)
-            if d.root is True:
+            match attached.fstype:
+                case "crypto_LUKS":  # LUKS FULL DISK container:
+                    # On creation these have a unique uuid.
+                    # Stash this uuid so we might later work out our
+                    # container mapping. Currently required as only btrfs uuids
+                    # are stored in the Disk model field. Also flag if we are the
+                    # container for a currently open LUKS volume.
+                    is_unlocked = attached.uuid in unlocked_luks_containers_uuids
+                    disk_roles_identified["LUKS"] = {
+                        "uuid": str(attached.uuid),
+                        "unlocked": is_unlocked,
+                    }
+                    # We also inform this role of the current crypttab status
+                    # of this device, ie: no entry = no "crypttab" key.
+                    # Device listed in crypttab = dict key entry of "crypttab".
+                    # If crypttab key entry then it's value is 3rd column ie:
+                    # 'none' = password on boot
+                    # '/root/keyfile-<uuid>' = full path to keyfile
+                    # Note that we also set a boolean in the LUKS disk role of
+                    # 'keyfileExists' true if a crypttab entry exists or if our
+                    # default /root/keyfile-<uuid> exists, false otherwise.
+                    # So the current keyfile takes priority when setting this flag.
+                    # This may have to be split out later to discern the two states
+                    # separately.
+                    if attached.uuid in dev_uuids_in_crypttab.keys():
+                        # Our device has a UUID= match in crypttab so save as
+                        # value the current cryptfile 3rd column entry.
+                        disk_roles_identified["LUKS"][
+                            "crypttab"
+                        ] = dev_uuids_in_crypttab[attached.uuid]
+                        # if crypttab 3rd column indicates keyfile: does that
+                        # keyfile exist. N.B. non 'none' entry assumed to be
+                        # keyfile. Allows for existing user created keyfiles.
+                        # TODO: could be problematic during crypttab rewrite where
+                        # keyfile is auto named but we should self correct on our
+                        # next run, ie new file entry is checked there after.
+                        if dev_uuids_in_crypttab[attached.uuid] != "none":
+                            disk_roles_identified["LUKS"][
+                                "keyfileExists"
+                            ] = os.path.isfile(dev_uuids_in_crypttab[attached.uuid])
+                    if "keyfileExists" not in disk_roles_identified["LUKS"]:
+                        # We haven't yet set our keyfileExists flag: ie no entry,
+                        # custom or otherwise, in crypttab to check or the entry
+                        # was "none". Revert to defining this flag against the
+                        # existence or otherwise of our native keyfile:
+                        disk_roles_identified["LUKS"][
+                            "keyfileExists"
+                        ] = native_keyfile_exists(attached.uuid)
+                case "bcache":  # bcache "backing devices" avoidance role.
+                    # Once formatted with make-bcache -B they are accessed via a virtual
+                    # device which should end up with a serial of bcache-(d.uuid)
+                    # Tag our backing device with its virtual counterparts serial.
+                    disk_roles_identified["bcache"] = f"bcache-{attached.uuid}"
+                case "bcachecdev":  # bcache cache device
+                    disk_roles_identified["bcachecdev"] = f"bcache-{attached.uuid}"
+                case "isw_raid_member" | "linux_raid_member":
+                    disk_roles_identified["mdraid"] = str(attached.fstype)
+                case "LVM2_member":  # Use avoidance role: value is placeholder and unused.
+                    disk_roles_identified["LVM2member"] = str(attached.fstype)
+            if attached.type == "crypt":
+                # OPEN LUKS DISK: opened LUKS containers appear as mapped devices.
+                disk_roles_identified["openLUKS"] = get_open_luks_volume_status(
+                    attached.name, byid_name_map
+                )
+            if attached.root is True:
                 # ROOT DISK: scan_disks() has already identified the current
-                # truth regarding the device hosting our root '/' fs so update
-                # our role accordingly.
-                # N.B. value of d.fstype here is essentially a place holder as
-                # the presence or otherwise of the 'root' key is all we need.
-                disk_roles_identified["root"] = str(d.fstype)
-            if d.partitions != {}:
+                # truth regarding the device hosting our root '/' mount.
+                # N.B. the value of d.fstype here is unused.
+                # The presence or otherwise of the 'root' key is all we need.
+                disk_roles_identified["root"] = str(attached.fstype)
+            if attached.partitions != {}:
                 # PARTITIONS: scan_disks() has built an updated partitions dict
                 # so create a partitions role containing this dictionary.
                 # Convert scan_disks() transient (but just scanned so current)
                 # sda type names to a more useful by-id type name as found
                 # in /dev/disk/by-id for each partition name.
                 byid_partitions = {
-                    get_dev_byid_name(part, True)[0]: d.partitions.get(part, "")
-                    for part in d.partitions
+                    get_dev_byid_name(part, True)[0]: attached.partitions.get(part, "")
+                    for part in attached.partitions
                 }
                 # In the above we fail over to "" on failed index for now.
                 disk_roles_identified["partitions"] = byid_partitions
-            # Now we join the previous non scan_disks identified roles dict
-            # with those we have identified/updated from our fresh scan_disks()
-            # data and return the result to our db entry in json format.
+            # Join the saved non scan_disks() identified roles dict with those
+            # we have just identified/updated from our fresh scan_disks() run.
+            # Return the combination to our DB entry in json format.
             # Note that dict of {} isn't None
             if (non_scan_disks_roles != {}) or (disk_roles_identified != {}):
                 combined_roles = dict(non_scan_disks_roles, **disk_roles_identified)
@@ -361,150 +335,72 @@ class DiskMixin(object):
                 dob.role = None
             dob.save(update_fields=["role"])
             # ### END OF ROLE FIELD UPDATE ###
-            # Does our existing Pool db know of this disk's pool?
-            # Find pool association, if any, of the current disk:
-            pool_name = None  # Until we find otherwise.
-            if d.fstype == "btrfs":
-                # Use canonical 'btrfs fi show' source via get_dev_pool_info()
-                dev_name = d.name
-                if d.partitions != {}:  # could have btrfs fs from a partition?
-                    # d.partitions={'/dev/vdc1': 'vfat', '/dev/vdc2': 'btrfs'}
-                    for partition, fs in iter(d.partitions.items()):
-                        if fs == "btrfs":  # We only allow one btrfs part / dev
-                            dev_name = partition
-                            break
-                p_info = dev_pool_info[dev_name]
-                pool_name = p_info.label
-                # TODO: First call we reset none pool label member count times!
-                # Corner case but room for efficiency improvement.
-                # Consider building a list of pools relabeled to address issue.
-                # N.B. 'system' for early source to rpm installs - openSUSE
-                if pool_name == "none" or pool_name == "system":
-                    pool_name = set_pool_label(p_info.uuid, dev_name, d.root)
-                # Update our disk database entry with btrfs specific data.
-                dob.devid = p_info.devid
-                # For btrfs we override disk size with more relevant btrfs size
-                # which should also fix btrfs in partition size as whole disk.
-                dob.size = p_info.size
-                dob.allocated = p_info.allocated
-            # Quick 'not None' test first to avoid redundant lengthy db filter.
+
+            # Does our existing DB know of this disks' established pool association?
+            # Quick 'not None' test first to avoid redundant lengthy DB filter.
             if pool_name is not None and Pool.objects.filter(name=pool_name).exists():
-                # update the disk db object's pool field accordingly.
+                # update the Disk DB object's pool field accordingly.
                 dob.pool = Pool.objects.get(name=pool_name)
                 # this is for backwards compatibility. root pools created
                 # before the pool.role migration need this. It can safely be
                 # removed a few versions after 3.8-11 or when we reset
                 # migrations.
-                if d.root is True:
+                if attached.root is True:
                     dob.pool.role = "root"
                     dob.pool.save()
-            else:  # disk not member of db pool via get_dev_pool_info()
+            else:  # DB Disk not member of Rockstor Managed Pool via get_dev_pool_info()
+                # N.B. dob.btrfs_uuid unaltered as Web-UI indicator of existing btrfs.
+                dob.devid = 0
+                dob.allocated = 0
                 dob.pool = None
-            # If no db pool has yet been found for this disk and
-            # the attached disk is our root disk (flagged by scan_disks):
-            if dob.pool is None and d.root is True:
-                # setup our special root disk db entry in Pool
-                # Note system disk is still a 'special' case which doesn't use
-                # the redirect role (ie: _role_filter_disk_name) even thought
-                # it's a partition. So we use it's disk name directly for now.
-                # Consider using mount_status() parse to update root pool db on
-                # active (fstab initiated) compression setting: maybe a helper
-                # around osi/mount_status('/')
-                # We cannot use get_property('/', 'compression') as
-                # we enable pool wide compression via a mount option.
-                if pool_name is not None:
-                    logger.debug("++++ Creating special system pool db entry.")
-                    root_compression = "no"
-                    pool_raid_info = get_pool_raid_levels("/")
-                    root_raid = get_pool_raid_profile(pool_raid_info)
-                    # scan_disks() has already acquired our fs uuid so inherit.
-                    # We have already established btrfs as the fs type.
-                    p = Pool(
-                        name=pool_name,
-                        raid=root_raid,
-                        role="root",
-                        compression=root_compression,
-                        uuid=d.uuid,
-                    )
-                    p.save()
-                    p.disk_set.add(dob)
-                    # update disk db object to reflect special root pool status
-                    dob.pool = p
-                    dob.save()
-                    p.size = p.usage_bound()
-                    enable_quota(p)
-                    p.save()
-                else:
-                    # Likely unlabeled pool & auto label failed - system disk.
-                    logger.error(
-                        "Skipping system pool creation. Ensure the "
-                        "system disk has a unique serial."
-                    )
-            # save our updated db disk object
             dob.save()
-        # Update online db entries with S.M.A.R.T availability and status.
-        for do in Disk.objects.all():
-            # find all the not offline db entries
-            if not do.offline:
-                # We have an attached disk db entry.
-                # Since our Disk.name model now uses by-id type names we can
-                # do cheap matches to the beginnings of these names to find
-                # virtio, md, or sdcard devices which are assumed to have no
-                # SMART capability.
-                # We also disable devices smart support when they have a
-                # fake serial number as ascribed by scan_disks as any SMART
-                # data collected is then less likely to be wrongly associated
-                # with the next device that takes this temporary drive's name.
-                # Also note that with no serial number some device types will
-                # not have a by-id type name expected by the smart subsystem.
-                # This has only been observed in no serial virtio devices.
-                if (re.match("fake-serial-", do.serial) is not None) or (
-                    re.match("virtio-|md-|mmc-|nvme-|dm-name-luks-|bcache|nbd", do.name)
+        # Update online DB entries with S.M.A.R.T availability and status.
+        for db_disk in Disk.objects.all():
+            if not db_disk.offline:
+                if (re.match("fake-serial-", db_disk.serial) is not None) or (
+                    re.match("virtio-|md-|mmc-|dm-name-luks-|bcache|nbd", db_disk.name)
                     is not None
                 ):
-                    # Virtio disks (named virtio-*), md devices (named md-*),
-                    # and an sdcard reader that provides devs named mmc-* have
-                    # no smart capability so avoid cluttering logs with
-                    # exceptions on probing these with smart.available.
-                    # nvme not yet supported by CentOS 7 smartmontools:
-                    # https://www.smartmontools.org/ticket/657
-                    # Thanks to @snafu in rockstor forum post 1567 for this.
-                    do.smart_available = do.smart_enabled = False
+                    # Fake serial ignored as unreliable dev name.
+                    # Also note that with no serial, some device types will
+                    # not have a by-id type name: expected by the smart subsystem.
+                    # Virtio, md, and sdcards, have no smart capability: avoid logs spam.
+                    db_disk.smart_available = db_disk.smart_enabled = False
                     continue
-                # try to establish smart availability and status and update db
+                # try to establish smart availability and status and update DB
                 try:
                     # for non ata/sata drives
-                    do.smart_available, do.smart_enabled = smart.available(
-                        do.name, do.smart_options
+                    db_disk.smart_available, db_disk.smart_enabled = smart.available(
+                        db_disk.name, db_disk.smart_options
                     )
                 except Exception as e:
                     logger.exception(e)
-                    do.smart_available = do.smart_enabled = False
-            else:  # We have offline / detached Disk db entries.
+                    db_disk.smart_available = db_disk.smart_enabled = False
+            else:  # We have offline / detached Disk DB entries.
                 # Update detached disks previously know to a pool i.e. missing.
                 # After a reboot device name is lost and replaced by 'missing'
                 # so we compare via btrfs devid stored prior to detached state.
                 # N.B. potential flag mechanism to denote required reboot if
-                # missing device has non existent dev entry rather than missing
+                # missing device has non-existent dev entry rather than missing
                 # otherwise remove missing / detached fails with:
                 # "no missing devices found to remove".
                 # Suspect this will be fixed in future btrfs variants.
-                if do.pool is not None and do.pool.is_mounted:
-                    mnt_pt = "{}{}".format(settings.MNT_PT, do.pool.name)
+                if db_disk.pool is not None and db_disk.pool.is_mounted:
+                    mnt_pt = f"{settings.MNT_PT}{db_disk.pool.name}"
                     devid_usage = get_devid_usage(mnt_pt)
-                    if do.devid in devid_usage:
-                        dev_info = devid_usage[do.devid]
-                        do.size = dev_info.size
-                        do.allocated = dev_info.allocated
+                    if db_disk.devid in devid_usage:
+                        dev_info = devid_usage[db_disk.devid]
+                        db_disk.size = dev_info.size
+                        db_disk.allocated = dev_info.allocated
                     else:
-                        # Our device has likely been removed from this pool as
-                        # it's devid no longer show up in it's associated pool.
-                        # Reset all btrfs related elements for disk db object:
-                        do.pool = None
-                        do.btrfs_uuid = None
-                        do.devid = 0  # db default and int flag for None.
-                        do.allocated = 0  # No devid_usage = no allocation.
-            do.save()
+                        # Our device has likely been removed from this pool:
+                        # its devid no longer shows up in its associated pool.
+                        # Reset all btrfs related elements for disk DB object:
+                        db_disk.pool = None
+                        db_disk.btrfs_uuid = None
+                        db_disk.devid = 0  # DB default and int flag for None.
+                        db_disk.allocated = 0  # No devid_usage = no allocation.
+            db_disk.save()
         ds = DiskInfoSerializer(Disk.objects.all().order_by("name"), many=True)
         return Response(ds.data)
 
@@ -556,6 +452,24 @@ class DiskDetailView(rfc.GenericView):
                 if "redirect" in disk_role_dict:
                     disk_name = disk_role_dict.get("redirect", None)
             return disk_name
+        except:
+            e_msg = "Problem with role filter of disk ({}).".format(disk.name)
+            handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    def _role_filter_disk_isroot(disk, request):
+        """
+        Return Boolean on "root" index in disk.role
+        @param disk: disk object
+        @param request:
+        @return:
+        """
+        try:
+            if disk.role is not None:
+                disk_role_dict = json.loads(disk.role)
+                if "root" in disk_role_dict:
+                    return True
+            return False
         except:
             e_msg = "Problem with role filter of disk ({}).".format(disk.name)
             handle_exception(Exception(e_msg), request)
@@ -827,12 +741,21 @@ class DiskDetailView(rfc.GenericView):
             disk = self._validate_disk(did, request)
             disk_name = self._role_filter_disk_name(disk, request)
             p_info = get_pool_info(disk_name)
+            logger.debug(
+                f"_btrfs_disk_import using get_pool_info({disk_name}) = {p_info}"
+            )
             # Create our initial pool object, default to no compression.
+            p_info_role: str | None = None
+            if p_info["label"] == "ROOT" or self._role_filter_disk_isroot(
+                disk, request
+            ):
+                p_info_role = "root"
             po = Pool(
                 name=p_info["label"],
                 raid="unknown",
                 compression="no",
                 uuid=p_info["uuid"],
+                role=p_info_role,
             )
             # need to save it so disk objects get updated properly in the for
             # loop below.
@@ -855,11 +778,11 @@ class DiskDetailView(rfc.GenericView):
                 if isPartition:
                     # ensure a redirect role to reach this partition; ie:
                     # "redirect": "virtio-serial-3-part2"
-                    if do.role is not None:  # db default is null / None.
+                    if do.role is not None:  # DB default is null / None.
                         # Get our previous roles into a dictionary
                         roles = json.loads(do.role)
                         # update or add our "redirect" role with our part name
-                        roles["redirect"] = "%s" % device
+                        roles["redirect"] = f"{device}"
                         # convert back to json and store in disk object
                         do.role = json.dumps(roles)
                     else:
@@ -1130,7 +1053,7 @@ class DiskDetailView(rfc.GenericView):
             role_crypttab = roles["LUKS"]["crypttab"]
             if (
                 role_crypttab != "none"
-                and role_crypttab != "/root/keyfile-%s" % disk_uuid
+                and role_crypttab != f"/root/keyfile-{disk_uuid}"
             ):
                 custom_keyfile = True
         if crypttab_selection != "none" and crypttab_selection != "false":

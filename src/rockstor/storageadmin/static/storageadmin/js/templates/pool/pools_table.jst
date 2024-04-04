@@ -155,13 +155,18 @@
   </tbody>
 </table>
 {{ else }}
-<h4>No Pools have been created</h4>
+  <h3>No Rockstor managed Pools (btrfs volumes) were found.</h3>
+
+  - A preexisting Pool can be imported via any one of its Disk members:
+  <a href="#disks" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Disks</a>
+  </p>
+
 {{/if}}
 <div>
-    <a {{#if disksAvailable}}
-            href="#add_pool"
+    {{#if disksAvailable}}
+         - <a href="#add_pool"
         {{else}}
-            disabled title="There are no Disks available to create a Pool at this time.
+         - No Disks available to: <a disabled
         {{/if}}
     id="add_pool" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i>&nbsp;Create Pool</a>
 </div>
