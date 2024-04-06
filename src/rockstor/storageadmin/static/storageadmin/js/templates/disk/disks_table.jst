@@ -29,7 +29,23 @@
                 Click to delete it from the system if it is not to be reattached." rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
             {{/if}}
         {{else if (isRootDevice this.role)}}
-              <i class="glyphicon glyphicon-registration-mark" title="Rockstor System Drive." rel="tooltip"></i>
+            <i class="glyphicon glyphicon-registration-mark" title="Rockstor System Drive." rel="tooltip"></i>
+            {{#if this.parted}}
+                <i class="glyphicon glyphicon-tags" title="Btrfs in partition via auto Redirect Role." rel="tooltip"></i>
+                {{#if this.pool_name }}
+                    &nbsp;<i class="glyphicon glyphicon-map-marker" title="OS Drive partition (via auto Redirect Role) is mapped to a Pool" rel="tooltip"></i>
+                {{else}}
+                    &nbsp;<a href="#" class="btrfs_import" data-disk-id="{{this.id}}" title="Click to import System Pool (Advanced Users Only)" rel="tooltip">
+                    <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+                {{/if}}
+            {{else}}
+                {{#if this.pool_name }}
+                     &nbsp;<i class="glyphicon glyphicon-map-marker" title="OS Drive whole is mapped to a Pool" rel="tooltip"></i>
+                {{else}}
+                    &nbsp;<a href="#" class="btrfs_import" data-disk-id="{{this.id}}" title="Click to import Whole Disk System Pool (Advanced Users Only)" rel="tooltip">
+                    <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+                {{/if}}
+            {{/if}}
         {{else if (isLuksContainer this.role)}}
             {{#if this.parted}}
                 {{#if (isLuksContainerUnlocked this.role)}}
