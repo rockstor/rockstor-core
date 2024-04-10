@@ -61,9 +61,19 @@
     </tbody>
   </table>
   <a href="#add_share" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Create Share</a>
-{{ else }}
+{{else if poolsNotEmpty}}
       <h4>No shares have been created</h4>
       <a href="#add_share" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Create Share</a>
+{{else}}
+       <h3>A 'Share' (btrfs subvolume) is a portion of a Pool (btrfs volume).</h3>
+       <h4>No Rockstor managed Pools were found.</h4>
+
+       - A preexisting Pool can be imported via any one of its Disk members:
+       <a href="#disks" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i>&nbsp;Disks</a>
+       </p>
+       - Or a new Pool can be created:
+       <a href="#pools" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i>&nbsp;Pools</a>
+
 {{/if}}
 
 {{! Todo: maintain a common file and function for all modals? }}
