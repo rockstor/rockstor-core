@@ -1784,13 +1784,12 @@ class OSITests(unittest.TestCase):
 
     def test_scan_disks_btrfs_in_partition(self):
         """
-        Test btrfs in partition on otherwise generic install. System disk sda
-        data disk (for btrfs in partition) virtio with serial "serial-1"
-        prepared as follows with regard to partition / formatting:
+        Test btrfs in partition on an otherwise generic install. System disk sda
+        data disk (for btrfs in partition) virtio with serial "serial-1" 10 GB,
+        prepared as follows with regard to partitioning / formatting:
 
         First data set:
 
-        yum install dosfstools
         parted -a optimal /dev/disk/by-id/virtio-serial-1
         mklabel msdos
         mkpart primary fat32 1 50%

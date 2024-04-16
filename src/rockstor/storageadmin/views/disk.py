@@ -211,6 +211,9 @@ class DiskMixin(object):
                                     disk_roles_identified["redirect"] = part_byid_name
                             break
                 pool_info = dev_pool_info[dev_name]
+                # TODO: pool_info.uuid should be canonical: not pool_info.label
+                #  As we move to this posture the following will need attention.
+                #  And we already have btrfs uuid from attached.uuid.
                 pool_name = pool_info.label
                 # TODO: First call we reset none pool label member-count times!
                 # Corner case but room for efficiency improvement.
