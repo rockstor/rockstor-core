@@ -458,6 +458,25 @@ class DiskDetailView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
+    def _role_filter_disk_isroot(disk, request):
+        """
+        Return Boolean on "root" index in disk.role
+        @param disk: disk object
+        @param request:
+        @return:
+        """
+        try:
+            if disk.role is not None:
+                disk_role_dict = json.loads(disk.role)
+                if "root" in disk_role_dict:
+                    return True
+            return False
+        except:
+            e_msg = "Problem with role filter of disk ({}).".format(disk.name)
+            handle_exception(Exception(e_msg), request)
+
+
+    @staticmethod
     def _reverse_role_filter_name(disk_name, request):
         """
         Simple syntactic reversal of what _update_disk_state does to assign
@@ -724,12 +743,17 @@ class DiskDetailView(rfc.GenericView):
             disk = self._validate_disk(did, request)
             disk_name = self._role_filter_disk_name(disk, request)
             p_info = get_pool_info(disk_name)
+            logger.debug(f"_btrfs_disk_import using get_pool_info({disk_name}) = {p_info}")
             # Create our initial pool object, default to no compression.
+            p_info_role: str | None = None
+            if p_info["label"] == "ROOT" or self._role_filter_disk_isroot(disk, request):
+                p_info_role = "root"
             po = Pool(
                 name=p_info["label"],
                 raid="unknown",
                 compression="no",
                 uuid=p_info["uuid"],
+                role=p_info_role
             )
             # need to save it so disk objects get updated properly in the for
             # loop below.
