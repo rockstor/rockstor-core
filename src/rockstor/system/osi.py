@@ -137,12 +137,8 @@ Disk = collections.namedtuple(
 # Tuple (partition_name_regex, parent_dev_pattern)
 # - sda3 parent is sda, sdag3 parent is sdag
 # nvme, md, or mmcblk have partitions with 'p' + >= one digit e.g.:
-# - nvme0n1p4 | md126p3 | mmcblk0p2 parents  nvme0n1 | md126 | mmcblk0
-
+# - nvme0n1p4 | md126p3 | mmcblk0p2 parents are nvme0n1 | md126 | mmcblk0
 base_dev_patterns = [("sd|vd", "\d+"), ("nvme|md|mmcblk", "p\d+")]
-# Dictionary indexed by partition dev.name[5:7]: i.e. first two letters after "/dev/".
-# with base_dev_pattern
-
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -406,9 +402,9 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
         if is_partition:
             dev = dev._replace(parted=True)
             # Search our working dictionary of already scanned devices by name.
-            # now back port to the parent device its partitioned status and info.
+            # And backport to the parent device, its partitioned status and info.
             pattern: str = ""
-            for (name_regex, dev_pattern) in base_dev_patterns:
+            for name_regex, dev_pattern in base_dev_patterns:
                 if re.match(name_regex, dev.name[5:], re.ASCII) is not None:
                     pattern = dev_pattern
                     break
@@ -420,94 +416,48 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
                 base_dev_pattern = dname[5:] + pattern
                 # str[5:] strips "/dev/" from our full path names.
                 if re.fullmatch(base_dev_pattern, dev.name[5:], re.ASCII) is not None:
-                    logger.debug(f"({dname}) parent of partition ({dev.name})")
-                    # Our device name has a base/parent device entry of interest
-                    # saved: ie we have scanned and saved sdb, but we are now looking
-                    # at sdb3.  Given we have found a partition on an existing
-                    # base dev we should update that base dev's entry in dnames
-                    # to have `parted=True` as when parsing lsblk type of the base
-                    # device, it would have been disk or RAID1 or raid1 (for base
-                    # md dev).
-                    dnames[dname] = dnames[dname]._replace(parted=True)
-                    # Also take this opportunity to back-port software raid
-                    # info from partitions to the base device if the base
-                    # device doesn't already have an fstype identifying its
-                    # raid member status. For Example:- bios raid base dev
-                    # gives lsblk fstype="isw_raid_member"; we already catch
-                    # this directly.  Pure software mdraid base dev has lsblk
-                    # 'fstype=""' but a partition on this pure software mdraid
-                    # that is a member of eg md125 has fstype="linux_raid_member".
-                    # Add the same treatment for partitions hosting LUKS containers.
-                    if dev.fstype == "linux_raid_member" and (
-                        dnames[dname].fstype is None
-                    ):
-                        # We are a partition that is a mdraid raid member, so backport
-                        # this info to our base device, i.e. sda1 raid member, so
-                        # label sda's fstype= entry the same as its partition's
-                        # entry if the above condition is met, i.e. only if the
-                        # base device doesn't already have an fstype= entry i.e.
-                        # None, this way we don't overwrite / loose info and we
-                        # only need to have one partition identified as an
-                        # mdraid member to classify the entire device (the base
-                        # device) as a raid member, at least in part.
-                        dnames[dname] = dnames[dname]._replace(fstype=dev.fstype)
-                    if dev.fstype == "crypto_LUKS" and (dnames[dname].fstype is None):
-                        # As per mdraid, we backport to the base device LUKS
-                        # containers that live in partitions, as the base device
-                        # will have an fstype="", and as per mdraid we classify
-                        # the entire device as a LUKS container member, even if
-                        # it is only in part (ie this partition). But we only
-                        # backport this information if there currently exists
-                        # no fstype= on the base device, there by protecting
-                        # against fstype information loss on the base device.
-                        dnames[dname] = dnames[dname]._replace(
-                            fstype=dev.fstype, uuid=dev.uuid
-                        )
-                    # Akin to back porting a partitions' fstype to its base device,
-                    # as with 'linux_raid_member' above, we can do the
-                    # same for btrfs-in-partition.
-                    # This is intended to facilitate the user redirection role
-                    # so that the base disk can be labeled with its partitions fstype,
-                    # label (for pool updates), uuid, and size.
-                    # N.B. The base device info will end up pertaining to the
-                    # highest partition numbers details. Design limitation.
-                    if is_btrfs and dnames[dname].fstype is None:
-                        # We are a btrfs partition where the base device has no
-                        # fstype entry: backport: size, fstype, label, & uuid.
-                        dnames[dname] = dnames[dname]._replace(
-                            size=dev.size,
-                            fstype=dev.fstype,
-                            label=dev.label,
-                            uuid=dev.uuid,
-                        )
-                    # Build a dictionary of the partitions we find.
-                    # Back port our current name as a partition entry in our
-                    # base devices 'partitions' dictionary:
+                    logger.debug(
+                        f"({dname}) is parent of partition ({dev.name}): backporting info to parent."
+                    )
+                    # Our partition device name has a base/parent device entry of interest saved.
+                    # I.e. we have scanned and saved sdb previously, but we are now looking at sdb3.
+                    # Update our base dev's entry in dnames accordingly. Informs DB Disk.role related mechanisms.
                     parts: dict = dnames[dname].partitions.copy()
                     parts.update({dev.name: dev.fstype})
-                    dnames[dname] = dnames[dname]._replace(partitions=parts)
-                    # This dict is intended for use later in roles such as
-                    # import / export devices or external backup drives so
-                    # that the role config mechanism can offer up the known
-                    # partitions found so that the eventual configured role
-                    # will know which partition on the role based device to
-                    # work with and its current filesystem type.
-                    # There is a 'one role per device' limit, this helps with
-                    # usability, and reduces underlying disk management complexity.
+                    dnames[dname] = dnames[dname]._replace(
+                        partitions=parts, parted=True
+                    )
+                    # Also backport btrfs & software raid info, but only if base dev fstype is None.
+                    if dnames[dname].fstype is None:
+                        match dev.fstype:
+                            case "btrfs":  # btrfs-in-partition
+                                # N.B. Base device ultimately inherits the last listed partition's
+                                # details. Design limitation.
+                                dnames[dname] = dnames[dname]._replace(
+                                    size=dev.size,
+                                    fstype=dev.fstype,
+                                    label=dev.label,
+                                    uuid=dev.uuid,
+                                )
+                            case "crypto_LUKS":
+                                # Backport to the base device, LUKS containers that live in partitions,
+                                # as the base device will have an fstype="".
+                                dnames[dname] = dnames[dname]._replace(
+                                    fstype=dev.fstype, uuid=dev.uuid
+                                )
+                            case "linux_raid_member":  # mdraid partition member.
+                                # Bios raid base dev lsblk listing has fstype="isw_raid_member".
+                                # Pure software mdraid base dev lsblk listing has fstype="".
+                                dnames[dname] = dnames[dname]._replace(fstype=dev.fstype)
+            if is_btrfs:
+                # Skip now backported to parent btrrs-in-partition device
+                logger.debug("-- Skipping btrfs partition entry -")
+                continue
         if not is_partition or is_btrfs:
             # We have a non partition (base device). Or we have a device that is btrfs formatted.
-            # dev = dev._replace(root=is_root_disk)
-            if is_btrfs and is_partition:
-                # We have a btrfs filesystem.
-                # I.e. we are a whole disk or a partition with btrfs on.
-                # Most likely a current btrfs data drive or one we could import.
-                # Ignore / skip this btrfs device if it is a partition.
-                if is_partition:
-                    logger.debug("-- Skipping btrfs partition entry -")
-                    continue
-            # No more continues so the device we have is to be passed to our DB
+            # No more continues, so the device we have is to be passed to our DB
             # entry system views/disk.py: _update_disk_state().
-            # Do final tidy of data in dev and ready for entry in dnames dict.
+            # Do final tidy of data in dev, ready for entry into dnames dict.
             # DB needs unique serial, so provide one where there is None found.
             # First try harder with udev if lsblk failed on serial retrieval.
             if dev.serial is None or dev.serial == "" or always_use_udev_serial:
