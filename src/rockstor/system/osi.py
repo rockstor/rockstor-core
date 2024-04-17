@@ -342,9 +342,7 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
         dev: Disk = Disk(**blk_dev_properties)
         # Set up our line / dev dependant variables.
         # Easy read categorization flags.
-        is_root_disk: bool = False  # base dev that "/" is mounted on ie system disk
         is_partition: bool = False
-        is_btrfs: bool = False
         # md devices, such as mdadmin software raid and some hardware raid
         # block devices show up in lsblk's output multiple times with identical
         # info.  Given we only need one copy of this info we ignore duplicate
@@ -375,29 +373,19 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
         if re.match("/dev/md", dev.name) is not None:
             # cheap way to display our member drives
             dev = dev._replace(model=get_md_members(dev.name))
+
         # ------------ Start more complex classification -------------
         if dev.name == base_root_disk:  # as returned by root_disk()
-            # We are looking at the system drive that hosts, either
-            # directly or within a partition, the "/" mount point.
-            # Set readability flag as base_dev identified.
-            is_root_disk = True  # root as returned by root_disk()
-            # And until we find a partition on this root disk we will label it
-            # as our root, this then allows for non partitioned root devices
-            # such as mdraid installs where root is directly on eg /dev/md126.
-            # N.B. this assumes base devs are listed before their partitions.
+            # System drive that hosts, either directly or within a partition, the "/" mount point.
             dev = dev._replace(root=True)
 
-        # Normal partitions are of type 'part', md partitions are of type 'md'.
-        # Normal disks are of type 'disk', md devices are of type e.g. 'raid1'.
-        # Disk members of e.g. intel bios raid md devices: fstype='isw_raid_member'.
-        # Note for future re-write; when using udevadm DEVTYPE, partition and disk
+        # Normal partitions have type 'part', md partitions have type 'md'.
+        # Normal disks have type 'disk', md devices have type e.g. 'raid1'.
+        # Disk members of e.g. an intel bios raid device has fstype='isw_raid_member'.
+        # Note for future re-write: when using udevadm DEVTYPE, partition and disk
         # works for both raid and non raid partitions and devices.
-        # ----- Begin readability variables assignment:
         if dev.type == "part" or dev.type == "md":
-            is_partition = True
-        if dev.fstype == "btrfs":
-            is_btrfs = True
-        # End readability variables assignment
+            is_partition = True  # type 'md' is also a partition.
 
         if is_partition:
             dev = dev._replace(parted=True)
@@ -439,24 +427,23 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
                                     label=dev.label,
                                     uuid=dev.uuid,
                                 )
+                                break  # Assumed single parent dev, now updated: break search loop.
                             case "crypto_LUKS":
                                 # Backport to the base device, LUKS containers that live in partitions,
-                                # as the base device will have an fstype="".
+                                # as the base device will have fstype="".
                                 dnames[dname] = dnames[dname]._replace(
                                     fstype=dev.fstype, uuid=dev.uuid
                                 )
+                                break  # Assumed single parent dev, now updated: break search loop.
                             case "linux_raid_member":  # mdraid partition member.
                                 # Bios raid base dev lsblk listing has fstype="isw_raid_member".
                                 # Pure software mdraid base dev lsblk listing has fstype="".
-                                dnames[dname] = dnames[dname]._replace(fstype=dev.fstype)
-            if is_btrfs:
-                # Skip now backported to parent btrrs-in-partition device
-                logger.debug("-- Skipping btrfs partition entry -")
-                continue
-        if not is_partition or is_btrfs:
-            # We have a non partition (base device). Or we have a device that is btrfs formatted.
-            # No more continues, so the device we have is to be passed to our DB
-            # entry system views/disk.py: _update_disk_state().
+                                dnames[dname] = dnames[dname]._replace(
+                                    fstype=dev.fstype
+                                )
+                                break  # Assumed single parent dev, now updated: break search loop.
+            continue  # Partition info backported to parent device: we only manage parent devices.
+        else:  # Non partition (base device) of direct interest to our DB views/disk.py: _update_disk_state().
             # Do final tidy of data in dev, ready for entry into dnames dict.
             # DB needs unique serial, so provide one where there is None found.
             # First try harder with udev if lsblk failed on serial retrieval.
