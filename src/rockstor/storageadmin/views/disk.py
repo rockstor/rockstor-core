@@ -135,7 +135,7 @@ class DiskMixin(object):
         for db_disk in Disk.objects.all():
             # Replace all device names with a unique placeholder on each scan.
             # N.B. do not optimize by re-using uuid index as this could lead
-            # to a non refreshed WebUi acting upon an entry that is different
+            # to a non-refreshed WebUi acting upon an entry that is different
             # from that shown to the user.
             db_disk.name = "detached-" + str(uuid.uuid4()).replace("-", "")
             db_disk.save(update_fields=["name"])
@@ -294,18 +294,18 @@ class DiskMixin(object):
                     # Once formatted with make-bcache -B they are accessed via a virtual
                     # device which should end up with a serial of bcache-(d.uuid)
                     # Tag our backing device with its virtual counterparts serial.
-                    disk_roles_identified["bcache"] = "bcache-%s" % attached.uuid
+                    disk_roles_identified["bcache"] = f"bcache-{attached.uuid}"
                 case "bcachecdev":  # bcache cache device
-                    disk_roles_identified["bcachecdev"] = "bcache-%s" % attached.uuid
+                    disk_roles_identified["bcachecdev"] = f"bcache-{attached.uuid}"
                 case "isw_raid_member" | "linux_raid_member":
                     disk_roles_identified["mdraid"] = str(attached.fstype)
                 case "LVM2_member":  # Use avoidance role: value is placeholder and unused.
                     disk_roles_identified["LVM2member"] = str(attached.fstype)
-            if (
-                attached.type == "crypt"
-            ):  # OPEN LUKS DISK: opened LUKS containers appears as mapped dev.
-                luks_volume_status = get_open_luks_volume_status(attached.name, byid_name_map)
-                disk_roles_identified["openLUKS"] = luks_volume_status
+            if attached.type == "crypt":
+                # OPEN LUKS DISK: opened LUKS containers appear as mapped devices.
+                disk_roles_identified["openLUKS"] = get_open_luks_volume_status(
+                    attached.name, byid_name_map
+                )
             if attached.root is True:
                 # ROOT DISK: scan_disks() has already identified the current
                 # truth regarding the device hosting our root '/' mount.
@@ -358,14 +358,13 @@ class DiskMixin(object):
         for db_disk in Disk.objects.all():
             if not db_disk.offline:
                 if (re.match("fake-serial-", db_disk.serial) is not None) or (
-                    re.match("virtio-|md-|mmc-|nvme-|dm-name-luks-|bcache|nbd", db_disk.name)
+                    re.match("virtio-|md-|mmc-|dm-name-luks-|bcache|nbd", db_disk.name)
                     is not None
                 ):
                     # Fake serial ignored as unreliable dev name.
                     # Also note that with no serial, some device types will
                     # not have a by-id type name: expected by the smart subsystem.
                     # Virtio, md, and sdcards, have no smart capability: avoid logs spam.
-                    # Nvme was previously now supported by smartmontools.
                     db_disk.smart_available = db_disk.smart_enabled = False
                     continue
                 # try to establish smart availability and status and update DB
@@ -474,7 +473,6 @@ class DiskDetailView(rfc.GenericView):
         except:
             e_msg = "Problem with role filter of disk ({}).".format(disk.name)
             handle_exception(Exception(e_msg), request)
-
 
     @staticmethod
     def _reverse_role_filter_name(disk_name, request):
@@ -743,17 +741,21 @@ class DiskDetailView(rfc.GenericView):
             disk = self._validate_disk(did, request)
             disk_name = self._role_filter_disk_name(disk, request)
             p_info = get_pool_info(disk_name)
-            logger.debug(f"_btrfs_disk_import using get_pool_info({disk_name}) = {p_info}")
+            logger.debug(
+                f"_btrfs_disk_import using get_pool_info({disk_name}) = {p_info}"
+            )
             # Create our initial pool object, default to no compression.
             p_info_role: str | None = None
-            if p_info["label"] == "ROOT" or self._role_filter_disk_isroot(disk, request):
+            if p_info["label"] == "ROOT" or self._role_filter_disk_isroot(
+                disk, request
+            ):
                 p_info_role = "root"
             po = Pool(
                 name=p_info["label"],
                 raid="unknown",
                 compression="no",
                 uuid=p_info["uuid"],
-                role=p_info_role
+                role=p_info_role,
             )
             # need to save it so disk objects get updated properly in the for
             # loop below.
@@ -776,11 +778,11 @@ class DiskDetailView(rfc.GenericView):
                 if isPartition:
                     # ensure a redirect role to reach this partition; ie:
                     # "redirect": "virtio-serial-3-part2"
-                    if do.role is not None:  # db default is null / None.
+                    if do.role is not None:  # DB default is null / None.
                         # Get our previous roles into a dictionary
                         roles = json.loads(do.role)
                         # update or add our "redirect" role with our part name
-                        roles["redirect"] = "%s" % device
+                        roles["redirect"] = f"{device}"
                         # convert back to json and store in disk object
                         do.role = json.dumps(roles)
                     else:
@@ -1051,7 +1053,7 @@ class DiskDetailView(rfc.GenericView):
             role_crypttab = roles["LUKS"]["crypttab"]
             if (
                 role_crypttab != "none"
-                and role_crypttab != "/root/keyfile-%s" % disk_uuid
+                and role_crypttab != f"/root/keyfile-{disk_uuid}"
             ):
                 custom_keyfile = True
         if crypttab_selection != "none" and crypttab_selection != "false":
