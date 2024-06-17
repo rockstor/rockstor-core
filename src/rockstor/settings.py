@@ -203,8 +203,11 @@ INSTALLED_APPS = (
     "huey.contrib.djhuey",
 )
 
-# STATICFILES_STORAGE = "pipeline.storage.PipelineManifestStorage"
+# https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "pipeline.storage.PipelineManifestStorage",
     },
