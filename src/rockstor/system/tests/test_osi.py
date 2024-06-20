@@ -1638,6 +1638,90 @@ class OSITests(unittest.TestCase):
                 "expected = ({}).".format(returned, expected),
             )
 
+    def test_scan_disks_lsblk_parse_fail(self):
+        """
+        Testing releases 5.0.9-0 & 5.0.10-0 failed lsblk output parsing when values began with a space.
+        This test can collect other such parsing failures to avoid similar regressions of the dict comp
+        approach to extracting disk properties from lsblks output.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_lsblk_parse_fail
+        """
+        # E.g 'VENDOR="        "' failed with: "ValueError: not enough values to unpack (expected 2, got 1)"
+        # We use dictionary comprehension to parse lsblk output and rely on: 'line.strip().split('" ')'
+        # this breaks when a disk property begins with a space.
+        # See: https://github.com/rockstor/rockstor-core/issues/2853
+        # Reported/encountered/addressed failure concerns values consisting solely of whitespace.
+        out = [
+            [
+                'NAME="/dev/fd0" MODEL="" SERIAL="" SIZE="4K" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+                'NAME="/dev/sda" MODEL="ST18000NM000J-2T" SERIAL="ZR54RJQ2" SIZE="16.4T" TRAN="" VENDOR="        " HCTL="1:0:0:0" TYPE="disk" FSTYPE="btrfs" LABEL="Pool" UUID="f15ef88e-c734-49a9-9f5a-3bfaf40656d0"',  # noqa E501
+                'NAME="/dev/sdb" MODEL="Virtual Disk" SERIAL="6002248008e48f45909f67474b658d2a" SIZE="32G" TRAN="" VENDOR="Msft    " HCTL="0:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+                'NAME="/dev/sdb1" MODEL="" SERIAL="" SIZE="2M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="" LABEL="" UUID=""',  # noqa E501
+                'NAME="/dev/sdb2" MODEL="" SERIAL="" SIZE="64M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="EFI" UUID="1381-2428"',  # noqa E501
+                'NAME="/dev/sdb3" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="SWAP" UUID="ee6de8d5-eb1c-4d19-943c-0d24ecee92a7"',  # noqa E501
+                'NAME="/dev/sdb4" MODEL="" SERIAL="" SIZE="29.9G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="ROOT" UUID="46befa9e-b399-480d-b10d-338a4c875615"',  # noqa E501
+                "",
+            ]
+        ]
+        err = [[""]]
+        rc = [0]
+        expected_result = [
+            [
+                Disk(
+                    name="/dev/sda",
+                    model="ST18000NM000J-2T",
+                    serial="ZR54RJQ2",
+                    size=17609365913,
+                    transport=None,
+                    vendor=None,
+                    hctl="1:0:0:0",
+                    type="disk",
+                    fstype="btrfs",
+                    label="Pool",
+                    uuid="f15ef88e-c734-49a9-9f5a-3bfaf40656d0",
+                    parted=False,
+                    root=True,
+                    partitions={},
+                ),
+                Disk(
+                    name="/dev/sdb",
+                    model="Virtual Disk",
+                    serial="6002248008e48f45909f67474b658d2a",
+                    size=31352422,
+                    transport=None,
+                    vendor="Msft",
+                    hctl="0:0:0:0",
+                    type="disk",
+                    fstype="btrfs",
+                    label="ROOT",
+                    uuid="46befa9e-b399-480d-b10d-338a4c875615",
+                    parted=True,
+                    root=False,
+                    partitions={"/dev/sdb4": "btrfs"},
+                ),
+            ]
+        ]
+        # As all serials are available via the lsblk we can avoid mocking
+        # get_device_serial()
+        # And given no bcache we can also avoid mocking
+        # get_bcache_device_type()
+        # Iterate the test data sets for run_command running lsblk.
+        for o, e, r, expected in zip(out, err, rc, expected_result):
+            self.mock_run_command.return_value = (o, e, r)
+            # itemgetter(0) referenced the first item within our Disk
+            # collection by which to sort (key) ie name. N.B. 'name' failed.
+            expected.sort(key=operator.itemgetter(0))
+            returned = scan_disks(5242880, test_mode=True)
+            returned.sort(key=operator.itemgetter(0))
+            self.assertListEqual(
+                returned,
+                expected,
+                msg="Regression in parsing lsblk output:\n "
+                "returned = ({}).\n "
+                "expected = ({}).".format(returned, expected),
+            )
+
     def test_scan_disks_luks_sys_disk(self):
         """
         Test to ensure scan_disks() correctly identifies the CentOS, default
