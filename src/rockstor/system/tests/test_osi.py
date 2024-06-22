@@ -25,6 +25,7 @@ from system.osi import (
     run_command,
     replace_pattern_inline,
     root_disk,
+    get_libs,
 )
 
 
@@ -3905,3 +3906,117 @@ class OSITests(unittest.TestCase):
                     f"returned = {returned}.\n"
                     f"expected = {expected}.",
                 )
+
+    def test_get_libs(self):
+        """
+        Test get libs ldd wrapper.
+        TO RUN:
+        cd /opt/rockstor/src/rockstor/system/tests
+        /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_get_libs
+        """
+        # Leap 15.6 x86_64 `ldd /usr/bin/bash`
+        prog = ["/usr/bin/bash"]
+        out = [
+            [
+                "linux-vdso.so.1 (0x00007ffcd2518000)",
+                "libreadline.so.7 => /lib64/libreadline.so.7 (0x00007f061a400000)",
+                "libdl.so.2 => /lib64/libdl.so.2 (0x00007f061aca6000)",
+                "libc.so.6 => /lib64/libc.so.6 (0x00007f061a000000)",
+                "libtinfo.so.6 => /lib64/libtinfo.so.6 (0x00007f061ac75000)",
+                "/lib64/ld-linux-x86-64.so.2 (0x00007f061acb3000)",
+                "",
+            ]
+        ]
+        err = [[""]]
+        rc = [0]
+        expected_result = [
+            [
+                "/lib64/libreadline.so.7",
+                "/lib64/libdl.so.2",
+                "/lib64/libc.so.6",
+                "/lib64/libtinfo.so.6",
+                "/lib64/ld-linux-x86-64.so.2",
+            ]
+        ]
+        # Tumbleweed x86_64 `ldd /usr/bin/bash`
+        prog.append("/usr/bin/bash")
+        out.append(
+            [
+                "linux-vdso.so.1 (0x00007f1570574000)",
+                "libreadline.so.8 => /lib64/libreadline.so.8 (0x00007f1570423000)",
+                "libc.so.6 => /lib64/libc.so.6 (0x00007f1570200000)",
+                "libtinfo.so.6 => /lib64/libtinfo.so.6 (0x00007f15701c5000)",
+                "/lib64/ld-linux-x86-64.so.2 (0x00007f1570576000)",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(
+            [
+                "/lib64/libreadline.so.8",
+                "/lib64/libc.so.6",
+                "/lib64/libtinfo.so.6",
+                "/lib64/ld-linux-x86-64.so.2",
+            ]
+        )
+        # Tumbleweed aarch64 `ldd /usr/bin/bash`
+        prog.append("/usr/bin/bash")
+        out.append(
+            [
+                "linux-vdso.so.1 (0x0000ffff9085b000)",
+                "libreadline.so.8 => /lib64/libreadline.so.8 (0x0000ffff906a0000)",
+                "libc.so.6 => /lib64/libc.so.6 (0x0000ffff904e0000)",
+                "/lib/ld-linux-aarch64.so.1 (0x0000ffff9081e000)",
+                "libtinfo.so.6 => /lib64/libtinfo.so.6 (0x0000ffff90490000)",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(
+            [
+                "/lib64/libreadline.so.8",
+                "/lib64/libc.so.6",
+                "/lib/ld-linux-aarch64.so.1",
+                "/lib64/libtinfo.so.6",
+            ]
+        )
+        # Tumbleweed aarch64 `ldd /usr/bin/rsync`
+        prog.append("/usr/bin/rsync")
+        out.append(
+            [
+                "linux-vdso.so.1 (0x0000ffffbf6e4000)",
+                "libacl.so.1 => /lib64/libacl.so.1 (0x0000ffffbf5c0000)",
+                "libz.so.1 => /lib64/libz.so.1 (0x0000ffffbf580000)",
+                "libpopt.so.0 => /lib64/libpopt.so.0 (0x0000ffffbf550000)",
+                "liblz4.so.1 => /lib64/liblz4.so.1 (0x0000ffffbf510000)",
+                "libzstd.so.1 => /lib64/libzstd.so.1 (0x0000ffffbf450000)",
+                "libxxhash.so.0 => /lib64/libxxhash.so.0 (0x0000ffffbf420000)",
+                "libcrypto.so.3 => /lib64/libcrypto.so.3 (0x0000ffffbee00000)",
+                "libc.so.6 => /lib64/libc.so.6 (0x0000ffffbf260000)",
+                "/lib/ld-linux-aarch64.so.1 (0x0000ffffbf6a7000)",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(
+            [
+                "/lib64/libacl.so.1",
+                "/lib64/libz.so.1",
+                "/lib64/libpopt.so.0",
+                "/lib64/liblz4.so.1",
+                "/lib64/libzstd.so.1",
+                "/lib64/libxxhash.so.0",
+                "/lib64/libcrypto.so.3",
+                "/lib64/libc.so.6",
+                "/lib/ld-linux-aarch64.so.1",
+            ]
+        )
+        # p in prog is cosmetic as we mock run_command.
+        for p, o, e, r, expected in zip(prog, out, err, rc, expected_result):
+            self.mock_run_command.return_value = (o, e, r)
+            returned = get_libs(p)
+            self.maxDiff = None
+            self.assertListEqual(returned, expected)

@@ -28,6 +28,7 @@ MOUNT = "/usr/bin/mount"
 UMOUNT = "/usr/bin/umount"
 
 USERMOD = "/usr/sbin/usermod"
+LDD = "/usr/bin/ldd"
 
 SYSTEMCTL = "/usr/bin/systemctl"
 

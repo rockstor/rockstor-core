@@ -28,7 +28,7 @@ from tempfile import mkstemp
 import distro
 from django.conf import settings
 
-from system.osi import run_command
+from system.osi import run_command, get_libs
 from system.constants import (
     MKDIR,
     MOUNT,
@@ -73,6 +73,7 @@ SSHD_CONFIG = {
     ),
 }
 
+PROGS_IN_CHROOT = ["/usr/bin/bash", "/usr/bin/rsync"]
 
 def sshd_config_opener(path, flags):
     return os.open(path, flags, mode=stat.S_IRUSR | stat.S_IWUSR)
@@ -232,75 +233,24 @@ def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable="rw"):
 
 
 def rsync_for_sftp(chroot_loc):
+    """
+    Populate passed chroot_loc path with libraries sufficient for PROGS_IN_CHROOT.
+    Dependencies retrieved via ldd.
+    """
     user = chroot_loc.split("/")[-1]
-    run_command([MKDIR, "-p", "{}/bin".format(chroot_loc)], log=True)
-    run_command([MKDIR, "-p", "{}/usr/bin".format(chroot_loc)], log=True)
-    run_command([MKDIR, "-p", "{}/lib64".format(chroot_loc)], log=True)
-    run_command([MKDIR, "-p", "{}/usr/lib64".format(chroot_loc)], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/bin"], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/usr/bin"], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/lib64"], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/usr/lib64"], log=True)
 
-    copy("/bin/bash", "{}/bin".format(chroot_loc))
-    copy("/usr/bin/rsync", "{}/usr/bin".format(chroot_loc))
-
-    ld_linux_so = "/lib64/ld-linux-x86-64.so.2"
-    if platform.machine() == "aarch64":
-        ld_linux_so = "/lib64/ld-linux-aarch64.so.1"
-
-    libs_d = {
-        "rockstor": [
-            ld_linux_so,
-            "/lib64/libacl.so.1",
-            "/lib64/libattr.so.1",
-            "/lib64/libc.so.6",
-            "/lib64/libdl.so.2",
-            "/lib64/libpopt.so.0",
-            "/lib64/libtinfo.so.5",
-        ],
-        # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
-        "opensuse": [
-            "/lib64/libacl.so.1",
-            "/lib64/libz.so.1",
-            "/usr/lib64/libpopt.so.0",
-            "/usr/lib64/libslp.so.1",
-            "/lib64/libc.so.6",
-            "/lib64/libattr.so.1",
-            "/usr/lib64/libcrypto.so.1.1",
-            "/lib64/libpthread.so.0",
-            ld_linux_so,
-            "/lib64/libdl.so.2",
-            "/lib64/libreadline.so.7",
-            "/lib64/libtinfo.so.6",
-        ],
-        "opensuse-leap": [
-            "/lib64/libacl.so.1",
-            "/lib64/libz.so.1",
-            "/usr/lib64/libpopt.so.0",
-            "/usr/lib64/libslp.so.1",
-            "/lib64/libc.so.6",
-            "/lib64/libattr.so.1",
-            "/usr/lib64/libcrypto.so.1.1",
-            "/lib64/libpthread.so.0",
-            ld_linux_so,
-            "/lib64/libdl.so.2",
-            "/lib64/libreadline.so.7",
-            "/lib64/libtinfo.so.6",
-        ],
-        "opensuse-tumbleweed": [
-            "/lib64/libc.so.6",
-            "/usr/lib64/libacl.so.1",
-            "/lib64/libz.so.1",
-            "/usr/lib64/libpopt.so.0",
-            "/usr/lib64/libslp.so.1",
-            ld_linux_so,
-            "/usr/lib64/libcrypto.so.1.1",
-            "/lib64/libpthread.so.0",
-            "/lib64/libdl.so.2",
-            "/lib64/libreadline.so.8",
-            "/lib64/libtinfo.so.6",
-        ],
-    }
-
-    for l in libs_d[settings.OS_DISTRO_ID]:
-        copy(l, "{}{}".format(chroot_loc, l))
+    lib_list: list[str] = []
+    # Copy chroot binaries and resolve lib dependencies
+    for prog in PROGS_IN_CHROOT:
+        copy(prog, f"{chroot_loc}/usr/bin")
+        lib_list = lib_list + get_libs(prog)
+    # Copy libs for PROGS_IN_CHROOT to chroot
+    for lib in set(lib_list):
+        copy(lib, f"{chroot_loc}{lib}")
     run_command([USERMOD, "-s", "/bin/bash", user], log=True)
 
 
