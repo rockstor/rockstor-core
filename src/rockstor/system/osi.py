@@ -327,6 +327,8 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
         # lsblk example line (incomplete): 'NAME="/dev/sdb" MODEL="TOSHIBA MK1652GS" VENDOR="ATA     " LABEL="" UUID=""'
         # line.strip().split('" ') = ['NAME="/dev/sdb', 'MODEL="TOSHIBA MK1652GS', 'VENDOR="ATA     ', 'LABEL="', 'UUID=""']   # noqa E501
         # Device information built from each lsblk line in turn.
+        clean_line = re.sub('"\s+"', '""', line).strip()
+        # logger.debug(f"Scan_disks() using lsblk clean_line={clean_line}")
         blk_dev_properties: dict = {
             key.lower()
             if key != "TRAN"
@@ -334,7 +336,7 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
             if value.replace('"', "").strip() != ""
             else None
             for key, value in (
-                key_value.split("=") for key_value in line.strip().split('" ')
+                key_value.split("=") for key_value in clean_line.split('" ')
             )
         }
         logger.debug(f"Scan_disks() using: blk_dev_properties={blk_dev_properties}")
