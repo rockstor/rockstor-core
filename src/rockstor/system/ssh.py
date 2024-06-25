@@ -19,7 +19,6 @@ import collections
 import logging
 import os
 import re
-import platform
 import shutil
 import stat
 from shutil import move, copy
@@ -238,7 +237,6 @@ def rsync_for_sftp(chroot_loc):
     Dependencies retrieved via ldd.
     """
     user = chroot_loc.split("/")[-1]
-    run_command([MKDIR, "-p", f"{chroot_loc}/bin"], log=True)
     run_command([MKDIR, "-p", f"{chroot_loc}/usr/bin"], log=True)
     run_command([MKDIR, "-p", f"{chroot_loc}/lib64"], log=True)
     run_command([MKDIR, "-p", f"{chroot_loc}/usr/lib64"], log=True)
