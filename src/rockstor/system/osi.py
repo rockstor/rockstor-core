@@ -2006,7 +2006,7 @@ def get_libs(program_path: str) -> list[str]:
             line_fields: list = each_line.strip().split()
             match len(line_fields):
                 case 2:
-                    if re.match("linux-vdso", each_line) is not None:
+                    if re.match("linux-vdso", line_fields[0]) is not None:
                         continue
                     else:
                         libs.append(line_fields[0])

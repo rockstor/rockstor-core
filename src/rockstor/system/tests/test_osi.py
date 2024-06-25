@@ -3918,12 +3918,12 @@ class OSITests(unittest.TestCase):
         prog = ["/usr/bin/bash"]
         out = [
             [
-                "linux-vdso.so.1 (0x00007ffcd2518000)",
-                "libreadline.so.7 => /lib64/libreadline.so.7 (0x00007f061a400000)",
-                "libdl.so.2 => /lib64/libdl.so.2 (0x00007f061aca6000)",
-                "libc.so.6 => /lib64/libc.so.6 (0x00007f061a000000)",
-                "libtinfo.so.6 => /lib64/libtinfo.so.6 (0x00007f061ac75000)",
-                "/lib64/ld-linux-x86-64.so.2 (0x00007f061acb3000)",
+                "\tlinux-vdso.so.1 (0x00007ffcd2518000)",
+                "\tlibreadline.so.7 => /lib64/libreadline.so.7 (0x00007f061a400000)",
+                "\tlibdl.so.2 => /lib64/libdl.so.2 (0x00007f061aca6000)",
+                "\tlibc.so.6 => /lib64/libc.so.6 (0x00007f061a000000)",
+                "\tlibtinfo.so.6 => /lib64/libtinfo.so.6 (0x00007f061ac75000)",
+                "\t/lib64/ld-linux-x86-64.so.2 (0x00007f061acb3000)",
                 "",
             ]
         ]
@@ -3942,11 +3942,11 @@ class OSITests(unittest.TestCase):
         prog.append("/usr/bin/bash")
         out.append(
             [
-                "linux-vdso.so.1 (0x00007f1570574000)",
-                "libreadline.so.8 => /lib64/libreadline.so.8 (0x00007f1570423000)",
-                "libc.so.6 => /lib64/libc.so.6 (0x00007f1570200000)",
-                "libtinfo.so.6 => /lib64/libtinfo.so.6 (0x00007f15701c5000)",
-                "/lib64/ld-linux-x86-64.so.2 (0x00007f1570576000)",
+                "\tlinux-vdso.so.1 (0x00007f1570574000)",
+                "\tlibreadline.so.8 => /lib64/libreadline.so.8 (0x00007f1570423000)",
+                "\tlibc.so.6 => /lib64/libc.so.6 (0x00007f1570200000)",
+                "\tlibtinfo.so.6 => /lib64/libtinfo.so.6 (0x00007f15701c5000)",
+                "\t/lib64/ld-linux-x86-64.so.2 (0x00007f1570576000)",
                 "",
             ]
         )
@@ -3964,11 +3964,11 @@ class OSITests(unittest.TestCase):
         prog.append("/usr/bin/bash")
         out.append(
             [
-                "linux-vdso.so.1 (0x0000ffff9085b000)",
-                "libreadline.so.8 => /lib64/libreadline.so.8 (0x0000ffff906a0000)",
-                "libc.so.6 => /lib64/libc.so.6 (0x0000ffff904e0000)",
-                "/lib/ld-linux-aarch64.so.1 (0x0000ffff9081e000)",
-                "libtinfo.so.6 => /lib64/libtinfo.so.6 (0x0000ffff90490000)",
+                "\tlinux-vdso.so.1 (0x0000ffff9085b000)",
+                "\tlibreadline.so.8 => /lib64/libreadline.so.8 (0x0000ffff906a0000)",
+                "\tlibc.so.6 => /lib64/libc.so.6 (0x0000ffff904e0000)",
+                "\t/lib/ld-linux-aarch64.so.1 (0x0000ffff9081e000)",
+                "\tlibtinfo.so.6 => /lib64/libtinfo.so.6 (0x0000ffff90490000)",
                 "",
             ]
         )
@@ -3986,16 +3986,16 @@ class OSITests(unittest.TestCase):
         prog.append("/usr/bin/rsync")
         out.append(
             [
-                "linux-vdso.so.1 (0x0000ffffbf6e4000)",
-                "libacl.so.1 => /lib64/libacl.so.1 (0x0000ffffbf5c0000)",
-                "libz.so.1 => /lib64/libz.so.1 (0x0000ffffbf580000)",
-                "libpopt.so.0 => /lib64/libpopt.so.0 (0x0000ffffbf550000)",
-                "liblz4.so.1 => /lib64/liblz4.so.1 (0x0000ffffbf510000)",
-                "libzstd.so.1 => /lib64/libzstd.so.1 (0x0000ffffbf450000)",
-                "libxxhash.so.0 => /lib64/libxxhash.so.0 (0x0000ffffbf420000)",
-                "libcrypto.so.3 => /lib64/libcrypto.so.3 (0x0000ffffbee00000)",
-                "libc.so.6 => /lib64/libc.so.6 (0x0000ffffbf260000)",
-                "/lib/ld-linux-aarch64.so.1 (0x0000ffffbf6a7000)",
+                "\tlinux-vdso.so.1 (0x0000ffffbf6e4000)",
+                "\tlibacl.so.1 => /lib64/libacl.so.1 (0x0000ffffbf5c0000)",
+                "\tlibz.so.1 => /lib64/libz.so.1 (0x0000ffffbf580000)",
+                "\tlibpopt.so.0 => /lib64/libpopt.so.0 (0x0000ffffbf550000)",
+                "\tliblz4.so.1 => /lib64/liblz4.so.1 (0x0000ffffbf510000)",
+                "\tlibzstd.so.1 => /lib64/libzstd.so.1 (0x0000ffffbf450000)",
+                "\tlibxxhash.so.0 => /lib64/libxxhash.so.0 (0x0000ffffbf420000)",
+                "\tlibcrypto.so.3 => /lib64/libcrypto.so.3 (0x0000ffffbee00000)",
+                "\tlibc.so.6 => /lib64/libc.so.6 (0x0000ffffbf260000)",
+                "\t/lib/ld-linux-aarch64.so.1 (0x0000ffffbf6a7000)",
                 "",
             ]
         )
