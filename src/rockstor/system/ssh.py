@@ -238,6 +238,7 @@ def rsync_for_sftp(chroot_loc):
     """
     user = chroot_loc.split("/")[-1]
     run_command([MKDIR, "-p", f"{chroot_loc}/usr/bin"], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/lib"], log=True)
     run_command([MKDIR, "-p", f"{chroot_loc}/lib64"], log=True)
     run_command([MKDIR, "-p", f"{chroot_loc}/usr/lib64"], log=True)
 
