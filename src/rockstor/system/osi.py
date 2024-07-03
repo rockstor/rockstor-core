@@ -45,6 +45,7 @@ from system.constants import (
     DEFAULT_MNT_DIR,
     UDEVADM,
     SHUTDOWN,
+    LDD,
 )
 
 logger = logging.getLogger(__name__)
@@ -1990,6 +1991,28 @@ def get_devname(device_name, addPath=False):
             return fields[0]
     # a non one word reply was received on the first line from udevadm or
     return None
+
+
+def get_libs(program_path: str) -> list[str]:
+    """
+    Wrapper around `ldd program_path` 
+    @param program_path: Binary to query ldd about 
+    @return: list of OS paths or empty list if error or non found.
+    """
+    libs: list[str] = []
+    out, err, rc = run_command([LDD, f"{program_path}"], throw=False)
+    if len(out) > 0 and rc == 0:
+        for each_line in out:
+            line_fields: list = each_line.strip().split()
+            match len(line_fields):
+                case 2:
+                    if re.match("linux-vdso", line_fields[0]) is not None:
+                        continue
+                    else:
+                        libs.append(line_fields[0])
+                case 4:
+                    libs.append(line_fields[2])
+    return libs
 
 
 def update_hdparm_service(hdparm_command_list, comment):
