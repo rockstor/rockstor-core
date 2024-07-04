@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import copy
 import gzip
 import json
 import logging
@@ -74,7 +74,7 @@ def random_pass(length):
     return "".join((random.choice(all_chars)) for _ in range(length))
 
 
-def restore_users_groups(ml):
+def restore_users_groups(ml: list):
     logger.info("Started restoring users and groups.")
     users = []
     groups = []
@@ -100,19 +100,26 @@ def restore_users_groups(ml):
     logger.info("Finished restoring users and groups.")
 
 
-def restore_samba_exports(ml):
+def restore_samba_exports(ml: list):
+    """
+    Parse storageadmin model list from config-backup DB dump, to recreate
+    a system-native (by local Share ID) Samba share exports config.
+    @param ml: Model list (storageadmin)
+    """
     logger.info("Started restoring Samba exports.")
-    exports = []
+    conf_file_exports = []
+    native_exports = []
     for m in ml:
         if m["model"] == "storageadmin.sambashare":
-            exports.append(m["fields"])
-    for e in exports:
-        e["shares"] = []
-        e["shares"].append(e["share"])
-    generic_post("{}/samba".format(BASE_URL), exports)
+            conf_file_exports.append(m["fields"])
+    logger.debug(f"conf_file_exports={conf_file_exports}")
+    for export in conf_file_exports:
+        native_exports.append(transform_samba_export_share_id(export, ml))
+    logger.debug(f"native_exports={native_exports}")
+    generic_post(f"{BASE_URL}/samba", native_exports)
 
 
-def restore_nfs_exports(ml):
+def restore_nfs_exports(ml: list):
     logger.info("Started restoring NFS exports.")
     exports = []
     export_groups = {}
@@ -136,7 +143,7 @@ def restore_nfs_exports(ml):
     logger.info("Finished restoring NFS exports.")
 
 
-def restore_services(ml):
+def restore_services(ml: list):
     logger.info("Started restoring services.")
     services = {}
     for m in ml:
@@ -169,11 +176,11 @@ def restore_services(ml):
     logger.info("Finished restoring services.")
 
 
-def validate_service_status(ml, pkid):
+def validate_service_status(ml: list, pkid: int):
     """
     Parses a model list (ml) and returns True if the service identified by
     its id (pkid) was ON in the config backup.
-    :param ml: dict of models list
+    :param ml: list model dictionaries
     :param pkid: int
     :return: True
     """
@@ -236,6 +243,26 @@ def restore_scheduled_tasks(ml: list, sa_ml: list):
     for t in tasks:
         generic_post("{}/sm/tasks".format(BASE_URL), t)
     logger.info("Finished restoring scheduled tasks.")
+
+
+def transform_samba_export_share_id(samba_export: dict, ml: list) -> dict:
+    """
+    Transform samba export Share ID found in config-backup file, to native counterpart.
+    Share ID is DB generated and unique to a DB instance: so we require a transform
+    from storageadmin.sambashare.share DB dump in config-backup file, to current DB Share ID.
+    Original Share name is resolved from the config backup file via get_sname(),
+    and resolved to the native DB counterpart Share ID via get_target_share_id().
+    @param samba_export: dict of config-backup storageadmin.sambashare fields
+    @param ml: list of storageadmin models found in config-backup file
+    @return: native variant of samba_export
+    """
+    conf_share_id: int | None = samba_export.get("share", None)
+    if conf_share_id is not None:
+        native_share_id = get_target_share_id(get_sname(ml, conf_share_id))
+        transformed_export = copy.deepcopy(samba_export)
+        transformed_export["shares"] = [native_share_id]
+        return transformed_export
+    return {}
 
 
 def validate_task_definitions(ml: list, sa_ml: list) -> list:
@@ -576,8 +603,8 @@ def restore_config(cbid):
     fp = os.path.join(settings.MEDIA_ROOT, "config-backups", cbo.filename)
     gfo = gzip.open(fp)
     lines = gfo.readlines()
-    sa_ml = json.loads(lines[0])
-    sm_ml = json.loads(lines[1])
+    sa_ml: list = json.loads(lines[0])
+    sm_ml: list = json.loads(lines[1])
     gfo.close()
     restore_users_groups(sa_ml)
     restore_samba_exports(sa_ml)
