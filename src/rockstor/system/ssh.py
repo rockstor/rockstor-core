@@ -72,7 +72,8 @@ SSHD_CONFIG = {
     ),
 }
 
-PROGS_IN_CHROOT = ["/usr/bin/bash", "/usr/bin/rsync"]
+PROGS_IN_CHROOT = ["/usr/bin/bash", "/usr/bin/rsync", "/usr/bin/ls"]
+
 
 def sshd_config_opener(path, flags):
     return os.open(path, flags, mode=stat.S_IRUSR | stat.S_IWUSR)
@@ -250,7 +251,7 @@ def rsync_for_sftp(chroot_loc):
     # Copy libs for PROGS_IN_CHROOT to chroot
     for lib in set(lib_list):
         copy(lib, f"{chroot_loc}{lib}")
-    run_command([USERMOD, "-s", "/bin/bash", user], log=True)
+    run_command([USERMOD, "-s", "/usr/bin/bash", user], log=True)
 
 
 def is_pub_key(key):
