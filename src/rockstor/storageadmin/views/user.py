@@ -84,9 +84,7 @@ class UserMixin(object):
         input_fields = {}
         username = request.data.get("username", None)
         if username is None or re.match(settings.USERNAME_REGEX, username) is None:
-            e_msg = ("Username is invalid. It must conform to the regex: ({}).").format(
-                settings.USERNAME_REGEX
-            )
+            e_msg = f"Username is invalid. It must conform to the regex: ({settings.USERNAME_REGEX})."
             handle_exception(Exception(e_msg), request, status_code=400)
         if len(username) > 30:
             e_msg = "Username cannot be more than 30 characters long."
@@ -104,21 +102,19 @@ class UserMixin(object):
         input_fields["admin"] = admin
         shell = request.data.get("shell", "/bin/bash")
         if shell not in settings.VALID_SHELLS:
-            e_msg = ("Element shell ({}) is not valid. Valid shells are {}.").format(
-                shell, settings.VALID_SHELLS
-            )
+            e_msg = f"Element shell ({shell}) is not valid. Valid shells are {settings.VALID_SHELLS}."
             handle_exception(Exception(e_msg), request, status_code=400)
         input_fields["shell"] = shell
         email = request.data.get("email", None)
         input_fields["email"] = email
-        input_fields["homedir"] = request.data.get("homedir", "/home/%s" % username)
+        input_fields["homedir"] = request.data.get("homedir", f"/home/{username}")
         input_fields["uid"] = request.data.get("uid", None)
         if input_fields["uid"] is not None:
             try:
                 input_fields["uid"] = int(input_fields["uid"])
             except ValueError as e:
-                e_msg = ("UID must be an integer, try again. Exception: ({}).").format(
-                    e.__str__()
+                e_msg = (
+                    f"UID must be an integer, try again. Exception: ({e.__str__()})."
                 )
                 handle_exception(Exception(e_msg), request, status_code=400)
         input_fields["gid"] = request.data.get("gid", None)
@@ -126,8 +122,8 @@ class UserMixin(object):
             try:
                 input_fields["gid"] = int(input_fields["gid"])
             except ValueError as e:
-                e_msg = ("GID must be an integer, try again. Exception: ({}).").format(
-                    e.__str__()
+                e_msg = (
+                    f"GID must be an integer, try again. Exception: ({e.__str__()})."
                 )
                 handle_exception(Exception(e_msg), request, status_code=400)
         input_fields["group"] = request.data.get("group", None)
@@ -153,17 +149,13 @@ class UserListView(UserMixin, rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-
             invar = self._validate_input(request)
             # Check that a django user with the same name does not exist
-            e_msg = (
-                "User ({}) already exists. Please choose a different username."
-            ).format(invar["username"])
+            e_msg = f"User ({invar['username']}) already exists. Please choose a different username."
             if (
                 DjangoUser.objects.filter(username=invar["username"]).exists()
                 or User.objects.filter(username=invar["username"]).exists()
             ):
-
                 handle_exception(Exception(e_msg), request, status_code=400)
             users = combined_users()
             groups = combined_groups()
@@ -187,9 +179,7 @@ class UserListView(UserMixin, rfc.GenericView):
                 if u.username == invar["username"]:
                     handle_exception(Exception(e_msg), request, status_code=400)
                 elif u.uid == invar["uid"]:
-                    e_msg = (
-                        "UID ({}) already exists. Please choose a different one."
-                    ).format(invar["uid"])
+                    e_msg = f"UID ({invar['uid']}) already exists. Please choose a different one."
                     handle_exception(Exception(e_msg), request)
 
             if invar["admin"]:
@@ -254,9 +244,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
         with self._handle_exception(request):
             if username in self.exclude_list:
                 if username != "root":
-                    e_msg = ("Editing restricted user ({}) is not supported.").format(
-                        username
-                    )
+                    e_msg = f"Editing restricted user ({username}) is not supported."
                     handle_exception(Exception(e_msg), request)
             email = request.data.get("email", None)
             new_pw = request.data.get("password", None)
@@ -313,7 +301,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                     add_ssh_key(username, public_key, cur_public_key)
                     break
             if suser is None:
-                e_msg = "User ({}) does not exist.".format(username)
+                e_msg = f"User ({username}) does not exist."
                 handle_exception(Exception(e_msg), request)
 
             return Response(SUserSerializer(suser).data)
@@ -326,9 +314,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if username in self.exclude_list:
-                e_msg = ("Delete of restricted user ({}) is not supported.").format(
-                    username
-                )
+                e_msg = f"Delete of restricted user ({username}) is not supported."
                 handle_exception(Exception(e_msg), request)
 
             gid = None
@@ -346,7 +332,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                         found = True
                         break
                 if found is False:
-                    e_msg = "User ({}) does not exist.".format(username)
+                    e_msg = f"User ({username}) does not exist."
                     handle_exception(Exception(e_msg), request)
 
             for g in combined_groups():
@@ -365,8 +351,8 @@ class UserDetailView(UserMixin, rfc.GenericView):
             except Exception as e:
                 logger.exception(e)
                 e_msg = (
-                    "A low level error occurred while deleting the user ({})."
-                ).format(username)
+                    f"A low level error occurred while deleting the user ({username})."
+                )
                 handle_exception(Exception(e_msg), request)
 
             return Response()
