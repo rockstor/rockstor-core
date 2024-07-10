@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import logging
+import os.path
 import re
 import time
 from typing import List
@@ -41,6 +42,22 @@ TS_UI_SETTINGS = [
 ]
 logger = logging.getLogger(__name__)
 
+TS_NOT_INSTALLED_E_MSG = (
+    "Tailscale is NOT installed by default. "
+    "See docs How-tos & guides: `Tailscale install` "
+    "https://rockstor.com/docs/howtos/tailscale_install.html"
+)
+
+
+def tailscale_not_found(binary: str = TAILSCALE) -> OSError | None:
+    """
+    Check for TAILSCALE binary.
+    @param binary: full path expected.
+    """
+    if not os.path.isfile(binary):
+        raise FileNotFoundError
+    return None
+
 
 def tailscale_up(config: dict = None, timeout: int = None):
     """Start tailscale
@@ -49,6 +66,7 @@ def tailscale_up(config: dict = None, timeout: int = None):
     Adds the timeout flag is specified (used to generate authURL during the
     LOGIN action from the webUI).
     """
+    tailscale_not_found()
     # Construct tailscale up command
     cmd = [
         TAILSCALE,

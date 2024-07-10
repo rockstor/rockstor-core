@@ -23,6 +23,7 @@ from system.tailscale import (
     tailscale_up,
     validate_ts_hostname,
     tailscale_down,
+    tailscale_not_found,
 )
 
 
@@ -30,7 +31,6 @@ class TailscaleTests(unittest.TestCase):
     """
     The tests in this suite can be run via the following command:
     cd /opt/rockstor/src/rockstor
-    export DJANGO_SETTINGS_MODULE=settings
     poetry run django-admin test -p test_tailscale.py -v 2
     """
 
@@ -49,7 +49,7 @@ class TailscaleTests(unittest.TestCase):
         params.append("--shields-up")
         expected.append("shields_up")
 
-        for (param, exp) in zip(params, expected):
+        for param, exp in zip(params, expected):
             returned = extract_param(param)
             self.assertEqual(
                 returned,
@@ -169,6 +169,10 @@ class TailscaleTests(unittest.TestCase):
         self.patch_run_command = patch("system.tailscale.run_command")
         self.mock_run_command = self.patch_run_command.start()
         self.mock_run_command.return_value = [""], [""], 0
+        # mock tailscale_not_found()
+        self.patch_tailscale_not_found = patch("system.tailscale.tailscale_not_found")
+        self.mock_tailscale_not_found = self.patch_tailscale_not_found.start()
+        self.mock_tailscale_not_found.return_value = None
 
         # enable_ip_forwarding() should not be called
         config = {"hostname": "rockdevtest", "reset": "yes", "ssh": "yes"}
