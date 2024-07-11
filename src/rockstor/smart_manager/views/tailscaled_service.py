@@ -25,6 +25,7 @@ from smart_manager.models import Service
 from smart_manager.views.base_service import BaseServiceDetailView
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.util import handle_exception
+from system.exceptions import CommandException
 from system.services import systemctl
 from system.tailscale import (
     tailscale_up,
@@ -32,6 +33,7 @@ from system.tailscale import (
     get_ts_auth_url,
     tailscale_down,
     validate_ts_hostname,
+    TS_NOT_INSTALLED_E_MSG,
 )
 
 logger = logging.getLogger(__name__)
@@ -95,9 +97,20 @@ class TailscaledServiceView(BaseServiceDetailView):
             # to use it so we enable and start the tailscaled daemon.
             # This will create the tailscale tun device and allow us to get
             # an authURL during the "login" action
-            systemctl(self.name, "stop")
-            systemctl(self.name, "enable")
-            systemctl(self.name, "start")
+            try:
+                systemctl(self.name, "stop")
+                systemctl(self.name, "enable")
+                systemctl(self.name, "start")
+            except Exception as e:
+                logger.exception(e)
+                e_msg = "An error occurred with tailscaled.service."
+                if e.__class__ == CommandException:
+                    if e.err == [
+                        "Failed to stop tailscaled.service: Unit tailscaled.service not loaded.",
+                        "",
+                    ]:
+                        e_msg = TS_NOT_INSTALLED_E_MSG
+                handle_exception(Exception(e_msg), request)
 
         elif command == "start":
             config = None
@@ -112,7 +125,16 @@ class TailscaledServiceView(BaseServiceDetailView):
                 handle_exception(Exception(e_msg), request)
 
             # Start tailscale
-            tailscale_up(config=config)
+            # Account for install with restored Tailscale config, but no Tailscale installed.
+            try:
+                tailscale_up(config=config)
+            except Exception as e:
+                logger.exception(e)
+                if e.__class__ == FileNotFoundError:
+                    e_msg = TS_NOT_INSTALLED_E_MSG
+                else:
+                    e_msg = "An error occurred running `tailscale up`."
+                handle_exception(Exception(e_msg), request)
 
         elif command == "stop":
             config = None
