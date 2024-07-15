@@ -42,13 +42,14 @@ from fs.btrfs import (
     scrub_status_extra,
     get_pool_raid_profile,
 )
+from packaging.version import InvalidVersion
 
 
 """
 The tests in this suite can be run via the following commands:
 
 cd /opt/rockstor/src/rockstor/fs
-poetry run django-admin test --settings=settings -v 3 -p test_btrfs*
+poetry run django-admin test -v 3 -p test_btrfs*
 """
 
 
@@ -1000,21 +1001,31 @@ class BTRFSTests(unittest.TestCase):
 
     def test_btrfsprogs_legacy(self):
         """
-        Test btrfsprogs_legacy for expected function, of boolean return on depricated
+        Test btrfsprogs_legacy for expected function, of boolean return on deprecated
         btrfs version.
         """
         err = [""]
         rc = 0
-        # btrfs-progs v4.12
-        outset = [["btrfs-progs v4.12 ", ""]]  # e.g. Leap 15.2
+        # Leap 15.2
+        outset = [["btrfs-progs v4.12 ", ""]]
         is_legacy = [True]
-        outset.append(["btrfs-progs v4.19.1 ", ""])  # e.g. Leap 15.3
+        # Leap 15.3
+        outset.append(["btrfs-progs v4.19.1 ", ""])
         is_legacy.append(True)
-        outset.append(["btrfs-progs v5.14 ", ""])  # e.g. Leap 15.4
+        # Leap 15.4 & 15.5
+        outset.append(["btrfs-progs v5.14 ", ""])
         is_legacy.append(False)
-        outset.append(
-            ["btrfs-progs v6.1.8 ", ""]
-        )  # e.g. Leap 15.4 Stable Kernel Backports
+        # Older Stable Kernel Backports for 15.4 & 15.5
+        outset.append(["btrfs-progs v6.1.8 ", ""])
+        is_legacy.append(False)
+        # Leap 15.6
+        outset.append(['btrfs-progs v6.5.1 ', ''])
+        is_legacy.append(False)
+        # TW (July 2024)
+        outset.append(['btrfs-progs v6.9.2 ', ''])
+        is_legacy.append(False)
+        # Non PEP 440 'btrfs-progs version'
+        outset.append(['btrfs-progs NonsenseVersion ', ''])
         is_legacy.append(False)
         for out, expected_result in zip(outset, is_legacy):
             self.mock_run_command.return_value = (out, err, rc)
@@ -1022,9 +1033,10 @@ class BTRFSTests(unittest.TestCase):
             self.assertEqual(
                 result,
                 expected_result,
-                msg="Un-expected boolean returned: btrfsprogs_legacy. Mock ({}) "
-                "return expected ({})".format(out, result),
+                msg="Un-expected boolean returned: btrfsprogs_legacy. "
+                    f"Mock ({out}), result ({result}), expected ({expected_result})"
             )
+
 
     def test_scrub_status_raw_running_legacy(self):
         """
