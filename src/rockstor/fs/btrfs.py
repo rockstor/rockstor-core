@@ -1497,14 +1497,19 @@ def qgroup_destroy(qid, mnt_pt):
     return False
 
 
-def qgroup_is_assigned(qid, pqid, mnt_pt):
-    # Returns true if the given qgroup qid is already assigned to pqid for the
-    # path(mnt_pt)
+def qgroup_is_assigned(qid: str, pqid: str, mnt_pt: str) -> bool:
+    """
+    Returns true if quota group qid is assigned to parent quota group pqid,
+    for the Pool mount point mnt_pt. Parses "BTRFS qgroup show -pc mnt_pt"
+    @param qid: quota group id, i.e. "0/268"
+    @param pqid: parent quota group id, i.e. "2015/2"
+    @param mnt_pt: Mount point on Pool of interest
+    @return: qid is assigned to pqid for given pool
+    """
     cmd = [BTRFS, "qgroup", "show", "-pc", mnt_pt]
     try:
         o, e, rc = run_command(cmd, log=False)
     except CommandException as e:
-        # we may have quotas disabled so catch and deal.
         emsg = "ERROR: can't list qgroups: quotas not enabled"
         if e.err[0] == emsg:
             # No need to scan output as nothing to see with quotas disabled.
@@ -1513,41 +1518,15 @@ def qgroup_is_assigned(qid, pqid, mnt_pt):
             return True
         # otherwise we raise an exception as normal
         raise e
-    for l in o:
-        fields = l.split()
-        if (
-            len(fields) > 3
-            and fields[0] == qid
-            and
-            # Account for potential parent-child column inversion by
-            # checking both parent & child columns for parent qgroup match.
-            # Fixed upstream but observed in distro released btrfs-progs:
-            # see: https://github.com/kdave/btrfs-progs/issues/129
-            # Acknowledged correct:
-            # [0]               [1]         [2]     [3]     [4]
-            # qgroupid         rfer         excl parent  child
-            # 0/340        16.00KiB     16.00KiB 2015/2  ---
-            # 2015/2       16.00KiB     16.00KiB ---     0/340
-            # ie 2015/2 has a child of 0/340
-            #
-            # Acknowledged incorrect (observed in distro code):
-            # [0]               [1]         [2]     [3]     [4]
-            # qgroupid         rfer         excl parent  child
-            # 0/298       540.00KiB     32.00KiB ---     2015/1
-            # 2015/1      540.00KiB     32.00KiB 0/298   ---
-            # prior working comparison:
-            # fields[3] == pqid):
-            # TODO: enhance to accommodate for multiple listings via:
-            # pqid in fields[3].split(',') or the like.
-            # [0]               [1]         [2]     [3]     [4]
-            # qgroupid         rfer         excl parent  child
-            # 0/258        16.00KiB     16.00KiB 2015/1,2015/5 ---
-            # 0/311        16.00KiB     16.00KiB 2015/1        ---
-            # 0/313        16.00KiB     16.00KiB 2015/1        ---
-            # 2015/1       48.00KiB     48.00KiB ---     0/258,0/311,0/313
-            # ie 2015/1 has 3 children of 0/258,0/311,0/313
-            (fields[3] == pqid or fields[4] == pqid)
-        ):
+    #   [0]       [1]       [2]       [3]   [4]   [5]
+    # Qgroupid Referenced Exclusive Parent Child Path
+    for line in o:
+        fields = line.split()
+        if len(fields) <= 3:
+            continue
+        qgroupid: str = fields[0]
+        parent: str = fields[3]
+        if qgroupid == qid and pqid in parent.split(","):
             return True
     return False
 
@@ -1581,7 +1560,7 @@ def qgroup_assign(qid, pqid, mnt_pt):
         run_command([BTRFS, "qgroup", "assign", qid, pqid, mnt_pt], log=False)
     except CommandException as e:
         emsg = "ERROR: unable to assign quota group: Read-only file system"
-        # this is non fatal so we catch this specific error and info log it.
+        # this is non-fatal, so we catch this specific error and info log it.
         if e.err[0] == emsg:
             logger.info(
                 "Read-only fs ({}), skipping qgroup assign: "
@@ -1603,8 +1582,8 @@ def qgroup_assign(qid, pqid, mnt_pt):
             )
             return e.out, e.err, e.rc
         # N.B. we catch known errors and log to avoid blocking share imports.
-        # Newer btrfs schedules it's own quota rescans and with serialized quote changes
-        # these can overlap so we catch, log, and move on to avoid blocking imports.
+        # Newer btrfs schedules its own quota rescans and with serialized quote changes
+        # these can overlap, so we catch, log, and move on to avoid blocking imports.
         rescan_sched_out = "Quota data changed, rescan scheduled"
         rescan_sched_err = "ERROR: quota rescan failed: Operation now in progress"
         if e.err[0] == rescan_sched_err:

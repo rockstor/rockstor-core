@@ -41,8 +41,8 @@ from fs.btrfs import (
     scrub_status_raw,
     scrub_status_extra,
     get_pool_raid_profile,
+    qgroup_is_assigned,
 )
-from packaging.version import InvalidVersion
 
 
 """
@@ -407,6 +407,156 @@ class BTRFSTests(unittest.TestCase):
     #     self.mock_run_command.side_effect = Exception('mkfs error')
     #     self.assertFalse(is_subvol(mount_point),
     #                  msg='Did NOT return False for exception')
+
+    def test_qgroup_is_assigned(self):
+        """
+        Old and new btrfs-progs output for "BTRFS qgroup show -pc mnt_pt"
+        with expected results when parsed by qgroup_is_assigned() in the
+        context of passed qgroub and parent qgroup ids.
+        """
+        # We no longer account for btrfs-progs inverting parent child:
+        # see: https://github.com/kdave/btrfs-progs/issues/129
+        # fixed in btrfs-progs v4.17 mid 2018, so OK again in Leap 15.3+
+        err = [""]
+        rc = 0
+        mnt_pt = "/mnt2/fake"
+        # Akin to Leap 15.3 btrfs-progs (no path column)
+        # 0/340 has a parent 2015/2
+        qid_set = ["0/340"]
+        pqid_set = ["2015/2"]
+        out_set = [
+            [
+                "qgroupid         rfer         excl parent  child",
+                "0/340        16.00KiB     16.00KiB 2015/2  ---",
+                "2015/2       16.00KiB     16.00KiB ---     0/340",
+                "",
+            ]
+        ]
+        result_set = [True]
+        # 0/258 has 2 parents of 2015/1,2015/5
+        # This output may no loger be achievable.
+        qid_set.append("0/258")  # multiple parents
+        pqid_set.append("2015/5")
+        out_set.append(
+            [
+                "qgroupid         rfer         excl parent        child",
+                "0/258        16.00KiB     16.00KiB 2015/1,2015/5 ---",
+                "0/311        16.00KiB     16.00KiB 2015/1        ---",
+                "0/313        16.00KiB     16.00KiB 2015/1        ---",
+                "2015/1       48.00KiB     48.00KiB ---           0/258,0/311,0/313",
+                "",
+            ]
+        )
+        result_set.append(True)
+        # Leap 15.6 btrfs-progs v6.5.1
+        # qid 0/268 (sftp-share) has multiple (8) parents: multiple imports.
+        # qgroup_is_assigned(qid=0/268, pqid=2015/82, mnt_pt=/mnt2/rock-pool
+        # long list of prior, now unused, rockstor specific (2015/1-74) parents.
+        qid_set.append("0/268")
+        pqid_set.append("2015/82")
+        out_set.append(
+            [
+                "Qgroupid    Referenced    Exclusive Parent                                                          Child   Path ",  # noqa E501
+                "--------    ----------    --------- ------                                                          -----   ---- ",  # noqa E501
+                "0/5           16.00KiB     16.00KiB -                                                               -       <toplevel>",  # noqa E501
+                "0/268         16.00KiB     16.00KiB 2015/75,2015/76,2015/77,2015/78,2015/79,2015/80,2015/81,2015/82 -       sftp-share",  # noqa E501
+                "2015/1           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/2           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/3           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/4           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/5           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/6           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/7           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/8           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/9           0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/10          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/11          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/12          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/13          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/14          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/15          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/16          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/17          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/18          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/19          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/20          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/21          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/22          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/23          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/24          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/25          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/26          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/27          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/28          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/29          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/30          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/31          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/32          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/33          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/34          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/35          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/36          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/37          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/38          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/39          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/40          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/41          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/42          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/43          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/44          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/45          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/46          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/47          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/49          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/50          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/51          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/52          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/53          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/54          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/55          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/56          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/57          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/58          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/59          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/60          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/61          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/62          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/63          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/64          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/65          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/66          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/67          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/68          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/69          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/70          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/71          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/72          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/73          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/74          0.00B        0.00B -                                                               -       <0 member qgroups>",  # noqa E501
+                "2015/75       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "2015/76       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "2015/77       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "2015/78       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "2015/79       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "2015/80       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "2015/81       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "2015/82       16.00KiB     16.00KiB -                                                               0/268   <0 member qgroups>",  # noqa E501
+                "",
+            ]
+        )
+        result_set.append(True)
+        for qid, pqid, out, expected_result in zip(
+            qid_set, pqid_set, out_set, result_set
+        ):
+            self.mock_run_command.return_value = (out, err, rc)
+            result = qgroup_is_assigned(qid, pqid, mnt_pt)
+            self.assertEqual(
+                result,
+                expected_result,
+                msg="Un-expected boolean returned: "
+                f"qgroup_is_assigned(qid={qid}, pqid={pqid}, mnt_pt={mnt_pt}). "
+                f"Mock ({out}), result ({result}), expected ({expected_result})",
+            )
 
     def test_volume_usage(self):
         """
@@ -1019,13 +1169,13 @@ class BTRFSTests(unittest.TestCase):
         outset.append(["btrfs-progs v6.1.8 ", ""])
         is_legacy.append(False)
         # Leap 15.6
-        outset.append(['btrfs-progs v6.5.1 ', ''])
+        outset.append(["btrfs-progs v6.5.1 ", ""])
         is_legacy.append(False)
         # TW (July 2024)
-        outset.append(['btrfs-progs v6.9.2 ', ''])
+        outset.append(["btrfs-progs v6.9.2 ", ""])
         is_legacy.append(False)
         # Non PEP 440 'btrfs-progs version'
-        outset.append(['btrfs-progs NonsenseVersion ', ''])
+        outset.append(["btrfs-progs NonsenseVersion ", ""])
         is_legacy.append(False)
         for out, expected_result in zip(outset, is_legacy):
             self.mock_run_command.return_value = (out, err, rc)
@@ -1034,9 +1184,8 @@ class BTRFSTests(unittest.TestCase):
                 result,
                 expected_result,
                 msg="Un-expected boolean returned: btrfsprogs_legacy. "
-                    f"Mock ({out}), result ({result}), expected ({expected_result})"
+                f"Mock ({out}), result ({result}), expected ({expected_result})",
             )
-
 
     def test_scrub_status_raw_running_legacy(self):
         """
