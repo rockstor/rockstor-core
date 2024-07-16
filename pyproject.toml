@@ -72,6 +72,7 @@ psycopg = "~3"
 psycogreen = "==1.0"
 gevent = "*"  # can be an extra dependency to gunicorn.
 gunicorn = "*"
+packaging = "*"  # 'btrfs version' parsing.
 
 # [tool.poetry.group.tools.dependencies]
 six = "==1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib

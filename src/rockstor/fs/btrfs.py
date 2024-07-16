@@ -38,6 +38,7 @@ from huey.contrib.djhuey import task
 from django.conf import settings
 import logging
 from datetime import datetime
+from packaging.version import Version, InvalidVersion
 
 """
 system level helper methods to interact with the btrfs filesystem
@@ -1874,23 +1875,27 @@ def scrub_start(pool, force=False):
     return p.pid
 
 
-def btrfsprogs_legacy():
+def btrfsprogs_legacy() -> bool:
     """
-    Returns True if "btrfs version" considered legacy: i.e. < "v5.1.2" (approximately).
-    Previously used parse_version(btrfs_progs_version) < parse_version("v5.1.2"), this
-    was removed as it depended on setuptools and was overkill in this situation.
+    Returns True if "btrfs version" considered legacy: i.e. < "v5.1.2".
+    Example output of "btrfs version" is "btrfs-progs v6.5.1".
+    v4.12 (Leap 15.2), v4.19.1 (Leap 15.3), v5.14 (Leap 15.4 & 15.5),
+    v6.5.1 (Leap 15.6), v6.9.2 TW or Backports (July 2024).
+    For assumed version string schema:
+    https://packaging.python.org/en/latest/specifications/version-specifiers/#version-scheme
     :return: Legacy status.
-    :rtype Boolean
     """
-    legacy_version = [5, 1, 2]
+    legacy_version = Version("v5.1.2")
+    installed_version = Version("v6.7.8")  # Place-holder flag value
     out, err, rc = run_command([BTRFS, "version"])
-    # "btrfs-progs v5.14"
-    # e.g. v4.12 Leap 15.2, v4.19.1 Leap 15.3, v5.14 Leap 15.4 v6.1.3 Backports
-    btrfs_progs_version = out[0].split()[1].strip(" v").split(".")
-    # ["4", "12"], ["4", "19", "1"], ["5", "14"], ["6","1", "3"]
-    for index, element in enumerate(btrfs_progs_version):
-        if int(element) < legacy_version[index]:
-            return True
+    try:
+        installed_version = Version(out[0].split()[1])
+    except Exception as e:
+        logger.exception(e)
+        if not e.__class__ == InvalidVersion:
+            raise e
+    if installed_version < legacy_version:
+        return True
     return False
 
 
