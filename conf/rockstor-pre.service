@@ -3,9 +3,11 @@ Description=Tasks required prior to starting Rockstor
 After=rockstor-build.service
 After=postgresql.service
 After=NetworkManager.service
+After=chrony-wait.service
 Requires=rockstor-build.service
 Requires=postgresql.service
 Requires=NetworkManager.service
+Wants=chrony-wait.service
 
 [Service]
 WorkingDirectory=/opt/rockstor
