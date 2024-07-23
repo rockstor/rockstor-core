@@ -37,3 +37,10 @@ UDEVADM = "/usr/bin/udevadm"
 SHUTDOWN = "/sbin/shutdown"
 
 TAILSCALE = "/usr/bin/tailscale"
+
+# Major block device number:str to ignore (commonality ordered):
+# https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
+# 7: Loopback
+# 11: SCSI CD-ROM
+# 2: Floppy disks
+BLOCK_DEV_EXCLUDE: list[str] = ["7", "11", "2"]

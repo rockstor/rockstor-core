@@ -23,6 +23,8 @@ from tempfile import mkstemp
 
 from gevent import monkey
 
+from system.constants import BLOCK_DEV_EXCLUDE
+
 monkey.patch_all()
 
 from fs.btrfs import degraded_pools_found
@@ -616,16 +618,22 @@ class DisksWidgetNamespace(RockstorIO):
             cur_stats = {}
             interval = 1
             # TODO: Consider refactoring the following to use Disk.temp_name or
-            # TODO: building byid_disk_map from the same. Ideally we would have
-            # TODO: performance testing in place prior to this move.
+            #  building byid_disk_map from the same. Ideally we would have
+            #  performance testing in place prior to this move.
             # Build a list of our db's disk names, now in by-id type format.
             disks = [d.name for d in Disk.objects.all()]
-            # /proc/diskstats has lines of the following form:
+            # Older Leap kernels: /proc/diskstats has lines of the following form:
             #  8      64 sde 1034 0 9136 702 0 0 0 0 0 548 702
             #  8      65 sde1 336 0 2688 223 0 0 0 0 0 223 223
+            # TW (2024): more fields, and loop block device entries.
+            #  8       0 sda 2507 0 101712 388 0 0 0 0 0 264 388 0 0 0 0 0 0
+            #  7       0 loop0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
             with open(stats_file_path) as stats_file:
                 for line in stats_file.readlines():
                     fields = line.split()
+                    # Sanity check: available fields and block device blacklist
+                    if len(fields) < 14 or fields[0] in BLOCK_DEV_EXCLUDE:
+                        continue
                     # As the /proc/diskstats lines contain transient type names
                     # we need to convert those to our by-id db names.
                     byid_name = self.byid_disk_map[fields[2]]

@@ -3585,6 +3585,31 @@ class OSITests(unittest.TestCase):
                 "sda": "wwn-0x690b11c0223db60025bb4a6c79bc0d52",
             }
         )
+        # TW 20240716 VM with virtio & SCSI disks, plus SCSI CDROM.
+        out.append(
+            [
+                "total 0",
+                "lrwxrwxrwx 1 root root 10 Jul 23 10:37 virtio-112358-part3 -> ../../vda3",
+                "lrwxrwxrwx 1 root root 10 Jul 23 10:37 virtio-112358-part2 -> ../../vda2",
+                "lrwxrwxrwx 1 root root 10 Jul 23 10:37 virtio-112358-part1 -> ../../vda1",
+                "lrwxrwxrwx 1 root root  9 Jul 23 10:37 virtio-112358 -> ../../vda",
+                "lrwxrwxrwx 1 root root  9 Jul 23 10:37 ata-QEMU_HARDDISK_QM00003 -> ../../sda",
+                "lrwxrwxrwx 1 root root  9 Jul 23 10:37 ata-QEMU_DVD-ROM_QM00001 -> ../../sr0",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(
+            {
+                "vda3": "virtio-112358-part3",
+                "vda2": "virtio-112358-part2",
+                "vda1": "virtio-112358-part1",
+                "vda": "virtio-112358",
+                "sda": "ata-QEMU_HARDDISK_QM00003",
+                "sr0": "ata-QEMU_DVD-ROM_QM00001",
+            }
+        )
         for o, e, r, expected in zip(out, err, rc, expected_result):
             self.mock_run_command.return_value = (o, e, r)
             returned = get_byid_name_map()
