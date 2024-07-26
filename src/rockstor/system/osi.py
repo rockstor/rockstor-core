@@ -304,6 +304,7 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
     :return: List containing Disk: namedtuple members of interest.
     """
     base_root_disk = root_disk()  # /dev/sda if /dev/sda3, or md126 if md126p2
+    # TODO Add MAJ:MIN in concert with system.constants BLOCK_DEV_EXCLUDE
     cmd = [
         LSBLK,
         "-P",
@@ -353,7 +354,7 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
         if dev.name in device_names_seen:
             continue
         device_names_seen.append(dev.name)
-        # We are not interested in CD / DVD rom devices.
+        # We are not interested in CD / DVD rom devices, see: BLOCK_DEV_EXCLUDE.
         if dev.type == "rom":
             continue
         # We are not interested in swap devices.
@@ -373,6 +374,7 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
             continue
         # ----- Now we are done with easy exclusions we begin classification.
         # If md device, populate otherwise unused MODEL with basic member/raid summary.
+        # /dev/md devices have major id "9"
         if re.match("/dev/md", dev.name) is not None:
             # cheap way to display our member drives
             dev = dev._replace(model=get_md_members(dev.name))
@@ -1743,20 +1745,20 @@ def get_dev_byid_name(device_name, remove_path=False):
     return return_name, is_byid
 
 
-def get_byid_name_map():
+def get_byid_name_map() -> dict:
     """Simple wrapper around 'ls -lr /dev/disk/by-id' which returns a current
-    mapping of all attached by-id device names to their sdX counterparts. When
-    multiple by-id names are found for the same sdX device then the longest is
+    mapping of all attached by-id device names to their base counterparts. When
+    multiple by-id names are found for the same base device then the longest is
     preferred, or when equal in length then the first listed is used. Intended
-    as a light weight helper for the Dashboard disk activity widget or other
-    non critical components. For critical components use only:
+    as a light-weight helper for the Dashboard disk activity widget or other
+    non-critical components. For critical components use only:
     get_dev_byid_name() and get_devname() as they contain sanity checks and
     validation mechanisms and are intended to have more repeatable behaviour
     but only work on a single device at a time.  A single call to this method
-    can provide all current by-id device names mapped to their sdX counterparts
+    can provide all current by-id device names mapped to their base counterparts
     with the latter being the index.
-    :return: dictionary indexed (keyed) by sdX type names with associated by-id
-    type names as the values, or an empty dictionary if a non zero return code
+    :return: dictionary indexed (keyed) by canonical (base) names with associated by-id
+    type names as the values, or an empty dictionary if a non-zero return code
     was encountered by run_command or no by-id type names were encountered.
     """
     byid_name_map = {}
@@ -1776,8 +1778,7 @@ def get_byid_name_map():
             # Split the line by spaces and '/' chars
             line_fields = each_line.replace("/", " ").split()
             # Grab every sda type name from the last field in the line and add
-            # it as a dictionary key with it's value as the by-id type name so
-            # we can index by sda type name and retrieve the by-id. As there
+            # it as a dictionary key with its value as the by-id type name. As there
             # are often multiple by-id type names for a given sda type name we
             # gain consistency in mapped by-id value by always preferring the
             # longest by-id for a given sda type name key.
