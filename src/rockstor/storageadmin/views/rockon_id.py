@@ -73,7 +73,6 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
     @transaction.atomic
     def post(self, request, rid, command):
         with self._handle_exception(request):
-
             if not docker_status():
                 e_msg = "Docker service is not running. Start it and try again."
                 handle_exception(Exception(e_msg), request)
@@ -107,6 +106,9 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                 dev_map = request.data.get("devices", {})
                 cc_map = request.data.get("cc", {})
                 env_map = request.data.get("environment", {})
+                logger.debug(
+                    f"install request with share_map={share_map}, port_map={port_map}, dev_map={dev_map}, cc_map={cc_map}, env_map={env_map}"
+                )
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
                     for sname in share_map.keys():
