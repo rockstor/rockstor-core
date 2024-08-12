@@ -79,8 +79,14 @@ ROOT_SUBVOL_EXCLUDE = [
     "@/.snapshots",
     ".snapshots",
 ]
-# Note in the above we have a non symmetrical exclusions entry of '@/.snapshots
+# Note in the above we have a non-symmetrical exclusions entry of '@/.snapshots
 # this is to help distinguish our .snapshots from snapper's rollback subvol.
+
+# Create subvolume blacklist to avoid name clash with default ROOT pool.
+# Used in addition to ROOT_SUBVOL_EXCLUDE. From 5.0.9-0 we no longer auto-import
+# the system (ROOT) pool.
+CREATE_SUBVOL_EXCLUDE = ["home", "@/home"]
+
 # System-wide subvolume exclude list.
 SUBVOL_EXCLUDE = [".beeshome", "@/.beeshome"]
 
