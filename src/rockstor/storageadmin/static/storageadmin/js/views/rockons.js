@@ -807,7 +807,11 @@ RockonEnvironment = RockonCustomChoice.extend({
         }
         var env_map = {};
         var envars = this.custom_config.filter(function(cvar) {
-            env_map[cvar.get('key')] = this.$('#' + cvar.id).val();
+            co_id = cvar.get('container');
+            if(env_map[co_id] == undefined) {
+                env_map[co_id] = {};
+            }
+            env_map[co_id][cvar.get('key')] = this.$('#' + cvar.id).val();
             return cvar;
         }, this);
         this.model.set('env_map', env_map);
