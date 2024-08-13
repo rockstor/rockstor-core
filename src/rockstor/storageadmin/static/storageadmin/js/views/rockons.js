@@ -838,12 +838,18 @@ RockonInstallSummary = RockstorWizardPage.extend({
 
     render: function() {
         RockstorWizardPage.prototype.render.apply(this, arguments);
+        var container_env_map = {}
+        for (const [container, container_envs] of Object.entries(this.env_map)) {
+            for (const [env, value] of Object.entries(container_envs)) {
+                container_env_map[`${env}:container-id:${container}`] = value
+            }
+        }
         this.$('#ph-summary-table').html(this.table_template({
             share_map: this.share_map,
             port_map: this.port_map,
             cc_map: this.cc_map,
             dev_map: this.dev_map,
-            env_map: this.env_map
+            env_map: container_env_map
         }));
         return this;
     },
