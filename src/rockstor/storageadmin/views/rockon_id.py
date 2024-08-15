@@ -73,7 +73,6 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
     @transaction.atomic
     def post(self, request, rid, command):
         with self._handle_exception(request):
-
             if not docker_status():
                 e_msg = "Docker service is not running. Start it and try again."
                 handle_exception(Exception(e_msg), request)
@@ -107,8 +106,12 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                 dev_map = request.data.get("devices", {})
                 cc_map = request.data.get("cc", {})
                 env_map = request.data.get("environment", {})
+                logger.debug(
+                    f"install request with share_map={share_map}, port_map={port_map}, dev_map={dev_map}, cc_map={cc_map}, env_map={env_map}"
+                )
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
+                    co_id = str(co.id)
                     for sname in share_map.keys():
                         dest_dir = share_map[sname]
                         if not Share.objects.filter(name=sname).exists():
@@ -175,15 +178,16 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                         cco = DCustomConfig.objects.get(rockon=rockon, key=c)
                         cco.val = cc_map[c]
                         cco.save()
-                    for e in env_map.keys():
-                        if not DContainerEnv.objects.filter(
-                            container=co, key=e
-                        ).exists():
-                            e_msg = ("Invalid environment variable ({}).").format(e)
-                            handle_exception(Exception(e_msg), request)
-                        ceo = DContainerEnv.objects.get(container=co, key=e)
-                        ceo.val = env_map[e]
-                        ceo.save()
+                    if co_id in env_map:
+                        for e in env_map[co_id].keys():
+                            if not DContainerEnv.objects.filter(
+                                container=co, key=e
+                            ).exists():
+                                e_msg = ("Invalid environment variable ({}).").format(e)
+                                handle_exception(Exception(e_msg), request)
+                            ceo = DContainerEnv.objects.get(container=co, key=e)
+                            ceo.val = env_map[co_id][e]
+                            ceo.save()
                 task_result_handle = install(rockon.id)
                 rockon.taskid = task_result_handle.id
                 rockon.state = "pending_install"
