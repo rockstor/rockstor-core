@@ -112,19 +112,23 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
                     co_id = str(co.id)
-                    for sname in share_map.keys():
-                        dest_dir = share_map[sname]
-                        if not Share.objects.filter(name=sname).exists():
-                            e_msg = "Invalid share ({}).".format(sname)
-                            handle_exception(Exception(e_msg), request)
-                        if DVolume.objects.filter(
-                            container=co, dest_dir=dest_dir
-                        ).exists():
-                            so = Share.objects.get(name=sname)
-                            vo = DVolume.objects.get(container=co, dest_dir=dest_dir)
-                            vo.share = so
-                            vo.save()
-                    # {'host_port' : 'container_port', ... }
+                    # share_map={'2': {'share-name1': '/etc/bareos'}, '3': {'share-name2': '/etc/bareos'}
+                    if co_id in share_map:
+                        for sname in share_map[co_id].keys():
+                            dest_dir = share_map[co_id][sname]
+                            if not Share.objects.filter(name=sname).exists():
+                                e_msg = "Invalid share ({}).".format(sname)
+                                handle_exception(Exception(e_msg), request)
+                            if DVolume.objects.filter(
+                                container=co, dest_dir=dest_dir
+                            ).exists():
+                                so = Share.objects.get(name=sname)
+                                vo = DVolume.objects.get(
+                                    container=co, dest_dir=dest_dir
+                                )
+                                vo.share = so
+                                vo.save()
+                    # port_map={'host_port': 'container_port', ... }
                     for p in port_map.keys():
                         if DPort.objects.filter(hostp=p).exists():
                             dup_po = DPort.objects.get(hostp=p)
@@ -178,6 +182,7 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                         cco = DCustomConfig.objects.get(rockon=rockon, key=c)
                         cco.val = cc_map[c]
                         cco.save()
+                    # env_map={'85': {'PASSWORD': '***'}, '86': {'DB_ADMIN_PASSWORD': '+++', ...}, ...}
                     if co_id in env_map:
                         for e in env_map[co_id].keys():
                             if not DContainerEnv.objects.filter(
