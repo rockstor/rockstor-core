@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+ * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
  *
  * Rockstor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -22,7 +22,6 @@
  * for the JavaScript code in this page.
  *
  */
-
 
 PoolAddDisks = RockstorWizardPage.extend({
 
