@@ -12,17 +12,18 @@ documentation = "https://rockstor.com/docs/"
 readme = "README.md"
 keywords = ["linux", "NAS", "appliance", "btrfs"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3 :: Only", # at least initially
     # The "license" property should auto-invoke License classifier/classifiers.
 ]
 authors = [
-    "The Rockstor Project <support@linuxlines.com>",
+    "The Rockstor Project <support@rockstor.com>",
 ]
 maintainers = [
-    "Philip Paul Guyton <support@linuxlines.com>",
+    "Philip Paul Guyton <support@rockstor.com>",
+    "Flox <support@rockstor.com>",
 ]
 # Source0: (rockstor-core) is GPL-3.0-or-later, Source1: (rockstor-jslibs) has mixed licensing:
 license = "GPL-3.0-or-later AND (MIT AND Apache-2.0 AND GPL-3.0-or-later AND LGPL-3.0-or-later AND ISC)"
