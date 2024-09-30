@@ -51,9 +51,13 @@ poetry self show plugins >> poetry-install.txt
 poetry install -vvv --no-interaction --no-ansi >> poetry-install.txt 2>&1
 echo
 
+# Source package version from pyproject.toml's (version = "5.0.14") via `poetry version` output:
+# e.g. "rockstor 5.0.14"
+ROCKSTOR_VERSION=$(poetry version | sed 's/rockstor //')
+
 # Add js libs. See: https://github.com/rockstor/rockstor-jslibs
 # Set jslibs_version of GitHub release:
-jslibs_version=5.0.14
+jslibs_version=$ROCKSTOR_VERSION
 jslibs_url=https://github.com/rockstor/rockstor-jslibs/archive/refs/tags/"${jslibs_version}".tar.gz
 
 #  Check for rpm embedded, or previously downloaded jslibs.
@@ -84,7 +88,7 @@ fi
 /usr/bin/gpg --quick-generate-key --batch --passphrase '' rockstor@localhost || true
 # Init 'pass' in .env defined PASSWORD_STORE_DIR using above GPG key, and generate Django SECRET_KEY
 set -o allexport
-echo "Sourcing ${pwd}.env"
+echo "Sourcing $(pwd).env"
 source .env  # also read by rockstor-build.service
 set +o allexport
 /usr/bin/pass init rockstor@localhost
