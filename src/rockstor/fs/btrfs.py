@@ -1181,7 +1181,7 @@ def remove_share(pool, share_name, pqgroup, force=False):
     # TODO: Consider also using the following command to allow delete of the
     # initial (anomalous) temp replication snap as share; but this also blindly
     # circumvents ro 'protection' for any other share!
-    # set_property(subvol_mnt_pt, 'ro', 'false', mount=False)
+    # set_property(subvol_mnt_pt, 'ro', 'false', mount=False, force=True)
     toggle_path_rw(subvol_mnt_pt, rw=True)
     if force:
         o, e, rc = run_command([BTRFS, "subvolume", "list", "-o", subvol_mnt_pt])
@@ -2308,9 +2308,16 @@ def btrfs_uuid(disk):
     return o[0].split()[3]
 
 
-def set_property(mnt_pt, name, val, mount=True):
+def set_property(mnt_pt, name, val, mount=True, force=False):
+    """
+    https://btrfs.readthedocs.io/en/latest/btrfs-property.html
+    https://btrfs.readthedocs.io/en/latest/btrfs-subvolume.html
+    """
     if mount is not True or is_mounted(mnt_pt):
-        cmd = [BTRFS, "property", "set", mnt_pt, name, val]
+        if not force:
+            cmd = [BTRFS, "property", "set", mnt_pt, name, val]
+        else:
+            cmd = [BTRFS, "property", "set", "-f", mnt_pt, name, val]
         return run_command(cmd)
 
 
