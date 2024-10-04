@@ -2,24 +2,24 @@
 <table class="table table-condensed table-bordered table-hover table-striped tablesorter">
 <thead>
   <tr>
-     <th>Resource type&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Type of the system resource on Rockstor. Eg: Share, port numbers etc.. Custom type is for arbitrary variables needed by the Rock-on that may not map to a system resource." rel="tooltip"></i></th>
-    <th>Name&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Name of the resource according to Rockstor. Eg: Share names, port numbers etc.." rel="tooltip"></i></th>
-    <th>Mapped representation&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Name/representation of the resource inside the Rock-on. Eg: Shares map to directories, ports map to (possibly different)ports to send traffic to the Rock-on, etc.." rel="tooltip"></i></th>
+    <th>Resource type&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Eg: Share, Port, Environmental variable etc. Custom type is for arbitrary variables needed by the Rock-on that may not map to an external resource." rel="tooltip"></i></th>
+    <th>Internal Reference&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Resource reference from inside the Rock-on/docker-containers. E.g.: internal directories, internal port numbers, Environmental variable names, etc.." rel="tooltip"></i></th>
+    <th>External Reference / Configured value&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Rockstor's reference for the given resource. E.g.: mapped Share, external Port, Environment variable value configured, etc.." rel="tooltip"></i></th>
   </tr>
 </thead>
 {{#each volumes}}
     <tr>
         <td>Share</td>
-        <td>{{this.share_name}}</td>
         <td>{{this.dest_dir}}</td>
+        <td>{{this.share_name}}</td>
     </tr>
 {{/each}}
 {{display_newVolumes}}
 {{#each ports}}
     <tr>
         <td>Port</td>
-        <td>{{this.hostp}}</td>
         <td>{{this.containerp}}{{isPublished this.id this.publish}}</td>
+        <td>{{this.hostp}}</td>
         <!--<td>{{this.containerp}}{{isPublished this.id}}</td>-->
     </tr>
 {{/each}}
@@ -37,22 +37,22 @@
 {{#each cc}}
     <tr>
         <td>Custom</td>
-        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
         <td>{{this.key}}</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
     </tr>
 {{/each}}
 {{#each device}}
     <tr>
         <td>Device</td>
-        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
         <td>{{this.dev}}</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
     </tr>
 {{/each}}
 {{#each env}}
     <tr>
         <td>Env</td>
-        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
         <td>{{this.key}}</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
     </tr>
 {{/each}}
 {{#each labels}}
