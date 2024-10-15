@@ -1650,11 +1650,6 @@ class OSITests(unittest.TestCase):
         cd /opt/rockstor/src/rockstor/system/tests
         /opt/rockstor/.venv/bin/python -m unittest test_osi.OSITests.test_scan_disks_lsblk_parse_fail
         """
-        # E.g 'VENDOR="        "' failed with: "ValueError: not enough values to unpack (expected 2, got 1)"
-        # We use dictionary comprehension to parse lsblk output and rely on: 'line.strip().split('" ')'
-        # this breaks when a disk property begins with a space.
-        # See: https://github.com/rockstor/rockstor-core/issues/2853
-        # Reported/encountered/addressed failure concerns values consisting solely of whitespace.
         out = [
             [
                 'NAME="/dev/fd0" MODEL="" SERIAL="" SIZE="4K" TRAN="" VENDOR="" HCTL="" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
@@ -1664,6 +1659,7 @@ class OSITests(unittest.TestCase):
                 'NAME="/dev/sdb2" MODEL="" SERIAL="" SIZE="64M" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="vfat" LABEL="EFI" UUID="1381-2428"',  # noqa E501
                 'NAME="/dev/sdb3" MODEL="" SERIAL="" SIZE="2G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="swap" LABEL="SWAP" UUID="ee6de8d5-eb1c-4d19-943c-0d24ecee92a7"',  # noqa E501
                 'NAME="/dev/sdb4" MODEL="" SERIAL="" SIZE="29.9G" TRAN="" VENDOR="" HCTL="" TYPE="part" FSTYPE="btrfs" LABEL="ROOT" UUID="46befa9e-b399-480d-b10d-338a4c875615"',  # noqa E501
+                'NAME="/dev/sdd" MODEL="SanDisk 3.2Gen1" SERIAL="01016c73a2fabf22051f78f30546627c9fb5e8083fbc14d477f85d6a269220dd15710000000000000000000060a25f5700804f0091558107a3ab6843" SIZE="57.3G" TRAN="usb" VENDOR=" USB    " HCTL="6:0:0:0" TYPE="disk" FSTYPE="" LABEL="" UUID=""',  # noqa E501
                 "",
             ]
         ]
@@ -1703,6 +1699,22 @@ class OSITests(unittest.TestCase):
                     root=False,
                     partitions={"/dev/sdb4": "btrfs"},
                 ),
+                Disk(
+                    name="/dev/sdd",
+                    model="SanDisk 3.2Gen1",
+                    serial="01016c73a2fabf22051f78f30546627c9fb5e8083fbc14d477f85d6a269220dd15710000000000000000000060a25f5700804f0091558107a3ab6843",
+                    size=60083404,
+                    transport="usb",
+                    vendor="USB",
+                    hctl="6:0:0:0",
+                    type="disk",
+                    fstype=None,
+                    label=None,
+                    uuid=None,
+                    parted=False,
+                    root=False,
+                    partitions={}
+                )
             ]
         ]
         # As all serials are available via the lsblk we can avoid mocking

@@ -326,19 +326,20 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
         if line == "" or re.match("NAME", line) is None:
             continue
         # lsblk example line (incomplete): 'NAME="/dev/sdb" MODEL="TOSHIBA MK1652GS" VENDOR="ATA     " LABEL="" UUID=""'
-        # line.strip().split('" ') = ['NAME="/dev/sdb', 'MODEL="TOSHIBA MK1652GS', 'VENDOR="ATA     ', 'LABEL="', 'UUID=""']   # noqa E501
-        # Device information built from each lsblk line in turn.
-        clean_line = re.sub('"\s+"', '""', line).strip()
-        # logger.debug(f"Scan_disks() using lsblk clean_line={clean_line}")
+        # Device information built from each lsblk line in turn
+        # 'KEY_1="VALUE_1" KEY_2="VALUE_2" ... KEY_N="VALUE_N"' will become
+        # ['KEY_1', '', 'VALUE_1', 'KEY_2', '', 'VALUE_2', ... 'KEY_N', '', 'VALUE_N', '']
+        line = [item.strip() for item in re.split(r'["=]', line)]
+        # Remove every third value starting from index 2 to turn the list into
+        # ['KEY_1', 'VALUE_1', 'KEY_2', 'VALUE_2', 'KEY_N', 'VALUE_N', '']
+        # Trailing item is ok due to how zip is done
+        line = [item for i, item in enumerate(line, 2) if i % 3 != 0]
+        # logger.debug(f"Scan_disks() using lsblk line={line}")
         blk_dev_properties: dict = {
-            key.lower()
-            if key != "TRAN"
-            else "transport": value.replace('"', "").strip()
-            if value.replace('"', "").strip() != ""
-            else None
-            for key, value in (
-                key_value.split("=") for key_value in clean_line.split('" ')
+            key.lower() if key != "TRAN" else "transport": (
+                value if value != "" else None
             )
+            for key, value in zip(line[::2], line[1::2])
         }
         logger.debug(f"Scan_disks() using: blk_dev_properties={blk_dev_properties}")
         # Disk namedtuple from lsblk line dictionary.
@@ -1995,8 +1996,8 @@ def get_devname(device_name, addPath=False):
 
 def get_libs(program_path: str) -> list[str]:
     """
-    Wrapper around `ldd program_path` 
-    @param program_path: Binary to query ldd about 
+    Wrapper around `ldd program_path`
+    @param program_path: Binary to query ldd about
     @return: list of OS paths or empty list if error or non found.
     """
     libs: list[str] = []
