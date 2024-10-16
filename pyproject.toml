@@ -63,7 +63,7 @@ python = "~3.11"
 
 # [tool.poetry.group.django.dependencies]
 django = "~4.2"
-django-oauth-toolkit = "*"
+django-oauth-toolkit = "~2.4"
 djangorestframework = "*"
 django-pipeline = "*"
 python-engineio = "==4.8.0"
