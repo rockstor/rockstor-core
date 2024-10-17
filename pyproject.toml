@@ -63,7 +63,7 @@ python = "~3.11"
 
 # [tool.poetry.group.django.dependencies]
 django = "~4.2"
-django-oauth-toolkit = "*"
+django-oauth-toolkit = "~2.4"
 djangorestframework = "*"
 django-pipeline = "*"
 python-engineio = "==4.8.0"
@@ -71,8 +71,9 @@ python-socketio = "==5.9.0"
 dbus-python = "*"
 psycopg = "~3"
 psycogreen = "==1.0"
-gevent = "*"  # can be an extra dependency to gunicorn.
-gunicorn = "*"
+# gevent 24.10.[1 & 2] resulted in: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL
+gevent = "24.2.1"  # can be an extra dependency to gunicorn.
+gunicorn = "~23"
 packaging = "*"  # 'btrfs version' parsing.
 
 # [tool.poetry.group.tools.dependencies]
