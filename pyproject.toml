@@ -71,8 +71,9 @@ python-socketio = "==5.9.0"
 dbus-python = "*"
 psycopg = "~3"
 psycogreen = "==1.0"
-gevent = "*"  # can be an extra dependency to gunicorn.
-gunicorn = "*"
+# gevent 24.10.[1 & 2] resulted in: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL
+gevent = "24.2.1"  # can be an extra dependency to gunicorn.
+gunicorn = "~23"
 packaging = "*"  # 'btrfs version' parsing.
 
 # [tool.poetry.group.tools.dependencies]
