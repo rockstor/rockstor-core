@@ -14,21 +14,52 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-from unittest import mock
 from unittest.mock import patch
 
 from rest_framework import status
-from storageadmin.models import Pool, Share, NFSExportGroup, NFSExport
 from storageadmin.tests.test_api import APITestMixin
+
+"""
+fixture with:
+Pool:
+  - pk=11
+  - name="rock-pool"
+Share:
+  - pk=21
+  - name: "share-nfs"
+  - pool: "rock-pool" above
+  - exported with defaults:
+    - (NFS Clients) host_str: "*"
+    - (Admin Host) admin_host: None
+    - (Access type) mod_choice: "rw"
+    - (Response type) sync_choice: "async"
+Share:
+  - pk=22
+  - name: "share2"
+User:
+  - pk: 1
+  - name: admin
+  - group: 1
+Group:
+  - pk: 1
+
+proposed fixture = 'test_nfs.json'
+
+cd /opt/rockstor
+poetry run django-admin dumpdata storageadmin.pool storageadmin.share \
+storageadmin.nfsexport storageadmin.nfsexportgroup \
+storageadmin.user storageadmin.group \
+--natural-foreign --indent 4 > \
+src/rockstor/storageadmin/fixtures/test_nfs.json
+
+To run the tests:
+cd /opt/rockstor/src/rockstor
+poetry run django-admin test -v 2 -p test_nfs_export.py
+"""
 
 
 class NFSExportTests(APITestMixin):
-    # fixture with:
-    # share-nfs - NFS exported - with defaults: client=*, Writable, async
-    # {'host_str': '*', 'mod_choice': 'rw', 'sync_choice': 'async', }
-    # share2 - no NFS export
-    # proposed fixture = 'test_nfs.json'
-    fixtures = ["test_api.json"]
+    fixtures = ["test_api.json", "test_nfs.json"]
     BASE_URL = "/api/nfs-exports"
 
     @classmethod
@@ -50,21 +81,6 @@ class NFSExportTests(APITestMixin):
         # validate_nfs_host_str
         # validate_nfs_modify_str
         # validate_nfs_sync_choice
-
-        # all values as per fixture
-        cls.temp_pool = Pool(id=11, name="rock-pool", size=5242880)
-        cls.temp_share_nfs = Share(id=21, name="share-nfs", pool=cls.temp_pool)
-        # the following is not picking up from db !!
-        # cls.temp_nfsexportgroup = NFSExportGroup.objects.get(id=1)
-        cls.temp_nfsexportgroup = NFSExportGroup(id=1)
-        cls.temp_nfsexport = NFSExport(
-            export_group=cls.temp_nfsexportgroup,
-            share=cls.temp_share_nfs,
-            mount="/export/share-nfs",
-            id=1,
-        )
-
-        cls.temp_share2 = Share(id=22, name="share2", pool=cls.temp_pool)
 
     @classmethod
     def tearDownClass(cls):
@@ -91,8 +107,7 @@ class NFSExportTests(APITestMixin):
         response = self.client.get("{}/99999".format(self.BASE_URL))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
 
-    @mock.patch("storageadmin.views.share_helpers.Share")
-    def test_post_requests(self, mock_share):
+    def test_post_requests(self):
         """
         invalid nfs-export api operations
         1. Add nfs-export without providing share names
@@ -114,8 +129,6 @@ class NFSExportTests(APITestMixin):
         )
         e_msg = "Cannot export without specifying shares."
         self.assertEqual(response.data[0], e_msg)
-
-        mock_share.objects.get.return_value = self.temp_share2
 
         # AssertionError: ["{'share': [u'share instance with id 22 does not exist.']}",
         # # happy path
@@ -203,10 +216,7 @@ class NFSExportTests(APITestMixin):
     #     self.assertEqual(response.data[0], e_msg)
     #     self.mock_refresh_nfs_exports.side_effect = None
 
-    @mock.patch("storageadmin.views.share_helpers.Share")
-    def test_invalid_admin_host1(self, mock_share):
-
-        mock_share.objects.get.return_value = self.temp_share2
+    def test_invalid_admin_host1(self):
 
         # invalid post request
         # Add nfs-export providing invalid admin host
@@ -255,9 +265,7 @@ class NFSExportTests(APITestMixin):
         # self.assertEqual(response.data[0], e_msg)
         self.mock_refresh_nfs_exports.side_effect = None
 
-    @mock.patch("storageadmin.views.nfs_exports.NFSExportGroup")
-    @mock.patch("storageadmin.views.share_helpers.Share")
-    def test_put_requests(self, mock_share, mock_nfsexportgroup):
+    def test_put_requests(self):
         """
         . Edit nfs-export with no shares
         . Edit nfs-export
@@ -268,7 +276,8 @@ class NFSExportTests(APITestMixin):
         self.mock_refresh_nfs_exports.side_effect = None
         self.mock_refresh_nfs_exports.return_value = "out", "err", 0
 
-        nfs_id = self.temp_nfsexport.id
+        # from fixture, TODO remove hard-coding.
+        nfs_id = 3
         data = {"host_str": "*.edu", "mod_choice": "rw", "sync_choice": "async"}
         response = self.client.put("{}/{}".format(self.BASE_URL, nfs_id), data=data)
         self.assertEqual(
@@ -278,9 +287,6 @@ class NFSExportTests(APITestMixin):
         )
         e_msg = "Cannot export without specifying shares."
         self.assertEqual(response.data[0], e_msg)
-
-        mock_share.objects.get.return_value = self.temp_share_nfs
-        mock_nfsexportgroup.objects.get.return_value = self.temp_nfsexportgroup
 
         # TODO: FAIL AssertionError: ["{'export_group': [u'This field cannot be null.'],
         #  'share': [u'share instance with id 21 does not exist.']}",
@@ -319,20 +325,15 @@ class NFSExportTests(APITestMixin):
         # e_msg = 'NFS export with id ({}) does not exist.'.format(nfs_id)
         # self.assertEqual(response.data[0], e_msg)
 
-    @mock.patch("storageadmin.views.nfs_exports.NFSExport")
-    @mock.patch("storageadmin.views.nfs_exports.NFSExportGroup")
-    def test_delete_requests(self, mock_nfsexportgroup, mock_nfsexport):
+    def test_delete_requests(self):
 
         """
         . Delete nfs-export that does not exist
         . Delete nfs-export
         """
 
-        mock_nfsexportgroup.objects.get.return_value = self.temp_nfsexportgroup
-        mock_nfsexport.objects.get.return_value = self.temp_nfsexport
-
         # happy path
-        nfs_id = self.temp_nfsexport.id
+        nfs_id = 3
         response = self.client.delete("{}/{}".format(self.BASE_URL, nfs_id))
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
@@ -357,10 +358,7 @@ class NFSExportTests(APITestMixin):
         # get base URL
         self.get_base("/api/adv-nfs-exports")
 
-    @mock.patch("storageadmin.views.share_helpers.Share")
-    def test_adv_nfs_post_requests(self, mock_share):
-
-        mock_share.objects.get.return_value = self.temp_share_nfs
+    def test_adv_nfs_post_requests(self):
 
         # without specifying entries
         data = {}
