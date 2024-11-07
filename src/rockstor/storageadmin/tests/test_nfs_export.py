@@ -86,21 +86,15 @@ class NFSExportTests(APITestMixin):
     def tearDownClass(cls):
         super(NFSExportTests, cls).tearDownClass()
 
-    # TODO: FAIL {"detail":"Not found."}
-    # def test_get(self):
-    #     """
-    #     Test GET request
-    #     1. Get base URL
-    #     2. Get request with id
-    #     """
-    #     # get base URL
-    #     self.get_base(self.BASE_URL)
-    #
-    #     # get nfs-export with id
-    #     nfs_id = self.temp_nfsexport.id
-    #     response = self.client.get('{}/{}'.format(self.BASE_URL, nfs_id))
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK,
-    #                      msg=response)
+    def test_get(self):
+
+        # get base URL
+        self.get_base(self.BASE_URL)
+
+        # get nfs-export with id
+        nfs_id = 3  # from fixture
+        response = self.client.get(f'{self.BASE_URL}/{nfs_id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
 
     def test_invalid_get(self):
         # get nfs-export with invalid id
