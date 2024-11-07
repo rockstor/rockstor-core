@@ -87,23 +87,20 @@ class NFSExportTests(APITestMixin):
         super(NFSExportTests, cls).tearDownClass()
 
     def test_get(self):
-
         # get base URL
         self.get_base(self.BASE_URL)
 
         # get nfs-export with id
         nfs_id = 3  # from fixture
-        response = self.client.get(f'{self.BASE_URL}/{nfs_id}')
+        response = self.client.get(f"{self.BASE_URL}/{nfs_id}")
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
 
     def test_invalid_get(self):
-
         # get nfs-export with invalid id
-        response = self.client.get("{}/99999".format(self.BASE_URL))
+        response = self.client.get(f"{self.BASE_URL}/99999")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
 
     def test_post_requests(self):
-
         # Add nfs-export without providing share names
         self.mock_refresh_nfs_exports.side_effect = None
         self.mock_refresh_nfs_exports.return_value = "out", "err", 0
@@ -119,11 +116,14 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.data[0], e_msg)
 
         # happy path
-        data1 = {'shares': ('share2',), 'host_str': '*.edu',
-                 'mod_choice': 'rw', 'sync_choice': 'async', }
+        data1 = {
+            "shares": ("share2",),
+            "host_str": "*.edu",
+            "mod_choice": "rw",
+            "sync_choice": "async",
+        }
         response = self.client.post(self.BASE_URL, data=data1)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Add NFS export - non-existent share
         fake_share_name: str = "non-existent"
@@ -139,35 +139,42 @@ class NFSExportTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = f'Share with name ({fake_share_name}) does not exist.'
+        e_msg = f"Share with name ({fake_share_name}) does not exist."
         self.assertEqual(response.data[0], e_msg)
 
     def test_no_nfs_client(self):
-
         # Add NFS export without host_str
         # The server side defaults the host string to * so test for this.
 
         self.mock_refresh_nfs_exports.side_effect = None
 
-        data = {'shares': ('share2',), 'mod_choice': 'rw', 'sync_choice': 'async', }
+        data = {
+            "shares": ("share2",),
+            "mod_choice": "rw",
+            "sync_choice": "async",
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data['host_str'], '*')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data["host_str"], "*")
 
     def test_share_already_exported(self):
-
         # Add NFS export for share already exported
-        data = {'shares': ('share-nfs',), 'host_str': '*', 'mod_choice': 'rw', 'sync_choice': 'async', }
+        data = {
+            "shares": ("share-nfs",),
+            "host_str": "*",
+            "mod_choice": "rw",
+            "sync_choice": "async",
+        }
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = 'An export already exists for the host string: (*).'
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = "An export already exists for the host string: (*)."
         self.assertEqual(response.data[0], e_msg)
 
     def test_low_level_error_post(self):
-
         # Invalid POST request
         # Add NFS export - invalid admin host
         ll_error: str = "post low level error"
@@ -186,13 +193,14 @@ class NFSExportTests(APITestMixin):
             msg=response.data,
         )
 
-        e_msg = f'A lower level error occurred while refreshing NFS exports: ({ll_error}).'
+        e_msg = (
+            f"A lower level error occurred while refreshing NFS exports: ({ll_error})."
+        )
         self.assertEqual(response.data[0], e_msg)
 
         self.mock_refresh_nfs_exports.side_effect = None
 
     def test_low_level_error_put(self):
-
         # Invalid PUT request
         # Edit NFS export - invalid admin host
         ll_error: str = "put low level error"
@@ -213,13 +221,14 @@ class NFSExportTests(APITestMixin):
             msg=response.data,
         )
 
-        e_msg = f'A lower level error occurred while refreshing NFS exports: ({ll_error}).'
+        e_msg = (
+            f"A lower level error occurred while refreshing NFS exports: ({ll_error})."
+        )
         self.assertEqual(response.data[0], e_msg)
 
         self.mock_refresh_nfs_exports.side_effect = None
 
     def test_put_requests(self):
-
         # Edit NFS export without specifying share.
         self.mock_refresh_nfs_exports.side_effect = None
         self.mock_refresh_nfs_exports.return_value = "out", "err", 0
@@ -236,31 +245,45 @@ class NFSExportTests(APITestMixin):
 
         # Happy path - editing existing NFS export.
         nfs_id = 3  # from fixture
-        data = {'shares': ('share-nfs',), 'host_str': '*.edu',
-                'mod_choice': 'rw', 'sync_choice': 'async', }
-        response = self.client.put(f'{self.BASE_URL}/{nfs_id}', data=data)
+        data = {
+            "shares": ("share-nfs",),
+            "host_str": "*.edu",
+            "mod_choice": "rw",
+            "sync_choice": "async",
+        }
+        response = self.client.put(f"{self.BASE_URL}/{nfs_id}", data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Happy path - editing existing NFS export re adding admin host.
         nfs_id = 3  # from fixture
-        data = {'shares': ('share-nfs',), 'host_str': '*.edu', 'admin_host': 'test-nfs-admin-host',
-                'mod_choice': 'rw', 'sync_choice': 'async', }
-        response = self.client.put(f'{self.BASE_URL}/{nfs_id}', data=data)
+        data = {
+            "shares": ("share-nfs",),
+            "host_str": "*.edu",
+            "admin_host": "test-nfs-admin-host",
+            "mod_choice": "rw",
+            "sync_choice": "async",
+        }
+        response = self.client.put(f"{self.BASE_URL}/{nfs_id}", data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Edit non-existent NFS export, existing share in fixtures.
         nfs_id = 99999
-        data = {'shares': ('share2',), 'host_str': '*.edu',
-                'mod_choice': 'rw', 'sync_choice': 'async', }
-        response = self.client.put(f'{self.BASE_URL}/{nfs_id}', data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = f'NFS export with id ({nfs_id}) does not exist.'
+        data = {
+            "shares": ("share2",),
+            "host_str": "*.edu",
+            "mod_choice": "rw",
+            "sync_choice": "async",
+        }
+        response = self.client.put(f"{self.BASE_URL}/{nfs_id}", data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = f"NFS export with id ({nfs_id}) does not exist."
         self.assertEqual(response.data[0], e_msg)
 
     def test_delete_requests(self):
-
         # Happy path
         nfs_id = 3  # from fixture
         response = self.client.delete(f"{self.BASE_URL}/{nfs_id}")
@@ -268,20 +291,20 @@ class NFSExportTests(APITestMixin):
 
         # Delete nfs-export that does not exist
         nfs_id = 99999
-        response = self.client.delete(f'{self.BASE_URL}/{nfs_id}')
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        e_msg = f'NFS export with id ({nfs_id}) does not exist.'
+        response = self.client.delete(f"{self.BASE_URL}/{nfs_id}")
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = f"NFS export with id ({nfs_id}) does not exist."
         self.assertEqual(response.data[0], e_msg)
 
     def test_adv_nfs_get(self):
-
         # Get advanced base URL
         self.get_base("/api/adv-nfs-exports")
 
     def test_adv_nfs_post_requests(self):
-
         # Without specifying entries
         data = {}
         response = self.client.post("/api/adv-nfs-exports", data=data)
