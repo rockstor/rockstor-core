@@ -95,6 +95,27 @@ class NFSExportTests(APITestMixin):
         response = self.client.get(f"{self.BASE_URL}/{nfs_id}")
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
 
+    def test_post(self):
+        # Happy path - ensuring we create all that we intend.
+        # Clarifies current map re field naming of API vs DB vs Web-UI.
+
+        # API / DB / Web-UI field name map:
+        data = {
+            "shares": ("share2",),
+            "host_str": "*.edu",  # 'host_str', "NFS Clients"
+            "admin_host": "example-host",  # 'admin_host', "Admin Host"
+            "mod_choice": "rw",  # 'editable', "Access type"
+            "sync_choice": "sync",  # 'syncable', "Response type"
+            # "mount_security": "secure",   # 'mount_security', NOT IMPLEMENTED.
+        }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data["host_str"], "*.edu")
+        self.assertEqual(response.data["admin_host"], "example-host")
+        self.assertEqual(response.data["editable"], "rw")
+        self.assertEqual(response.data["syncable"], "sync")
+        # self.assertEqual(response.data["mount_security"], "secure")
+
     def test_invalid_get(self):
         # get nfs-export with invalid id
         response = self.client.get(f"{self.BASE_URL}/99999")
