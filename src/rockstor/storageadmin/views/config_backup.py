@@ -52,14 +52,12 @@ def generic_post(url, payload):
             payload.pop("password", None)
         else:
             logger.info("Non Dictionary payload")
-        logger.info(
-            "Successfully created resource: {}. Payload: {}".format(url, payload)
-        )
+        logger.info(f"Successfully created resource: {url}. Payload: {payload}")
     except Exception as e:
         logger.error(
-            "Exception occurred while creating resource: {}. "
-            "Payload: {}. Exception: {}. "
-            "Moving on.".format(url, payload, e.__str__())
+            f"Exception occurred while creating resource: {url}. "
+            f"Payload: {payload}. Exception: {e.__str__()}. "
+            "Moving on."
         )
 
 
@@ -119,6 +117,11 @@ def restore_samba_exports(ml: list):
 
 
 def restore_nfs_exports(ml: list):
+    """
+    Parses storageadmin model list from config-backup DB dump.
+    Assumes Share mount point is Share name.
+    @param ml: Model list (storageadmin)
+    """
     logger.info("Started restoring NFS exports.")
     exports = []
     export_groups = {}
@@ -131,11 +134,13 @@ def restore_nfs_exports(ml: list):
             export_groups[m["pk"]] = m["fields"]
         elif m["model"] == "storageadmin.advancednfsexport":
             adv_exports["entries"].append(m["fields"]["export_str"])
+        logger.debug(f'model={m["model"]}, exports={exports}, export_groups={export_groups}')
     for e in exports:
         if len(e["mount"].split("/")) != 3:
-            logger.info("skipping nfs export with mount: {}".format(e["mount"]))
+            logger.info(f'skipping nfs export with mount: {e["mount"]}')
             continue
         e["shares"] = [e["mount"].split("/")[2]]
+        logger.debug(f'e["shares"]={e["shares"]}')
         payload = dict(export_groups[e["export_group"]], **e)
         generic_post("{}/nfs-exports".format(BASE_URL), payload)
     generic_post("{}/adv-nfs-exports".format(BASE_URL), adv_exports)
