@@ -157,6 +157,107 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data["host_str"], "*")
 
+    def test_mod_choice_validator_post(self):
+        # DB validator should restrict to "ro" or "rw": validate_nfs_modify_str() & model choices
+        data = {
+            "shares": ("share2",),
+            "mod_choice": "rr",
+            "sync_choice": "async",
+        }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = {'editable': ["Value 'rr' is not a valid choice."]}
+        self.assertEqual(response.data[0], str(e_msg))
+
+    def test_mod_choice_validator_put(self):
+        # DB validator should restrict to "ro" or "rw": validate_nfs_modify_str() & model choices
+        data = {
+            "shares": ("share-nfs",),
+            "mod_choice": "rr",
+            "sync_choice": "async",
+        }
+        nfs_id = 3  # from fixture
+        response = self.client.put(f"{self.BASE_URL}/{nfs_id}", data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = {'editable': ["Value 'rr' is not a valid choice."]}
+        self.assertEqual(response.data[0], str(e_msg))
+
+    def test_sync_choice_validator_post(self):
+        # DB validator should restrict to "async" or "sync": validate_nfs_sync_choice() & model choices
+        data = {
+            "shares": ("share2",),
+            "mod_choice": "ro",
+            "sync_choice": "aaaaa",
+        }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = {'syncable': ["Value 'aaaaa' is not a valid choice."]}
+        self.assertEqual(response.data[0], str(e_msg))
+
+    def test_sync_choice_validator_put(self):
+        # DB validator should restrict to "async" or "sync": validate_nfs_sync_choice() & model choices
+        data = {
+            "shares": ("share-nfs",),
+            "mod_choice": "ro",
+            "sync_choice": "aaaaa",
+        }
+        nfs_id = 3  # from fixture
+        response = self.client.put(f"{self.BASE_URL}/{nfs_id}", data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = {'syncable': ["Value 'aaaaa' is not a valid choice."]}
+        self.assertEqual(response.data[0], str(e_msg))
+
+    def test_host_str_validator_post(self):
+        # DB validator should restrict to valid entry: validate_nfs_host_str
+        data = {
+            "shares": ("share2",),
+            "host_str": "1.!",
+            "mod_choice": "ro",
+            "sync_choice": "async",
+        }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = {'host_str': ['Invalid host string: 1.!']}
+        self.assertEqual(response.data[0], str(e_msg))
+
+    def test_host_str_validator_put(self):
+        # DB validator should restrict to valid entry: validate_nfs_host_str
+        data = {
+            "shares": ("share-nfs",),
+            "host_str": "ted fred",
+            "mod_choice": "ro",
+            "sync_choice": "async",
+        }
+        nfs_id = 3  # from fixture
+        response = self.client.put(f"{self.BASE_URL}/{nfs_id}", data=data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
+        e_msg = {'host_str': ['Invalid host string: ted fred']}
+        self.assertEqual(response.data[0], str(e_msg))
+
     def test_share_already_exported(self):
         # Add NFS export for share already exported
         data = {
