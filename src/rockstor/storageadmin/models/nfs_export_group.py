@@ -28,9 +28,10 @@ class NFSExportGroup(models.Model):
     INSECURE = "insecure"
 
     """hostname string in /etc/exports"""
-    host_str = models.CharField(max_length=4096, validators=[validators.validate_nfs_host_str])
+    host_str = models.CharField(
+        max_length=4096, validators=[validators.validate_nfs_host_str]
+    )
     """mount options"""
-    """mount read only by default"""
     MODIFY_CHOICES = (
         (READ_ONLY, "ro"),
         (READ_WRITE, "rw"),
@@ -69,3 +70,4 @@ class NFSExportGroup(models.Model):
 
     class Meta:
         app_label = "storageadmin"
+        ordering = ["-id"]
