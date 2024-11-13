@@ -170,6 +170,7 @@ class NFSExportGroupListView(NFSExportMixin, rfc.GenericView):
 
             cur_exports = list(NFSExport.objects.all())
             eg = NFSExportGroup(**options)
+            eg.clean_fields(exclude="admin_host")
             eg.save()
             for s in shares:
                 mnt_pt = "%s%s" % (settings.MNT_PT, s.name)
@@ -237,6 +238,7 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
                     s, options["host_str"], request, export_id=int(export_id)
                 )
             NFSExportGroup.objects.filter(id=export_id).update(**options)
+            NFSExportGroup.objects.filter(id=export_id)[0].clean_fields(exclude="admin_host")
             NFSExportGroup.objects.filter(id=export_id)[0].save()
             cur_exports = list(NFSExport.objects.all())
             for e in NFSExport.objects.filter(export_group=eg):
