@@ -119,6 +119,11 @@ def restore_samba_exports(ml: list):
 
 
 def restore_nfs_exports(ml: list):
+    """
+    Parses storageadmin model list from config-backup DB dump.
+    Assumes Share mount-point is Share name.
+    @param ml: Model list (storageadmin)
+    """
     logger.info("Started restoring NFS exports.")
     exports = []
     export_groups = {}
@@ -127,13 +132,21 @@ def restore_nfs_exports(ml: list):
         if m["model"] == "storageadmin.nfsexport":
             exports.append(m["fields"])
         elif m["model"] == "storageadmin.nfsexportgroup":
+            logger.debug(f"Processing nfsexportgroup = {m}")
             m["fields"]["pk"] = m["pk"]
-            export_groups[m["pk"]] = m["fields"]
+            # Derive API field names & structure from nfsexportgroup DB dump field names:
+            nfse_api_fields: dict = m["fields"]
+            # Maintaining "editable" and "syncable" enables future API sync to DB model.
+            if "editable" in nfse_api_fields:  # 'mod_choice' from 'editable'
+                nfse_api_fields["mod_choice"] = nfse_api_fields["editable"]
+            if "syncable" in nfse_api_fields:  # 'sync_choice' from 'syncable'
+                nfse_api_fields["sync_choice"] = nfse_api_fields["syncable"]
+            export_groups[m["pk"]] = nfse_api_fields
         elif m["model"] == "storageadmin.advancednfsexport":
             adv_exports["entries"].append(m["fields"]["export_str"])
     for e in exports:
         if len(e["mount"].split("/")) != 3:
-            logger.info("skipping nfs export with mount: {}".format(e["mount"]))
+            logger.info(f"skipping nfs export with mount: {e['mount']}")
             continue
         e["shares"] = [e["mount"].split("/")[2]]
         payload = dict(export_groups[e["export_group"]], **e)
