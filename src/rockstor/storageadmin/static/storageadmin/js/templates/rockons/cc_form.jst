@@ -16,7 +16,21 @@
             {{else}}
                  type="text"
             {{/if}}
-            id="{{this.id}}" name="{{this.id}}" value="{{#unless null}}{{this.val}}{{/unless}}">
+            id="{{this.id}}" name="{{this.id}}"
+            value="
+		{{~#if (isNull this.val)~}}
+                    {{~#unless (isNull this.default_val)~}}
+			{{~this.default_val~}}
+		    {{~/unless~}}
+       	        {{~else~}}
+		    {{~this.val~}}
+		{{~/if~}}
+            "
+	    placeholder="
+		{{~#unless (isNull this.default_val)~}}
+		    {{~this.default_val~}}
+		{{~/unless~}}
+	    ">
          </div>&nbsp;&nbsp;
          <i class="fa fa-info-circle fa-lg" title="{{this.description}}" rel="tooltop"></i>
         </div>

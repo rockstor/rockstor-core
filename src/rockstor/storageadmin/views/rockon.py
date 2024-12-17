@@ -465,7 +465,11 @@ class RockOnView(rfc.GenericView):
         cc_d = c_d.get("environment", {})
         for k in self._sorted_keys(cc_d):
             ccc_d = cc_d[k]
+            
             defaults = {"description": ccc_d["description"], "label": ccc_d["label"]}
+            if "default_value" in ccc_d:
+                defaults["default_val"] = ccc_d["default_value"];
+                
             cco, created = DContainerEnv.objects.get_or_create(
                 container=co, key=k, defaults=defaults
             )

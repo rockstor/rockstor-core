@@ -227,7 +227,7 @@ class DContainerEnv(models.Model):
     val = models.CharField(max_length=1024, null=True)
     description = models.CharField(max_length=2048, null=True)
     label = models.CharField(max_length=64, null=True)
-
+    default_val = models.CharField(max_length=1024, null=True)
 
 class DContainerDevice(models.Model):
     container = models.ForeignKey(DContainer, on_delete=models.CASCADE)

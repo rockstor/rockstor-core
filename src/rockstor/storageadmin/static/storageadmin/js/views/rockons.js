@@ -736,6 +736,11 @@ RockonCustomChoice = RockstorWizardPage.extend({
             }
             return false;
         });
+
+        Handlebars.registerHelper('isNull', function(fieldValue) {
+            return _.isNull(fieldValue) || _.isUndefined(fieldValue);
+        });        
+        
     }
 });
 
