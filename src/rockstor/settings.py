@@ -162,6 +162,7 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     # New in 1.8, 1.11 newly sets Content-Length header.
     # 'django.middleware.common.CommonMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -200,6 +201,7 @@ INSTALLED_APPS = (
     "smart_manager",
     "oauth2_provider",
     "huey.contrib.djhuey",
+    "debug_toolbar",
 )
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES
@@ -470,3 +472,16 @@ OS_DISTRO_NAME = distro.name()  # Rockstor, openSUSE Leap, openSUSE Tumbleweed
 # Note that the following will capture the build os version.
 # For live updates (running system) we call distro.version() directly in code.
 OS_DISTRO_VERSION = distro.version()  # 3, 15.0 ,20181107
+
+# Django Debug Toolbar-related settings and confrguration
+INTERNAL_IPS = [
+    "127.0.0.1", # It seems requests always come from this when using DRF
+]
+
+# https://django-debug-toolbar.readthedocs.io/en/stable/configuration.html
+DEBUG_TOOLBAR_CONFIG = {
+    # Update to the latest AJAX request
+    # Without this, we can only catch the initial request
+    # which is not helpful in most of our cases
+    "UPDATE_ON_FETCH": True
+}

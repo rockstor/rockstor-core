@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.urls import include, re_path
 from django.views.static import serve
 from django.conf import settings
+from debug_toolbar.toolbar import debug_toolbar_urls
 
 from smart_manager.views import (
     BaseServiceView,
@@ -149,4 +150,4 @@ urlpatterns = [
     re_path(
         r"^api/update-subscriptions/", include("storageadmin.urls.update_subscription")
     ),
-]
+] + debug_toolbar_urls()

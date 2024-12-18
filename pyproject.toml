@@ -95,6 +95,7 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
+django-debug-toolbar = "^4.4.6"
 
 [tool.poetry.scripts]
 # https://python-poetry.org/docs/pyproject#scripts
