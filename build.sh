@@ -2,11 +2,6 @@
 # exit on error
 set -o errexit
 
-DEV_MODE=0
-if [ "$1" = "--dev" ]; then
-    DEV_MODE=1
-fi
-
 # Install Poetry, a dependency management, packaging, and build system.
 # Uninstall legacy/transitional Poetry version of 1.1.15
 PATH="/root/.local/bin:$PATH"  # ensure legacy path.
@@ -54,8 +49,8 @@ poetry --version >> poetry-install.txt
 poetry self show plugins >> poetry-install.txt
 # /usr/local/bin/poetry -> /opt/pipx/venvs/poetry
 
-if [ $DEV_MODE -eq 1 ]; then
-	echo "Install djdt."
+if [ "$DJANGO_DEBUG" = "True" ]; then
+	echo "Install Django Debug Toolbar."
   poetry install -vvv --no-interaction --no-ansi --with dev >> poetry-install-dev.txt 2>&1
 else
 	echo "Normal install."
