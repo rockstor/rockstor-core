@@ -164,7 +164,6 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
-    # "debug_toolbar.middleware.DebugToolbarMiddleware",
     # New in 1.8, 1.11 newly sets Content-Length header.
     # 'django.middleware.common.CommonMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -203,7 +202,6 @@ INSTALLED_APPS = (
     "smart_manager",
     "oauth2_provider",
     "huey.contrib.djhuey",
-    # "debug_toolbar",
 )
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES
@@ -477,7 +475,7 @@ OS_DISTRO_VERSION = distro.version()  # 3, 15.0 ,20181107
 
 # DJANGO DEBUG TOOLBAR settings and configuration
 # recommended NOT to use the toolbar when running tests
-# so enable it only when NOT running tests or NOT DEBUG
+# so enable it only when in DEBUG mode and NOT running tests
 TESTING = "test" in sys.argv
 if (not TESTING) and DEBUG:
     INSTALLED_APPS = [

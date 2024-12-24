@@ -151,6 +151,9 @@ urlpatterns = [
     ),
 ]
 
+# DJANGO DEBUG TOOLBAR
+# recommended NOT to use the toolbar when running tests
+# so enable it only when in DEBUG mode and NOT running tests
 if (not settings.TESTING) and settings.DEBUG:
     from debug_toolbar.toolbar import debug_toolbar_urls
 
