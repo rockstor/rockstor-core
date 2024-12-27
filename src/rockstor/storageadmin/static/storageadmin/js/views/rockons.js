@@ -1617,20 +1617,20 @@ RockonSettingsSummary = RockstorWizardPage.extend({
     initHandlebarHelpers: function() {
         Handlebars.registerHelper('display_newVolumes', function() {
             // Display newly-defined shares and their corresponding mapping
-            // for confimation before submit in settings_summary_table.jst
+            // for confirmation before submit in settings_summary_table.jst
             var html = '';
             for (share in this.new_volumes) {
                 html += '<tr>';
                 html += '<td>Share</td>';
-                html += '<td>' + this.new_volumes[share] + '</td>';
                 html += '<td>' + share + '</td>';
+                html += '<td>' + this.new_volumes[share] + '</td>';
                 html += '</tr>';
             }
             return new Handlebars.SafeString(html);
         });
         Handlebars.registerHelper('display_newLabels', function() {
             // Display newly-defined labels and their corresponding container
-            // for confimation before submit in settings_summary_table.jst
+            // for confirmation before submit in settings_summary_table.jst
             var html = '';
             for (new_label in this.new_labels) {
                 html += '<tr>';
