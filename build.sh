@@ -48,14 +48,7 @@ env > poetry-install.txt
 poetry --version >> poetry-install.txt
 poetry self show plugins >> poetry-install.txt
 # /usr/local/bin/poetry -> /opt/pipx/venvs/poetry
-
-if [ "$DJANGO_DEBUG" = "True" ]; then
-	echo "Install Django Debug Toolbar."
-  poetry install -vvv --no-interaction --no-ansi --with dev >> poetry-install-dev.txt 2>&1
-else
-	echo "Normal install."
-  poetry install -vvv --no-interaction --no-ansi >> poetry-install.txt 2>&1
-fi
+poetry install -vvv --no-interaction --no-ansi >> poetry-install.txt 2>&1
 echo
 
 # Source package version from pyproject.toml's (version = "5.0.14") via `poetry version` output:
