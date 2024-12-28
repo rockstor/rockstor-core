@@ -18,6 +18,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # Django settings for Rockstor project.
 import os
+import sys
+
 import distro
 import keyring
 from huey import SqliteHuey
@@ -470,3 +472,28 @@ OS_DISTRO_NAME = distro.name()  # Rockstor, openSUSE Leap, openSUSE Tumbleweed
 # Note that the following will capture the build os version.
 # For live updates (running system) we call distro.version() directly in code.
 OS_DISTRO_VERSION = distro.version()  # 3, 15.0 ,20181107
+
+# DJANGO DEBUG TOOLBAR settings and configuration
+# recommended NOT to use the toolbar when running tests
+# so enable it only when in DEBUG mode and NOT running tests
+TESTING = "test" in sys.argv
+if (not TESTING) and DEBUG:
+    INSTALLED_APPS = [
+        *INSTALLED_APPS,
+        "debug_toolbar",
+    ]
+    MIDDLEWARE = [
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
+        *MIDDLEWARE,
+    ]
+    INTERNAL_IPS = [
+        "127.0.0.1", # It seems requests always come from this when using DRF
+    ]
+
+    # https://django-debug-toolbar.readthedocs.io/en/stable/configuration.html
+    DEBUG_TOOLBAR_CONFIG = {
+        # Update to the latest AJAX request
+        # Without this, we can only see the initial request in the toolbar panel
+        # Previous queries can still be seen and inspected in the "History" panel, though
+        "UPDATE_ON_FETCH": True
+    }
