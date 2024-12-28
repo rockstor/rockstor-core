@@ -88,6 +88,7 @@ URLObject = "==2.1.1"
 keyring-pass = "*"
 # https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
 supervisor = "==4.2.4"
+django-debug-toolbar = "^4.4.6" # used only when DEBUG = True
 
 # `poetry install --with dev`
 [tool.poetry.group.dev]
@@ -95,7 +96,6 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
-django-debug-toolbar = "^4.4.6"
 
 [tool.poetry.scripts]
 # https://python-poetry.org/docs/pyproject#scripts
