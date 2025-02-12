@@ -15,9 +15,34 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import Disk, Pool, Share
 from django.contrib import admin
+from storageadmin.models import Disk, Pool, Share, Snapshot
+from storageadmin.models.rockon import RockOn, DImage, DContainer, DContainerLink, DContainerNetwork, DPort, DVolume, ContainerOption, DContainerArgs, DCustomConfig, DContainerEnv, DContainerDevice, DContainerLabel
+from storageadmin.models.user import User, Group
+# https://docs.djangoproject.com/en/4.2/ref/contrib/admin/
 
-admin.site.register(Disk)
-admin.site.register(Pool)
-admin.site.register(Share)
+@admin.register(Disk)
+class DiskAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Pool)
+class PoolAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Share)
+class ShareAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Snapshot)
+class SnapshotAdmin(admin.ModelAdmin):
+    pass
+
+# Rock-ons
+Rockon_Models = (RockOn, DImage, DContainer, DContainerLink, DContainerNetwork, DPort, DVolume, ContainerOption, DContainerArgs, DCustomConfig, DContainerEnv, DContainerDevice, DContainerLabel)
+admin.site.register(Rockon_Models)
+
+# User/Group models
+admin.site.register((User, Group))
+
+
+
