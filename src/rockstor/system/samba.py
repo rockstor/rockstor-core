@@ -77,7 +77,7 @@ def rockstor_smb_config(fo, exports):
             fo.write("    veto files = /.{}*/\n".format(e.snapshot_prefix))
         elif e.time_machine:
             fo.write("    vfs objects = catia fruit streams_xattr\n")
-            fo.write("    fruit:timemachine = yes\n")
+            fo.write("    fruit:time machine = yes\n")
             fo.write("    fruit:metadata = stream\n")
             fo.write("    fruit:veto_appledouble = no\n")
             fo.write("    fruit:posix_rename = no\n")
