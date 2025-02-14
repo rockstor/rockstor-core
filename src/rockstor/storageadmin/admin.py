@@ -255,6 +255,39 @@ class DVolumeAdmin(admin.ModelAdmin):
     ]
 
 
+class DPortAdminInline(admin.TabularInline):
+    model = DPort
+
+
+@admin.register(DPort)
+class DPortAdmin(admin.ModelAdmin):
+    # Similar to DVolumeAdmin
+    def parent_container_name(self, obj):
+        if obj.container:
+            return obj.container.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "label",
+        "parent_container_name",
+        "description",
+        "hostp",
+        "hostp_default",
+        "containerp",
+        "protocol",
+        "uiport",
+        "publish",
+    ]
+    # Detailed view
+    fields = [
+        ("description", "label"),
+        ("hostp", "hostp_default", "containerp"),
+        ("uiport", "publish", "protocol"),
+    ]
+
+
 class DContainerAdminInline(admin.TabularInline):
     model = DContainer
 
@@ -277,11 +310,105 @@ class ContainerOptionAdmin(admin.ModelAdmin):
     fields = [("name", "val")]
 
 
+class DContainerArgsAdminInline(admin.TabularInline):
+    model = DContainerArgs
+
+
+@admin.register(DContainerArgs)
+class DContainerArgsAdmin(admin.ModelAdmin):
+    # Essentially identical to ContainerOptionAdmin
+    def parent_container_name(self, obj):
+        if obj.container:
+            return obj.container.name
+        else:
+            return None
+
+    # Overview list
+    list_display = ["parent_container_name", "name", "val"]
+    # Detailed view
+    fields = [("name", "val")]
+
+
+class DContainerLabelAdminInline(admin.TabularInline):
+    model = DContainerLabel
+
+
+@admin.register(DContainerLabel)
+class DContainerLabelAdmin(admin.ModelAdmin):
+    # Almost identical to DContainerArgs (-name + key)
+    def parent_container_name(self, obj):
+        if obj.container:
+            return obj.container.name
+        else:
+            return None
+
+    # Overview list
+    list_display = ["parent_container_name", "key", "val"]
+    # Detailed view
+    fields = [("key", "val")]
+
+
+class DContainerEnvAdminInline(admin.TabularInline):
+    model = DContainerEnv
+
+
+@admin.register(DContainerEnv)
+class DContainerEnvAdmin(admin.ModelAdmin):
+    def parent_container_name(self, obj):
+        if obj.container:
+            return obj.container.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "parent_container_name",
+        "label",
+        "key",
+        "val",
+        "description",
+    ]
+    # Detailed view
+    fields = [
+        "label",
+        "description",
+        ("key", "val"),
+    ]
+
+
+class DContainerDeviceAdminInline(admin.TabularInline):
+    model = DContainerDevice
+
+
+@admin.register(DContainerDevice)
+class DContainerDeviceAdmin(admin.ModelAdmin):
+    # Almost identical to DContainerEnvAdmin (i.e. dev/key fields)
+    def parent_container_name(self, obj):
+        if obj.container:
+            return obj.container.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "parent_container_name",
+        "label",
+        "dev",
+        "val",
+        "description",
+    ]
+    # Detailed view
+    fields = [
+        "label",
+        "description",
+        ("dev", "val"),
+    ]
+
+
 class DContainerLinkAdminInline(admin.TabularInline):
     # https://docs.djangoproject.com/en/4.2/ref/contrib/admin/#django.contrib.admin.InlineModelAdmin.fk_name
     fk_name = "destination"  # Specify which ForeignKey/OneToOne use use.
     model = DContainerLink
-
 
 
 @admin.register(DContainerLink)
@@ -328,16 +455,49 @@ class DContainerAdmin(admin.ModelAdmin):
         else:
             return False
 
+    def has_container_args(self, obj) -> bool:
+        if DContainerArgs.objects.filter(container=obj).exists():
+            return True
+        else:
+            return False
+
+    def has_container_env(self, obj) -> bool:
+        if DContainerEnv.objects.filter(container=obj).exists():
+            return True
+        else:
+            return False
+
+    def has_container_device(self, obj) -> bool:
+        if DContainerDevice.objects.filter(container=obj).exists():
+            return True
+        else:
+            return False
+
+    def has_container_label(self, obj) -> bool:
+        if DContainerLabel.objects.filter(container=obj).exists():
+            return True
+        else:
+            return False
+
     has_container_options.boolean = True
+    has_container_args.boolean = True
+    has_container_env.boolean = True
+    has_container_device.boolean = True
+    has_container_label.boolean = True
     # Overview list
     list_display = [
         "name",
         "parent_rockon_name",
         "parent_dimage_name",
         "has_container_options",
+        "has_container_args",
+        "has_container_env",
+        "has_container_device",
+        "has_container_label",
         "launch_order",
         "uid",
     ]
+    list_per_page = 15
     # Detailed view
     fields = [
         "name",
@@ -345,7 +505,15 @@ class DContainerAdmin(admin.ModelAdmin):
         "launch_order",
         "uid",
     ]
-    inlines = [ContainerOptionAdminInline, DContainerLinkAdminInline]
+    inlines = [
+        ContainerOptionAdminInline,
+        DPortAdminInline,
+        DContainerArgsAdminInline,
+        DContainerEnvAdminInline,
+        DContainerDeviceAdminInline,
+        DContainerLabelAdminInline,
+        DContainerLinkAdminInline,
+    ]
 
 
 class DCustomConfigAdminInline(admin.TabularInline):
@@ -585,11 +753,6 @@ class PoolAdmin(admin.ModelAdmin):
 Rockon_Models = (
     DImage,
     DContainerNetwork,
-    DPort,
-    DContainerArgs,
-    DContainerEnv,
-    DContainerDevice,
-    DContainerLabel,
 )
 admin.site.register(Rockon_Models)
 
