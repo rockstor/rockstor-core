@@ -21,8 +21,12 @@ from storageadmin.models import (
     Pool,
     Share,
     Snapshot,
-    SambaCustomConfig,
+    IscsiTarget,
+    SFTP,
+    NFSExportGroup,
+    NFSExport,
     SambaShare,
+    SambaCustomConfig,
     PosixACLs,
     OauthApp,
 )
@@ -50,6 +54,7 @@ class ShareAdminInline(admin.TabularInline):
     """
     Controls display of Share when displayed inline, e.g. in Pool detailed view.
     """
+
     model = Share
     fields = [
         "subvol_name",
@@ -65,6 +70,7 @@ class SnapshotAdminInline(admin.TabularInline):
     """
     Controls display of Snapshot when displayed inline, e.g. in Share detailed view.
     """
+
     model = Snapshot
     fields = [
         "name",
@@ -76,10 +82,98 @@ class SnapshotAdminInline(admin.TabularInline):
     list_per_page = 15
 
 
+class IscsiTargetAdminInline(admin.TabularInline):
+    """
+    Controls display of IscsiTarget when displayed inline, e.g. in Share detailed view.
+    """
+
+    model = IscsiTarget
+    fields = [
+        "tname",
+        "tid",
+        "dev_name",
+        "dev_size",
+    ]
+    list_per_page = 15
+
+
+class SFTPAdminInline(admin.TabularInline):
+    """
+    Controls display of SFTP when displayed inline, e.g. in Share detailed view.
+    """
+
+    model = SFTP
+    fields = [
+        "editable",
+    ]
+
+
+@admin.register(SFTP)
+class SFTPAdmin(admin.ModelAdmin):
+    def parent_share_name(self, obj):
+        if obj.share:
+            return obj.share.name
+        else:
+            return None
+
+    # Overview list
+    list_display = ["parent_share_name", "editable"]
+    list_per_page = 15
+    # Detailed view
+    fields = ["editable"]
+
+
+class NFSExportAdminInline(admin.TabularInline):
+    """
+    Controls display of NFSExport when displayed inline, e.g. in Share & NFSExportGroup detailed view.
+    """
+
+    model = NFSExport
+    fields = ["export_group", "mount"]
+
+
+@admin.register(NFSExport)
+class NFSExportAdmin(admin.ModelAdmin):
+    def parent_share_name(self, obj):
+        if obj.share:
+            return obj.share.name
+        else:
+            return None
+
+    # Overview list
+    list_display = ["parent_share_name", "export_group", "mount"]
+    list_per_page = 15
+    # Detailed view
+    fields = ["export_group", "share", "mount"]
+
+
+@admin.register(NFSExportGroup)
+class NFSExportGroupAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "host_str",
+        "admin_host",
+        "editable",
+        "syncable",
+        "mount_security",
+        "nohide",
+        "enabled",
+    ]
+    # Detailed view
+    fields = [
+        "host_str",
+        "admin_host",
+        ("editable", "syncable", "mount_security"),
+        ("nohide", "enabled")
+    ]
+    inlines = [NFSExportAdminInline]
+
+
 class DiskAdminInline(admin.TabularInline):
     """
     Controls display of Disk when displayed inline, e.g. in a Pool detailed view.
     """
+
     model = Disk
     fields = [
         "name",
@@ -93,14 +187,12 @@ class DiskAdminInline(admin.TabularInline):
 
 @admin.register(Disk)
 class DiskAdmin(admin.ModelAdmin):
-    """
-    Controls display of Disks.
-    """
     def parent_pool_name(self, obj):
         if obj.pool:
             return obj.pool.name
         else:
             return None
+
     # Overview list
     list_display = [
         "name",
@@ -123,6 +215,130 @@ class DiskAdmin(admin.ModelAdmin):
     ]
 
 
+# Samba
+
+
+class SambaShareAdminInline(admin.TabularInline):
+    """
+    Controls display of SambaShare when displayed inline, e.g. in Share detailed view.
+    """
+
+    model = SambaShare
+    fields = [
+        "path",
+        "comment",
+        "browsable",
+        "read_only",
+        "guest_ok",
+        "time_machine",
+        "shadow_copy",
+        "snapshot_prefix",
+    ]
+    list_per_page = 15
+
+
+class SambaCustomConfigAdminInline(admin.TabularInline):
+    """
+    Controls display of SambaCustomConfig when displayed inline, e.g. in SambaShare detailed view.
+    """
+
+    model = SambaCustomConfig
+
+
+class PosixACLsAdminInline(admin.TabularInline):
+    """
+    Controls display of SambaCustomConfig when displayed inline, e.g. in SambaShare detailed view.
+    """
+
+    model = PosixACLs
+
+
+@admin.register(SambaShare)
+class SambaShareAdmin(admin.ModelAdmin):
+    def parent_share_name(self, obj):
+        if obj.share:
+            return obj.share.name
+        else:
+            return None
+
+    def has_custom_config(self, obj) -> bool:
+        if SambaCustomConfig.objects.filter(smb_share=obj).exists():
+            return True
+        else:
+            return False
+
+    # has_custom_config.boolean = True
+    # Overview list
+    list_display = [
+        "path",
+        "comment",
+        "browsable",
+        "read_only",
+        "guest_ok",
+        "time_machine",
+        "shadow_copy",
+        "snapshot_prefix",
+        "has_custom_config",
+        "parent_share_name",
+    ]
+    list_per_page = 15
+    # Detailed view
+    fields = [
+        ("share", "path"),
+        "comment",
+        ("browsable", "read_only", "guest_ok", "time_machine"),
+        ("shadow_copy", "snapshot_prefix"),
+    ]
+    inlines = [SambaCustomConfigAdminInline, PosixACLsAdminInline]
+
+
+@admin.register(SambaCustomConfig)
+class SambaCustomConfigAdmin(admin.ModelAdmin):
+    def parent_sambashare_path(self, obj):
+        if obj.smb_share:
+            return obj.smb_share.path
+        else:
+            return None
+
+    def parent_sambashare_sharename(self, obj):
+        if obj.smb_share.share:
+            return obj.smb_share.share.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "parent_sambashare_path",
+        "parent_sambashare_sharename",
+        "custom_config",
+    ]
+
+
+@admin.register(IscsiTarget)
+class IscsiTargetAdmin(admin.ModelAdmin):
+    def parent_share_name(self, obj):
+        if obj.share:
+            return obj.share.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "tname",
+        "tid",
+        "dev_name",
+        "dev_size",
+        "parent_share_name",
+    ]
+    list_per_page = 15
+    # Detailed view
+    fields = [
+        "share",
+        ("tname", "tid"),
+        ("dev_name", "dev_size"),
+    ]
+
+
 @admin.register(Share)
 class ShareAdmin(admin.ModelAdmin):
     # model = Share
@@ -133,9 +349,11 @@ class ShareAdmin(admin.ModelAdmin):
             return obj.pool.name
         else:
             return None
+
     # Overview list
     list_display = [
         "name",
+        "id",
         "size",
         "subvol_name",
         "uuid",
@@ -150,6 +368,7 @@ class ShareAdmin(admin.ModelAdmin):
         "eusage",
         "parent_pool_name",
     ]
+    list_per_page = 15
     # Detailed view
     fields = [
         ("name", "subvol_name"),
@@ -162,8 +381,13 @@ class ShareAdmin(admin.ModelAdmin):
         "uuid",
         "replica",
     ]
-    list_per_page = 15
-    inlines = [SnapshotAdminInline]
+    inlines = [
+        SnapshotAdminInline,
+        SambaShareAdminInline,
+        SFTPAdminInline,
+        NFSExportAdminInline,
+        IscsiTargetAdminInline,
+    ]
 
 
 @admin.register(Snapshot)
@@ -173,6 +397,7 @@ class SnapshotAdmin(admin.ModelAdmin):
             return obj.share.name
         else:
             return None
+
     # Overview list
     list_display = [
         "name",
@@ -231,7 +456,3 @@ admin.site.register(Rockon_Models)
 
 # User/Group models
 admin.site.register((User, Group, OauthApp))
-
-# Samba
-Samba_Models = (SambaShare, SambaCustomConfig, PosixACLs)
-admin.site.register(Samba_Models)
