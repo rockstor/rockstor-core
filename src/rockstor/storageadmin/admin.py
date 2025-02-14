@@ -259,6 +259,55 @@ class DContainerAdminInline(admin.TabularInline):
     model = DContainer
 
 
+class ContainerOptionAdminInline(admin.TabularInline):
+    model = ContainerOption
+
+
+@admin.register(ContainerOption)
+class ContainerOptionAdmin(admin.ModelAdmin):
+    def parent_container_name(self, obj):
+        if obj.container:
+            return obj.container.name
+        else:
+            return None
+
+    # Overview list
+    list_display = ["parent_container_name", "name", "val"]
+    # Detailed view
+    fields = [("name", "val")]
+
+
+class DContainerLinkAdminInline(admin.TabularInline):
+    # https://docs.djangoproject.com/en/4.2/ref/contrib/admin/#django.contrib.admin.InlineModelAdmin.fk_name
+    fk_name = "destination"  # Specify which ForeignKey/OneToOne use use.
+    model = DContainerLink
+
+
+
+@admin.register(DContainerLink)
+class DContainerLinkAdmin(admin.ModelAdmin):
+    def parent_source_container_name(self, obj):
+        if obj.source:
+            return obj.source.name
+        else:
+            return None
+
+    def parent_destination_container_name(self, obj):
+        if obj.destination:
+            return obj.destination.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "name",
+        "parent_source_container_name",
+        "parent_destination_container_name",
+    ]
+    # Detailed view
+    fields = ["name", ("source", "destination")]
+
+
 @admin.register(DContainer)
 class DContainerAdmin(admin.ModelAdmin):
     def parent_rockon_name(self, obj):
@@ -273,11 +322,19 @@ class DContainerAdmin(admin.ModelAdmin):
         else:
             return None
 
+    def has_container_options(self, obj) -> bool:
+        if ContainerOption.objects.filter(container=obj).exists():
+            return True
+        else:
+            return False
+
+    has_container_options.boolean = True
     # Overview list
     list_display = [
         "name",
         "parent_rockon_name",
         "parent_dimage_name",
+        "has_container_options",
         "launch_order",
         "uid",
     ]
@@ -288,6 +345,7 @@ class DContainerAdmin(admin.ModelAdmin):
         "launch_order",
         "uid",
     ]
+    inlines = [ContainerOptionAdminInline, DContainerLinkAdminInline]
 
 
 class DCustomConfigAdminInline(admin.TabularInline):
@@ -320,7 +378,23 @@ class DCustomConfigAdmin(admin.ModelAdmin):
 
 @admin.register(RockOn)
 class RockOnAdmin(admin.ModelAdmin):
-    pass
+    # Overview list
+    list_display = [
+        "name",
+        "description",
+        "version",
+        "state",
+        "status",
+    ]
+    # Detailed view
+    fields = [
+        ("name", "version", "website"),
+        "description",
+        "more_info",
+        ("ui", "https", "volume_add_support"),
+        ("state", "status", "taskid", "link"),
+    ]
+    inlines = [DContainerAdminInline, DCustomConfigAdminInline]
 
 
 @admin.register(SambaShare)
@@ -337,7 +411,7 @@ class SambaShareAdmin(admin.ModelAdmin):
         else:
             return False
 
-    # has_custom_config.boolean = True
+    has_custom_config.boolean = True
     # Overview list
     list_display = [
         "path",
@@ -510,10 +584,8 @@ class PoolAdmin(admin.ModelAdmin):
 # Rock-ons
 Rockon_Models = (
     DImage,
-    DContainerLink,
     DContainerNetwork,
     DPort,
-    ContainerOption,
     DContainerArgs,
     DContainerEnv,
     DContainerDevice,
