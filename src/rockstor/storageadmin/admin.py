@@ -51,10 +51,6 @@ from storageadmin.models.user import User, Group
 
 
 class ShareAdminInline(admin.TabularInline):
-    """
-    Controls display of Share when displayed inline, e.g. in Pool detailed view.
-    """
-
     model = Share
     fields = [
         "subvol_name",
@@ -67,10 +63,6 @@ class ShareAdminInline(admin.TabularInline):
 
 
 class SnapshotAdminInline(admin.TabularInline):
-    """
-    Controls display of Snapshot when displayed inline, e.g. in Share detailed view.
-    """
-
     model = Snapshot
     fields = [
         "name",
@@ -83,10 +75,6 @@ class SnapshotAdminInline(admin.TabularInline):
 
 
 class IscsiTargetAdminInline(admin.TabularInline):
-    """
-    Controls display of IscsiTarget when displayed inline, e.g. in Share detailed view.
-    """
-
     model = IscsiTarget
     fields = [
         "tname",
@@ -98,10 +86,6 @@ class IscsiTargetAdminInline(admin.TabularInline):
 
 
 class SFTPAdminInline(admin.TabularInline):
-    """
-    Controls display of SFTP when displayed inline, e.g. in Share detailed view.
-    """
-
     model = SFTP
     fields = [
         "editable",
@@ -124,10 +108,6 @@ class SFTPAdmin(admin.ModelAdmin):
 
 
 class NFSExportAdminInline(admin.TabularInline):
-    """
-    Controls display of NFSExport when displayed inline, e.g. in Share & NFSExportGroup detailed view.
-    """
-
     model = NFSExport
     fields = ["export_group", "mount"]
 
@@ -164,16 +144,12 @@ class NFSExportGroupAdmin(admin.ModelAdmin):
         "host_str",
         "admin_host",
         ("editable", "syncable", "mount_security"),
-        ("nohide", "enabled")
+        ("nohide", "enabled"),
     ]
     inlines = [NFSExportAdminInline]
 
 
 class DiskAdminInline(admin.TabularInline):
-    """
-    Controls display of Disk when displayed inline, e.g. in a Pool detailed view.
-    """
-
     model = Disk
     fields = [
         "name",
@@ -215,14 +191,7 @@ class DiskAdmin(admin.ModelAdmin):
     ]
 
 
-# Samba
-
-
 class SambaShareAdminInline(admin.TabularInline):
-    """
-    Controls display of SambaShare when displayed inline, e.g. in Share detailed view.
-    """
-
     model = SambaShare
     fields = [
         "path",
@@ -238,19 +207,120 @@ class SambaShareAdminInline(admin.TabularInline):
 
 
 class SambaCustomConfigAdminInline(admin.TabularInline):
-    """
-    Controls display of SambaCustomConfig when displayed inline, e.g. in SambaShare detailed view.
-    """
-
     model = SambaCustomConfig
 
 
 class PosixACLsAdminInline(admin.TabularInline):
-    """
-    Controls display of SambaCustomConfig when displayed inline, e.g. in SambaShare detailed view.
-    """
-
     model = PosixACLs
+
+
+class DVolumeAdminInline(admin.TabularInline):
+    model = DVolume
+
+
+@admin.register(DVolume)
+class DVolumeAdmin(admin.ModelAdmin):
+    def parent_share_name(self, obj):
+        if obj.share:
+            return obj.share.name
+        else:
+            return None
+
+    def parent_container_name(self, obj):
+        if obj.container:
+            return obj.container.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "label",
+        "parent_container_name",
+        "description",
+        "min_size",
+        "uservol",
+        "dest_dir",
+        "parent_share_name",
+    ]
+    # Detailed view
+    fields = [
+        ("container", "share"),
+        "label",
+        "description",
+        (
+            "uservol",
+            "dest_dir",
+            "min_size",
+        ),
+    ]
+
+
+class DContainerAdminInline(admin.TabularInline):
+    model = DContainer
+
+
+@admin.register(DContainer)
+class DContainerAdmin(admin.ModelAdmin):
+    def parent_rockon_name(self, obj):
+        if obj.rockon:
+            return obj.rockon.name
+        else:
+            return None
+
+    def parent_dimage_name(self, obj):
+        if obj.dimage:
+            return obj.dimage.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "name",
+        "parent_rockon_name",
+        "parent_dimage_name",
+        "launch_order",
+        "uid",
+    ]
+    # Detailed view
+    fields = [
+        "name",
+        ("rockon", "dimage"),
+        "launch_order",
+        "uid",
+    ]
+
+
+class DCustomConfigAdminInline(admin.TabularInline):
+    model = DCustomConfig
+
+
+@admin.register(DCustomConfig)
+class DCustomConfigAdmin(admin.ModelAdmin):
+    def parent_rockon_name(self, obj):
+        if obj.rockon:
+            return obj.rockon.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "parent_rockon_name",
+        "label",
+        "key",
+        "val",
+        "description",
+    ]
+    # Detailed view
+    fields = [
+        "label",
+        "description",
+        ("key", "val"),
+    ]
+
+
+@admin.register(RockOn)
+class RockOnAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(SambaShare)
@@ -387,6 +457,7 @@ class ShareAdmin(admin.ModelAdmin):
         SFTPAdminInline,
         NFSExportAdminInline,
         IscsiTargetAdminInline,
+        DVolumeAdminInline,
     ]
 
 
@@ -438,16 +509,12 @@ class PoolAdmin(admin.ModelAdmin):
 
 # Rock-ons
 Rockon_Models = (
-    RockOn,
     DImage,
-    DContainer,
     DContainerLink,
     DContainerNetwork,
     DPort,
-    DVolume,
     ContainerOption,
     DContainerArgs,
-    DCustomConfig,
     DContainerEnv,
     DContainerDevice,
     DContainerLabel,
