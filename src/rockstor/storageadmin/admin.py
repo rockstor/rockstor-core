@@ -94,14 +94,8 @@ class SFTPAdminInline(admin.TabularInline):
 
 @admin.register(SFTP)
 class SFTPAdmin(admin.ModelAdmin):
-    def parent_share_name(self, obj):
-        if obj.share:
-            return obj.share.name
-        else:
-            return None
-
     # Overview list
-    list_display = ["parent_share_name", "editable"]
+    list_display = ["share_name", "share_id", "editable"]
     list_per_page = 15
     # Detailed view
     fields = ["editable"]
@@ -114,14 +108,8 @@ class NFSExportAdminInline(admin.TabularInline):
 
 @admin.register(NFSExport)
 class NFSExportAdmin(admin.ModelAdmin):
-    def parent_share_name(self, obj):
-        if obj.share:
-            return obj.share.name
-        else:
-            return None
-
     # Overview list
-    list_display = ["parent_share_name", "export_group", "mount"]
+    list_display = ["share_name", "share_id", "export_group", "mount"]
     list_per_page = 15
     # Detailed view
     fields = ["export_group", "share", "mount"]
@@ -163,21 +151,21 @@ class DiskAdminInline(admin.TabularInline):
 
 @admin.register(Disk)
 class DiskAdmin(admin.ModelAdmin):
-    def parent_pool_name(self, obj):
-        if obj.pool:
-            return obj.pool.name
-        else:
-            return None
-
     # Overview list
     list_display = [
         "name",
+        "target_name",
+        "temp_name",
         "serial",
         "devid",
         "size",
         "allocated",
         "model",
-        "parent_pool_name",
+        "power_state",
+        "hdparm_setting",
+        "apm_level",
+        "io_error_stats",
+        "pool_name",
     ]
     # Detailed view
     fields = [
@@ -220,12 +208,6 @@ class DVolumeAdminInline(admin.TabularInline):
 
 @admin.register(DVolume)
 class DVolumeAdmin(admin.ModelAdmin):
-    def parent_share_name(self, obj):
-        if obj.share:
-            return obj.share.name
-        else:
-            return None
-
     def parent_container_name(self, obj):
         if obj.container:
             return obj.container.name
@@ -240,7 +222,7 @@ class DVolumeAdmin(admin.ModelAdmin):
         "min_size",
         "uservol",
         "dest_dir",
-        "parent_share_name",
+        "share_name",
     ]
     # Detailed view
     fields = [
@@ -262,16 +244,10 @@ class DPortAdminInline(admin.TabularInline):
 @admin.register(DPort)
 class DPortAdmin(admin.ModelAdmin):
     # Similar to DVolumeAdmin
-    def parent_container_name(self, obj):
-        if obj.container:
-            return obj.container.name
-        else:
-            return None
-
     # Overview list
     list_display = [
         "label",
-        "parent_container_name",
+        "container_name",
         "description",
         "hostp",
         "hostp_default",
@@ -280,6 +256,7 @@ class DPortAdmin(admin.ModelAdmin):
         "uiport",
         "publish",
     ]
+    list_per_page = 15
     # Detailed view
     fields = [
         ("description", "label"),
@@ -435,6 +412,23 @@ class DContainerLinkAdmin(admin.ModelAdmin):
     fields = ["name", ("source", "destination")]
 
 
+class DContainerNetworkAdminInline(admin.TabularInline):
+    # https://docs.djangoproject.com/en/4.2/ref/contrib/admin/#django.contrib.admin.InlineModelAdmin.fk_name
+    fk_name = "container"  # Specify which ForeignKey/OneToOne use use.
+    model = DContainerNetwork
+
+
+@admin.register(DContainerNetwork)
+class DContainerNetworkAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "docker_name",
+        "container_name",
+    ]
+    # Detailed view
+    fields = [("container", "connection")]
+
+
 @admin.register(DContainer)
 class DContainerAdmin(admin.ModelAdmin):
     def parent_rockon_name(self, obj):
@@ -449,51 +443,59 @@ class DContainerAdmin(admin.ModelAdmin):
         else:
             return None
 
-    def has_container_options(self, obj) -> bool:
+    def has_options(self, obj) -> bool:
         if ContainerOption.objects.filter(container=obj).exists():
             return True
         else:
             return False
 
-    def has_container_args(self, obj) -> bool:
+    def has_args(self, obj) -> bool:
         if DContainerArgs.objects.filter(container=obj).exists():
             return True
         else:
             return False
 
-    def has_container_env(self, obj) -> bool:
+    def has_env(self, obj) -> bool:
         if DContainerEnv.objects.filter(container=obj).exists():
             return True
         else:
             return False
 
-    def has_container_device(self, obj) -> bool:
+    def has_device(self, obj) -> bool:
         if DContainerDevice.objects.filter(container=obj).exists():
             return True
         else:
             return False
 
-    def has_container_label(self, obj) -> bool:
+    def has_label(self, obj) -> bool:
         if DContainerLabel.objects.filter(container=obj).exists():
             return True
         else:
             return False
 
-    has_container_options.boolean = True
-    has_container_args.boolean = True
-    has_container_env.boolean = True
-    has_container_device.boolean = True
-    has_container_label.boolean = True
+    def has_network(self, obj) -> bool:
+        if DContainerNetwork.objects.filter(container=obj).exists():
+            return True
+        else:
+            return False
+
+    has_options.boolean = True
+    has_args.boolean = True
+    has_env.boolean = True
+    has_device.boolean = True
+    has_label.boolean = True
+    has_network.boolean = True
     # Overview list
     list_display = [
         "name",
         "parent_rockon_name",
         "parent_dimage_name",
-        "has_container_options",
-        "has_container_args",
-        "has_container_env",
-        "has_container_device",
-        "has_container_label",
+        "has_options",
+        "has_args",
+        "has_env",
+        "has_device",
+        "has_label",
+        "has_network",
         "launch_order",
         "uid",
     ]
@@ -513,6 +515,7 @@ class DContainerAdmin(admin.ModelAdmin):
         DContainerDeviceAdminInline,
         DContainerLabelAdminInline,
         DContainerLinkAdminInline,
+        DContainerNetworkAdminInline,
     ]
 
 
@@ -551,9 +554,13 @@ class RockOnAdmin(admin.ModelAdmin):
         "name",
         "description",
         "version",
+        "ui_publish",
+        "ui_port",
         "state",
         "status",
+        "host_network",
     ]
+    list_per_page = 10
     # Detailed view
     fields = [
         ("name", "version", "website"),
@@ -567,12 +574,6 @@ class RockOnAdmin(admin.ModelAdmin):
 
 @admin.register(SambaShare)
 class SambaShareAdmin(admin.ModelAdmin):
-    def parent_share_name(self, obj):
-        if obj.share:
-            return obj.share.name
-        else:
-            return None
-
     def has_custom_config(self, obj) -> bool:
         if SambaCustomConfig.objects.filter(smb_share=obj).exists():
             return True
@@ -584,6 +585,7 @@ class SambaShareAdmin(admin.ModelAdmin):
     list_display = [
         "path",
         "comment",
+        "admin_users",
         "browsable",
         "read_only",
         "guest_ok",
@@ -591,7 +593,8 @@ class SambaShareAdmin(admin.ModelAdmin):
         "shadow_copy",
         "snapshot_prefix",
         "has_custom_config",
-        "parent_share_name",
+        "share_name",
+        "share_id",
     ]
     list_per_page = 15
     # Detailed view
@@ -666,14 +669,18 @@ class ShareAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "id",
-        "size",
         "subvol_name",
+        "mnt_pt",
+        "mount_status",
+        "size",
+        # "size_gb",
         "uuid",
         "owner",
         "group",
         "perms",
         "qgroup",
         "pqgroup",
+        "pqgroup_exist",
         "replica",
         "compression_algo",
         "rusage",
@@ -737,23 +744,28 @@ class PoolAdmin(admin.ModelAdmin):
     # Overview list
     list_display = [
         "name",
+        "mnt_pt",
+        "mount_status",
+        "raid",
+        "data_raid",
+        "metadata_raid",
+        "quotas_enabled",
         "uuid",
         "size",
-        "raid",
-        "toc",
+        "free",
+        # "toc",
         "compression",
         "mnt_options",
         "role",
+        "has_missing_dev",
+        "redundancy_exceeded",
     ]
     list_per_page = 15
     inlines = [DiskAdminInline, ShareAdminInline]
 
 
 # Rock-ons
-Rockon_Models = (
-    DImage,
-    DContainerNetwork,
-)
+Rockon_Models = (DImage,)
 admin.site.register(Rockon_Models)
 
 # User/Group models
