@@ -32,6 +32,14 @@ from storageadmin.models import (
     PosixACLs,
     OauthApp,
 )
+from storageadmin.models.network_interface import (
+    BondConnection,
+    TeamConnection,
+    EthernetConnection,
+    NetworkDevice,
+    NetworkConnection,
+)
+
 from storageadmin.models.rockon import (
     RockOn,
     DImage,
@@ -448,6 +456,86 @@ class DContainerNetworkAdmin(admin.ModelAdmin):
     fields = [("container", "connection")]
 
 
+class NetworkDeviceAdminInline(admin.TabularInline):
+    model = NetworkDevice
+
+
+@admin.register(NetworkDevice)
+class NetworkDeviceAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "name",
+        "cname",
+        "dev_name",
+        "dtype",
+        "mac",
+        "state",
+        "mtu",
+    ]
+
+
+class EthernetConnectionAdminInline(admin.TabularInline):
+    model = EthernetConnection
+
+
+@admin.register(EthernetConnection)
+class EthernetConnectionAdmin(admin.ModelAdmin):
+    def connection_name(self, obj):
+        if obj.connection:
+            return obj.connection.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "connection_name",
+        "mac",
+        "cloned_mac",
+        "mtu",
+    ]
+
+
+class TeamConnectionAdminInline(admin.TabularInline):
+    model = TeamConnection
+
+
+@admin.register(TeamConnection)
+class TeamConnectionAdmin(admin.ModelAdmin):
+    def connection_name(self, obj):
+        if obj.connection:
+            return obj.connection.name
+        else:
+            return None
+
+    # Same as BondConnection counterpart
+    # Overview list
+    list_display = [
+        "connection_name",
+        "name",
+        "config",
+    ]
+
+
+class BondConnectionAdminInline(admin.TabularInline):
+    model = BondConnection
+
+
+@admin.register(BondConnection)
+class BondConnectionAdmin(admin.ModelAdmin):
+    def connection_name(self, obj):
+        if obj.connection:
+            return obj.connection.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "connection_name",
+        "name",
+        "config",
+    ]
+
+
 class BridgeConnectionAdminInline(admin.TabularInline):
     model = BridgeConnection
 
@@ -459,6 +547,7 @@ class BridgeConnectionAdmin(admin.ModelAdmin):
             return obj.connection.name
         else:
             return None
+
     # Overview list
     list_display = [
         "connection_name",
@@ -472,6 +561,35 @@ class BridgeConnectionAdmin(admin.ModelAdmin):
         "ip_masquerade",
         "ip_range",
         "subnet",
+    ]
+
+
+class NetworkConnectionAdminInline(admin.TabularInline):
+    model = NetworkConnection
+
+
+@admin.register(NetworkConnection)
+class NetworkConnectionAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "name",
+        "uuid",
+        "state",
+        "autoconnect",
+        "ctype",
+        "ipv4_method",
+        "ipaddr",
+        "ipv6_method",
+        "master",
+        "docker_name",
+        "user_dnet",
+    ]
+    inlines = [
+        NetworkDeviceAdminInline,
+        EthernetConnectionAdminInline,
+        TeamConnectionAdminInline,
+        BondConnectionAdminInline,
+        BridgeConnectionAdminInline,
     ]
 
 
