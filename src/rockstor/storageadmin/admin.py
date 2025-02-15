@@ -19,6 +19,8 @@ from django.contrib import admin
 from storageadmin.models import (
     Disk,
     Pool,
+    PoolScrub,
+    PoolBalance,
     Share,
     Snapshot,
     IscsiTarget,
@@ -36,6 +38,7 @@ from storageadmin.models.rockon import (
     DContainer,
     DContainerLink,
     DContainerNetwork,
+    BridgeConnection,
     DPort,
     DVolume,
     ContainerOption,
@@ -269,6 +272,22 @@ class DContainerAdminInline(admin.TabularInline):
     model = DContainer
 
 
+class DImageAdminInline(admin.TabularInline):
+    model = DImage
+
+
+@admin.register(DImage)
+class DImageAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "name",
+        "tag",
+        "repo",
+    ]
+    list_per_page = 15
+    inlines = [DContainerAdminInline]
+
+
 class ContainerOptionAdminInline(admin.TabularInline):
     model = ContainerOption
 
@@ -429,6 +448,33 @@ class DContainerNetworkAdmin(admin.ModelAdmin):
     fields = [("container", "connection")]
 
 
+class BridgeConnectionAdminInline(admin.TabularInline):
+    model = BridgeConnection
+
+
+@admin.register(BridgeConnection)
+class BridgeConnectionAdmin(admin.ModelAdmin):
+    def connection_name(self, obj):
+        if obj.connection:
+            return obj.connection.name
+        else:
+            return None
+    # Overview list
+    list_display = [
+        "connection_name",
+        "docker_name",
+        "usercon",
+        "aux_address",
+        "dgateway",
+        "host_binding",
+        "icc",
+        "internal",
+        "ip_masquerade",
+        "ip_range",
+        "subnet",
+    ]
+
+
 @admin.register(DContainer)
 class DContainerAdmin(admin.ModelAdmin):
     def parent_rockon_name(self, obj):
@@ -570,6 +616,45 @@ class RockOnAdmin(admin.ModelAdmin):
         ("state", "status", "taskid", "link"),
     ]
     inlines = [DContainerAdminInline, DCustomConfigAdminInline]
+
+
+class UserAdminInline(admin.TabularInline):
+    fk_name = "group"
+    model = User
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "username",
+        "groupname",
+        "uid",
+        "gid",
+        "public_key",
+        # "smb_shares",  # must not be a ManyToManyField
+        "shell",
+        "homedir",
+        "email",
+        "admin",
+    ]
+    list_per_page = 15
+
+
+class GroupAdminInline(admin.TabularInline):
+    model = Group
+
+
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "groupname",
+        "gid",
+        "admin",
+    ]
+    list_per_page = 15
+    inlines = [UserAdminInline]
 
 
 @admin.register(SambaShare)
@@ -739,6 +824,60 @@ class SnapshotAdmin(admin.ModelAdmin):
     ]
 
 
+class PoolBalanceAdminInline(admin.TabularInline):
+    model = PoolBalance
+
+
+@admin.register(PoolBalance)
+class PoolBalanceAdmin(admin.ModelAdmin):
+    def parent_pool_name(self, obj):
+        if obj.pool:
+            return obj.pool.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "parent_pool_name",
+        "status",
+        "tid",
+        "message",
+        "start_time",
+        "end_time",
+        "percent_done",
+        "internal",
+    ]
+    list_per_page = 15
+
+
+class PoolScrubAdminInline(admin.TabularInline):
+    model = PoolScrub
+
+
+@admin.register(PoolScrub)
+class PoolScrubAdmin(admin.ModelAdmin):
+    def parent_pool_name(self, obj):
+        if obj.pool:
+            return obj.pool.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "parent_pool_name",
+        "status",
+        "pid",
+        "start_time",
+        "end_time",
+        "time_left",
+        "eta",
+        "rate",
+        "kb_scrubbed",
+        "read_errors",
+    ]
+    list_per_page = 15
+
+
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
     # Overview list
@@ -761,12 +900,13 @@ class PoolAdmin(admin.ModelAdmin):
         "redundancy_exceeded",
     ]
     list_per_page = 15
-    inlines = [DiskAdminInline, ShareAdminInline]
+    inlines = [
+        DiskAdminInline,
+        ShareAdminInline,
+        PoolBalanceAdminInline,
+        PoolScrubAdminInline,
+    ]
 
-
-# Rock-ons
-Rockon_Models = (DImage,)
-admin.site.register(Rockon_Models)
 
 # User/Group models
-admin.site.register((User, Group, OauthApp))
+admin.site.register(OauthApp)
