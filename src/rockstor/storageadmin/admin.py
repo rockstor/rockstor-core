@@ -40,6 +40,14 @@ from storageadmin.models import (
     Setup,
     Plugin,
     InstalledPlugin,
+    TLSCertificate,
+    SMARTInfo,
+    SMARTCapability,
+    SMARTAttribute,
+    SMARTErrorLog,
+    SMARTTestLog,
+    SMARTTestLogDetail,
+    SMARTIdentity,
 )
 from storageadmin.models.network_interface import (
     BondConnection,
@@ -179,6 +187,153 @@ class DiskAdminInline(admin.TabularInline):
     list_per_page = 15
 
 
+# S.M.A.R.T
+class SMARTCapabilityAdminInline(admin.TabularInline):
+    model = SMARTCapability
+
+
+@admin.register(SMARTCapability)
+class SMARTCapabilityAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "info",
+        "name",
+        "flag",
+        "capabilities",
+    ]
+
+
+class SMARTAttributeAdminInline(admin.TabularInline):
+    model = SMARTAttribute
+
+
+@admin.register(SMARTAttribute)
+class SMARTAttributeAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "info",
+        "aid",
+        "name",
+        "flag",
+        "normed_value",
+        "worst",
+        "threshold",
+        "atype",
+        "raw_value",
+        "updated",
+        "failed",
+    ]
+
+
+class SMARTErrorLogAdminInline(admin.TabularInline):
+    model = SMARTErrorLog
+
+
+@admin.register(SMARTErrorLog)
+class SMARTErrorLogAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "info",
+        "line",
+    ]
+
+
+class SMARTTestLogAdminInline(admin.TabularInline):
+    model = SMARTTestLog
+
+
+@admin.register(SMARTTestLog)
+class SMARTTestLogAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "info",
+        "test_num",
+        "description",
+        "status",
+        "pct_completed",
+        "lifetime_hours",
+        "lba_of_first_error",
+    ]
+
+
+class SMARTTestLogDetailAdminInline(admin.TabularInline):
+    model = SMARTTestLogDetail
+
+
+@admin.register(SMARTTestLogDetail)
+class SMARTTestLogDetailAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "info",
+        "line",
+    ]
+
+
+class SMARTIdentityAdminInline(admin.TabularInline):
+    model = SMARTIdentity
+
+
+@admin.register(SMARTIdentity)
+class SMARTIdentityAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "info",
+        "model_family",
+        "device_model",
+        "serial_number",
+        "world_wide_name",
+        "firmware_version",
+        "capacity",
+        "sector_size",
+        "rotation_rate",
+        "in_smartdb",
+        "ata_version",
+        "sata_version",
+        "scanned_on",
+        "supported",
+        "enabled",
+        "version",
+        "assessment",
+    ]
+
+
+class SMARTInfoAdminInline(admin.TabularInline):
+    model = SMARTInfo
+
+
+@admin.register(SMARTInfo)
+class SMARTInfoAdmin(admin.ModelAdmin):
+    def disk_name(self, obj):
+        if obj.disk:
+            return obj.disk.name
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "disk_name",
+        # "toc",
+        "capabilities",
+        "attributes",
+        "errorlog",
+        "errorlogsummary",
+        "identity",
+        "testlog",
+        "testlogdetail",
+    ]
+    inlines = [
+        SMARTCapabilityAdminInline,
+        SMARTAttributeAdminInline,
+        SMARTErrorLogAdminInline,
+        SMARTTestLogAdminInline,
+        SMARTTestLogDetailAdminInline,
+        SMARTIdentityAdminInline,
+    ]
+
+
+# S.M.A.R.T end
+
+
 @admin.register(Disk)
 class DiskAdmin(admin.ModelAdmin):
     # Overview list
@@ -207,6 +362,7 @@ class DiskAdmin(admin.ModelAdmin):
         ("smart_available", "smart_enabled", "smart_options"),
         "role",
     ]
+    inlines = [SMARTInfoAdminInline]
 
 
 class SambaShareAdminInline(admin.TabularInline):
@@ -1189,3 +1345,17 @@ class PluginAdmin(admin.ModelAdmin):
         "key",
     ]
     inlines = [InstalledPluginAdminInline]
+
+
+class TLSCertificateAdminInline(admin.TabularInline):
+    model = TLSCertificate
+
+
+@admin.register(TLSCertificate)
+class TLSCertificateAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "name",
+        "certificate",
+        "key",
+    ]
