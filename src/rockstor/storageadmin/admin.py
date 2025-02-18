@@ -31,6 +31,15 @@ from storageadmin.models import (
     SambaCustomConfig,
     PosixACLs,
     OauthApp,
+    APIKeys,
+    Appliance,
+    UpdateSubscription,
+    AdvancedNFSExport,
+    SupportCase,
+    DashboardConfig,
+    Setup,
+    Plugin,
+    InstalledPlugin,
 )
 from storageadmin.models.network_interface import (
     BondConnection,
@@ -124,6 +133,16 @@ class NFSExportAdmin(admin.ModelAdmin):
     list_per_page = 15
     # Detailed view
     fields = ["export_group", "share", "mount"]
+
+
+class AdvancedNFSExportAdminInline(admin.TabularInline):
+    model = AdvancedNFSExport
+
+
+@admin.register(AdvancedNFSExport)
+class AdvancedNFSExportAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = ["export_str"]
 
 
 @admin.register(NFSExportGroup)
@@ -582,6 +601,7 @@ class NetworkConnectionAdmin(admin.ModelAdmin):
         "ipv6_method",
         "master",
         "docker_name",
+        "docker_options",
         "user_dnet",
     ]
     inlines = [
@@ -736,6 +756,24 @@ class RockOnAdmin(admin.ModelAdmin):
     inlines = [DContainerAdminInline, DCustomConfigAdminInline]
 
 
+class OauthAppAdminInline(admin.TabularInline):
+    model = OauthApp
+    fk_name = "user"
+
+
+@admin.register(OauthApp)
+class OauthAppAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "name",
+        "application",
+        "user",
+        "client_id",
+        "client_secret",
+        "is_internal",
+    ]
+
+
 class UserAdminInline(admin.TabularInline):
     fk_name = "group"
     model = User
@@ -757,6 +795,7 @@ class UserAdmin(admin.ModelAdmin):
         "admin",
     ]
     list_per_page = 15
+    inlines = [OauthAppAdminInline]
 
 
 class GroupAdminInline(admin.TabularInline):
@@ -1026,5 +1065,127 @@ class PoolAdmin(admin.ModelAdmin):
     ]
 
 
-# User/Group models
-admin.site.register(OauthApp)
+class APIKeysAdminInline(admin.TabularInline):
+    model = APIKeys
+
+
+@admin.register(APIKeys)
+class APIKeysAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "user",
+        "key",
+    ]
+
+
+class UpdateSubscriptionAdminInline(admin.TabularInline):
+    model = UpdateSubscription
+
+
+@admin.register(UpdateSubscription)
+class UpdateSubscriptionAdmin(admin.ModelAdmin):
+    def appliance_hostname(self, obj):
+        if obj.appliance:
+            return obj.appliance.hostname
+        else:
+            return None
+
+    # Overview list
+    list_display = [
+        "name",
+        "description",
+        "url",
+        "appliance_hostname",
+        "password",
+        "status",
+    ]
+
+
+class ApplianceAdminInline(admin.TabularInline):
+    model = Appliance
+
+
+@admin.register(Appliance)
+class ApplianceAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "uuid",
+        "ip",
+        "current_appliance",
+        "hostname",
+        "mgmt_port",
+        "client_id",
+        "client_secret",
+        "ipaddr",
+    ]
+    inlines = [UpdateSubscriptionAdminInline]
+
+
+@admin.register(SupportCase)
+class SupportCaseAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "notes",
+        "zipped_log",
+        "status",
+        "case_type",
+    ]
+
+
+class DashboardConfigAdminInline(admin.TabularInline):
+    model = DashboardConfig
+
+
+@admin.register(DashboardConfig)
+class DashboardConfigAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "user",
+        "widgets",
+    ]
+
+
+class SetupAdminInline(admin.TabularInline):
+    model = Setup
+
+
+@admin.register(Setup)
+class SetupAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "setup_user",
+        "setup_system",
+        "setup_disks",
+        "setup_network",
+    ]
+
+
+class InstalledPluginAdminInline(admin.TabularInline):
+    model = InstalledPlugin
+
+
+@admin.register(InstalledPlugin)
+class InstalledPluginAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "plugin_meta",
+        "install_date",
+    ]
+
+
+class PluginAdminInline(admin.TabularInline):
+    model = Plugin
+
+
+@admin.register(Plugin)
+class PluginAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "name",
+        "display_name",
+        "description",
+        "css_file_name",
+        "js_file_name",
+        "key",
+    ]
+    inlines = [InstalledPluginAdminInline]
