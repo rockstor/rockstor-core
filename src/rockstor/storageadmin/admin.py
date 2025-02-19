@@ -48,6 +48,9 @@ from storageadmin.models import (
     SMARTTestLog,
     SMARTTestLogDetail,
     SMARTIdentity,
+    ConfigBackup,
+    EmailClient,
+    Pincard,
 )
 from storageadmin.models.network_interface import (
     BondConnection,
@@ -1358,4 +1361,38 @@ class TLSCertificateAdmin(admin.ModelAdmin):
         "name",
         "certificate",
         "key",
+    ]
+
+
+@admin.register(ConfigBackup)
+class ConfigBackupAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "filename",
+        "md5sum",
+        "size",
+        "config_backup",
+    ]
+
+
+@admin.register(EmailClient)
+class EmailClientAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "smtp_server",
+        "port",
+        "name",
+        "sender",
+        "username",
+        "receiver",
+    ]
+
+
+@admin.register(Pincard)
+class PincardAdmin(admin.ModelAdmin):
+    # Overview list
+    list_display = [
+        "user",
+        "pin_number",
+        "pin_code",
     ]
