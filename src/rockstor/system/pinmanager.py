@@ -14,7 +14,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
 import random
 import string
 from hashlib import md5
@@ -25,30 +24,31 @@ from system.email_util import email_root
 from django.contrib.auth.models import User as DjangoUser
 
 
-def reset_password(uname, uid, pinlist):
-
+def reset_password(uname: str, uid: int, pinlist: dict[str]) -> tuple[str, bool]:
+    """
+    Loop through pinlist, get md5 digest of every pin
+    and compare with Pincard model's DB values.
+    @param uname: username.
+    @param uid: e.g. uid=1022 of type <class 'int'>
+    @param pinlist: e.g. {'2': '111', '6': '222', '11': '333', '16': '444'} of type <class 'dict'>
+    @return:
+    """
     pass_change_enabled = True
-
-    # Loop through pinlist, get md5 digest of every pin and
-    # and compare with Pincard model values
     for pin_index, pin_value in pinlist.items():
-
-        pin_value_md5 = md5(pin_value).hexdigest()
+        pin_value_md5: str = md5(bytes(pin_value, "utf8")).hexdigest()
         if (
-            not Pincard.objects.filter(user=int(uid))
+            not Pincard.objects.filter(user=uid)
             .filter(pin_number=int(pin_index))
             .filter(pin_code=pin_value_md5)
             .exists()
         ):
-
             pass_change_enabled = False
             break
 
     if pass_change_enabled:
-
         # Generate new 8 chars random password
-        new_password = "".join(
-            random.choice(string.letters + string.digits) for _ in range(8)
+        new_password: str = "".join(
+            random.choice(string.ascii_letters + string.digits) for _ in range(8)
         )
         # Reset system password
         usermod(uname, new_password)
@@ -63,52 +63,56 @@ def reset_password(uname, uid, pinlist):
             duser.save()
 
         password_message = (
-            "Password reset succeeded. New current password "
-            "is {}".format(new_password)
+            f"Password reset succeeded. New password is {new_password} (will not be shown again)."
         )
         password_status = True
 
     else:
-
-        password_message = "At least one pin was wrong, password reset failed"
+        password_message = "At least one pin was wrong, password reset failed."
         password_status = False
 
     return password_message, password_status
 
 
-def reset_random_pins(uid):
-
-    # Random get 4 pins from Pincard for selected user
+def reset_random_pins(uid: str):
+    """
+    Randomly get 4 pins from Pincard for selected user.
+    @param uid:
+    @return:
+    """
     random_pins = random.sample(range(1, 24), 4)
     pin_rows = list(
         Pincard.objects.filter(user=int(uid))
         .filter(pin_number__in=random_pins)
         .values("pin_number")
-    )  # noqa: E501
+    )
 
     return pin_rows
 
 
-def generate_otp(username):
-
-    # Generate a random 6 chars text and sent to root mail
-    new_otp = "".join(
-        random.choice(string.letters + string.digits) for _ in range(6)
-    )  # noqa: E501
-    otp_subject = "Received password reset request for uid 0 user"
-    otp_message = (
-        "System has received a password reset request for user %s\n\n OTP string value is: %s"
-        % (username, new_otp)
-    )  # noqa: E501
+def generate_otp(username: str) -> str:
+    """
+    Generate a random 6 chars text and sent to root mail
+    @param username:
+    @return:
+    """
+    new_otp: str = "".join(
+        random.choice(string.ascii_letters + string.digits) for _ in range(6)
+    )
+    otp_subject: str = "Received password reset request for uid 0 user"
+    otp_message: str = f"System has received a password reset request for user {username}\n\n OTP string value is: {new_otp}"
 
     email_root(otp_subject, otp_message)
 
     return new_otp
 
 
-def username_to_uid(username):
-
-    # Convert from username to user uid
+def username_to_uid(username: str) -> int | None:
+    """
+    Convert from username to user uid
+    @param username:
+    @return:
+    """
     try:
         # retrieve the password database entry for a given username
         user_uid = getpwnam(username).pw_uid
@@ -119,10 +123,12 @@ def username_to_uid(username):
     return user_uid
 
 
-def email_notification_enabled():
-
-    # Check for email notifications state
-    # required for password reset over root user (Pincard + otp via mail)
+def email_notification_enabled() -> bool:
+    """
+    Check for email notifications state
+    required for password reset over root user (Pincard + otp via mail)
+    @return:
+    """
     try:
         mail_accounts = EmailClient.objects.filter().count()
     except EmailClient.DoesNotExist:
@@ -133,35 +139,42 @@ def email_notification_enabled():
     return has_mail
 
 
-def has_pincard(user):
+def has_pincard(user: User) -> bool:
+    """
+    Check if user has already a Pincard
+    Added uid_field to dinamically handle passed data:
+    user can be and User obcject or directly a uid
+    @param user:
+    @return:
+    """
 
-    # Check if user has already a Pincard
-    # Added uid_field to dinamically handle passed data:
-    # user can be and User obcject or directly a uid
     uid_field = user.uid if hasattr(user, "uid") else user
     try:
         pins = Pincard.objects.filter(user=int(uid_field)).count()
     except Pincard.DoesNotExist:
         pins = 0
 
-    has_pincard = True if (pins == 24) else False
+    has_pincard_return: bool = True if (pins == 24) else False
 
-    return has_pincard
+    return has_pincard_return
 
 
-def pincard_states(user):
-
-    # If user has a Pincard that means already allowed to have one, so avoid
-    # computing If selected user is a managed one allowed to have a
-    # pincard_allowed If user is uid 0 (root) and mail notifications enabled ->
-    # ok Pincard Otherwise 'otp' third state : allowed to have a Pincard, but
-    # mail notifications required
+def pincard_states(user: User) -> tuple[str, bool]:
+    """
+    If user has a Pincard that means already allowed to have one, so avoid
+    computing If selected user is a managed one allowed to have a
+    pincard_allowed If user is uid 0 (root) and mail notifications enabled ->
+    ok Pincard Otherwise 'otp' third state : allowed to have a Pincard, but
+    mail notifications required
+    @param user:
+    @return:
+    """
     pincard_allowed = "no"
     pincard_present = has_pincard(user)
     if user.managed_user:
         pincard_allowed = "yes"
     else:
-        if int(user.uid) == 0:
+        if user.uid == 0:
             pincard_allowed = "yes" if email_notification_enabled() else "otp"
         else:
             pincard_allowed = "no"
@@ -169,42 +182,52 @@ def pincard_states(user):
     return pincard_allowed, pincard_present
 
 
-def generate_pincard():
-
-    # Generate a 72 chars string over letters, digits and punctuation
-    # Split string in 3 chars groups for 24 total pins
-    # and crypt them
-    chars_base = string.letters + string.digits + string.punctuation
-    pincard_plain = "".join(random.choice(chars_base) for _ in range(72))
-    pincard_plain = [
+def generate_pincard() -> tuple[list[str], list[str]]:
+    """
+    Generate a 72 chars string over letters, digits, and punctuation.
+    Split string in 3 chars groups for 24 total pins and crypt them.
+    @return:
+    """
+    pincard_plain: str = "".join(
+        random.choice(string.ascii_letters + string.digits + string.punctuation)
+        for _ in range(72)
+    )
+    pincard_plain_list: list[str] = [
         pincard_plain[i : i + 3] for i in range(0, len(pincard_plain), 3)
-    ]  # noqa E501
-    pincard_crypted = []
-    for pin in pincard_plain:
-        pincard_crypted.append(md5(pin).hexdigest())
+    ]
+    pincard_crypted: list[str] = []
+    for pin in pincard_plain_list:
+        pincard_crypted.append(md5(bytes(pin, "utf8")).hexdigest())
 
-    return pincard_plain, pincard_crypted
+    return pincard_plain_list, pincard_crypted
 
 
-def flush_pincard(uid):
-
-    # Clear all Pincard entries for selected user
-    # But only if we have a uid, see username_to_uid() which will return None
-    # if called when the given user no longer exists.
+def flush_pincard(uid: int | None):
+    """
+    Clear all Pincard entries for selected user
+    But only if we have an uid, see username_to_uid() which will return None
+    if called when the given user no longer exists.
+    @param uid:
+    @return:
+    """
     if uid is not None:
-        Pincard.objects.filter(user=int(uid)).delete()
+        # Bulk delete all Pincard keys for this user via queryset.
+        Pincard.objects.filter(user=uid).delete()
 
 
-def save_pincard(uid):
+def save_pincard(uid: str) -> list[str]:
+    """
+    Generate new pincard - plain text for frontend and md5 vals for db
+    Flush current pincard over db
+    Populate db and return plain text pins to user
+    @param uid:
+    @return:
+    """
+    pincard_for_onetime_display, pincard_for_db = generate_pincard()
+    flush_pincard(int(uid))
 
-    # Generate new pincard - plain text for frontend and md5 vals for db
-    # Flush current pincard over db
-    # Populate db and return plain text pins to user
-    pincard_touser, pincard_todb = generate_pincard()
-    flush_pincard(uid)
-
-    for index, pin in enumerate(pincard_todb, start=1):
+    for index, pin in enumerate(pincard_for_db, start=1):
         newpin = Pincard(user=int(uid), pin_number=index, pin_code=pin)
         newpin.save()
 
-    return pincard_touser
+    return pincard_for_onetime_display

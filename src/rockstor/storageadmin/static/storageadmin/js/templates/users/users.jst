@@ -69,7 +69,8 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 id="myModalLabel">Pincard Generator</h4>
+        <h4 id="myModalLabel">SAVE NOW - CANNOT BE VIEWED AGAIN</h4>
+        <h5>Pincard for user <span id="pincard_user" style="font-style: italic; font-weight: bold;"></span></h5>
       </div>
       <div class="modal-body">
         <div class="messages"></div>
@@ -77,11 +78,15 @@
 		<canvas id="Pincard_canvas" width="324" height="204"></canvas>
 		</p>
 		<p style="text-align: justify; font-size: small;">
-		This is your pincard for user <span id="pincard_user" style="font-style: italic; font-weight: bold;"></span>, right click on it and save as png image.<br/>
-		Generated pincard is in <a href="https://en.wikipedia.org/wiki/ISO/IEC_7810"
-		target="_blank">ISO/IEC 7810 ID-1</a> format (mm 85.60x53.98 over a 96 dpi monitor) and 
-		can be printed or applied over an ID-1 size card.
+		<strong>Right click on image and select 'Save Image As...'.</strong>
+		<hr>
+		Pincard is in <a href="https://en.wikipedia.org/wiki/ISO/IEC_7810"
+		target="_blank">ISO/IEC 7810 ID-1</a> format (85.60x53.98mm on a 96 dpi monitor),
+		compatible with ID-1 card size.
 		</p>
+		<hr>
+		<strong>Or/and highlight and copy-paste the below text version.</strong>
+		<br/><br/>
 		<p style="text-align: justify; font-size: small; font-weight: bold;" id="pins_list"></p>
       </div>
     </div>

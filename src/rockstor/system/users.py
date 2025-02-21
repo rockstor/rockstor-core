@@ -202,6 +202,7 @@ def smbpasswd(username, passwd):
     rc = p.returncode
     if rc != 0:
         raise CommandException(cmd, out, err, rc)
+    logger.info(f"Command (smbpasswd -s -a) run for username: ({username}).")
     return out, err, rc
 
 
