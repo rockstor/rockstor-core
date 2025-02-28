@@ -125,7 +125,6 @@ class SFTPAdminInline(admin.TabularInline):
 
 @admin.register(SFTP)
 class SFTPAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = ["share_name", "share_id", "editable"]
     list_per_page = 15
     # Detailed view
@@ -139,7 +138,6 @@ class NFSExportAdminInline(admin.TabularInline):
 
 @admin.register(NFSExport)
 class NFSExportAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = ["share_name", "share_id", "export_group", "mount"]
     list_per_page = 15
     # Detailed view
@@ -152,13 +150,11 @@ class AdvancedNFSExportAdminInline(admin.TabularInline):
 
 @admin.register(AdvancedNFSExport)
 class AdvancedNFSExportAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = ["export_str"]
 
 
 @admin.register(NFSExportGroup)
 class NFSExportGroupAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "host_str",
         "admin_host",
@@ -197,7 +193,6 @@ class SMARTCapabilityAdminInline(admin.TabularInline):
 
 @admin.register(SMARTCapability)
 class SMARTCapabilityAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "info",
         "name",
@@ -212,7 +207,6 @@ class SMARTAttributeAdminInline(admin.TabularInline):
 
 @admin.register(SMARTAttribute)
 class SMARTAttributeAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "info",
         "aid",
@@ -234,7 +228,6 @@ class SMARTErrorLogAdminInline(admin.TabularInline):
 
 @admin.register(SMARTErrorLog)
 class SMARTErrorLogAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "info",
         "line",
@@ -247,7 +240,6 @@ class SMARTTestLogAdminInline(admin.TabularInline):
 
 @admin.register(SMARTTestLog)
 class SMARTTestLogAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "info",
         "test_num",
@@ -265,7 +257,6 @@ class SMARTTestLogDetailAdminInline(admin.TabularInline):
 
 @admin.register(SMARTTestLogDetail)
 class SMARTTestLogDetailAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "info",
         "line",
@@ -278,7 +269,6 @@ class SMARTIdentityAdminInline(admin.TabularInline):
 
 @admin.register(SMARTIdentity)
 class SMARTIdentityAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "info",
         "model_family",
@@ -312,7 +302,6 @@ class SMARTInfoAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "disk_name",
         # "toc",
@@ -339,7 +328,6 @@ class SMARTInfoAdmin(admin.ModelAdmin):
 
 @admin.register(Disk)
 class DiskAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "target_name",
@@ -403,7 +391,6 @@ class DVolumeAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "label",
         "parent_container_name",
@@ -433,7 +420,7 @@ class DPortAdminInline(admin.TabularInline):
 @admin.register(DPort)
 class DPortAdmin(admin.ModelAdmin):
     # Similar to DVolumeAdmin
-    # Overview list
+
     list_display = [
         "label",
         "container_name",
@@ -464,7 +451,6 @@ class DImageAdminInline(admin.TabularInline):
 
 @admin.register(DImage)
 class DImageAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "tag",
@@ -486,7 +472,6 @@ class ContainerOptionAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = ["parent_container_name", "name", "val"]
     # Detailed view
     fields = [("name", "val")]
@@ -505,7 +490,6 @@ class DContainerArgsAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = ["parent_container_name", "name", "val"]
     # Detailed view
     fields = [("name", "val")]
@@ -524,7 +508,6 @@ class DContainerLabelAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = ["parent_container_name", "key", "val"]
     # Detailed view
     fields = [("key", "val")]
@@ -542,7 +525,6 @@ class DContainerEnvAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "parent_container_name",
         "label",
@@ -571,7 +553,6 @@ class DContainerDeviceAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "parent_container_name",
         "label",
@@ -607,7 +588,6 @@ class DContainerLinkAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "name",
         "parent_source_container_name",
@@ -625,7 +605,6 @@ class DContainerNetworkAdminInline(admin.TabularInline):
 
 @admin.register(DContainerNetwork)
 class DContainerNetworkAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "docker_name",
         "container_name",
@@ -640,7 +619,6 @@ class NetworkDeviceAdminInline(admin.TabularInline):
 
 @admin.register(NetworkDevice)
 class NetworkDeviceAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "cname",
@@ -664,7 +642,6 @@ class EthernetConnectionAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "connection_name",
         "mac",
@@ -686,7 +663,7 @@ class TeamConnectionAdmin(admin.ModelAdmin):
             return None
 
     # Same as BondConnection counterpart
-    # Overview list
+
     list_display = [
         "connection_name",
         "name",
@@ -706,7 +683,6 @@ class BondConnectionAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "connection_name",
         "name",
@@ -726,7 +702,6 @@ class BridgeConnectionAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "connection_name",
         "docker_name",
@@ -748,7 +723,6 @@ class NetworkConnectionAdminInline(admin.TabularInline):
 
 @admin.register(NetworkConnection)
 class NetworkConnectionAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "uuid",
@@ -828,7 +802,7 @@ class DContainerAdmin(admin.ModelAdmin):
     has_device.boolean = True
     has_label.boolean = True
     has_network.boolean = True
-    # Overview list
+
     list_display = [
         "name",
         "parent_rockon_name",
@@ -874,7 +848,6 @@ class DCustomConfigAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "parent_rockon_name",
         "label",
@@ -892,7 +865,6 @@ class DCustomConfigAdmin(admin.ModelAdmin):
 
 @admin.register(RockOn)
 class RockOnAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "description",
@@ -922,7 +894,6 @@ class OauthAppAdminInline(admin.TabularInline):
 
 @admin.register(OauthApp)
 class OauthAppAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "application",
@@ -940,7 +911,6 @@ class UserAdminInline(admin.TabularInline):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "username",
         "groupname",
@@ -963,7 +933,6 @@ class GroupAdminInline(admin.TabularInline):
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "groupname",
         "gid",
@@ -982,7 +951,7 @@ class SambaShareAdmin(admin.ModelAdmin):
             return False
 
     has_custom_config.boolean = True
-    # Overview list
+
     list_display = [
         "path",
         "comment",
@@ -1022,7 +991,6 @@ class SambaCustomConfigAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "parent_sambashare_path",
         "parent_sambashare_sharename",
@@ -1038,7 +1006,6 @@ class IscsiTargetAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "tname",
         "tid",
@@ -1066,7 +1033,6 @@ class ShareAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "name",
         "id",
@@ -1119,7 +1085,6 @@ class SnapshotAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "name",
         "size",
@@ -1152,7 +1117,6 @@ class PoolBalanceAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "parent_pool_name",
         "status",
@@ -1178,7 +1142,6 @@ class PoolScrubAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "parent_pool_name",
         "status",
@@ -1196,7 +1159,6 @@ class PoolScrubAdmin(admin.ModelAdmin):
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "mnt_pt",
@@ -1230,7 +1192,6 @@ class APIKeysAdminInline(admin.TabularInline):
 
 @admin.register(APIKeys)
 class APIKeysAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "user",
         "key",
@@ -1249,7 +1210,6 @@ class UpdateSubscriptionAdmin(admin.ModelAdmin):
         else:
             return None
 
-    # Overview list
     list_display = [
         "name",
         "description",
@@ -1266,7 +1226,6 @@ class ApplianceAdminInline(admin.TabularInline):
 
 @admin.register(Appliance)
 class ApplianceAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "uuid",
         "ip",
@@ -1282,7 +1241,6 @@ class ApplianceAdmin(admin.ModelAdmin):
 
 @admin.register(SupportCase)
 class SupportCaseAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "notes",
         "zipped_log",
@@ -1297,7 +1255,6 @@ class DashboardConfigAdminInline(admin.TabularInline):
 
 @admin.register(DashboardConfig)
 class DashboardConfigAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "user",
         "widgets",
@@ -1310,7 +1267,6 @@ class SetupAdminInline(admin.TabularInline):
 
 @admin.register(Setup)
 class SetupAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "setup_user",
         "setup_system",
@@ -1325,7 +1281,6 @@ class InstalledPluginAdminInline(admin.TabularInline):
 
 @admin.register(InstalledPlugin)
 class InstalledPluginAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "plugin_meta",
         "install_date",
@@ -1338,7 +1293,6 @@ class PluginAdminInline(admin.TabularInline):
 
 @admin.register(Plugin)
 class PluginAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "display_name",
@@ -1356,7 +1310,6 @@ class TLSCertificateAdminInline(admin.TabularInline):
 
 @admin.register(TLSCertificate)
 class TLSCertificateAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "name",
         "certificate",
@@ -1366,7 +1319,6 @@ class TLSCertificateAdmin(admin.ModelAdmin):
 
 @admin.register(ConfigBackup)
 class ConfigBackupAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "filename",
         "md5sum",
@@ -1377,7 +1329,6 @@ class ConfigBackupAdmin(admin.ModelAdmin):
 
 @admin.register(EmailClient)
 class EmailClientAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "smtp_server",
         "port",
@@ -1390,7 +1341,6 @@ class EmailClientAdmin(admin.ModelAdmin):
 
 @admin.register(Pincard)
 class PincardAdmin(admin.ModelAdmin):
-    # Overview list
     list_display = [
         "user",
         "pin_number",
