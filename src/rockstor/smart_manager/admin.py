@@ -37,6 +37,8 @@ from smart_manager.models import (
     ReplicaTrail,
     ReplicaShare,
     ReceiveTrail,
+    TaskDefinition,
+    Task,
 )
 
 
@@ -387,6 +389,38 @@ class ReplicaShareAdmin(admin.ModelAdmin):
 
 
 # Share Replication end
+# Scheduled Tasks begin
 
 
+class TaskAdminInline(admin.TabularInline):
+    model = Task
 
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = [
+        "task_def",
+        "state",
+        "start",
+        "end",
+    ]
+    list_per_page = 15
+
+
+@admin.register(TaskDefinition)
+class TaskDefinitionAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "share_name",
+        "pool_name",
+        "task_type",
+        "json_meta",
+        "enabled",
+        "crontab",
+        "crontabwindow",
+    ]
+    list_per_page = 15
+    inlines = [TaskAdminInline]
+
+
+# Scheduled Tasks end
