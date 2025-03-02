@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.urls import include, re_path
+from django.urls import include, re_path, path
 from django.views.static import serve
 from django.conf import settings
 
@@ -63,10 +63,8 @@ from storageadmin.views import (
 )
 import os.path
 
-# Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 
-admin.autodiscover()
 
 site_media = os.path.join(os.path.dirname(__file__), "site_media")
 css_doc_root = os.path.join(os.path.dirname(__file__), "/templates/storageadmin/css")
@@ -150,3 +148,8 @@ urlpatterns = [
         r"^api/update-subscriptions/", include("storageadmin.urls.update_subscription")
     ),
 ]
+
+# Django Admin Docs
+urlpatterns += [path('radmin/doc/', include('django.contrib.admindocs.urls'))]
+# Django Admin
+urlpatterns += [path("radmin/", admin.site.urls, name="admin")]
