@@ -28,24 +28,21 @@ logger = logging.getLogger(__name__)
 class PincardView(rfc.GenericView):
     @transaction.atomic
     def post(self, request, command, user):
-
         with self._handle_exception(request):
-
+            logger.debug(f"Command ({command}) received for username: ({user}).")
             if command == "create":
                 response_data = save_pincard(user)
-                logger.debug("Created new pincard for user with uid ({}).".format(user))
+                logger.debug(f"Created/Recreated pincard for username: ({user}).")
 
             if command == "reset":
                 uid = request.data.get("uid")
                 pinlist = request.data.get("pinlist")
                 reset_response, reset_status = reset_password(user, uid, pinlist)
                 response_data = {"response": reset_response, "status": reset_status}
-                logger.debug(
-                    "Received password reset request for user ({}).".format(user)
-                )
+                logger.debug(f"Processed password reset request for username ({user}).")
+                logger.debug(f"reset status: ({reset_status}).")
 
             return Response(response_data)
-        e_msg = ("Unsupported command ({}). Valid commands are create, reset.").format(
-            command
-        )
+
+        e_msg = f"Unsupported command ({command}). Valid commands are create, reset."
         handle_exception(Exception(e_msg), request)
