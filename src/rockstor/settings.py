@@ -465,8 +465,8 @@ TASK_SCHEDULER = {"max_log": 100}  # max number of task log entries to keep
 # Establish our OS base id, name, and version:
 # Use id for code path decisions. Others are for Web-UI display purposes.
 # Examples given are for CentOS Rockstor variant, Leap 15, and Tumblweed.
-OS_DISTRO_ID = distro.id()  # rockstor, opensuse-leap/opensuse, opensuse-tumbleweed
-OS_DISTRO_NAME = distro.name()  # Rockstor, openSUSE Leap, openSUSE Tumbleweed
+OS_DISTRO_ID = distro.id()  # rockstor, opensuse, opensuse-slowroll, opensuse-tumbleweed
+OS_DISTRO_NAME = distro.name()  # Rockstor, openSUSE Leap, openSUSE Tumbleweed-Slowroll, openSUSE Tumbleweed
 # Note that the following will capture the build os version.
 # For live updates (running system) we call distro.version() directly in code.
-OS_DISTRO_VERSION = distro.version()  # 3, 15.0 ,20181107
+OS_DISTRO_VERSION = distro.version()  # 3, 15.6, 20250205
