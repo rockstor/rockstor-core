@@ -36,8 +36,8 @@ logger = logging.getLogger(__name__)
 DOCKERD = "/usr/bin/dockerd"
 
 # Distros for which we have had known working conf/docker-distroid.service files.
-# This mechanism has now been superseded but is maintained just-in-case for now.
-KNOWN_DISTRO_IDS = ["rockstor", "opensuse", "opensuse-tumbleweed"]
+# The docker-distroid file mechanism has now been removed, but the following is still referenced.
+KNOWN_DISTRO_IDS = ["rockstor", "opensuse", "opensuse-slowroll", "opensuse-tumbleweed"]
 
 
 class DockerServiceView(BaseServiceDetailView):

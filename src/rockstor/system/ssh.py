@@ -63,6 +63,12 @@ SSHD_CONFIG = {
         AllowUsers="/etc/ssh/sshd_config",
     ),
     # Newer overload  - type files
+    "opensuse-slowroll": sshd_files(
+        sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
+        sshd_os="/usr/etc/ssh/sshd_config",
+        sftp="/etc/ssh/sshd_config.d/rockstor-sftp.conf",
+        AllowUsers="/etc/ssh/sshd_config.d/rockstor-AllowUsers.conf",
+    ),
     "opensuse-tumbleweed": sshd_files(
         sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
         sshd_os="/usr/etc/ssh/sshd_config",

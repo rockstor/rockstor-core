@@ -122,10 +122,12 @@ def rpm_build_info(pkg):
         if re.match("Buildtime", line) is not None:
             # Legacy Rockstor (using original yum):
             #     "Buildtime   : Tue Dec  5 13:34:06 2017"
-            # openSUSE Rocsktor (using dnf-yum):
+            # earlier openSUSE Rockstor (using dnf-yum):
             #     "Buildtime    : Fri 29 Nov 2019 18:34:43 GMT"
-            # we return 2017-Dec-06 or 2019-Nov-29
-            # Note the plus-one day on from retrieved Buildtime with zero padding.
+            # opensuse-tumblweed | opensuse-slowroll Rockstor (using dnf-yum):
+            #     "Buildtime    : Fri 07 Mar 2025 08:16:20 AM WET"
+            # we return 2017-Dec-06 | 2019-Nov-30 | 2025-Mar-08 respectively.
+            # Note the plus-one day on from retrieved Build time with zero padding.
             dfields = line.strip().split()
             if distro_id == "rockstor":  # CentOS based Rockstor conditional
                 dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
@@ -218,7 +220,7 @@ def switch_repo(subscription, on=True):
     # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id.
     if distro_id == "opensuse-leap" or distro_id == "opensuse":
         subscription_distro_url += "/leap/{}".format(distro_version)
-    elif distro_id == "opensuse-tumbleweed":
+    elif distro_id == "opensuse-tumbleweed" or distro_id == "opensuse-slowroll":
         subscription_distro_url += "/tumbleweed"
     else:
         use_zypper = False
@@ -446,7 +448,7 @@ def update_run(subscription=None, update_all_other=False):
     # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id.
     if distro_id == "opensuse-leap" or distro_id == "opensuse":
         pkg_update_all = "{} --non-interactive update --no-recommends\n".format(ZYPPER)
-    if distro_id == "opensuse-tumbleweed":
+    if distro_id == "opensuse-tumbleweed" or distro_id == "opensuse-slowroll":
         pkg_update_all = "{} --non-interactive dist-upgrade --no-recommends\n".format(
             ZYPPER
         )

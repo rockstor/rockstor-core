@@ -30,7 +30,6 @@ class SystemPackageTests(unittest.TestCase):
     """
     The tests in this suite can be run via the following command:
     cd /opt/rockstor/src/rockstor
-    export DJANGO_SETTINGS_MODULE=settings
     poetry run django-admin test -p test_pkg_mgmt.py -v 2
     """
 
@@ -125,7 +124,7 @@ class SystemPackageTests(unittest.TestCase):
             Stubbed out fake pkg_changelog to allow for isolation of caller
             N.B. currenlty only uses single package test data to simply dict
             comparisons, ie recersive dict sort othewise required.
-            :param args:  
+            :param args:
             :param kwargs:
             :return: Dict indexed by name=arg[0], installed, available, and description.
             last 3 are = [] unless arg[1] is not "rockstor" then available has different
@@ -450,11 +449,47 @@ class SystemPackageTests(unittest.TestCase):
         err.append([""])
         rc.append(0)
         expected_results.append(("3.9.2-50.2093", "2019-Nov-30"))
+        # Slowroll dnf-yum
+        dist_id.append("opensuse-slowroll")
+        out.append(
+            [
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, groups-manager, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync, system-upgrade",
+                "YUM version: 4.18.0",
+                "cachedir: /var/cache/dnf",
+                "User-Agent: constructed: 'libdnf (openSUSE Tumbleweed-Slowroll 20250205; generic; Linux.x86_64)'",
+                "Installed Packages",
+                "Name         : rockstor",
+                "Version      : 5.0.15",
+                "Release      : 2969",
+                "Architecture : x86_64",
+                "Size         : 6.6 M",
+                "Source       : rockstor-5.0.15-2969.src.rpm",
+                "Repository   : @System",
+                "Packager     : None",
+                "Buildtime    : Fri 07 Mar 2025 08:16:20 AM WET",
+                "Install time : Fri 07 Mar 2025 08:19:21 AM WET",
+                "Summary      : Btrfs Network Attached Storage (NAS) Appliance.",
+                "URL          : https://rockstor.com/",
+                "License      : GPL-3.0-or-later AND (MIT AND Apache-2.0 AND GPL-3.0-or-later AND LGPL-3.0-or-later AND ISC)",
+                "Description  : Software raid, snapshot capable NAS solution with built-in file integrity protection.",
+                "             : Allows for file sharing between network attached devices.",
+                "",
+                "",
+            ]
+        )
+        err.append(
+            [
+                "allow_vendor_change is disabled. This option is currently not supported for downgrade and distro-sync commands",
+                "",
+            ]
+        )
+        rc.append(0)
+        expected_results.append(("5.0.15-2969", "2025-Mar-08"))
         # Source install where we key from the error message:
         dist_id.append("opensuse-tumbleweed")
         out.append(
             [
-                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
+                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",
                 "DNF version: 4.2.6",
                 "cachedir: /var/cache/dnf",
                 "No module defaults found",
