@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from storageadmin.exceptions import RockStorAPIException
-from system.pkg_mgmt import rpm_build_info
+from system.pkg_mgmt import current_version
 import traceback
 import logging
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # module level variable so it's computed once per process.
 version = "unknown"
 try:
-    version, date = rpm_build_info("rockstor")
+    version = current_version()
 except Exception as e:
     logger.exception(e)
 
@@ -42,7 +42,7 @@ def handle_exception(e, request, e_msg=None, status_code=500):
         e_msg = e.__str__()
 
     logger.exception("Exception: {}".format(e.__str__()))
-    logger.debug("Current Rockstor version: {}".format(version))
+    logger.debug(f"Current Rockstor version: {version}")
     raise RockStorAPIException(
         status_code=status_code, detail=e_msg, trace=traceback.format_exc()
     )
