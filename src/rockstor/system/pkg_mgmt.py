@@ -18,39 +18,61 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import os
 import platform
 import re
-import stat
+import subprocess
+import typing
+from subprocess import run, CalledProcessError, TimeoutExpired
+from time import sleep
+from xml.etree.ElementTree import fromstring, ElementTree
 from tempfile import mkstemp
+from storageadmin.models import UpdateSubscription
+from system.exceptions import CommandException
 from system.osi import run_command
 from system.services import systemctl
 import shutil
 import time
-from datetime import datetime, timedelta
 import requests
 from django.conf import settings
-from system.exceptions import CommandException
 import distro
 import logging
+import keyring
+from keyring import set_password
+from keyring.errors import KeyringError, PasswordSetError, KeyringLocked, NoKeyringError
+from zypper_changelog_lib import get_zypper_changelog
 
 logger = logging.getLogger(__name__)
 
-YUM = "/usr/bin/yum"
 RPM = "/usr/bin/rpm"
 ZYPPER = "/usr/bin/zypper"
 SYSTEMCTL = "/usr/bin/systemctl"
 AT = "/usr/bin/at"
 YCFILE = "/etc/yum/yum-cron.conf"  # Doesn't exist in openSUSE
 STABLE_CREDENTIALS_FILE = "/etc/zypp/credentials.d/Rockstor-Stable"
-
-
-def install_pkg(name):
-    return run_command([YUM, "--setopt=timeout=600", "-y", "install", name])
-
-
-def downgrade_pkgs(*packages):
-    cmd = [YUM, "--setopt=timeout=600", "-y", "downgrade"]
-    for p in packages:
-        cmd.append(p)
-    return run_command(cmd)
+# Zypper return codes:
+ZYPPER_EXIT_ERR_INVALID_ARGS = 3  # Can occur when naming a non-existent repo.
+ZYPPER_EXIT_ZYPP_LOCKED = 7  # Likely indicating a retry requirement.
+ZYPPER_EXIT_INF_REPOS_SKIPPED = 106  # Likely not catastrophic and temporary.
+# Zypper info return codes.
+# These invoke subprocess.CalledProcessError with --xmlout but do not represent failure,
+# rather a requirement to retrieve stdout from the exception, not the CompletedProcess.
+zypp_info_codes = {
+    100: "ZYPPER_EXIT_INF_UPDATE_NEEDED",
+    101: "ZYPPER_EXIT_INF_SEC_UPDATE_NEEDED",
+    102: "ZYPPER_EXIT_INF_REBOOT_NEEDED",
+    103: "ZYPPER_EXIT_INF_RESTART_NEEDED",  # Associated with 'zypper needs-rebooting'.
+    106: "ZYPPER_EXIT_INF_REPOS_SKIPPED",  # Likely not catastrophic and temporary.
+}
+zypp_err_codes = {
+    1: "ZYPPER_EXIT_ERR_BUG",
+    2: "ZYPPER_EXIT_ERR_SYNTAX",
+    3: "ZYPPER_EXIT_ERR_INVALID_ARGS",  # Can occur when naming a non-existent repo.
+    4: "ZYPPER_EXIT_ERR_ZYPP",
+    5: "ZYPPER_EXIT_ERR_PRIVILEGES",
+    6: "ZYPPER_EXIT_NO_REPOS",
+    7: "ZYPPER_EXIT_ZYPP_LOCKED",  # Likely indicating a retry requirement.
+    104: "ZYPPER_EXIT_INF_CAP_NOT_FOUND",  # Failure via insufficient capabilities.
+    105: "ZYPPER_EXIT_ON_SIGNAL",  # Failure via cancellation i.e. OOM.
+    107: "ZYPPER_EXIT_INF_RPM_SCRIPT_FAILED",  # Should be highlighted as an error.
+}
 
 
 def auto_update(enable=True):
@@ -94,79 +116,167 @@ def auto_update_status():
     return enabled
 
 
-def current_version():
-    out, err, rc = run_command([RPM, "-qi", "rockstor"], throw=False)
-    if rc != 0:
-        return "0.0-0"
-    return "{}-{}".format(out[1].split(":")[-1].strip(), out[2].split(":")[-1].strip())
+def current_version(get_build_date: bool = False) -> (str, str | None):
+    """
+    If the 'rockstor' package is installed, return a "version-release" string,
+    otherwise return the flag version value of "0.0.0-0".
+    If build_date is True, also return Build Date, otherwise return None.
+    :param get_build_date: Boolean flag to request a build date look-up.
+    :return: (version-release, build_date)
+    """
+    # https://rpm-software-management.github.io/rpm/manual/tags.html
+    # from man rpm: ":day   Use strftime(3) "%a %b %d %Y" format.": Thu May 01 2025
+    # Standardises output, or without :day we can get unix timestamp.
+    # The following tags gives us a pre-formatted:
+    # 'Version-Release' (first line)
+    # 'Thu May 01 2025' (second line)
+    tags = "%{VERSION}\-%{RELEASE}\\\n%{BUILDTIME:day}"
+    out, err, rc = run_command(
+        [RPM, "-q", "--queryformat", tags, "rockstor"], throw=False
+    )
+    if rc != 0:  # Not installed is rc=1
+        return "0.0.0-0", None
+    date_list = []
+    if get_build_date:
+        try:
+            # we get on second line: "Thu May 01 2025" we want 2025-May-01
+            date_list = out[1].split()[1:]  # ["May",  "01",  "2025"]
+        except Exception as e:
+            logger.debug(
+                f"failed to parse build date from 'rpm -qi rockstor`: {e.__str__}"
+            )
+            return out[0].strip(), None
+        return out[0].strip(), f"{date_list[2]}-{date_list[0]}-{date_list[1]}"
+    return out[0].strip(), None
 
 
-def rpm_build_info(pkg):
+def rpm_build_info(pkg: str) -> tuple[str, str | None]:
     version = "Unknown Version"
     date = None
-    distro_id = distro.id()
-    try:
-        o, e, rc = run_command([YUM, "info", "installed", "-v", pkg])
-    except CommandException as e:
-        # Catch "No matching Packages to list" so we can return:
-        # "Unknown Version", None
-        emsg = "Error: No matching Packages to list"
-        # By checking both the first error element and the second to last we
-        # catch one yum waiting for another to release yum lock.
-        if e.err[0] == emsg or e.err[-2] == emsg:
-            logger.info('No "{}" package found: source install?'.format(pkg))
-            return version, date
-        # otherwise we raise an exception as normal.
-        raise e
-    for line in o:
-        if re.match("Buildtime", line) is not None:
-            # Legacy Rockstor (using original yum):
-            #     "Buildtime   : Tue Dec  5 13:34:06 2017"
-            # earlier openSUSE Rockstor (using dnf-yum):
-            #     "Buildtime    : Fri 29 Nov 2019 18:34:43 GMT"
-            # opensuse-tumblweed | opensuse-slowroll Rockstor (using dnf-yum):
-            #     "Buildtime    : Fri 07 Mar 2025 08:16:20 AM WET"
-            # we return 2017-Dec-06 | 2019-Nov-30 | 2025-Mar-08 respectively.
-            # Note the plus-one day on from retrieved Build time with zero padding.
-            dfields = line.strip().split()
-            if distro_id == "rockstor":  # CentOS based Rockstor conditional
-                dstr = dfields[6] + " " + dfields[3] + " " + dfields[4]
-            else:  # Assuming we are openSUSE variant and so using dnf-yum
-                dstr = dfields[5] + " " + dfields[4] + " " + dfields[3]
-            bdate = datetime.strptime(dstr, "%Y %b %d")
-            bdate += timedelta(days=1)
-            date = bdate.strftime("%Y-%b-%d")
-        if re.match("Version ", line) is not None:
-            version = line.strip().split()[2]
-        if re.match("Release ", line) is not None:
-            version = "{}-{}".format(version, line.strip().split()[2])
+    version, date = current_version(get_build_date=True)
+    # Maintain compatibility with existing expectations for now.
+    if version == "0.0.0-0":
+        version = "Unknown Version"
     return version, date
 
 
-def zypper_repos_list():
+def zypper_repos_list(max_wait: int = 1) -> typing.List[str]:
     """
-    Low level wrapper around "zypper repos"
-    :return: List of repo Alias's
+    Simple wrapper for "zypper --xmlout lr Rockstor-Testing Rockstor-Stable".
+    Retrieves a list of enabled Rockstor repositories.
+    :return: list of enabled Rockstor repos by alias.
     """
-    repo_list = []
-    cmd = [ZYPPER, "-q", "repos"]
-    out, err, rc = run_command(cmd, log=True)
-    if len(out) > 0 and rc == 0:
-        for line in out:
-            # Skip empty or header lines
-            if len(line) == 0 or line[0] == "#" or line[0] == "-":
-                continue
-            line_fields = line.split()
-            if len(line_fields) >= 3:
-                repo_list.append(line_fields[2])
+    repo_list: typing.List[str] = []
+    stdout_value: str | None = None
+    try:
+        zypp_run = run(
+            ["zypper", "--xmlout", "lr", "Rockstor-Testing", "Rockstor-Stable"],
+            capture_output=True,
+            encoding="utf-8",  # stdout and stderr as string
+            universal_newlines=True,
+            timeout=max_wait,
+            check=True,
+        )
+    except CalledProcessError as e:
+        if e.returncode in zypp_info_codes.keys():
+            logger.info(f"list repos returned {zypp_info_codes[e.returncode]}.")
+        if e.returncode != ZYPPER_EXIT_ERR_INVALID_ARGS:
+            logger.error(f"{e.stdout}Error fetching repository list: ({e})")
+            return []
+        stdout_value = e.stdout
+    except TimeoutExpired as e:
+        logger.error(f"Package system may be busy: {e}")
+        return []
+    if not stdout_value:
+        logger.info(f"Both Testing and Stable were inadvertently enabled")
+        stdout_value = zypp_run.stdout
+    repo_tree = ElementTree(fromstring(stdout_value))
+    repo_root = repo_tree.getroot()
+    for repo in repo_root.iter("repo"):
+        if repo.get("enabled") == "1":
+            repo_list.append(repo.get("alias"))
     return repo_list
 
 
-def create_credentials_file(user, password):
+def rockstor_repo_mgmt(
+    zypp_cmd: str,
+    repo_list: list[str] | None = None,
+    url: str | None = None,
+    max_wait: int = 1,
+    retries: int = 2,
+) -> bool:
+    """
+    Retry wrapper for "zypper --xmlout removerepo|addrepo options".
+    Retry on - "System management is locked by the application with pid ... (zypper).",
+    indicated by ZYPPER_EXIT_ZYPP_LOCKED (return code 7)-
+    Uses --xmlout to constrain output as we read only the return code.
+    If one or more repo are not found, return code is still. 0.
+    :param zypp_cmd: zypper command: currently "removerepo" or "addrepo".
+    :param url: URL for addrepo use.
+    :param repo_list: List of repositories, default to all Rockstor-* repos.
+    :param retries: Number of retries to attempt.
+    :param max_wait: Max seconds expected for each execution.
+    :return: Bool if zypper return code indicates a change was made.
+    """
+    if repo_list is None:
+        repo_list = ["Rockstor-Testing", "Rockstor-Stable"]
+    # Only the fist match case gets executed
+    match zypp_cmd:
+        case "removerepo":
+            cmd_list = ["zypper", "--xmlout", f"{zypp_cmd}"] + repo_list
+        case "addrepo" if len(repo_list) == 1 and url:
+            cmd_list = [
+                "zypper",
+                "--xmlout",
+                f"{zypp_cmd}",
+                "--refresh",
+                f"{url}",
+            ] + repo_list
+        case _:
+            logger.error(f"Unknown zypper command {zypp_cmd} use.")
+            return False
+    zypp_run = None
+    for attempt in range(retries + 1):  # [0 1 2] for retries = 2
+        try:
+            zypp_run = run(
+                cmd_list,
+                capture_output=False,
+                timeout=max_wait,
+                check=True,
+            )
+        except CalledProcessError as e:
+            if e.returncode in zypp_info_codes.keys():
+                logger.info(f"Zypper returned: {zypp_info_codes[e.returncode]}.")
+                return True
+            if e.returncode != ZYPPER_EXIT_ZYPP_LOCKED:
+                if zypp_cmd == "addrepo" and e.returncode == 4:
+                    # Assumed cause. Consider capturing output and confirming error:
+                    # <message type="error">Repository named &apos;Rockstor-...&apos;
+                    # already exists. Please use another alias.</message>
+                    logger.info(f"*** {repo_list} exists.")
+                    return False
+                logger.error(f"Error managing Rockstor-* repositories: {e}")
+                raise CommandException(cmd_list, e.stdout, e.stderr, e.returncode)
+            if attempt <= retries:
+                logger.info(f"--- Zypper locked: attempt {attempt +1}, retrying in 1s.")
+                sleep(1)
+                continue  # retry on zypper locked.
+            raise CommandException(cmd_list, e.stdout, e.stderr, e.returncode)
+        except TimeoutExpired as e:
+            logger.error(f"Timeout managing repos (attempt {attempt + 1}): {e}")
+            continue
+    if not isinstance(zypp_run, subprocess.CompletedProcess):
+        logger.error("Error managing Rockstor-* repositories.")
+        return False
+    return True
+
+
+def update_zypp_auth_file(user, password):
     """
     Takes Appliance ID as username and Activation code as password and creates a zypper
     compatible Rockstor-Stable credentials file in /etc/zypp/credentials.d which is the
     default credentials.global.dir see: /etc/zypp/zypp.conf
+    See also zypper-changelog-lib counterpart update_password_store().
     :param user: Appliance ID
     :param password: Activation code
     :return: True if credentials file successfully created, or throws an exception.
@@ -205,93 +315,114 @@ def create_credentials_file(user, password):
     return True
 
 
-def switch_repo(subscription, on=True):
+def update_password_store(user, password):
+    """
+    Zypper-changelog-lib password-store counterpart, to update_zypp_auth_file().
+    Takes Appliance ID as username and Activation code as password.
+    Required to enable partial RPM pkg downloads for pending changelog retrieval.
+    Employs python-keyring to update password-store keyring backend, already enabled
+    for Rockstor Django secrets storage.
+    :param user: Appliance ID
+    :param password: Activation code
+    :return: True if credentials file successfully created, or throws an exception.
+    """
+    # See conf/rockstor-pre.service for rockstor@localhost keyring setup.
+    service = f"zypper-changelog-lib/Rockstor-Stable/"
+    try:
+        set_password(service_name=service, username=user, password=password)
+    except NoKeyringError as e:
+        logger.error(f"No rockstor@localhost keyring, try rebooting: {e.__str__()}")
+    except KeyringLocked as e:
+        logger.error(f"rockstor@localhost keyring locked: {e.__str__}")
+    except PasswordSetError as e:
+        logger.error(f"Web-UI changelog: Stable repo auth set issue. {e.__str__()}")
+    except keyring.errors.KeyringError as e:
+        logger.error(f"Unknown KeyringError: {e.__str__()}")
+    return None
+
+
+def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
+    logger.info(
+        f"++ switch_repo({subscription.name}, enable_repo={enable_repo}) called."
+    )
     repos_dir = "/etc/yum.repos.d"
+    # Yum repo clean-up scheduled for removal post 5.1.0-0 Stable release.
     yum_file = "{}/Rockstor-{}.repo".format(repos_dir, subscription.name)
+    if not enable_repo:
+        logger.info("--- Removing all Rockstor-* repositories")
+        if os.path.exists(yum_file):
+            os.remove(yum_file)
+        repos_modified = rockstor_repo_mgmt(zypp_cmd="removerepo")
+        if repos_modified:
+            logger.info("Repo config changed.")
+        return None
+    repo_alias = "Rockstor-{}".format(subscription.name)
     rock_pub_key_file = "{}conf/ROCKSTOR-GPG-KEY".format(settings.ROOT_DIR)
     # Historically our base subscription url denotes our CentOS rpm repo.
     subscription_distro_url = subscription.url
     distro_id = distro.id()
     distro_version = distro.version()
     machine_arch = platform.machine()
-    use_zypper = True
-    repo_alias = "Rockstor-{}".format(subscription.name)
-    logger.debug("########### SWITCH REPO repo-alias = {}".format(repo_alias))
     # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id.
     if distro_id == "opensuse-leap" or distro_id == "opensuse":
         subscription_distro_url += "/leap/{}".format(distro_version)
     elif distro_id == "opensuse-tumbleweed" or distro_id == "opensuse-slowroll":
         subscription_distro_url += "/tumbleweed"
-    else:
-        use_zypper = False
+    # From Tumblweed/Slowroll 20250329-0 onwards remove all DNF/YUM use.
+    current_repo_list = zypper_repos_list()
     # As from Leap15.4, update repositories are multi-arch. Maintain 15.3_aarch for now.
     if distro_version == "15.3" and machine_arch != "x86_64":
         subscription_distro_url += "_{}".format(machine_arch)
-    # Check if dir /etc/yum.repos.d exists and if not create.
-    if not os.path.isdir(repos_dir):
-        # Can use os.makedirs(path) if intermediate levels also don't exist.
-        os.mkdir(repos_dir)
     if subscription.password is not None:
-        repo_url = "http://{}:{}@{}".format(
-            subscription.appliance.uuid, subscription.password, subscription_distro_url
-        )
+        repo_url = f"http://{subscription.appliance.uuid}@{subscription_distro_url}"
     else:
-        repo_url = "http://{}".format(subscription_distro_url)
-    if on:
-        if use_zypper:
-            run_command([RPM, "--import", rock_pub_key_file], log=True)
-            current_repo_list = zypper_repos_list()
-            if subscription.name == "Stable" and repo_alias not in current_repo_list:
-                if "Rockstor-Testing" in current_repo_list:
-                    run_command([ZYPPER, "removerepo", "Rockstor-Testing"])
-                # If already added rc=4
-                create_credentials_file(
-                    subscription.appliance.uuid, subscription.password
+        repo_url = f"http://{subscription_distro_url}"
+    logger.debug(f"REPO_URL={repo_url}")
+    # Rockstor public key import call takes around 13 ms.
+    run_command([RPM, "--import", rock_pub_key_file], log=True)
+    repos_modified: bool = False
+    if subscription.name == "Stable":
+        # TODO: After 5.6.0-0 Stable this can be moved to after update_zypp_auth_file().
+        # Required for now to update password-store on existing Stable systems.
+        logger.info("Syncing password-store auth for Web-UI changelog feature.")
+        update_password_store(subscription.appliance.uuid, subscription.password)
+        if repo_alias not in current_repo_list:
+            logger.info("++++ Enabling Stable as not in current repo list")
+            if "Rockstor-Testing" in current_repo_list:
+                logger.info("--- Testing enabled - removing repo")
+                repos_modified = rockstor_repo_mgmt(
+                    zypp_cmd="removerepo", repo_list=["Rockstor-Testing"]
                 )
-                run_command(
-                    [
-                        ZYPPER,
-                        "--non-interactive",
-                        "addrepo",
-                        "--refresh",
-                        "http://{}@{}?credentials={}&auth=basic".format(
-                            subscription.appliance.uuid,
-                            subscription_distro_url,
-                            STABLE_CREDENTIALS_FILE,
-                        ),
-                        repo_alias,
-                    ],
-                    log=True,
-                    throw=False,
-                )
-            if subscription.name == "Testing" and repo_alias not in zypper_repos_list():
-                if "Rockstor-Stable" in current_repo_list:
-                    run_command([ZYPPER, "removerepo", "Rockstor-Stable"])
-                # If already added rc=4
-                run_command(
-                    [ZYPPER, "addrepo", "--refresh", repo_url, repo_alias],
-                    log=True,
-                    throw=False,
-                )
-        # N.B. for now we also use YUM (read only) on openSUSE to retrieve changelogs
-        with open(yum_file, "w") as rfo:
-            rfo.write("[Rockstor-{}]\n".format(subscription.name))
-            rfo.write("name={}\n".format(subscription.description))
-            rfo.write("baseurl={}\n".format(repo_url))
-            rfo.write("enabled=1\n")
-            rfo.write("gpgcheck=1\n")
-            rfo.write("gpgkey=file://{}\n".format(rock_pub_key_file))
-            rfo.write("metadata_expire=1h\n")
-            rfo.write("exclude=*.src\n")  # src changelogs = false positive update flag.
-        # Set file to rw- --- --- (600) via stat constants.
-        os.chmod(yum_file, stat.S_IRUSR | stat.S_IWUSR)
-    else:
-        if os.path.exists(yum_file):
-            os.remove(yum_file)
-        if use_zypper:
-            run_command(
-                [ZYPPER, "removerepo", "Rockstor-Testing", "Rockstor-Stable"], log=True
+            update_zypp_auth_file(subscription.appliance.uuid, subscription.password)
+            repos_modified = rockstor_repo_mgmt(
+                zypp_cmd="addrepo",
+                repo_list=[repo_alias],
+                url=f"{repo_url}?credentials={STABLE_CREDENTIALS_FILE}&auth=basic",
             )
+        else:
+            logger.info("*** Stable repo already enabled.")
+        if repos_modified:
+            logger.info("Repo config changed.")
+    elif subscription.name == "Testing":
+        if repo_alias not in current_repo_list:
+            logger.info("++++ Enabling Testing as not in current repo list")
+            if "Rockstor-Stable" in current_repo_list:
+                logger.info("--- Stable enabled - removing repo")
+                repos_modified = rockstor_repo_mgmt(
+                    zypp_cmd="removerepo", repo_list=["Rockstor-Stable"]
+                )
+            repos_modified = rockstor_repo_mgmt(
+                zypp_cmd="addrepo", repo_list=[repo_alias], url=repo_url
+            )
+        else:
+            logger.info("*** Testing already enabled.")
+        if repos_modified:
+            logger.info("Repo config changed.")
+    else:
+        logger.info(f"The subscription name ({subscription.name}) is unknown.")
+        # Possible 'Edge' release.
+        return None
+    return None
 
 
 def repo_status(subscription):
@@ -318,119 +449,49 @@ def repo_status(subscription):
         raise Exception(e_msg)
 
 
-def rockstor_pkg_update_check(subscription=None):
-    distro_id = distro.id()
+def rockstor_pkg_update_check(
+    subscription: None | UpdateSubscription = None,
+) -> (str, str, list[str]):
+    """
+    Uses zypper-changelog-lib to see if an update
+    to the 'rockstor' package is available, and if so, the current and updated
+    versions are returned, along with the differential changelog.
+    If there is no current (rpm) version, i.e. a source installation, the default
+    changelog length for an available 'rockstor' rpm will be returned.
+    :param subscription:
+    :return:
+    """
     machine_arch = platform.machine()
     if subscription is not None:
         switch_repo(subscription)
-    pkg = "rockstor*{}".format(machine_arch)
+    pkg = f"rockstor*{machine_arch}"
+    rpm_installed: bool = False  # Until we find otherwise
     version, date = rpm_build_info(pkg)
-    if date is None:
-        # None date signifies no rpm installed so list all changelog entries.
-        date = "all"
-    log = False
-    available = False
+    if date is not None:
+        rpm_installed = True
     new_version = None
     updates = []
-    if distro_id == "rockstor":
-        changelog_cmd = [YUM, "changelog", date, pkg]
-    else:  # We are assuming openSUSE with dnf-yum specific options
-        if date != "all":
-            changelog_cmd = [YUM, "changelog", "--since", date, pkg]
-        else:
-            # Here we list the default number of changelog entries:
-            # defaults to last 8 releases but states "Listing all changelogs"
-            changelog_cmd = [YUM, "changelog", pkg]
-    try:
-        o, e, rc = run_command(changelog_cmd)
-    except CommandException as e:
-        # Catch as yet unconfigured repos ie openSUSE Stable error log accordingly.
-        # Avoids breaking current version display and update channel selection.
-        emsg = "Error\\: Cannot retrieve repository metadata \\(repomd.xml\\)"
-        if re.match(emsg, e.err[-2]) is not None:
-            logger.error(
-                "Rockstor repo for distro.id ({}) version ({}) may "
-                "not exist: pending or deprecated.\nReceived: ({}).".format(
-                    distro_id, distro.version(), e.err
-                )
-            )
-            new_version = version  # Explicitly set (flag) for code clarity.
-            return version, new_version, updates
-        # otherwise we raise an exception as normal.
-        raise e
-    for line in o:
-        # We have possible targets of:
-        # "Listing changelogs since 2019-11-29" - legacy yum and dnf-yum
-        # "Listing all changelogs" - legacy yum and dnf-yum with no --count=#
-        # "Listing # latest changelogs" - dnf-yum with a --count=# options
-        if re.match("Listing", line) is not None:
-            available = True
-        if not available:
-            continue
-        if new_version is None:
-            if re.match("rockstor-", line) is not None:  # legacy yum
-                # eg: "rockstor-3.9.2-51.2089.x86_64"
-                new_version = (
-                    line.split()[0]
-                    .split("rockstor-")[1]
-                    .split(".{}".format(machine_arch))[0]
-                )
-            if re.match("Changelogs for rockstor-", line) is not None:  # dnf-yum
-                # eg: "Changelogs for rockstor-3.9.2-51.2089.x86_64"
-                new_version = (
-                    line.split()[2]
-                    .split("rockstor-")[1]
-                    .split(".{}".format(machine_arch))[0]
-                )
-        if log is True:
-            updates.append(line)
-            if len(line.strip()) == 0:
-                log = False
-        if re.match("\* ", line) is not None:
-            updates.append(line)
-            log = True
-    if new_version is None:
-        logger.debug("No changelog found: trying yum update for info.")
-        # Do a second check which is valid for updates without changelog
-        # updates. eg: same day updates, testing updates.
-        new_version = pkg_latest_available(pkg, machine_arch, distro_id)
-        if new_version is None:
-            new_version = version
-    return version, new_version, updates
-
-
-def pkg_latest_available(pkg_name, arch, distro_id):
-    """
-    Simple wrapper around "yum update pkg_name --assumeno" to retrieve
-    the latest version available from "Version" column
-    :return:
-    """
-    new_version = None
-    # TODO: We might use "zypper se -s --match-exact rockstor" and parse first
-    #  line with rockstor in second column but unit test will be defunct.
-    #  Advantage: works with no rockstor version installed, no so dnf-yum
-    o, e, rc = run_command([YUM, "update", pkg_name, "--assumeno"], throw=False)
-    if rc == 1:
-        for line in o:
-            if distro_id == "rockstor":
-                # Legacy Yum appropriate parsing, all info on one line.
-                # "Package rockstor.x86_64 0:3.9.2-51.2089 will be an update"
-                if re.search("will be an update", line) is not None:
-                    if re.search("rockstor.{}".format(arch), line) is not None:
-                        new_version = line.strip().split()[3].split(":")[1]
-            else:  # We are assuming openSUSE with dnf-yum output format
-                # dnf-yum output line of interest; when presented:
-                #  " rockstor   x86_64   3.9.2-51.2089   localrepo   15 M"
-                if re.match(" rockstor", line) is not None:
-                    new_version = line.strip().split()[2]
-    return new_version
+    # RPM & zypper only path
+    # Retrieve changelog via zypper-changelog-lib
+    if subscription is None:
+        return version, version, updates
+    # Rockstor's Repo alias is either "Rockstor-Testing" or "Rockstor-Stable".
+    zyppchange = get_zypper_changelog(
+        pkg_list=["rockstor"],
+        repo_list=[f"Rockstor-{subscription.name}"],
+        only_updates=rpm_installed,
+    )
+    if zyppchange is None:
+        logger.debug("get_zypper_changelog() returned None.")
+        return version, version, updates
+    changelog_list: list = zyppchange.get("rockstor", [])
+    if changelog_list:
+        # First element is available package version pertaining to the changelog.
+        new_version = changelog_list.pop(0)
+    return version, new_version, changelog_list
 
 
 def update_run(subscription=None, update_all_other=False):
-    # update_run modified to handle yum updates too
-    # and avoid an ad hoc yum update function
-    # If we have a yum update we don't stop/start Rockstor and
-    # don't delete *.pyc files
     if subscription is not None:
         switch_repo(subscription)
     run_command([SYSTEMCTL, "start", "atd"])
@@ -438,12 +499,8 @@ def update_run(subscription=None, update_all_other=False):
     # Set system-wide package manager refresh command according to distro.
     distro_id = distro.id()
     pkg_refresh_cmd = "{} --non-interactive refresh\n".format(ZYPPER)
-    if distro_id == "rockstor":  # CentOS based Rockstor conditional
-        pkg_refresh_cmd = "{} --setopt=timeout=600 -y update\n".format(YUM)
     # Set package manager rockstor install/update command according to distro.
     pkg_in_up_rockstor = "{} --non-interactive install rockstor\n".format(ZYPPER)
-    if distro_id == "rockstor":  # CentOS based Rockstor conditional
-        pkg_in_up_rockstor = "{} --setopt=timeout=600 -y install rockstor\n".format(YUM)
     pkg_update_all = ""
     # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id.
     if distro_id == "opensuse-leap" or distro_id == "opensuse":
@@ -465,12 +522,9 @@ def update_run(subscription=None, update_all_other=False):
             logger.info(
                 "Updating all but rockstor package for distro {}".format(distro_id)
             )
-            if distro_id == "rockstor":
-                atfo.write("{} --setopt=timeout=600 -y -x rock* update\n".format(YUM))
-            else:
-                atfo.write("{} addlock rockstor\n".format(ZYPPER))
-                atfo.write(pkg_update_all)
-                atfo.write("{} removelock rockstor\n".format(ZYPPER))
+            atfo.write("{} addlock rockstor\n".format(ZYPPER))
+            atfo.write(pkg_update_all)
+            atfo.write("{} removelock rockstor\n".format(ZYPPER))
         atfo.write("/bin/rm -f {}\n".format(npath))
     # out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     out, err, rc = run_command([AT, "-f", npath, "now"])
@@ -478,119 +532,72 @@ def update_run(subscription=None, update_all_other=False):
     return out, err, rc
 
 
-def pkg_changelog(package, distro_id):
+def pkg_updates_info(max_wait: int = 15) -> typing.List[dict[str:str]]:
     """
-    Takes a package name and builds a dictionary based on current and update
-    info for that package by parsing the output from:
-    yum changelog 1 package
-    The result is formatted appropriate for display.
-
-    :param package: A package name
-    :param distro_id: System expected output from distro.id()
-    :return: Dict indexed by 'name', 'installed', 'available' and 'description'
+    Fetch info on installable updates across all repos via zypper xml output call.
+    Resolves as per 'zypper up' excluding packages with dependency problems.
+    Adding `--all` includes packages with dependency problems.
+    For "No updates found." [] is returned.
+    Drop-in replacement for legacy pkg_update_check(), and its dependency of:
+    pkg_changelog() (yum based), and its unique dependency of:
+    pkg_infos()
+    We don't retrieve non 'rockstor' package changelogs.
+    Note: This procedure has no re-try capability as it is run, somewhat excessive,
+    on every page refresh. This should be addressed in the planned front-end re-work.
+    For now, the invocation has a hard-wired delay of a second to avoid locking
+    zypper and blocking 'SYSTEM - Software update' invoking rockstor_pkg_update_check().
     """
-    # we can't work with rpm -qi Build Date field: some packages have
-    # Build Date > new package version changelog
-    # pkg_changelog behaviour is output beautify too, returning pkg name,
-    # changelog for installed package and available new package update
-    # TODO: Find way to show pending update packages changelogs in openSUSE.
-    #  could be pending addition to zypper via
-    #  zypper info --changelog packagename
-    #  https://github.com/openSUSE/zypper/issues/138
-    out, err, rc = run_command([YUM, "changelog", "1", package], throw=False)
-    package_info = {
-        "name": package.split(".")[0],
-        "installed": [],
-        "available": [],
-        "description": "",
-    }
-    if distro_id != "rockstor":
-        package_info["available"] = [
-            "Version and changelog of update not available in openSUSE"
-        ]
-    installed = False
-    available = False
-    for line in out:
-        stripped_line = line.strip()
-        if re.search("Available Packages", stripped_line) is not None:
-            installed = False
-            available = True
-            continue
-        if re.search("Installed Packages", stripped_line) is not None:
-            installed = True
-            continue
-        if re.search("changelog stats", stripped_line) is not None:
-            installed = False
-            available = False
-            break
-        if installed and len(stripped_line) != 0:
-            package_info["installed"].append(stripped_line)
-        if available and len(stripped_line) != 0:
-            package_info["available"].append(stripped_line)
-    package_info["installed"] = "[line]".join(package_info["installed"])
-    package_info["available"] = "[line]".join(package_info["available"])
-    package_info["description"] = pkg_infos(package_info["name"], "DESCRIPTION")
-    return package_info
-
-
-def pkg_infos(package, tag="DESCRIPTION"):
-    # Retrieve a package description and other infos  with some 'magic spells'
-    # We query rpm dbs passing a queryformat, with default to DESCRIPTION
-    # To @schakrava: this probably can help avoiding some reading loops used
-    # to grab packages infos like on Rockstor updates check
-    # Full ref for avail tags here: http://rpm.org/user_doc/query_format.html
-    # and avail tags list with rpm --querytags
-    tag = "%%{%s}" % tag
-    out, err, rc = run_command([RPM, "-q", "--queryformat", tag, package], throw=False)
-    if rc != 0:
-        return ""
-    return " ".join(out)
-
-
-def pkg_update_check():
-    """
-    Retrieves list of available package updates and passes each in turn to
-    pkg_changelog for package specific info and presentation formatting.
-    :return: list of dictionaries returned by pkg_changelog()
-    """
-    # Query yum for updates and grab return code
-    # yum check-update return code is 0 with no updates
-    # and 100 if at least 1 update available.
-    # But this is not the case with zypper equivalent.
-    # Using -x rockstor* to avoid having Rockstor updated here
-    # instead of Rockstor "ad hoc" updater
-    distro_id = distro.id()
-    if distro_id == "rockstor":
-        # N.B. equivalent cmd - yum check-update -q -x 'rock*'
-        # i.e. quotes important around wildcard
-        pkg_list_all_other = [YUM, "check-update", "-q", "-x", "rock*"]
-    else:
-        # N.B. although we fail to exclude the rockstor package here, so it
-        # will be listed, it is skipped in update_run(). Different behaviour
-        # form before as will, re-trigger notification but workable for now.
-        pkg_list_all_other = [ZYPPER, "--non-interactive", "-q", "list-updates"]
-    out, err, rc = run_command(pkg_list_all_other, throw=False, log=True)
-    if rc == 106:  # zypper specific
-        logger.error("### REPOSITORY ERROR ###\n {}".format(err))
-    packages = []
-    # Read output skipping first one or two lines and last empty line
-    # on every line we add changelog info and some beautify with pkg_changelog.
-    if distro_id == "rockstor":
-        for line in out[1:-1]:
-            packages.append(pkg_changelog(line.split()[0].strip(), distro_id))
-    else:
-        # N.B. repo issues give warnings/info above the package updates table.
-        for line in out:
-            if line == "":
-                continue
-            if line[0] == "-" or line[0] == "S":
-                continue
-            # Skip "File 'repomd.xml' ..." and "Warning: ..." lines:
-            line_fields = line.split()  # Assumed faster than re.match()
-            if line_fields[0] == "File" or line_fields[0] == "Warning:":
-                continue
-            line_table_fields = line.split("|")
-            if len(line_table_fields) < 3:
-                continue  # Avoid index out of range on unknown line content.
-            packages.append(pkg_changelog(line_table_fields[2].strip(), distro_id))
-    return packages
+    # Proposed output:
+    # [ {'name': 'binutils', 'installed': '2.43-5.2', 'available': '2.43-6.1', 'description': 'C compiler ...'}, ...]
+    logger.debug("pkg_updates_info() called")
+    updates_info: typing.List[dict[str:str]] = []
+    stdout_value: str | None = None
+    zypp_run = None
+    try:
+        # rc = 1 when out = "package * is not installed"
+        zypp_run = run(
+            ["zypper", "--xmlout", "list-updates"],
+            capture_output=True,
+            encoding="utf-8",  # stdout and stderr as string
+            universal_newlines=True,
+            timeout=max_wait,
+            check=True,
+        )
+    except CalledProcessError as e:
+        if e.returncode in zypp_info_codes.keys():  # get stdout on zypper info codes.
+            logger.info(f"list-updates returned {zypp_info_codes[e.returncode]}.")
+            stdout_value = e.stdout
+        elif e.returncode == ZYPPER_EXIT_ZYPP_LOCKED:
+            logger.info(f"Skipped fetching updates, zypper busy.")
+        else:
+            if e.returncode in zypp_err_codes.keys():
+                logger.error(f"list-updates returned {zypp_err_codes[e.returncode]}.")
+            else:
+                logger.error(f"Error fetching updates: {e}")
+            return updates_info
+    except TimeoutExpired as e:
+        logger.error(f"Consider applying updates to reduce backlog: {e}")
+        return updates_info
+    if not stdout_value:
+        if isinstance(zypp_run, subprocess.CompletedProcess):
+            stdout_value = zypp_run.stdout
+        else:
+            return updates_info
+    updates_tree = ElementTree(fromstring(stdout_value))
+    updates_root = updates_tree.getroot()
+    for update in updates_root.iter("update"):
+        pkg_info: dict = {
+            "name": update.get("name"),
+            "installed": update.get("edition-old"),
+            "available": update.get("edition"),
+            "description": update.find("description").text,
+            # "summary": update.find("summary").text,
+            # "repo_alias": update.find("source").get("alias")
+        }
+        if pkg_info["name"] == "rockstor":
+            pkg_info["description"] = (
+                "-- See: 'SYSTEM -> Software Update' to apply --.\n"
+                + pkg_info["description"]
+            )
+        updates_info.append(pkg_info)
+    return updates_info

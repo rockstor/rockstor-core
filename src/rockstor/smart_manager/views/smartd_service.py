@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from system.services import systemctl
-from system.pkg_mgmt import install_pkg
 from django.db import transaction
 from smart_manager.views.base_service import BaseServiceDetailView
 import os
@@ -42,7 +41,8 @@ class SMARTDServiceView(BaseServiceDetailView):
         e_msg = "Failed to %s S.M.A.R.T service due to system error." % command
         with self._handle_exception(request, e_msg):
             if not os.path.exists(SMART):
-                install_pkg("smartmontools")
+                logger.info(f"{SMART} binary not found: try `zypper in smartmontools`")
+                raise Exception
             if command == "config":
                 service = Service.objects.get(name=self.service_name)
                 config = request.data.get("config", {})
