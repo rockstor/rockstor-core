@@ -83,17 +83,47 @@ def auto_update_status():
     return enabled
 
 
-def current_version() -> str:
-    out, err, rc = run_command([RPM, "-qi", "rockstor"], throw=False)
-    if rc != 0:
-        return "0.0.0-0"
-    return "{}-{}".format(out[1].split(":")[-1].strip(), out[2].split(":")[-1].strip())
+def current_version(get_build_date: bool=False) -> (str, str|None):
+    """
+    If the 'rockstor' package is installed, return a "version-release" string,
+    otherwise return the flag version value of "0.0.0-0".
+    If build_date is True, also return Build Date, otherwise return None.
+    :param get_build_date: Boolean flag to request a build date look-up.
+    :return: (version-release, build_date)
+    """
+    # https://rpm-software-management.github.io/rpm/manual/tags.html
+    # from man rpm: ":day   Use strftime(3) "%a %b %d %Y" format.": Thu May 01 2025
+    # Standardises output, or without :day we can get unix timestamp.
+    # The following tags gives us a pre-formatted:
+    # 'Version-Release' (first line)
+    # 'Thu May 01 2025' (second line)
+    tags = "%{VERSION}\-%{RELEASE}\n%{BUILDTIME:day}"
+    out, err, rc = run_command([RPM, "-q", "--queryformat", tags, "rockstor"], throw=False)
+    if rc != 0:  # Not installed is rc=1
+        return "0.0.0-0", None
+    date_list = []
+    if get_build_date:
+        try:
+            # we get on second line: "Thu May 01 2025" we want 2025-May-01
+            date_list =  out[1].split()[1:]  # ["May",  "01",  "2025"]
+        except Exception as e:
+            logger.debug(f"failed to parse build date from 'rpm -qi rockstor`: {e.__str__}")
+            return out[0].strip(), None
+    return out[0].strip(), f"{date_list[2]}-{date_list[0]}-{date_list[1]}"
 
 
 def rpm_build_info(pkg: str) -> tuple[str, str|None]:
     version = "Unknown Version"
     date = None
+    # Non YUM/DNF path (rpm & zypper only)
     distro_id = distro.id()
+    if distro_id == "opensuse-tumbleweed" or distro_id == "opensuse-slowroll":
+        version, date = current_version(get_build_date=True)
+        # Maintain compatibility with existing expectations for now.
+        if version == "0.0.0-0":
+            version = "Unknown Version"
+        return version, date
+    # Legacy YUM/DNF path: scheduled for deprecation.
     try:
         o, e, rc = run_command([YUM, "info", "installed", "-v", pkg])
     except CommandException as e:

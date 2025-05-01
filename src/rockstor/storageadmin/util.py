@@ -23,8 +23,9 @@ logger = logging.getLogger(__name__)
 
 # module level variable so it's computed once per process.
 version = "unknown"
+build_date = None
 try:
-    version = current_version()
+    version, build_date = current_version()
 except Exception as e:
     logger.exception(e)
 

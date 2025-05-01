@@ -22,7 +22,7 @@ from system.pkg_mgmt import (
     pkg_changelog,
     zypper_repos_list,
     rpm_build_info,
-    pkg_latest_available,
+    pkg_latest_available, current_version,
 )
 
 
@@ -316,6 +316,28 @@ class SystemPackageTests(unittest.TestCase):
                 "expected = ({}).".format(returned, expected),
             )
 
+    def test_current_version(self):
+        """
+        current_version() wraps `rpm -q --queryformat ... rockstor` and returns version-release,
+        and optionally Build Date from 2 lines indicating the same.
+        :return:
+        """
+        out = [['5.0.15-2981', 'Thu May 01 2025']]
+        err = [[""]]
+        rc = [0]
+        expected_results = [("5.0.15-2981", "2025-May-01")]
+        # Need more test data sets.
+        for o, e, r, expected in zip(out, err, rc, expected_results):
+            self.mock_run_command.return_value = (o, e, r)
+            returned = current_version(get_build_date=True)
+            self.assertEqual(
+                returned,
+                expected,
+                msg="Un-expected zypper_repos_list() result:\n "
+                "returned = ({}).\n "
+                "expected = ({}).".format(returned, expected),
+            )
+
     def test_rpm_build_info(self):
         """
         rpm_build_info strips out and concatenates Version and Release info for the
@@ -356,76 +378,34 @@ class SystemPackageTests(unittest.TestCase):
         err = [[""]]
         rc = [0]
         expected_results = [("3.9.2-50.2093", "2019-Dec-01")]
-        # Tumbleweed dnf-yum
+        # Tumbleweed using rpm -q --query-format
         dist_id.append("opensuse-tumbleweed")
         out.append(
             [
-                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",  # noqa E501
-                "DNF version: 4.2.6",
-                "cachedir: /var/cache/dnf",
-                "No module defaults found",
-                "Installed Packages",
-                "Name         : rockstor",
-                "Version      : 3.9.2",
-                "Release      : 50.2093",
-                "Architecture : x86_64",
-                "Size         : 84 M",
-                "Source       : rockstor-3.9.2-50.2093.src.rpm",
-                "Repository   : @System",
-                "Packager     : None",
-                "Buildtime    : Fri 29 Nov 2019 10:03:53 PM GMT",
-                "Install time : Sun 01 Dec 2019 03:23:33 PM GMT",
-                "Summary      : Btrfs Network Attached Storage (NAS) Appliance.",
-                "URL          : http://rockstor.com/",
-                "License      : GPL",
-                "Description  : Software raid, snapshot capable NAS solution with built-in file",
-                "             : integrity protection. Allows for file sharing between network",
-                "             : attached devices.",
-                "",
-                "",
+                "3.9.2-50.2093",
+                "Fri Nov 29 2019",
             ]
         )
         err.append([""])
         rc.append(0)
-        expected_results.append(("3.9.2-50.2093", "2019-Nov-30"))
-        # Slowroll dnf-yum before Tumbleweed move to 20250329-0 re dnf-plugins-core issue re dnf major update.
+        # N.B. we no longer add a day to work around yum/dnf 'changelog --since' issues.
+        expected_results.append(("3.9.2-50.2093", "2019-Nov-29"))
+        # Slowroll using rpm -q --query-format
         dist_id.append("opensuse-slowroll")
         out.append(
             [
-                "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, groups-manager, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync, system-upgrade",
-                "YUM version: 4.18.0",
-                "cachedir: /var/cache/dnf",
-                "User-Agent: constructed: 'libdnf (openSUSE Tumbleweed-Slowroll 20250205; generic; Linux.x86_64)'",
-                "Installed Packages",
-                "Name         : rockstor",
-                "Version      : 5.0.15",
-                "Release      : 2969",
-                "Architecture : x86_64",
-                "Size         : 6.6 M",
-                "Source       : rockstor-5.0.15-2969.src.rpm",
-                "Repository   : @System",
-                "Packager     : None",
-                "Buildtime    : Fri 07 Mar 2025 08:16:20 AM WET",
-                "Install time : Fri 07 Mar 2025 08:19:21 AM WET",
-                "Summary      : Btrfs Network Attached Storage (NAS) Appliance.",
-                "URL          : https://rockstor.com/",
-                "License      : GPL-3.0-or-later AND (MIT AND Apache-2.0 AND GPL-3.0-or-later AND LGPL-3.0-or-later AND ISC)",
-                "Description  : Software raid, snapshot capable NAS solution with built-in file integrity protection.",
-                "             : Allows for file sharing between network attached devices.",
-                "",
-                "",
+                "5.0.15-2969",
+                "Fri Mar 07 2025",
             ]
         )
-        err.append(
-            [
-                "allow_vendor_change is disabled. This option is currently not supported for downgrade and distro-sync commands",
-                "",
-            ]
-        )
+        err.append([""])
         rc.append(0)
-        expected_results.append(("5.0.15-2969", "2025-Mar-08"))
+        # N.B. we no longer add a day to work around yum/dnf 'changelog --since' issues.
+        expected_results.append(("5.0.15-2969", "2025-Mar-07"))
         # Source install where we key from the error message:
-        dist_id.append("opensuse-tumbleweed")
+        # N.B. moved test data from TW yum-dnf versions but preserved coverage for the same in leap.
+        # Slowroll dnf-yum before Tumbleweed move to 20250329-0 re dnf-plugins-core issue re dnf major update.
+        dist_id.append("opensuse-leap")
         out.append(
             [
                 "Loaded plugins: builddep, changelog, config-manager, copr, debug, debuginfo-install, download, generate_completion_cache, needs-restarting, playground, repoclosure, repodiff, repograph, repomanage, reposync",
@@ -436,6 +416,16 @@ class SystemPackageTests(unittest.TestCase):
             ]
         )
         err.append(["Error: No matching Packages to list", ""])
+        rc.append(1)
+        expected_results.append(("Unknown Version", None))
+        # Tumbleweed using rpm -q --query-format with a source install, we key from rc=1
+        dist_id.append("opensuse-tumbleweed")
+        out.append(
+            [
+                "package rockstor is not installed",
+            ]
+        )
+        err.append([""])
         rc.append(1)
         expected_results.append(("Unknown Version", None))
 
