@@ -247,7 +247,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
 
         if command == "update-check":
             try:
-                subo = None
+                subo: None | UpdateSubscription = None
                 try:
                     subo = UpdateSubscription.objects.get(
                         name="Stable", status="active"

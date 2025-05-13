@@ -14,6 +14,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
 import unittest
 from unittest.mock import patch
 
@@ -22,7 +23,9 @@ from system.pkg_mgmt import (
     pkg_changelog,
     zypper_repos_list,
     rpm_build_info,
-    pkg_latest_available, current_version,
+    pkg_latest_available,
+    current_version,
+    pkg_updates_info,
 )
 
 
@@ -103,6 +106,7 @@ class SystemPackageTests(unittest.TestCase):
 
     def test_pkg_update_check(self):
         """
+        N.B. to be superseded by pkg_updates_info()
         Test pkg_update_check() across distro.id values and consequently different
         output format of:
         distro.id = "opensuse" N.B. this was "opensuse-leap" in distro <= 1.6.0
@@ -112,6 +116,7 @@ class SystemPackageTests(unittest.TestCase):
         same command as for "opensuse"
         """
         # Mock pkg_changelog to allow for isolated testing of yum_check
+        # Only pertains to legacy YUM/DNF targets
         self.patch_pkg_changelog = patch("system.pkg_mgmt.pkg_changelog")
         self.mock_pkg_changelog = self.patch_pkg_changelog.start()
         # TODO:
@@ -131,9 +136,9 @@ class SystemPackageTests(unittest.TestCase):
             pkg_info["installed"] = ""
             pkg_info["available"] = ""
             if args[1] != "rockstor":
-                pkg_info[
-                    "available"
-                ] = "Version and changelog of update not available in openSUSE"
+                pkg_info["available"] = (
+                    "Version and changelog of update not available in openSUSE"
+                )
             pkg_info["description"] = ""
             return pkg_info
 
@@ -161,7 +166,7 @@ class SystemPackageTests(unittest.TestCase):
         ]
         err = [[""]]
         rc = [0]
-        dist_id = ["opensuse-tumbleweed"]
+        dist_id = ["opensuse"]
         #
         # zypper no spaces in Repository name Example,
         # actual Leap 15.0 but no-space repos also seen in other openSUSE variants.
@@ -185,7 +190,7 @@ class SystemPackageTests(unittest.TestCase):
         )
         err.append([""])
         rc.append(0)
-        dist_id.append("opensuse-tumbleweed")
+        dist_id.append("opensuse")
         #
         # When we have a poorly repo.
         #     '/usr/bin/zypper', '--non-interactive', '-q', 'list-updates']
@@ -257,6 +262,24 @@ class SystemPackageTests(unittest.TestCase):
                 "expected = ({}).".format(returned, expected),
             )
 
+#     @patch("system.pkg_mgmt.subprocess.run")
+#     def test_pkg_updates_info(self, mock_subproc_run):
+          # No updates available:
+#         run_out = [
+#             """<?xml version='1.0'?>
+# <stream>
+# <message type="info">Loading repository data...</message>
+# <message type="info">Reading installed packages...</message>
+# <update-status version="0.6">
+# <update-list>
+# </update-list>
+# </update-status>
+# </stream>"""
+#         ]
+#
+#         # Need mocking setup for subprocess.run
+#         returned = pkg_updates_info()
+
     def test_zypper_repos_list(self):
         # Test empty return values
         out = [[""]]
@@ -322,7 +345,7 @@ class SystemPackageTests(unittest.TestCase):
         and optionally Build Date from 2 lines indicating the same.
         :return:
         """
-        out = [['5.0.15-2981', 'Thu May 01 2025']]
+        out = [["5.0.15-2981", "Thu May 01 2025"]]
         err = [[""]]
         rc = [0]
         expected_results = [("5.0.15-2981", "2025-May-01")]
