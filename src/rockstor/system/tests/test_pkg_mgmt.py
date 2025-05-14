@@ -343,16 +343,43 @@ class SystemPackageTests(unittest.TestCase):
         """
         current_version() wraps `rpm -q --queryformat ... rockstor` and returns version-release,
         and optionally Build Date from 2 lines indicating the same.
+        N.B. There is overlap here with test_rpm_build_info() concerning the
+        non-legacy code path as it calls current_version also.
+        But rpm_build_info(), while it exists, performs additional translation of version.
         :return:
         """
+        # version & date function - rpm installed
         out = [["5.0.15-2981", "Thu May 01 2025"]]
         err = [[""]]
         rc = [0]
-        expected_results = [("5.0.15-2981", "2025-May-01")]
+        get_build_date = [True]
+        expected_results: typing.List[(str, str | None)] = [
+            ("5.0.15-2981", "2025-May-01")
+        ]
+        # version only - rpm installed
+        out.append(["5.0.15-111.1", "Thu May 01 2025"])
+        err.append([""])
+        rc.append(0)
+        get_build_date.append(False)
+        expected_results.append(("5.0.15-111.1", None))
+        # version & date function - no rpm installed
+        out.append(["package rockstor is not installed"])
+        err.append([""])
+        rc.append(1)
+        get_build_date.append(True)
+        expected_results.append(("0.0.0-0", None))
+        # version only - no rpm installed
+        out.append(["package rockstor is not installed"])
+        err.append([""])
+        rc.append(1)
+        get_build_date.append(False)
+        expected_results.append(("0.0.0-0", None))
         # Need more test data sets.
-        for o, e, r, expected in zip(out, err, rc, expected_results):
+        for o, e, r, get_date, expected in zip(
+            out, err, rc, get_build_date, expected_results
+        ):
             self.mock_run_command.return_value = (o, e, r)
-            returned = current_version(get_build_date=True)
+            returned = current_version(get_build_date=get_date)
             self.assertEqual(
                 returned,
                 expected,

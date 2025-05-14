@@ -103,7 +103,7 @@ def current_version(get_build_date: bool = False) -> (str, str | None):
     # The following tags gives us a pre-formatted:
     # 'Version-Release' (first line)
     # 'Thu May 01 2025' (second line)
-    tags = "%{VERSION}\-%{RELEASE}\n%{BUILDTIME:day}"
+    tags = "%{VERSION}\-%{RELEASE}\\\n%{BUILDTIME:day}"
     out, err, rc = run_command([RPM, "-q", "--queryformat", tags, "rockstor"], throw=False)
     if rc != 0:  # Not installed is rc=1
         return "0.0.0-0", None
@@ -115,7 +115,8 @@ def current_version(get_build_date: bool = False) -> (str, str | None):
         except Exception as e:
             logger.debug(f"failed to parse build date from 'rpm -qi rockstor`: {e.__str__}")
             return out[0].strip(), None
-    return out[0].strip(), f"{date_list[2]}-{date_list[0]}-{date_list[1]}"
+        return out[0].strip(), f"{date_list[2]}-{date_list[0]}-{date_list[1]}"
+    return out[0].strip(), None
 
 
 def rpm_build_info(pkg: str) -> tuple[str, str | None]:
