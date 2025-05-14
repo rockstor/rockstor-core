@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import typing
 import unittest
 from unittest.mock import patch
 
@@ -37,6 +38,8 @@ class SystemPackageTests(unittest.TestCase):
     """
 
     def setUp(self):
+        # Avoid default of first Docstring in verbose mode
+        unittest.TestCase.shortDescription = lambda x: None
         self.patch_run_command = patch("system.pkg_mgmt.run_command")
         self.mock_run_command = self.patch_run_command.start()
 
@@ -262,23 +265,23 @@ class SystemPackageTests(unittest.TestCase):
                 "expected = ({}).".format(returned, expected),
             )
 
-#     @patch("system.pkg_mgmt.subprocess.run")
-#     def test_pkg_updates_info(self, mock_subproc_run):
-          # No updates available:
-#         run_out = [
-#             """<?xml version='1.0'?>
-# <stream>
-# <message type="info">Loading repository data...</message>
-# <message type="info">Reading installed packages...</message>
-# <update-status version="0.6">
-# <update-list>
-# </update-list>
-# </update-status>
-# </stream>"""
-#         ]
-#
-#         # Need mocking setup for subprocess.run
-#         returned = pkg_updates_info()
+    #     @patch("system.pkg_mgmt.subprocess.run")
+    #     def test_pkg_updates_info(self, mock_subproc_run):
+    # No updates available:
+    #         run_out = [
+    #             """<?xml version='1.0'?>
+    # <stream>
+    # <message type="info">Loading repository data...</message>
+    # <message type="info">Reading installed packages...</message>
+    # <update-status version="0.6">
+    # <update-list>
+    # </update-list>
+    # </update-status>
+    # </stream>"""
+    #         ]
+    #
+    #         # Need mocking setup for subprocess.run
+    #         returned = pkg_updates_info()
 
     def test_zypper_repos_list(self):
         # Test empty return values
