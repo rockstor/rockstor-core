@@ -43,7 +43,7 @@ class UpdateSubscriptionListView(rfc.GenericView):
             offo = UpdateSubscription.objects.get(name=fcd["name"])
             offo.status = "inactive"
             offo.save()
-            switch_repo(offo, on=False)
+            switch_repo(offo, enable_repo=False)
         except UpdateSubscription.DoesNotExist:
             pass
 

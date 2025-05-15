@@ -269,28 +269,37 @@ def create_credentials_file(user, password):
     return True
 
 
-def switch_repo(subscription, on=True):
+def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
+    logger.info(
+        f"++ switch_repo({subscription.name}, enable_repo={enable_repo}) called."
+    )
     repos_dir = "/etc/yum.repos.d"
     yum_file = "{}/Rockstor-{}.repo".format(repos_dir, subscription.name)
+    if not enable_repo:
+        logger.info("--- Removing all Rockstor-* repositories")
+        if os.path.exists(yum_file):
+            os.remove(yum_file)
+        run_command(
+            [ZYPPER, "removerepo", "Rockstor-Testing", "Rockstor-Stable"], log=True
+        )
+        return None
+    repo_alias = "Rockstor-{}".format(subscription.name)
     rock_pub_key_file = "{}conf/ROCKSTOR-GPG-KEY".format(settings.ROOT_DIR)
     # Historically our base subscription url denotes our CentOS rpm repo.
     subscription_distro_url = subscription.url
     distro_id = distro.id()
     distro_version = distro.version()
     machine_arch = platform.machine()
-    use_zypper: bool = True
-    yum_also: bool = True  # Leap and before use yum for changelog function.
-    repo_alias = "Rockstor-{}".format(subscription.name)
-    logger.debug("########### SWITCH REPO repo-alias = {}".format(repo_alias))
+    yum_also: bool = True  # Leap uses yum for changelog function.
     # Accommodate for distro 1.7.0 onwards reporting "opensuse" for id.
     if distro_id == "opensuse-leap" or distro_id == "opensuse":
         subscription_distro_url += "/leap/{}".format(distro_version)
+        current_repo_list = zypper_repos_list_legacy()
     elif distro_id == "opensuse-tumbleweed" or distro_id == "opensuse-slowroll":
         subscription_distro_url += "/tumbleweed"
         # Tumblweed/Slowroll from 20250329-0 onwards uses zypper-changelog-plugin
         yum_also = False
-    else:
-        use_zypper = False
+        current_repo_list = zypper_repos_list()
     # As from Leap15.4, update repositories are multi-arch. Maintain 15.3_aarch for now.
     if distro_version == "15.3" and machine_arch != "x86_64":
         subscription_distro_url += "_{}".format(machine_arch)
@@ -304,64 +313,65 @@ def switch_repo(subscription, on=True):
         )
     else:
         repo_url = "http://{}".format(subscription_distro_url)
-    if on:
-        if use_zypper:
-            run_command([RPM, "--import", rock_pub_key_file], log=True)
-            current_repo_list = zypper_repos_list()
-            if subscription.name == "Stable" and repo_alias not in current_repo_list:
-                if "Rockstor-Testing" in current_repo_list:
-                    run_command([ZYPPER, "removerepo", "Rockstor-Testing"])
-                # If already added rc=4
-                create_credentials_file(
-                    subscription.appliance.uuid, subscription.password
-                )
-                run_command(
-                    [
-                        ZYPPER,
-                        "--non-interactive",
-                        "addrepo",
-                        "--refresh",
-                        "http://{}@{}?credentials={}&auth=basic".format(
-                            subscription.appliance.uuid,
-                            subscription_distro_url,
-                            STABLE_CREDENTIALS_FILE,
-                        ),
-                        repo_alias,
-                    ],
-                    log=True,
-                    throw=False,
-                )
-            # TODO: Avoid re-calling zypper_repos_list(), we already have zypper_repos_list()
-            #  we just need to know if a re-call is required from our own actions.
-            if subscription.name == "Testing" and repo_alias not in zypper_repos_list():
-                if "Rockstor-Stable" in current_repo_list:
-                    run_command([ZYPPER, "removerepo", "Rockstor-Stable"])
-                # If already added rc=4
-                run_command(
-                    [ZYPPER, "addrepo", "--refresh", repo_url, repo_alias],
-                    log=True,
-                    throw=False,
-                )
-        # N.B. on Leap we also use YUM (read only) to retrieve changelogs
-        if yum_also:
-            with open(yum_file, "w") as rfo:
-                rfo.write("[Rockstor-{}]\n".format(subscription.name))
-                rfo.write("name={}\n".format(subscription.description))
-                rfo.write("baseurl={}\n".format(repo_url))
-                rfo.write("enabled=1\n")
-                rfo.write("gpgcheck=1\n")
-                rfo.write("gpgkey=file://{}\n".format(rock_pub_key_file))
-                rfo.write("metadata_expire=1h\n")
-                rfo.write("exclude=*.src\n")  # src changelogs = false positive update flag.
-            # Set file to rw- --- --- (600) via stat constants.
-            os.chmod(yum_file, stat.S_IRUSR | stat.S_IWUSR)
-    else:
-        if os.path.exists(yum_file):
-            os.remove(yum_file)
-        if use_zypper:
+    run_command([RPM, "--import", rock_pub_key_file], log=True)
+    if subscription.name == "Stable":
+        if repo_alias not in current_repo_list:
+            logger.info("++++ Enabling Stable as not in current repo list")
+            if "Rockstor-Testing" in current_repo_list:
+                logger.info("--- Testing enabled - removing repo")
+                run_command([ZYPPER, "removerepo", "Rockstor-Testing"], log=True)
+            # If already added rc=4
+            create_credentials_file(subscription.appliance.uuid, subscription.password)
             run_command(
-                [ZYPPER, "removerepo", "Rockstor-Testing", "Rockstor-Stable"], log=True
+                [
+                    ZYPPER,
+                    "--non-interactive",
+                    "addrepo",
+                    "--refresh",
+                    "http://{}@{}?credentials={}&auth=basic".format(
+                        subscription.appliance.uuid,
+                        subscription_distro_url,
+                        STABLE_CREDENTIALS_FILE,
+                    ),
+                    repo_alias,
+                ],
+                log=True,
+                throw=False,
             )
+        else:
+            logger.info("*** Stable repo already enabled.")
+    elif subscription.name == "Testing":
+        if repo_alias not in current_repo_list:
+            logger.info("++++ Enabling Testing as not in current repo list")
+            if "Rockstor-Stable" in current_repo_list:
+                logger.info("--- Stable enabled - removing repo")
+                run_command([ZYPPER, "removerepo", "Rockstor-Stable"], log=True)
+            # If already added rc=4
+            run_command(
+                [ZYPPER, "addrepo", "--refresh", repo_url, repo_alias],
+                log=True,
+                throw=False,
+            )
+        else:
+            logger.info("*** Testing already enabled.")
+    else:
+        logger.info(f"The subscription name ({subscription.name}) is unknown.")
+        # Possible 'Edge' release.
+        return None
+    # N.B. on Leap we also use YUM (read only) to retrieve changelogs
+    if yum_also:
+        with open(yum_file, "w") as rfo:
+            rfo.write("[Rockstor-{}]\n".format(subscription.name))
+            rfo.write("name={}\n".format(subscription.description))
+            rfo.write("baseurl={}\n".format(repo_url))
+            rfo.write("enabled=1\n")
+            rfo.write("gpgcheck=1\n")
+            rfo.write("gpgkey=file://{}\n".format(rock_pub_key_file))
+            rfo.write("metadata_expire=1h\n")
+            rfo.write("exclude=*.src\n")  # src changelogs = false positive update flag.
+        # Set file to rw- --- --- (600) via stat constants.
+        os.chmod(yum_file, stat.S_IRUSR | stat.S_IWUSR)
+    return None
 
 
 def repo_status(subscription):
