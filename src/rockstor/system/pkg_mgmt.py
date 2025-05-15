@@ -523,12 +523,9 @@ def pkg_latest_available(pkg_name, arch, distro_id):
     :return:
     """
     new_version = None
-    # TODO: We might use "zypper se -s --match-exact rockstor" and parse first
-    #  line with rockstor in second column but unit test will be defunct.
-    #  Advantage: works with no rockstor version installed, no so dnf-yum
-    # Add quite & XML output: zypper --quiet --xmlout se -s --match-exact rockstor
-    # Maybe https://github.com/martinblech/xmltodict via pip install xmltodict
-    # Or
+    # Legacy YUM/DNF path: scheduled for deprecation/removal after 5.1.0-0
+    # Deprecated by RPM & zypper only path in rockstor_pkg_update_check(),
+    # which uses zypper-changelog-lib, and recent improvements in rpm_build_info().
     o, e, rc = run_command([YUM, "update", pkg_name, "--assumeno"], throw=False)
     if rc == 1:
         for line in o:
