@@ -22,7 +22,7 @@ from unittest.mock import patch
 from system.pkg_mgmt import (
     pkg_update_check,
     pkg_changelog,
-    zypper_repos_list,
+    zypper_repos_list_legacy,
     rpm_build_info,
     pkg_latest_available,
     current_version,
@@ -283,7 +283,7 @@ class SystemPackageTests(unittest.TestCase):
     #         # Need mocking setup for subprocess.run
     #         returned = pkg_updates_info()
 
-    def test_zypper_repos_list(self):
+    def test_zypper_repos_list_legacy(self):
         # Test empty return values
         out = [[""]]
         err = [[""]]
@@ -333,7 +333,7 @@ class SystemPackageTests(unittest.TestCase):
 
         for o, e, r, expected in zip(out, err, rc, expected_results):
             self.mock_run_command.return_value = (o, e, r)
-            returned = zypper_repos_list()
+            returned = zypper_repos_list_legacy()
             self.assertEqual(
                 returned,
                 expected,

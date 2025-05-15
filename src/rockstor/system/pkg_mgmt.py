@@ -46,6 +46,9 @@ SYSTEMCTL = "/usr/bin/systemctl"
 AT = "/usr/bin/at"
 YCFILE = "/etc/yum/yum-cron.conf"  # Doesn't exist in openSUSE
 STABLE_CREDENTIALS_FILE = "/etc/zypp/credentials.d/Rockstor-Stable"
+# Zypper return codes:
+ZYPPER_EXIT_ERR_INVALID_ARGS = 3
+ZYPPER_EXIT_ZYPP_LOCKED = 7
 
 
 def auto_update(enable=True):
@@ -165,12 +168,12 @@ def rpm_build_info(pkg: str) -> tuple[str, str | None]:
     return version, date
 
 
-def zypper_repos_list():
+def zypper_repos_list_legacy():
     """
     Low level wrapper around "zypper repos"
     :return: List of repo Alias's
     """
-    # TODO: zypper-changelog-lib exports get_zypper_repo_dict() likely faster and cleaner.
+    # Superseeded by zypper_repos_list() scheduled for deprecation/removal after 5.1.0-0
     repo_list = []
     cmd = [ZYPPER, "-q", "repos"]
     out, err, rc = run_command(cmd, log=True)
@@ -182,6 +185,42 @@ def zypper_repos_list():
             line_fields = line.split()
             if len(line_fields) >= 3:
                 repo_list.append(line_fields[2])
+    return repo_list
+
+
+def zypper_repos_list(max_wait: int = 1) -> typing.List[str]:
+    """
+    Simple wrapper for "zypper -x lr Rockstor-Testing Rockstor-Stable".
+    Retrieves a list of enabled Rockstor repositories.
+    :return: list of enabled Rockstor repos by alias.
+    """
+    repo_list: typing.List[str] = []
+    stdout_value: str | None = None
+    try:
+        zypp_run = run(
+            ["zypper", "-x", "lr", "Rockstor-Testing", "Rockstor-Stable"],
+            capture_output=True,
+            encoding="utf-8",  # stdout and stderr as string
+            universal_newlines=True,
+            timeout=max_wait,
+            check=True,
+        )
+    except CalledProcessError as e:
+        if e.returncode != ZYPPER_EXIT_ERR_INVALID_ARGS:
+            logger.error(f"{e.stdout}Error fetching repository list: ({e})")
+            return []
+        stdout_value = e.stdout
+    except TimeoutExpired as e:
+        logger.error(f"Package system may be busy: {e}")
+        return []
+    if not stdout_value:
+        logger.info(f"Both Testing and Stable were inadvertently enabled")
+        stdout_value = zypp_run.stdout
+    repo_tree = ElementTree(fromstring(stdout_value))
+    repo_root = repo_tree.getroot()
+    for repo in repo_root.iter("repo"):
+        if repo.get("enabled") == "1":
+            repo_list.append(repo.get("alias"))
     return repo_list
 
 
