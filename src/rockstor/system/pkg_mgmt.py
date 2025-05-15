@@ -107,7 +107,9 @@ def current_version(get_build_date: bool = False) -> (str, str | None):
     # 'Version-Release' (first line)
     # 'Thu May 01 2025' (second line)
     tags = "%{VERSION}\-%{RELEASE}\\\n%{BUILDTIME:day}"
-    out, err, rc = run_command([RPM, "-q", "--queryformat", tags, "rockstor"], throw=False)
+    out, err, rc = run_command(
+        [RPM, "-q", "--queryformat", tags, "rockstor"], throw=False
+    )
     if rc != 0:  # Not installed is rc=1
         return "0.0.0-0", None
     date_list = []
@@ -116,7 +118,9 @@ def current_version(get_build_date: bool = False) -> (str, str | None):
             # we get on second line: "Thu May 01 2025" we want 2025-May-01
             date_list = out[1].split()[1:]  # ["May",  "01",  "2025"]
         except Exception as e:
-            logger.debug(f"failed to parse build date from 'rpm -qi rockstor`: {e.__str__}")
+            logger.debug(
+                f"failed to parse build date from 'rpm -qi rockstor`: {e.__str__}"
+            )
             return out[0].strip(), None
         return out[0].strip(), f"{date_list[2]}-{date_list[0]}-{date_list[1]}"
     return out[0].strip(), None
@@ -693,7 +697,7 @@ def pkg_update_check():
     return packages
 
 
-def pkg_updates_info(max_wait: int = 14) -> typing.List[dict[str : str]]:
+def pkg_updates_info(max_wait: int = 15) -> typing.List[dict[str:str]]:
     """
     Fetch info on installable updates across all repos via zypper xml output call.
     Resolves as per 'zypper up' excluding packages with dependency problems.
@@ -706,7 +710,7 @@ def pkg_updates_info(max_wait: int = 14) -> typing.List[dict[str : str]]:
     """
     # Proposed output:
     # [ {'name': 'binutils', available': '2.43-6.1', 'installed': '2.43-5.2', 'description': 'C compiler ...'}, ...]
-    updates_info: typing.List[dict[str : str]] = []
+    updates_info: typing.List[dict[str:str]] = []
     try:
         # rc = 1 when out = "package * is not installed"
         zypp_run = run(
@@ -737,6 +741,6 @@ def pkg_updates_info(max_wait: int = 14) -> typing.List[dict[str : str]]:
             # "repo_alias": update.find("source").get("alias")
         }
         if pkg_info["name"] == "rockstor":
-            continue
+            continue  # See: rockstor_pkg_update_check()
         updates_info.append(pkg_info)
     return updates_info
