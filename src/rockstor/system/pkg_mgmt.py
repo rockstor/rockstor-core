@@ -34,7 +34,9 @@ from django.conf import settings
 from system.exceptions import CommandException
 import distro
 import logging
-
+import keyring
+from keyring import set_password
+from keyring.errors import KeyringError, PasswordSetError, KeyringLocked, NoKeyringError
 from zypper_changelog_lib import get_zypper_changelog
 
 logger = logging.getLogger(__name__)
@@ -228,11 +230,12 @@ def zypper_repos_list(max_wait: int = 1) -> typing.List[str]:
     return repo_list
 
 
-def create_credentials_file(user, password):
+def update_zypp_auth_file(user, password):
     """
     Takes Appliance ID as username and Activation code as password and creates a zypper
     compatible Rockstor-Stable credentials file in /etc/zypp/credentials.d which is the
     default credentials.global.dir see: /etc/zypp/zypp.conf
+    See also zypper-changelog-lib counterpart update_password_store().
     :param user: Appliance ID
     :param password: Activation code
     :return: True if credentials file successfully created, or throws an exception.
@@ -268,9 +271,33 @@ def create_credentials_file(user, password):
                     npath, e.__str__()
                 )
                 raise Exception(msg)
-    # TODO Stash/Sync credentials in our password-store also, i.e. via python-keyring.
-    #  This enables their use in zypper-changelog-lib or Stable Updates repo.
     return True
+
+
+def update_password_store(user, password):
+    """
+    Zypper-changelog-lib password-store counterpart, to update_zypp_auth_file().
+    Takes Appliance ID as username and Activation code as password.
+    Required to enable partial RPM pkg downloads for pending changelog retrieval.
+    Employs python-keyring to update password-store keyring backend, already enabled
+    for Rockstor Django secrets storage.
+    :param user: Appliance ID
+    :param password: Activation code
+    :return: True if credentials file successfully created, or throws an exception.
+    """
+    # See conf/rockstor-pre.service for rockstor@localhost keyring setup.
+    service = f"zypper-changelog-lib/Rockstor-Stable/"
+    try:
+        set_password(service_name=service, username=user, password=password)
+    except NoKeyringError as e:
+        logger.error(f"No rockstor@localhost keyring, try rebooting: {e.__str__()}")
+    except KeyringLocked as e:
+        logger.error(f"rockstor@localhost keyring locked: {e.__str__}")
+    except PasswordSetError as e:
+        logger.error(f"Web-UI changelog: Stable repo auth set issue. {e.__str__()}")
+    except keyring.errors.KeyringError as e:
+        logger.error(f"Unknown KeyringError: {e.__str__()}")
+    return None
 
 
 def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
@@ -317,15 +344,20 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
         )
     else:
         repo_url = "http://{}".format(subscription_distro_url)
+    # Rockstor public key import call takes around 13 ms.
     run_command([RPM, "--import", rock_pub_key_file], log=True)
     if subscription.name == "Stable":
+        # TODO: After 5.6.0-0 Stable this can be moved to after update_zypp_auth_file().
+        # Required for now to update password-store on existing Stable systems.
+        logger.info("Syncing password-store auth for Web-UI changelog feature.")
+        update_password_store(subscription.appliance.uuid, subscription.password)
         if repo_alias not in current_repo_list:
             logger.info("++++ Enabling Stable as not in current repo list")
             if "Rockstor-Testing" in current_repo_list:
                 logger.info("--- Testing enabled - removing repo")
                 run_command([ZYPPER, "removerepo", "Rockstor-Testing"], log=True)
+            update_zypp_auth_file(subscription.appliance.uuid, subscription.password)
             # If already added rc=4
-            create_credentials_file(subscription.appliance.uuid, subscription.password)
             run_command(
                 [
                     ZYPPER,
