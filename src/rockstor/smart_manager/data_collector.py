@@ -63,7 +63,7 @@ from storageadmin.models import Disk, Pool  # noqa E402
 from smart_manager.models import Service  # noqa E402
 from system.services import service_status  # noqa E402
 from cli.api_wrapper import APIWrapper  # noqa E402
-from system.pkg_mgmt import rockstor_pkg_update_check, pkg_update_check  # noqa E402
+from system.pkg_mgmt import rockstor_pkg_update_check, pkg_updates_info  # noqa E402
 import distro
 import logging  # noqa E402
 
@@ -1025,7 +1025,7 @@ class SysinfoNamespace(RockstorIO):
     def yum_updates(self):
 
         while self.start:
-            packages = pkg_update_check()
+            packages = pkg_updates_info()
             data = {}
             if packages:  # Non empty lists are True.
                 data["yum_updates"] = True
