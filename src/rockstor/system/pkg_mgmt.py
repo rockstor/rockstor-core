@@ -50,6 +50,7 @@ STABLE_CREDENTIALS_FILE = "/etc/zypp/credentials.d/Rockstor-Stable"
 # Zypper return codes:
 ZYPPER_EXIT_ERR_INVALID_ARGS = 3
 ZYPPER_EXIT_ZYPP_LOCKED = 7
+ZYPPER_EXIT_INF_REPOS_SKIPPED = 106
 
 
 def auto_update(enable=True):
@@ -514,6 +515,7 @@ def pkg_updates_info(max_wait: int = 15) -> typing.List[dict[str:str]]:
             check=True,
         )
     except CalledProcessError as e:
+        # TODO: Catch and ignore ZYPPER_EXIT_INF_REPOS_SKIPPED
         logger.error(f"Error fetching updates: {e}")
         return updates_info
     except TimeoutExpired as e:
