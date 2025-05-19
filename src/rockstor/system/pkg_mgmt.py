@@ -139,7 +139,7 @@ def rpm_build_info(pkg: str) -> tuple[str, str | None]:
 
 def zypper_repos_list(max_wait: int = 1) -> typing.List[str]:
     """
-    Simple wrapper for "zypper -x lr Rockstor-Testing Rockstor-Stable".
+    Simple wrapper for "zypper --xmlout lr Rockstor-Testing Rockstor-Stable".
     Retrieves a list of enabled Rockstor repositories.
     :return: list of enabled Rockstor repos by alias.
     """
@@ -147,7 +147,7 @@ def zypper_repos_list(max_wait: int = 1) -> typing.List[str]:
     stdout_value: str | None = None
     try:
         zypp_run = run(
-            ["zypper", "-x", "lr", "Rockstor-Testing", "Rockstor-Stable"],
+            ["zypper", "--xmlout", "lr", "Rockstor-Testing", "Rockstor-Stable"],
             capture_output=True,
             encoding="utf-8",  # stdout and stderr as string
             universal_newlines=True,
@@ -322,11 +322,10 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
     if distro_version == "15.3" and machine_arch != "x86_64":
         subscription_distro_url += "_{}".format(machine_arch)
     if subscription.password is not None:
-        repo_url = "http://{}:{}@{}".format(
-            subscription.appliance.uuid, subscription.password, subscription_distro_url
-        )
+        repo_url = f"http://{subscription.appliance.uuid}@{subscription_distro_url}"
     else:
-        repo_url = "http://{}".format(subscription_distro_url)
+        repo_url = f"http://{subscription_distro_url}"
+    logger.debug(f"REPO_URL={repo_url}")
     # Rockstor public key import call takes around 13 ms.
     run_command([RPM, "--import", rock_pub_key_file], log=True)
     if subscription.name == "Stable":
@@ -347,11 +346,7 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
                     "--non-interactive",
                     "addrepo",
                     "--refresh",
-                    "http://{}@{}?credentials={}&auth=basic".format(
-                        subscription.appliance.uuid,
-                        subscription_distro_url,
-                        STABLE_CREDENTIALS_FILE,
-                    ),
+                    f"{repo_url}?credentials={STABLE_CREDENTIALS_FILE}&auth=basic",
                     repo_alias,
                 ],
                 log=True,
@@ -367,7 +362,14 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
                 remove_rockstor_repo(["Rockstor-Stable"])
             # If already added rc=4
             run_command(
-                [ZYPPER, "addrepo", "--refresh", repo_url, repo_alias],
+                [
+                    ZYPPER,
+                    "--non-interactive",
+                    "addrepo",
+                    "--refresh",
+                    repo_url,
+                    repo_alias,
+                ],
                 log=True,
                 throw=False,
             )
