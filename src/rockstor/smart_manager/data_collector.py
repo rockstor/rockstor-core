@@ -1025,6 +1025,7 @@ class SysinfoNamespace(RockstorIO):
     def yum_updates(self):
 
         while self.start:
+            gevent.sleep(1)  # Hack to avoid zypper toes of rockstor_pkg_update_check()
             packages = pkg_updates_info()
             data = {}
             if packages:  # Non empty lists are True.
