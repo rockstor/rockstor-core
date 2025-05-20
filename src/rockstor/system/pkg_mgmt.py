@@ -575,6 +575,9 @@ def pkg_updates_info(max_wait: int = 15) -> typing.List[dict[str:str]]:
             # "repo_alias": update.find("source").get("alias")
         }
         if pkg_info["name"] == "rockstor":
-            continue  # See: rockstor_pkg_update_check()
+            pkg_info["description"] = (
+                "-- See: 'SYSTEM -> Software Update' to apply --.\n"
+                + pkg_info["description"]
+            )
         updates_info.append(pkg_info)
     return updates_info
