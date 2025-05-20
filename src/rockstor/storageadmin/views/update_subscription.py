@@ -43,14 +43,19 @@ class UpdateSubscriptionListView(rfc.GenericView):
             offo = UpdateSubscription.objects.get(name=fcd["name"])
             offo.status = "inactive"
             offo.save()
+            ## enable_repos False removes both repositories.
             switch_repo(offo, enable_repo=False)
         except UpdateSubscription.DoesNotExist:
             pass
-
+        try:
+            appliance = Appliance.objects.get(current_appliance=True)
+        except:
+            raise RockStorAPIException(
+                status_code=400, detail="Error retrieving current Appliance ID"
+            )
         try:
             ono = UpdateSubscription.objects.get(name=ncd["name"])
         except UpdateSubscription.DoesNotExist:
-            appliance = Appliance.objects.get(current_appliance=True)
             ono = UpdateSubscription(
                 name=ncd["name"],
                 description=ncd["description"],
@@ -64,16 +69,14 @@ class UpdateSubscriptionListView(rfc.GenericView):
         ono.save()
         if status == "inactive":
             e_msg = (
-                "Activation code ({}) could not be authorized for your "
-                "appliance ({}). Verify the code and try again. If the "
+                f"Activation code ({ono.password}) could not be authorized for your "
+                f"appliance ({appliance.uuid}). Verify the code and try again. If the "
                 "problem persists, email support@rockstor.com with this "
                 "message."
-            ).format(ono.password, appliance.uuid)
+            )
             raise RockStorAPIException(status_code=400, detail=e_msg)
         if status != "active":
-            e_msg = (
-                "Failed to activate subscription. Status code: {} details: {}"
-            ).format(status, text)
+            e_msg = f"Failed to activate subscription. Status code: {status} details: {text}"
             raise Exception(e_msg)
         switch_repo(ono)
         return ono
