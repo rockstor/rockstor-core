@@ -48,9 +48,31 @@ AT = "/usr/bin/at"
 YCFILE = "/etc/yum/yum-cron.conf"  # Doesn't exist in openSUSE
 STABLE_CREDENTIALS_FILE = "/etc/zypp/credentials.d/Rockstor-Stable"
 # Zypper return codes:
-ZYPPER_EXIT_ERR_INVALID_ARGS = 3
-ZYPPER_EXIT_ZYPP_LOCKED = 7
-ZYPPER_EXIT_INF_REPOS_SKIPPED = 106
+ZYPPER_EXIT_ERR_INVALID_ARGS = 3  # Can occur when naming a non-existent repo.
+ZYPPER_EXIT_ZYPP_LOCKED = 7  # Likely indicating a retry requirement.
+ZYPPER_EXIT_INF_REPOS_SKIPPED = 106  # Likely not catastrophic and temporary.
+# Zypper info return codes.
+# These invoke subprocess.CalledProcessError with --xmlout but do not represent failure,
+# rather a requirement to retrieve stdout from the exception, not the CompletedProcess.
+zypp_info_codes = {
+    100: "ZYPPER_EXIT_INF_UPDATE_NEEDED",
+    101: "ZYPPER_EXIT_INF_SEC_UPDATE_NEEDED",
+    102: "ZYPPER_EXIT_INF_REBOOT_NEEDED",
+    103: "ZYPPER_EXIT_INF_RESTART_NEEDED",  # Associated with 'zypper needs-rebooting'.
+    106: "ZYPPER_EXIT_INF_REPOS_SKIPPED",  # Likely not catastrophic and temporary.
+}
+zypp_err_codes = {
+    1: "ZYPPER_EXIT_ERR_BUG",
+    2: "ZYPPER_EXIT_ERR_SYNTAX",
+    3: "ZYPPER_EXIT_ERR_INVALID_ARGS",  # Can occur when naming a non-existent repo.
+    4: "ZYPPER_EXIT_ERR_ZYPP",
+    5: "ZYPPER_EXIT_ERR_PRIVILEGES",
+    6: "ZYPPER_EXIT_NO_REPOS",
+    7: "ZYPPER_EXIT_ZYPP_LOCKED",  # Likely indicating a retry requirement.
+    104: "ZYPPER_EXIT_INF_CAP_NOT_FOUND",  # Failure via insufficient capabilities.
+    105: "ZYPPER_EXIT_ON_SIGNAL",  # Failure via cancellation i.e. OOM.
+    107: "ZYPPER_EXIT_INF_RPM_SCRIPT_FAILED",  # Should be highlighted as an error.
+}
 
 
 def auto_update(enable=True):
@@ -500,14 +522,21 @@ def pkg_updates_info(max_wait: int = 15) -> typing.List[dict[str:str]]:
     pkg_changelog() (yum based), and its unique dependency of:
     pkg_infos()
     We don't retrieve non 'rockstor' package changelogs.
+    Note: This procedure has no re-try capability as it is run, somewhat excessive,
+    on every page refresh. This should be addressed in the planned front-end re-work.
+    For now, the invocation has a hard-wired delay of a second to avoid locking
+    zypper and blocking 'SYSTEM - Software update' invoking rockstor_pkg_update_check().
     """
     # Proposed output:
-    # [ {'name': 'binutils', available': '2.43-6.1', 'installed': '2.43-5.2', 'description': 'C compiler ...'}, ...]
+    # [ {'name': 'binutils', 'installed': '2.43-5.2', 'available': '2.43-6.1', 'description': 'C compiler ...'}, ...]
+    logger.debug("pkg_updates_info() called")
     updates_info: typing.List[dict[str:str]] = []
+    stdout_value: str | None = None
+    zypp_run = None
     try:
         # rc = 1 when out = "package * is not installed"
         zypp_run = run(
-            ["zypper", "-x", "--non-interactive", "list-updates"],
+            ["zypper", "--xmlout", "list-updates"],
             capture_output=True,
             encoding="utf-8",  # stdout and stderr as string
             universal_newlines=True,
@@ -515,14 +544,25 @@ def pkg_updates_info(max_wait: int = 15) -> typing.List[dict[str:str]]:
             check=True,
         )
     except CalledProcessError as e:
-        # TODO: Catch and ignore ZYPPER_EXIT_INF_REPOS_SKIPPED
-        logger.error(f"Error fetching updates: {e}")
-        return updates_info
+        if e.returncode in zypp_info_codes.keys():  # get stdout on zypper info codes.
+            logger.info(f"list-updates returned {zypp_info_codes[e.returncode]}.")
+            stdout_value = e.stdout
+        elif e.returncode == ZYPPER_EXIT_ZYPP_LOCKED:
+            logger.info(f"Skipped fetching updates, zypper busy.")
+        else:
+            if e.returncode in zypp_err_codes.keys():
+                logger.error(f"list-updates returned {zypp_err_codes[e.returncode]}.")
+            else:
+                logger.error(f"Error fetching updates: {e}")
+            return updates_info
     except TimeoutExpired as e:
         logger.error(f"Consider applying updates to reduce backlog: {e}")
         return updates_info
-    stdout_value = zypp_run.stdout
-    # logger.info(f"PKG_UPDATES_info() stdout={stdout_value}")
+    if not stdout_value:
+        if isinstance(zypp_run, subprocess.CompletedProcess):
+            stdout_value = zypp_run.stdout
+        else:
+            return updates_info
     updates_tree = ElementTree(fromstring(stdout_value))
     updates_root = updates_tree.getroot()
     for update in updates_root.iter("update"):
