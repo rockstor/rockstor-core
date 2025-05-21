@@ -178,6 +178,8 @@ def zypper_repos_list(max_wait: int = 1) -> typing.List[str]:
             check=True,
         )
     except CalledProcessError as e:
+        if e.returncode in zypp_info_codes.keys():
+            logger.info(f"list repos returned {zypp_info_codes[e.returncode]}.")
         if e.returncode != ZYPPER_EXIT_ERR_INVALID_ARGS:
             logger.error(f"{e.stdout}Error fetching repository list: ({e})")
             return []
