@@ -224,13 +224,16 @@ def remove_rockstor_repo(
                 cmd_list,
                 capture_output=False,
                 timeout=max_wait,
-                check=True,  # rc = 7 when zypper locked.
+                check=True,
             )
         except CalledProcessError as e:
+            if e.returncode in zypp_info_codes.keys():
+                logger.info(f"Remove repo returned {zypp_info_codes[e.returncode]}.")
+                return True
             if e.returncode != ZYPPER_EXIT_ZYPP_LOCKED:
                 logger.error(f"Error removing Rockstor-* repositories: {e}")
                 raise CommandException(cmd_list, e.stdout, e.stderr, e.returncode)
-            if attempt < retries - 1:
+            if attempt <= retries:
                 logger.info(f"--- Zypper locked: attempt {attempt +1}, retrying in 1s.")
                 sleep(1)
                 continue  # retry on zypper locked.
