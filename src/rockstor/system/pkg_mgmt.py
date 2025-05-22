@@ -198,27 +198,43 @@ def zypper_repos_list(max_wait: int = 1) -> typing.List[str]:
     return repo_list
 
 
-def remove_rockstor_repo(
-    repo_list: list[str] | None = None, max_wait: int = 1, retries: int = 2
+def rockstor_repo_mgmt(
+    zypp_cmd: str,
+    repo_list: list[str] | None = None,
+    url: str | None = None,
+    max_wait: int = 1,
+    retries: int = 2,
 ) -> bool:
     """
-    Retry wrapper for "zypper removerepo Rockstor-Testing Rockstor-Stable" by default.
+    Retry wrapper for "zypper --xmlout removerepo|addrepo options".
     Retry on - "System management is locked by the application with pid ... (zypper).",
     indicated by ZYPPER_EXIT_ZYPP_LOCKED (return code 7)-
     Uses --xmlout to constrain output as we read only the return code.
     If one or more repo are not found, return code is still. 0.
+    :param zypp_cmd: zypper command: currently "removerepo" or "addrepo".
+    :param url: URL for addrepo use.
     :param repo_list: List of repositories, default to all Rockstor-* repos.
     :param retries: Number of retries to attempt.
     :param max_wait: Max seconds expected for each execution.
-    :return: Bool is zypper return code indicates a success.
+    :return: Bool if zypper return code indicates a change was made.
     """
     if repo_list is None:
         repo_list = ["Rockstor-Testing", "Rockstor-Stable"]
-    cmd_list = [
-        "zypper",
-        "--xmlout",
-        "removerepo",
-    ] + repo_list
+    # Only the fist match case gets executed
+    match zypp_cmd:
+        case "removerepo":
+            cmd_list = ["zypper", "--xmlout", f"{zypp_cmd}"] + repo_list
+        case "addrepo" if len(repo_list) == 1 and url:
+            cmd_list = [
+                "zypper",
+                "--xmlout",
+                f"{zypp_cmd}",
+                "--refresh",
+                f"{url}",
+            ] + repo_list
+        case _:
+            logger.error(f"Unknown zypper command {zypp_cmd} use.")
+            return False
     zypp_run = None
     for attempt in range(retries + 1):  # [0 1 2] for retries = 2
         try:
@@ -230,10 +246,16 @@ def remove_rockstor_repo(
             )
         except CalledProcessError as e:
             if e.returncode in zypp_info_codes.keys():
-                logger.info(f"Remove repo returned {zypp_info_codes[e.returncode]}.")
+                logger.info(f"Zypper returned: {zypp_info_codes[e.returncode]}.")
                 return True
             if e.returncode != ZYPPER_EXIT_ZYPP_LOCKED:
-                logger.error(f"Error removing Rockstor-* repositories: {e}")
+                if zypp_cmd == "addrepo" and e.returncode == 4:
+                    # Assumed cause. Consider capturing output and confirming error:
+                    # <message type="error">Repository named &apos;Rockstor-...&apos;
+                    # already exists. Please use another alias.</message>
+                    logger.info(f"*** {repo_list} exists.")
+                    return False
+                logger.error(f"Error managing Rockstor-* repositories: {e}")
                 raise CommandException(cmd_list, e.stdout, e.stderr, e.returncode)
             if attempt <= retries:
                 logger.info(f"--- Zypper locked: attempt {attempt +1}, retrying in 1s.")
@@ -241,10 +263,10 @@ def remove_rockstor_repo(
                 continue  # retry on zypper locked.
             raise CommandException(cmd_list, e.stdout, e.stderr, e.returncode)
         except TimeoutExpired as e:
-            logger.error(f"Timeout removing repos (attempt {attempt + 1}): {e}")
+            logger.error(f"Timeout managing repos (attempt {attempt + 1}): {e}")
             continue
     if not isinstance(zypp_run, subprocess.CompletedProcess):
-        logger.error("Error removing old repositories.")
+        logger.error("Error managing Rockstor-* repositories.")
         return False
     return True
 
@@ -330,7 +352,9 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
         logger.info("--- Removing all Rockstor-* repositories")
         if os.path.exists(yum_file):
             os.remove(yum_file)
-        remove_rockstor_repo()
+        repos_modified = rockstor_repo_mgmt(zypp_cmd="removerepo")
+        if repos_modified:
+            logger.info("Repo config changed.")
         return None
     repo_alias = "Rockstor-{}".format(subscription.name)
     rock_pub_key_file = "{}conf/ROCKSTOR-GPG-KEY".format(settings.ROOT_DIR)
@@ -356,6 +380,7 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
     logger.debug(f"REPO_URL={repo_url}")
     # Rockstor public key import call takes around 13 ms.
     run_command([RPM, "--import", rock_pub_key_file], log=True)
+    repos_modified: bool = False
     if subscription.name == "Stable":
         # TODO: After 5.6.0-0 Stable this can be moved to after update_zypp_auth_file().
         # Required for now to update password-store on existing Stable systems.
@@ -365,44 +390,34 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
             logger.info("++++ Enabling Stable as not in current repo list")
             if "Rockstor-Testing" in current_repo_list:
                 logger.info("--- Testing enabled - removing repo")
-                remove_rockstor_repo(["Rockstor-Testing"])
+                repos_modified = rockstor_repo_mgmt(
+                    zypp_cmd="removerepo", repo_list=["Rockstor-Testing"]
+                )
             update_zypp_auth_file(subscription.appliance.uuid, subscription.password)
-            # If already added rc=4
-            run_command(
-                [
-                    ZYPPER,
-                    "--non-interactive",
-                    "addrepo",
-                    "--refresh",
-                    f"{repo_url}?credentials={STABLE_CREDENTIALS_FILE}&auth=basic",
-                    repo_alias,
-                ],
-                log=True,
-                throw=False,
+            repos_modified = rockstor_repo_mgmt(
+                zypp_cmd="addrepo",
+                repo_list=[repo_alias],
+                url=f"{repo_url}?credentials={STABLE_CREDENTIALS_FILE}&auth=basic",
             )
         else:
             logger.info("*** Stable repo already enabled.")
+        if repos_modified:
+            logger.info("Repo config changed.")
     elif subscription.name == "Testing":
         if repo_alias not in current_repo_list:
             logger.info("++++ Enabling Testing as not in current repo list")
             if "Rockstor-Stable" in current_repo_list:
                 logger.info("--- Stable enabled - removing repo")
-                remove_rockstor_repo(["Rockstor-Stable"])
-            # If already added rc=4
-            run_command(
-                [
-                    ZYPPER,
-                    "--non-interactive",
-                    "addrepo",
-                    "--refresh",
-                    repo_url,
-                    repo_alias,
-                ],
-                log=True,
-                throw=False,
+                repos_modified = rockstor_repo_mgmt(
+                    zypp_cmd="removerepo", repo_list=["Rockstor-Stable"]
+                )
+            repos_modified = rockstor_repo_mgmt(
+                zypp_cmd="addrepo", repo_list=[repo_alias], url=repo_url
             )
         else:
             logger.info("*** Testing already enabled.")
+        if repos_modified:
+            logger.info("Repo config changed.")
     else:
         logger.info(f"The subscription name ({subscription.name}) is unknown.")
         # Possible 'Edge' release.
