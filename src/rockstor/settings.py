@@ -306,6 +306,11 @@ LOGGING = {
             "level": LOG_LEVEL,
             "propagate": True,
         },
+        "zypper_changelog_lib": {
+            "handlers": ["file"],
+            "level": LOG_LEVEL,
+            "propagate": True,
+        },
     },
 }
 

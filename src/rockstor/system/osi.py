@@ -341,7 +341,7 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
             )
             for key, value in zip(line[::2], line[1::2])
         }
-        logger.debug(f"Scan_disks() using: blk_dev_properties={blk_dev_properties}")
+        # logger.debug(f"Scan_disks() using: blk_dev_properties={blk_dev_properties}")
         # Disk namedtuple from lsblk line dictionary.
         dev: Disk = Disk(**blk_dev_properties)
         # Set up our line / dev dependant variables.
@@ -409,9 +409,9 @@ def scan_disks(min_size: int, test_mode: bool = False) -> list[Disk]:
                 base_dev_pattern = dname[5:] + pattern
                 # str[5:] strips "/dev/" from our full path names.
                 if re.fullmatch(base_dev_pattern, dev.name[5:], re.ASCII) is not None:
-                    logger.debug(
-                        f"({dname}) is parent of partition ({dev.name}): backporting info to parent."
-                    )
+                    # logger.debug(
+                    #     f"({dname}) is parent of partition ({dev.name}): backporting info to parent."
+                    # )
                     # Our partition device name has a base/parent device entry of interest saved.
                     # I.e. we have scanned and saved sdb previously, but we are now looking at sdb3.
                     # Update our base dev's entry in dnames accordingly. Informs DB Disk.role related mechanisms.

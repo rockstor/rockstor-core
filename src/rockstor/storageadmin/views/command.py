@@ -247,7 +247,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
 
         if command == "update-check":
             try:
-                subo = None
+                subo: None | UpdateSubscription = None
                 try:
                     subo = UpdateSubscription.objects.get(
                         name="Stable", status="active"
@@ -286,7 +286,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
 
         if command == "current-version":
             try:
-                return Response(current_version())
+                return Response(current_version()[0])
             except Exception as e:
                 e_msg = (
                     "Unable to check current version due to this exception: ({})."

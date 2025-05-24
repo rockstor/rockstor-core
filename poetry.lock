@@ -1173,6 +1173,20 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "rpm"
+version = "0.4.0"
+description = "Shim RPM module for use in virtualenvs."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "rpm-0.4.0-py3-none-any.whl", hash = "sha256:0ef697cb5fb73bf9300a13d423529d7ec215239bf95c5ecb145e6610645f6067"},
+    {file = "rpm-0.4.0.tar.gz", hash = "sha256:79adbefa82318e2625d6e4fa16666cf88543498a1f2c10dc3879165d1dc3ecee"},
+]
+
+[package.extras]
+testing = ["tox"]
+
+[[package]]
 name = "secretstorage"
 version = "3.3.3"
 description = "Python bindings to FreeDesktop.org Secret Service API"
@@ -1436,7 +1450,23 @@ docs = ["Sphinx", "furo", "repoze.sphinx.autointerface"]
 test = ["coverage[toml]", "zope.event", "zope.testing"]
 testing = ["coverage[toml]", "zope.event", "zope.testing"]
 
+[[package]]
+name = "zypper-changelog-lib"
+version = "0.7.9"
+description = "Changelogs for installable pending updates, or available/uninstalled packages"
+optional = false
+python-versions = "<4.0,>=3.11"
+files = [
+    {file = "zypper_changelog_lib-0.7.9-py3-none-any.whl", hash = "sha256:f5784eb1e93bdb9a663e9d4156f0564474c32f39b44719e0fcee591877719bce"},
+    {file = "zypper_changelog_lib-0.7.9.tar.gz", hash = "sha256:f1a601a7607c190241d741db0c21ec9857b937c92786068c333c352aacd53535"},
+]
+
+[package.dependencies]
+keyring-pass = "*"
+requests = "*"
+rpm = "*"
+
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "f4f0388bedabc8496d0067d679680579ab287539e12a65ff85b2fec6a63bbf35"
+content-hash = "023bf7a6e3812880ed0a031dd18ecc1612a65bc8f34e76910f264be77f2d3198"

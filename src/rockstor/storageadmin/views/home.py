@@ -64,16 +64,12 @@ def home(request):
         "page_size": settings.REST_FRAMEWORK["PAGE_SIZE"],
         "update_channel": update_channel,
     }
-    logger.debug("context={}".format(context))
     if request.user.is_authenticated:
-        logger.debug("ABOUT TO RENDER INDEX")
         return render(request, "index.html", context)
     else:
         if setup.setup_user:
-            logger.debug("ABOUT TO RENDER LOGIN")
             return render(request, "login.html", context)
         else:
-            logger.debug("ABOUT TO RENDER SETUP")
             return render(request, "setup.html", context)
 
 
