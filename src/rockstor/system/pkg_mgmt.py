@@ -31,7 +31,6 @@ from system.services import systemctl
 import shutil
 import time
 import requests
-from django.conf import settings
 import distro
 import logging
 import keyring
@@ -357,7 +356,6 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
             logger.info("Repo config changed.")
         return None
     repo_alias = "Rockstor-{}".format(subscription.name)
-    rock_pub_key_file = "{}conf/ROCKSTOR-GPG-KEY".format(settings.ROOT_DIR)
     # Historically our base subscription url denotes our CentOS rpm repo.
     subscription_distro_url = subscription.url
     distro_id = distro.id()
@@ -378,8 +376,6 @@ def switch_repo(subscription: UpdateSubscription, enable_repo: bool = True):
     else:
         repo_url = f"http://{subscription_distro_url}"
     logger.debug(f"REPO_URL={repo_url}")
-    # Rockstor public key import call takes around 13 ms.
-    run_command([RPM, "--import", rock_pub_key_file], log=True)
     repos_modified: bool = False
     if subscription.name == "Stable":
         # TODO: After 5.6.0-0 Stable this can be moved to after update_zypp_auth_file().
