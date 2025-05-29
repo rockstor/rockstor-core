@@ -45,7 +45,9 @@ class UserTests(APITestMixin):
     # multi_db = True
     fixtures = ["test_api.json", "test_user.json"]
     BASE_URL = "/api/users"
-    valid_pubkey = "ssh-dss AAAAB3NzaC1kc3MAAACBAIo+KNTMOS6H9slesrwgSsqp+hxJUDxTT3uy5/LLBDPHRxUz+OR5jcbk/CvgbZsDE3Q7iAIlN8w2bM/L/CG4AwT90f4vFf783QJK9gRxqZmgrPb7Ey88EIeb7UN3+nhc754IEl28y82Rqnq/gtQveSB3aQIWdEIdw17ToLsN5dDPAAAAFQDQ+005d8pBpJSuwH5T7n/xhI6s5wAAAIBJP0okYMbFrYWBfPJvi+WsLHw1tqRerX7bteVmN4IcIlDDtSTaQV7DOAl5B+iMPciRGaixtParUPk8oTew/MY1rECfIBs5wt+3hns4XDcsrXDTNyFDx9qYDtI3Fxt0+2f8k58Ym622Pqq1TZ09IBX7hEZH2EB0dUvxsUOf/4cUNAAAAIEAh3IpPoHWodVQpCalZ0AJXub9hJtOWWke4v4l8JL5w5hNlJwUmAPGuJHZq5GC511hg/7r9PqOk3KnSVp9Jsya6DrtJAxr/8JjAd0fqQjDsWXQRLONgcMfH24ciuFLyIWgDprTWmEWekyFF68vEwd4Jpnd4CiDbZjxc44xBnlbPEI= suman@Learnix"  # noqa E501
+    # Slowroll `ssh-keygen`:
+    # openssh-common (Version-Release Buildtime): 10.0p2-2.0.2.1.sr20250501 May 13 2025
+    valid_pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKKFqyt41xjfic1gPx49ByHwDYrlPTD+zI4LWgn7emyv test@rslowroll"
 
     @classmethod
     def setUpClass(cls):
