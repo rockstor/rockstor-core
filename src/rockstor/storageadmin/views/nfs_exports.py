@@ -208,6 +208,12 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
             cur_exports = list(NFSExport.objects.all())
             for e in NFSExport.objects.filter(export_group=eg):
                 export_pt = "%s%s" % (settings.NFS_EXPORT_ROOT, e.share.name)
+                for snaps in NFSExport.objects.all():    # #2995 Iterate through current mounts to find snaps and delete them before deleting base share
+                    if snaps.mount.count(export_pt+"/."):
+                        logger.info("Deleting snapshot export {} ".format(snaps.mount))
+                        nfs4_mount_teardown("%s" % snaps.mount)
+                        cur_exports.remove(snaps)
+                        snaps.delete()
                 if e.export_group.nohide:
                     snap_name = e.mount.split(e.share.name + "_")[-1]
                     export_pt = "%s/%s" % (export_pt, snap_name)
