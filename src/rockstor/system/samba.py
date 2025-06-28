@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -23,8 +22,8 @@ from tempfile import mkstemp
 
 from django.conf import settings
 
-from osi import run_command
-from services import service_status, define_avahi_service
+from system.osi import run_command
+from system.services import service_status, define_avahi_service
 from storageadmin.models import SambaCustomConfig
 
 TESTPARM = "/usr/bin/testparm"
@@ -49,14 +48,15 @@ def test_parm(config="/etc/samba/smb.conf"):
 
 
 def rockstor_smb_config(fo, exports):
-    mnt_helper = os.path.join(settings.ROOT_DIR, ".venv/bin/mnt-share")
+    mnt_helper = "poetry run mnt-share"
     fo.write("{}\n".format(RS_SHARES_HEADER))
     for e in exports:
         admin_users = ""
         for au in e.admin_users.all():
             admin_users = "{}{} ".format(admin_users, au.username)
         fo.write("[{}]\n".format(e.share.name))
-        fo.write('    root preexec = "{} {}"\n'.format(mnt_helper, e.share.name))
+        # Requires `poetry run` in ROOT_DIR to gain .env defined environment.
+        fo.write(f"    root preexec = sh -c \"cd {settings.ROOT_DIR} && {mnt_helper} {e.share.name}\"\n")
         fo.write("    root preexec close = yes\n")
         fo.write("    comment = {}\n".format(e.comment.encode("utf-8")))
         fo.write("    path = {}\n".format(e.path))
@@ -77,7 +77,7 @@ def rockstor_smb_config(fo, exports):
             fo.write("    veto files = /.{}*/\n".format(e.snapshot_prefix))
         elif e.time_machine:
             fo.write("    vfs objects = catia fruit streams_xattr\n")
-            fo.write("    fruit:timemachine = yes\n")
+            fo.write("    fruit:time machine = yes\n")
             fo.write("    fruit:metadata = stream\n")
             fo.write("    fruit:veto_appledouble = no\n")
             fo.write("    fruit:posix_rename = no\n")
@@ -129,7 +129,7 @@ def update_global_config(smb_config=None, ad_config=None):
             "printcap name": "/dev/null",
             "map to guest": "Bad User",
         }
-        for key, value in smb_default_options.iteritems():
+        for key, value in iter(smb_default_options.items()):
             if key not in smb_config:
                 tfo.write("    {} = {}\n".format(key, value))
 

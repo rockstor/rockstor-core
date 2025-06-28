@@ -3,15 +3,14 @@
 <head>
     <!--
     /**
-    * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
-    * This file is part of RockStor.
+    * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
     *
-    * RockStor is free software; you can redistribute it and/or modify
+    * Rockstor is free software; you can redistribute it and/or modify
     * it under the terms of the GNU General Public License as published
     * by the Free Software Foundation; either version 2 of the License,
     * or (at your option) any later version.
     *
-    * RockStor is distributed in the hope that it will be useful, but
+    * Rockstor is distributed in the hope that it will be useful, but
     * WITHOUT ANY WARRANTY; without even the implied warranty of
     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
     * General Public License for more details.
@@ -24,7 +23,7 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RockStor: Store Smartly {% block title %}{% endblock %}</title>
+    <title>Rockstor: Store Smartly {% block title %}{% endblock %}</title>
     <link href="/static/storageadmin/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/storageadmin/css/style.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/storageadmin/img/favicon.ico">
@@ -32,25 +31,20 @@
     <link href="/css/bootstrap-responsive.css" rel="stylesheet">
     -->
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
     <script>
         /*
          *
          * @licstart  The following is the entire license notice for the
          * JavaScript code in this page.
          *
-         * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-         * This file is part of RockStor.
+         * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
          *
-         * RockStor is free software; you can redistribute it and/or modify
+         * Rockstor is free software; you can redistribute it and/or modify
          * it under the terms of the GNU General Public License as published
          * by the Free Software Foundation; either version 2 of the License,
          * or (at your option) any later version.
          *
-         * RockStor is distributed in the hope that it will be useful, but
+         * Rockstor is distributed in the hope that it will be useful, but
          * WITHOUT ANY WARRANTY; without even the implied warranty of
          * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
          * General Public License for more details.
@@ -150,8 +144,8 @@
 <div class="simple-overlay" id="pincard-reset-form">
     <div style="padding: 20px">
         <h3>Welcome to Pincard Manager password reset</h3><br/>
-        <h4>From this form you're able to reset passwords for every user with Pincard enabled.<br>
-            Password reset for root user (user with UID equal to 0) requires email notifications too (One Time Password sent via mail)
+        <h4>Password reset any user with access to their current Pincard.<br>
+            Note that the 'root' user (UID 0) requires an additional password sent via the email alerts system.
         </h4><br/><br/>
 		<form class="form-inline">
 			<div class="form-group">

@@ -1,29 +1,58 @@
 """
-Copyright (c) 2012-2019 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
-RockStor is free software; you can redistribute it and/or modify
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
-RockStor is distributed in the hope that it will be useful, but
+
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
+
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import unittest
-from mock import patch
+from unittest.mock import patch, mock_open, call
 
 from system.exceptions import CommandException
-from system.network import get_dev_config, get_con_config
+from system.network import (
+    get_dev_config,
+    get_con_config,
+    enable_ip_forwarding,
+    SYSCTL_CONFD_PATH,
+    SYSCTL,
+    disable_ip_forwarding,
+)
+
+
+class MockDirEntry:
+    """Create a fake DirEntry object
+    A DirEntry object is what's os.scandir returns. To properly mock os.scandir,
+    we thus need to re-create what it would return. We currently only need some
+    of the attributes that a real DirEntry has, so let's include only these:
+    - name
+    - path
+    - is_file: bool
+    """
+
+    def __init__(self, name, path, is_file):
+        self.name = name
+        self.path = path
+        self._is_file = is_file
+
+    def is_file(self):
+        return self._is_file
 
 
 class SystemNetworkTests(unittest.TestCase):
     """
     The tests in this suite can be run via the following command:
-    cd <root dir of rockstor ie /opt/rockstor>
-    ./bin/test --settings=test-settings -v 3 -p test_system_network*
+    cd /opt/rockstor/src/rockstor
+    export DJANGO_SETTINGS_MODULE=settings
+    poetry run django-admin test -p test_system_network.py -v 2
     """
 
     def setUp(self):
@@ -480,13 +509,13 @@ class SystemNetworkTests(unittest.TestCase):
                 "7ffa9c37-4559-4608-80de-ea77a27876cd": {
                     "bridge": {
                         "aux_address": None,
-                        "subnet": u"172.17.0.0/16",
+                        "subnet": "172.17.0.0/16",
                         "internal": False,
-                        "host_binding": u"0.0.0.0",
+                        "host_binding": "0.0.0.0",
                         "docker_name": "docker0",
                         "icc": True,
                         "ip_masquerade": False,
-                        "dgateway": u"172.17.0.1",
+                        "dgateway": "172.17.0.1",
                         "ip_range": None,
                     },
                     "ctype": "bridge",
@@ -650,13 +679,13 @@ class SystemNetworkTests(unittest.TestCase):
                 "c344cf82-783e-420e-9d02-30980e058ae5": {
                     "bridge": {
                         "aux_address": None,
-                        "subnet": u"172.20.0.0/16",
+                        "subnet": "172.20.0.0/16",
                         "internal": False,
                         "host_binding": None,
                         "docker_name": "rocknet01",
                         "icc": True,
                         "ip_masquerade": False,
-                        "dgateway": u"172.20.0.1",
+                        "dgateway": "172.20.0.1",
                         "ip_range": None,
                     },
                     "ctype": "bridge",
@@ -732,3 +761,65 @@ class SystemNetworkTests(unittest.TestCase):
         )
         with self.assertRaises(CommandException):
             get_con_config(con_name)
+
+    def test_enable_ip_forwarding(self):
+        """enable_ip_forwarding() calls write with the correct contents
+        Enable_ip_forwarding should write to /etc/sysctl.d/99-tailscale.conf
+        with the following lines
+          - net.ipv4.ip_forward = 1
+          - net.ipv6.conf.all.forwarding = 1
+        """
+        priority = 99
+        name = "tailscale"
+        file_path = f"{SYSCTL_CONFD_PATH}{priority}-{name}.conf"
+        m = mock_open()
+        with patch("system.network.open", m):
+            enable_ip_forwarding(name=name, priority=priority)
+
+            # Test that the file was opened in 'w' mode
+            m.assert_called_once_with(file_path, "w")
+
+            # Test that 'write' was called with the correct content
+            calls = [
+                call("net.ipv4.ip_forward = 1\n"),
+                call("net.ipv6.conf.all.forwarding = 1\n"),
+            ]
+            m().write.assert_has_calls(calls, any_order=False)
+
+        # Test that run_command was called as expected
+        self.mock_run_command.assert_called_once_with(
+            [SYSCTL, "-p", file_path], log=True
+        )
+
+    def test_disable_ip_forwarding(self):
+        """test proper call of os.remove() and final sysctl command"""
+        # mock os.scandir()
+        self.patch_os_scandir = patch("system.network.os.scandir")
+        self.mock_os_scandir = self.patch_os_scandir.start()
+        self.mock_os_scandir.return_value.__enter__.return_value = [
+            MockDirEntry(
+                name="99-tailscale.conf",
+                path="/etc/sysctl.d/99-tailscale.conf",
+                is_file=True,
+            ),
+            MockDirEntry(
+                name="70-yast.conf", path="/etc/sysctl.d/70-yast.conf", is_file=True
+            ),
+        ]
+        # mock os.remove()
+        self.patch_os_remove = patch("system.network.os.remove")
+        self.mock_os_remove = self.patch_os_remove.start()
+        # mock run_command()
+        self.mock_run_command.return_value = [""], [""], 0
+        disable_ip_forwarding(name="tailscale")
+        # test os.remove() was called
+        self.mock_os_remove.assert_called_once_with("/etc/sysctl.d/99-tailscale.conf")
+        cmd = [
+            SYSCTL,
+            "-w",
+            "net.ipv4.ip_forward=0",
+            "-w",
+            "net.ipv6.conf.all.forwarding=0",
+        ]
+        # test run_command() was called
+        self.mock_run_command.assert_called_once_with(cmd, log=True)

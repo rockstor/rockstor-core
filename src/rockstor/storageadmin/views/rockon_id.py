@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -38,7 +37,7 @@ from storageadmin.models import (
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
-from rockon_helpers import start, stop, install, uninstall, update
+from storageadmin.views.rockon_helpers import start, stop, install, uninstall, update
 from system.services import superctl
 from system.docker import docker_status, dnet_create, dnet_disconnect, dnet_remove
 from storageadmin.views.network import NetworkMixin
@@ -73,7 +72,6 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
     @transaction.atomic
     def post(self, request, rid, command):
         with self._handle_exception(request):
-
             if not docker_status():
                 e_msg = "Docker service is not running. Start it and try again."
                 handle_exception(Exception(e_msg), request)
@@ -107,21 +105,29 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                 dev_map = request.data.get("devices", {})
                 cc_map = request.data.get("cc", {})
                 env_map = request.data.get("environment", {})
+                logger.debug(
+                    f"install request with share_map={share_map}, port_map={port_map}, dev_map={dev_map}, cc_map={cc_map}, env_map={env_map}"
+                )
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
-                    for sname in share_map.keys():
-                        dest_dir = share_map[sname]
-                        if not Share.objects.filter(name=sname).exists():
-                            e_msg = "Invalid share ({}).".format(sname)
-                            handle_exception(Exception(e_msg), request)
-                        if DVolume.objects.filter(
-                            container=co, dest_dir=dest_dir
-                        ).exists():
-                            so = Share.objects.get(name=sname)
-                            vo = DVolume.objects.get(container=co, dest_dir=dest_dir)
-                            vo.share = so
-                            vo.save()
-                    # {'host_port' : 'container_port', ... }
+                    co_id = str(co.id)
+                    # share_map={'2': {'share-name1': '/etc/bareos'}, '3': {'share-name2': '/etc/bareos'}
+                    if co_id in share_map:
+                        for sname in share_map[co_id].keys():
+                            dest_dir = share_map[co_id][sname]
+                            if not Share.objects.filter(name=sname).exists():
+                                e_msg = "Invalid share ({}).".format(sname)
+                                handle_exception(Exception(e_msg), request)
+                            if DVolume.objects.filter(
+                                container=co, dest_dir=dest_dir
+                            ).exists():
+                                so = Share.objects.get(name=sname)
+                                vo = DVolume.objects.get(
+                                    container=co, dest_dir=dest_dir
+                                )
+                                vo.share = so
+                                vo.save()
+                    # port_map={'host_port': 'container_port', ... }
                     for p in port_map.keys():
                         if DPort.objects.filter(hostp=p).exists():
                             dup_po = DPort.objects.get(hostp=p)
@@ -175,15 +181,17 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                         cco = DCustomConfig.objects.get(rockon=rockon, key=c)
                         cco.val = cc_map[c]
                         cco.save()
-                    for e in env_map.keys():
-                        if not DContainerEnv.objects.filter(
-                            container=co, key=e
-                        ).exists():
-                            e_msg = ("Invalid environment variable ({}).").format(e)
-                            handle_exception(Exception(e_msg), request)
-                        ceo = DContainerEnv.objects.get(container=co, key=e)
-                        ceo.val = env_map[e]
-                        ceo.save()
+                    # env_map={'85': {'PASSWORD': '***'}, '86': {'DB_ADMIN_PASSWORD': '+++', ...}, ...}
+                    if co_id in env_map:
+                        for e in env_map[co_id].keys():
+                            if not DContainerEnv.objects.filter(
+                                container=co, key=e
+                            ).exists():
+                                e_msg = ("Invalid environment variable ({}).").format(e)
+                                handle_exception(Exception(e_msg), request)
+                            ceo = DContainerEnv.objects.get(container=co, key=e)
+                            ceo.val = env_map[co_id][e]
+                            ceo.save()
                 task_result_handle = install(rockon.id)
                 rockon.taskid = task_result_handle.id
                 rockon.state = "pending_install"

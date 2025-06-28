@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -41,8 +40,7 @@ from system.smart import (
     test_logs,
     run_test,
 )
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 
 import logging
 
@@ -77,7 +75,7 @@ class DiskSMARTDetailView(rfc.GenericView):
         e_summary, e_lines = error_logs(disk.name, disk.smart_options)
         smartid = info(disk.name, disk.smart_options)
         test_d, log_lines = test_logs(disk.name, disk.smart_options)
-        ts = datetime.utcnow().replace(tzinfo=utc)
+        ts = datetime.utcnow().replace(tzinfo=timezone.utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()
         for k in sorted(attributes.keys(), reverse=True):

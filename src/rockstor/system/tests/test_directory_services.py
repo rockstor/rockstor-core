@@ -1,19 +1,21 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
-RockStor is free software; you can redistribute it and/or modify
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
-RockStor is distributed in the hope that it will be useful, but
+
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
+
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import unittest
-from mock import patch
+from unittest.mock import patch
 
 from system.exceptions import CommandException
 from system.directory_services import domain_workgroup
@@ -22,8 +24,9 @@ from system.directory_services import domain_workgroup
 class SystemDirectoryServicesTests(unittest.TestCase):
     """
     The tests in this suite can be run via the following command:
-    cd <root dir of rockstor ie /opt/rockstor>
-    ./bin/test --settings=test-settings -v 3 -p test_directory_services*
+    cd /opt/rockstor/src/rockstor
+    export DJANGO_SETTINGS_MODULE=settings
+    poetry run django-admin test -p test_directory_services.py -v 2
     """
 
     def setUp(self):
@@ -50,8 +53,8 @@ class SystemDirectoryServicesTests(unittest.TestCase):
             returned,
             expected,
             msg="Un-expected domain_workgroup() result:\n "
-            "returned = ({}).\n "
-            "expected = ({}).".format(returned, expected),
+            f"returned = {returned}.\n "
+            f"expected = {expected}.",
         )
 
     def test_domain_workgroup_invalid(self):
@@ -62,7 +65,7 @@ class SystemDirectoryServicesTests(unittest.TestCase):
         domain = "bogusad.bogusdomain.com"
         self.mock_run_command.side_effect = CommandException(
             err=["Didn't find the cldap server!", ""],
-            cmd=["/usr/bin/net", "ads", "workgroup", "-S", domain],
+            cmd=["/usr/bin/net", "ads", "workgroup", f"--realm={domain.upper()}"],
             out=[""],
             rc=255,
         )

@@ -1,12 +1,33 @@
 [Unit]
 Description=Tasks required prior to starting Rockstor
+After=rockstor-build.service
 After=postgresql.service
+After=NetworkManager.service
+After=chrony-wait.service
+Requires=rockstor-build.service
 Requires=postgresql.service
+Requires=NetworkManager.service
+Wants=chrony-wait.service
 
 [Service]
-Environment="DJANGO_SETTINGS_MODULE=settings"
 WorkingDirectory=/opt/rockstor
-ExecStart=/root/.local/bin/poetry run initrock
+EnvironmentFile=/opt/rockstor/.env
+# Avoid `pass` stdout leaking generated passwords (N.B. 2>&1 >/dev/null failed).
+StandardOutput=null
+# Idempotent: failure tolerated for pgp as key likely already exists (rc 2).
+ExecStartPre=-/usr/bin/gpg --quick-generate-key --batch --passphrase '' rockstor@localhost
+# Idempotent.
+ExecStartPre=/usr/bin/pass init rockstor@localhost
+# Rotate Django SECRET_KEY: failure tolerated in rename in case of no prior SECRET_KEY.
+ExecStartPre=-/usr/bin/pass rename --force python-keyring/rockstor/SECRET_KEY python-keyring/rockstor/SECRET_KEY_FALLBACK
+ExecStartPre=/usr/bin/pass generate --no-symbols --force python-keyring/rockstor/SECRET_KEY 100
+# RPM package and repository public GPG/PGP key refresh - ensure rpmkeys is current.
+# Failure tolerated as this key may be defunct or we may be on first boot.
+ExecStartPre=-/usr/bin/rpm --erase gpg-pubkey-5f043187
+# Failure tolerated as non catastrophic: pertains to Rockstor repos only.
+ExecStartPre=-/usr/bin/rpm --import /opt/rockstor/conf/ROCKSTOR-GPG-KEY
+# Python script to establish Django DB etc.
+ExecStart=/usr/local/bin/poetry run initrock
 Type=oneshot
 RemainAfterExit=yes
 

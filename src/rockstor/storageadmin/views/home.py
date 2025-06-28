@@ -1,19 +1,18 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.shortcuts import render
@@ -27,6 +26,7 @@ from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 def login_page(request):
     return render(request, "login.html")
@@ -64,16 +64,12 @@ def home(request):
         "page_size": settings.REST_FRAMEWORK["PAGE_SIZE"],
         "update_channel": update_channel,
     }
-    logger.debug("context={}".format(context))
-    if request.user.is_authenticated():
-        logger.debug("ABOUT TO RENDER INDEX")
+    if request.user.is_authenticated:
         return render(request, "index.html", context)
     else:
         if setup.setup_user:
-            logger.debug("ABOUT TO RENDER LOGIN")
             return render(request, "login.html", context)
         else:
-            logger.debug("ABOUT TO RENDER SETUP")
             return render(request, "setup.html", context)
 
 

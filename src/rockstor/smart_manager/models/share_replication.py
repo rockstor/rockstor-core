@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -48,7 +47,7 @@ class ReplicaTrail(models.Model):
     3. snapshot_created -> send_pending -> send_failed (error)
     """
 
-    replica = models.ForeignKey(Replica)
+    replica = models.ForeignKey(Replica, on_delete=models.CASCADE)
     snap_name = models.CharField(max_length=1024)
     kb_sent = models.BigIntegerField(default=0)
     snapshot_created = models.DateTimeField(null=True)
@@ -92,7 +91,7 @@ class ReceiveTrail(models.Model):
     3. snapshot_created -> send_pending -> send_failed (error)
     """
 
-    rshare = models.ForeignKey(ReplicaShare)
+    rshare = models.ForeignKey(ReplicaShare, on_delete=models.CASCADE)
     snap_name = models.CharField(max_length=1024)
     kb_received = models.BigIntegerField(default=0)
     receive_pending = models.DateTimeField(null=True)

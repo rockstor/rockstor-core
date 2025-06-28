@@ -1,31 +1,33 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
 import logging
+import os
 import re
 
-from .exceptions import CommandException
-from .osi import run_command, to_boolean
-from .docker import dnets, docker_status, dnet_inspect
+from system.docker import dnets, docker_status, dnet_inspect
+from system.exceptions import CommandException
+from system.osi import run_command, to_boolean
 
 NMCLI = "/usr/bin/nmcli"
 DEFAULT_MTU = 1500
+SYSCTL = "/sbin/sysctl"
+SYSCTL_CONFD_PATH = "/etc/sysctl.d/"
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +53,7 @@ def get_dev_list():
 def get_dev_config(dev_list):
     """
     Takes a list of connection devices and returns a dictionary with
-    each device's config as seens by Network Manager
+    each device's config as seen by Network Manager
     :param dev_list: list returned by get_dev_list()
     :return: dictionary
     """
@@ -97,14 +99,23 @@ def get_con_list():
     Returns a list of connections as seen by Network Manager.
     :return: list
     """
-    o, e, rc = run_command([NMCLI, "-t", "-f", "uuid", "c", "show",])
+    o, e, rc = run_command(
+        [
+            NMCLI,
+            "-t",
+            "-f",
+            "uuid",
+            "c",
+            "show",
+        ]
+    )
     return o
 
 
 def get_con_config(con_list):
     """
     Takes a list of connections and returns a dictionary with
-    each connection's config as seens by Network Manager
+    each connection's config as seen by Network Manager
     :param con_list: list returned by get_con_list()
     :return: dictionary
     """
@@ -118,7 +129,7 @@ def get_con_config(con_list):
 
     def parse_aux_addresses(dtmap):
         """
-        Parses auxilliary addresses of a docker network and
+        Parses auxiliary addresses of a docker network and
         returns a flat list.
         :param dtmap:
         :return:
@@ -147,7 +158,14 @@ def get_con_config(con_list):
             "ipv6_dns_search": None,
         }
         try:
-            o, e, rc = run_command([NMCLI, "c", "show", uuid,])
+            o, e, rc = run_command(
+                [
+                    NMCLI,
+                    "c",
+                    "show",
+                    uuid,
+                ]
+            )
         except CommandException as e:
             # in case the connection disappears
             if e.rc == 10:
@@ -433,3 +451,54 @@ def new_bond_connection(
     new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains)
     new_member_helper(name, members, "bond-slave")
     reload_connection(name)
+
+
+def enable_ip_forwarding(name: str, priority: int):
+    """Enable IP forwarding
+    Write a sysctl.d conf file and load it into sysctl configuration
+
+    :type name: name of the conf file(s) to create
+    :param priority: priority of the conf file(s) to create
+    """
+    out_fn = f"{SYSCTL_CONFD_PATH}{priority}-{name}.conf"
+    logger.debug(f"Write sysctl.d conf file to enable IP forwarding: {out_fn}")
+    try:
+        with open(out_fn, "w") as f:
+            f.write("net.ipv4.ip_forward = 1\n")
+            f.write("net.ipv6.conf.all.forwarding = 1\n")
+    except IOError as e:
+        logger.exception(e)
+        e_msg = (
+            f"The sysctl configuration file couldn't be written to disk at {out_fn}."
+        )
+        raise IOError(e_msg)
+    # Load into sysctl configuration
+    cmd = [
+        SYSCTL,
+        "-p",
+        f"{out_fn}",
+    ]
+    return run_command(cmd, log=True)
+
+
+def disable_ip_forwarding(name: str):
+    """Disable IP forwarding
+    Find and delete the conf file with name matching the related service
+    and manually set IP forwarding to 0 (as config reload is not enough).
+    See https://github.com/rockstor/rockstor-core/issues/2679#issuecomment-1751421374
+    """
+    # Logic taken from https://docs.python.org/3.9/library/os.html#os.scandir
+    with os.scandir(SYSCTL_CONFD_PATH) as it:
+        for entry in it:
+            if entry.name.endswith(f"{name}.conf") and entry.is_file():
+                logger.debug(f"Delete {entry.path}")
+                os.remove(entry.path)
+    # Manually disable IP forwarding
+    cmd = [
+        SYSCTL,
+        "-w",
+        "net.ipv4.ip_forward=0",
+        "-w",
+        "net.ipv6.conf.all.forwarding=0",
+    ]
+    return run_command(cmd, log=True)

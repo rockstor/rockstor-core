@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -33,11 +32,12 @@ from system.osi import (
 )
 from system.exceptions import CommandException
 from system.constants import MOUNT, UMOUNT, RMDIR, DEFAULT_MNT_DIR
-from pool_scrub import PoolScrub
+from fs.pool_scrub import PoolScrub
 from huey.contrib.djhuey import task
 from django.conf import settings
 import logging
 from datetime import datetime
+from packaging.version import Version, InvalidVersion
 
 """
 system level helper methods to interact with the btrfs filesystem
@@ -78,8 +78,14 @@ ROOT_SUBVOL_EXCLUDE = [
     "@/.snapshots",
     ".snapshots",
 ]
-# Note in the above we have a non symmetrical exclusions entry of '@/.snapshots
+# Note in the above we have a non-symmetrical exclusions entry of '@/.snapshots
 # this is to help distinguish our .snapshots from snapper's rollback subvol.
+
+# Create subvolume blacklist to avoid name clash with default ROOT pool.
+# Used in addition to ROOT_SUBVOL_EXCLUDE. From 5.0.9-0 we no longer auto-import
+# the system (ROOT) pool.
+CREATE_SUBVOL_EXCLUDE = ["home", "@/home"]
+
 # System-wide subvolume exclude list.
 SUBVOL_EXCLUDE = [".beeshome", "@/.beeshome"]
 
@@ -1175,7 +1181,7 @@ def remove_share(pool, share_name, pqgroup, force=False):
     # TODO: Consider also using the following command to allow delete of the
     # initial (anomalous) temp replication snap as share; but this also blindly
     # circumvents ro 'protection' for any other share!
-    # set_property(subvol_mnt_pt, 'ro', 'false', mount=False)
+    # set_property(subvol_mnt_pt, 'ro', 'false', mount=False, force=True)
     toggle_path_rw(subvol_mnt_pt, rw=True)
     if force:
         o, e, rc = run_command([BTRFS, "subvolume", "list", "-o", subvol_mnt_pt])
@@ -1496,14 +1502,19 @@ def qgroup_destroy(qid, mnt_pt):
     return False
 
 
-def qgroup_is_assigned(qid, pqid, mnt_pt):
-    # Returns true if the given qgroup qid is already assigned to pqid for the
-    # path(mnt_pt)
+def qgroup_is_assigned(qid: str, pqid: str, mnt_pt: str) -> bool:
+    """
+    Returns true if quota group qid is assigned to parent quota group pqid,
+    for the Pool mount point mnt_pt. Parses "BTRFS qgroup show -pc mnt_pt"
+    @param qid: quota group id, i.e. "0/268"
+    @param pqid: parent quota group id, i.e. "2015/2"
+    @param mnt_pt: Mount point on Pool of interest
+    @return: qid is assigned to pqid for given pool
+    """
     cmd = [BTRFS, "qgroup", "show", "-pc", mnt_pt]
     try:
         o, e, rc = run_command(cmd, log=False)
     except CommandException as e:
-        # we may have quotas disabled so catch and deal.
         emsg = "ERROR: can't list qgroups: quotas not enabled"
         if e.err[0] == emsg:
             # No need to scan output as nothing to see with quotas disabled.
@@ -1512,41 +1523,15 @@ def qgroup_is_assigned(qid, pqid, mnt_pt):
             return True
         # otherwise we raise an exception as normal
         raise e
-    for l in o:
-        fields = l.split()
-        if (
-            len(fields) > 3
-            and fields[0] == qid
-            and
-            # Account for potential parent-child column inversion by
-            # checking both parent & child columns for parent qgroup match.
-            # Fixed upstream but observed in distro released btrfs-progs:
-            # see: https://github.com/kdave/btrfs-progs/issues/129
-            # Acknowledged correct:
-            # [0]               [1]         [2]     [3]     [4]
-            # qgroupid         rfer         excl parent  child
-            # 0/340        16.00KiB     16.00KiB 2015/2  ---
-            # 2015/2       16.00KiB     16.00KiB ---     0/340
-            # ie 2015/2 has a child of 0/340
-            #
-            # Acknowledged incorrect (observed in distro code):
-            # [0]               [1]         [2]     [3]     [4]
-            # qgroupid         rfer         excl parent  child
-            # 0/298       540.00KiB     32.00KiB ---     2015/1
-            # 2015/1      540.00KiB     32.00KiB 0/298   ---
-            # prior working comparison:
-            # fields[3] == pqid):
-            # TODO: enhance to accommodate for multiple listings via:
-            # pqid in fields[3].split(',') or the like.
-            # [0]               [1]         [2]     [3]     [4]
-            # qgroupid         rfer         excl parent  child
-            # 0/258        16.00KiB     16.00KiB 2015/1,2015/5 ---
-            # 0/311        16.00KiB     16.00KiB 2015/1        ---
-            # 0/313        16.00KiB     16.00KiB 2015/1        ---
-            # 2015/1       48.00KiB     48.00KiB ---     0/258,0/311,0/313
-            # ie 2015/1 has 3 children of 0/258,0/311,0/313
-            (fields[3] == pqid or fields[4] == pqid)
-        ):
+    #   [0]       [1]       [2]       [3]   [4]   [5]
+    # Qgroupid Referenced Exclusive Parent Child Path
+    for line in o:
+        fields = line.split()
+        if len(fields) <= 3:
+            continue
+        qgroupid: str = fields[0]
+        parent: str = fields[3]
+        if qgroupid == qid and pqid in parent.split(","):
             return True
     return False
 
@@ -1580,7 +1565,7 @@ def qgroup_assign(qid, pqid, mnt_pt):
         run_command([BTRFS, "qgroup", "assign", qid, pqid, mnt_pt], log=False)
     except CommandException as e:
         emsg = "ERROR: unable to assign quota group: Read-only file system"
-        # this is non fatal so we catch this specific error and info log it.
+        # this is non-fatal, so we catch this specific error and info log it.
         if e.err[0] == emsg:
             logger.info(
                 "Read-only fs ({}), skipping qgroup assign: "
@@ -1602,8 +1587,8 @@ def qgroup_assign(qid, pqid, mnt_pt):
             )
             return e.out, e.err, e.rc
         # N.B. we catch known errors and log to avoid blocking share imports.
-        # Newer btrfs schedules it's own quota rescans and with serialized quote changes
-        # these can overlap so we catch, log, and move on to avoid blocking imports.
+        # Newer btrfs schedules its own quota rescans and with serialized quote changes
+        # these can overlap, so we catch, log, and move on to avoid blocking imports.
         rescan_sched_out = "Quota data changed, rescan scheduled"
         rescan_sched_err = "ERROR: quota rescan failed: Operation now in progress"
         if e.err[0] == rescan_sched_err:
@@ -1874,23 +1859,27 @@ def scrub_start(pool, force=False):
     return p.pid
 
 
-def btrfsprogs_legacy():
+def btrfsprogs_legacy() -> bool:
     """
-    Returns True if "btrfs version" considered legacy: i.e. < "v5.1.2" (approximately).
-    Previously used parse_version(btrfs_progs_version) < parse_version("v5.1.2"), this
-    was removed as it depended on setuptools and was overkill in this situation.
+    Returns True if "btrfs version" considered legacy: i.e. < "v5.1.2".
+    Example output of "btrfs version" is "btrfs-progs v6.5.1".
+    v4.12 (Leap 15.2), v4.19.1 (Leap 15.3), v5.14 (Leap 15.4 & 15.5),
+    v6.5.1 (Leap 15.6), v6.9.2 TW or Backports (July 2024).
+    For assumed version string schema:
+    https://packaging.python.org/en/latest/specifications/version-specifiers/#version-scheme
     :return: Legacy status.
-    :rtype Boolean
     """
-    legacy_version = [5, 1, 2]
+    legacy_version = Version("v5.1.2")
+    installed_version = Version("v6.7.8")  # Place-holder flag value
     out, err, rc = run_command([BTRFS, "version"])
-    # "btrfs-progs v5.14"
-    # e.g. v4.12 Leap 15.2, v4.19.1 Leap 15.3, v5.14 Leap 15.4 v6.1.3 Backports
-    btrfs_progs_version = out[0].split()[1].strip(" v").split(".")
-    # ["4", "12"], ["4", "19", "1"], ["5", "14"], ["6","1", "3"]
-    for index, element in enumerate(btrfs_progs_version):
-        if int(element) < legacy_version[index]:
-            return True
+    try:
+        installed_version = Version(out[0].split()[1])
+    except Exception as e:
+        logger.exception(e)
+        if not e.__class__ == InvalidVersion:
+            raise e
+    if installed_version < legacy_version:
+        return True
     return False
 
 
@@ -2235,7 +2224,7 @@ def balance_status_internal(pool):
             if unallocated < 0:
                 stats["status"] = "running"
                 break
-    if unallocated >= 0:
+    if unallocated is not None and unallocated >= 0:
         # We have no 'tell' so report a finished balance as there is no
         # evidence of one happening.
         stats["status"] = "finished"
@@ -2319,9 +2308,16 @@ def btrfs_uuid(disk):
     return o[0].split()[3]
 
 
-def set_property(mnt_pt, name, val, mount=True):
+def set_property(mnt_pt, name, val, mount=True, force=False):
+    """
+    https://btrfs.readthedocs.io/en/latest/btrfs-property.html
+    https://btrfs.readthedocs.io/en/latest/btrfs-subvolume.html
+    """
     if mount is not True or is_mounted(mnt_pt):
-        cmd = [BTRFS, "property", "set", mnt_pt, name, val]
+        if not force:
+            cmd = [BTRFS, "property", "set", mnt_pt, name, val]
+        else:
+            cmd = [BTRFS, "property", "set", "-f", mnt_pt, name, val]
         return run_command(cmd)
 
 
@@ -2333,7 +2329,7 @@ def get_property(mnt_pt, prop_name=None):
     properties. But if called with a single property then the value and type
     appropriate for that property ie:
     string for label (in presented in properties),
-    string for compression ie: lzo, zlib (if presented in properties),
+    string for compression ie: zlib (if presented in properties), lzo, zstd,
     and Boolean for prop_name='ro'
     If prop_name specified but not found then None is returned.
     N.B. compression property for subvol only, vol/pool uses mount option.

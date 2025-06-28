@@ -61,11 +61,14 @@
                     {{this.compression}}
                 {{else}}
                     <strong><a href="#" class="cmpOptns" data-name="cmpOptns" data-type="select" data-mntoptn="{{this.mnt_options}}"
-                               data-value="{{this.compression}}" data-pid="{{this.id}}" data-title="Pool compression algorithm.
-                               <br><strong>zlib: </strong>slower than lzo but higher compression ratio.<br><strong>lzo: </strong>
-                               faster than zlib but lower compression ratio.<br>Pool level compression applies to all it's Shares.
-                               <br>Alternatively: consider Share level compression.<br>Unchanged data remains at prior setting
-                               until balanced.">
+                        data-value="{{this.compression}}" data-pid="{{this.id}}" data-title="Pool compression algorithm.<br />
+                         - <strong>zlib:</strong> slower than LZO but higher compression ratio.<br />
+                         - <strong>lzo:</strong> faster compression and decompression than ZLIB, worse compression ratio, designed to be fast.<br />
+                         - <strong>zstd:</strong> compression comparable to ZLIB with higher compression/decompression speeds and different ratio.<br />
+                        <br />
+                        Pool level compression applies to all its Shares.<br />
+                        Alternatively: consider Share level compression.<br />
+                        Unchanged data remains at prior setting until balanced.">
                     {{this.compression}}</a></strong>
                 {{/if}}
             </td>
@@ -152,13 +155,18 @@
   </tbody>
 </table>
 {{ else }}
-<h4>No Pools have been created</h4>
+  <h3>No Rockstor managed Pools (btrfs volumes) were found.</h3>
+
+  - A preexisting Pool can be imported via any one of its Disk members:
+  <a href="#disks" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Disks</a>
+  </p>
+
 {{/if}}
 <div>
-    <a {{#if disksAvailable}}
-            href="#add_pool"
+    {{#if disksAvailable}}
+         - <a href="#add_pool"
         {{else}}
-            disabled title="There are no Disks available to create a Pool at this time.
+         - No Disks available to: <a disabled
         {{/if}}
     id="add_pool" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i>&nbsp;Create Pool</a>
 </div>

@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -24,8 +23,7 @@ import rest_framework_custom as rfc
 from rest_framework.response import Response
 from system.services import service_status
 from django.db import transaction
-from django.utils.timezone import utc
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,7 +41,7 @@ class ServiceMixin(object):
         return json.loads(service.config)
 
     def _get_or_create_sso(self, service):
-        ts = datetime.utcnow().replace(tzinfo=utc)
+        ts = datetime.utcnow().replace(tzinfo=timezone.utc)
         so = None
         if ServiceStatus.objects.filter(service=service).exists():
             so = ServiceStatus.objects.filter(service=service).order_by("-ts")[0]
@@ -90,9 +88,8 @@ class BaseServiceView(ServiceMixin, rfc.GenericView):
                 sos = []
                 for s in Service.objects.all():
                     sos.append(self._get_or_create_sso(s))
-                return sorted(
-                    sos, cmp=lambda x, y: cmp(x.display_name, y.display_name)
-                )  # noqa
+                # https://docs.python.org/3.6/howto/sorting.html#key-functions
+                return sorted(sos, key=lambda each: each.display_name)
 
 
 class BaseServiceDetailView(ServiceMixin, rfc.GenericView):

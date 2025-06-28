@@ -1,19 +1,18 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
@@ -28,17 +27,19 @@ def main():
     rid = int(sys.argv[1])
     ctx = zmq.Context()
     poll = zmq.Poller()
-    num_tries = 12
+    num_tries = 3
     while True:
         req = ctx.socket(zmq.DEALER)
         poll.register(req, zmq.POLLIN)
-        req.connect("ipc://%s" % settings.REPLICATION.get("ipc_socket"))
-        req.send_multipart(["new-send", b"%d" % rid])
+        ipc_socket = settings.REPLICATION.get("ipc_socket")
+        req.connect(f"ipc://{ipc_socket}")
+        req.send_multipart([b"new-send", f"{rid}".encode("utf-8")])
 
         socks = dict(poll.poll(5000))
         if socks.get(req) == zmq.POLLIN:
             rcommand, reply = req.recv_multipart()
-            if rcommand == "SUCCESS":
+            print(f"rcommand={rcommand}, reply={reply}")
+            if rcommand == b"SUCCESS":
                 print(reply)
                 break
             ctx.destroy(linger=0)
@@ -46,7 +47,7 @@ def main():
         num_tries -= 1
         print(
             "No response from Replication service. Number of retry "
-            "attempts left: %d" % num_tries
+            f"attempts left: {num_tries}"
         )
         if num_tries == 0:
             ctx.destroy(linger=0)

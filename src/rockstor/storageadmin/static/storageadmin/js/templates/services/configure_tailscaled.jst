@@ -1,0 +1,146 @@
+<script>
+/*
+* Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+*
+* Rockstor is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published
+* by the Free Software Foundation; either version 2 of the License,
+* or (at your option) any later version.
+*
+* Rockstor is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <https://www.gnu.org/licenses/>.
+*
+*/
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Configure {{ serviceName }}
+                <a href="https://rockstor.com/docs/interface/system/services.html#tailscale" target="_blank"
+                   title="See Rockstor's documentation" rel="tooltip"><i class="glyphicon glyphicon-question-sign"></i></a>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="tailscaled-form" name="tailscaled-form">
+                    <p>All settings below are entirely <b>optional</b>. See <a
+                            href="https://tailscale.com/kb/1241/tailscale-up/" target="_blank">Tailscale's
+                        documentation</a> for a full description of each setting.</p>
+                    <div class="messages"></div>
+                    <div id="ip-forwarding-warning" class="alert alert-warning" style="display: none;">
+                        <h4>Warning! The current settings will enable IP forwarding on this machine.</h4>
+                        <p>Enabling the <em>subnet router</em> or <em>exit node</em> features require IP forwarding
+                            to be enabled on this machine (see Tailscale documentation
+                            <a href="https://tailscale.com/kb/1019/subnets/" target="_blank"
+                               title="Subnet router documentation">here</a>
+                            and <a href="https://tailscale.com/kb/1103/exit-nodes/" target="_blank"
+                                   title="Exit node documentation">here</a>
+                            for more details). With the current settings, Rockstor will thus: </p>
+                        <ul>
+                            <li>enable IPv4 and IPv6 forwarding upon turning ON the Tailscale service</li>
+                            <li>disable IPv4 and IPv6 forwarding upon turning OFF the Tailscale service</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="accept_routes">Accept routes</label>
+                        <div class="col-sm-8">
+                            {{ display_options "accept_routes"}}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="advertise_exit_node">Advertise exit node</label>
+                        <div class="col-sm-8">
+                            {{ display_options "advertise_exit_node" "mutually-exclusive"}}
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="subnet_router">Use this machine as a subnet
+                            router</label>
+                        <div class="col-sm-8">
+                            {{ display_options "subnet_router"}}
+                        </div>
+
+                        <div class="col-sm-8">
+                            <input class="form-control" type="text" id="advertise_routes" name="advertise_routes"
+                                   value="{{ config.advertise_routes }}" placeholder="Click YES to enable this field"
+                                   disabled>
+                            Physical subnet routes to expose to your entire Tailscale network.
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="exit_node">Exit node to use</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" type="text" id="exit_node" name="exit_node"
+                                   value="{{ config.exit_node }}" placeholder="100.x.y.z"
+                                   title="Tailscale 100.x.y.z IP address of the exit node.">
+                            <input class="checkbox-inline" type="checkbox" id="exit_node_allow_lan_access"
+                                   name="exit_node_allow_lan_access" title="Please enter an exit node first"
+                                   {{#if config.exit_node_allow_lan_access}}
+                                   checked="true"
+                                    {{ else }}
+                                   disabled
+                                    {{/if}}>
+                            Allow direct access to the local network when routing traffic via this exit node?
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="hostname">Hostname</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" type="text" id="hostname" name="hostname"
+                                   value="{{ config.hostname }}" placeholder="rockstor">
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="reset">Reset unspecified settings to default</label>
+                        <div class="col-sm-8">
+                            {{ display_options "reset"}}
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="ssh">Enable <a
+                                href="https://tailscale.com/kb/1193/tailscale-ssh" target="_blank">Tailscale
+                            SSH</a></label>
+                        <div class="col-sm-8">
+                            {{ display_options "ssh"}}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="custom_config">Custom configuration </label>
+                        <div class="col-sm-8">
+                            <textarea rows="5" columns="40" id="custom_config" name="custom_config"
+                                      class="form-control">{{ display_ts_custom_config }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-sm-4 col-sm-offset-4">
+                            <button id="cancel" class="btn btn-default">Cancel</button>
+                            <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>            <!-- panel-body -->
+        </div>
+        <!-- panel-default -->
+    </div>
+    <!-- col-md-8 -->
+</div>
+<!-- row -->

@@ -1,27 +1,25 @@
 """
-Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import sys
 import json
-from datetime import datetime, timedelta
-import crontabwindow  # load crontabwindow module
+from datetime import datetime, timedelta, timezone
+from scripts.scheduled_tasks import crontabwindow
 from smart_manager.models import Task, TaskDefinition
 from cli.api_wrapper import APIWrapper
-from django.utils.timezone import utc
 from system.osi import is_network_device_responding
 from csv import reader as csv_reader
 import re
@@ -112,7 +110,7 @@ def main():
             )
             return
 
-        now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
+        now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=timezone.utc)
         schedule = now + timedelta(minutes=3)
         t = Task(task_def=tdo, state="scheduled", start=now, end=schedule)
 

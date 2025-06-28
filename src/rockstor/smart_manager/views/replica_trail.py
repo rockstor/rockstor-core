@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -17,11 +16,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import transaction
-from django.utils.timezone import utc
 from rest_framework.response import Response
 from smart_manager.models import Replica, ReplicaTrail
 from smart_manager.serializers import ReplicaTrailSerializer
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import rest_framework_custom as rfc
 
 
@@ -44,7 +42,7 @@ class ReplicaTrailListView(rfc.GenericView):
         with self._handle_exception(request):
             replica = Replica.objects.get(id=rid)
             snap_name = request.data["snap_name"]
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             rt = ReplicaTrail(
                 replica=replica,
                 snap_name=snap_name,
@@ -59,7 +57,7 @@ class ReplicaTrailListView(rfc.GenericView):
         with self._handle_exception(request):
             days = int(request.data.get("days", 30))
             replica = Replica.objects.get(id=rid)
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             ts0 = ts - timedelta(days=days)
             if ReplicaTrail.objects.filter(replica=replica).count() > 100:
                 ReplicaTrail.objects.filter(replica=replica, end_ts__lt=ts0).delete()
@@ -88,7 +86,7 @@ class ReplicaTrailDetailView(rfc.GenericView):
             if "kb_sent" in request.data:
                 rt.kb_sent = request.data["kb_sent"]
             if rt.status in ("failed", "succeeded",):
-                ts = datetime.utcnow().replace(tzinfo=utc)
+                ts = datetime.utcnow().replace(tzinfo=timezone.utc)
                 rt.end_ts = ts
                 if rt.status == "failed":
                     rt.send_failed = ts

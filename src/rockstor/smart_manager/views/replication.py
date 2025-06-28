@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -27,8 +26,7 @@ from storageadmin.models import Share, Appliance, EmailClient
 from smart_manager.models import Replica, ReplicaTrail
 from smart_manager.serializers import ReplicaSerializer
 from storageadmin.util import handle_exception
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 from django.conf import settings
 import rest_framework_custom as rfc
 import logging
@@ -111,7 +109,7 @@ class ReplicaListView(ReplicaMixin, rfc.GenericView):
             replication_ip = request.data.get("listener_ip", None)
             if replication_ip is not None and len(replication_ip.strip()) == 0:
                 replication_ip = None
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             r = Replica(
                 task_name=task_name,
                 share=sname,
@@ -177,7 +175,7 @@ class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
             r.data_port = self._validate_port(
                 request.data.get("listener_port", r.data_port), request
             )
-            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts = datetime.utcnow().replace(tzinfo=timezone.utc)
             r.ts = ts
             r.save()
             self._refresh_crontab()

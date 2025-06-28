@@ -1,22 +1,30 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
-RockStor is free software; you can redistribute it and/or modify
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
-RockStor is distributed in the hope that it will be useful, but
+
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
+
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
-
+from unittest.mock import patch
 from rest_framework import status
-from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+
+
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_commands.py
+"""
 
 
 class CommandTests(APITestMixin):
@@ -75,6 +83,18 @@ class CommandTests(APITestMixin):
             "storageadmin.views.command.import_snapshots"
         )
         cls.mock_import_snapshots = cls.patch_import_snapshots.start()
+
+        cls.patch_get_unlocked_luks_containers_uuids = patch(
+            "storageadmin.views.disk.get_unlocked_luks_containers_uuids"
+        )
+        cls.mock_get_unlocked_luks_containers_uuids = (
+            cls.patch_get_unlocked_luks_containers_uuids.start()
+        )
+        cls.mock_get_unlocked_luks_containers_uuids.return_value = []
+
+        cls.patch_enable_quota = patch("storageadmin.views.disk.enable_quota")
+        cls.mock_enable_quota = cls.patch_enable_quota.start()
+        cls.mock_enable_quota.return_value = [""], [""], 0
 
     @classmethod
     def tearDownClass(cls):

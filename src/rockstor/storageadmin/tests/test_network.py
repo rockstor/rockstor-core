@@ -1,27 +1,33 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+from unittest import mock
+from unittest.mock import patch
 
-import mock
 from rest_framework import status
-from mock import patch
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.models import NetworkConnection, NetworkDevice
 
+
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_network.py
+"""
 
 class NetworkTests(APITestMixin):
     # TODO Move as many by-hand mocks to now functional fixture setup.
@@ -31,7 +37,6 @@ class NetworkTests(APITestMixin):
     # Proposed fixture = "test_network.json"
     # TODO: Needs changing as API url different ie connection|devices|refresh
     # see referenced pr in setUpClass
-    # ./bin/test -v 2 -p test_network.py
     fixtures = ["test_api.json"]
     BASE_URL = "/api/network"
 
@@ -91,6 +96,11 @@ class NetworkTests(APITestMixin):
                 "ipv4_dns_search": None,
             }
         }
+
+        # system.network.get_con_list()
+        cls.patch_get_con_list = patch("system.network.get_con_list")
+        cls.mock_get_con_list = cls.patch_get_con_list.start()
+        cls.mock_get_con_list.return_value = []
 
         # valid_connection
         cls.patch_valid_connection = patch("system.network.valid_connection")

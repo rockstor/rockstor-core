@@ -3,15 +3,14 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
- * This file is part of RockStor.
+ * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
  *
- * RockStor is free software; you can redistribute it and/or modify
+ * Rockstor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
  *
- * RockStor is distributed in the hope that it will be useful, but
+ * Rockstor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -192,7 +191,14 @@ AddPoolView = Backbone.View.extend({
         this.$('#compression').tooltip({
             html: true,
             placement: 'right',
-            title: 'Choose a Pool compression algorithm.<br><strong>zlib: </strong>slower than lzo but higher compression ratio.<br><strong>lzo: </strong>faster than zlib but lower compression ratio.<br>Pool level compression applies to all it\'s Shares.<br>Alternatively: consider Share level compression.<br>This setting can be changed at any time.'
+            title: `Choose a Pool compression algorithm.<br />
+             - <strong>zlib:</strong> slower than LZO but higher compression ratio.<br />
+             - <strong>lzo:</strong> faster compression and decompression than ZLIB, worse compression ratio, designed to be fast.<br />
+             - <strong>zstd:</strong> compression comparable to ZLIB with higher compression/decompression speeds and different ratio.<br />
+            <br />
+            Pool level compression applies to all its Shares.<br />
+            Alternatively: consider Share level compression.<br />
+            This setting can be changed at any time.`
         });
 
         $('#add-pool-form').validate({

@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -25,7 +24,7 @@ from django.conf import settings
 from django.db import transaction
 from rest_framework.response import Response
 
-from base_service import BaseServiceDetailView
+from smart_manager.views.base_service import BaseServiceDetailView
 from fs.btrfs import mount_share
 from smart_manager.models import Service
 from storageadmin.models import Share
@@ -36,8 +35,9 @@ logger = logging.getLogger(__name__)
 
 DOCKERD = "/usr/bin/dockerd"
 
-# Distro's for which we have known working conf/docker-distroid.service files.
-KNOWN_DISTRO_IDS = ["rockstor", "opensuse-leap", "opensuse-tumbleweed"]
+# Distros for which we have had known working conf/docker-distroid.service files.
+# The docker-distroid file mechanism has now been removed, but the following is still referenced.
+KNOWN_DISTRO_IDS = ["rockstor", "opensuse", "opensuse-slowroll", "opensuse-tumbleweed"]
 
 
 class DockerServiceView(BaseServiceDetailView):

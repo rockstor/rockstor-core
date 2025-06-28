@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -42,11 +41,10 @@ from storageadmin.models import (
     AdvancedNFSExport,
 )
 from storageadmin.util import handle_exception
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 from django.conf import settings
 from django.db import transaction
-from share_helpers import sftp_snap_toggle, import_shares, import_snapshots
+from storageadmin.views.share_helpers import sftp_snap_toggle, import_shares, import_snapshots
 from rest_framework_custom.oauth_wrapper import RockstorOAuth2Authentication
 from system.pkg_mgmt import (
     auto_update,
@@ -55,7 +53,7 @@ from system.pkg_mgmt import (
     update_run,
     auto_update_status,
 )
-from nfs_exports import NFSExportMixin
+from storageadmin.views.nfs_exports import NFSExportMixin
 import logging
 
 logger = logging.getLogger(__name__)
@@ -236,7 +234,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
             return Response()
 
         if command == "utcnow":
-            return Response(datetime.utcnow().replace(tzinfo=utc))
+            return Response(datetime.utcnow().replace(tzinfo=timezone.utc))
 
         if command == "uptime":
             return Response(uptime())
@@ -249,7 +247,7 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
 
         if command == "update-check":
             try:
-                subo = None
+                subo: None | UpdateSubscription = None
                 try:
                     subo = UpdateSubscription.objects.get(
                         name="Stable", status="active"
@@ -288,22 +286,21 @@ class CommandView(DiskMixin, NFSExportMixin, APIView):
 
         if command == "current-version":
             try:
-                return Response(current_version())
+                return Response(current_version()[0])
             except Exception as e:
                 e_msg = (
                     "Unable to check current version due to this exception: ({})."
                 ).format(e.__str__())
                 handle_exception(Exception(e_msg), request)
 
-        # default has shutdown and reboot with delay set to now
-        # having normal sytem power off with now = 1 min
-        # reboot and shutdown requests from WebUI don't have request.auth
-        # while same requests over rest api (ex. scheduled tasks) have
-        # an auth token, so if we detect a token we delay with 3 mins
-        # to grant connected WebUI user to close it or cancel shutdown/reboot
-        delay = "now"
+        # Default has shutdown and reboot with delay set to "now".
+        # Reboot and shutdown requests from WebUI don't have request.auth,
+        # while same requests over rest api (e.g. scheduled tasks) have
+        # an auth token, so if we detect a token we set delay to 3 minutes
+        # to notify cli users ahead of time.
+        delay: str = "now"
         if request.auth is not None:
-            delay = 3
+            delay = "3"
 
         if command == "shutdown":
             msg = "The system will now be shutdown."

@@ -1,10 +1,10 @@
 [build-system]
-requires = ["poetry-core=1.1.15"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "rockstor"
-version = "4.6.1"
+version = "5.1.0"
 description = "Btrfs Network Attached Storage (NAS) Appliance."
 homepage = "https://rockstor.com/"
 repository = "https://github.com/rockstor/rockstor-core"
@@ -12,17 +12,18 @@ documentation = "https://rockstor.com/docs/"
 readme = "README.md"
 keywords = ["linux", "NAS", "appliance", "btrfs"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 2 :: Only", # at least initially
+    "Programming Language :: Python :: 3 :: Only", # at least initially
     # The "license" property should auto-invoke License classifier/classifiers.
 ]
 authors = [
-    "The Rockstor Project <support@linuxlines.com>",
+    "The Rockstor Project <support@rockstor.com>",
 ]
 maintainers = [
-    "Philip Paul Guyton <support@linuxlines.com>",
+    "Philip Paul Guyton <support@rockstor.com>",
+    "Flox <support@rockstor.com>",
 ]
 # Source0: (rockstor-core) is GPL-3.0-or-later, Source1: (rockstor-jslibs) has mixed licensing:
 license = "GPL-3.0-or-later AND (MIT AND Apache-2.0 AND GPL-3.0-or-later AND LGPL-3.0-or-later AND ISC)"
@@ -33,6 +34,7 @@ include = [
     "build.sh",  # master build script
     "poetry.toml",  # poetry config
     "poetry.lock",  # current poetry established dependency lock file.
+    ".env",  # poetry-plugin-dotenv default source file.
     { path = "conf" },  # Configuration directories
     { path = "etc" },
     { path = "var" },  # Some processes depend on this tree existing.
@@ -51,51 +53,53 @@ generate-setup-file = false
 
 [tool.poetry.dependencies]
 # We use groups (>=1.2.0) to clarify our dependencies (essentially labels):
-# We currently need Poetry 1.1.15 for it's Python 2.7 compatibility.
+# We use to need Poetry 1.1.15 for it's Python 2.7/3.6 compatibility.
+# https://python-poetry.org/history/#120b1---2022-03-17
+# 1.20b1 dropped Python 3.6 support.
 # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
 #
-# https://python-poetry.org/docs/1.1/dependency-specification/
-python = "~2.7"
+# https://python-poetry.org/docs/dependency-specification
+python = "~3.11"
 
 # [tool.poetry.group.django.dependencies]
-django = "==1.11.29"
-django-oauth-toolkit = "==1.1.2"
-djangorestframework = "==3.9.3"
-django-pipeline = "==1.6.9"
-django-braces = "==1.13.0"  # look to 1.14.0 (30 Dec 2019) as Django 1.11.0+ now
-oauthlib = "==3.1.0"  # Last Python 2.7 compat + 3.7 compat.
-python-engineio = "==2.3.2"  # Revisit version post 3.0.0
-python-socketio = "==1.6.0"
-dbus-python = "==1.2.18"
-# N.B. officially Django >= 2.2.1 is required for psycopg2 >= 2.8
-psycopg2 = "==2.8.6"  # last Python 2.7 version, PostgreSQL 13 errorcodes map?
+django = "~4.2"
+django-oauth-toolkit = "~2.4"
+# DRF next version (3.16.0) changes behaviour!
+djangorestframework = "==3.15.2"
+django-pipeline = "==4.0.0"
+docutils = "~0.21"
+python-engineio = "==4.8.0"
+python-socketio = "==5.9.0"
+# Need dbus-python 1.4.0 for Py3.13
+dbus-python = "==1.3.2"
+psycopg = "~3"
 psycogreen = "==1.0"
-gevent = "==1.1.2"
-gevent-websocket = "==0.9.5"
-# Python WSGI HTTP Server - 20.0 (2019/10/30) dropped Python 2.7.
-gunicorn = "==19.10.0"  # buildout previously used 19.7.1
-
-# [tool.poetry.group.requests.dependencies]
-requests = "==2.27.1"  # Last Python 2/3 version, requires chardet
-chardet = "==4.0.0"  # 5.0.0 requires Python3.
-idna = "==2.10"  # Requests (2.27.1) requires idna<3,>=2.5
-certifi = "==2021.10.8"  # Requests (2.27.1) requires certifi>=2017.4.17
-urllib3 = "==1.26.12"  # Requests (2.27.1) requires urllib3<1.27,>=1.21.1
-pytz = "==2022.6"
+# gevent 24.10.[1 & 2] resulted in: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL
+gevent = "24.2.1"  # can be an extra dependency to gunicorn.
+gunicorn = "~23"
+packaging = "*"  # 'btrfs version' parsing.
 
 # [tool.poetry.group.tools.dependencies]
 six = "==1.16.0"  # 1.14.0 (15 Jan 2020) Python 2/3 compat lib
-huey = "==2.3.0"
+huey = "*"
 psutil = "==5.9.4"
-mock = "==1.0.1"
+# mock = "==1.0.1" now part of std lib in Python 3.3 onwards as unittest.mock
 # pyzmq requires libzmq5 on system unless in wheel form.
-pyzmq = "==19.0.2"  # Last specifying Python 2 on PyPi page.
-distro = "==1.6.0"  # Last Python 2/3 version that works as we expect.
+pyzmq = "*"
+distro = "*"
 URLObject = "==2.1.1"
+keyring-pass = "*"
+zypper-changelog-lib = "0.7.9"
+# zypper-changelog-lib = {path = "/path/zypper-changelog-lib/dist/zypper_changelog_lib-0.7.9-py3-none-any.whl"}
 # https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
 supervisor = "==4.2.4"
 
-[tool.poetry.dev-dependencies]
+# `poetry install --with dev`
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
 
 [tool.poetry.scripts]
 # https://python-poetry.org/docs/pyproject#scripts

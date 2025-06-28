@@ -1,22 +1,22 @@
 """
-Copyright (c) 2012-2019 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-import mock
-from mock import patch
+from unittest import mock
+from unittest.mock import patch
+
 from rest_framework import status
 
 from storageadmin.exceptions import RockStorAPIException
@@ -24,36 +24,46 @@ from storageadmin.models import Pool, Share, SambaShare, User
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.views.samba import SambaListView
 
+"""
+fixture with:
+1 pool:
+  - id=11
+  - name="rock-pool"
+1 share:
+  - pool: "rock-pool" above
+  - name: share-smb
+  - exported with defaults:
+      - comment: "Samba-Export"
+      - admin_users: None
+      - browsable: 'yes'
+      - guest_ok: 'no'
+      - read_only: 'no'
+1 share:
+  - name: share2 - no SMB export
+1 User:
+  - id: 1
+  - name: admin
+  - group: 1
+1 Group:
+  - pk: 1
+
+proposed fixture = "test_smb.json"
+
+cd /opt/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin dumpdata storageadmin.pool storageadmin.share
+storageadmin.sambashare storageadmin.user storageadmin.group
+--natural-foreign --indent 4 >
+src/rockstor/storageadmin/fixtures/test_smb.json
+
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_samba.py
+"""
+
 
 class SambaTests(APITestMixin, SambaListView):
-    # fixture with:
-    # 1 pool:
-    #   - id=11
-    #   - name="rock-pool"
-    # 1 share:
-    #   - pool: "rock-pool" above
-    #   - name: share-smb
-    #   - exported with defaults:
-    #       - comment: "Samba-Export"
-    #       - admin_users: None
-    #       - browsable: 'yes'
-    #       - guest_ok: 'no'
-    #       - read_only: 'no'
-    # 1 share:
-    #   - name: share2 - no SMB export
-    # 1 User:
-    #   - id: 1
-    #   - name: admin
-    #   - group: 1
-    # 1 Group:
-    #   - pk: 1
-
-    # proposed fixture = "test_smb.json"
-    # bin/django dumpdata storageadmin.pool storageadmin.share
-    # storageadmin.sambashare storageadmin.user storageadmin.group
-    # --natural-foreign --indent 4 >
-    # src/rockstor/storageadmin/fixtures/test_smb.json
-    # ./bin/test -v 2 -p test_samba.py
     fixtures = ["test_api.json", "test_smb.json"]
     BASE_URL = "/api/samba"
 
@@ -83,6 +93,11 @@ class SambaTests(APITestMixin, SambaListView):
         )
         cls.mock_refresh_smb_config = cls.patch_refresh_smb_config.start()
         cls.mock_refresh_smb_config.return_value = "smbconfig"
+
+        cls.patch_refresh_smb_discovery = patch(
+            "storageadmin.views.samba.refresh_smb_discovery"
+        )
+        cls.mock_refresh_smb_discovery = cls.patch_refresh_smb_discovery.start()
 
     @classmethod
     def tearDownClass(cls):

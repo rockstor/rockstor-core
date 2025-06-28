@@ -1,6 +1,5 @@
 """
-Copyright (c) 2012-2023 Rockstor, Inc. <https://rockstor.com>
-This file is part of Rockstor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -28,5 +27,19 @@ MOUNT = "/usr/bin/mount"
 UMOUNT = "/usr/bin/umount"
 
 USERMOD = "/usr/sbin/usermod"
+LDD = "/usr/bin/ldd"
 
 SYSTEMCTL = "/usr/bin/systemctl"
+
+# Works in Leap 15.4 (systemd-249.16-150400.8.28.3) and Tumbleweed (systemd-253.4-2.1)
+UDEVADM = "/usr/bin/udevadm"
+SHUTDOWN = "/sbin/shutdown"
+
+TAILSCALE = "/usr/bin/tailscale"
+
+# Major block device number:str to ignore (commonality ordered):
+# https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
+# 7: Loopback
+# 11: SCSI CD-ROM
+# 2: Floppy disks
+BLOCK_DEV_EXCLUDE: list[str] = ["7", "11", "2"]

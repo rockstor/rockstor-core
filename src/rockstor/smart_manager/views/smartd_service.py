@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -18,9 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from system.services import systemctl
-from system.pkg_mgmt import install_pkg
 from django.db import transaction
-from base_service import BaseServiceDetailView
+from smart_manager.views.base_service import BaseServiceDetailView
 import os
 from system import smart
 from smart_manager.models import Service
@@ -43,7 +41,8 @@ class SMARTDServiceView(BaseServiceDetailView):
         e_msg = "Failed to %s S.M.A.R.T service due to system error." % command
         with self._handle_exception(request, e_msg):
             if not os.path.exists(SMART):
-                install_pkg("smartmontools")
+                logger.info(f"{SMART} binary not found: try `zypper in smartmontools`")
+                raise Exception
             if command == "config":
                 service = Service.objects.get(name=self.service_name)
                 config = request.data.get("config", {})

@@ -1,41 +1,35 @@
 """
-Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 import crypt
-import fcntl
-import grp
 import logging
 import os
 import pwd
-import random
 import re
 import stat
-import string
-import subprocess
-import time
 from shutil import move
+from subprocess import run, Popen, PIPE
 from tempfile import mkstemp
+from typing import Union, Optional, Dict, Any
 
-import chardet
 import dbus
-from dbus import DBusException
+import grp
 
-from exceptions import CommandException
-from osi import run_command
+from system.exceptions import CommandException
+from system.osi import run_command
 from system.services import is_systemd_service_active
 
 logger = logging.getLogger(__name__)
@@ -62,46 +56,34 @@ IFP_CONSTANTS = {
 }
 
 
-# this is a hack for AD to get as many users as possible within 90 seconds.  If
+# this is a hack for AD to get as many users as possible within 60 seconds.  If
 # there are several thousands of domain users and AD isn't that fast, winbind
 # takes a long time to enumerate the users for getent. Subsequent queries
 # finish faster because of caching. But this prevents timing out.
-def get_users(max_wait=90):
-    t0 = time.time()
+def get_users(max_wait=60):
     users = {}
-    p = subprocess.Popen(
+    # TODO: In Python 3.7 we have a capture_output option.
+    result = run(
         ["/usr/bin/getent", "passwd"],
         shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        encoding="utf-8",
+        # stdout and stderr as string
+        universal_newlines=True,  # 3.7 adds text parameter universal_newlines alias
+        timeout=max_wait,
     )
-    fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-    alive = True
-    user_data = ""
-    while alive:
-        try:
-            if p.poll() is not None:
-                alive = False
-            user_data += p.stdout.read()
-        except IOError:
-            if time.time() - t0 < max_wait:
-                continue
-        except Exception as e:
-            logger.exception(e)
-            p.terminate()
-        uf = user_data.split("\n")
-        # If the feed ends in \n, the last element will be '', if not, it will
-        # be a partial line to be processed next time around.
-        user_data = uf[-1]
-        for u in uf[:-1]:
-            ufields = u.split(":")
-            if len(ufields) > 3:
-                charset = chardet.detect(ufields[0])
-                uname = ufields[0].decode(charset["encoding"])
-                users[uname] = (int(ufields[2]), int(ufields[3]), str(ufields[6]))
-            if time.time() - t0 > max_wait:
-                p.terminate()
-                break
+    out = result.stdout
+    # TODO: Report & handle exception reported via CompletedProcess (result)
+    out_list = out.split("\n")
+    # out_list looks like;
+    # ['root:x:0:0:root:/root:/bin/bash', ...
+    # 'radmin:x:1000:100::/home/radmin:/bin/bash', '']
+    for line in out_list[:-1]:  # skip empty last line.
+        fields = line.split(":")
+        if len(fields) > 3:
+            uname = fields[0]
+            users[uname] = (int(fields[2]), int(fields[3]), str(fields[6]))
     return users
 
 
@@ -111,8 +93,8 @@ def get_groups(*gids):
         for g in gids:
             try:
                 entry = grp.getgrgid(g)
-                charset = chardet.detect(entry.gr_name)
-                gr_name = entry.gr_name.decode(charset["encoding"])
+                # Assume utf-8 encoded gr_name str
+                gr_name = entry.gr_name
                 groups[gr_name] = entry.gr_gid
             except KeyError:
                 # The block above can sometimes fail for domain users (AD/LDAP)
@@ -130,8 +112,8 @@ def get_groups(*gids):
                 )
     else:
         for g in grp.getgrall():
-            charset = chardet.detect(g.gr_name)
-            gr_name = g.gr_name.decode(charset["encoding"])
+            # Assume utf-8 encoded gr_name str
+            gr_name = g.gr_name
             groups[gr_name] = g.gr_gid
 
         # If sssd.service is running:
@@ -143,7 +125,8 @@ def get_groups(*gids):
             for ifp_gp, ifp_gid in ifp_groups.items():
                 if ifp_gp not in groups:
                     groups[ifp_gp] = ifp_gid
-        except DBusException:
+        except dbus.DBusException as e:
+            logger.debug(f"Exception while getting groups from InfoPipe: {e}")
             pass
     return groups
 
@@ -181,42 +164,46 @@ def usermod(username, passwd):
     # TODO: 'salt = crypt.mksalt()' # Python 3.3 onwards provides system best.
     # Salt starting "$6$" & of 19 chars signifies SHA-512 current system best.
     # Salt must contain only [./a-zA-Z0-9] chars (bar first 3 if len > 2)
-    salt_header = "$6$"  # SHA-512
-    rnd = random.SystemRandom()
-    salt = "".join(
-        [rnd.choice(string.ascii_letters + string.digits + "./") for _ in range(16)]
-    )
-    crypted_passwd = crypt.crypt(passwd.encode("utf8"), salt_header + salt)
-    cmd = [USERMOD, "-p", crypted_passwd, username]
-    p = subprocess.Popen(
-        cmd,
-        shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-    )
-    out, err = p.communicate(input=None)
-    rc = p.returncode
-    if rc != 0:
-        raise CommandException(cmd, out, err, rc)
+    # salt_header = "$6$"  # SHA-512
+    # rnd = random.SystemRandom()
+    # salt = "".join(
+    #     [rnd.choice(string.ascii_letters + string.digits + "./") for _ in range(16)]
+    # )
+    # crypted_passwd = crypt.crypt(passwd.encode("utf8"), salt_header + salt)
+    salt = crypt.mksalt()
+    crypted_passwd = crypt.crypt(passwd, salt)
+    cmd: list[str] = [USERMOD, "-p", crypted_passwd, username]
+    out, err, rc = run_command(cmd, log=True)
+    # p = subprocess.Popen(
+    #     cmd,
+    #     shell=False,
+    #     stdout=subprocess.PIPE,
+    #     stderr=subprocess.PIPE,
+    #     stdin=subprocess.PIPE,
+    # )
+    # out, err = p.communicate(input=None)
+    # rc = p.returncode
+    # if rc != 0:
+    #     raise CommandException(cmd, out, err, rc)
     return out, err, rc
 
 
 def smbpasswd(username, passwd):
     cmd = [SMBPASSWD, "-s", "-a", username]
-    p = subprocess.Popen(
+    p = Popen(
         cmd,
         shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        stdin=PIPE,
     )
     pstr = "%s\n%s\n" % (passwd, passwd)
     out, err = p.communicate(input=pstr.encode("utf8"))
     rc = p.returncode
     if rc != 0:
         raise CommandException(cmd, out, err, rc)
-    return (out, err, rc)
+    logger.info(f"Command (smbpasswd -s -a) run for username: ({username}).")
+    return out, err, rc
 
 
 def update_shell(username, shell):
@@ -247,9 +234,9 @@ def useradd(username, shell, uid=None, gid=None):
                 "User({0}) already exists, but her shell({1}) is "
                 "different from the input({2}).".format(username, pw_entry.shell, shell)
             )
-        return ([""], [""], 0)
+        return [""], [""], 0
 
-    cmd = [USERADD, "-s", shell, "-m", username]
+    cmd: list[str] = [USERADD, "-s", shell, "-m", username]
     if uid is not None:
         cmd.insert(-1, "-u")
         cmd.insert(-1, str(uid))
@@ -259,11 +246,11 @@ def useradd(username, shell, uid=None, gid=None):
     return run_command(cmd)
 
 
-def groupadd(groupname, gid=None):
-    cmd = [GROUPADD, groupname]
+def groupadd(groupname: str, gid: int | None = None):
+    cmd: list[str] = [GROUPADD, groupname]
     if gid is not None:
         cmd.insert(-1, "-g")
-        cmd.insert(-1, gid)
+        cmd.insert(-1, str(gid))
     return run_command(cmd)
 
 
@@ -298,7 +285,9 @@ def add_ssh_key(username, key, old_key=None):
     run_command([CHOWN, "%s:%s" % (username, groupname), AUTH_KEYS])
 
 
-def ifp_get_properties_from_name_or_id(iface_type, target, *obj_properties):
+def ifp_get_properties_from_name_or_id(
+    iface_type: str, target: Union[str, int], *obj_properties: str
+) -> Optional[Dict[str, Any]]:
     """Get user of group properties from InfoPipe
 
     Uses InfoPipe (SSSD D-Bus responder) to get desired properties
@@ -313,29 +302,34 @@ def ifp_get_properties_from_name_or_id(iface_type, target, *obj_properties):
     # InfoPipe depends on the sssd service running:
     if not is_systemd_service_active("sssd"):
         return None
-    bus = dbus.SystemBus()
-    ifp_bus_name = "org.freedesktop.sssd.infopipe"
+    try:
+        bus = dbus.SystemBus()
+        ifp_bus_name = "org.freedesktop.sssd.infopipe"
+        ifp_obj = bus.get_object(ifp_bus_name, IFP_CONSTANTS[iface_type]["obj_path"])
+        ifp_iface = dbus.Interface(ifp_obj, IFP_CONSTANTS[iface_type]["main_iface"])
 
-    ifp_obj = bus.get_object(ifp_bus_name, IFP_CONSTANTS[iface_type]["obj_path"])
-    ifp_iface = dbus.Interface(ifp_obj, IFP_CONSTANTS[iface_type]["main_iface"])
+        if isinstance(target, str):
+            my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByName(target))
+        elif isinstance(target, int):
+            my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByID(target))
+        else:
+            raise Exception(
+                "Incompatible type for target {}: {}.".format(target, type(target))
+            )
 
-    if isinstance(target, str):
-        my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByName(target))
-    elif isinstance(target, int):
-        my_obj = bus.get_object(ifp_bus_name, ifp_iface.FindByID(target))
-    else:
-        raise Exception(
-            "Incompatible type for target {}: {}.".format(target, type(target))
+        my_iface_properties = dbus.Interface(my_obj, "org.freedesktop.DBus.Properties")
+
+        ifp_res = {}
+        for obj_property in obj_properties:
+            ifp_res[obj_property] = my_iface_properties.Get(
+                IFP_CONSTANTS[iface_type]["sub_iface"], obj_property
+            )
+        return ifp_res
+    except dbus.DBusException as e:
+        logger.debug(
+            f"Exception while getting {obj_properties} for {target} on {iface_type}: {e}"
         )
-
-    my_iface_properties = dbus.Interface(my_obj, "org.freedesktop.DBus.Properties")
-
-    ifp_res = {}
-    for obj_property in obj_properties:
-        ifp_res[obj_property] = my_iface_properties.Get(
-            IFP_CONSTANTS[iface_type]["sub_iface"], obj_property
-        )
-    return ifp_res
+        return None
 
 
 def ifp_get_groups():

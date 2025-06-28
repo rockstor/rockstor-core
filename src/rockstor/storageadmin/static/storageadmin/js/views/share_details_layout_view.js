@@ -3,15 +3,14 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2017 RockStor, Inc. <http://rockstor.com>
- * This file is part of RockStor.
+ * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
  *
- * RockStor is free software; you can redistribute it and/or modify
+ * Rockstor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
  *
- * RockStor is distributed in the hope that it will be useful, but
+ * Rockstor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -99,7 +98,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         this.cOpts = {
             'no': 'Dont enable compression',
             'zlib': 'zlib',
-            'lzo': 'lzo'
+            'lzo': 'lzo',
+            'zstd': 'zstd'
         };
         this.cView = this.options.cView;
         this.initHandlebarHelpers();
@@ -348,7 +348,12 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         this.$('#ph-compression-info #compression').tooltip({
             html: true,
             placement: 'top',
-            title: 'Choose a compression algorithm for this Share. By default, parent pool\'s compression algorithm is applied.<br> If you like to set pool wide compression, don\'t choose anything here. If you want finer control of this particular Share\'s compression algorithm, you can set it here.<br><strong>zlib: </strong>slower than lzo but higher compression ratio.<br><strong>lzo: </strong>faster than zlib but lower compression ratio.'
+            title: `Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is applied.<br />
+            If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular
+            Share's compression algorithm, you can set it here.<br />
+             - <strong>zlib:</strong> slower than LZO but higher compression ratio.<br />
+             - <strong>lzo:</strong> faster compression and decompression than ZLIB, worse compression ratio, designed to be fast.<br />
+             - <strong>zstd:</strong> compression comparable to ZLIB with higher compression/decompression speeds and different ratio.`
         });
     },
 

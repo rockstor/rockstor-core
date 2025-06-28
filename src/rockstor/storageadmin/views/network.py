@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -545,7 +544,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
     def delete(self, request, id):
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            if nco.bridgeconnection_set.first() > 0:  # If docker network
+            if nco.bridgeconnection_set.exists():  # If docker network
                 brco = nco.bridgeconnection_set.first()
                 # check for running containers and disconnect them first
                 clist = probe_containers(network=brco.docker_name)
@@ -554,21 +553,32 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                         dnet_disconnect(c, brco.docker_name)
                 dnet_remove(network=brco.docker_name)
             else:
-                restricted = False
+                restricted: bool = False
+                unknown_restricted: bool = False
                 try:
                     so = Service.objects.get(name="rockstor")
-                    config = json.loads(so.config)
-                    if config["network_interface"] == nco.name:
-                        restricted = True
+                    if so.config is None:
+                        unknown_restricted = True
+                    else:
+                        config = json.loads(so.config)
+                        if config["network_interface"] == nco.name:
+                            restricted = True
                 except Exception as e:
                     logger.exception(e)
                 if restricted:
                     e_msg = (
-                        "This connection ({}) is designated for "
-                        "management and cannot be deleted. If you really "
+                        f"This connection ({nco.name}) is designated for "
+                        "management/Web-UI and cannot be deleted. If you really "
                         "need to delete it, change the Rockstor service "
                         "configuration and try again."
-                    ).format(nco.name)
+                    )
+                    handle_exception(Exception(e_msg), request)
+                if unknown_restricted:
+                    e_msg = (
+                        "No connection is yet designated for management/Web-UI. "
+                        "To avoid inadvertently deleting the Web-UI network connection, "
+                        "first configure the Rockstor service's 'Network Interface'."
+                    )
                     handle_exception(Exception(e_msg), request)
                 self._delete_connection(nco)
             return Response()

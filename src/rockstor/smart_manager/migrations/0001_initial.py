@@ -248,7 +248,7 @@ class Migration(migrations.Migration):
                 ('end_ts', models.DateTimeField(null=True, db_index=True)),
                 ('status', models.CharField(max_length=10)),
                 ('error', models.CharField(max_length=4096, null=True)),
-                ('replica', models.ForeignKey(to='smart_manager.Replica')),
+                ('replica', models.ForeignKey(to='smart_manager.Replica', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -267,7 +267,7 @@ class Migration(migrations.Migration):
                 ('status', models.BooleanField(default=False)),
                 ('count', models.BigIntegerField(default=1)),
                 ('ts', models.DateTimeField(auto_now=True, db_index=True)),
-                ('service', models.ForeignKey(to='smart_manager.Service')),
+                ('service', models.ForeignKey(to='smart_manager.Service', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -325,36 +325,36 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='task',
             name='task_def',
-            field=models.ForeignKey(to='smart_manager.TaskDefinition'),
+            field=models.ForeignKey(to='smart_manager.TaskDefinition', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='receivetrail',
             name='rshare',
-            field=models.ForeignKey(to='smart_manager.ReplicaShare'),
+            field=models.ForeignKey(to='smart_manager.ReplicaShare', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='nfsduidgiddistribution',
             name='rid',
-            field=models.ForeignKey(to='smart_manager.SProbe'),
+            field=models.ForeignKey(to='smart_manager.SProbe', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='nfsdsharedistribution',
             name='rid',
-            field=models.ForeignKey(to='smart_manager.SProbe'),
+            field=models.ForeignKey(to='smart_manager.SProbe', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='nfsdshareclientdistribution',
             name='rid',
-            field=models.ForeignKey(to='smart_manager.SProbe'),
+            field=models.ForeignKey(to='smart_manager.SProbe', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='nfsdclientdistribution',
             name='rid',
-            field=models.ForeignKey(to='smart_manager.SProbe'),
+            field=models.ForeignKey(to='smart_manager.SProbe', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='nfsdcalldistribution',
             name='rid',
-            field=models.ForeignKey(to='smart_manager.SProbe'),
+            field=models.ForeignKey(to='smart_manager.SProbe', on_delete=models.CASCADE),
         ),
     ]

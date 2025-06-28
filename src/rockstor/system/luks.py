@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -238,7 +237,7 @@ def get_unlocked_luks_containers_uuids():
                 # Initial call to gain backing device name for our container
                 container_dev = get_open_luks_container_dev(each_line)
                 # strip leading /dev/ from device name if any returned.
-                if container_dev is not "":
+                if container_dev != "":
                     container_dev = container_dev.split("/")[-1]
                     # should now have name without path ie 'vdd' ready to
                     # index our uuid_name_map.
@@ -348,7 +347,7 @@ def update_crypttab(uuid, keyfile_entry):
             if re.match("UUID=", line_fields[1]) is not None:
                 # we have our native UUID reference so split and compare
                 source_dev_fields = line_fields[1].split("=")
-                if len(source_dev_fields) is not 2:
+                if len(source_dev_fields) != 2:
                     # ie "UUID=" with no value which is non legit so skip
                     continue
                 # we should have a UUID=<something> entry so examine it
