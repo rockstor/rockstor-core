@@ -1294,16 +1294,6 @@ socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
-name = "urlobject"
-version = "2.1.1"
-description = "A utility class for manipulating URLs."
-optional = false
-python-versions = "*"
-files = [
-    {file = "URLObject-2.1.1.tar.gz", hash = "sha256:06462b6ab3968e7be99442a0ecaf20ac90fdf0c50dca49126019b7bf803b1d17"},
-]
-
-[[package]]
 name = "wheel"
 version = "0.45.1"
 description = "A built-package format for Python"
@@ -1441,4 +1431,4 @@ rpm = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "5c155bd2349615183842a6a8354470d5ff1be6007279440a048f5629ccf6ce55"
+content-hash = "d5e49161e77d4dc1fb988a524eabacc24fac3fa1e6d7109a57d800847a34b8a2"
