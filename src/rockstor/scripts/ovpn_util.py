@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -31,14 +30,14 @@ def initpki():
 
 
 def client_gen():
-    client_name = raw_input("Enter a name for the client(no spaces): ")  # noqa F821
+    client_name = input("Enter a name for the client(no spaces): ")  # noqa F821
     os.system(
         "%s -it %s easyrsa build-client-full %s nopass" % (CMD, image, client_name)
     )
 
 
 def client_retrieve():
-    client_name = raw_input(
+    client_name = input(
         "Enter the name of the client you like to retrieve: "
     )  # noqa F821 E501
     outfile = "/tmp/%s.ovpn" % client_name

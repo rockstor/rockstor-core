@@ -1,21 +1,22 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
-RockStor is free software; you can redistribute it and/or modify
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
-RockStor is distributed in the hope that it will be useful, but
+
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
+
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from rest_framework import status
-from mock import patch
+from unittest.mock import patch
 
 from storageadmin.tests.test_api import APITestMixin
 
@@ -27,11 +28,16 @@ Fixture creation instructions:
 - Create snapshot snap1 from share1 with uvisible False
 - Created snapshot snap2 from share2 with uvisible True
 
-bin/django dumpdata storageadmin.pool storageadmin.share storageadmin.snapshot \
+cd /opt/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin dumpdata storageadmin.pool storageadmin.share storageadmin.snapshot \
 --natural-foreign --indent 4 > \
 src/rockstor/storageadmin/fixtures/test_snapshot.json
 
-./bin/test -v 2 -p test_snapshot.py
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_snapshot.py
 """
 
 
@@ -82,6 +88,12 @@ class SnapshotTests(APITestMixin):
         cls.patch_create_clone = patch("storageadmin.views.snapshot." "create_clone")
         cls.mock_create_clone = cls.patch_create_clone.start()
 
+        cls.patch_refresh_nfs_exports = patch(
+            "storageadmin.views.snapshot.refresh_nfs_exports"
+        )
+        cls.mock_refresh_nfs_exports = cls.patch_refresh_nfs_exports.start()
+        cls.mock_refresh_nfs_exports.return_value = [""], [""], 0
+
     @classmethod
     def tearDownClass(cls):
         super(SnapshotTests, cls).tearDownClass()
@@ -123,7 +135,6 @@ class SnapshotTests(APITestMixin):
         e_msg = "Share with id ({}) does not exist.".format(share_id)
         self.assertEqual(response.data[0], e_msg)
 
-
     def test_post_requests_2(self):
         """
         1. Create snapshot providing invalid uvisible bool type
@@ -153,7 +164,8 @@ class SnapshotTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = "Element 'uvisible' must be a boolean, not (<type 'unicode'>)."
+        # Py3.6 defaults to class 'str' in our test data.
+        e_msg = "Element 'uvisible' must be a boolean, not (<class 'str'>)."
         self.assertEqual(response.data[0], e_msg)
 
         # Invalid writable bool type
@@ -177,9 +189,9 @@ class SnapshotTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        # TODO consider changing tested code to unify quota types to single
-        #  as per "Invalid uvisible bool type" to remove need for escaping here.
-        e_msg = 'Element "writable" must be a boolean, not ' "(<type 'unicode'>)."
+        # Py3.6 defaults to class 'str' in our test data.
+        # Maintaining type/class report in tested code as this can help with debugging.
+        e_msg = 'Element "writable" must be a boolean, not ' "(<class 'str'>)."
         self.assertEqual(response.data[0], e_msg)
 
         # # Happy Path creating a snapshot by name snap3
@@ -226,7 +238,6 @@ class SnapshotTests(APITestMixin):
         )
         self.assertEqual(response.data[0], e_msg)
 
-
     def test_clone_command(self):
 
         data = {"name": "clonesnap2"}
@@ -241,7 +252,6 @@ class SnapshotTests(APITestMixin):
             command="clone",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-
 
     def test_delete_requests(self):
         """
@@ -270,9 +280,9 @@ class SnapshotTests(APITestMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Delete snapshot in fixture - happy path
-        snap_name = 'snap2'
+        snap_name = "snap2"
         share_id = 3  # from fixture share_name = "share2"
         response = self.client.delete(
-            '{}/{}/snapshots/{}'.format(self.BASE_URL, share_id, snap_name))
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
+            "{}/{}/snapshots/{}".format(self.BASE_URL, share_id, snap_name)
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)

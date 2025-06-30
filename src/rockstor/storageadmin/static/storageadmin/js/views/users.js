@@ -3,15 +3,14 @@
  * @licstart  The following is the entire license notice for the 
  * JavaScript code in this page.
  * 
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
- * This file is part of RockStor.
+ * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
  * 
- * RockStor is free software; you can redistribute it and/or modify
+ * Rockstor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
  * 
- * RockStor is distributed in the hope that it will be useful, but
+ * Rockstor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -198,7 +197,7 @@ UsersView = RockstorLayoutView.extend({
             pins_string += '</tr>';
         }
         pins_string += '</tbody></table>';
-        $('#pins_list').html('Selectable Pincard pins:<br/>' + pins_string);
+        $('#pins_list').html('Text Table Pincard variant:<br/>' + pins_string);
         $('#pincard-modal').modal({
             keyboard: false,
             show: false,
@@ -245,11 +244,11 @@ UsersView = RockstorLayoutView.extend({
                         html += '<a href="#" class="delete-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>&nbsp;';
                     }
                     if (has_pincard && pincard_allowed == 'yes') {
-                        html += '<a href="#" class="add-pincard" data-username="' + filteredCollection[i].get('username') + '" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Pincard already present - Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
+                        html += '<a href="#" class="add-pincard" data-username="' + filteredCollection[i].get('username') + '" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Pincard exists. Click to renew. ALERT: VOIDS EXISTING CARD."><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
                     } else {
                         switch (pincard_allowed) {
                         case 'yes':
-                            html += '<a href="#" class="add-pincard" data-username="' + filteredCollection[i].get('username') + '" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="Click to generate a new Pincard"><i class="fa fa-credit-card text-success" aria-hidden="true"></i></a>';
+                            html += '<a href="#" class="add-pincard" data-username="' + filteredCollection[i].get('username') + '" data-uid="' + filteredCollection[i].get('uid') + '" rel="tooltip" title="No Pincard exists. Click to create a password reset Pincard."><i class="fa fa-credit-card text-danger" aria-hidden="true"></i></a>';
                             break;
                         case 'otp':
                             html += '<a href="#email" rel="tooltip" title="Pincard+OTP (One Time Password) via mail required, Email Alerts not enabled, click to procede"><i class="fa fa-credit-card text-warning" aria-hidden="true"></i></a>';

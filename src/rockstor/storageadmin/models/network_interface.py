@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -59,7 +58,7 @@ class NetworkConnection(models.Model):
     ipv6_dns_search = models.CharField(max_length=256, null=True)
 
     # slave connections have a master. eg: team
-    master = models.ForeignKey("NetworkConnection", null=True)
+    master = models.ForeignKey("NetworkConnection", null=True, on_delete=models.CASCADE)
 
     @property
     def ipaddr(self):
@@ -223,7 +222,7 @@ class NetworkDevice(models.Model):
 # This is the most common of connection types that uses NetworkInterface of
 # dtype=ethernet
 class EthernetConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.CASCADE)
     mac = models.CharField(max_length=64, null=True)
     cloned_mac = models.CharField(max_length=64, null=True)
     mtu = models.CharField(max_length=64, null=True)
@@ -233,7 +232,7 @@ class EthernetConnection(models.Model):
 
 
 class TeamConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.CASCADE)
     # eg: Team1
     name = models.CharField(max_length=64, null=True)
     # json config.
@@ -244,7 +243,7 @@ class TeamConnection(models.Model):
 
 
 class BondConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=64, null=True)
     # at the NM level it's not json like in team config, but we could convert
     # it for consistency.
@@ -255,7 +254,7 @@ class BondConnection(models.Model):
 
 
 class BridgeConnection(models.Model):
-    connection = models.ForeignKey(NetworkConnection, null=True)
+    connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.CASCADE)
     docker_name = models.CharField(max_length=64, null=True)
     usercon = models.BooleanField(default=False)
     aux_address = models.CharField(max_length=2048, null=True)

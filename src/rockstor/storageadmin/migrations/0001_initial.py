@@ -94,7 +94,7 @@ class Migration(migrations.Migration):
                 ('val', models.CharField(max_length=1024, null=True)),
                 ('description', models.CharField(max_length=2048, null=True)),
                 ('label', models.CharField(max_length=64, null=True)),
-                ('container', models.ForeignKey(to='storageadmin.DContainer')),
+                ('container', models.ForeignKey(to='storageadmin.DContainer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -102,8 +102,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=64, null=True)),
-                ('destination', models.ForeignKey(related_name='destination_container', to='storageadmin.DContainer')),
-                ('source', models.OneToOneField(to='storageadmin.DContainer')),
+                ('destination', models.ForeignKey(related_name='destination_container', to='storageadmin.DContainer', on_delete=models.CASCADE)),
+                ('source', models.OneToOneField(to='storageadmin.DContainer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -155,7 +155,7 @@ class Migration(migrations.Migration):
                 ('protocol', models.CharField(max_length=32, null=True)),
                 ('uiport', models.BooleanField(default=False)),
                 ('label', models.CharField(max_length=1024, null=True)),
-                ('container', models.ForeignKey(to='storageadmin.DContainer')),
+                ('container', models.ForeignKey(to='storageadmin.DContainer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -167,7 +167,7 @@ class Migration(migrations.Migration):
                 ('description', models.CharField(max_length=1024, null=True)),
                 ('min_size', models.IntegerField(null=True)),
                 ('label', models.CharField(max_length=1024, null=True)),
-                ('container', models.ForeignKey(to='storageadmin.DContainer')),
+                ('container', models.ForeignKey(to='storageadmin.DContainer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -244,7 +244,7 @@ class Migration(migrations.Migration):
                 ('ipv6_gw', models.CharField(max_length=64, null=True)),
                 ('ipv6_dns', models.CharField(max_length=256, null=True)),
                 ('ipv6_dns_search', models.CharField(max_length=256, null=True)),
-                ('master', models.ForeignKey(to='storageadmin.NetworkConnection', null=True)),
+                ('master', models.ForeignKey(to='storageadmin.NetworkConnection', null=True, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -284,7 +284,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(unique=True, max_length=128)),
-                ('application', models.OneToOneField(to=settings.OAUTH2_PROVIDER_APPLICATION_MODEL)),
+                ('application', models.OneToOneField(to=settings.OAUTH2_PROVIDER_APPLICATION_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -332,7 +332,7 @@ class Migration(migrations.Migration):
                 ('start_time', models.DateTimeField(auto_now=True)),
                 ('end_time', models.DateTimeField(null=True)),
                 ('percent_done', models.IntegerField(default=0)),
-                ('pool', models.ForeignKey(to='storageadmin.Pool')),
+                ('pool', models.ForeignKey(to='storageadmin.Pool', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -358,7 +358,7 @@ class Migration(migrations.Migration):
                 ('unverified_errors', models.IntegerField(default=0)),
                 ('corrected_errors', models.IntegerField(default=0)),
                 ('last_physical', models.BigIntegerField(default=0)),
-                ('pool', models.ForeignKey(to='storageadmin.Pool')),
+                ('pool', models.ForeignKey(to='storageadmin.Pool', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -442,7 +442,7 @@ class Migration(migrations.Migration):
                 ('compression_algo', models.CharField(max_length=1024, null=True)),
                 ('rusage', models.BigIntegerField(default=0)),
                 ('eusage', models.BigIntegerField(default=0)),
-                ('pool', models.ForeignKey(to='storageadmin.Pool')),
+                ('pool', models.ForeignKey(to='storageadmin.Pool', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -515,7 +515,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('toc', models.DateTimeField(auto_now=True)),
-                ('disk', models.ForeignKey(to='storageadmin.Disk')),
+                ('disk', models.ForeignKey(to='storageadmin.Disk', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -528,7 +528,7 @@ class Migration(migrations.Migration):
                 ('pct_completed', models.IntegerField()),
                 ('lifetime_hours', models.IntegerField()),
                 ('lba_of_first_error', models.CharField(max_length=1024)),
-                ('info', models.ForeignKey(to='storageadmin.SMARTInfo')),
+                ('info', models.ForeignKey(to='storageadmin.SMARTInfo', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -536,7 +536,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('line', models.CharField(max_length=128)),
-                ('info', models.ForeignKey(to='storageadmin.SMARTInfo')),
+                ('info', models.ForeignKey(to='storageadmin.SMARTInfo', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -553,7 +553,7 @@ class Migration(migrations.Migration):
                 ('snap_type', models.CharField(default=b'admin', max_length=64)),
                 ('rusage', models.BigIntegerField(default=0)),
                 ('eusage', models.BigIntegerField(default=0)),
-                ('share', models.ForeignKey(to='storageadmin.Share')),
+                ('share', models.ForeignKey(to='storageadmin.Share', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -572,7 +572,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=64, null=True)),
                 ('config', models.CharField(max_length=2048, null=True)),
-                ('connection', models.ForeignKey(to='storageadmin.NetworkConnection', null=True)),
+                ('connection', models.ForeignKey(to='storageadmin.NetworkConnection', null=True, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -593,7 +593,7 @@ class Migration(migrations.Migration):
                 ('url', models.CharField(max_length=512)),
                 ('password', models.CharField(max_length=64, null=True)),
                 ('status', models.CharField(max_length=64)),
-                ('appliance', models.ForeignKey(to='storageadmin.Appliance')),
+                ('appliance', models.ForeignKey(to='storageadmin.Appliance', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -608,55 +608,55 @@ class Migration(migrations.Migration):
                 ('homedir', models.CharField(max_length=1024, null=True)),
                 ('email', models.CharField(blank=True, max_length=1024, null=True, validators=[django.core.validators.EmailValidator()])),
                 ('admin', models.BooleanField(default=True)),
-                ('group', models.ForeignKey(blank=True, to='storageadmin.Group', null=True)),
+                ('group', models.ForeignKey(blank=True, to='storageadmin.Group', null=True, on_delete=models.CASCADE)),
                 ('smb_shares', models.ManyToManyField(related_name='admin_users', null=True, to='storageadmin.SambaShare')),
-                ('user', models.OneToOneField(related_name='suser', null=True, blank=True, to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(related_name='suser', null=True, blank=True, to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.AddField(
             model_name='smartidentity',
             name='info',
-            field=models.ForeignKey(to='storageadmin.SMARTInfo'),
+            field=models.ForeignKey(to='storageadmin.SMARTInfo', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='smarterrorlogsummary',
             name='info',
-            field=models.ForeignKey(to='storageadmin.SMARTInfo'),
+            field=models.ForeignKey(to='storageadmin.SMARTInfo', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='smarterrorlog',
             name='info',
-            field=models.ForeignKey(to='storageadmin.SMARTInfo'),
+            field=models.ForeignKey(to='storageadmin.SMARTInfo', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='smartcapability',
             name='info',
-            field=models.ForeignKey(to='storageadmin.SMARTInfo'),
+            field=models.ForeignKey(to='storageadmin.SMARTInfo', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='smartattribute',
             name='info',
-            field=models.ForeignKey(to='storageadmin.SMARTInfo'),
+            field=models.ForeignKey(to='storageadmin.SMARTInfo', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='sftp',
             name='share',
-            field=models.OneToOneField(to='storageadmin.Share'),
+            field=models.OneToOneField(to='storageadmin.Share', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='sambashare',
             name='share',
-            field=models.OneToOneField(related_name='sambashare', to='storageadmin.Share'),
+            field=models.OneToOneField(related_name='sambashare', to='storageadmin.Share', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='sambacustomconfig',
             name='smb_share',
-            field=models.ForeignKey(to='storageadmin.SambaShare'),
+            field=models.ForeignKey(to='storageadmin.SambaShare', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='posixacls',
             name='smb_share',
-            field=models.ForeignKey(to='storageadmin.SambaShare'),
+            field=models.ForeignKey(to='storageadmin.SambaShare', on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='pincard',
@@ -665,42 +665,42 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='oauthapp',
             name='user',
-            field=models.ForeignKey(to='storageadmin.User'),
+            field=models.ForeignKey(to='storageadmin.User', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='nfsexport',
             name='export_group',
-            field=models.ForeignKey(to='storageadmin.NFSExportGroup'),
+            field=models.ForeignKey(to='storageadmin.NFSExportGroup', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='nfsexport',
             name='share',
-            field=models.ForeignKey(to='storageadmin.Share'),
+            field=models.ForeignKey(to='storageadmin.Share', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='netatalkshare',
             name='share',
-            field=models.OneToOneField(related_name='netatalkshare', to='storageadmin.Share'),
+            field=models.OneToOneField(related_name='netatalkshare', to='storageadmin.Share', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='iscsitarget',
             name='share',
-            field=models.ForeignKey(to='storageadmin.Share'),
+            field=models.ForeignKey(to='storageadmin.Share', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='installedplugin',
             name='plugin_meta',
-            field=models.ForeignKey(to='storageadmin.Plugin'),
+            field=models.ForeignKey(to='storageadmin.Plugin', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='ethernetconnection',
             name='connection',
-            field=models.ForeignKey(to='storageadmin.NetworkConnection', null=True),
+            field=models.ForeignKey(to='storageadmin.NetworkConnection', null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='dvolume',
             name='share',
-            field=models.ForeignKey(to='storageadmin.Share', null=True),
+            field=models.ForeignKey(to='storageadmin.Share', null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='disk',
@@ -710,32 +710,32 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='dcustomconfig',
             name='rockon',
-            field=models.ForeignKey(to='storageadmin.RockOn'),
+            field=models.ForeignKey(to='storageadmin.RockOn', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='dcontainer',
             name='dimage',
-            field=models.ForeignKey(to='storageadmin.DImage'),
+            field=models.ForeignKey(to='storageadmin.DImage', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='dcontainer',
             name='rockon',
-            field=models.ForeignKey(to='storageadmin.RockOn'),
+            field=models.ForeignKey(to='storageadmin.RockOn', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='dashboardconfig',
             name='user',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, unique=True),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, unique=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='containeroption',
             name='container',
-            field=models.ForeignKey(to='storageadmin.DContainer'),
+            field=models.ForeignKey(to='storageadmin.DContainer', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='bondconnection',
             name='connection',
-            field=models.ForeignKey(to='storageadmin.NetworkConnection', null=True),
+            field=models.ForeignKey(to='storageadmin.NetworkConnection', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='snapshot',

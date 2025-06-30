@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -23,8 +22,8 @@ from tempfile import mkstemp
 
 import distro
 
-from exceptions import CommandException
-from osi import run_command, get_base_device_byid, get_device_path
+from system.exceptions import CommandException
+from system.osi import run_command, get_base_device_byid, get_device_path
 from system.email_util import email_root
 
 logger = logging.getLogger(__name__)
@@ -97,7 +96,7 @@ def extended_info(device, custom_options="", test_mode=TESTMODE):
     Attribute name.
 
     :param device: disk device name
-    :param testmode: Not True causes cat from file rather than smartctl command
+    :param test_mode: Not True causes cat from file rather than smartctl command
     :return: dictionary of smart attributes extracted from device or test file
 
     """
@@ -440,16 +439,15 @@ def get_dev_options(dev_byid, custom_options=""):
         dev_options = [get_device_path(get_base_device_byid(dev_byid, TESTMODE))]
     else:
         # Convert string of custom options into a list ready for run_command
-        # TODO: think this ascii should be utf-8 as that's kernel standard
-        # TODO: or just use str(custom_options).split()
-        dev_options = custom_options.encode("ascii").split()
+        dev_options = custom_options.encode("utf-8").split()
         # Remove Rockstor native 'autodev' custom smart option raid dev target.
         # As we automatically add the full path by-id if a raid controller
         # target dev is not found, we can simply remove this option.
         # N.B. here we assume there is either 'autodev' or a specified target:
         # input validation was tested to reject both being entered.
+        # TODO: Needs validation post Preliminary python 3.6 port
         if "autodev" in dev_options:
-            dev_options.remove("autodev")
+            dev_options.remove(b"autodev")
         # If our custom options don't contain a raid controller target then add
         # the full path to our base device as our last device specific option.
         if re.search("/dev/tw|/dev/cciss/c|/dev/sg|/dev/sd", custom_options) is None:

@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -23,7 +22,7 @@ import json
 import base64
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
-from base_console import BaseConsole
+from cli.base_console import BaseConsole
 from storageadmin.models import OauthApp
 from django.conf import settings
 
@@ -43,13 +42,13 @@ def set_token(client_id=None, client_secret=None, url=None, logger=None):
         "client_id": client_id,
         "client_secret": client_secret,
     }
-    user_pass = "{0}:{1}".format(client_id, client_secret)
+    user_pass = f"{client_id}:{client_secret}"
     auth_string = base64.b64encode(user_pass.encode("utf-8"))
     auth_headers = {
         "HTTP_AUTHORIZATION": "Basic " + auth_string.decode("utf-8"),
     }
     response = requests.post(
-        "%s/o/token/" % url, data=token_request_data, headers=auth_headers, verify=False
+        "%s/o/token/" % url, data=token_request_data, headers=auth_headers, verify=False, timeout=5,
     )
     try:
         content = json.loads(response.content.decode("utf-8"))

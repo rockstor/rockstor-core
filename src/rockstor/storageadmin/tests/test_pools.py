@@ -1,23 +1,22 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 from django.conf import settings
 from rest_framework import status
-from mock import patch
+from unittest.mock import patch
 
 import fs.btrfs
 from storageadmin.models import Disk, Pool, PoolBalance
@@ -442,6 +441,7 @@ class PoolTests(APITestMixin):
         - enable zlib
         - disable lzo - compression-test-pool
         - enable lzo
+        - change compression from lzo to zstd - compression-test-pool
         """
 
         # create pool with invalid compression
@@ -453,7 +453,7 @@ class PoolTests(APITestMixin):
         }
         e_msg = (
             "Unsupported compression algorithm (derp). "
-            "Use one of ('lzo', 'zlib', 'no')."
+            "Use one of ('zlib', 'lzo', 'zstd', 'no')."
         )
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -541,6 +541,15 @@ class PoolTests(APITestMixin):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data["compression"], "lzo")
+
+        # change compression from lzo to zstd on compression-test-pool
+        comp_zstd = {"compression": "zstd"}
+        # call remount pool command with new compression setting request (put)
+        response = self.client.put(
+            "{}/{}/remount".format(self.BASE_URL, pId), data=comp_zstd
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data["compression"], "zstd")
 
     def test_mount_options(self):
         """
@@ -658,7 +667,7 @@ class PoolTests(APITestMixin):
 
         # test invalid compress-force applied via remount command
         data2 = {"mnt_options": "compress-force=1"}
-        e_msg = "compress-force is only allowed with ('lzo', 'zlib', 'no')."
+        e_msg = "compress-force is only allowed with ('zlib', 'lzo', 'zstd', 'no')."
         response = self.client.put(
             "{}/{}/remount".format(self.BASE_URL, pId), data=data2
         )

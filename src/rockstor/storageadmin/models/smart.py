@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -21,7 +20,7 @@ from storageadmin.models import Disk
 
 
 class SMARTCapability(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     flag = models.CharField(max_length=64)
     capabilities = models.CharField(max_length=2048)
@@ -31,7 +30,7 @@ class SMARTCapability(models.Model):
 
 
 class SMARTAttribute(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.CASCADE)
     aid = models.IntegerField()
     name = models.CharField(max_length=256)
     flag = models.CharField(max_length=64)
@@ -48,7 +47,7 @@ class SMARTAttribute(models.Model):
 
 
 class SMARTErrorLog(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.CASCADE)
     line = models.CharField(max_length=128)
 
     class Meta:
@@ -56,7 +55,7 @@ class SMARTErrorLog(models.Model):
 
 
 class SMARTErrorLogSummary(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.CASCADE)
     error_num = models.IntegerField()
     lifetime_hours = models.IntegerField()
     state = models.CharField(max_length=64)
@@ -68,7 +67,7 @@ class SMARTErrorLogSummary(models.Model):
 
 
 class SMARTTestLog(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.CASCADE)
     test_num = models.IntegerField()
     description = models.CharField(max_length=64)
     status = models.CharField(max_length=256)
@@ -81,7 +80,7 @@ class SMARTTestLog(models.Model):
 
 
 class SMARTTestLogDetail(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.CASCADE)
     line = models.CharField(max_length=128)
 
     class Meta:
@@ -89,7 +88,7 @@ class SMARTTestLogDetail(models.Model):
 
 
 class SMARTIdentity(models.Model):
-    info = models.ForeignKey("SMARTInfo")
+    info = models.ForeignKey("SMARTInfo", on_delete=models.CASCADE)
     CHOICES = [
         ("Model Family",) * 2,
         ("Device Model",) * 2,
@@ -129,7 +128,7 @@ class SMARTIdentity(models.Model):
 
 
 class SMARTInfo(models.Model):
-    disk = models.ForeignKey(Disk)
+    disk = models.ForeignKey(Disk, on_delete=models.CASCADE)
     toc = models.DateTimeField(auto_now=True)
 
     class Meta:

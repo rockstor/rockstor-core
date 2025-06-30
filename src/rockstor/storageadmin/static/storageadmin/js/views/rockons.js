@@ -3,15 +3,14 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
- * This file is part of RockStor.
+ * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
  *
- * RockStor is free software; you can redistribute it and/or modify
+ * Rockstor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
  *
- * RockStor is distributed in the hope that it will be useful, but
+ * Rockstor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -622,10 +621,13 @@ RockonShareChoice = RockstorWizardPage.extend({
             this.validator.showErrors();
             return $.Deferred().reject();
         }
-
         var share_map = {};
         var volumes = this.volumes.filter(function(volume) {
-            share_map[this.$('#' + volume.id).val()] = volume.get('dest_dir');
+            co_id = volume.get('container');
+            if(share_map[co_id] === undefined ) {
+                share_map[co_id] = {};
+            }
+            share_map[co_id][this.$('#' + volume.id).val()] = volume.get('dest_dir');
             return volume;
         }, this);
         this.model.set('share_map', share_map);
@@ -807,7 +809,11 @@ RockonEnvironment = RockonCustomChoice.extend({
         }
         var env_map = {};
         var envars = this.custom_config.filter(function(cvar) {
-            env_map[cvar.get('key')] = this.$('#' + cvar.id).val();
+            co_id = cvar.get('container');
+            if(env_map[co_id] == undefined) {
+                env_map[co_id] = {};
+            }
+            env_map[co_id][cvar.get('key')] = this.$('#' + cvar.id).val();
             return cvar;
         }, this);
         this.model.set('env_map', env_map);
@@ -834,12 +840,24 @@ RockonInstallSummary = RockstorWizardPage.extend({
 
     render: function() {
         RockstorWizardPage.prototype.render.apply(this, arguments);
+        var container_env_map = {};
+        for (const [container, container_envs] of Object.entries(this.env_map)) {
+            for (const [env, value] of Object.entries(container_envs)) {
+                container_env_map[`${env}:container-id:${container}`] = value
+            }
+        }
+        var container_share_map = {};
+        for (const [container, container_shares] of Object.entries(this.share_map)) {
+            for (const [share, value] of Object.entries(container_shares)) {
+                container_share_map[`${share}:container-id:${container}`] = value
+            }
+        }
         this.$('#ph-summary-table').html(this.table_template({
-            share_map: this.share_map,
+            share_map: container_share_map,
             port_map: this.port_map,
             cc_map: this.cc_map,
             dev_map: this.dev_map,
-            env_map: this.env_map
+            env_map: container_env_map
         }));
         return this;
     },
@@ -1599,20 +1617,20 @@ RockonSettingsSummary = RockstorWizardPage.extend({
     initHandlebarHelpers: function() {
         Handlebars.registerHelper('display_newVolumes', function() {
             // Display newly-defined shares and their corresponding mapping
-            // for confimation before submit in settings_summary_table.jst
+            // for confirmation before submit in settings_summary_table.jst
             var html = '';
             for (share in this.new_volumes) {
                 html += '<tr>';
                 html += '<td>Share</td>';
-                html += '<td>' + this.new_volumes[share] + '</td>';
                 html += '<td>' + share + '</td>';
+                html += '<td>' + this.new_volumes[share] + '</td>';
                 html += '</tr>';
             }
             return new Handlebars.SafeString(html);
         });
         Handlebars.registerHelper('display_newLabels', function() {
             // Display newly-defined labels and their corresponding container
-            // for confimation before submit in settings_summary_table.jst
+            // for confirmation before submit in settings_summary_table.jst
             var html = '';
             for (new_label in this.new_labels) {
                 html += '<tr>';

@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -201,7 +200,7 @@ def update_postfix(smtp_server, port, revert=False):
                 # "inet_protocols = all" as we need this to be:
                 # "inet_protocols = ipv4" as our NetworkManager is ipv4 only.
                 # Or if we find duplicates of our to-be-installed settings;
-                if len(line) > 0 and line[0] is not "#":
+                if len(line) > 0 and line[0] != "#":
                     # TODO: Revert ipv4 only once network config is ipv6 aware.
                     if re.match("inet_protocols = all", line) is not None:
                         tfo.write("inet_protocols = ipv4\n")

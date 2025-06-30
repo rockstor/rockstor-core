@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -21,6 +20,7 @@ import logging
 import os
 import re
 import fnmatch
+import time
 
 import requests
 from django.db import transaction
@@ -43,7 +43,7 @@ from storageadmin.models import (
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from rockon_helpers import rockon_status
+from storageadmin.views.rockon_helpers import rockon_status
 from system.docker import docker_status
 from huey.contrib.djhuey import HUEY
 from django.conf import settings
@@ -432,7 +432,7 @@ class RockOnView(rfc.GenericView):
         return sorted_keys
 
     def _update_model(self, modelinst, ad):
-        for k, v in ad.iteritems():
+        for k, v in iter(ad.items()):
             setattr(modelinst, k, v)
         modelinst.save()
 
@@ -482,28 +482,32 @@ class RockOnView(rfc.GenericView):
 
         url_root = ROCKONS.get("remote_metastore")
         remote_root = "{}/{}".format(url_root, ROCKONS.get("remote_root"))
-        msg = "Error while processing remote metastore at ({}).".format(remote_root)
+        msg = f"Error while processing remote metastore at ({remote_root})."
         with self._handle_exception(self.request, msg=msg):
-            response = requests.get(remote_root, timeout=10)
+            response = requests.get(remote_root, timeout=5)
             if response.status_code != 200:
                 response.raise_for_status()
             root = response.json()
 
         meta_cfg = {}
-        for k, v in root.items():
-            cur_meta_url = "{}/{}".format(url_root, v)
-            msg = "Error while processing Rock-on profile at ({}).".format(cur_meta_url)
-            with self._handle_exception(self.request, msg=msg):
-                cur_res = requests.get(cur_meta_url, timeout=10)
-                if cur_res.status_code != 200:
-                    cur_res.raise_for_status()
-                meta_cfg.update(cur_res.json())
+        start_t = time.perf_counter()
+        with requests.Session() as session:
+            for k, v in root.items():
+                cur_meta_url = f"{url_root}/{v}"
+                msg = f"Error while processing Rock-on profile at ({cur_meta_url})."
+                with self._handle_exception(self.request, msg=msg):
+                    cur_res = session.get(cur_meta_url, timeout=5)
+                    if cur_res.status_code != 200:
+                        cur_res.raise_for_status()
+                    meta_cfg.update(cur_res.json())
+        end_t = time.perf_counter()
+        logger.info(f"Rock-on definitions retrieved in: {end_t - start_t:0.2f} seconds.")
 
         local_root = ROCKONS.get("local_metastore")
         if os.path.isdir(local_root):
             for f in fnmatch.filter(os.listdir(local_root), '*.json'):
-                fp = "{}/{}".format(local_root, f)
-                msg = "Error while processing Rock-on profile at ({}).".format(fp)
+                fp = f"{local_root}/{f}"
+                msg = f"Error while processing Rock-on profile at ({fp})."
                 with self._handle_exception(self.request, msg=msg):
                     with open(fp) as fo:
                         ds = json.load(fo)

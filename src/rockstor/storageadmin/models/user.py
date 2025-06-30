@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2023 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -18,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import grp
 
-import chardet
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from django.core.validators import validate_email
@@ -29,7 +27,7 @@ from system.users import ifp_get_properties_from_name_or_id
 
 
 class User(models.Model):
-    user = models.OneToOneField(DjangoUser, null=True, blank=True, related_name="suser")
+    user = models.OneToOneField(DjangoUser, null=True, blank=True, related_name="suser", on_delete=models.CASCADE)
     username = models.CharField(max_length=4096, unique=True, default="")
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
@@ -42,7 +40,7 @@ class User(models.Model):
     )
     # 'admin' field represents indicator of Rockstor web admin capability.
     admin = models.BooleanField(default=True)
-    group = models.ForeignKey(Group, null=True, blank=True)
+    group = models.ForeignKey(Group, null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def groupname(self, *args, **kwargs):
@@ -58,8 +56,6 @@ class User(models.Model):
         if self.gid is not None:
             try:
                 groupname = grp.getgrgid(self.gid).gr_name
-                charset = chardet.detect(groupname)
-                groupname = groupname.decode(charset["encoding"])
                 return groupname
             except KeyError:
                 # Failed to fetch user using grp, so let's try with InfoPipe

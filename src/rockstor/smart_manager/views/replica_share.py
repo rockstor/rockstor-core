@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -23,8 +22,7 @@ from storageadmin.models import Share, Appliance
 from smart_manager.models import ReplicaShare, ReceiveTrail
 from smart_manager.serializers import ReplicaShareSerializer
 from storageadmin.util import handle_exception
-from datetime import datetime
-from django.utils.timezone import utc
+from datetime import datetime, timezone
 import rest_framework_custom as rfc
 
 
@@ -46,7 +44,7 @@ class ReplicaShareListView(rfc.GenericView):
         aip = request.data["appliance"]
         self._validate_appliance(aip, request)
         src_share = request.data["src_share"]
-        ts = datetime.utcnow().replace(tzinfo=utc)
+        ts = datetime.utcnow().replace(tzinfo=timezone.utc)
         r = ReplicaShare(
             share=sname, appliance=aip, pool=share.pool.name, src_share=src_share, ts=ts
         )

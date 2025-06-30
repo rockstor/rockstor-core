@@ -1,0 +1,112 @@
+[
+{
+    "model": "storageadmin.pool",
+    "pk": 11,
+    "fields": {
+        "name": "rock-pool",
+        "uuid": "26e1fb5e-65fc-43e1-8054-60ccec189243",
+        "size": 10485760,
+        "raid": "single-dup",
+        "toc": "2024-11-06T16:05:29.817Z",
+        "compression": "no",
+        "mnt_options": null,
+        "role": null
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 21,
+    "fields": {
+        "pool": 11,
+        "qgroup": "0/463",
+        "pqgroup": "2015/3",
+        "name": "share-nfs",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2024-11-06T16:05:29.894Z",
+        "subvol_name": "share-nfs",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
+},
+{
+    "model": "storageadmin.share",
+    "pk": 22,
+    "fields": {
+        "pool": 11,
+        "qgroup": "0/464",
+        "pqgroup": "2015/4",
+        "name": "share2",
+        "uuid": null,
+        "size": 1048576,
+        "owner": "root",
+        "group": "root",
+        "perms": "755",
+        "toc": "2024-11-06T16:05:29.918Z",
+        "subvol_name": "share2",
+        "replica": false,
+        "compression_algo": "no",
+        "rusage": 16,
+        "eusage": 16,
+        "pqgroup_rusage": 16,
+        "pqgroup_eusage": 16
+    }
+},
+{
+    "model": "storageadmin.nfsexport",
+    "pk": 3,
+    "fields": {
+        "export_group": 3,
+        "share": 21,
+        "mount": "/export/share-nfs"
+    }
+},
+{
+    "model": "storageadmin.nfsexportgroup",
+    "pk": 3,
+    "fields": {
+        "host_str": "*",
+        "editable": "rw",
+        "syncable": "async",
+        "mount_security": "insecure",
+        "nohide": false,
+        "enabled": true,
+        "admin_host": null
+    }
+},
+{
+    "model": "storageadmin.user",
+    "pk": 1,
+    "fields": {
+        "user": [
+            "admin"
+        ],
+        "username": "admin",
+        "uid": 1000,
+        "gid": 100,
+        "public_key": null,
+        "shell": "/bin/bash",
+        "homedir": "/home/admin",
+        "email": null,
+        "admin": true,
+        "group": 1,
+        "smb_shares": []
+    }
+},
+{
+    "model": "storageadmin.group",
+    "pk": 1,
+    "fields": {
+        "gid": 100,
+        "groupname": "users",
+        "admin": true
+    }
+}
+]

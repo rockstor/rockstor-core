@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -20,30 +19,36 @@ import requests
 import time
 import json
 import base64
+from settings import CLIENT_SECRET
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import OauthApp
 from django.conf import settings
 
 
 class APIWrapper(object):
-    def __init__(self, client_id=None, client_secret=None, url=None):
+    def __init__(self, client_id=None, client_secret=CLIENT_SECRET, url=None):
         self.access_token = None
         self.expiration = time.time()
         self.client_id = client_id
         self.client_secret = client_secret
         # directly connect to gunicorn, bypassing nginx as we are on the same
         # host.
+        # TODO: Move to unix socket.
         self.url = "http://127.0.0.1:8000"
         if url is not None:
             # for remote urls.
             self.url = url
 
     def set_token(self):
-        if self.client_id is None or self.client_secret is None:
+        if self.client_id is None:
             app = OauthApp.objects.get(name=settings.OAUTH_INTERNAL_APP)
             self.client_id = app.application.client_id
-            self.client_secret = app.application.client_secret
+            self.client_secret = CLIENT_SECRET
+            app.application.client_secret = CLIENT_SECRET
+            app.application.save()
+            app.save()
 
+        # https://django-oauth-toolkit.readthedocs.io/en/latest/getting_started.html#client-credential
         token_request_data = {
             "grant_type": "client_credentials",
             "client_id": self.client_id,
@@ -62,14 +67,15 @@ class APIWrapper(object):
                 data=token_request_data,
                 headers=auth_headers,
                 verify=False,
+                timeout=2,
             )
             content = json.loads(response.content.decode("utf-8"))
             self.access_token = content["access_token"]
             self.expiration = int(time.time()) + content["expires_in"] - 600
         except Exception as e:
             msg = (
-                "Exception while setting access_token for url(%s): %s. "
-                "content: %s" % (self.url, e.__str__(), content)
+                f"Exception while setting access_token for url({self.url}): {e.__str__()}. "
+                f"content: {content}"
             )
             raise Exception(msg)
 

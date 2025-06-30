@@ -42,3 +42,25 @@ node_modules/
 
 # VS Code
 .vscode
+
+# Rockstor build
+.initrock
+PKG-INFO
+certs/
+jslibs/
+poetry-install.txt
+rockstor-jslibs.tar.gz*
+rockstor-tasks-huey.db*
+/static/
+
+# Rockstor error tgz
+/src/rockstor/logs/error.tgz
+# Rockstor docker
+/conf/docker-daemon.json
+
+# Poetry error logs
+poetry-installer-error*
+/build-output.txt
+
+# Pyenv version
+.python-version

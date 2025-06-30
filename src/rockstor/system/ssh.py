@@ -1,6 +1,5 @@
 """
-Copyright (c) 2012-2023 Rockstor, Inc. <https://rockstor.com>
-This file is part of Rockstor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -19,7 +18,6 @@ import collections
 import logging
 import os
 import re
-import platform
 import shutil
 import stat
 from shutil import move, copy
@@ -28,7 +26,7 @@ from tempfile import mkstemp
 import distro
 from django.conf import settings
 
-from system.osi import run_command
+from system.osi import run_command, get_libs
 from system.constants import (
     MKDIR,
     MOUNT,
@@ -65,6 +63,12 @@ SSHD_CONFIG = {
         AllowUsers="/etc/ssh/sshd_config",
     ),
     # Newer overload  - type files
+    "opensuse-slowroll": sshd_files(
+        sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
+        sshd_os="/usr/etc/ssh/sshd_config",
+        sftp="/etc/ssh/sshd_config.d/rockstor-sftp.conf",
+        AllowUsers="/etc/ssh/sshd_config.d/rockstor-AllowUsers.conf",
+    ),
     "opensuse-tumbleweed": sshd_files(
         sshd="/etc/ssh/sshd_config.d/rockstor-sshd.conf",
         sshd_os="/usr/etc/ssh/sshd_config",
@@ -73,44 +77,47 @@ SSHD_CONFIG = {
     ),
 }
 
+PROGS_IN_CHROOT = ["/usr/bin/bash", "/usr/bin/rsync", "/usr/bin/ls"]
+
+
+def sshd_config_opener(path, flags):
+    return os.open(path, flags, mode=stat.S_IRUSR | stat.S_IWUSR)
+
 
 def init_sftp_config(sshd_config=None):
     """
     Establish our default sftp configuration within the distro specific file
     or a file passed by full path.
     :param sshd_config:
-    :return: True if file found and alterations were made, False otherwise.
+    :return: True if sshd configuration was modified, False otherwise.
     :rtype boolean:
     """
     if sshd_config is None:
         sshd_config = SSHD_CONFIG[distro.id()].sftp
     sshd_restart = False
+    found = False
     if not os.path.isfile(sshd_config):
         logger.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
-    # Set AllowUsers and Subsystem sftp-internal if not already in-place.
-    # N.B. opening mode "a+" creates this file if it doesn't exist - rw either way.
-    # Post Python 3, consider build-in open with custom opener.
-    with os.fdopen(
-        os.open(sshd_config, os.O_RDWR | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), "a+"
-    ) as sfo:
-        found = False
-        for line in sfo.readlines():
-            if (
-                re.match(SSHD_HEADER, line) is not None
-                or re.match("AllowUsers ", line) is not None
-                or re.match(INTERNAL_SFTP_STR, line) is not None
-            ):
-                found = True
-                logger.info("SSHD ({}) already initialised".format(sshd_config))
-                break
-        if not found:
+    else:
+        with open(sshd_config, encoding="utf-8") as sfo:
+            for line in sfo.readlines():
+                if line.startswith(SSHD_HEADER):
+                    found = True
+                    logger.info("SSHD ({}) already initialised".format(sshd_config))
+                    break
+    if not found:
+        # Set initial AllowUsers and Subsystem sftp-internal configuration.
+        # N.B. opening mode append with create-file if it doesn't exist.
+        with open(
+            sshd_config, mode="a+", encoding="utf-8", opener=sshd_config_opener
+        ) as sfo:
             sshd_restart = True
             sfo.write("{}\n".format(SSHD_HEADER))
             sfo.write("{}\n".format(INTERNAL_SFTP_STR))
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
             if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
                 sfo.write("AllowUsers root\n")
-            logger.info("SSHD ({}) initialised".format(sshd_config))
+        logger.info("SSHD ({}) initialised".format(sshd_config))
     return sshd_restart
 
 
@@ -231,76 +238,25 @@ def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable="rw"):
 
 
 def rsync_for_sftp(chroot_loc):
+    """
+    Populate passed chroot_loc path with libraries sufficient for PROGS_IN_CHROOT.
+    Dependencies retrieved via ldd.
+    """
     user = chroot_loc.split("/")[-1]
-    run_command([MKDIR, "-p", "{}/bin".format(chroot_loc)], log=True)
-    run_command([MKDIR, "-p", "{}/usr/bin".format(chroot_loc)], log=True)
-    run_command([MKDIR, "-p", "{}/lib64".format(chroot_loc)], log=True)
-    run_command([MKDIR, "-p", "{}/usr/lib64".format(chroot_loc)], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/usr/bin"], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/lib"], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/lib64"], log=True)
+    run_command([MKDIR, "-p", f"{chroot_loc}/usr/lib64"], log=True)
 
-    copy("/bin/bash", "{}/bin".format(chroot_loc))
-    copy("/usr/bin/rsync", "{}/usr/bin".format(chroot_loc))
-
-    ld_linux_so = "/lib64/ld-linux-x86-64.so.2"
-    if platform.machine() == "aarch64":
-        ld_linux_so = "/lib64/ld-linux-aarch64.so.1"
-
-    libs_d = {
-        "rockstor": [
-            ld_linux_so,
-            "/lib64/libacl.so.1",
-            "/lib64/libattr.so.1",
-            "/lib64/libc.so.6",
-            "/lib64/libdl.so.2",
-            "/lib64/libpopt.so.0",
-            "/lib64/libtinfo.so.5",
-        ],
-        # Account for distro 1.7.0 onwards reporting "opensuse" for id in opensuse-leap.
-        "opensuse": [
-            "/lib64/libacl.so.1",
-            "/lib64/libz.so.1",
-            "/usr/lib64/libpopt.so.0",
-            "/usr/lib64/libslp.so.1",
-            "/lib64/libc.so.6",
-            "/lib64/libattr.so.1",
-            "/usr/lib64/libcrypto.so.1.1",
-            "/lib64/libpthread.so.0",
-            ld_linux_so,
-            "/lib64/libdl.so.2",
-            "/lib64/libreadline.so.7",
-            "/lib64/libtinfo.so.6",
-        ],
-        "opensuse-leap": [
-            "/lib64/libacl.so.1",
-            "/lib64/libz.so.1",
-            "/usr/lib64/libpopt.so.0",
-            "/usr/lib64/libslp.so.1",
-            "/lib64/libc.so.6",
-            "/lib64/libattr.so.1",
-            "/usr/lib64/libcrypto.so.1.1",
-            "/lib64/libpthread.so.0",
-            ld_linux_so,
-            "/lib64/libdl.so.2",
-            "/lib64/libreadline.so.7",
-            "/lib64/libtinfo.so.6",
-        ],
-        "opensuse-tumbleweed": [
-            "/lib64/libc.so.6",
-            "/usr/lib64/libacl.so.1",
-            "/lib64/libz.so.1",
-            "/usr/lib64/libpopt.so.0",
-            "/usr/lib64/libslp.so.1",
-            ld_linux_so,
-            "/usr/lib64/libcrypto.so.1.1",
-            "/lib64/libpthread.so.0",
-            "/lib64/libdl.so.2",
-            "/lib64/libreadline.so.8",
-            "/lib64/libtinfo.so.6",
-        ],
-    }
-
-    for l in libs_d[settings.OS_DISTRO_ID]:
-        copy(l, "{}{}".format(chroot_loc, l))
-    run_command([USERMOD, "-s", "/bin/bash", user], log=True)
+    lib_list: list[str] = []
+    # Copy chroot binaries and resolve lib dependencies
+    for prog in PROGS_IN_CHROOT:
+        copy(prog, f"{chroot_loc}/usr/bin")
+        lib_list = lib_list + get_libs(prog)
+    # Copy libs for PROGS_IN_CHROOT to chroot
+    for lib in set(lib_list):
+        copy(lib, f"{chroot_loc}{lib}")
+    run_command([USERMOD, "-s", "/usr/bin/bash", user], log=True)
 
 
 def is_pub_key(key):

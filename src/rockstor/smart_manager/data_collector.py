@@ -1,27 +1,28 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 # TODO: Let's deprecate gevent in favor of django channels and we won't need
-# monkey patching and flake8 exceptions.
+#  monkey patching and flake8 exceptions.
 import shutil
 from tempfile import mkstemp
 
 from gevent import monkey
+
+from system.constants import BLOCK_DEV_EXCLUDE
 
 monkey.patch_all()
 
@@ -33,7 +34,6 @@ import json  # noqa E402
 import gevent  # noqa E402
 import socketio  # noqa E402
 from gevent import pywsgi  # noqa E402
-from geventwebsocket.handler import WebSocketHandler  # noqa E402
 
 from gevent.subprocess import Popen, PIPE  # noqa E402
 from os import path  # noqa E402
@@ -44,6 +44,7 @@ from glob import glob  # noqa E402
 # https://docs.djangoproject.com/en/1.11/topics/settings/#calling-django-setup-is-required-for-standalone-django-usage
 import django
 from django.conf import settings  # noqa E402
+
 django.setup()
 
 from system.pinmanager import (
@@ -62,7 +63,7 @@ from storageadmin.models import Disk, Pool  # noqa E402
 from smart_manager.models import Service  # noqa E402
 from system.services import service_status  # noqa E402
 from cli.api_wrapper import APIWrapper  # noqa E402
-from system.pkg_mgmt import rockstor_pkg_update_check, pkg_update_check  # noqa E402
+from system.pkg_mgmt import rockstor_pkg_update_check, pkg_updates_info  # noqa E402
 import distro
 import logging  # noqa E402
 
@@ -427,7 +428,13 @@ class LogManagerNamespace(RockstorIO):
                 download_command.append(self.build_log_path(log))
 
             # Build download archive
-            download_process = Popen(download_command, bufsize=1, stdout=PIPE)
+            download_process = Popen(
+                download_command,
+                bufsize=1,
+                stdout=PIPE,
+                encoding="utf-8",
+                universal_newlines=True,
+            )
             download_process.communicate()
 
             # Return ready state for logs archive download specifying recipient
@@ -480,7 +487,13 @@ class LogManagerNamespace(RockstorIO):
                 read_command = build_reader_command(reader)
 
                 # Define popen process and once completed split stdout by lines
-                reader_process = Popen(read_command, bufsize=1, stdout=PIPE)
+                reader_process = Popen(
+                    read_command,
+                    bufsize=1,
+                    stdout=PIPE,
+                    encoding="utf-8",
+                    universal_newlines=True,
+                )
                 log_content = reader_process.communicate()[0]
                 log_contentsize = getsizeof(log_content)
                 log_content = log_content.splitlines(True)
@@ -492,7 +505,7 @@ class LogManagerNamespace(RockstorIO):
                 reader_sleep = logs_loader[reader_type]["sleep"]
                 log_content_chunks = [
                     log_content[x : x + chunk_size]
-                    for x in xrange(0, len(log_content), chunk_size)
+                    for x in range(0, len(log_content), chunk_size)
                 ]  # noqa F821
                 total_rows = len(log_content)
 
@@ -541,7 +554,13 @@ class LogManagerNamespace(RockstorIO):
             else:
                 read_command = build_reader_command("tailf")
 
-            self.livereader_process = Popen(read_command, bufsize=1, stdout=PIPE)
+            self.livereader_process = Popen(
+                read_command,
+                bufsize=1,
+                stdout=PIPE,
+                encoding="utf-8",
+                universal_newlines=True,
+            )
             while self.livereading:
                 live_out = self.livereader_process.stdout.readline()
                 self.emit(
@@ -598,16 +617,22 @@ class DisksWidgetNamespace(RockstorIO):
             cur_stats = {}
             interval = 1
             # TODO: Consider refactoring the following to use Disk.temp_name or
-            # TODO: building byid_disk_map from the same. Ideally we would have
-            # TODO: performance testing in place prior to this move.
+            #  building byid_disk_map from the same. Ideally we would have
+            #  performance testing in place prior to this move.
             # Build a list of our db's disk names, now in by-id type format.
             disks = [d.name for d in Disk.objects.all()]
-            # /proc/diskstats has lines of the following form:
+            # Older Leap kernels: /proc/diskstats has lines of the following form:
             #  8      64 sde 1034 0 9136 702 0 0 0 0 0 548 702
             #  8      65 sde1 336 0 2688 223 0 0 0 0 0 223 223
+            # TW (2024): more fields, and loop block device entries.
+            #  8       0 sda 2507 0 101712 388 0 0 0 0 0 264 388 0 0 0 0 0 0
+            #  7       0 loop0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
             with open(stats_file_path) as stats_file:
                 for line in stats_file.readlines():
                     fields = line.split()
+                    # Sanity check: available fields and block device blacklist
+                    if len(fields) < 14 or fields[0] in BLOCK_DEV_EXCLUDE:
+                        continue
                     # As the /proc/diskstats lines contain transient type names
                     # we need to convert those to our by-id db names.
                     byid_name = self.byid_disk_map[fields[2]]
@@ -729,8 +754,8 @@ class NetworkWidgetNamespace(RockstorIO):
             with open("/proc/net/dev") as sfo:
                 sfo.readline()
                 sfo.readline()
-                for l in sfo.readlines():
-                    fields = l.split()
+                for line in sfo.readlines():
+                    fields = line.split()
                     if fields[0][:-1] not in interfaces:
                         continue
                     cur_stats[fields[0][:-1]] = fields[1:]
@@ -739,12 +764,14 @@ class NetworkWidgetNamespace(RockstorIO):
                 results = []
                 for interface in cur_stats.keys():
                     if interface in prev_stats:
-                        data = map(
-                            lambda x, y: float(x) / interval
-                            if x < y
-                            else (float(x) - float(y)) / interval,
-                            cur_stats[interface],
-                            prev_stats[interface],
+                        data = list(
+                            map(
+                                lambda x, y: float(x) / interval
+                                if x < y
+                                else (float(x) - float(y)) / interval,
+                                cur_stats[interface],
+                                prev_stats[interface],
+                            )
                         )
                         results.append(
                             {
@@ -866,18 +893,15 @@ class ServicesNamespace(RockstorIO):
     start = False
 
     def on_connect(self, sid, environ):
-
         self.emit("connected", {"key": "services:connected", "data": "connected"})
         self.start = True
         self.spawn(self.send_service_statuses, sid)
 
     def on_disconnect(self, sid):
-
         self.cleanup(sid)
         self.start = False
 
     def send_service_statuses(self):
-
         while self.start:
 
             data = {}
@@ -894,7 +918,6 @@ class ServicesNamespace(RockstorIO):
                 data[service.name] = {}
                 output, error, return_code = service_status(service.name, config=config)
                 data[service.name]["running"] = return_code
-
             self.emit("get_services", {"data": data, "key": "services:get_services"})
             gevent.sleep(15)
 
@@ -991,8 +1014,8 @@ class SysinfoNamespace(RockstorIO):
                         r["url"], data=None, calltype="post", save_error=False
                     )
                 except Exception as e:
-                    logger.error("%s. exception: %s" % (r["error"], e.__str__()))
-            gevent.sleep(60)
+                    logger.error(f"{r['error']}. exception: {e.__str__()}")
+            gevent.sleep(20)
 
     def update_check(self):
 
@@ -1002,7 +1025,8 @@ class SysinfoNamespace(RockstorIO):
     def yum_updates(self):
 
         while self.start:
-            packages = pkg_update_check()
+            gevent.sleep(1)  # Hack to avoid zypper toes of rockstor_pkg_update_check()
+            packages = pkg_updates_info()
             data = {}
             if packages:  # Non empty lists are True.
                 data["yum_updates"] = True
@@ -1102,7 +1126,6 @@ class SysinfoNamespace(RockstorIO):
                 data["status"] = "errors"
                 data["message"] = "Pools found with device errors: "
                 data["message"] += "({})".format(", ".join(labels))
-
             self.emit("pool_dev_stats", {"key": "sysinfo:pool_dev_stats", "data": data})
 
             gevent.sleep(30)
@@ -1125,9 +1148,12 @@ def main():
         LogManagerNamespace("/logmanager"),
         PincardManagerNamespace("/pincardmanager"),
     ]
-    sio_server = socketio.Server(async_mode="gevent")
+    # async_mode "threading" invokes simple-websocket.
+    # https://python-socketio.readthedocs.io/en/latest/server.html#standard-threads
+    # This did not allow us to removes gevent's monkey patching.
+    sio_server = socketio.Server(async_mode="threading", cors_allowed_origins='*', logger=False, engineio_logger=False)
     for namespace in sio_namespaces:
         sio_server.register_namespace(namespace)
     app = socketio.Middleware(sio_server)
     logger.debug("Python-socketio listening on port http://127.0.0.1:8001")
-    pywsgi.WSGIServer(("", 8001), app, handler_class=WebSocketHandler).serve_forever()
+    pywsgi.WSGIServer(('', 8001), app).serve_forever()

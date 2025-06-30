@@ -1,6 +1,5 @@
 """
-Copyright (c) 2012-2020 Rockstor, Inc. <http://rockstor.com>
-This file is part of Rockstor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -42,7 +41,7 @@ PQGROUP_DEFAULT = settings.MODEL_DEFS["pqgroup"]
 
 def create_repclone(share, request, logger, snapshot):
     """
-    Variant of create_clone but where the share already exists and is to be
+    Variant of create_clone but where the share may already exist and is to be
     supplanted by a snapshot which is effectively moved into the shares prior
     position, both in the db and on the file system. This is achieved thus:
     Unmount target share - (via remove_share()).
@@ -75,7 +74,7 @@ def create_repclone(share, request, logger, snapshot):
         # Normalise source name across initial quirk share & subsequent snaps.
         source_name = snapshot.name.split("/")[-1]
         # Note in the above we have to use Object.name for polymorphism, but
-        # our share is passed by it's subvol (potential fragility point).
+        # our share is passed by its subvol (potential fragility point).
         snap_path = "{}/.snapshots/{}/{}".format(
             share.pool.mnt_pt, share.name, source_name
         ).replace("//", "/")
@@ -92,7 +91,11 @@ def create_repclone(share, request, logger, snapshot):
         # unmounts and then subvol deletes our on disk share
         remove_share(share.pool, share.name, PQGROUP_DEFAULT)
         # Remove read only flag on our snapshot subvol
-        set_property(snap_path, "ro", "false", mount=False)
+        # N.B. more recent btrfs has force requirement re safeguard on received_uuid set.
+        # However, Rockstor replication cascades ro snapshots used in send/receive.
+        # The oldest of 3 received snapshot sends is promoted to Share, from 4th replication event onwards.
+        # As such this subvol is no longer referenced in the ongoing btrfs send/receive cascade.
+        set_property(snap_path, "ro", "false", mount=False, force=True)
         # Ensure removed share path is clean, ie remove mount point.
         run_command(["/usr/bin/rm", "-rf", share_path], throw=False)
         # Now move snapshot to prior shares location. Given both a share and

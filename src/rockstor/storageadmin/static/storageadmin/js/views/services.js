@@ -3,21 +3,20 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
- * This file is part of RockStor.
+ * Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
  *
- * RockStor is free software; you can redistribute it and/or modify
+ * Rockstor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
  *
- * RockStor is distributed in the hope that it will be useful, but
+ * Rockstor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
@@ -28,11 +27,11 @@ ServicesView = Backbone.View.extend({
 
     events: {
         'click .configure': 'configureService',
-        'switchChange.bootstrapSwitch': 'switchStatus'
+        'switchChange.bootstrapSwitch': 'switchStatus',
+        'click .actions-tailscale': 'tailscaleAuthAction'
     },
 
     initialize: function() {
-
         this.template = window.JST.services_services;
         this.collection = new ServiceCollection();
         this.actionMessages = {
@@ -42,11 +41,12 @@ ServicesView = Backbone.View.extend({
             'reload': 'reloaded'
         };
         this.smTs = null; // current timestamp of sm service
-        this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'shellinaboxd', 'rockstor'];
+        this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'shellinaboxd', 'rockstor', 'tailscaled'];
         this.tooltipMap = {
             'active-directory': 'By turning this service on, the system will attempt to join the Active Directory domain using the credentials provided during configuration.',
             'rockstor-bootstrap': 'Service responsible for bootstrapping Rockstor when the system starts.',
-            'ztask-daemon': 'Background service for tasks like Pool scrub.'
+            'ztask-daemon': 'Background service for tasks like Pool scrub.',
+            'tailscaled': 'Private mesh VPN based on WireGuard.'
         };
         this.initHandlebarHelpers();
     },
@@ -69,7 +69,6 @@ ServicesView = Backbone.View.extend({
     },
 
     servicesStatuses: function(data) {
-
         var _this = this;
         _.each(data, function(value, key, list) {
             // Returns array of one object
@@ -78,10 +77,16 @@ ServicesView = Backbone.View.extend({
             });
             var collectionModel = collectionArr[0];
             if (collectionArr.length > 0) {
-                if (value.running > 0) {
+                if (value.running === 5) {
+                    // A value of 5 indicates a need for authentication
+                    collectionModel.set('needs_auth', true);
                     collectionModel.set('status', false);
+                } else if (value.running > 0) {
+                    collectionModel.set('status', false);
+                    collectionModel.set('needs_auth', false);
                 } else {
                     collectionModel.set('status', true);
+                    collectionModel.set('needs_auth', false);
                 }
             }
         });
@@ -117,14 +122,17 @@ ServicesView = Backbone.View.extend({
         };
         //Added columns definition for sorting purpose
         $('table.data-table').DataTable({
-            'iDisplayLength': 15,
+            'iDisplayLength': 30,
             'aLengthMenu': [
                 [15, 30, 45, -1],
                 [15, 30, 45, 'All']
             ],
             'columns': [
-                null, {
-                    'orderDataType': 'dom-checkbox'
+                null,
+                {
+                    'orderDataType': 'dom-checkbox',
+                    'width': '10%',
+                    'className': 'centertext'
                 }
             ]
         });
@@ -226,8 +234,39 @@ ServicesView = Backbone.View.extend({
     },
 
     cleanup: function() {
-
         RockStorSocket.removeOneListener('services');
+    },
+
+    tailscaleAuthAction: function (event) {
+        var _this = this;
+        if (event) event.preventDefault();
+        var button = $(event.currentTarget);
+        var action = button.attr('id');
+        var serviceName = $(event.currentTarget).data('service-name');
+        $.ajax({
+            url: '/api/sm/services/' + serviceName + '/config/' + action,
+            type: 'POST',
+            success: function (data, status, xhr) {
+                _this.collection.fetch({
+                    success: function(collection, response, options) {
+                        var colArr = _this.collection.where({
+                            'name': "tailscaled"
+                        });
+                        var colModel = colArr[0];
+                        var config = colModel.get('config');
+                        var configJSON = JSON.parse(config);
+                        var url = configJSON.auth_url;
+
+                        // Open new window to authenticate
+                        window.open(url, "_blank");
+                    }
+                });
+                _this.render();
+            },
+            error: function (xhr, status, error) {
+                enableButton(button);
+            }
+        });
     },
 
     initHandlebarHelpers: function() {

@@ -1,0 +1,20 @@
+[Unit]
+Description=Build Rockstor
+ConditionPathIsDirectory=!/opt/rockstor/.venv
+After=postgresql.service
+After=NetworkManager.service
+After=NetworkManager-wait-online.service
+Requires=postgresql.service
+Requires=NetworkManager.service
+# https://pypi.org/ to install/update Poetry, & have it build/rebuild .venv.
+Requires=NetworkManager-wait-online.service
+
+[Service]
+WorkingDirectory=/opt/rockstor
+EnvironmentFile=/opt/rockstor/.env
+ExecStart=/opt/rockstor/build.sh
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

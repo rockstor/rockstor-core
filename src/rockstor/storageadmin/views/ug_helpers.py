@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -34,7 +33,7 @@ def combined_users():
             uo.uid = sys_users[u][0]
             uo.gid = sys_users[u][1]
             uo.shell = sys_users[u][2]
-            gname = get_groups(uo.gid).keys()[0]
+            gname = list(get_groups(uo.gid).keys())[0]
             create = True
             if uo.group is not None:
                 if uo.group.gid == uo.gid or uo.group.groupname == gname:
@@ -77,9 +76,7 @@ def combined_users():
     for u in User.objects.all():
         if u.username not in uname_list:
             users.append(u)
-    return sorted(
-        users, cmp=lambda x, y: cmp(x.username.lower(), y.username.lower())  # noqa F821
-    )
+    return sorted(users, key=lambda each: each.username.lower())
 
 
 def combined_groups():
@@ -97,7 +94,4 @@ def combined_groups():
     for g in Group.objects.all():
         if g.groupname not in gname_list:
             groups.append(g)
-    return sorted(
-        groups,
-        cmp=lambda x, y: cmp(x.groupname.lower(), y.groupname.lower()),  # noqa F821
-    )
+    return sorted(groups, key=lambda each: each.groupname.lower())

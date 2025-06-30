@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -41,7 +40,7 @@ from storageadmin.models import (
 from system.docker import dnet_create, dnet_connect
 from system.osi import run_command
 from fs.btrfs import mount_share
-from rockon_utils import container_status
+from storageadmin.views.rockon_utils import container_status
 
 DOCKER = "/usr/bin/docker"
 ROCKON_URL = "https://localhost/api/rockons"
@@ -236,7 +235,7 @@ def uninstall(rid, new_state="available", task=None):
         if rockon is not None:
             # During non live update we do uninstall-install under task.name "update"
             # During this cycle we want to maintain our taskid stamp.
-            if new_state is not "pending_update" and task is not None:
+            if new_state != "pending_update" and task is not None:
                 rockon.taskid = None
             else:
                 logger.info(
@@ -376,7 +375,7 @@ def generic_install(rockon):
         cmd.extend(device_ops(c))
         if c.uid is not None:
             uid = c.uid
-            if c.uid is -1:
+            if c.uid == -1:
                 uid = vol_owner_uid(c)
             # @todo: what if the uid does not exist? Create a user with
             # username=container-name?

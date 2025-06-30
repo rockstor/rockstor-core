@@ -1,6 +1,5 @@
 """
-Copyright (c) 2012-2020 Rockstor, Inc. <http://rockstor.com>
-This file is part of Rockstor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -26,7 +25,7 @@ from rest_framework.response import Response
 
 import rest_framework_custom as rfc
 from fs.btrfs import is_share_mounted, umount_root
-from share_helpers import helper_mount_share, validate_share, sftp_snap_toggle
+from storageadmin.views.share_helpers import helper_mount_share, validate_share, sftp_snap_toggle
 from storageadmin.models import SFTP
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.util import handle_exception

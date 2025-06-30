@@ -1,27 +1,35 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+from unittest.mock import patch
 
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 
+"""
+To run the tests:
+cd /opt/rockstor/src/rockstor
+export DJANGO_SETTINGS_MODULE="settings"
+poetry run django-admin test -v 2 -p test_snmp.py
+"""
+
+
 class SNMPTests(APITestCase):
-    multi_db = True
+    databases = '__all__'
     # TODO Requires command to reproduce minimal fixture:
     #  "services.json" fixture requires only the smart_manager.service model.
     fixtures = ["test_api.json", "services.json"]
@@ -41,6 +49,11 @@ class SNMPTests(APITestCase):
         """
         config happy path
         """
+        self.patch_configure_snmp = patch(
+            "smart_manager.views.snmp_service.configure_snmp"
+        )
+        self.mock_configure_snmp = self.patch_configure_snmp.start()
+
         config = {
             "syslocation": "Rockstor Labs",
             "syscontact": "rocky@rockstor.com",
@@ -159,6 +172,10 @@ class SNMPTests(APITestCase):
         """
         start/stop tests
         """
+        self.patch_systemctl = patch("smart_manager.views.snmp_service.systemctl")
+        self.mock_systemctl = self.patch_systemctl.start()
+        self.mock_systemctl.return_value = [""], [""], 0
+
         self.session_login()
         response = self.client.post("%s/start" % self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.content)

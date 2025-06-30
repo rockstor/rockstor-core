@@ -1,6 +1,5 @@
 """
-Copyright (c) 2012-2023 Rockstor, Inc. <https://rockstor.com>
-This file is part of Rockstor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -24,7 +23,9 @@ import shutil
 import stat
 import sys
 from tempfile import mkstemp
-
+import secrets
+import keyring
+from keyring.errors import KeyringError
 from django.conf import settings
 
 from system import services
@@ -37,12 +38,17 @@ from collections import OrderedDict, namedtuple
 logger = logging.getLogger(__name__)
 
 BASE_DIR = settings.ROOT_DIR  # ends in "/"
-BASE_BIN = "{}.venv/bin".format(BASE_DIR)
-CONF_DIR = "{}conf".format(BASE_DIR)
-DJANGO = "{}/django-admin".format(BASE_BIN)
-STAMP = "{}/.initrock".format(BASE_DIR)
-FLASH_OPTIMIZE = "{}/flash-optimize".format(BASE_BIN)
-DJANGO_PREP_DB = "{}/prep_db".format(BASE_BIN)
+BASE_BIN = f"{BASE_DIR}.venv/bin"
+CONF_DIR = f"{BASE_DIR}conf"
+DJANGO = f"{BASE_BIN}/django-admin"
+DJANGO_MIGRATE_CMD = [DJANGO, "migrate", "--noinput"]
+DJANGO_MIGRATE_SMART_MANAGER_CMD = DJANGO_MIGRATE_CMD + [
+    "--database=smart_manager",
+    "smart_manager",
+]
+STAMP = f"{BASE_DIR}/.initrock"
+FLASH_OPTIMIZE = f"{BASE_BIN}/flash-optimize"
+DJANGO_PREP_DB = f"{BASE_BIN}/prep_db"
 OPENSSL = "/usr/bin/openssl"
 RPM = "/usr/bin/rpm"
 YUM = "/usr/bin/yum"
@@ -63,7 +69,7 @@ IP = "/usr/sbin/ip"
 # su - postgres -c "psql -c \"SELECT ROLPASSWORD FROM pg_authid WHERE rolname = 'rocky'\""
 # su - postgres -c "psql -c \"ALTER ROLE rocky WITH PASSWORD 'rocky'\""
 
-OVERWRITE_PG_HBA = "cp -f {}/pg_hba.conf /var/lib/pgsql/data/".format(CONF_DIR)
+OVERWRITE_PG_HBA = f"cp -f {CONF_DIR}/pg_hba.conf /var/lib/pgsql/data/"
 PG_RELOAD = "pg_ctl reload"  # Does not require pg_hba.conf based authentication.
 RUN_SQL = "psql -w -f"  # Without password prompt and from file.
 #
@@ -74,17 +80,13 @@ RUN_SQL = "psql -w -f"  # Without password prompt and from file.
 DB_SYS_TUNE = OrderedDict()
 DB_SYS_TUNE["Setup_host_based_auth"] = OVERWRITE_PG_HBA
 DB_SYS_TUNE["Reload_config"] = PG_RELOAD  # Enables pg_hba for following psql access.
-DB_SYS_TUNE["PG_tune"] = "{} {}/postgresql_tune.sql".format(RUN_SQL, CONF_DIR)
+DB_SYS_TUNE["PG_tune"] = f"{RUN_SQL} {CONF_DIR}/postgresql_tune.sql"
 
-# Create and then populate our databases from scratch.
-# # {storageadmin,smartdb}.sql.in are created using:
-# `pg_dump --username=rocky <db_name> > <db_name>.sql.in
+# Create and then populate our databases (default & smart_manager) from scratch.
 DB_SETUP = OrderedDict()
-DB_SETUP["drop_and_recreate"] = "{} {}/postgresql_setup.sql".format(RUN_SQL, CONF_DIR)
-DB_SETUP[
-    "populate_storageadmin"
-] = "psql storageadmin -w -f {}/storageadmin.sql.in".format(CONF_DIR)
-DB_SETUP["populate_smartdb"] = "psql smartdb -w -f {}/smartdb.sql.in".format(CONF_DIR)
+DB_SETUP["drop_and_recreate"] = f"{RUN_SQL} {CONF_DIR}/postgresql_setup.sql"
+DB_SETUP["migrate_default"] = DJANGO_MIGRATE_CMD
+DB_SETUP["migrate_smart_manager"] = DJANGO_MIGRATE_SMART_MANAGER_CMD
 
 # List of systemd services to instantiate/update or remove, if required.
 # Service filenames that are not found in CONF_DIR will be removed from the system.
@@ -92,6 +94,7 @@ SYSTEMD_DIR = "/usr/lib/systemd/system"
 SYSTEMD_OVERRIDE_DIR = "/etc/systemd/system"
 
 ROCKSTOR_SYSTEMD_SERVICES = [
+    "rockstor-build.service",  # Build/Rebuild .venv & jslibs, init `pass`.
     "rockstor-pre.service",  # Loads us (initrock.py).
     "rockstor.service",
     "rockstor-bootstrap.service",
@@ -112,9 +115,10 @@ ROCKSTOR_LEGACY_SYSTEMD_SERVICES = [
 #       use None to use the current mask of the target file defined at <path>.
 # services: Python List of service(s) to restart, if any, after modifying the file.
 LocalFile = namedtuple("LocalFile", "path mask services")
+# samba_config's "root preexec = ..." migrations do not required service restarts.
 LOCAL_FILES = {
     "samba_config": LocalFile(
-        path="/etc/samba/smb.conf", mask=None, services=["nmb", "smb"]
+        path="/etc/samba/smb.conf", mask=None, services=None
     ),
     "rockstor_crontab": LocalFile(
         path="/etc/cron.d/rockstortab", mask=stat.S_IRUSR | stat.S_IWUSR, services=None
@@ -212,10 +216,10 @@ def update_nginx(log):
         log.exception("Exception while updating nginx: {e}".format(e=e))
 
 
-def update_tz(log):
+def update_tz():
     # update timezone variable in settings.py
     zonestr = os.path.realpath("/etc/localtime").split("zoneinfo/")[1]
-    log.info("system timezone = {}".format(zonestr))
+    logger.info("system timezone = {}".format(zonestr))
     sfile = "{}/src/rockstor/settings.py".format(BASE_DIR)
     fo, npath = mkstemp()
     updated = False
@@ -228,7 +232,7 @@ def update_tz(log):
                 else:
                     tfo.write("TIME_ZONE = '{}'\n".format(zonestr))
                     updated = True
-                    log.info("Changed timezone from {} to {}".format(curzone, zonestr))
+                    logger.info("Changed timezone from {} to {}".format(curzone, zonestr))
             else:
                 tfo.write(line)
     if updated:
@@ -414,7 +418,7 @@ def establish_poetry_paths():
     The local files in questions are defined in the LOCAL_FILES constant.
     """
     logger.info("### BEGIN Establishing poetry path to binaries in local files...")
-    pattern = "/opt/rockstor/bin/"
+    pattern = "/opt/rockstor[/]+bin/"
     replacement = "/opt/rockstor/.venv/bin/"
     for local_file in LOCAL_FILES:
         if os.path.isfile(LOCAL_FILES[local_file].path):
@@ -459,6 +463,46 @@ def establish_poetry_paths():
     logger.info("### DONE establishing poetry path to binaries in local files.")
 
 
+def update_smb_conf_preexec():
+    """
+    5.0.8-0 onwards adopts a new smb.conf preexec command for all new Samba exports.
+    Modify existing shares accordingly. Example for test_share01:
+        root preexec = "/opt/rockstor/.venv/bin/mnt-share test_share01"
+        root preexec = sh -c "cd /opt/rockstor/ && poetry run mnt-share test_share01"
+    Avoids premature DB requirement re:
+    - refresh_smb_config(list(SambaShare.objects.all()))
+    - refresh_smb_discovery(list(SambaShare.objects.all()))
+    """
+    logger.info("### BEGIN Establishing SMB config preexec update...")
+    smb_conf = LOCAL_FILES["samba_config"]
+    pattern = f'"{BASE_DIR}.venv/bin/'
+    replacement = f'sh -c "cd {BASE_DIR} && poetry run '
+    if os.path.isfile(smb_conf.path):
+        fh, npath = mkstemp()
+        altered = replace_pattern_inline(smb_conf.path, npath, pattern, replacement)
+        if altered:  # smb_conf.mask assumed None
+            shutil.copystat(smb_conf.path, npath)
+            shutil.move(npath, smb_conf.path)
+            logger.info("smb.conf preexec format updated")
+        else:
+            os.remove(npath)
+            logger.info("smb.conf preexec already updated")
+    logger.info("### DONE Establishing SMB config preexec update...")
+
+
+def set_api_client_secret():
+    """
+    Set/reset the API client secret which is used internally by OAUTH_INTERNAL_APP = "cliapp",
+    and the Replication service. Ultimately retrieved in setting.py and intended to be installed
+    instance stable. Resources OS package pass as python-keyring backend via interface project keyring-pass.
+    """
+    try:
+        keyring.set_password("rockstor", "CLIENT_SECRET", secrets.token_urlsafe(100))
+        logger.info("API CLIENT_SECRET set/reset successfully.")
+    except keyring.errors.PasswordSetError:
+        raise keyring.errors.PasswordSetError("Failed to set/reset API CLIENT_SECRET.")
+
+
 def main():
     loglevel = logging.INFO
     if len(sys.argv) > 1 and sys.argv[1] == "-x":
@@ -478,7 +522,7 @@ def main():
             "/C=US/ST=Rockstor user's state/L=Rockstor user's "
             "city/O=Rockstor user/OU=Rockstor dept/CN=rockstor.user"
         )
-        logging.info("Creating openssl cert...")
+        logger.info("Creating openssl cert...")
         run_command(
             [
                 OPENSSL,
@@ -494,8 +538,8 @@ def main():
                 dn,
             ]
         )
-        logging.debug("openssl cert created")
-        logging.info("Creating rockstor key...")
+        logger.debug("openssl cert created")
+        logger.info("Creating rockstor key...")
         run_command(
             [
                 OPENSSL,
@@ -506,8 +550,8 @@ def main():
                 "{}/rockstor.key".format(cert_loc),
             ]
         )
-        logging.debug("rockstor key created")
-        logging.info("Singing cert with rockstor key...")
+        logger.debug("rockstor key created")
+        logger.info("Singing cert with rockstor key...")
         run_command(
             [
                 OPENSSL,
@@ -523,45 +567,48 @@ def main():
                 "3650",
             ]
         )
-        logging.debug("cert signed.")
-        logging.info("restarting nginx...")
+        logger.debug("cert signed.")
+        logger.info("restarting nginx...")
         run_command([SYSTEMCTL, "restart", "nginx"])
 
-    logging.info("Checking for flash and Running flash optimizations if appropriate.")
+    logger.info("Checking for flash and Running flash optimizations if appropriate.")
     run_command([FLASH_OPTIMIZE, "-x"], throw=False)
     try:
-        logging.info("Updating the timezone from the system")
-        update_tz(logging)
+        logger.info("Updating the timezone from the system")
+        update_tz()
     except Exception as e:
-        logging.error("Exception while updating timezone: {}".format(e.__str__()))
-        logging.exception(e)
+        logger.error("Exception while updating timezone: {}".format(e.__str__()))
+        logger.exception(e)
 
     try:
-        logging.info("Initialising SSHD config")
+        logger.info("Initialising SSHD config")
         bootstrap_sshd_config(logging)
     except Exception as e:
-        logging.error("Exception while updating sshd config: {}".format(e.__str__()))
+        logger.error("Exception while updating sshd config: {}".format(e.__str__()))
 
     db_already_setup = os.path.isfile(STAMP)
+    if not db_already_setup or keyring.get_password("rockstor", "CLIENT_SECRET") is None:
+        set_api_client_secret()
     for db_stage_name, db_stage_items in zip(
         ["Tune Postgres", "Setup Databases"], [DB_SYS_TUNE, DB_SETUP]
     ):
         if db_stage_name == "Setup Databases" and db_already_setup:
             continue
-        logging.info("--DB-- {} --DB--".format(db_stage_name))
+        logger.info(f"--DB-- {db_stage_name} --DB--")
         for action, command in db_stage_items.items():
-            logging.info("--DB-- Running - {}".format(action))
-            run_command(["su", "-", "postgres", "-c", command])
-            logging.info("--DB-- Done with {}.".format(action))
-        logging.info("--DB-- {} Done --DB--.".format(db_stage_name))
+            logger.info(f"--DB-- Running - {action}")
+            if action.startswith("migrate"):
+                run_command(command)
+            else:
+                run_command(["su", "-", "postgres", "-c", command])
+            logger.info(f"--DB-- Done with {action}.")
+        logger.info(f"--DB-- {db_stage_name} Done --DB--.")
         if db_stage_name == "Setup Databases":
             run_command(["touch", STAMP])  # file flag indicating db setup
 
-    logging.info("Running app database migrations...")
-    migration_cmd = [DJANGO, "migrate", "--noinput"]
-    fake_migration_cmd = migration_cmd + ["--fake"]
-    fake_initial_migration_cmd = migration_cmd + ["--fake-initial"]
-    smartdb_opts = ["--database=smart_manager", "smart_manager"]
+    logger.info("Running app database migrations...")
+    fake_migration_cmd = DJANGO_MIGRATE_CMD + ["--fake"]
+    fake_initial_migration_cmd = DJANGO_MIGRATE_CMD + ["--fake-initial"]
 
     # Migrate Content types before individual apps
     logger.debug("migrate (--fake-initial) contenttypes")
@@ -588,50 +635,38 @@ def main():
             )
             run_command(fake_migration_cmd + [db_arg, app, "0001_initial"], log=True)
 
-    run_command(migration_cmd + ["auth"], log=True)
-    run_command(migration_cmd + ["storageadmin"], log=True)
-    run_command(migration_cmd + smartdb_opts, log=True)
+    run_command(DJANGO_MIGRATE_CMD + ["auth"], log=True)
+    run_command(DJANGO_MIGRATE_CMD + ["storageadmin"], log=True)
+    run_command(DJANGO_MIGRATE_SMART_MANAGER_CMD, log=True)
 
-    # Avoid re-apply from our six days 0002_08_updates to oauth2_provider
-    # by faking so we can catch-up on remaining migrations.
-    # Only do this if not already done, however, as we would otherwise incorrectly reset
-    # the list of migrations applied (https://github.com/rockstor/rockstor-core/issues/2376).
-    oauth2_provider_faked = False
-    # Get current list of migrations
-    o, e, rc = run_command([DJANGO, "showmigrations", "--list", "oauth2_provider"])
-    for l in o:
-        if l.strip() == "[X] 0002_08_updates":
-            logger.debug(
-                "The 0002_08_updates migration seems already applied, so skip it"
-            )
-            oauth2_provider_faked = True
-            break
-    if not oauth2_provider_faked:
-        logger.debug(
-            "The 0002_08_updates migration is not already applied so fake apply it now"
-        )
-        run_command(
-            fake_migration_cmd + ["oauth2_provider", "0002_08_updates"], log=True
-        )
+    o, e, rc = run_command(
+        [DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True
+    )
+    logger.info(f"Prior migrations for oauth2_provider are: {o}")
 
     # Run all migrations for oauth2_provider
-    run_command(migration_cmd + ["oauth2_provider"], log=True)
+    run_command(DJANGO_MIGRATE_CMD + ["oauth2_provider"], log=True)
 
-    logging.info("DB Migrations Done")
+    o, e, rc = run_command(
+        [DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True
+    )
+    logger.info(f"Post migrations for oauth2_provider are: {o}")
 
-    logging.info("Running Django prep_db.")
+    logger.info("DB Migrations Done")
+
+    logger.info("Running Django prep_db.")
     run_command([DJANGO_PREP_DB])
-    logging.info("Done")
+    logger.info("Done")
 
-    logging.info("Stopping firewalld...")
+    logger.info("Stopping firewalld...")
     run_command([SYSTEMCTL, "stop", "firewalld"])
     run_command([SYSTEMCTL, "disable", "firewalld"])
-    logging.info("Firewalld stopped and disabled")
+    logger.info("Firewalld stopped and disabled")
 
-    logging.info("Enabling and Starting atd...")
+    logger.info("Enabling and Starting atd...")
     run_command([SYSTEMCTL, "enable", "atd"])
     run_command([SYSTEMCTL, "start", "atd"])
-    logging.info("Atd enabled and started")
+    logger.info("Atd enabled and started")
 
     update_nginx(logging)
 
@@ -640,6 +675,8 @@ def main():
     establish_systemd_services()
 
     establish_poetry_paths()
+
+    update_smb_conf_preexec()
 
 
 if __name__ == "__main__":

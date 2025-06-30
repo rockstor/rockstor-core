@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('val', models.CharField(max_length=1024, null=True)),
                 ('description', models.CharField(max_length=2048, null=True)),
                 ('label', models.CharField(max_length=64, null=True)),
-                ('container', models.ForeignKey(to='storageadmin.DContainer')),
+                ('container', models.ForeignKey(to='storageadmin.DContainer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AlterUniqueTogether(

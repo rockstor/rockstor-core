@@ -1,13 +1,12 @@
 """
-Copyright (c) 2012-2021 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
@@ -22,7 +21,7 @@ import socket
 from django.db import transaction
 from rest_framework.response import Response
 
-from base_service import BaseServiceDetailView
+from smart_manager.views.base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.util import handle_exception
 from system.directory_services import (
@@ -100,9 +99,9 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._resolve_check(config.get("domain"), request)
 
                 # 2. realm discover check?
-                domain = config.get("domain")
+                domain = str(config.get("domain"))
                 try:
-                    cmd = [REALM, "discover", "--name-only", domain]
+                    cmd: list[str] = [REALM, "discover", "--name-only", domain]
                     o, e, rc = run_command(cmd)
                 except Exception as e:
                     e_msg = (
@@ -117,14 +116,14 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
 
             elif command == "start":
                 config = self._config(service, request)
-                domain = config.get("domain")
+                domain = str(config.get("domain"))
                 # 1. make sure ntpd is running, or else, don't start.
                 self._ntp_check(request)
                 # 2. Name resolution check?
                 self._resolve_check(config.get("domain"), request)
 
                 if method == "winbind":
-                    cmd = [
+                    cmd: list[str] = [
                         "/usr/sbin/authconfig",
                     ]
                     # nss

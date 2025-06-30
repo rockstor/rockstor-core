@@ -1,23 +1,22 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from rest_framework import status
-from mock import patch
+from unittest.mock import patch
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.models import Pool, Share
 
@@ -56,12 +55,14 @@ bin/django dumpdata --database smart_manager smart_manager.service \
 --natural-foreign --indent 4 > \
 src/rockstor/storageadmin/fixtures/test_shares-services.json
 
-./bin/test -v 2 -p test_shares.py
+To run the tests:
+cd /opt/rockstor/src/rockstor
+poetry run django-admin test -v 2 -p test_shares.py
 """
 
 
 class ShareTests(APITestMixin):
-    multi_db = True
+    databases = "__all__"
     fixtures = ["test_api.json", "test_shares.json", "test_shares-services.json"]
     BASE_URL = "/api/shares"
 
@@ -242,6 +243,7 @@ class ShareTests(APITestMixin):
         - Create share with valid replica
         - Create share with invalid replica
         - Create share with share size > pool size
+        - Create share with system reserved name
         """
 
         # create a share on non-existent pool
@@ -260,7 +262,7 @@ class ShareTests(APITestMixin):
         data["compression"] = "invalid"
         e_msg2 = (
             "Unsupported compression algorithm (invalid). Use one of "
-            "('lzo', 'zlib', 'no')."
+            "('zlib', 'lzo', 'zstd', 'no')."
         )
         response3 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -334,7 +336,8 @@ class ShareTests(APITestMixin):
             "size": 100,
             "replica": "non-bool",
         }
-        e_msg7 = "Replica must be a boolean, not (<type 'unicode'>)."
+        # Py3.6 defaults to class 'str' in our test data.
+        e_msg7 = "Replica must be a boolean, not (<class 'str'>)."
         response9 = self.client.post(self.BASE_URL, data=data5)
         self.assertEqual(
             response9.status_code,
@@ -352,6 +355,17 @@ class ShareTests(APITestMixin):
         self.assertEqual(response10.data["name"], "too_big")
         pool = Pool.objects.get(name=data6["pool"])
         self.assertEqual(response10.data["size"], pool.size)
+
+        # Create share with system reserved name
+        data7 = {"sname": "var", "pool": "rock-pool", "size": 1048576}
+        e_msg8 = f"Share name ({data7['sname']}) reserved for system. Choose a different name."
+        response11 = self.client.post(self.BASE_URL, data=data7)
+        self.assertEqual(
+            response11.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response11.data,
+        )
+        self.assertEqual(response11.data[0], e_msg8)
 
     def test_resize(self):
         """
@@ -446,6 +460,7 @@ class ShareTests(APITestMixin):
         - enable zlib
         - disable lzo
         - enable lzo
+        - change compression from lzo to zstd
         """
 
         # create share with invalid compression
@@ -457,7 +472,7 @@ class ShareTests(APITestMixin):
         }
         e_msg = (
             "Unsupported compression algorithm (derp). "
-            "Use one of ('lzo', 'zlib', 'no')."
+            "Use one of ('zlib', 'lzo', 'zstd', 'no')."
         )
         response = self.client.post(self.BASE_URL, data=compression_test_share)
         self.assertEqual(
@@ -530,6 +545,14 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data["compression_algo"], "lzo")
+
+        # change compression from lzo to zstd
+        compression_zstd = {"compression": "zstd"}
+        response9 = self.client.put(
+            "{}/{}".format(self.BASE_URL, sId), data=compression_zstd
+        )
+        self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response9.data["compression_algo"], "zstd")
 
     def test_delete_exported_replicated(self):
         """
@@ -617,7 +640,6 @@ class ShareTests(APITestMixin):
         self.assertEqual(response9.data[0], e_msg)
 
     def test_delete_with_regular_snapshot(self):
-
         # Delete share with regular snapshot and nothing else.
 
         share = Share.objects.get(name="share-with-snap")  # share - regular snap only
@@ -670,7 +692,6 @@ class ShareTests(APITestMixin):
         self.assertEqual(response8.data[0], e_msg)
 
     def test_delete_os_exception(self):
-
         # Delete share mocking OS exception
         share = Share.objects.get(name="root-share")  # no associated exports/services
         sId = share.id  # from fixture - rock-ons-root

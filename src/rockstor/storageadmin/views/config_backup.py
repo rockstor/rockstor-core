@@ -1,21 +1,20 @@
 """
-Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
-This file is part of RockStor.
+Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
 
-RockStor is free software; you can redistribute it and/or modify
+Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-RockStor is distributed in the hope that it will be useful, but
+Rockstor is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import copy
 import gzip
 import json
 import logging
@@ -74,7 +73,7 @@ def random_pass(length):
     return "".join((random.choice(all_chars)) for _ in range(length))
 
 
-def restore_users_groups(ml):
+def restore_users_groups(ml: list):
     logger.info("Started restoring users and groups.")
     users = []
     groups = []
@@ -100,19 +99,31 @@ def restore_users_groups(ml):
     logger.info("Finished restoring users and groups.")
 
 
-def restore_samba_exports(ml):
+def restore_samba_exports(ml: list):
+    """
+    Parse storageadmin model list from config-backup DB dump, to recreate
+    a system-native (by local Share ID) Samba share exports config.
+    @param ml: Model list (storageadmin)
+    """
     logger.info("Started restoring Samba exports.")
-    exports = []
+    conf_file_exports = []
+    native_exports = []
     for m in ml:
         if m["model"] == "storageadmin.sambashare":
-            exports.append(m["fields"])
-    for e in exports:
-        e["shares"] = []
-        e["shares"].append(e["share"])
-    generic_post("{}/samba".format(BASE_URL), exports)
+            conf_file_exports.append(m["fields"])
+    logger.debug(f"conf_file_exports={conf_file_exports}")
+    for export in conf_file_exports:
+        native_exports.append(transform_samba_export_share_id(export, ml))
+    logger.debug(f"native_exports={native_exports}")
+    generic_post(f"{BASE_URL}/samba", native_exports)
 
 
-def restore_nfs_exports(ml):
+def restore_nfs_exports(ml: list):
+    """
+    Parses storageadmin model list from config-backup DB dump.
+    Assumes Share mount-point is Share name.
+    @param ml: Model list (storageadmin)
+    """
     logger.info("Started restoring NFS exports.")
     exports = []
     export_groups = {}
@@ -121,13 +132,21 @@ def restore_nfs_exports(ml):
         if m["model"] == "storageadmin.nfsexport":
             exports.append(m["fields"])
         elif m["model"] == "storageadmin.nfsexportgroup":
+            logger.debug(f"Processing nfsexportgroup = {m}")
             m["fields"]["pk"] = m["pk"]
-            export_groups[m["pk"]] = m["fields"]
+            # Derive API field names & structure from nfsexportgroup DB dump field names:
+            nfse_api_fields: dict = m["fields"]
+            # Maintaining "editable" and "syncable" enables future API sync to DB model.
+            if "editable" in nfse_api_fields:  # 'mod_choice' from 'editable'
+                nfse_api_fields["mod_choice"] = nfse_api_fields["editable"]
+            if "syncable" in nfse_api_fields:  # 'sync_choice' from 'syncable'
+                nfse_api_fields["sync_choice"] = nfse_api_fields["syncable"]
+            export_groups[m["pk"]] = nfse_api_fields
         elif m["model"] == "storageadmin.advancednfsexport":
             adv_exports["entries"].append(m["fields"]["export_str"])
     for e in exports:
         if len(e["mount"].split("/")) != 3:
-            logger.info("skipping nfs export with mount: {}".format(e["mount"]))
+            logger.info(f"skipping nfs export with mount: {e['mount']}")
             continue
         e["shares"] = [e["mount"].split("/")[2]]
         payload = dict(export_groups[e["export_group"]], **e)
@@ -136,7 +155,7 @@ def restore_nfs_exports(ml):
     logger.info("Finished restoring NFS exports.")
 
 
-def restore_services(ml):
+def restore_services(ml: list):
     logger.info("Started restoring services.")
     services = {}
     for m in ml:
@@ -169,11 +188,11 @@ def restore_services(ml):
     logger.info("Finished restoring services.")
 
 
-def validate_service_status(ml, pkid):
+def validate_service_status(ml: list, pkid: int):
     """
     Parses a model list (ml) and returns True if the service identified by
     its id (pkid) was ON in the config backup.
-    :param ml: dict of models list
+    :param ml: list model dictionaries
     :param pkid: int
     :return: True
     """
@@ -185,7 +204,7 @@ def validate_service_status(ml, pkid):
             return m["fields"]["status"]
 
 
-def validate_taskdef_meta(sa_ml, taskdef_meta, task_type):
+def validate_taskdef_meta(sa_ml: list, taskdef_meta: dict, task_type: str) -> dict:
     """
     Task definition of type snapshot include a share ID in their
     json_meta field (taskdef_meta). The share ID for the share in question
@@ -213,17 +232,17 @@ def validate_taskdef_meta(sa_ml, taskdef_meta, task_type):
         # get ID of source share name in the target system
         target_share_id = get_target_share_id(source_name)
         # Update taskdef_meta (needs to be a unicode object)
-        taskdef_meta["share"] = unicode(target_share_id)
+        taskdef_meta["share"] = str(target_share_id)
     if task_type == "scrub":
         # get ID of pool name in the target system
         target_pool_id = get_target_pool_id(taskdef_meta["pool_name"])
         # Update taskdef_meta (needs to be a unicode object)
-        taskdef_meta["pool"] = unicode(target_pool_id)
+        taskdef_meta["pool"] = str(target_pool_id)
 
     return taskdef_meta
 
 
-def restore_scheduled_tasks(ml, sa_ml):
+def restore_scheduled_tasks(ml: list, sa_ml: list):
     """
     Simple wrapper to trigger the preparation of the list of scheduled tasks
     to be restored, followed by the actual API request.
@@ -238,7 +257,27 @@ def restore_scheduled_tasks(ml, sa_ml):
     logger.info("Finished restoring scheduled tasks.")
 
 
-def validate_task_definitions(ml, sa_ml):
+def transform_samba_export_share_id(samba_export: dict, ml: list) -> dict:
+    """
+    Transform samba export Share ID found in config-backup file, to native counterpart.
+    Share ID is DB generated and unique to a DB instance: so we require a transform
+    from storageadmin.sambashare.share DB dump in config-backup file, to current DB Share ID.
+    Original Share name is resolved from the config backup file via get_sname(),
+    and resolved to the native DB counterpart Share ID via get_target_share_id().
+    @param samba_export: dict of config-backup storageadmin.sambashare fields
+    @param ml: list of storageadmin models found in config-backup file
+    @return: native variant of samba_export
+    """
+    conf_share_id: int | None = samba_export.get("share", None)
+    if conf_share_id is not None:
+        native_share_id = get_target_share_id(get_sname(ml, conf_share_id))
+        transformed_export = copy.deepcopy(samba_export)
+        transformed_export["shares"] = [native_share_id]
+        return transformed_export
+    return {}
+
+
+def validate_task_definitions(ml: list, sa_ml: list) -> list:
     """
     Parses the config backup to re-create a valid POST request to be sent to the
     sm/tasks API in order to re-create the scheduled task(s) in question.
@@ -542,11 +581,12 @@ def validate_rockons(ml):
     return rockons
 
 
-def get_sname(ml, share_id):
-    """
+def get_sname(ml: list, share_id: int) -> str:
+    """Return name of share from config backup
+
     Takes a share ID and a database backup list of models and returns the
     name of the share.
-    :param ml: dict of models from the config backup
+    :param ml: list of models (dict) from the config backup
     :param share_id: number ID of the share whose name is sought
     :return: string of the share name
     """
@@ -556,18 +596,14 @@ def get_sname(ml, share_id):
     return sname
 
 
-def get_target_share_id(source_name):
-    """
-    Takes a share name and returns its ID from the database.
-    """
+def get_target_share_id(source_name: str) -> int:
+    """Takes a share name and returns its ID from the database."""
     so = Share.objects.get(name=source_name)
     return so.id
 
 
-def get_target_pool_id(source_name):
-    """
-    Takes a pool name and returns its ID from the database.
-    """
+def get_target_pool_id(source_name: str) -> int:
+    """Takes a pool name and returns its ID from the database."""
     po = Pool.objects.get(name=source_name)
     return po.id
 
@@ -579,8 +615,8 @@ def restore_config(cbid):
     fp = os.path.join(settings.MEDIA_ROOT, "config-backups", cbo.filename)
     gfo = gzip.open(fp)
     lines = gfo.readlines()
-    sa_ml = json.loads(lines[0])
-    sm_ml = json.loads(lines[1])
+    sa_ml: list = json.loads(lines[0])
+    sm_ml: list = json.loads(lines[1])
     gfo.close()
     restore_users_groups(sa_ml)
     restore_samba_exports(sa_ml)
@@ -605,6 +641,8 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
             if not os.path.isfile(fp):
                 cbo.delete()
+                # TODO: add 'continue' to go to next iteration as all steps below
+                #  will fail if fp does not exist.
 
             try:
                 with gzip.open(fp, "rb") as f:
@@ -729,6 +767,9 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
                     "duplicate is not allowed."
                 ).format(filename)
                 handle_exception(Exception(msg), request)
+            # TODO: use ConfigBackup() instead to avoid creating the object directly and
+            #  save only once everything is successful.
+            #  Otherwise, we are left with a ghost model entry.
             cbo = ConfigBackup.objects.create(filename=filename, config_backup=file_obj)
             cb_dir = ConfigBackup.cb_dir()
             if not os.path.isdir(cb_dir):
