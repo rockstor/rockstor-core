@@ -405,6 +405,21 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-debug-toolbar"
+version = "5.2.0"
+description = "A configurable set of panels that display various debug information about the current request/response."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "django_debug_toolbar-5.2.0-py3-none-any.whl", hash = "sha256:15627f4c2836a9099d795e271e38e8cf5204ccd79d5dbcd748f8a6c284dcd195"},
+    {file = "django_debug_toolbar-5.2.0.tar.gz", hash = "sha256:9e7f0145e1a1b7d78fcc3b53798686170a5b472d9cf085d88121ff823e900821"},
+]
+
+[package.dependencies]
+django = ">=4.2.9"
+sqlparse = ">=0.2"
+
+[[package]]
 name = "django-oauth-toolkit"
 version = "2.4.0"
 description = "OAuth2 Provider for Django"
@@ -1441,4 +1456,4 @@ rpm = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "5c155bd2349615183842a6a8354470d5ff1be6007279440a048f5629ccf6ce55"
+content-hash = "18b6b8829ca620eb7ac9ef8164748cc0646806713ba70a7177abb7cab5756e23"

@@ -93,7 +93,7 @@ zypper-changelog-lib = "0.7.9"
 # zypper-changelog-lib = {path = "/path/zypper-changelog-lib/dist/zypper_changelog_lib-0.7.9-py3-none-any.whl"}
 # https://pypi.org/project/supervisor/ 4.1.0 onwards embeds unmaintained meld3
 supervisor = "==4.2.4"
-django-debug-toolbar = "^4.4.6" # used only when DEBUG = True
+django-debug-toolbar = "^5.2.0" # used only when DEBUG = True
 
 # `poetry install --with dev`
 [tool.poetry.group.dev]
