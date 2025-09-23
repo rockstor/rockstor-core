@@ -286,14 +286,13 @@ class LogManagerNamespace(RockstorIO):
         "nginx_error": {"logfile": "error.log", "logdir": nginx_subd_logs},
         "gunicorn": {"logfile": "gunicorn.log", "logdir": rockstor_logs},
         "gunicorn_stdout": {
-            "logfile": "supervisord_gunicorn_stdout.log",
+            "logfile": "gunicorn_stdout.log",
             "logdir": rockstor_logs,
         },
         "gunicorn_stderr": {
-            "logfile": "supervisord_gunicorn_stderr.log",
+            "logfile": "gunicorn_stderr.log",
             "logdir": rockstor_logs,
         },
-        "supervisord": {"logfile": "supervisord.log", "logdir": rockstor_logs},
         "zypper": {"logfile": "history", "logdir": zypp_subd_logs},
     }
 

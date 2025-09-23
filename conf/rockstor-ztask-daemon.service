@@ -1,0 +1,19 @@
+[Unit]
+Description=Rockstor Huey/Ztask Daemon
+After=network.target rockstor-gunicorn.service
+Requires=rockstor-gunicorn.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rockstor
+Environment=DJANGO_SETTINGS_MODULE=settings
+ExecStart=/opt/rockstor/.venv/bin/django-admin run_huey --workers 2 --worker-type thread --logfile /opt/rockstor/var/log/huey.log
+Restart=always
+RestartSec=5s
+StandardOutput=append:/opt/rockstor/var/log/ztask-daemon_stdout.log
+StandardError=append:/opt/rockstor/var/log/ztask-daemon_stderr.log
+LimitNOFILE=1024
+
+[Install]
+WantedBy=multi-user.target

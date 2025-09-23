@@ -1,0 +1,17 @@
+[Unit]
+Description=Rockstor Gunicorn Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rockstor
+ExecStart=/opt/rockstor/.venv/bin/gunicorn --config ./conf/gunicorn.conf.py wsgi:application
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:/opt/rockstor/var/log/gunicorn_stdout.log
+StandardError=append:/opt/rockstor/var/log/gunicorn_stderr.log
+LimitNOFILE=1024
+
+[Install]
+WantedBy=multi-user.target
