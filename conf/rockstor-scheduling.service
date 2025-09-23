@@ -1,5 +1,5 @@
 [Unit]
-Description=Rockstor Huey/Ztask Daemon
+Description=Rockstor Scheduling Service
 After=network.target rockstor.service
 Requires=rockstor.service
 
