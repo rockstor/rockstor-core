@@ -96,10 +96,10 @@ SYSTEMD_OVERRIDE_DIR = "/etc/systemd/system"
 ROCKSTOR_SYSTEMD_SERVICES = [
     "rockstor-build.service",  # Build/Rebuild .venv & jslibs, init `pass`.
     "rockstor-pre.service",  # Loads us (initrock.py).
-    "rockstor-gunicorn.service", #gunicorn startup
-    "rockstor-data-collector.service", # log collector
-    "rockstor-replication.service", # replication daemon
-    "rockstor-ztask-daemon.service", # huey service
+    "rockstor.service", #Server Gateway Interface startup
+    "rockstor-data-collector.service", # Log collector
+    "rockstor-replication.service", # Replication daemon
+    "rockstor-ztask-daemon.service", # Huey service
     "rockstor-bootstrap.service",
 ]
 # These services are added programatically outside initrock (rockstor-pre.service)

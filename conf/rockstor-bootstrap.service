@@ -1,7 +1,7 @@
 [Unit]
 Description=Rockstor bootstrapping tasks
-After=rockstor-gunicorn.service
-Requires=rockstor-gunicorn.service
+After=rockstor.service
+Requires=rockstor.service
 
 [Service]
 WorkingDirectory=/opt/rockstor
