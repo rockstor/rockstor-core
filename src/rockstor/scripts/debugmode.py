@@ -28,7 +28,7 @@ from system.osi import run_command
 
 
 SETTINGS_FILE = path.join(settings.ROOT_DIR, "src/rockstor/settings.py")
-SUPERCTL_BIN = path.join(settings.ROOT_DIR, ".venv/bin/supervisorctl")
+SYSTEMCTL_BIN = path.join(settings.ROOT_DIR, ".venv/bin/systemctl")
 
 
 def update_settings(debug_flag):
@@ -60,7 +60,7 @@ def main():
             print("DEBUG flag already set to %s" % debug_flag)
         else:
             update_settings(debug_flag)
-            run_command([SUPERCTL_BIN, "restart", "gunicorn"])
+            run_command([SYSTEMCTL_BIN, "restart", "gunicorn"])
             print("DEBUG flag is now set to %s" % debug_flag)
     else:
         display_current()

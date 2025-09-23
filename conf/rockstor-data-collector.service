@@ -1,0 +1,19 @@
+[Unit]
+Description=Rockstor Data Collector
+After=network.target rockstor.service
+Requires=rockstor.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rockstor
+EnvironmentFile=/opt/rockstor/.env
+ExecStart=/opt/rockstor/.venv/bin/data-collector
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:/opt/rockstor/var/log/data-collector_stdout.log
+StandardError=append:/opt/rockstor/var/log/data-collector_stderr.log
+LimitNOFILE=1024
+
+[Install]
+WantedBy=multi-user.target

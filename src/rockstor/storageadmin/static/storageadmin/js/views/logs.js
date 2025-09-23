@@ -255,7 +255,6 @@ LogsView = RockstorLayoutView.extend({
         var _this = this;
         _this.avail_logs = {
             'rockstor': 'Rockstor Logs',
-            'supervisord': 'Supervisord (Process monitor)',
             'dmesg': 'Dmesg (Kernel)',
             'nmbd': 'Nmbd (Samba)',
             'smbd': 'Smbd (Samba)',

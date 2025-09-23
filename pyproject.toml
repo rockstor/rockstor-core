@@ -58,7 +58,7 @@ dependencies = [
     "keyring-pass (>=0.9.3,<0.10.0)",
     "zypper-changelog-lib (==0.7.9)",
     # "zypper-changelog-lib @ file:///path/zypper-changelog-lib/dist/zypper_changelog_lib-0.7.9-py3-none-any.whl",
-    "supervisor (==4.2.4)",
+    # "supervisor (==4.2.4)",
     "django-debug-toolbar (==6.0.0)",  # used only when DEBUG = True
 ]
 

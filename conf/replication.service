@@ -1,0 +1,18 @@
+[Unit]
+Description=Rockstor Replication Daemon
+After=network.target rockstor.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rockstor
+EnvironmentFile=/opt/rockstor/.env
+ExecStart=/opt/rockstor/.venv/bin/replicad
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:/opt/rockstor/var/log/replication_stdout.log
+StandardError=append:/opt/rockstor/var/log/replication_stderr.log
+LimitNOFILE=1024
+
+[Install]
+WantedBy=multi-user.target

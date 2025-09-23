@@ -34,7 +34,7 @@ from storageadmin.models import PoolBalance
 
 # N.B. these imports are required for task auto-discovery, even if not used here-in.
 from fs.btrfs import start_resize_pool, start_balance
-from smart_manager.views.ztask_helpers import restart_rockstor
+from smart_manager.views.scheduling_helpers import restart_rockstor
 from storageadmin.views.rockon_helpers import start, stop, update, install, uninstall
 from storageadmin.views.config_backup import restore_config, restore_rockons
 from storageadmin.views.pool_balance import update_end_time

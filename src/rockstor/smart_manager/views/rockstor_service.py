@@ -21,7 +21,7 @@ from django.db import transaction
 from smart_manager.views.base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.models import NetworkConnection
-from smart_manager.views import ztask_helpers
+from smart_manager.views import scheduling_helpers
 
 
 import logging
@@ -52,14 +52,14 @@ class RockstorServiceView(BaseServiceDetailView):
                     raise Exception("Invalid listener port(%d)" % listener_port)
                 ni = config["network_interface"]
                 if len(ni.strip()) == 0:  # empty string
-                    ztask_helpers.restart_rockstor(None, listener_port)
+                    scheduling_helpers.restart_rockstor(None, listener_port)
                 else:
                     try:
                         nco = NetworkConnection.objects.get(name=ni)
                     except NetworkConnection.DoesNotExist:
                         raise Exception("Network Connection(%s) does not exist." % ni)
                     # @todo: we should make restart transparent to the user.
-                    ztask_helpers.restart_rockstor(nco.ipaddr, listener_port)
+                    scheduling_helpers.restart_rockstor(nco.ipaddr, listener_port)
                 self._save_config(service, config)
                 return Response()
             except Exception as e:

@@ -1,16 +1,21 @@
 [Unit]
-Description=Rockstor startup script
-After=rockstor-pre.service
-Requires=rockstor-pre.service
+Description=Rockstor SGI Service
+After=network.target
 
 [Service]
+Type=simple
+PIDFile=/run/gunicorn.pid
 WorkingDirectory=/opt/rockstor
 EnvironmentFile=/opt/rockstor/.env
-ExecStart=/usr/local/bin/poetry run supervisord -c /opt/rockstor/etc/supervisord.conf
-ExecStop=/usr/local/bin/poetry run supervisorctl shutdown
-ExecReload=/usr/local/bin/poetry run supervisorctl reload
-# Generally not recommended but used here to honour supervisord's remit re process management.
-KillMode=process
+ExecStart=/opt/rockstor/.venv/bin/gunicorn --config ./conf/gunicorn.conf.py wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+KillMode=mixed
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:/opt/rockstor/var/log/sgi_stdout.log
+StandardError=append:/opt/rockstor/var/log/sgi_stderr.log
+LimitNOFILE=1024
 
 [Install]
 WantedBy=multi-user.target

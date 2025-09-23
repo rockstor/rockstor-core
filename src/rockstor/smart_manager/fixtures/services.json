@@ -129,8 +129,8 @@
     "model": "smart_manager.service",
     "pk": 17,
     "fields": {
-        "name": "ztask-daemon",
-        "display_name": "ZTaskd",
+        "name": "rockstor-scheduling",
+        "display_name": "Rockstor Scheduling",
         "config": null
     }
 },
