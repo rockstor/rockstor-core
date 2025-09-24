@@ -38,7 +38,7 @@ from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
 from storageadmin.views.rockon_helpers import start, stop, install, uninstall, update
-from system.services import superctl
+from system.services import systemctl # DW superctl
 from system.docker import docker_status, dnet_create, dnet_disconnect, dnet_remove
 from storageadmin.views.network import NetworkMixin
 
@@ -85,16 +85,19 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
             try:
                 dname = "ztask-daemon"
                 e_msg = "ztask daemon is not running and could not be started."
-                o, e, rc = superctl(dname, "status")
+# DW                o, e, rc = superctl(dname, "status")
+                o, e, rc = systemctl(dname, "status")
                 if rc == 1:
-                    superctl(dname, "restart")
+# DW                    superctl(dname, "restart")
+                    systemctl(dname, "restart")
                     time.sleep(5)
             except Exception as e:
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
             finally:
                 if rc == 1:
-                    o, e, rc = superctl(dname, "status")
+# DW                    o, e, rc = superctl(dname, "status")
+                    o, e, rc = systemctl(dname, "status")
                     if rc == 1:
                         handle_exception(Exception(e_msg), request)
 

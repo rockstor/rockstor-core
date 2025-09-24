@@ -140,7 +140,8 @@ def set_autostart(service, switch):
     shutil.move(npath, SUPERVISORD_CONF)
 
 
-def superctl(
+# DW Disabled as we are moving away from supervisord to systemd
+""" def superctl(
     service: str, switch: str, throw: bool = True
 ) -> Tuple[List[str], List[str], int]:
     out, err, rc = run_command([SUPERCTL_BIN, switch, service], throw=throw)
@@ -149,7 +150,7 @@ def superctl(
         status = out[0].split()[1]
         if status != "RUNNING":
             rc = 1
-    return out, err, rc
+    return out, err, rc """
 
 
 def service_status(service_name, config=None):
@@ -192,8 +193,9 @@ def service_status(service_name, config=None):
     elif service_name == "sftp":
         # Delegate sshd's sftp subsystem status check to system.ssh.py call.
         return is_sftp_running(return_boolean=False)
-    elif service_name in ("replication", "data-collector", "ztask-daemon"):
-        return superctl(service_name, "status", throw=False)
+    elif service_name in ("replication", "data-collector", "scheduling"):
+# DW        return superctl(service_name, "status", throw=False)
+        return systemctl("status", service_name)
     elif service_name == "smb":
         out, err, rc = run_command(
             [SYSTEMCTL, "--lines=0", "status", "smb"], throw=False
