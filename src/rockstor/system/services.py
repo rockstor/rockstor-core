@@ -198,7 +198,8 @@ def service_status(service_name, config=None):
         return is_sftp_running(return_boolean=False)
     elif service_name in ("replication", "data-collector", "scheduling"):
 # DW        return superctl(service_name, "status", throw=False)
-        return systemctl("status", service_name)
+        out, err, rc = systemctl(service_name, "status", throw=False)
+        return out, err, rc
     elif service_name == "smb":
         out, err, rc = run_command(
             [SYSTEMCTL, "--lines=0", "status", "smb"], throw=False
