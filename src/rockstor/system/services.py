@@ -105,52 +105,52 @@ def systemctl(service_name, switch):
 
     return run_command(arg_list, log=True)
 
+# DW Disabled as we are moving away from supervisord to systemd
+# def set_autostart(service, switch):
+#     """
+#     Configure autostart setting for supervisord managed services eg:-
+#     gunicorn, smart_manager daemon, replication daemon, data-collector,
+#     and ztask-daemon. Works by rewriting autostart lines in  SUPERVISORD_CONF
+#     http://supervisord.org/
+#     :param service:
+#     :param switch:
+#     :return:
+#     """
+#     switch_map = {"start": "true", "stop": "false"}
+#     if switch not in switch_map:
+#         return
+#     switch = switch_map[switch]
+#     fo, npath = mkstemp()
+#     with open(SUPERVISORD_CONF) as sfo, open(npath, "w") as tfo:
+#         start = False
+#         stop = False
+#         for line in sfo.readlines():
+#             if re.match("\[program:{}\]".format(service), line) is not None:
+#                 start = True
+#             elif start is True and len(line.strip()) == 0:
+#                 stop = True
 
-def set_autostart(service, switch):
-    """
-    Configure autostart setting for supervisord managed services eg:-
-    gunicorn, smart_manager daemon, replication daemon, data-collector,
-    and ztask-daemon. Works by rewriting autostart lines in  SUPERVISORD_CONF
-    http://supervisord.org/
-    :param service:
-    :param switch:
-    :return:
-    """
-    switch_map = {"start": "true", "stop": "false"}
-    if switch not in switch_map:
-        return
-    switch = switch_map[switch]
-    fo, npath = mkstemp()
-    with open(SUPERVISORD_CONF) as sfo, open(npath, "w") as tfo:
-        start = False
-        stop = False
-        for line in sfo.readlines():
-            if re.match("\[program:{}\]".format(service), line) is not None:
-                start = True
-            elif start is True and len(line.strip()) == 0:
-                stop = True
-
-            if start is True and stop is False:
-                if re.match("autostart", line) is not None:
-                    tfo.write("autostart={}\n".format(switch))
-                else:
-                    tfo.write(line)
-            else:
-                tfo.write(line)
-    shutil.move(npath, SUPERVISORD_CONF)
+#             if start is True and stop is False:
+#                 if re.match("autostart", line) is not None:
+#                     tfo.write("autostart={}\n".format(switch))
+#                 else:
+#                     tfo.write(line)
+#             else:
+#                 tfo.write(line)
+#     shutil.move(npath, SUPERVISORD_CONF)
 
 
 # DW Disabled as we are moving away from supervisord to systemd
-""" def superctl(
-    service: str, switch: str, throw: bool = True
-) -> Tuple[List[str], List[str], int]:
-    out, err, rc = run_command([SUPERCTL_BIN, switch, service], throw=throw)
-    set_autostart(service, switch)
-    if switch == "status":
-        status = out[0].split()[1]
-        if status != "RUNNING":
-            rc = 1
-    return out, err, rc """
+# def superctl(
+#     service: str, switch: str, throw: bool = True
+# ) -> Tuple[List[str], List[str], int]:
+#     out, err, rc = run_command([SUPERCTL_BIN, switch, service], throw=throw)
+#     set_autostart(service, switch)
+#     if switch == "status":
+#         status = out[0].split()[1]
+#         if status != "RUNNING":
+#             rc = 1
+#     return out, err, r
 
 
 def service_status(service_name, config=None):
