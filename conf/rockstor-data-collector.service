@@ -7,7 +7,7 @@ Requires=rockstor.service
 Type=simple
 User=root
 WorkingDirectory=/opt/rockstor
-Environment=DJANGO_SETTINGS_MODULE=settings
+EnvironmentFile=/opt/rockstor/.env
 ExecStart=/opt/rockstor/.venv/bin/data-collector
 Restart=on-failure
 RestartSec=5s
