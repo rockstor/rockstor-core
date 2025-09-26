@@ -1,7 +1,6 @@
 [Unit]
 Description=Rockstor SGI Service
 After=network.target
-Requires=rockstor.socket
 
 [Service]
 Type=simple
