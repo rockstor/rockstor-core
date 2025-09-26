@@ -1,0 +1,10 @@
+[Unit]
+Description=Rockstor SGI Socket
+After=network.target
+
+[Socket]
+ListenStream=/run/gunicorn.socket
+SocketUser=root
+
+[Install]
+WantedBy=sockets.target

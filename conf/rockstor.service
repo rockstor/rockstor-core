@@ -1,12 +1,18 @@
 [Unit]
 Description=Rockstor SGI Service
 After=network.target
+Requires=rockstor.socket
 
 [Service]
 Type=simple
+PIDFile=/run/gunicorn.pid
 User=root
 WorkingDirectory=/opt/rockstor
+EnvironmentFile=/opt/rockstor/.env
 ExecStart=/opt/rockstor/.venv/bin/gunicorn --config ./conf/gunicorn.conf.py wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+KillMode=mixed
 Restart=on-failure
 RestartSec=5s
 StandardOutput=append:/opt/rockstor/var/log/sgi_stdout.log

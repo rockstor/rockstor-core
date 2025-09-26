@@ -96,7 +96,8 @@ SYSTEMD_OVERRIDE_DIR = "/etc/systemd/system"
 ROCKSTOR_SYSTEMD_SERVICES = [
     "rockstor-build.service",  # Build/Rebuild .venv & jslibs, init `pass`.
     "rockstor-pre.service",  # Loads us (initrock.py).
-    "rockstor.service", #Server Gateway Interface startup
+    "rockstor.service", # Server Gateway Interface (SGI) startup
+    "rockstor.socket", # SGI socket
     "rockstor-data-collector.service", # Log collector
     "rockstor-replication.service", # Replication daemon
     "rockstor-scheduling.service", # scheduling service
