@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import systemctl # DW superctl
+from system.services import systemctl
 from smart_manager.views.base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
@@ -33,7 +33,6 @@ class ZTaskdServiceView(BaseServiceDetailView):
         """
         service = Service.objects.get(name="ztask-daemon")
         try:
-# DW            superctl(service.name, command)
             systemctl(service.name, command)
             return Response()
         except Exception as e:

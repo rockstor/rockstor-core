@@ -33,8 +33,7 @@ def register_services() -> None:
         "Rock-on": "docker",
         "S.M.A.R.T": "smartd",
         "NUT-UPS": "nut",
-        # ZTaskd display/service names maintained: but are now huey pseudonyms.
-        # "ZTaskd": "ztask-daemon",
+        # moving towards generic scheduling service name.
         "ZTaskd": "rockstor-scheduling",
         "Bootstrap": "rockstor-bootstrap",
         "Shell In A Box": "shellinaboxd",

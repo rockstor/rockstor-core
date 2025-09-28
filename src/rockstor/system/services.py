@@ -28,8 +28,6 @@ from system.constants import SYSTEMCTL, TAILSCALE
 from system.osi import run_command
 from system.ssh import is_sftp_running
 
-SUPERCTL_BIN = "{}.venv/bin/supervisorctl".format(settings.ROOT_DIR)
-SUPERVISORD_CONF = "{}etc/supervisord.conf".format(settings.ROOT_DIR)
 SSSD_FILE = "/etc/sssd/sssd.conf"
 NET = "/usr/bin/net"
 WBINFO = "/usr/bin/wbinfo"
@@ -108,53 +106,6 @@ def systemctl(service_name, switch):
 
     return run_command(arg_list, log=True)
 
-# DW Disabled as we are moving away from supervisord to systemd
-# def set_autostart(service, switch):
-#     """
-#     Configure autostart setting for supervisord managed services eg:-
-#     gunicorn, smart_manager daemon, replication daemon, data-collector,
-#     and ztask-daemon. Works by rewriting autostart lines in  SUPERVISORD_CONF
-#     http://supervisord.org/
-#     :param service:
-#     :param switch:
-#     :return:
-#     """
-#     switch_map = {"start": "true", "stop": "false"}
-#     if switch not in switch_map:
-#         return
-#     switch = switch_map[switch]
-#     fo, npath = mkstemp()
-#     with open(SUPERVISORD_CONF) as sfo, open(npath, "w") as tfo:
-#         start = False
-#         stop = False
-#         for line in sfo.readlines():
-#             if re.match("\[program:{}\]".format(service), line) is not None:
-#                 start = True
-#             elif start is True and len(line.strip()) == 0:
-#                 stop = True
-
-#             if start is True and stop is False:
-#                 if re.match("autostart", line) is not None:
-#                     tfo.write("autostart={}\n".format(switch))
-#                 else:
-#                     tfo.write(line)
-#             else:
-#                 tfo.write(line)
-#     shutil.move(npath, SUPERVISORD_CONF)
-
-
-# DW Disabled as we are moving away from supervisord to systemd
-# def superctl(
-#     service: str, switch: str, throw: bool = True
-# ) -> Tuple[List[str], List[str], int]:
-#     out, err, rc = run_command([SUPERCTL_BIN, switch, service], throw=throw)
-#     set_autostart(service, switch)
-#     if switch == "status":
-#         status = out[0].split()[1]
-#         if status != "RUNNING":
-#             rc = 1
-#     return out, err, r
-
 
 def service_status(service_name, config=None):
     """
@@ -197,7 +148,6 @@ def service_status(service_name, config=None):
         # Delegate sshd's sftp subsystem status check to system.ssh.py call.
         return is_sftp_running(return_boolean=False)
     elif service_name in ("replication", "data-collector", "scheduling"):
-# DW        return superctl(service_name, "status", throw=False)
         out, err, rc = systemctl(service_name, "status", throw=False)
         return out, err, rc
     elif service_name == "smb":
