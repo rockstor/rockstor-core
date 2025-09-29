@@ -26,7 +26,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ZTaskdServiceView(BaseServiceDetailView):
+class RockstorSchedulingServiceView(BaseServiceDetailView):
     def post(self, request, command):
         """
         execute a command on the service

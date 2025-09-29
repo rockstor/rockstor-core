@@ -11,8 +11,8 @@ EnvironmentFile=/opt/rockstor/.env
 ExecStart=/opt/rockstor/.venv/bin/django-admin run_huey --workers 2 --worker-type thread --logfile /opt/rockstor/var/log/huey.log
 Restart=always
 RestartSec=5s
-StandardOutput=append:/opt/rockstor/var/log/ztask-daemon_stdout.log
-StandardError=append:/opt/rockstor/var/log/ztask-daemon_stderr.log
+StandardOutput=append:/opt/rockstor/var/log/rockstor-scheduling_stdout.log
+StandardError=append:/opt/rockstor/var/log/rockstor-scheduling_stderr.log
 LimitNOFILE=1024
 
 [Install]
