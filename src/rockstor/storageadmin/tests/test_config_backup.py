@@ -988,9 +988,9 @@ class ConfigBackupTests(APITestMixin):
         },
         {
             "fields": {
-                "display_name": "ZTaskd",
+                "display_name": "Rockstor Scheduling",
                 "config": None,
-                "name": "ztask-daemon",
+                "name": "rockstor-scheduling",
             },
             "model": "smart_manager.service",
             "pk": 17,

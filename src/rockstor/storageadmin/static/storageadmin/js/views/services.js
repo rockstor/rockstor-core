@@ -45,7 +45,7 @@ ServicesView = Backbone.View.extend({
         this.tooltipMap = {
             'active-directory': 'By turning this service on, the system will attempt to join the Active Directory domain using the credentials provided during configuration.',
             'rockstor-bootstrap': 'Service responsible for bootstrapping Rockstor when the system starts.',
-            'ztask-daemon': 'Background service for tasks like Pool scrub.',
+            'rockstor-scheduling': 'Background service for tasks like Pool scrub.',
             'tailscaled': 'Private mesh VPN based on WireGuard.'
         };
         this.initHandlebarHelpers();

@@ -83,8 +83,8 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                 handle_exception(Exception(e_msg), request)
 
             try:
-                dname = "ztask-daemon"
-                e_msg = "ztask daemon is not running and could not be started."
+                dname = "rockstor-scheduling"
+                e_msg = "rockstor-scheduling is not running and could not be started."
                 o, e, rc = systemctl(dname, "status")
                 if rc == 1:
                     systemctl(dname, "restart")

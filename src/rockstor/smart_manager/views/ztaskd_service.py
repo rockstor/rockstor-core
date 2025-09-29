@@ -31,7 +31,7 @@ class ZTaskdServiceView(BaseServiceDetailView):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name="ztask-daemon")
+        service = Service.objects.get(name="rockstor-scheduling")
         try:
             systemctl(service.name, command)
             return Response()
