@@ -28,7 +28,7 @@ def register_services() -> None:
         "Active Directory": "active-directory",
         "LDAP": "ldap",
         "SFTP": "sftp",
-        "Replication": "rockstor-replication",
+        "Replication": "replication",
         "SNMP": "snmpd",
         "Rock-on": "docker",
         "S.M.A.R.T": "smartd",
