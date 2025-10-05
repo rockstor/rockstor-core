@@ -68,7 +68,7 @@ class ServicesTests(unittest.TestCase):
             "nut-server",
             "rockstor-bootstrap",
             "rockstor",
-            "rockstor-replication",
+            "replication",
             "rockstor-scheduling",
             "rockstor-data-collector",
             "systemd-shutdownd",

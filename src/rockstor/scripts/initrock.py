@@ -98,7 +98,7 @@ ROCKSTOR_SYSTEMD_SERVICES = [
     "rockstor-pre.service",  # Loads us (initrock.py).
     "rockstor.service", # Server Gateway Interface (SGI) startup
     "rockstor-data-collector.service", # Log collector
-    "rockstor-replication.service", # Replication daemon
+    "replication.service", # Replication daemon
     "rockstor-scheduling.service", # scheduling service
     "rockstor-bootstrap.service",
 ]
