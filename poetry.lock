@@ -1299,24 +1299,6 @@ dev = ["build", "hatch"]
 doc = ["sphinx"]
 
 [[package]]
-name = "supervisor"
-version = "4.2.4"
-description = "A system for controlling process state under UNIX"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "supervisor-4.2.4-py2.py3-none-any.whl", hash = "sha256:bbae57abf74e078fe0ecc9f30068b6da41b840546e233ef1e659a12e4c875af6"},
-    {file = "supervisor-4.2.4.tar.gz", hash = "sha256:40dc582ce1eec631c3df79420b187a6da276bbd68a4ec0a8f1f123ea616b97a2"},
-]
-
-[package.dependencies]
-setuptools = "*"
-
-[package.extras]
-testing = ["pytest", "pytest-cov"]
-
-[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
@@ -1503,4 +1485,4 @@ rpm = "*"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "07d639fbeefaf4db20fdce688851deb246b5567f35dc74dd342dc0f1717c095a"
+content-hash = "f633c15119fc5ed7b8badd9cc549445c59e0692532de614543f8f5b4c0a49126"
