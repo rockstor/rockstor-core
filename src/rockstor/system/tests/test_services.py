@@ -69,8 +69,8 @@ class ServicesTests(unittest.TestCase):
             "rockstor-bootstrap",
             "rockstor",
             "replication",
-            "rockstor-scheduling",
-            "rockstor-data-collector",
+            "scheduling",
+            "rockstor-collector",
             "systemd-shutdownd",
             "tailscaled",
         )

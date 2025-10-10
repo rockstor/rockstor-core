@@ -31,9 +31,9 @@ class RockstorSchedulingServiceView(BaseServiceDetailView):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name="rockstor-scheduling")
+        service = Service.objects.get(name="scheduling")
         try:
-            systemctl(service.name, command)
+            systemctl("rockstor-scheduling", command)
             return Response()
         except Exception as e:
             e_msg = "Failed to %s run_huey due to an error: %s" % (command, e.__str__())

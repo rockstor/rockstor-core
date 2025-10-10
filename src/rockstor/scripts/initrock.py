@@ -97,9 +97,9 @@ ROCKSTOR_SYSTEMD_SERVICES = [
     "rockstor-build.service",  # Build/Rebuild .venv & jslibs, init `pass`.
     "rockstor-pre.service",  # Loads us (initrock.py).
     "rockstor.service", # Server Gateway Interface (SGI) startup
-    "rockstor-data-collector.service", # Log collector
-    "replication.service", # Replication daemon
-    "rockstor-scheduling.service", # scheduling service
+    "rockstor-collector.service", # Log collector
+    "rockstor-replication.service", # Replication daemon
+    "scheduling.service", # scheduling service
     "rockstor-bootstrap.service",
 ]
 # These services are added programatically outside initrock (rockstor-pre.service)

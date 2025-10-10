@@ -34,7 +34,7 @@ def register_services() -> None:
         "S.M.A.R.T": "smartd",
         "NUT-UPS": "nut",
         # moving towards generic scheduling service name.
-        "Scheduling": "rockstor-scheduling",
+        "Scheduling": "scheduling",
         "Bootstrap": "rockstor-bootstrap",
         "Shell In A Box": "shellinaboxd",
         "Rockstor": "rockstor", # Service Gateway Interface (SGI) server.

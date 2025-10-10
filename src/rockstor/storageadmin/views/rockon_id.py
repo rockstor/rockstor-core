@@ -83,8 +83,8 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                 handle_exception(Exception(e_msg), request)
 
             try:
-                dname = "rockstor-scheduling"
-                e_msg = "rockstor-scheduling is not running and could not be started."
+                dname = "scheduling"
+                e_msg = "scheduling is not running and could not be started."
                 o, e, rc = systemctl(dname, "status")
                 if rc == 1:
                     systemctl(dname, "restart")

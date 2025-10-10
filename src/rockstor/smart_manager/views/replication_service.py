@@ -78,7 +78,7 @@ class ReplicationServiceView(BaseServiceDetailView):
                 )
                 handle_exception(Exception(e_msg), request)
         try:
-            systemctl(service.name, command)
+            systemctl("rockstor-replication", command)
             return Response()
         except Exception as e:
             e_msg = "Failed to %s Replication due to an error: %s" % (

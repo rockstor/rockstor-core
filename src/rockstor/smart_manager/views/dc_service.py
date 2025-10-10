@@ -34,7 +34,7 @@ class DataCollectorServiceView(BaseServiceDetailView):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name="data-collector")
+        service = Service.objects.get(name="rockstor-collector")
         if command == "config":
             # nothing to really configure atm. just save the model
             try:
