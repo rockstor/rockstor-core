@@ -109,9 +109,9 @@ def systemctl(service_name, switch):
 
 def service_status(service_name, config=None):
     """
-    Service status of either systemd or supervisord managed services.
-    Hardwired to identify controlling system by service name and uses one of
-    systemctl, init_service_op, or superctl to assess status accordingly.
+    Service status of systemd managed services.
+    Hardwired to identify controlling system by service name.
+    Uses either systemctl or init_service_op to assess status accordingly.
     Note some sanity checks for some services.
     :param service_name:
     :param config:
