@@ -99,7 +99,7 @@ ROCKSTOR_SYSTEMD_SERVICES = [
     "rockstor.service", # Server Gateway Interface (SGI) startup
     "rockstor-collector.service", # Log collector
     "rockstor-replication.service", # Replication daemon
-    "scheduling.service", # scheduling service
+    "rockstor-scheduling.service", # scheduling service
     "rockstor-bootstrap.service",
 ]
 # These services are added programatically outside initrock (rockstor-pre.service)
