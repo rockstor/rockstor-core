@@ -68,7 +68,7 @@ def init_service_op(service_name, command, throw=True):
         "rockstor-bootstrap",
         "rockstor",
         "replication",
-        "scheduling",
+        "rockstor-scheduling",
         "rockstor-collector",
         "systemd-shutdownd",
         "tailscaled",
@@ -147,7 +147,7 @@ def service_status(service_name, config=None):
     elif service_name == "sftp":
         # Delegate sshd's sftp subsystem status check to system.ssh.py call.
         return is_sftp_running(return_boolean=False)
-    elif service_name == "scheduling":
+    elif service_name == "rockstor-scheduling":
         out, err, rc = systemctl("rockstor-scheduling", "status")
         return out, err, rc
     elif service_name == "rockstor-collector":

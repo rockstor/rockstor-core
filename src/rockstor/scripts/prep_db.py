@@ -33,6 +33,7 @@ def register_services() -> None:
         "Rock-on": "docker",
         "S.M.A.R.T": "smartd",
         "NUT-UPS": "nut",
+        "Data Collector": "rockstor-collector",
         # moving towards generic scheduling service name.
         "Scheduling": "scheduling",
         "Bootstrap": "rockstor-bootstrap",

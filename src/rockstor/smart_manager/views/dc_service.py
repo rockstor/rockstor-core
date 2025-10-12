@@ -47,7 +47,7 @@ class DataCollectorServiceView(BaseServiceDetailView):
 
         else:
             try:
-                systemctl(service.name, command)
+                systemctl("rockstor-collector", command)
             except Exception as e:
                 logger.exception(e)
                 e_msg = "Failed to %s Data collector due to a system error." % command

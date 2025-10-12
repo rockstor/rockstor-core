@@ -990,7 +990,7 @@ class ConfigBackupTests(APITestMixin):
             "fields": {
                 "display_name": "Rockstor Scheduling",
                 "config": None,
-                "name": "scheduling",
+                "name": "rockstor-scheduling",
             },
             "model": "smart_manager.service",
             "pk": 17,
