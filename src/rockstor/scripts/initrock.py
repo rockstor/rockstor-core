@@ -402,7 +402,9 @@ def install_or_update_systemd_service(
             os.mkdir(target_directory)
         shutil.copyfile(source_with_path, target_with_path)
         logger.info("{} updated.".format(target_with_path))
-        run_command([SYSTEMCTL, "enable", service_name])
+        if service_name == "rockstor-bootstrap":
+            logger.info("Enabling rockstor-bootstrap.service")
+            run_command([SYSTEMCTL, "enable", service_name])
         return True
     logger.info("{} up-to-date.".format(target_with_path))
     return False
