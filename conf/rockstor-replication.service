@@ -1,7 +1,7 @@
 [Unit]
-Description=Rockstor Replication Daemon
-After=network.target rockstor-pre.service rockstor.service
-Requires=rockstor-pre.service rockstor.service
+Description=Rockstor Replication Service
+After=rockstor.service
+Requires=rockstor.service
 
 [Service]
 Type=simple
