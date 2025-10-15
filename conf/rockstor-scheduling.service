@@ -1,7 +1,7 @@
 [Unit]
 Description=Rockstor Scheduling Service
-After=network.target rockstor-pre.service rockstor.service
-Requires=rockstor-pre.service rockstor.service
+After=rockstor.service
+Requires=rockstor.service
 
 [Service]
 Type=simple
