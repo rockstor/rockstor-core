@@ -1,7 +1,7 @@
 [Unit]
-Description=Rockstor bootstrapping tasks
-After=rockstor.service
-Requires=rockstor.service rockstor-collector
+Description=Rockstor Bootstrapping Tasks
+After=rockstor-collector.service rockstor-scheduling.service
+Requires=systemd-udev-settle.service rockstor-collector.service rockstor-scheduling.service
 
 [Service]
 WorkingDirectory=/opt/rockstor
