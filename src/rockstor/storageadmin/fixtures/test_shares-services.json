@@ -129,8 +129,8 @@
     "model": "smart_manager.service",
     "pk": 17,
     "fields": {
-        "name": "rockstor-scheduling",
-        "display_name": "Rockstor Scheduling",
+        "name": "scheduling",
+        "display_name": "Scheduling",
         "config": null
     }
 },
