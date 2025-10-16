@@ -148,14 +148,9 @@ def service_status(service_name, config=None):
         # Delegate sshd's sftp subsystem status check to system.ssh.py call.
         return is_sftp_running(return_boolean=False)
     elif service_name == "scheduling":
-        out, err, rc = systemctl("rockstor-scheduling", "status")
-        return out, err, rc
-    elif service_name == "rockstor-collector":
-        out, err, rc = systemctl("rockstor-collector", "status")
-        return out, err, rc
+        return init_service_op("rockstor-scheduling", "status", throw=False)
     elif service_name == "replication":
-        out, err, rc = systemctl("rockstor-replication", "status")
-        return out, err, rc
+        return init_service_op("rockstor-replication", "status", throw=False)
     elif service_name == "smb":
         out, err, rc = run_command(
             [SYSTEMCTL, "--lines=0", "status", "smb"], throw=False
