@@ -67,7 +67,7 @@ def init_service_op(service_name, command, throw=True):
         "nut-server",
         "rockstor-bootstrap",
         "rockstor",
-        "replication",
+        "rockstor-replication",
         "rockstor-scheduling",
         "rockstor-collector",
         "systemd-shutdownd",
