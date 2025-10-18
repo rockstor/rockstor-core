@@ -167,7 +167,7 @@ AddSambaExportView = RockstorLayoutView.extend({
             return null;
         }
         this.$('#admin_users').select2({
-            minimumInputLength: 3,
+            minimumInputLength: 2,
             allowClear: true,
             placeholder: '',
             matcher: matchCustom
