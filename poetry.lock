@@ -531,14 +531,14 @@ testing = ["coveralls", "django", "tox", "wheel"]
 
 [[package]]
 name = "djangorestframework"
-version = "3.15.2"
+version = "3.16.1"
 description = "Web APIs for Django, made easy."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "djangorestframework-3.15.2-py3-none-any.whl", hash = "sha256:2b8871b062ba1aefc2de01f773875441a961fefbf79f5eed1e32b2f096944b20"},
-    {file = "djangorestframework-3.15.2.tar.gz", hash = "sha256:36fe88cd2d6c6bec23dca9804bab2ba5517a8bb9d8f47ebc68981b56840107ad"},
+    {file = "djangorestframework-3.16.1-py3-none-any.whl", hash = "sha256:33a59f47fb9c85ede792cbf88bde71893bcda0667bc573f784649521f1102cec"},
+    {file = "djangorestframework-3.16.1.tar.gz", hash = "sha256:166809528b1aced0a17dc66c24492af18049f2c9420dbd0be29422029cfc3ff7"},
 ]
 
 [package.dependencies]
@@ -1560,4 +1560,4 @@ rpm = "*"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "f633c15119fc5ed7b8badd9cc549445c59e0692532de614543f8f5b4c0a49126"
+content-hash = "a7da7fe51ab2aafa2b6a193575e99ed075c2ac2816f6d0febe2370164c0ed573"
