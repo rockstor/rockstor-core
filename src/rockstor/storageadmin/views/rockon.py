@@ -242,8 +242,11 @@ class RockOnView(rfc.GenericView):
             )
             co.dimage = io
             co.launch_order = c_d["launch_order"]
+            # Hard copy json uid & gid values to our model.
             if "uid" in c_d:
                 co.uid = int(c_d["uid"])
+            if "gid" in c_d:
+                co.gid = int(c_d["gid"])
             co.save()
 
             ports = containers[c].get("ports", {})

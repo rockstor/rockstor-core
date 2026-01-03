@@ -41,6 +41,7 @@ from system.docker import dnet_create, dnet_connect
 from system.osi import run_command
 from fs.btrfs import mount_share
 from storageadmin.views.rockon_utils import container_status
+from system.users import group_gid
 
 DOCKER = "/usr/bin/docker"
 ROCKON_URL = "https://localhost/api/rockons"
@@ -307,13 +308,34 @@ def device_ops(container):
     return device_list
 
 
-def vol_owner_uid(container):
-    # If there are volumes, return the uid of the owner of the first volume.
+def vol_owner_uid(container: DContainer) -> int:
+    """
+    If the container has any mapped volumes, return the 1st mount point owner id.
+    Otherwise, return 0.
+    :param container:
+    :return: int of first container volume owner uid.
+    """
     vo = DVolume.objects.filter(container=container).first()
     if vo is None:
-        return None
-    share_mnt = "{}{}".format(settings.MNT_PT, vo.share.name)
+        return 0
+    share_mnt = f"{settings.MNT_PT}{vo.share.name}"
+    # https://docs.python.org/3.11/library/os.html#os.stat_result.st_uid
     return os.stat(share_mnt).st_uid
+
+
+def vol_group_gid(container: DContainer) -> int:
+    """
+    If the container has any mapped volumes, return the 1st mount group id.
+    Otherwise, return 0.
+    :param container:
+    :return: int of first container volume group gid.
+    """
+    vo = DVolume.objects.filter(container=container).first()
+    if vo is None:
+        return 0
+    share_mnt = f"{settings.MNT_PT}{vo.share.name}"
+    # https://docs.python.org/3.11/library/os.html#os.stat_result.st_gid
+    return os.stat(share_mnt).st_gid
 
 
 def cargs(container):
@@ -373,13 +395,36 @@ def generic_install(rockon):
         cmd.extend(vol_ops(c))
         # Add '--device' flag
         cmd.extend(device_ops(c))
-        if c.uid is not None:
-            uid = c.uid
-            if c.uid == -1:
-                uid = vol_owner_uid(c)
-            # @todo: what if the uid does not exist? Create a user with
-            # username=container-name?
-            cmd.extend(["-u", str(uid)])
+        # Conditionally add '--user' option.
+        if c.uid is not None:  # it must then be int
+            uid: int; gid: int; docker_user_option: str
+            # Match negative/special cases.
+            match c.uid:
+                case -1:
+                    uid = vol_owner_uid(c)
+                case _:
+                    if c.uid >= 0:
+                        uid = c.uid
+                    else:
+                        uid = 0
+            if c.gid is not None:  # it must then be int
+                match c.gid:
+                    case -1:
+                        gid = vol_group_gid(c)
+                    case -2:
+                        gid = group_gid("docker")
+                    case _:
+                        if c.gid >= 0:
+                            gid = c.gid
+                        else:
+                            gid = 0
+                # use only the specified gid
+                docker_user_option = f"{uid}:{gid}"
+            else:
+                # docker defaults to uid's groups
+                docker_user_option = f"{uid}"
+            # TODO: Confirm behaviour when uid:gid is not found on the host.
+            cmd.extend(["--user", docker_user_option])
         cmd.extend(port_ops(c))
         cmd.extend(container_ops(c))
         cmd.extend(envars(c))

@@ -351,3 +351,19 @@ def ifp_get_groups():
         )
         ifp_groups[str(gpname)] = int(gpid)
     return ifp_groups
+
+
+def group_gid(group_name: str) -> int:
+    """
+    Return the system GID (Group ID) for a given group name, if it exists.
+    Otherwise, return 0 (root gid).
+    :return: int (GID) or 0 if the group name is not found.
+    """
+    try:
+        entry = grp.getgrnam(group_name)
+        # Assume utf-8 encoded gr_name str
+        gid = entry.gr_gid
+    except KeyError:
+        logger.warning(f"Group ({group_name}) not found in system groups. Using gid (0)")
+        return 0
+    return gid

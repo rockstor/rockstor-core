@@ -100,10 +100,14 @@ class DContainer(models.Model):
     dimage = models.ForeignKey(DImage, on_delete=models.CASCADE)
     name = models.CharField(max_length=1024, unique=True)
     launch_order = models.IntegerField(default=1)
-    # if uid is None, container's owner is not set. defaults to root.  if it's
-    # -1, then owner is set to the owner of first volume, if any.  if it's an
-    # integer other than -1, like 0, then owner is set to that uid.
+    # If uid is None (default) the container defaults to running as the root user;
+    # i.e. NO docker "--user" option is constructed, irrespective of any gid value.
+    # All other positive values are used verbatim in `--user uid:gid`.
+    # If uid or gid are -1, the first volume's uid or gid are substituted. If no
+    # volume exists the docker default, and vol default of uid:gid 0:0 is used.
+    # If gid is -2, & uid is NOT None, gid is set to the systems docker group id.
     uid = models.IntegerField(null=True)
+    gid = models.IntegerField(null=True)
 
     class Meta:
         app_label = "storageadmin"
