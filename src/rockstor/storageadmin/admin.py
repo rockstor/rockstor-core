@@ -815,6 +815,7 @@ class DContainerAdmin(admin.ModelAdmin):
         "has_network",
         "launch_order",
         "uid",
+        "gid",
     ]
     list_per_page = 15
     # Detailed view
