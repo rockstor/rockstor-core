@@ -14,8 +14,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+
 import re
 from datetime import datetime, timezone
+import os
+from os import stat_result
+from stat import S_IMODE
+
 from django.conf import settings
 from storageadmin.models import Share, Snapshot, SFTP
 from smart_manager.models import ShareUsage
@@ -31,11 +36,14 @@ from fs.btrfs import (
     update_quota,
     share_pqgroup_assign,
     qgroup_assign,
+    get_property,
 )
 from storageadmin.util import handle_exception
 from copy import deepcopy
 
 import logging
+
+from system.users import user_name, group_name
 
 logger = logging.getLogger(__name__)
 
@@ -100,17 +108,18 @@ def import_shares(pool, request):
     for s_in_pool_db in shares_in_pool_db:
         if s_in_pool_db not in shares_in_pool:
             logger.debug(
-                "Removing, missing on disk, share db entry ({}) from "
-                "pool ({}).".format(s_in_pool_db, pool.name)
+                f"Removing, missing on disk, share db entry ({s_in_pool_db}) from pool ({pool.name})."
             )
             Share.objects.get(pool=pool, name=s_in_pool_db).delete()
     # Check if each share in pool also has a db counterpart.
     for s_in_pool in shares_in_pool:
-        logger.debug("---- Share name = {}.".format(s_in_pool))
+        logger.debug(f"---- Share name = {s_in_pool}.")
         if s_in_pool in shares_in_pool_db:
             logger.debug("Updating pre-existing same pool db share entry.")
             # We have a pool db share counterpart so retrieve and update it.
             share = Share.objects.get(name=s_in_pool, pool=pool)
+
+            # QUOTA GROUPS AND ASSOCIATED USAGE UPDATE.
             # Initially default our pqgroup value to db default of '-1/-1'
             # This way, unless quotas are enabled, all pqgroups will be
             # returned to db default.
@@ -157,6 +166,23 @@ def import_shares(pool, request):
                 update_shareusage_db(s_in_pool, rusage, eusage)
             else:
                 update_shareusage_db(s_in_pool, rusage, eusage, UPDATE_TS)
+
+            # OWNER, GROUP, AND PERMISSIONS UPDATE.
+            # Update the existing DB Share entry from the on disk subvol info.
+            share_stat: stat_result = os.stat(share.mnt_pt)
+            subvol_owner = user_name(share_stat.st_uid)
+            subvol_group = group_name(share_stat.st_gid)
+            subvol_perms = oct(S_IMODE(share_stat.st_mode))[2:].zfill(3)
+            if share.owner != subvol_owner:
+                share.owner = subvol_owner
+            if share.group != subvol_group:
+                share.group = subvol_group
+            if share.perms != subvol_perms:
+                share.perms = subvol_perms
+            # COMPRESSION SETTING FROM DISK
+            subvol_compression = get_property(share.mnt_pt, "compression")
+            if share.compression_algo != subvol_compression:
+                share.compression_algo = subvol_compression
             share.save()
             continue
         try:
@@ -180,9 +206,12 @@ def import_shares(pool, request):
                 )
                 handle_exception(Exception(e_msg), request)
             else:
-                # Update the prior existing db share entry previously
-                # associated with another pool.
+                # Update the prior existing DB share entry previously associated with
+                # another pool. N.B. Until DB share.save() we cannot use share.mnt_pt.
+                # See Share model: mnt_pt property is construction from share.pool.
+                # Consider wiping DB entry and raising exception Share.DoesNotExist
                 logger.debug("Updating prior db entry from another pool.")
+                subvol_path = f"{pool.mnt_pt}/{s_in_pool}".replace("//", "/")
                 cshare.pool = pool
                 cshare.qgroup = shares_in_pool[s_in_pool]
                 cshare.size = pool.size
@@ -193,6 +222,15 @@ def import_shares(pool, request):
                     cshare.pqgroup_rusage,
                     cshare.pqgroup_eusage,
                 ) = volume_usage(pool, cshare.qgroup, cshare.pqgroup)
+                # OWNER, GROUP, AND PERMISSIONS UPDATE.
+                # Update the existing DB Share entry from the on disk subvol info.
+                share_stat: stat_result = os.stat(subvol_path)
+                cshare.owner = user_name(share_stat.st_uid)
+                cshare.group = group_name(share_stat.st_gid)
+                cshare.perms = oct(S_IMODE(share_stat.st_mode))[2:].zfill(3)
+                # COMPRESSION SETTING FROM DISK
+                cshare.compression_algo = get_property(subvol_path, "compression")
+                pool.save()
                 cshare.save()
                 update_shareusage_db(s_in_pool, cshare.rusage, cshare.eusage)
         except Share.DoesNotExist:
@@ -203,8 +241,8 @@ def import_shares(pool, request):
             replica = False
             share_name = s_in_pool
             if re.match(".snapshot", s_in_pool) is not None:
-                # We have an initial replication share, non snap in .snapshots.
-                # We could change it's name here but still a little mixing
+                # We have an initial replication share, non-snap in .snapshots.
+                # We could change its name here but still a little mixing
                 # of name and subvol throughout project.
                 replica = True
                 logger.debug(
@@ -219,22 +257,30 @@ def import_shares(pool, request):
             rusage, eusage, pqgroup_rusage, pqgroup_eusage = volume_usage(
                 pool, qid, pqid
             )
+            # Use Pool subvol path for stat info; Share not yet independently mounted.
+            subvol_path = f"{pool.mnt_pt}/{share_name}".replace("//", "/")
+            share_stat: stat_result = os.stat(subvol_path)
             nso = Share(
                 pool=pool,
                 qgroup=qid,
                 pqgroup=pqid,
                 name=share_name,
-                size=pool.size,
+                size=pool.size,  # Default to size of Pool.
+                owner=user_name(share_stat.st_uid),
+                group=group_name(share_stat.st_gid),
+                perms=oct(S_IMODE(share_stat.st_mode))[2:].zfill(3),
                 subvol_name=s_in_pool,
                 rusage=rusage,
                 eusage=eusage,
                 pqgroup_rusage=pqgroup_rusage,
                 pqgroup_eusage=pqgroup_eusage,
                 replica=replica,
+                compression_algo=get_property(subvol_path, "compression"),
             )
+            pool.save()
             nso.save()
             update_shareusage_db(s_in_pool, rusage, eusage)
-            mount_share(nso, "{}{}".format(settings.MNT_PT, s_in_pool))
+            mount_share(nso, f"{settings.MNT_PT}{s_in_pool}")
 
 
 def import_snapshots(share):

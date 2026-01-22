@@ -30,6 +30,7 @@ class ShareACLView(ShareListView):
     def post(self, request, sid):
         with self._handle_exception(request):
             share = Share.objects.get(id=sid)
+            # TODO: a reproduction of model defaults - but we should use OS as SOT.
             options = {
                 "owner": "root",
                 "group": "root",
@@ -51,11 +52,13 @@ class ShareACLView(ShareListView):
             share.perms = options["perms"]
             share.save()
 
-            mnt_pt = "%s%s" % (settings.MNT_PT, share.name)
+            mnt_pt = f"{settings.MNT_PT}{share.name}"
             force_mount = False
             if not share.is_mounted:
                 mount_share(share, mnt_pt)
                 force_mount = True
+            # TODO: Huey task that will return immediately, but are run asynchronously
+            #  around a second after being called.
             chown(mnt_pt, options["owner"], options["group"], options["orecursive"])
             chmod(mnt_pt, options["perms"], options["precursive"])
             if force_mount is True:

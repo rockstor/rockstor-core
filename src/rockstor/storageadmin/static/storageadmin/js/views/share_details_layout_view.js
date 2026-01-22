@@ -311,6 +311,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     parsePermStr: function(perms) {
+        // Returns binary string of Share.perms string (assumed 3 chars)!
+        // e.g. "755" to binary "111101101" to represent rwx r-x r-x.
         var p = '';
         for (var i = 0; i < 3; i++) {
             var tmp = parseInt(perms.charAt(i)).toString(2);

@@ -40,10 +40,14 @@ class Share(models.Model):
     size = models.BigIntegerField(default=0)
     owner = models.CharField(max_length=4096, default="root")
     group = models.CharField(max_length=4096, default="root")
+    # JS front-end expects 3 char octal string (no leading 0o) for rwxr-xr-x i.e. 755.
+    # Consider moving to int base 10 of S_IMODE(stat.st_mode),
+    # or raw "rwxr-xr-x" via: stat.filemode(stat(mnt_pt).st_mode)[1:] strips front "-".
     perms = models.CharField(max_length=9, default="755")
     toc = models.DateTimeField(auto_now=True)
     subvol_name = models.CharField(max_length=4096)
     replica = models.BooleanField(default=False)
+    # zlib, lzo, and zstd. If null (model default) or "no" then inherited from pool.
     compression_algo = models.CharField(max_length=1024, null=True)
     # rusage and eusage reports original 0/x qgroup size
     # and this has only current share content without snapshots
@@ -54,6 +58,9 @@ class Share(models.Model):
     # to report correct real vol sizes
     pqgroup_rusage = models.BigIntegerField(default=0)
     pqgroup_eusage = models.BigIntegerField(default=0)
+    # TODO: stash our Huey task id to ease sanity checks
+    # Taskid=None means no associated tasks.
+    # taskid = models.CharField(max_length=36, null=True)
 
     def __init__(self, *args, **kwargs):
         super(Share, self).__init__(*args, **kwargs)

@@ -14,8 +14,11 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import os
+from os import stat_result
 import re
+from stat import S_IMODE
+
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db import transaction
@@ -52,6 +55,8 @@ import json
 from smart_manager.models import Service
 
 import logging
+
+from system.users import user_name, group_name
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +142,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
         # new qgroup: 2015/<some_number> whenever a Share is
         # created. <some_number> starts from 1 and is incremented as more
         # Shares are created. So, for the very first Share in a pool, it's
-        # qgroup will be 1/1. 2015 is arbitrarily chose.
+        # 'rockstor' qgroup will be 2015/1. 2015 is arbitrarily chose.
 
         # Before creating a new Share, we create the qgroup for it. And during
         # it's creation, we assign this qgroup to it. During it's creation a
@@ -201,14 +206,21 @@ class ShareListView(ShareMixin, rfc.GenericView):
                     e_msg = f"Replica must be a boolean, not ({type(replica)})."
                     handle_exception(Exception(e_msg), request)
             pqid = qgroup_create(pool)
+            # Create our new subvol within its parent Pool (btrfs Vol).
             add_share(pool, sname, pqid)
             qid = qgroup_id(pool, sname)
+            # Use Pool subvol path for stat info; Share not yet independently mounted.
+            subvol_path = f"{pool.mnt_pt}/{sname}".replace("//", "/")
+            share_stat: stat_result = os.stat(subvol_path)
             s = Share(
                 pool=pool,
                 qgroup=qid,
                 pqgroup=pqid,
                 name=sname,
                 size=size,
+                owner=user_name(share_stat.st_uid),
+                group=group_name(share_stat.st_gid),
+                perms=oct(S_IMODE(share_stat.st_mode))[2:].zfill(3),
                 subvol_name=sname,
                 replica=replica,
                 compression_algo=compression,
@@ -219,7 +231,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             if pqid != PQGROUP_DEFAULT:
                 update_quota(pool, pqid, size * 1024)
                 share_pqgroup_assign(pqid, s)
-            mnt_pt = "%s%s" % (settings.MNT_PT, sname)
+            mnt_pt = f"{settings.MNT_PT}{sname}"
             if not s.is_mounted:
                 mount_share(s, mnt_pt)
             if compression != "no":
@@ -286,7 +298,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 new_compression = self._validate_compression(request)
                 if share.compression_algo != new_compression:
                     share.compression_algo = new_compression
-                    mnt_pt = "%s%s" % (settings.MNT_PT, share.name)
+                    mnt_pt = f"{settings.MNT_PT}{share.name}"
                     if new_compression == "no":
                         new_compression = ""
                     set_property(mnt_pt, "compression", new_compression)

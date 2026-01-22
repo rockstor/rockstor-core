@@ -16,19 +16,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from system.osi import run_command
+from huey.contrib.djhuey import task
 
 CHOWN = "/usr/bin/chown"
 CHMOD = "/usr/bin/chmod"
-
 
 def chown(share: str, owner: str, group: str | None = None, recursive: bool = False):
     cmd: list[str] = [
         CHOWN,
     ]
-    if recursive is True:
+    if recursive:
         cmd.append("-R")
     if group is not None:
-        owner = "%s:%s" % (owner, group)
+        owner = f"{owner}:{group}"
     cmd.extend([owner, share])
     return run_command(cmd)
 
@@ -37,7 +37,7 @@ def chmod(share: str, perm_bits: str, recursive: bool = False):
     cmd: list[str] = [
         CHMOD,
     ]
-    if recursive is True:
+    if recursive:
         cmd.append("-R")
     cmd.extend([perm_bits, share])
     return run_command(cmd)

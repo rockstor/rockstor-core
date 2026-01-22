@@ -752,7 +752,7 @@ def mount_root(pool):
         mnt_options = pool.mnt_options
     if pool.compression is not None:
         if re.search("compress", mnt_options) is None:
-            mnt_options = "{},compress={}".format(mnt_options, pool.compression)
+            mnt_options = f"{mnt_options},compress={pool.compression}"
     if pool.role == "root" and root_pool_mnt != "/":  # boot-to-snap - See pool model
         mnt_options = "{},subvol=/@".format(mnt_options)
     # Prior to a mount by label attempt we call btrfs device scan on all

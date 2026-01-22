@@ -14,6 +14,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
 import logging
 import os
 import pwd
@@ -364,6 +365,40 @@ def group_gid(group_name: str) -> int:
         # Assume utf-8 encoded gr_name str
         gid = entry.gr_gid
     except KeyError:
-        logger.warning(f"Group ({group_name}) not found in system groups. Using gid (0)")
+        logger.warning(
+            f"Group ({group_name}) not found in system groups. Using gid (0)"
+        )
         return 0
     return gid
+
+
+def group_name(gid: int) -> str:
+    """
+    Return the system username for a given group ID, if it exists.
+    Otherwise, return the passed gid as a string.
+    :param gid: User ID.
+    :return: String of the username, or if non found then str(gid)
+    """
+    try:
+        entry = grp.getgrgid(gid)
+        g_name = entry.gr_name
+    except KeyError:
+        logger.warning(f"Group ID ({gid}) not found in system. Converting to str.")
+        return str(gid)
+    return g_name
+
+
+def user_name(uid: int) -> str:
+    """
+    Return the system username for a given user ID, if it exists.
+    Otherwise, return the uid as a string
+    :param uid: User ID.
+    :return: String of the username, or if non found then str(uid)
+    """
+    try:
+        entry = pwd.getpwuid(uid)
+        u_name = entry.pw_name  # Login name
+    except KeyError:
+        logger.warning(f"User ID ({uid}) not found in system. Converting to str.")
+        return str(uid)
+    return u_name
