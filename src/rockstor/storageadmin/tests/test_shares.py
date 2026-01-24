@@ -19,6 +19,7 @@ from rest_framework import status
 from unittest.mock import patch
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.models import Pool, Share
+from os import stat_result
 
 """
 Fixture creation instructions:
@@ -108,6 +109,30 @@ class ShareTests(APITestMixin):
         cls.patch_qgroup_create = patch("storageadmin.views.share." "qgroup_create")
         cls.mock_qgroup_create = cls.patch_qgroup_create.start()
         cls.mock_qgroup_create.return_value = "1"
+
+        # E.g. os.stat_result(st_mode=16877, st_ino=256, st_dev=202, st_nlink=1, st_uid=0, st_gid=0, st_size=0, st_atime=1769265087, st_mtime=1769265087, st_ctime=1769265087)
+        # TODO: properly mock a stat_result as may be throwing a tzone issue with
+        # test_get (ERROR)
+        # with (FAIL) on test_compression, test_create, test_name_regex, test_resize
+        cls.shara_stat = stat_result
+        cls.patch_os_stat = patch("storageadmin.views.share.os.stat")
+        cls.mock_os_stat = cls.patch_os_stat.start()
+        cls.mock_os_stat.return_value = cls.shara_stat
+        # The unpopulated stat_result fails for oct(S_IMODE(share_stat.st_mode))[2:].zfill(3)
+        # Hack for now via S_IMODE mock:
+        cls.patch_s_imode = patch("storageadmin.views.share.S_IMODE")
+        cls.mock_s_imode = cls.patch_s_imode.start()
+        cls.mock_s_imode.return_value = 493  # 0o755 (Octal) in decimal
+
+        # View Share mocks for "from system.users import user_name, group_name"
+        cls.patch_user_name = patch("storageadmin.views.share.user_name")
+        cls.mock_user_name = cls.patch_user_name.start()
+        cls.mock_user_name.return_value = "test_user"
+        #
+        cls.patch_group_name = patch("storageadmin.views.share.group_name")
+        cls.mock_group_name = cls.patch_group_name.start()
+        cls.mock_group_name.return_value = "test_group"
+
 
         cls.patch_volume_usage = patch("storageadmin.views.share.volume_usage")
         cls.mock_volume_usage = cls.patch_volume_usage.start()

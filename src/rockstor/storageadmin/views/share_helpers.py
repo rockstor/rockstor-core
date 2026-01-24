@@ -329,7 +329,7 @@ def update_shareusage_db(subvol_name, rusage, eusage, new_entry=True):
     :param new_entry: If True create a new entry with the passed params,
     otherwise attempt to update the latest (by id) entry with time and count.
     """
-    ts = datetime.utcnow().replace(tzinfo=timezone.utc)
+    ts = datetime.now(timezone.utc)
     if new_entry:
         su = ShareUsage(name=subvol_name, r_usage=rusage, e_usage=eusage, ts=ts)
         su.save()
