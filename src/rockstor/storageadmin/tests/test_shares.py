@@ -133,6 +133,10 @@ class ShareTests(APITestMixin):
         cls.mock_group_name = cls.patch_group_name.start()
         cls.mock_group_name.return_value = "test_group"
 
+        # Mock get_property() - used to retrieve on-disk Share compression setting.
+        cls.patch_get_property = patch("storageadmin.views.share_helpers.get_property")
+        cls.mock_get_property = cls.patch_get_property.start()
+        cls.mock_get_property.return_value = None
 
         cls.patch_volume_usage = patch("storageadmin.views.share.volume_usage")
         cls.mock_volume_usage = cls.patch_volume_usage.start()
