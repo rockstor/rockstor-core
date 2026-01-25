@@ -14,8 +14,8 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-import os
-from os import stat_result
+
+from os import stat, stat_result
 import re
 from stat import S_IMODE
 
@@ -211,7 +211,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             qid = qgroup_id(pool, sname)
             # Use Pool subvol path for stat info; Share not yet independently mounted.
             subvol_path = f"{pool.mnt_pt}/{sname}".replace("//", "/")
-            share_stat: stat_result = os.stat(subvol_path)
+            share_stat: stat_result = stat(subvol_path)
             s = Share(
                 pool=pool,
                 qgroup=qid,
