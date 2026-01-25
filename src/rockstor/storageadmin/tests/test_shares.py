@@ -19,7 +19,6 @@ from rest_framework import status
 from unittest.mock import patch
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.models import Pool, Share
-from os import stat_result
 
 """
 Fixture creation instructions:
@@ -473,16 +472,16 @@ class ShareTests(APITestMixin):
     def test_compression(self):
         """
         Test PUT request to update share compression_algo
-        - Create a share with invalid compression
-        - Create a share with zlib compression
+        - Create share with invalid compression
+        - Create share with zlib compression
         - change compression from zlib to lzo
+        - change compression from lzo to zstd
         - Create a share with lzo compression
+        - disable lzo
+        - re-enable lzo
         - change compression from lzo to zlib
         - disable zlib
-        - enable zlib
-        - disable lzo
-        - enable lzo
-        - change compression from lzo to zstd
+        - re-enable zlib
         """
 
         # create share with invalid compression
@@ -509,6 +508,8 @@ class ShareTests(APITestMixin):
         response = self.client.post(self.BASE_URL, data=compression_test_share)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data["compression_algo"], "zlib")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share", "compression", "zlib")
+
         share = Share.objects.get(name="compression-test-share")
         sId = share.id
 
@@ -519,6 +520,16 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data["compression_algo"], "lzo")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share", "compression", "lzo")
+
+        # change compression from lzo to zstd
+        compression_zstd = {"compression": "zstd"}
+        response9 = self.client.put(
+            "{}/{}".format(self.BASE_URL, sId), data=compression_zstd
+        )
+        self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response9.data["compression_algo"], "zstd")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share", "compression", "zstd")
 
         # create share with lzo compression
         share_lzo_compression = {
@@ -530,6 +541,27 @@ class ShareTests(APITestMixin):
         response2 = self.client.post(self.BASE_URL, data=share_lzo_compression)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data["compression_algo"], "lzo")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "lzo")
+
+        share = Share.objects.get(name="compression-test-share2")
+        sId = share.id
+
+        # disable lzo compression
+        compression_disable = {"compression": "no"}
+        response7 = self.client.put(
+            "{}/{}".format(self.BASE_URL, sId), data=compression_disable
+        )
+        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
+        self.assertEqual(response7.data["compression_algo"], "no")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "")
+
+        # re-enable lzo compression
+        response8 = self.client.put(
+            "{}/{}".format(self.BASE_URL, sId), data=compression_lzo
+        )
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        self.assertEqual(response8.data["compression_algo"], "lzo")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "lzo")
 
         # change compression from lzo to zlib
         compression_zlib = {"compression": "zlib"}
@@ -538,43 +570,24 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
         self.assertEqual(response4.data["compression_algo"], "zlib")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "zlib")
 
         # disable zlib compression
-        compression_disable = {"compression": "no"}
         response5 = self.client.put(
             "{}/{}".format(self.BASE_URL, sId), data=compression_disable
         )
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.assertEqual(response5.data["compression_algo"], "no")
+        # http PUT, when request contains "no" translates this to ""
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "")
 
-        # enable zlib compression
+        # re-enable zlib compression
         response6 = self.client.put(
             "{}/{}".format(self.BASE_URL, sId), data=compression_zlib
         )
         self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
         self.assertEqual(response6.data["compression_algo"], "zlib")
-
-        # disable lzo compression
-        response7 = self.client.put(
-            "{}/{}".format(self.BASE_URL, sId), data=compression_disable
-        )
-        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
-        self.assertEqual(response7.data["compression_algo"], "no")
-
-        # enable lzo compression
-        response8 = self.client.put(
-            "{}/{}".format(self.BASE_URL, sId), data=compression_lzo
-        )
-        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
-        self.assertEqual(response8.data["compression_algo"], "lzo")
-
-        # change compression from lzo to zstd
-        compression_zstd = {"compression": "zstd"}
-        response9 = self.client.put(
-            "{}/{}".format(self.BASE_URL, sId), data=compression_zstd
-        )
-        self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response9.data["compression_algo"], "zstd")
+        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "zlib")
 
     def test_delete_exported_replicated(self):
         """
