@@ -16,8 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from os import stat, stat_result
-import re
 from stat import S_IMODE
+import re
 
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
