@@ -116,6 +116,12 @@ class ShareTests(APITestMixin):
         cls.mock_os_stat.return_value.st_gid = 1000
         cls.mock_os_stat.return_value.st_mode = 16877
 
+        cls.patch_os_stat_helpers = patch("storageadmin.views.share_helpers.stat")
+        cls.mock_os_stat_helpers = cls.patch_os_stat_helpers.start()
+        cls.mock_os_stat_helpers.return_value.st_uid = 1000
+        cls.mock_os_stat_helpers.return_value.st_gid = 1000
+        cls.mock_os_stat_helpers.return_value.st_mode = 16877
+
         # View Share mocks for "from system.users import user_name, group_name"
         cls.patch_user_name = patch("storageadmin.views.share.user_name")
         cls.mock_user_name = cls.patch_user_name.start()

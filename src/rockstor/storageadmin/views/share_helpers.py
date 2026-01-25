@@ -17,8 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 from datetime import datetime, timezone
-import os
-from os import stat_result
+from os import stat, stat_result
 from stat import S_IMODE
 
 from django.conf import settings
@@ -169,7 +168,7 @@ def import_shares(pool, request):
 
             # OWNER, GROUP, AND PERMISSIONS UPDATE.
             # Update the existing DB Share entry from the on disk subvol info.
-            share_stat: stat_result = os.stat(share.mnt_pt)
+            share_stat: stat_result = stat(share.mnt_pt)
             subvol_owner = user_name(share_stat.st_uid)
             subvol_group = group_name(share_stat.st_gid)
             subvol_perms = oct(S_IMODE(share_stat.st_mode))[2:].zfill(3)
@@ -224,7 +223,7 @@ def import_shares(pool, request):
                 ) = volume_usage(pool, cshare.qgroup, cshare.pqgroup)
                 # OWNER, GROUP, AND PERMISSIONS UPDATE.
                 # Update the existing DB Share entry from the on disk subvol info.
-                share_stat: stat_result = os.stat(subvol_path)
+                share_stat: stat_result = stat(subvol_path)
                 cshare.owner = user_name(share_stat.st_uid)
                 cshare.group = group_name(share_stat.st_gid)
                 cshare.perms = oct(S_IMODE(share_stat.st_mode))[2:].zfill(3)
@@ -259,7 +258,7 @@ def import_shares(pool, request):
             )
             # Use Pool subvol path for stat info; Share not yet independently mounted.
             subvol_path = f"{pool.mnt_pt}/{share_name}".replace("//", "/")
-            share_stat: stat_result = os.stat(subvol_path)
+            share_stat: stat_result = stat(subvol_path)
             nso = Share(
                 pool=pool,
                 qgroup=qid,
