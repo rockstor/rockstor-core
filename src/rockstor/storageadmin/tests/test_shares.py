@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+from stat import S_IMODE
 from rest_framework import status
 from unittest.mock import patch
 from storageadmin.tests.test_api import APITestMixin
@@ -65,6 +66,11 @@ class ShareTests(APITestMixin):
     databases = "__all__"
     fixtures = ["test_api.json", "test_shares.json", "test_shares-services.json"]
     BASE_URL = "/api/shares"
+    # stat.st_mode=16877 post oct(S_IMODE(16877)) and Octal indicator "0o" strip
+    # equates to our model default of 755.
+    # Similarly, stat.st_mode=16832 equates to 700 (rwx --- ---)
+    ST_MODE_MOCK: int = 16832
+    PERMS_MOCK: str = oct(S_IMODE(ST_MODE_MOCK))[2:].zfill(3)
 
     @classmethod
     def setUpClass(cls):
@@ -114,13 +120,14 @@ class ShareTests(APITestMixin):
         cls.mock_os_stat = cls.patch_os_stat.start()
         cls.mock_os_stat.return_value.st_uid = 1000
         cls.mock_os_stat.return_value.st_gid = 1000
-        cls.mock_os_stat.return_value.st_mode = 16877
+        cls.mock_os_stat.return_value.st_mode = cls.ST_MODE_MOCK
 
-        cls.patch_os_stat_helpers = patch("storageadmin.views.share_helpers.stat")
-        cls.mock_os_stat_helpers = cls.patch_os_stat_helpers.start()
-        cls.mock_os_stat_helpers.return_value.st_uid = 1000
-        cls.mock_os_stat_helpers.return_value.st_gid = 1000
-        cls.mock_os_stat_helpers.return_value.st_mode = 16877
+        # Provisional mocks ready for futuer test coverage re ACL modifications.
+        # cls.patch_os_stat_helpers = patch("storageadmin.views.share_helpers.stat")
+        # cls.mock_os_stat_helpers = cls.patch_os_stat_helpers.start()
+        # cls.mock_os_stat_helpers.return_value.st_uid = 1000
+        # cls.mock_os_stat_helpers.return_value.st_gid = 1000
+        # cls.mock_os_stat_helpers.return_value.st_mode = 16877
 
         # View Share mocks for "from system.users import user_name, group_name"
         cls.patch_user_name = patch("storageadmin.views.share.user_name")
@@ -355,6 +362,13 @@ class ShareTests(APITestMixin):
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data["name"], "valid_replica")
         self.assertEqual(response8.data["replica"], True)
+        # http POST in views/share.py creates new shares.
+        # Ensure we are calling os_stat: retrieves owner.group & permissions
+        self.mock_os_stat.assert_called_with("/mnt2/ROOT/valid_replica")
+        # And the DB Share model has our mocked values from user_name() & group_name().
+        self.assertEqual(response8.data["owner"], "test_user")
+        self.assertEqual(response8.data["group"], "test_group")
+        self.assertEqual(response8.data["perms"], self.PERMS_MOCK)
 
         # create share with invalid replica
         data5 = {
@@ -514,7 +528,9 @@ class ShareTests(APITestMixin):
         response = self.client.post(self.BASE_URL, data=compression_test_share)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data["compression_algo"], "zlib")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share", "compression", "zlib")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share", "compression", "zlib"
+        )
 
         share = Share.objects.get(name="compression-test-share")
         sId = share.id
@@ -526,7 +542,9 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data["compression_algo"], "lzo")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share", "compression", "lzo")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share", "compression", "lzo"
+        )
 
         # change compression from lzo to zstd
         compression_zstd = {"compression": "zstd"}
@@ -535,7 +553,9 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response9.data["compression_algo"], "zstd")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share", "compression", "zstd")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share", "compression", "zstd"
+        )
 
         # create share with lzo compression
         share_lzo_compression = {
@@ -547,7 +567,9 @@ class ShareTests(APITestMixin):
         response2 = self.client.post(self.BASE_URL, data=share_lzo_compression)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data["compression_algo"], "lzo")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "lzo")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share2", "compression", "lzo"
+        )
 
         share = Share.objects.get(name="compression-test-share2")
         sId = share.id
@@ -559,7 +581,9 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
         self.assertEqual(response7.data["compression_algo"], "no")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share2", "compression", ""
+        )
 
         # re-enable lzo compression
         response8 = self.client.put(
@@ -567,7 +591,9 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data["compression_algo"], "lzo")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "lzo")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share2", "compression", "lzo"
+        )
 
         # change compression from lzo to zlib
         compression_zlib = {"compression": "zlib"}
@@ -576,7 +602,9 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
         self.assertEqual(response4.data["compression_algo"], "zlib")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "zlib")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share2", "compression", "zlib"
+        )
 
         # disable zlib compression
         response5 = self.client.put(
@@ -585,7 +613,9 @@ class ShareTests(APITestMixin):
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.assertEqual(response5.data["compression_algo"], "no")
         # http PUT, when request contains "no" translates this to ""
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share2", "compression", ""
+        )
 
         # re-enable zlib compression
         response6 = self.client.put(
@@ -593,7 +623,9 @@ class ShareTests(APITestMixin):
         )
         self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
         self.assertEqual(response6.data["compression_algo"], "zlib")
-        self.mock_set_property.assert_called_with("/mnt2/compression-test-share2", "compression", "zlib")
+        self.mock_set_property.assert_called_with(
+            "/mnt2/compression-test-share2", "compression", "zlib"
+        )
 
     def test_delete_exported_replicated(self):
         """
