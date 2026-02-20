@@ -2321,10 +2321,11 @@ def set_property(mnt_pt, name, val, mount=True, force=False):
         return run_command(cmd)
 
 
-def get_property(mnt_pt, prop_name=None):
+def get_property(mnt_pt: str, prop_name: str | None=None):
     """
     Convenience wrapper around 'btrfs property get prop_name mnt_pt'.
     :param mnt_pt: Vol(pool)/subvol(share/snap) mount point.
+    :param prop_name: Property name or None for all.
     :return: if called with no prop_name specified then a dict of available
     properties. But if called with a single property then the value and type
     appropriate for that property ie:
@@ -2335,7 +2336,6 @@ def get_property(mnt_pt, prop_name=None):
     N.B. compression property for subvol only, vol/pool uses mount option.
     """
     KNOWN_PROPERTIES = ["ro", "compression", "label"]
-    # TODO: Consider using -t as a form of typesetting on our mnt_pt:
     cmd = [BTRFS, "property", "get", mnt_pt]
     if prop_name is not None:
         cmd.append(prop_name)

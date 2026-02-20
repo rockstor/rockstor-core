@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Share
 from storageadmin.serializers import ShareSerializer
-from fs.btrfs import mount_share, umount_root
+from fs.btrfs import mount_share, umount_root, get_property
 from storageadmin.views import ShareListView
 from system.acl import chown, chmod
 from system.users import user_name, group_name
@@ -51,13 +51,23 @@ class ShareACLView(ShareListView):
                 "precursive": request.data.get("precursive", True),
             }
             # Align Share DB with requested owner, group, perms: if required.
+            changed_fields: list[str] = []
             if share.owner != options["owner"]:
                 share.owner = options["owner"]
+                changed_fields.append("owner")
             if share.group != options["group"]:
                 share.group = options["group"]
+                changed_fields.append("group")
             if share.perms != options["perms"]:
                 share.perms = options["perms"]
-            share.save()
+                changed_fields.append("perms")
+            # COMPRESSION SETTING FROM DISK
+            # Opportunistically update DB Share.compression_algo.
+            compression: str = get_property(mnt_pt, "compression")
+            if share.compression_algo != compression:
+                share.compression_algo = compression
+                changed_fields.append("compression_algo")
+            share.save(update_fields=changed_fields)
 
             force_mount = False
             if not share.is_mounted:
