@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from system.osi import run_command
-from huey.contrib.djhuey import task
+# from huey.contrib.djhuey import task
 
 CHOWN = "/usr/bin/chown"
 CHMOD = "/usr/bin/chmod"
