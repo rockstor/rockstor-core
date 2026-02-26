@@ -18,13 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from os import stat, stat_result
 from stat import S_IMODE
 
+from huey.api import Task
+from huey.contrib.djhuey import db_task
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Share
 from storageadmin.serializers import ShareSerializer
-from fs.btrfs import mount_share, umount_root, get_property
+from fs.btrfs import mount_share, get_property
 from storageadmin.views import ShareListView
-from system.acl import chown, chmod
+from system.acl import acl_change_manager
 from system.users import user_name, group_name
 
 
@@ -33,9 +35,19 @@ class ShareACLView(ShareListView):
     def post(self, request, sid):
         with self._handle_exception(request):
             share = Share.objects.get(id=sid)
+            # Consider Checking if Share.taskid is None before proceeding,
+            # else throw exception to inform user of ongoing task.
+            # However, our to-be-invoked acl_change_manager() does use locking.
+            # if share.taskid is not None:
+            #     raise
             # OWNER, GROUP, AND PERMISSIONS UPDATE.
             # Get the on disk subvol info.
             mnt_pt = share.mnt_pt
+            was_unmounted: bool = False
+            if not share.is_mounted:
+                was_unmounted = True
+                # Filesystem rights access/changes require a mounted filesystem/subvol.
+                mount_share(share, mnt_pt)
             share_stat: stat_result = stat(mnt_pt)
             subvol_owner = user_name(share_stat.st_uid)
             subvol_group = group_name(share_stat.st_gid)
@@ -67,16 +79,38 @@ class ShareACLView(ShareListView):
             if share.compression_algo != compression:
                 share.compression_algo = compression
                 changed_fields.append("compression_algo")
+            # TASK INVOCATION
+            # Locking prevents more than one invocation of this manager.
+            task_result_handle: Task = acl_change_manager(
+                mnt_pt,
+                owner=options["owner"],
+                group=options["group"],
+                og_recursive=options["orecursive"],
+                perms=options["perms"],
+                p_recursive=options["precursive"],
+                was_unmounted=was_unmounted,
+            )
+            # Store above task ID in share
+            share.taskid = task_result_handle.id
+            changed_fields.append("taskid")
             share.save(update_fields=changed_fields)
-
-            force_mount = False
-            if not share.is_mounted:
-                mount_share(share, mnt_pt)
-                force_mount = True
-            # TODO: Huey task that will return immediately, but are run asynchronously
-            #  around a second after being called.
-            chown(mnt_pt, options["owner"], options["group"], options["orecursive"])
-            chmod(mnt_pt, options["perms"], options["precursive"])
-            if force_mount is True:
-                umount_root(mnt_pt)
             return Response(ShareSerializer(share).data)
+
+
+@db_task()
+def clear_taskid(taskid: str | None = None):
+    """
+    Find Share with matching taskid to clear and update DB.
+    Called by @HUEY.signal(SIGNAL_COMPLETE) task_completed(signal, task) for relevant
+    tasks.
+    """
+    if taskid is None:
+        return None
+    try:
+        # Assumes there can be only one Share with this taskid.
+        share = Share.objects.get(taskid=taskid)
+    except Share.DoesNotExist:
+        return None
+    share.taskid = None
+    share.save(update_fields=["taskid"])
+    return None
