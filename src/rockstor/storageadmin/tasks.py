@@ -28,6 +28,7 @@ from huey.signals import (
     SIGNAL_LOCKED,
 )
 from storageadmin.models import PoolBalance
+from system.acl import clear_task_id
 
 # An alternative import method:
 # from huey.contrib import djhuey as huey
@@ -60,25 +61,32 @@ def task_completed(signal, task):
     # Task completed OK.
     # Could do clean if task name begins with rockon_helper:
     # removing all key,value pairs where value = task.id
-    logger.info("Task [{}], id: {} completed OK".format(task.name, task.id))
+    logger.info(f"Task name: [{task.name}], id: {task.id} completed OK")
     time_now = timezone.now()
-    if task.name == "start_balance" or task.name == "start_resize_pool":
-        logger.info("Updating end_time accordingly to {}".format(time_now))
-        # We now abstract db end_time update to an appropriately decorated task.
-        try:
-            task_result_handle = update_end_time(task.id, time_now)
-            db_update_end_time_task_id = task_result_handle.id
-            logger.debug(
-                "Initiated Huey db_task id ({}) to update end_time from task_completed() id ({})".format(
-                    db_update_end_time_task_id, task.id
+    match task.name:
+        case "start_balance" | "start_resize_pool":
+            logger.info("Updating end_time accordingly to {}".format(time_now))
+            # We now abstract db end_time update to an appropriately decorated task.
+            try:
+                task_result_handle = update_end_time(task.id, time_now)
+                db_update_end_time_task_id = task_result_handle.id
+                logger.debug(
+                    f"Initiated Huey db_task id ({db_update_end_time_task_id}) to update end_time from task_completed() id ({task.id})"
                 )
-            )
-        except Exception as e:
-            logger.error(
-                "Exception while updating PoolBalance end_time from Huey.signal: {}".format(
-                    e.__str__()
+            except Exception as e:
+                logger.error(
+                    f"Exception while updating PoolBalance end_time from Huey.signal: {e.__str__()}"
                 )
-            )
+        case "acl.chown":
+            logger.info("Chown task completed.")
+        case "acl.chmod":
+            logger.info("Chmod task completed.")
+        case "acl.change_manager":
+            logger.info("ACL change manager task completed.")
+            logger.info(f"Initiating task to clear Share.taskid={task.id}")
+            clear_task_id(task.id)
+        case _:
+            logger.error(f"No known task end jobs to execute for {task.name}.")
 
 
 @HUEY.signal(SIGNAL_ERROR, SIGNAL_LOCKED)
@@ -94,9 +102,7 @@ def task_failed(signal, task, exc=None):
     # Only log the final failure, once all retries are exhausted.
     if task.retries > 0:
         return
-    message = "Task [{}], id: {} failed, Args: {}, Kwargs: {}, Exception{}".format(
-        task.name, task.id, task.args, task.kwargs, exc
-    )
+    message = f"Task [{task.name}], id: {task.id} failed, Args: {task.args}, Kwargs: {task.kwargs}, Exception{exc}"
     logger.error(message)
     # mail_admins(subject, message)
     if task.name == "start_balance" or task.name == "start_resize_pool":
