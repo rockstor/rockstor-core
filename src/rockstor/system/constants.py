@@ -26,6 +26,9 @@ DEFAULT_MNT_DIR = "/mnt2/"
 MOUNT = "/usr/bin/mount"
 UMOUNT = "/usr/bin/umount"
 
+CHOWN = "/usr/bin/chown"
+CHMOD = "/usr/bin/chmod"
+
 USERMOD = "/usr/sbin/usermod"
 LDD = "/usr/bin/ldd"
 

@@ -58,9 +58,9 @@ class Share(models.Model):
     # to report correct real vol sizes
     pqgroup_rusage = models.BigIntegerField(default=0)
     pqgroup_eusage = models.BigIntegerField(default=0)
-    # TODO: stash our Huey task id to ease sanity checks
-    # Taskid=None means no associated tasks.
-    # taskid = models.CharField(max_length=36, null=True)
+    # Stash our Huey task id to ease sanity checks
+    # Taskid=None, (Null in DB) means no associated tasks.
+    taskid = models.CharField(max_length=36, null=True)
 
     def __init__(self, *args, **kwargs):
         super(Share, self).__init__(*args, **kwargs)

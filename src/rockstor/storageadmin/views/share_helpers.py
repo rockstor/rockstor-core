@@ -56,7 +56,7 @@ PQGROUP_DEFAULT = settings.MODEL_DEFS["pqgroup"]
 def helper_mount_share(share, mnt_pt=None):
     if not share.is_mounted:
         if mnt_pt is None:
-            mnt_pt = "{}{}".format(settings.MNT_PT, share.name)
+            mnt_pt = f"{settings.MNT_PT}{share.name}"
         mount_share(share, mnt_pt)
 
 
@@ -64,7 +64,7 @@ def validate_share(sname, request):
     try:
         return Share.objects.get(name=sname)
     except:
-        e_msg = "Share with name ({}) does not exist.".format(sname)
+        e_msg = f"Share with name ({sname}) does not exist."
         handle_exception(Exception(e_msg), request)
 
 
