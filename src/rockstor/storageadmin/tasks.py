@@ -53,7 +53,8 @@ logger = logging.getLogger(__name__)
 def task_signal_executing(signal, task):
     # global huey
     # HUEY.storage.put_data("executing-{}".format(task.name), 1)
-    logger.info(f"Now executing Huey task [{task.name}], id: {task.id}.")
+    logger.info(f"-STARTING Huey task: [{task.name}], id: {task.id}.")
+
 
 
 @HUEY.signal(SIGNAL_COMPLETE)
@@ -61,7 +62,7 @@ def task_completed(signal, task):
     # Task completed OK.
     # Could do clean if task name begins with rockon_helper:
     # removing all key,value pairs where value = task.id
-    logger.info(f"Task name: [{task.name}], id: {task.id} completed OK")
+    logger.info(f"COMPLETED Huey task: [{task.name}], id: {task.id}.")
     time_now = timezone.now()
     match task.name:
         case "start_balance" | "start_resize_pool":
@@ -78,15 +79,14 @@ def task_completed(signal, task):
                     f"Exception while updating PoolBalance end_time from Huey.signal: {e.__str__()}"
                 )
         case "chown":
-            logger.info("Chown task completed.")
+            pass
         case "chmod":
-            logger.info("Chmod task completed.")
+            pass
         case "acl_change_manager":
-            logger.info("ACL change manager task completed.")
-            logger.info(f"Initiating task to clear Share.taskid={task.id}")
+            logger.info(f"--- Initiating task to clear DB Share.taskid = {task.id}.")
             clear_taskid(task.id)
         case "clear_taskid":
-            logger.info(f"Task completed to clear Share.taskid={task.id}.")
+            pass
         case _:
             logger.error(f"No known task_completed jobs to execute for {task.name}.")
 
