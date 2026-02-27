@@ -19,6 +19,7 @@ from os import stat, stat_result
 from stat import S_IMODE
 
 from huey.api import Task
+from huey.contrib.djhuey import db_task
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Share
@@ -94,3 +95,22 @@ class ShareACLView(ShareListView):
             changed_fields.append("taskid")
             share.save(update_fields=changed_fields)
             return Response(ShareSerializer(share).data)
+
+
+@db_task(name="share_acl.clear_taskid")
+def clear_taskid(taskid: str | None = None):
+    """
+    Find Share with matching taskid to clear and update DB.
+    Called by @HUEY.signal(SIGNAL_COMPLETE) task_completed(signal, task) for relevant
+    tasks.
+    """
+    if taskid is None:
+        return None
+    try:
+        # Assumes there can be only one Share with this taskid.
+        share = Share.objects.get(taskid=taskid)
+    except Share.DoesNotExist:
+        return None
+    share.taskid = None
+    share.save(update_fields=["taskid"])
+    return None

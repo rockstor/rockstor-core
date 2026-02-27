@@ -28,7 +28,6 @@ from huey.signals import (
     SIGNAL_LOCKED,
 )
 from storageadmin.models import PoolBalance
-from system.acl import clear_task_id
 
 # An alternative import method:
 # from huey.contrib import djhuey as huey
@@ -39,6 +38,7 @@ from smart_manager.views.scheduling_helpers import restart_rockstor
 from storageadmin.views.rockon_helpers import start, stop, update, install, uninstall
 from storageadmin.views.config_backup import restore_config, restore_rockons
 from storageadmin.views.pool_balance import update_end_time
+from storageadmin.views.share_acl import clear_taskid
 
 import logging
 
@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 def task_signal_executing(signal, task):
     # global huey
     # HUEY.storage.put_data("executing-{}".format(task.name), 1)
-    logger.info("Now executing Huey task [{}], id: {}.".format(task.name, task.id))
+    logger.info(f"Now executing Huey task [{task.name}], id: {task.id}.")
 
 
 @HUEY.signal(SIGNAL_COMPLETE)
@@ -65,7 +65,7 @@ def task_completed(signal, task):
     time_now = timezone.now()
     match task.name:
         case "start_balance" | "start_resize_pool":
-            logger.info("Updating end_time accordingly to {}".format(time_now))
+            logger.info(f"Updating end_time accordingly to {time_now}")
             # We now abstract db end_time update to an appropriately decorated task.
             try:
                 task_result_handle = update_end_time(task.id, time_now)
@@ -84,7 +84,9 @@ def task_completed(signal, task):
         case "acl.change_manager":
             logger.info("ACL change manager task completed.")
             logger.info(f"Initiating task to clear Share.taskid={task.id}")
-            clear_task_id(task.id)
+            clear_taskid(task.id)
+        case "share_acl.clear_taskid":
+            logger.info(f"Task completed to clear Share.taskid={task.id}.")
         case _:
             logger.error(f"No known task end jobs to execute for {task.name}.")
 

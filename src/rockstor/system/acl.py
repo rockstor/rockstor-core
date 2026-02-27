@@ -98,12 +98,3 @@ def acl_change_manager(
     # If this subvol was previously unmounted, return it to that state.
     if was_unmounted:
         umount_root(mnt_pt)
-
-# TODO: We need a Huey @db_task to be called on Share chown / chmod task completion.
-#  I.e.: extend: src/rockstor/storageadmin/tasks.py task_complete().
-#  Purpose is to clear (set to None / Null in DB) the associated Share.taskid.
-
-@db_task(name="acl.clear_taskid")
-def clear_task_id(taskid: str = None):
-    """Find Share with now completed taskid to update DB."""
-    pass
