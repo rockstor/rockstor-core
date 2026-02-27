@@ -1055,6 +1055,7 @@ class ShareAdmin(admin.ModelAdmin):
         "compression_algo",
         "rusage",
         "eusage",
+        "taskid",
         "parent_pool_name",
     ]
     list_per_page = 15
@@ -1069,6 +1070,7 @@ class ShareAdmin(admin.ModelAdmin):
         "compression_algo",
         "uuid",
         "replica",
+        "taskid",
     ]
     inlines = [
         SnapshotAdminInline,
