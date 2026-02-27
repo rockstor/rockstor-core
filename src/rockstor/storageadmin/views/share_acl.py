@@ -97,7 +97,7 @@ class ShareACLView(ShareListView):
             return Response(ShareSerializer(share).data)
 
 
-@db_task(name="share_acl.clear_taskid")
+@db_task()
 def clear_taskid(taskid: str | None = None):
     """
     Find Share with matching taskid to clear and update DB.

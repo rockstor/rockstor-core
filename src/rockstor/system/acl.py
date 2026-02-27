@@ -21,7 +21,7 @@ from system.osi import run_command
 from huey.contrib.djhuey import task, db_task
 
 
-@task(name="acl.chown", lock_task="chown_lock")
+@task(lock_task="chown_lock")
 def chown(mnt_pt: str, owner: str, group: str | None = None, recursive: bool = False):
     """
     Constructs and runs a chown command, under our scheduler via a decorator.
@@ -42,7 +42,7 @@ def chown(mnt_pt: str, owner: str, group: str | None = None, recursive: bool = F
     return run_command(cmd)
 
 
-@task(name="acl.chmod", lock_task="chmod_lock")
+@task(lock_task="chmod_lock")
 def chmod(mnt_pt: str, perm_bits: str, recursive: bool = False):
     """
     Constructs and runs a chmod command, under our scheduler via a decorator.
@@ -64,7 +64,7 @@ def chmod(mnt_pt: str, perm_bits: str, recursive: bool = False):
     return run_command(cmd)
 
 
-@task(name="acl.change_manager", lock_task="acl_change_manager_lock")
+@task(lock_task="acl_change_manager_lock")
 def acl_change_manager(
     mnt_pt: str,
     owner: str,

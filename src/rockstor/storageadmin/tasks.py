@@ -77,18 +77,18 @@ def task_completed(signal, task):
                 logger.error(
                     f"Exception while updating PoolBalance end_time from Huey.signal: {e.__str__()}"
                 )
-        case "acl.chown":
+        case "chown":
             logger.info("Chown task completed.")
-        case "acl.chmod":
+        case "chmod":
             logger.info("Chmod task completed.")
-        case "acl.change_manager":
+        case "acl_change_manager":
             logger.info("ACL change manager task completed.")
             logger.info(f"Initiating task to clear Share.taskid={task.id}")
             clear_taskid(task.id)
-        case "share_acl.clear_taskid":
+        case "clear_taskid":
             logger.info(f"Task completed to clear Share.taskid={task.id}.")
         case _:
-            logger.error(f"No known task end jobs to execute for {task.name}.")
+            logger.error(f"No known task_completed jobs to execute for {task.name}.")
 
 
 @HUEY.signal(SIGNAL_ERROR, SIGNAL_LOCKED)
