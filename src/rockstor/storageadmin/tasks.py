@@ -110,3 +110,6 @@ def task_failed(signal, task, exc=None):
     if task.name == "start_balance" or task.name == "start_resize_pool":
         logger.info("Updating status accordingly")
         PoolBalance.objects.filter(tid=task.id).latest().update(status="failed")
+    if task.name == "acl_change_manager":
+        logger.info(f"--- Initiating task to clear DB Share.taskid = {task.id}.")
+        clear_taskid(task.id)
