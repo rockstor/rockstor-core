@@ -19,13 +19,15 @@ from os import stat, stat_result
 from stat import S_IMODE
 
 from huey.api import Task
-from huey.contrib.djhuey import db_task
+from huey.contrib.djhuey import db_task, HUEY
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Share
 from storageadmin.serializers import ShareSerializer
 from fs.btrfs import mount_share, get_property
+from storageadmin.util import handle_exception
 from storageadmin.views import ShareListView
+from storageadmin.views.scheduling_helpers import is_pending_task
 from system.acl import acl_change_manager
 from system.users import user_name, group_name
 
@@ -35,11 +37,24 @@ class ShareACLView(ShareListView):
     def post(self, request, sid):
         with self._handle_exception(request):
             share = Share.objects.get(id=sid)
-            # Consider Checking if Share.taskid is None before proceeding,
-            # else throw exception to inform user of ongoing task.
-            # However, our to-be-invoked acl_change_manager() does use locking.
-            # if share.taskid is not None:
-            #     raise
+            current_taskid = share.taskid
+            # Sanity check on current_taskid - wipe if no evidence of ongoing task.
+            if current_taskid is not None:
+                hi = HUEY
+                task_status = "unknown"
+                # Enqueue tasks are pending pre execution.
+                # There is a 1 to 3 second "pending" status for Huey tasks
+                if is_pending_task(hi, current_taskid):
+                    task_status = "pending"
+                # else:
+                    # Executing tasks are no longer pending.
+                    # Huey has limitations re executing tasks feedback:
+                    # I.e. task_status = hi.result(current_taskid, preserve = True)
+                    # Returns None for ongoing or non-existent!
+                    # https://github.com/coleifer/huey/issues/488
+                    # Consider
+                e_msg = f"Change task, status {task_status}, found this Share: task id ({current_taskid}) should complete in a few minutes."
+                handle_exception(Exception(e_msg), request)
             # OWNER, GROUP, AND PERMISSIONS UPDATE.
             # Get the on disk subvol info.
             mnt_pt = share.mnt_pt
