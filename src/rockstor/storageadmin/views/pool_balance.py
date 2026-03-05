@@ -73,6 +73,8 @@ def is_pending_balance_task(Huey_handle, tid):
     :param tid: task_id
     :return: Boolean, true if tid is pending
     """
+    # TODO replace with generic is_pending_task() in scheduling_helpers.py,
+    #  ensure test is similarly transitioned.
     pending_balance_task_ids = [
         task.id
         for task in Huey_handle.pending()

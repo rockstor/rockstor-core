@@ -60,7 +60,8 @@ class Share(models.Model):
     pqgroup_eusage = models.BigIntegerField(default=0)
     # Stash our Huey task id to ease sanity checks
     # Taskid=None, (Null in DB) means no associated tasks.
-    taskid = models.CharField(max_length=36, null=True)
+    # "bland=True" enables empty/blank entry validation in Admin site.
+    taskid = models.CharField(max_length=36, null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
         super(Share, self).__init__(*args, **kwargs)
