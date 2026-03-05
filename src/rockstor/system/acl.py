@@ -21,7 +21,7 @@ from system.osi import run_command
 from huey.contrib.djhuey import task, db_task
 
 
-@task(lock_task="chown_lock")
+@task()
 def chown(mnt_pt: str, owner: str, group: str | None = None, recursive: bool = False):
     """
     Constructs and runs a chown command, under our scheduler via a decorator.
@@ -42,7 +42,7 @@ def chown(mnt_pt: str, owner: str, group: str | None = None, recursive: bool = F
     return run_command(cmd)
 
 
-@task(lock_task="chmod_lock")
+@task()
 def chmod(mnt_pt: str, perm_bits: str, recursive: bool = False):
     """
     Constructs and runs a chmod command, under our scheduler via a decorator.
@@ -52,7 +52,6 @@ def chmod(mnt_pt: str, perm_bits: str, recursive: bool = False):
     :param mnt_pt: subvol mount point.
     :param perm_bits: e.g. 755 for rwx r-x r-x.
     :param recursive: Recursively apply.
-    :param was_unmounted: Enables us to honour prior mount status.
     :return: out, err, rc from run_command.
     """
     cmd: list[str] = [
@@ -63,8 +62,9 @@ def chmod(mnt_pt: str, perm_bits: str, recursive: bool = False):
     cmd.extend([perm_bits, mnt_pt])
     return run_command(cmd)
 
-
-@task(lock_task="acl_change_manager_lock")
+# TODO: re-apply locking so we can check if a lock can be attained:
+#  inferring from that there is no other ongoing same-name task.
+@task()
 def acl_change_manager(
     mnt_pt: str,
     owner: str,
@@ -98,3 +98,5 @@ def acl_change_manager(
     # If this subvol was previously unmounted, return it to that state.
     if was_unmounted:
         umount_root(mnt_pt)
+
+# TODO: psutil boolean on active chown or chmod activity for our mnt_pt.
