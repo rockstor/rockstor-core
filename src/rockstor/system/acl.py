@@ -18,7 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from fs.btrfs import umount_root
 from system.constants import CHOWN, CHMOD
 from system.osi import run_command
-from huey.contrib.djhuey import task, db_task
+from huey.contrib.djhuey import task
+import psutil
+
 
 
 @task()
@@ -62,8 +64,7 @@ def chmod(mnt_pt: str, perm_bits: str, recursive: bool = False):
     cmd.extend([perm_bits, mnt_pt])
     return run_command(cmd)
 
-# TODO: re-apply locking so we can check if a lock can be attained:
-#  inferring from that there is no other ongoing same-name task.
+
 @task()
 def acl_change_manager(
     mnt_pt: str,
@@ -99,4 +100,19 @@ def acl_change_manager(
     if was_unmounted:
         umount_root(mnt_pt)
 
-# TODO: psutil boolean on active chown or chmod activity for our mnt_pt.
+
+def chown_or_chmod_active(mnt_pt: str) -> bool:
+    """
+    Examines system process via psutils.
+    Returns boolean if chown or chmod processes are found on the given mnt_pt.
+    :param mnt_pt: subvol mount point.
+    :return:
+    """
+    # Example proc.info entries:
+    # {'status': 'running', 'cmdline': ['/usr/bin/chown', '-R', 'test2:test2', '/mnt2/rockons-root3'], 'name': 'chown'}
+    # {'status': 'running', 'cmdline': ['/usr/bin/chmod', '-R', '770', '/mnt2/rockons-root3'], 'name': 'chmod'}
+    for proc in psutil.process_iter(["name", "cmdline", "status"]):
+        if proc.info["name"] == "chown" or proc.info["name"] == "chmod":
+            if proc.info["cmdline"] != [] and proc.info["cmdline"][-1] == mnt_pt:
+                return True
+    return False
