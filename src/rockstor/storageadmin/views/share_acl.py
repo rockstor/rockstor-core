@@ -39,7 +39,7 @@ class ShareACLView(ShareListView):
             share = Share.objects.get(id=sid)
             current_taskid = share.taskid
             mnt_pt = share.mnt_pt
-            # Sanity check on current_taskid - wipe if no evidence of ongoing task.
+            # Sanity check on current_taskid - ignore if no evidence of ongoing task.
             if current_taskid is not None:
                 hi = HUEY
                 task_status = "unknown"
@@ -52,10 +52,12 @@ class ShareACLView(ShareListView):
                 # I.e. task_status = hi.result(current_taskid, preserve = True)
                 # Returns None for both ongoing and non-existent task ids.
                 # See: https://github.com/coleifer/huey/issues/488
+                # CHECK FOR ONGOING RELATED ACTIVITY
                 if chown_or_chmod_active(mnt_pt=mnt_pt):
                     task_status = "running"
-                e_msg = f"Change task, status ({task_status}), found this Share: task id ({current_taskid}) should complete in a few minutes."
-                handle_exception(Exception(e_msg), request)
+                if task_status != "unknown":
+                    e_msg = f"Change task, status ({task_status}), found for ({share.name}): task id ({current_taskid}) should complete in a few minutes."
+                    handle_exception(Exception(e_msg), request)
             # OWNER, GROUP, AND PERMISSIONS UPDATE.
             # Get the on disk subvol info.
             was_unmounted: bool = False
@@ -95,7 +97,6 @@ class ShareACLView(ShareListView):
                 share.compression_algo = compression
                 changed_fields.append("compression_algo")
             # TASK INVOCATION
-            # Locking prevents more than one invocation of this manager.
             task_result_handle: Task = acl_change_manager(
                 mnt_pt,
                 owner=options["owner"],
@@ -105,7 +106,7 @@ class ShareACLView(ShareListView):
                 p_recursive=options["precursive"],
                 was_unmounted=was_unmounted,
             )
-            # Store above task ID in share
+            # Store above task ID in Share; overwriting any "unknown" (orphaned) value.
             share.taskid = task_result_handle.id
             changed_fields.append("taskid")
             share.save(update_fields=changed_fields)
