@@ -1,6 +1,6 @@
 # The Rockstor Project
 
-An Open Source (Licensed: FSF Free/Libre & OSI approved) community endeavour
+(Licensed: FSF Free/Libre & OSI approved) community endeavour
 to sustainably develop, maintain, and distribute an easy to use, flexible,
 Linux & BTRFS based DIY Network Attached Storage (NAS) software appliance.
 
