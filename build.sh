@@ -48,11 +48,15 @@ export PIPX_BIN_DIR=/usr/local/bin  # binary location for pipx-installed apps, d
 export PIPX_MAN_DIR=/usr/local/share/man  # manual page location for pipx-installed apps, default ~/.local/share/man
 # https://python-poetry.org/docs/#installing-with-pipx
 pipx ensurepath
-pipx install --force --python ${POETRY_HOST_PYTHON} poetry==2.3.4
+# Remove any prior pipx installed poetry, and all plugins: || true as RC=1 if no poetry found.
+pipx uninstall poetry || true
+# Install to enable --python changes and poetry version changes without the problematic --force.
+pipx install --python ${POETRY_HOST_PYTHON} poetry==2.3.4
 # Poetry's own venv maintenance: https://python-poetry.org/docs/cli/#self-sync
 # The following sync also removes all plugins (e.g. legacy poetry-plugin-export),
 # and updates /root/.config/pypoetry/poetry.lock accordingly.
-poetry self sync > poetry-self-sync.txt
+# However we use pipx to maintainer our poetry and uninstall/reinstall to permit updating the host python
+# poetry self sync > poetry-self-sync.txt
 # https://pypi.org/project/poetry-plugin-dotenv/
 # https://python-poetry.org/docs/master/plugins/#using-plugins
 pipx inject --verbose poetry poetry-plugin-dotenv==3.3.0
@@ -61,9 +65,9 @@ pipx list
 # Establish Poetry managed standalone python (around 100 MB per version)
 # Capture list of options, both System (OS) and Poetry Managed (/root/.local/share/pypoetry/python/...)
 # poetry python list -m  # for installed managed version.
-poetry python list --no-ansi > poetry_python.txt
-# python install returns 1 if version is already installed.
-poetry python install -vvv --no-interaction --no-ansi ${STANDALONE_PYTHON_VERSION} >> poetry_python.txt || true
+poetry python list --no-ansi > poetry-python.txt
+# python install returns 1 if version is already installed, so "... || true".
+poetry python install -vvv --no-interaction --no-ansi ${STANDALONE_PYTHON_VERSION} >> poetry-python.txt || true
 # poetry python remove --no-interaction 3.11.15   # to be added once we move to a newer standalone python version.
 
 # Install project dependencies defined in cwd pyproject.toml using poetry.toml
