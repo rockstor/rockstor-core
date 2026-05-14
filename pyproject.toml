@@ -32,7 +32,7 @@ requires-python = "~3.13"
 dependencies = [
 # https://python-poetry.org/docs/dependency-specification/
 # PEP 508 https://packaging.python.org/en/latest/specifications/dependency-specifiers/#dependency-specifiers
-    "django (==5.2.*)",
+    "django (==6.0.5)",
     "django-oauth-toolkit (==2.4.*)",
     # DRF version (3.17.0) added Py3.14 & Django 6.0 support.
     "djangorestframework (==3.17.1)",
