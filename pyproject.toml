@@ -38,7 +38,7 @@ dependencies = [
     "djangorestframework (==3.17.1)",
     "django-pipeline (==4.1.0)",
     # "django-pipeline @ git+https://github.com/jazzband/django-pipeline.git@927ca9ad",
-    "docutils (==0.21.*)",
+    "docutils (==0.22.*)",
     "python-engineio (==4.8.0)",
     "python-socketio (==5.9.0)",
     # Need dbus-python 1.4.0 for Py3.13
