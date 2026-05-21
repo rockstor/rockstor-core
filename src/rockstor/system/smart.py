@@ -151,7 +151,7 @@ def capabilities(device, custom_options="", test_mode=TESTMODE):
             prev_line = None
             cur_cap = None
             for j in range(i + 2, len(o)):
-                if re.match(".*:\s+\(.*\)", o[j]) is not None:
+                if re.match(r".*:\s+\(.*\)", o[j]) is not None:
                     cap = o[j][: o[j].index(":")]
                     flag = o[j][(o[j].index("(") + 1) : o[j].index(")")].strip()
                     val = o[j][(o[j].index(")") + 1) :].strip()
@@ -163,7 +163,7 @@ def capabilities(device, custom_options="", test_mode=TESTMODE):
                         prev_line = None
                     cur_cap = cap
                     cap_d[cur_cap] = [flag, val]
-                elif re.match("\s", o[j]) is not None:
+                elif re.match(r"\s", o[j]) is not None:
                     cap_d[cur_cap][1] += "\n"
                     cap_d[cur_cap][1] += o[j].strip()
                 else:

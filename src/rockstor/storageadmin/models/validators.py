@@ -23,9 +23,9 @@ from django.core.validators import validate_ipv46_address
 def validate_nfs_host_str(value):
     error_count = 0
     host_regex = (
-        "^(([a-zA-Z0-9\*]|[a-zA-Z0-9\*][a-zA-Z0-9\-\*]*"
-        "[a-zA-Z0-9\*])\.)*([A-Za-z0-9\*]|[A-Za-z0-9\*]"
-        "[A-Za-z0-9\-\*]*[A-Za-z0-9\*])$"
+        r"^(([a-zA-Z0-9\*]|[a-zA-Z0-9\*][a-zA-Z0-9\-\*]*"
+        r"[a-zA-Z0-9\*])\.)*([A-Za-z0-9\*]|[A-Za-z0-9\*]"
+        r"[A-Za-z0-9\-\*]*[A-Za-z0-9\*])$"
     )
     if re.match(host_regex, value) is None:
         error_count += 1

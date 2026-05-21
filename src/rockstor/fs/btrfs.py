@@ -563,7 +563,7 @@ def get_pool_info(disk):
             fields = l.split()
             pool_info["uuid"] = fields[3]
             pool_info["label"] = fields[1].strip("'")
-        elif re.match("\tdevid", l) is not None:
+        elif re.match(r"\tdevid", l) is not None:
             # We have a line starting with <tab>devid, extract the temp_name,
             # devid, is_byid, size, and used. Collect in a named tuple.
             # We convert name into the db Disk.name by-id format so that our
@@ -584,10 +584,10 @@ def get_pool_info(disk):
                 allocated=allocated,
             )
             pool_info["disks"][dev_byid] = dev_info
-        elif re.match("\tTotal devices", l) is not None:
+        elif re.match(r"\tTotal devices", l) is not None:
             fields = l.split()
             full_dev_count = int(fields[2])
-        elif re.match("\t\*\*\* Some devices missing", l) is not None:
+        elif re.match(r"\t\*\*\* Some devices missing", l) is not None:
             pool_info["hasMissingDev"] = True
     pool_info["fullDevCount"] = full_dev_count
     pool_info["missingDevCount"] = full_dev_count - attached_dev_count
@@ -811,7 +811,7 @@ def umount_root(root_pool_mnt):
         if ce.rc == 32:
             for l in ce.err:
                 l = l.strip()
-                if re.search("not mounted\.$", l) is not None:
+                if re.search(r"not mounted\.$", l) is not None:
                     return
             raise ce
     for i in range(20):
@@ -1775,7 +1775,7 @@ def pool_usage(mnt_pt):
 
     used = 0
     for line in out:
-        fields = re.split("\W+", line)
+        fields = re.split(r"\W+", line)
         if line.startswith("Data"):
             used += int(fields[5])
         elif re.search("Size", line):

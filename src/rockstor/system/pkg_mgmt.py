@@ -131,7 +131,7 @@ def current_version(get_build_date: bool = False) -> (str, str | None):
     # The following tags gives us a pre-formatted:
     # 'Version-Release' (first line)
     # 'Thu May 01 2025' (second line)
-    tags = "%{VERSION}\-%{RELEASE}\\\n%{BUILDTIME:day}"
+    tags = "%{VERSION}-%{RELEASE}\\\n%{BUILDTIME:day}"
     out, err, rc = run_command(
         [RPM, "-q", "--queryformat", tags, "rockstor"], throw=False
     )

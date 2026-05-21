@@ -536,7 +536,7 @@ def owncloud_install(rockon):
             cur_wait = 0
             while True:
                 o, e, rc = run_command(
-                    [DOCKER, "exec", c.name, "psql", "-U", "postgres", "-c", "\l"],
+                    [DOCKER, "exec", c.name, "psql", "-U", "postgres", "-c", "\\l"],
                     throw=False,
                 )
                 if rc == 0:

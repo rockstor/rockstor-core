@@ -137,7 +137,7 @@ Disk = collections.namedtuple(
 # - sda3 parent is sda, sdag3 parent is sdag
 # nvme, md, or mmcblk have partitions with 'p' + >= one digit e.g.:
 # - nvme0n1p4 | md126p3 | mmcblk0p2 parents are nvme0n1 | md126 | mmcblk0
-base_dev_patterns = [("sd|vd", "\d+"), ("nvme|md|mmcblk", "p\d+")]
+base_dev_patterns = [(r"sd|vd", r"\d+"), (r"nvme|md|mmcblk", r"p\d+")]
 
 
 def replace_line_if_found(Original_file, new_file, regex, replacement_line):
@@ -975,7 +975,7 @@ def root_disk():
                     # Note: this same pattern is also shared by mmcblk (sdcard) devices.
                     # Base device examples: mmcblk1 or mmcblk2
                     # First partition on the first device would be mmcblk1p1
-                    end = re.search("\d+", disk).end()
+                    end = re.search(r"\d+", disk).end()
                     return disk[:end]
                 if re.match("/dev/nvme", disk) is not None:
                     # We have an nvme device. These have the following naming

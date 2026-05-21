@@ -115,7 +115,7 @@ def sssd_update_ad(domain, config):
                     # empty line or new section without empty line before it.
                     tfo.write(ol)
                     domain_section = False
-            elif re.match("\[domain/%s]" % domain, line) is not None:
+            elif re.match(r"\[domain/%s\]" % domain, line) is not None:
                 domain_section = True
             tfo.write(line)
         if domain_section is True:
@@ -170,9 +170,9 @@ def sssd_add_ldap(ldap_params):
                 for k, v in opts.items():
                     if re.match(k, line) is None:
                         tfo.write("{} = {}\n".format(k, v))
-            elif re.match("\[sssd]", line) is not None:
+            elif re.match(r"\[sssd]", line) is not None:
                 sssd_section = True
-            elif re.match("\[domain/{}]".format(server), line) is not None:
+            elif re.match(r"\[domain/{}\]".format(server), line) is not None:
                 domain_section = True
             tfo.write(line)
         if domain_section is False:
@@ -212,9 +212,9 @@ def sssd_remove_ldap(server):
                     continue
             elif domain_section is True:
                 continue
-            elif re.match("\[sssd]", line) is not None:
+            elif re.match(r"\[sssd]", line) is not None:
                 sssd_section = True
-            elif re.match("\[domain/{}]".format(server), line) is not None:
+            elif re.match(r"\[domain/{}\]".format(server), line) is not None:
                 domain_section = True
                 continue
             elif len(line.strip()) == 0:

@@ -194,9 +194,9 @@ def update_upssched_early_shutdown(seconds):
     """
     distro_id = distro.id()
     # setup out match patterns (with escaped '*') and associated lines
-    timer_start_pattern = "AT ONBATT \* START-TIMER early-shutdown"
+    timer_start_pattern = r"AT ONBATT \* START-TIMER early-shutdown"
     timer_start_line = "AT ONBATT * START-TIMER early-shutdown"
-    timer_stop_pattern = "AT ONLINE \* CANCEL-TIMER early-shutdown"
+    timer_stop_pattern = r"AT ONLINE \* CANCEL-TIMER early-shutdown"
     timer_stop_line = "AT ONLINE * CANCEL-TIMER early-shutdown"
     start_timer_found = False
     stop_timer_found = False

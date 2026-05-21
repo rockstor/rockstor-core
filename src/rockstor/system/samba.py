@@ -179,7 +179,7 @@ def get_global_config():
         global_custom_section = False
         for l in sfo.readlines():
             # Check one, entering smb.conf [global] section
-            if re.match("\[global]", l) is not None:
+            if re.match(r"\[global]", l) is not None:
                 global_section = True
                 continue
             # Check two, entering Rockstor custome params section under
@@ -200,7 +200,7 @@ def get_global_config():
                 or re.match(";", l) is not None
             ):
                 continue
-            if global_section and re.match("\[", l) is not None:
+            if global_section and re.match(r"\[", l) is not None:
                 global_section = False
                 continue
             fields = l.strip().split(" = ")
