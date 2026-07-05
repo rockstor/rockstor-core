@@ -62,7 +62,6 @@ class ServicesTests(unittest.TestCase):
             "snmpd",
             "docker",
             "smartd",
-            "shellinaboxd",
             "sssd",
             "nut-server",
             "rockstor-bootstrap",
