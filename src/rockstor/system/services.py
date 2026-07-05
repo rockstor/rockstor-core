@@ -61,7 +61,6 @@ def init_service_op(service_name, command, throw=True):
         "snmpd",
         "docker",
         "smartd",
-        "shellinaboxd",
         "sssd",
         "nut-server",
         "rockstor-bootstrap",

@@ -263,31 +263,6 @@ def bootstrap_sshd_config(log):
         run_command([SYSTEMCTL, "restart", "sshd"])
 
 
-def establish_shellinaboxd_service():
-    """
-    Normalise on shellinaboxd as service name for shellinabox package.
-    The https://download.opensuse.org/repositories/shells shellinabox package
-    ( https://build.opensuse.org/package/show/shells/shellinabox ) uses a
-    systemd service name of shellinabox.
-    If we find no shellinaboxd service file and there exists a shellinabox one
-    create a copy to enable us to normalise on shellinaboxd and avoid carrying
-    another package just to implement this service name change as we are
-    heavily invested in the shellinaboxd service name.
-    :return: Indication of action taken
-    :rtype: Boolean
-    """
-    logger.info("Normalising on shellinaboxd service file")
-    required_sysd_name = "/usr/lib/systemd/system/shellinaboxd.service"
-    opensuse_sysd_name = "/usr/lib/systemd/system/shellinabox.service"
-    if os.path.exists(required_sysd_name):
-        logger.info("- shellinaboxd.service already exists")
-        return False
-    if os.path.exists(opensuse_sysd_name):
-        shutil.copyfile(opensuse_sysd_name, required_sysd_name)
-        logger.info("- established shellinaboxd.service file")
-        return True
-
-
 def establish_rockstor_nginx_overide_conf():
     """
     We use a systemd drop-in override configuration file to have nginx configured
@@ -348,7 +323,7 @@ def establish_systemd_services():
     """
     Wrapper to establish our various systemd services.
     """
-    conf_altered = establish_shellinaboxd_service()
+    conf_altered = False
     if move_or_remove_legacy_rockstor_service_files():
         conf_altered = True
     if establish_rockstor_nginx_overide_conf():

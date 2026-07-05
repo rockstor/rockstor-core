@@ -436,21 +436,6 @@ NUT_LISTEN_ON_IP = "0.0.0.0"
 # The command that the root part of upsmon uses to shut down the system.
 NUT_SYSTEM_SHUTDOWNCMD = "/sbin/shutdown -h +0"
 
-# Shell In A Box base settings
-if distro.id() == "rockstor":
-    SHELLINABOX = {
-        "user": "shellinabox",
-        "group": "shellinabox",
-        "port": "4200",
-        "certs": "/var/lib/shellinabox",
-    }
-else:
-    SHELLINABOX = {
-        "user": "shellinabox",
-        "group": "shellinabox",
-        "port": "4200",
-        "certs": "/etc/shellinabox/certs",
-    }
 
 UPDATE_CHANNELS = {
     "stable": {

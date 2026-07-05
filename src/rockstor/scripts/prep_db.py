@@ -36,26 +36,15 @@ def register_services() -> None:
         # moving towards generic scheduling service name.
         "Scheduling": "scheduling",
         "Bootstrap": "rockstor-bootstrap",
-        "Shell In A Box": "shellinaboxd",
         "Rockstor": "rockstor", # Service Gateway Interface (SGI) server.
         "Tailscale": "tailscaled",
     }
 
-    # N.B. all other services have null as their default config with service.
-    # Consider bringing shellinaboxd in line with this now default behaviour.
-    services_configs = {
-        "shellinaboxd": (
-            '{"detach": false, "css": "white-on-black", ' '"shelltype": "LOGIN"}'
-        )
-    }
 
     for k, v in services.items():
         try:
             so = Service.objects.get(name=v)
             so.display_name = k
-            # Apply any configuration defaults found in services_configs.
-            if v in services_configs:
-                so.config = services_configs[v]
         except Service.DoesNotExist:
             so = Service(display_name=k, name=v)
         finally:

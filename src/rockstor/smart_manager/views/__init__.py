@@ -51,6 +51,5 @@ from smart_manager.views.active_directory import ActiveDirectoryServiceView  # n
 from smart_manager.views.receiver_pools import ReceiverPoolListView  # noqa E501
 from smart_manager.views.scheduling_service import RockstorSchedulingServiceView  # noqa E501
 from smart_manager.views.bootstrap_service import BootstrapServiceView  # noqa E501
-from smart_manager.views.shellinaboxd_service import ShellInABoxServiceView  # noqa E501
 from smart_manager.views.rockstor_service import RockstorServiceView  # noqa E501
 from smart_manager.views.tailscaled_service import TailscaledServiceView  # noqa E501

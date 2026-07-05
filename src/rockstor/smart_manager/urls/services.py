@@ -31,7 +31,6 @@ from smart_manager.views import (
     SMARTDServiceView,
     SNMPServiceView,
     SambaServiceView,
-    ShellInABoxServiceView,
     ServiceMonitorView,
     TaskSchedulerServiceView,
     RockstorSchedulingServiceView,
@@ -92,11 +91,6 @@ urlpatterns = [
     re_path(
         r"^rockstor-bootstrap/(?P<command>%s)$" % command_regex,
         BootstrapServiceView.as_view(),
-    ),
-    re_path(r"^shellinaboxd$", ShellInABoxServiceView.as_view()),
-    re_path(
-        r"^shellinaboxd/(?P<command>%s)$" % command_regex,
-        ShellInABoxServiceView.as_view(),
     ),
     re_path(r"^rockstor$", RockstorServiceView.as_view()),
     re_path(r"^rockstor/(?P<command>%s)$" % command_regex, RockstorServiceView.as_view()),

@@ -41,7 +41,7 @@ ServicesView = Backbone.View.extend({
             'reload': 'reloaded'
         };
         this.smTs = null; // current timestamp of sm service
-        this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'shellinaboxd', 'rockstor', 'tailscaled'];
+        this.configurable_services = ['ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'rockstor', 'tailscaled'];
         this.tooltipMap = {
             'active-directory': 'By turning this service on, the system will attempt to join the Active Directory domain using the credentials provided during configuration.',
             'rockstor-bootstrap': 'Service responsible for bootstrapping Rockstor when the system starts.',
