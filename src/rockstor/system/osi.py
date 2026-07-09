@@ -1984,25 +1984,46 @@ def get_devname(device_name, addPath=False):
     return None
 
 
+# Module level compilation to reduce overhead
+LDD_PATTERN = re.compile(
+    r'^\s*'                                 # Trim leading spaces
+    r'(?:(?P<so_name>\S+)\s+=>\s+)?'        # Shared Object Name (so_name) and arrow
+    r'(?P<path>\S+)\s+'                     # The actual file path (or so_name if no arrow)
+    r'\((?P<address>0x[0-9a-fA-F]+)\)$'     # The memory address
+)
+
+# Library exclusion list (easier for future exclusions)
+EXCLUDED_LIBS = ("linux-vdso")
+
 def get_libs(program_path: str) -> list[str]:
     """
     Wrapper around `ldd program_path`
     @param program_path: Binary to query ldd about
-    @return: list of OS paths or empty list if error or non found.
+    @return: list of OS paths or empty list if error or none found.
     """
-    libs: list[str] = []
-    out, err, rc = run_command([LDD, f"{program_path}"], throw=False)
-    if len(out) > 0 and rc == 0:
-        for each_line in out:
-            line_fields: list = each_line.strip().split()
-            match len(line_fields):
-                case 2:
-                    if re.match("linux-vdso", line_fields[0]) is not None:
-                        continue
-                    else:
-                        libs.append(line_fields[0])
-                case 4:
-                    libs.append(line_fields[2])
+    out, err, rc = run_command([LDD, program_path], throw=False)
+    
+    if rc != 0 or not out:
+        return []
+        
+    libs = []
+    for line in out:
+        match = LDD_PATTERN.match(line)
+        if match:
+            path = match.group('path')
+            so_name = match.group('so_name')
+            
+            # The identifier to check against exclusions (so_name if it exists, otherwise the path itself)
+            lib_name = so_name if so_name else path
+            
+            # Skip any library that starts with an excluded string
+            if lib_name.startswith(EXCLUDED_LIBS):
+                continue
+                
+            # Filter out any remaining virtual libraries that don't have absolute paths
+            if path.startswith('/'):
+                libs.append(path)
+                
     return libs
 
 
