@@ -22,6 +22,7 @@ import shutil
 import stat
 from shutil import move, copy
 from tempfile import mkstemp
+from pathlib import Path
 
 import distro
 from django.conf import settings
@@ -237,25 +238,50 @@ def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable="rw"):
             )
 
 
-def rsync_for_sftp(chroot_loc):
+def rsync_for_sftp(chroot_loc: str | Path):
     """
     Populate passed chroot_loc path with libraries sufficient for PROGS_IN_CHROOT.
     Dependencies retrieved via ldd.
     """
-    user = chroot_loc.split("/")[-1]
-    run_command([MKDIR, "-p", f"{chroot_loc}/usr/bin"], log=True)
-    run_command([MKDIR, "-p", f"{chroot_loc}/lib"], log=True)
-    run_command([MKDIR, "-p", f"{chroot_loc}/lib64"], log=True)
-    run_command([MKDIR, "-p", f"{chroot_loc}/usr/lib64"], log=True)
+    chroot_path = Path(chroot_loc)
+    user = chroot_path.name
 
+    # Create all required subdirectories
+    # TODO: See whether explicit directory creations (aside from /usr/bin) are not necessary anymore 
+    # with dynamic parent directory creation below
+    bin_dir = chroot_path / "usr" / "bin"
+    for sub_dir in [bin_dir, chroot_path / "lib", chroot_path / "lib64", chroot_path / "usr" / "lib64"]:
+        run_command([MKDIR, "-p", str(sub_dir)], log=True)
+
+    # filter list for path components not needed in chroot environment
+    FILTER_DIRS = {"zlib-ng-compat"}
+
+    # TODO: determine whether get_libs() can also be refactored to accept and return path objects
     lib_list: list[str] = []
+
     # Copy chroot binaries and resolve lib dependencies
     for prog in PROGS_IN_CHROOT:
-        copy(prog, f"{chroot_loc}/usr/bin")
-        lib_list = lib_list + get_libs(prog)
+        prog_path = Path(prog)
+        # Copy binary explicitly to target destination path
+        copy(prog_path, bin_dir / prog_path.name)
+        lib_list.extend(get_libs(prog))
+
     # Copy libs for PROGS_IN_CHROOT to chroot
     for lib in set(lib_list):
-        copy(lib, f"{chroot_loc}{lib}")
+        path_obj = Path(lib)
+
+        # Filter out unwanted directories
+        filtered_parts = [part for part in path_obj.parts if part not in FILTER_DIRS]
+        clean_lib_path = Path(*filtered_parts)
+
+        # Assemble target path
+        chroot_target = chroot_path / clean_lib_path.relative_to(path_obj.anchor)
+
+        # Ensure parent directory exists before copying, then copy library
+        chroot_target.parent.mkdir(parents=True, exist_ok=True)
+        copy(path_obj, chroot_target)
+
+    # Explicitly make bash the user shell
     run_command([USERMOD, "-s", "/usr/bin/bash", user], log=True)
 
 
