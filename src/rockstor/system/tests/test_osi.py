@@ -14,6 +14,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
 import operator
 import unittest
 from unittest.mock import patch, mock_open, call
@@ -1713,8 +1714,8 @@ class OSITests(unittest.TestCase):
                     uuid=None,
                     parted=False,
                     root=False,
-                    partitions={}
-                )
+                    partitions={},
+                ),
             ]
         ]
         # As all serials are available via the lsblk we can avoid mocking
@@ -3977,7 +3978,64 @@ class OSITests(unittest.TestCase):
                 "/lib64/ld-linux-x86-64.so.2",
             ]
         ]
-        # Tumbleweed x86_64 `ldd /usr/bin/bash`
+        # Leap 16.0 x86_64
+        prog.append("/usr/bin/rsync")
+        out.append(
+            [
+                "\tlinux-vdso.so.1 (0x00007f1c2b9ac000)",
+                "\tlibacl.so.1 => /lib64/libacl.so.1 (0x00007f1c2b902000)",
+                "\tlibpopt.so.0 => /lib64/libpopt.so.0 (0x00007f1c2b8f3000)",
+                "\tliblz4.so.1 => /lib64/liblz4.so.1 (0x00007f1c2b8cb000)",
+                "\tlibzstd.so.1 => /lib64/libzstd.so.1 (0x00007f1c2b80a000)",
+                "\tlibxxhash.so.0 => /lib64/libxxhash.so.0 (0x00007f1c2b800000)",
+                "\tlibcrypto.so.3 => /lib64/libcrypto.so.3 (0x00007f1c2b000000)",
+                "\tlibz.so.1 => /usr/lib64/zlib-ng-compat/libz.so.1 (0x00007f1c2b7dd000)",
+                "\tlibc.so.6 => /lib64/libc.so.6 (0x00007f1c2ae07000)",
+                "\tlibjitterentropy.so.3 => /lib64/libjitterentropy.so.3 (0x00007f1c2b7d0000)",
+                "\t/lib64/ld-linux-x86-64.so.2 (0x00007f1c2b9ae000)",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(
+            [
+                "/lib64/libacl.so.1",
+                "/lib64/libpopt.so.0",
+                "/lib64/liblz4.so.1",
+                "/lib64/libzstd.so.1",
+                "/lib64/libxxhash.so.0",
+                "/lib64/libcrypto.so.3",
+                "/usr/lib64/zlib-ng-compat/libz.so.1",
+                "/lib64/libc.so.6",
+                "/lib64/libjitterentropy.so.3",
+                "/lib64/ld-linux-x86-64.so.2",
+            ]
+        )
+        prog.append("/usr/bin/ls")
+        out.append(
+            [
+                "\tlinux-vdso.so.1 (0x00007f9a48658000)",
+                "\tlibselinux.so.1 => /lib64/libselinux.so.1 (0x00007f9a485f5000)",
+                "\tlibcap.so.2 => /lib64/libcap.so.2 (0x00007f9a485e9000)",
+                "\tlibc.so.6 => /lib64/libc.so.6 (0x00007f9a483f0000)",
+                "\tlibpcre2-8.so.0 => /lib64/libpcre2-8.so.0 (0x00007f9a48336000)",
+                "\t/lib64/ld-linux-x86-64.so.2 (0x00007f9a4865a000)",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(
+            [
+                "/lib64/libselinux.so.1",
+                "/lib64/libcap.so.2",
+                "/lib64/libc.so.6",
+                "/lib64/libpcre2-8.so.0",
+                "/lib64/ld-linux-x86-64.so.2",
+            ]
+        )
+        # Older Tumbleweed x86_64 `ldd /usr/bin/bash`
         prog.append("/usr/bin/bash")
         out.append(
             [
@@ -3999,7 +4057,7 @@ class OSITests(unittest.TestCase):
                 "/lib64/ld-linux-x86-64.so.2",
             ]
         )
-        # Tumbleweed aarch64 `ldd /usr/bin/bash`
+        # Older Tumbleweed aarch64 `ldd /usr/bin/bash`
         prog.append("/usr/bin/bash")
         out.append(
             [
@@ -4021,7 +4079,7 @@ class OSITests(unittest.TestCase):
                 "/lib64/libtinfo.so.6",
             ]
         )
-        # Tumbleweed aarch64 `ldd /usr/bin/rsync`
+        # Older Tumbleweed aarch64 `ldd /usr/bin/rsync`
         prog.append("/usr/bin/rsync")
         out.append(
             [
@@ -4051,6 +4109,40 @@ class OSITests(unittest.TestCase):
                 "/lib64/libcrypto.so.3",
                 "/lib64/libc.so.6",
                 "/lib/ld-linux-aarch64.so.1",
+            ]
+        )
+        # Tumbleweed-Slowroll X86_64 VERSION_ID="20260707"
+        prog.append("/usr/bin/rsync")
+        out.append(
+            [
+                "\tlinux-vdso.so.1 (0x00007f7adfb98000)",
+                "\tlibacl.so.1 => /lib64/libacl.so.1 (0x00007f7adfae7000)",
+                "\tlibpopt.so.0 => /lib64/libpopt.so.0 (0x00007f7adfad7000)",
+                "\tliblz4.so.1 => /lib64/liblz4.so.1 (0x00007f7adfaa8000)",
+                "\tlibzstd.so.1 => /lib64/libzstd.so.1 (0x00007f7adf9c2000)",
+                "\tlibxxhash.so.0 => /lib64/libxxhash.so.0 (0x00007f7adf9b8000)",
+                "\tlibcrypto.so.3 => /lib64/libcrypto.so.3 (0x00007f7adf200000)",
+                "\tlibz.so.1 => /usr/lib64/zlib-ng-compat/libz.so.1 (0x00007f7adf98e000)",
+                "\tlibc.so.6 => /lib64/libc.so.6 (0x00007f7adee00000)",
+                "\tlibjitterentropy.so.3 => /lib64/libjitterentropy.so.3 (0x00007f7adf981000)",
+                "\t/lib64/ld-linux-x86-64.so.2 (0x00007f7adfb9a000)",
+                "",
+            ]
+        )
+        err.append([""])
+        rc.append(0)
+        expected_result.append(
+            [
+                "/lib64/libacl.so.1",
+                "/lib64/libpopt.so.0",
+                "/lib64/liblz4.so.1",
+                "/lib64/libzstd.so.1",
+                "/lib64/libxxhash.so.0",
+                "/lib64/libcrypto.so.3",
+                "/usr/lib64/zlib-ng-compat/libz.so.1",
+                "/lib64/libc.so.6",
+                "/lib64/libjitterentropy.so.3",
+                "/lib64/ld-linux-x86-64.so.2",
             ]
         )
         # p in prog is cosmetic as we mock run_command.
