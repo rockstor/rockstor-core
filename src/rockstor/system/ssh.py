@@ -80,9 +80,6 @@ class SshdConfig:
         else:
             self.files: sshd_files = SSHD_CONFIG["opensuse-tumbleweed"]
 
-
-sshd_conf = SshdConfig()
-
 PROGS_IN_CHROOT = ["/usr/bin/bash", "/usr/bin/rsync", "/usr/bin/ls"]
 
 
@@ -99,7 +96,7 @@ def init_sftp_config(sshd_config=None):
     :rtype boolean:
     """
     if sshd_config is None:
-        sshd_config = sshd_conf.files.sftp
+        sshd_config = SshdConfig().files.sftp
     sshd_restart = False
     found = False
     if not os.path.isfile(sshd_config):
@@ -134,6 +131,7 @@ def update_sftp_user_share_config(input_map):
     :return:
     """
     fo, npath = mkstemp()
+    sshd_conf = SshdConfig()
     # TODO: Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
     userstr = "AllowUsers"
     if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
@@ -177,6 +175,7 @@ def toggle_sftp_service(switch=True):
     :return:
     """
     fo, npath = mkstemp()
+    sshd_conf = SshdConfig()
     written = False
     with open(sshd_conf.files.sftp) as sfo, open(npath, "w") as tfo:
         for line in sfo.readlines():
@@ -339,7 +338,7 @@ def is_sftp_subsystem_internal(sshd_config=None):
     """
     # Default to the distro specific sshd sftp file
     if sshd_config is None:
-        sshd_config = sshd_conf.files.sftp
+        sshd_config = SshdConfig().files.sftp
     if not os.path.isfile(sshd_config):
         # a non existent file cannot contain our INTERNAL_SFTP_STR
         return False
@@ -363,7 +362,7 @@ def remove_sftp_server_subsystem(sshd_config=None):
     # Comment out OS default sftp subsystem (if sftp-server).
     # Default to the distro specific sshd OS default config.
     if sshd_config is None:
-        sshd_config = sshd_conf.files.sshd_os
+        sshd_config = SshdConfig().files.sshd_os
     found_and_replaced = False
     if os.path.isfile(sshd_config):
         fh, npath = mkstemp()
