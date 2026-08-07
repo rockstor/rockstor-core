@@ -80,6 +80,7 @@ class SshdConfig:
         else:
             self.files: sshd_files = SSHD_CONFIG["opensuse-tumbleweed"]
 
+
 PROGS_IN_CHROOT = ["/usr/bin/bash", "/usr/bin/rsync", "/usr/bin/ls"]
 
 
