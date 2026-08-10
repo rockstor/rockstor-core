@@ -101,13 +101,13 @@ def init_sftp_config(sshd_config=None):
     sshd_restart = False
     found = False
     if not os.path.isfile(sshd_config):
-        logger.info("SSHD - Creating new configuration file ({}).".format(sshd_config))
+        logger.info(f"SSHD - Creating new configuration file ({sshd_config}).")
     else:
         with open(sshd_config, encoding="utf-8") as sfo:
             for line in sfo.readlines():
                 if line.startswith(SSHD_HEADER):
                     found = True
-                    logger.info("SSHD ({}) already initialised".format(sshd_config))
+                    logger.info(f"SSHD ({sshd_config}) already initialised")
                     break
     if not found:
         # Set initial AllowUsers and Subsystem sftp-internal configuration.
@@ -116,26 +116,26 @@ def init_sftp_config(sshd_config=None):
             sshd_config, mode="a+", encoding="utf-8", opener=sshd_config_opener
         ) as sfo:
             sshd_restart = True
-            sfo.write("{}\n".format(SSHD_HEADER))
-            sfo.write("{}\n".format(INTERNAL_SFTP_STR))
+            sfo.write(f"{SSHD_HEADER}\n")
+            sfo.write(f"{INTERNAL_SFTP_STR}\n")
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
-            if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
+            if os.path.isfile(f"{settings.CONFROOT}/PermitRootLogin"):
                 sfo.write("AllowUsers root\n")
-        logger.info("SSHD ({}) initialised".format(sshd_config))
+        logger.info(f"SSHD ({sshd_config}) initialised")
     return sshd_restart
 
 
 def update_sftp_user_share_config(input_map):
     """
     Receives sftp-related customization settings and writes them to SSHD_CONFIG files.
-    :param input_map: dictionary of user,directory pairs.
+    :param input_map: dictionary of chown directory values keyed by username.
     :return:
     """
     fo, npath = mkstemp()
     sshd_conf = SshdConfig()
     # TODO: Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
     userstr = "AllowUsers"
-    if os.path.isfile("{}/{}".format(settings.CONFROOT, "PermitRootLogin")):
+    if os.path.isfile(f"{settings.CONFROOT}/PermitRootLogin"):
         userstr += " root {}".format(" ".join(input_map.keys()))
     else:
         userstr += " {}".format(" ".join(input_map.keys()))
@@ -145,19 +145,19 @@ def update_sftp_user_share_config(input_map):
                 tfo.write(line)
             else:
                 break
-        tfo.write("{}\n".format(SSHD_HEADER))
+        tfo.write(f"{SSHD_HEADER}\n")
         # Detect sftp service status and ensure we maintain it
         if is_sftp_running():
-            tfo.write("{}\n".format(INTERNAL_SFTP_STR))
-        tfo.write("{}\n".format(userstr))
+            tfo.write(f"{INTERNAL_SFTP_STR}\n")
+        tfo.write(f"{userstr}\n")
         # Set options for each user according to openSUSE's defaults:
         # https://en.opensuse.org/SDB:SFTP_server_with_Chroot#Match_rule_block
         # TODO: implement webUI element to re-enable rsync over ssh by omitting
         #   the `ForceCommand internal-sftp` line below.
         for user in input_map:
-            tfo.write("Match User {}\n".format(user))
+            tfo.write(f"Match User {user}\n")
             tfo.write("\tForceCommand internal-sftp\n")
-            tfo.write("\tChrootDirectory {}\n".format(input_map[user]))
+            tfo.write(f"\tChrootDirectory {input_map[user]}\n")
             tfo.write("\tX11Forwarding no\n")
             tfo.write("\tAllowTcpForwarding no\n")
 
@@ -170,7 +170,7 @@ def update_sftp_user_share_config(input_map):
 
 def toggle_sftp_service(switch=True):
     """
-    Toggles the SFTP service on/off by writing or not the
+    Toggles the SFTP service on/off by writing or removing the
     `Subsystem sftp internal-sftp` (INTERNAL_SFTP_STR) declaration in SSHD_CONFIG.
     :param switch:
     :return:
@@ -182,12 +182,12 @@ def toggle_sftp_service(switch=True):
         for line in sfo.readlines():
             if re.match(INTERNAL_SFTP_STR, line) is not None:
                 if switch and not written:
-                    tfo.write("{}\n".format(INTERNAL_SFTP_STR))
+                    tfo.write(f"{INTERNAL_SFTP_STR}\n")
                     written = True
             elif re.match(SSHD_HEADER, line) is not None:
                 tfo.write(line)
                 if switch and not written:
-                    tfo.write("{}\n".format(INTERNAL_SFTP_STR))
+                    tfo.write(f"{INTERNAL_SFTP_STR}\n")
                     written = True
             else:
                 tfo.write(line)
