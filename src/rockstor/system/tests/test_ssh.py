@@ -29,6 +29,7 @@ from system.ssh import (
     INTERNAL_SFTP_STR,
     toggle_sftp_service,
     update_sftp_user_share_config,
+    remove_sftp_server_subsystem,
 )
 from settings import CONFROOT
 
@@ -103,7 +104,7 @@ class SshTests(TestCase):
         file_mode = stat.S_IRUSR | stat.S_IWUSR
         self.fs.create_file(
             sshd_conf_files_sftp,
-            st_mode=stat.S_IRUSR | stat.S_IWUSR,
+            st_mode=file_mode,
             contents=f"{SSHD_HEADER}\n{INTERNAL_SFTP_STR}\n",  # No "AllowUsers root\n",
         )
         input_map = {"radmin": "/mnt3/radmin"}  # user radmin creates a SFTP share.
@@ -125,3 +126,33 @@ class SshTests(TestCase):
         )
         # Check original file permissions were preserved.
         self.assertEqual(S_IMODE(os.stat(sshd_conf_files_sftp).st_mode), file_mode)
+
+    def test_remove_sftp_server_subsystem(self):
+        self.mock_distro.id.return_value = "opensuse-tumbleweed"
+        self.mock_distro.version.return_value = "20260806"
+        # OS SSH config file to edit for TW:
+        sshd_conf_files_sshd_os = "/usr/etc/ssh/sshd_config"
+        file_mode = stat.S_IRUSR | stat.S_IWUSR
+        self.fs.create_file(
+            sshd_conf_files_sshd_os,
+            st_mode=file_mode,
+            contents="# override default of no subsystems\n"
+            "Subsystem       sftp    /usr/libexec/ssh/sftp-server\n",
+        )
+        # TEST RC when change is applied:
+        self.assertTrue(remove_sftp_server_subsystem())
+        # Potential anomaly re "\n" last line in output file.
+        expected = [
+            "# override default of no subsystems\n",
+            "#Subsystem       sftp    /usr/libexec/ssh/sftp-server\n",
+            "\n",
+        ]
+        with open(sshd_conf_files_sshd_os) as written_content:
+            self.assertEqual(written_content.readlines(), expected)
+        # Check original file permissions were preserved.
+        self.assertEqual(S_IMODE(os.stat(sshd_conf_files_sshd_os).st_mode), file_mode)
+        # TEST RC when no changes are made: i.e. line already remarked out:
+        self.assertFalse(remove_sftp_server_subsystem())
+        # TEST rc when no file exists:
+        self.fs.remove(sshd_conf_files_sshd_os)
+        self.assertFalse(remove_sftp_server_subsystem())

@@ -378,10 +378,10 @@ def remove_sftp_server_subsystem(sshd_config=None):
                         temp_file.write(line)
         if found_and_replaced:
             shutil.move(npath, sshd_config)
-            logger.info("SSHD ({}) sftp-server disabled".format(sshd_config))
+            logger.info(f"SSHD ({sshd_config}) sftp-server disabled")
         else:
-            logger.info("SSHD ({}) sftp-server already disabled".format(sshd_config))
+            logger.info(f"SSHD ({sshd_config}) sftp-server already disabled")
             os.remove(npath)
     else:
-        logger.info("SSHD file ({}) does not exist".format(sshd_config))
+        logger.info(f"SSHD file ({sshd_config}) does not exist")
     return found_and_replaced
