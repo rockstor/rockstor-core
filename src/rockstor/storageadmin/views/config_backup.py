@@ -14,6 +14,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
 import copy
 import gzip
 import json
@@ -611,23 +612,41 @@ def get_target_pool_id(source_name: str) -> int:
 @db_task()
 @lock_task("restore_config_lock")
 def restore_config(cbid):
+    """
+    Manages the restore of our config-backup file containing 2 JSON formated DB dumps,
+    each for storageadmin DB, and smart_manager DB in this order.
+    I.e. a file containing 2 JSON arrays/lists, each on their own line.
+    Accommodate for upstream changes causing config_save() to produce config backup
+    files with a clear line between the storageadmin DB dump line[0] JSON array, and
+    what would have been line[1] of the smart_manager DB dump JSON array then line[2].
+    Assumptions:
+    - `storageadmin` DB dump line comes before `smart_manager` DB dump line.
+    - Each DB dump line begins with the '[{' chars, and ends with the ']]' chars & "\n".
+    :param cbid: ConfigBackup Django Object ID.
+    """
     cbo = ConfigBackup.objects.get(id=cbid)
     fp = os.path.join(settings.MEDIA_ROOT, "config-backups", cbo.filename)
-    gfo = gzip.open(fp)
-    lines = gfo.readlines()
-    sa_ml: list = json.loads(lines[0])
-    sm_ml: list = json.loads(lines[1])
-    gfo.close()
-    restore_users_groups(sa_ml)
-    restore_samba_exports(sa_ml)
-    restore_nfs_exports(sa_ml)
-    restore_services(sm_ml)
+    storageadmin_ml: list = []
+    smart_manager_ml: list = []
+    with gzip.open(fp, "rb") as gfo:
+        for line in gfo:
+            # Each DB dump line is formatted as a JSON array, i.e. [JSON ELEMENTS]
+            if not (line.startswith(b"[{") and line.endswith(b"}]\n")):
+                continue
+            if not storageadmin_ml:
+                storageadmin_ml = json.loads(line)
+            else:
+                smart_manager_ml = json.loads(line)
+    restore_users_groups(storageadmin_ml)
+    restore_samba_exports(storageadmin_ml)
+    restore_nfs_exports(storageadmin_ml)
+    restore_services(smart_manager_ml)
     # restore_dashboard(ml)
     # restore_appliances(ml)
-    # restore_network(sa_ml)
-    restore_scheduled_tasks(sm_ml, sa_ml)
+    # restore_network(storageadmin_ml)
+    restore_scheduled_tasks(smart_manager_ml, storageadmin_ml)
     # N.B. the following is also a Huey task in its own right.
-    restore_rockons(sa_ml)
+    restore_rockons(storageadmin_ml)
 
 
 class ConfigBackupMixin(object):
