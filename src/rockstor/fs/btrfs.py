@@ -446,6 +446,7 @@ def degraded_pools_found():
             in_pool = False
     return degraded_pool_count
 
+
 def get_pool_labels():
     """
     Wrapper around 'btrfs fi show --raw' to extract all Pool labels. Primarily intended
@@ -463,12 +464,13 @@ def get_pool_labels():
     o, e, rc = run_command(cmd, log=True)
     labels: list[str] = []
     for line in o:
-            if line == "":
-                continue
-            fields = line.strip().split()
-            if fields[0] == "Label:":  # Pool header: get label text:
-                labels.append(fields[1].strip("'"))
+        if line == "":
+            continue
+        fields = line.strip().split()
+        if fields[0] == "Label:":  # Pool header: get label text:
+            labels.append(fields[1].strip("'"))
     return labels
+
 
 def set_pool_label(label, dev_temp_name, root_pool=False):
     """
@@ -1494,9 +1496,11 @@ def qgroup_remove(qid: str, pqid: str, mnt_pt: str) -> bool:
     """
     Wrapper to remove parent assignment of rockstor native pqgroup ("2015/*") of subvol
     qgroup ("0/subvolid") to facilitate associated qgroup destroy commands.
-    :return: True on success, False on no change enacted or quotas disabled.
+    :return: True on success, False on; no mnt_pt, no change enacted, or quotas disabled.
     """
     # E.g. "btrfs qgroup remove 0/262 2015/2 /mnt2/rock-pool/share-name/"
+    if not os.path.exists(mnt_pt):
+        return False
     cmd = [BTRFS, "qgroup", "remove", qid, pqid, mnt_pt]
     try:
         _, _, _ = run_command(cmd, log=False)
@@ -1512,8 +1516,8 @@ def qgroup_remove(qid: str, pqid: str, mnt_pt: str) -> bool:
         emsg = "ERROR: unable to assign quota group: No such file or directory"
         if ce.err[0] == emsg:
             logger.info(
-                f"{cmd} reported: `No such file or directory`, "
-                "Can be for either qgroup or mount point."
+                f"{cmd} reported: `No such file or directory`: "
+                "can reference no existing qgroup; we check for missing path."
             )
             return False
         # otherwise we raise an exception as normal
