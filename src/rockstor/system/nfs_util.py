@@ -65,7 +65,9 @@ def nfs4_mount_teardown(export_paths: list[str]):
                 run_command([UMOUNT, "--force", export_path], log=True)
             # Ensure mount point is not read-only so we can clean up.
             toggle_path_rw(export_path, rw=True)
-        run_command([RMDIR, export_path])
+        # Check mount point exists before attempting to remove it.
+        if os.path.exists(export_path):
+            run_command([RMDIR, export_path])
     return True
 
 
