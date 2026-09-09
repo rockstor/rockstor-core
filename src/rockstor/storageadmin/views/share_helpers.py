@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from os import stat, stat_result
 from stat import S_IMODE
 
-from django.conf import settings
+from settings import SFTP_MNT_ROOT, MODEL_DEFS, MNT_PT
 from storageadmin.models import Share, Snapshot, SFTP
 from smart_manager.models import ShareUsage
 from fs.btrfs import (
@@ -50,13 +50,13 @@ NEW_ENTRY = True
 UPDATE_TS = False
 # The following model/db default setting is also used when quotas are disabled
 # or when a Read-only state prevents creation of a new pqgroup.
-PQGROUP_DEFAULT = settings.MODEL_DEFS["pqgroup"]
+PQGROUP_DEFAULT = MODEL_DEFS["pqgroup"]
 
 
 def helper_mount_share(share, mnt_pt=None):
     if not share.is_mounted:
         if mnt_pt is None:
-            mnt_pt = f"{settings.MNT_PT}{share.name}"
+            mnt_pt = f"{MNT_PT}{share.name}"
         mount_share(share, mnt_pt)
 
 
@@ -70,9 +70,7 @@ def validate_share(sname, request):
 
 def sftp_snap_toggle(share, mount=True):
     for snap in Snapshot.objects.filter(share=share, uvisible=True):
-        mnt_pt = "{}/{}/{}/.{}".format(
-            settings.SFTP_MNT_ROOT, share.owner, share.name, snap.name
-        )
+        mnt_pt = f"{SFTP_MNT_ROOT}/{share.owner}/{share.name}/.{snap.name}"
         if mount and not is_mounted(mnt_pt):
             mount_snap(share, snap.name, snap.qgroup, mnt_pt)
         elif is_mounted(mnt_pt) and not mount:
@@ -83,9 +81,7 @@ def toggle_sftp_visibility(share, snap_name, snap_qgroup, on=True):
     if not SFTP.objects.filter(share=share).exists():
         return
 
-    mnt_pt = "{}/{}/{}/.{}".format(
-        settings.SFTP_MNT_ROOT, share.owner, share.name, snap_name
-    )
+    mnt_pt = f"{SFTP_MNT_ROOT}/{share.owner}/{share.name}/.{snap_name}"
     if on:
         if not is_mounted(mnt_pt):
             mount_snap(share, snap_name, snap_qgroup, mnt_pt)
@@ -194,15 +190,13 @@ def import_shares(pool, request):
             cshares_d = shares_info(cshare.pool)
             if s_in_pool in cshares_d:
                 e_msg = (
-                    "Another pool ({}) has a share with this same "
-                    "name ({}) as this pool ({}). This configuration "
+                    f"Another pool ({cshare.pool.name}) has a share with this same "
+                    f"name ({s_in_pool}) as this pool ({pool.name}). This configuration "
                     "is not supported. You can delete one of them "
                     "manually with the following command: "
-                    '"btrfs subvol delete {}[pool name]/{}" WARNING this '
+                    f'"btrfs subvol delete {MNT_PT}{pool.name}/{s_in_pool}" WARNING this '
                     "will remove the entire contents of that "
                     "subvolume."
-                ).format(
-                    cshare.pool.name, s_in_pool, pool.name, settings.MNT_PT, s_in_pool
                 )
                 handle_exception(Exception(e_msg), request)
             else:
@@ -280,7 +274,7 @@ def import_shares(pool, request):
             pool.save()
             nso.save()
             update_shareusage_db(s_in_pool, rusage, eusage)
-            mount_share(nso, f"{settings.MNT_PT}{s_in_pool}")
+            mount_share(nso, f"{MNT_PT}{s_in_pool}")
 
 
 def import_snapshots(share):
@@ -289,8 +283,8 @@ def import_snapshots(share):
     for s in snaps:
         if s not in snaps_d:
             logger.debug(
-                "Removing, missing on disk, snapshot db entry ({}) "
-                "from share ({}).".format(s, share.name)
+                f"Removing, missing on disk, snapshot db entry ({s}) "
+                f"from share ({share.name})."
             )
             Snapshot.objects.get(share=share, name=s).delete()
     for s in snaps_d:
@@ -298,8 +292,8 @@ def import_snapshots(share):
             so = Snapshot.objects.get(share=share, name=s)
         else:
             logger.debug(
-                "Adding, missing in db, on disk snapshot ({}) "
-                "against share ({}).".format(s, share.name)
+                f"Adding, missing in db, on disk snapshot ({s}) "
+                f"against share ({share.name})."
             )
             so = Snapshot(
                 share=share,

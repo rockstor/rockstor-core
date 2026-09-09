@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -19,17 +19,26 @@ import logging
 import os
 import shutil
 
-from django.conf import settings
 from django.db import transaction
 from rest_framework.response import Response
 
 import rest_framework_custom as rfc
 from fs.btrfs import is_share_mounted, umount_root
-from storageadmin.views.share_helpers import helper_mount_share, validate_share, sftp_snap_toggle
+from settings import SFTP_MNT_ROOT, MNT_PT
+from storageadmin.views.share_helpers import (
+    helper_mount_share,
+    validate_share,
+    sftp_snap_toggle,
+)
 from storageadmin.models import SFTP
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.util import handle_exception
-from system.ssh import update_sftp_user_share_config, sftp_mount_map, sftp_mount, rsync_for_sftp
+from system.ssh import (
+    update_sftp_user_share_config,
+    sftp_mount_map,
+    sftp_mount,
+    rsync_for_sftp,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,20 +60,18 @@ class SFTPListView(rfc.GenericView):
             if "read_only" in request.data and request.data["read_only"] is True:
                 editable = "ro"
 
-            mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
+            mnt_map = sftp_mount_map(SFTP_MNT_ROOT)
             input_map = {}
             for share in shares:
                 if SFTP.objects.filter(share=share).exists():
-                    e_msg = ("Share ({}) is already exported via SFTP.").format(
-                        share.name
-                    )
+                    e_msg = f"Share ({share.name}) is already exported via SFTP."
                     handle_exception(Exception(e_msg), request)
                 if share.owner == "root":
                     e_msg = (
-                        "Share ({}) is owned by root. It cannot be "
+                        f"Share ({share.name}) is owned by root. It cannot be "
                         "exported via SFTP with "
                         "root ownership."
-                    ).format(share.name)
+                    )
                     handle_exception(Exception(e_msg), request)
             for share in shares:
                 sftpo = SFTP(share=share, editable=editable)
@@ -72,19 +79,15 @@ class SFTPListView(rfc.GenericView):
                 #  mount if not already mounted
                 helper_mount_share(share)
                 #  bindmount if not already
-                sftp_mount(
-                    share, settings.MNT_PT, settings.SFTP_MNT_ROOT, mnt_map, editable
-                )
+                sftp_mount(share, MNT_PT, SFTP_MNT_ROOT, mnt_map, editable)
                 sftp_snap_toggle(share)
 
-                chroot_loc = "{}{}".format(settings.SFTP_MNT_ROOT, share.owner)
+                chroot_loc = f"{SFTP_MNT_ROOT}{share.owner}"
                 rsync_for_sftp(chroot_loc)
                 input_map[share.owner] = chroot_loc
             for sftpo in SFTP.objects.all():
                 if sftpo.share not in shares:
-                    input_map[sftpo.share.owner] = "{}{}".format(
-                        settings.SFTP_MNT_ROOT, sftpo.share.owner,
-                    )
+                    input_map[sftpo.share.owner] = f"{SFTP_MNT_ROOT}{sftpo.share.owner}"
             update_sftp_user_share_config(input_map)
             return Response()
 
@@ -104,14 +107,14 @@ class SFTPDetailView(rfc.GenericView):
             try:
                 sftpo = SFTP.objects.get(id=id)
             except:
-                e_msg = ("SFTP config for the id ({}) does not exist.").format(id)
+                e_msg = f"SFTP config for the id ({id}) does not exist."
                 handle_exception(Exception(e_msg), request)
 
-            mnt_prefix = "{}{}/".format(settings.SFTP_MNT_ROOT, sftpo.share.owner)
+            mnt_prefix = f"{SFTP_MNT_ROOT}{sftpo.share.owner}/"
 
             if is_share_mounted(sftpo.share.name, mnt_prefix):
                 sftp_snap_toggle(sftpo.share, mount=False)
-                mnt_pt = "{}{}".format(mnt_prefix, sftpo.share.name)
+                mnt_pt = f"{mnt_prefix}{sftpo.share.name}"
                 umount_root(mnt_pt)
                 if os.path.isdir(mnt_pt):
                     shutil.rmtree(mnt_pt)
@@ -119,8 +122,6 @@ class SFTPDetailView(rfc.GenericView):
             input_map = {}
             for so in SFTP.objects.all():
                 if so.id != sftpo.id:
-                    input_map[so.share.owner] = "{}{}".format(
-                        settings.SFTP_MNT_ROOT, so.share.owner,
-                    )
+                    input_map[so.share.owner] = f"{SFTP_MNT_ROOT}{so.share.owner}"
             update_sftp_user_share_config(input_map)
             return Response()
