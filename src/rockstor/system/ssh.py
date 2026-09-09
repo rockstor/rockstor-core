@@ -28,7 +28,8 @@ from pathlib import Path
 import distro
 from django.conf import settings
 
-from system.osi import run_command, get_libs
+from fs.btrfs import umount_root
+from system.osi import run_command, get_libs, is_mounted
 from system.constants import (
     MKDIR,
     MOUNT,
@@ -199,6 +200,14 @@ def toggle_sftp_service(switch=True):
 
 
 def sftp_mount_map(mnt_prefix):
+    """
+    Returns Share.name indexed dictionary of /mnt_prefix/*share.name active mounts.
+    I.e. with mnt_prefix="/mnt3/" the bind mount location, within a users chroot,
+    that we expose SFTP Exported Shares.
+    :param mnt_prefix: normally settings.SFTP_MNT_ROOT
+    :return: E.g.: {'sftp-share1a': 'rw', 'sftp-share1': 'rw', 'sftp-share2': 'ro'}
+    or {} if no intended SFTP chroot mnt_points found.
+    """
     mnt_map = {}
     with open("/proc/mounts") as pfo:
         for line in pfo.readlines():
@@ -207,6 +216,7 @@ def sftp_mount_map(mnt_prefix):
                 sname = fields[1].split("/")[-1]
                 editable = fields[3][:2]
                 mnt_map[sname] = editable
+    logger.info(f" ***DEV: sftp_mount_map() returning {mnt_map}")
     return mnt_map
 
 
@@ -239,6 +249,31 @@ def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable="rw"):
                     sftp_mnt_pt,
                 ]
             )
+
+
+def remove_sftp_bindmounts(
+    share_name: str, snap_name_list: list[str], chroot_path: str
+):
+    """
+    Unmount SFTP bind mounts associated with each contained share.owner's chroot_path.
+    :param share_name: A SFTP Share.name to unmount from within the given chroot_path.
+    :param snap_name_list: List of visible snapshot.names to unmount from within the
+    chroot_path mounted share.
+    :param chroot_path:
+    """
+    # We do a lot of repeat calls to is_mounted here.
+    # Better to grab a dictionary of all mounts and reference it locally.
+    sftp_export_path = f"{chroot_path}{share_name}"
+    if is_mounted(sftp_export_path):  # SFTP in-chroot bind-mount.
+        for visible_snap_name in snap_name_list:
+            # E.g. "mnt3/share.owner/share.name/.visible_share_snapshot_name
+            if is_mounted(f"{sftp_export_path}/.{visible_snap_name}"):
+                # TODO: We need a lazy unmount here and a possible re-try.
+                #  See nfs4_mount_teardown() in system/nfs_util.py
+                umount_root(f"{sftp_export_path}/.{visible_snap_name}")
+        umount_root(sftp_export_path)
+        if os.path.isdir(sftp_export_path):
+            shutil.rmtree(sftp_export_path)
 
 
 def rsync_for_sftp(chroot_loc: str | Path):

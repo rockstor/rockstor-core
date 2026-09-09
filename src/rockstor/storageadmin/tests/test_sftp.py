@@ -61,9 +61,7 @@ class SFTPTests(APITestMixin):
 
         # post mocks
 
-        cls.patch_is_share_mounted = patch("storageadmin.views.sftp.is_share_mounted")
-        cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
-        cls.mock_is_share_mounted.return_value = True
+        # we may want to mock system.ssh.remove_sftp_bindmounts
 
         cls.patch_helper_mount_share = patch(
             "storageadmin.views.sftp.helper_mount_share"

@@ -16,21 +16,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import logging
-import os
-import shutil
 
 from django.db import transaction
 from rest_framework.response import Response
 
 import rest_framework_custom as rfc
-from fs.btrfs import is_share_mounted, umount_root
 from settings import SFTP_MNT_ROOT, MNT_PT
 from storageadmin.views.share_helpers import (
     helper_mount_share,
     validate_share,
     sftp_snap_toggle,
 )
-from storageadmin.models import SFTP
+from storageadmin.models import SFTP, Snapshot
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.util import handle_exception
 from system.ssh import (
@@ -38,6 +35,7 @@ from system.ssh import (
     sftp_mount_map,
     sftp_mount,
     rsync_for_sftp,
+    remove_sftp_bindmounts,
 )
 
 logger = logging.getLogger(__name__)
@@ -110,14 +108,11 @@ class SFTPDetailView(rfc.GenericView):
                 e_msg = f"SFTP config for the id ({id}) does not exist."
                 handle_exception(Exception(e_msg), request)
 
-            mnt_prefix = f"{SFTP_MNT_ROOT}{sftpo.share.owner}/"
-
-            if is_share_mounted(sftpo.share.name, mnt_prefix):
-                sftp_snap_toggle(sftpo.share, mount=False)
-                mnt_pt = f"{mnt_prefix}{sftpo.share.name}"
-                umount_root(mnt_pt)
-                if os.path.isdir(mnt_pt):
-                    shutil.rmtree(mnt_pt)
+            chroot_path = f"{SFTP_MNT_ROOT}{sftpo.share.owner}/"
+            visible_snap_names = []
+            for snap in Snapshot.objects.filter(share=sftpo.share, uvisible=True):
+                visible_snap_names.append(snap.name)
+            remove_sftp_bindmounts(sftpo.share.name, visible_snap_names, chroot_path)
             sftpo.delete()
             input_map = {}
             for so in SFTP.objects.all():
