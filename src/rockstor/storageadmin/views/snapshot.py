@@ -17,7 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
-from django.conf import settings
+
+from settings import MNT_PT, MODEL_DEFS
 from storageadmin.models import (
     Snapshot,
     Share,
@@ -84,8 +85,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         cur_exports = list(NFSExport.objects.all())
         # The following may be buggy when used with system mounted (fstab) /home
         # but we currently don't allow /home to be exported.
-        snap_mnt_pt = f"{settings.MNT_PT}{share.name}/.{snap_name}"
-        export_pt = snap_mnt_pt.replace(settings.MNT_PT, NFS_EXPORT_ROOT)
+        snap_mnt_pt = f"{MNT_PT}{share.name}/.{snap_name}"
+        export_pt = snap_mnt_pt.replace(MNT_PT, NFS_EXPORT_ROOT)
         if on:
             mount_snap(share, snap_name, snap_qgroup)
             ########################################################
@@ -130,7 +131,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         add_snap(share, snap_name, writable)
         snap_id = share_id(share.pool, snap_name)
         qgroup_id = f"0/{snap_id}"
-        if share.pqgroup != settings.MODEL_DEFS["pqgroup"]:
+        if share.pqgroup != MODEL_DEFS["pqgroup"]:
             qgroup_assign(qgroup_id, share.pqgroup, share.pool.mnt_pt)
         snap_size, eusage = volume_usage(share.pool, qgroup_id)
         s = Snapshot(
