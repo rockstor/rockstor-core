@@ -14,7 +14,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import os.path
 import re
 from datetime import datetime, timezone
 from os import stat, stat_result
@@ -70,7 +70,7 @@ def validate_share(sname, request):
 
 def sftp_snap_toggle(share, mount=True):
     for snap in Snapshot.objects.filter(share=share, uvisible=True):
-        mnt_pt = f"{SFTP_MNT_ROOT}/{share.owner}/{share.name}/.{snap.name}"
+        mnt_pt = f"{SFTP_MNT_ROOT}{share.owner}/{share.name}/.{snap.name}"
         if mount and not is_mounted(mnt_pt):
             mount_snap(share, snap.name, snap.qgroup, mnt_pt)
         elif is_mounted(mnt_pt) and not mount:
@@ -81,12 +81,14 @@ def toggle_sftp_visibility(share, snap_name, snap_qgroup, on=True):
     if not SFTP.objects.filter(share=share).exists():
         return
 
-    mnt_pt = f"{SFTP_MNT_ROOT}/{share.owner}/{share.name}/.{snap_name}"
+    mnt_pt = f"{SFTP_MNT_ROOT}{share.owner}/{share.name}/.{snap_name}"
+
     if on:
         if not is_mounted(mnt_pt):
             mount_snap(share, snap_name, snap_qgroup, mnt_pt)
     else:
-        umount_root(mnt_pt)
+        if os.path.exists(mnt_pt):
+            umount_root(mnt_pt)
 
 
 def import_shares(pool, request):
