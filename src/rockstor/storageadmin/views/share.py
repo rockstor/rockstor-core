@@ -22,6 +22,7 @@ import re
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db import transaction
+from settings import MNT_PT, MODEL_DEFS, MIN_SHARE_SIZE, COMPRESSION_TYPES, SHARE_REGEX
 from storageadmin.models import (
     Share,
     Pool,
@@ -49,7 +50,6 @@ from fs.btrfs import (
 from system.services import systemctl
 from storageadmin.serializers import ShareSerializer, SharePoolSerializer
 from storageadmin.util import handle_exception
-from django.conf import settings
 import rest_framework_custom as rfc
 import json
 from smart_manager.models import Service
@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 
 # The following model/db default setting is also used when quotas are disabled
 # or when a Read-only state prevents creation of a new pqgroup.
-PQGROUP_DEFAULT = settings.MODEL_DEFS["pqgroup"]
+PQGROUP_DEFAULT = MODEL_DEFS["pqgroup"]
 
 
 class ShareMixin(object):
@@ -73,8 +73,8 @@ class ShareMixin(object):
             size = int(size)
         except:
             handle_exception(Exception("Share size must be an integer."), request)
-        if size < settings.MIN_SHARE_SIZE:
-            e_msg = f"Share size should be at least {settings.MIN_SHARE_SIZE} KB. Given size is {size} KB."
+        if size < MIN_SHARE_SIZE:
+            e_msg = f"Share size should be at least {MIN_SHARE_SIZE} KB. Given size is {size} KB."
             handle_exception(Exception(e_msg), request)
         if size > pool.size:
             return pool.size
@@ -85,8 +85,8 @@ class ShareMixin(object):
         compression = request.data.get("compression", "no")
         if compression is None:
             compression = "no"
-        if compression not in settings.COMPRESSION_TYPES:
-            e_msg = f"Unsupported compression algorithm ({compression}). Use one of {settings.COMPRESSION_TYPES}."
+        if compression not in COMPRESSION_TYPES:
+            e_msg = f"Unsupported compression algorithm ({compression}). Use one of {COMPRESSION_TYPES}."
             handle_exception(Exception(e_msg), request)
         return compression
 
@@ -166,7 +166,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             compression = self._validate_compression(request)
             size = self._validate_share_size(request, pool)
             sname = request.data.get("sname", None)
-            if sname is None or re.match("%s$" % settings.SHARE_REGEX, sname) is None:
+            if sname is None or re.match("%s$" % SHARE_REGEX, sname) is None:
                 e_msg = (
                     "Invalid characters in share name. Following are "
                     "allowed: letter(a-z or A-Z), digit(0-9), "
@@ -231,7 +231,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             if pqid != PQGROUP_DEFAULT:
                 update_quota(pool, pqid, size * 1024)
                 share_pqgroup_assign(pqid, s)
-            mnt_pt = f"{settings.MNT_PT}{sname}"
+            mnt_pt = f"{MNT_PT}{sname}"
             if not s.is_mounted:
                 mount_share(s, mnt_pt)
             if compression != "no":
@@ -298,7 +298,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 new_compression = self._validate_compression(request)
                 if share.compression_algo != new_compression:
                     share.compression_algo = new_compression
-                    mnt_pt = f"{settings.MNT_PT}{share.name}"
+                    mnt_pt = f"{MNT_PT}{share.name}"
                     if new_compression == "no":
                         new_compression = ""
                     set_property(mnt_pt, "compression", new_compression)
