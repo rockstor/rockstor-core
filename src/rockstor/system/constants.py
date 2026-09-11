@@ -46,3 +46,19 @@ TAILSCALE = "/usr/bin/tailscale"
 # 11: SCSI CD-ROM
 # 2: Floppy disks
 BLOCK_DEV_EXCLUDE: list[str] = ["7", "11", "2"]
+
+# SAMBA
+
+SMB_CONFIG = "/etc/samba/smb.conf"
+TM_CONFIG = "/etc/avahi/services/timemachine.service"
+RS_SHARES_HEADER = "####BEGIN: Rockstor SAMBA CONFIG####"
+RS_SHARES_FOOTER = "####END: Rockstor SAMBA CONFIG####"
+RS_AD_HEADER = "####BEGIN: Rockstor ACTIVE DIRECTORY CONFIG####"
+RS_AD_FOOTER = "####END: Rockstor ACTIVE DIRECTORY CONFIG####"
+RS_CUSTOM_HEADER = "####BEGIN: Rockstor SAMBA GLOBAL CUSTOM####"
+RS_CUSTOM_FOOTER = "####END: Rockstor SAMBA GLOBAL CUSTOM####"
+
+# NFS
+
+NFS_CONFIG = "/etc/exports"
+NFS_EXPORT_ROOT: str = "/export/"

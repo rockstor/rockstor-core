@@ -413,6 +413,7 @@ class TaskDefinitionAdmin(admin.ModelAdmin):
         "name",
         "share_name",
         "pool_name",
+        "script",
         "task_type",
         "json_meta",
         "enabled",

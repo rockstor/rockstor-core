@@ -152,7 +152,7 @@ class ShareTests(APITestMixin):
         cls.mock_volume_usage.return_value = (500, 500)
 
         # delete mocks
-        cls.patch_remove_share = patch("storageadmin.views.share.remove_share")
+        cls.patch_remove_share = patch("storageadmin.views.share.remove_share_subvol")
         cls.mock_remove_share = cls.patch_remove_share.start()
         cls.mock_remove_share.return_value = True
 

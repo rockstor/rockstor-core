@@ -24,7 +24,7 @@ from fs.btrfs import (
     mount_share,
     qgroup_create,
     set_property,
-    remove_share,
+    remove_share_subvol,
     share_pqgroup_assign,
     is_subvol,
 )
@@ -39,7 +39,7 @@ from system.osi import run_command
 PQGROUP_DEFAULT = settings.MODEL_DEFS["pqgroup"]
 
 
-def create_repclone(share, request, logger, snapshot):
+def create_repclone(share: Share, request, logger, snapshot: Snapshot):
     """
     Variant of create_clone but where the share may already exist and is to be
     supplanted by a snapshot which is effectively moved into the shares prior
@@ -89,7 +89,7 @@ def create_repclone(share, request, logger, snapshot):
                 "replacement of share with path ({}).".format(snap_path, share_path)
             )
         # unmounts and then subvol deletes our on disk share
-        remove_share(share.pool, share.name, PQGROUP_DEFAULT)
+        remove_share_subvol(share)
         # Remove read only flag on our snapshot subvol
         # N.B. more recent btrfs has force requirement re safeguard on received_uuid set.
         # However, Rockstor replication cascades ro snapshots used in send/receive.

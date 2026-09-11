@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from django.conf import settings
+from settings import MNT_PT
 from storageadmin.models import Share
 from fs import btrfs
 
@@ -25,12 +25,12 @@ def mount_share():
     try:
         name = sys.argv[1]
     except IndexError:
-        sys.exit("%s <share_name>" % sys.argv[0])
+        sys.exit(f"{sys.argv[0]} <share_name>")
 
     try:
         so = Share.objects.get(name=name)
     except Share.DoesNotExist:
-        sys.exit("Share(%s) does not exist" % name)
+        sys.exit(f"Share({name}) does not exist")
 
-    mnt_pt = "%s%s" % (settings.MNT_PT, so.name)
+    mnt_pt = f"{MNT_PT}{so.name}"
     btrfs.mount_share(so, mnt_pt)

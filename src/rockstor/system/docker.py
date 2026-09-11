@@ -76,7 +76,7 @@ def container_list():
     return containers
 
 
-def docker_status():
+def docker_status() -> bool:
     o, e, rc = service_status("docker")
     if rc != 0:
         return False

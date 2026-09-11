@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -25,7 +25,8 @@ from storageadmin.serializers import (
     AdvancedNFSExportSerializer,
 )
 from fs.btrfs import mount_share
-from system.osi import refresh_nfs_exports, nfs4_mount_teardown
+from system.constants import NFS_EXPORT_ROOT
+from system.nfs_util import refresh_nfs_exports, nfs4_mount_teardown
 from storageadmin.views.share_helpers import validate_share
 import rest_framework_custom as rfc
 from rest_framework.exceptions import NotFound
@@ -40,20 +41,17 @@ class NFSExportMixin(object):
         eg = export.export_group
         ci = {
             "client_str": eg.host_str,
-            "option_list": ("%s,%s,%s" % (eg.editable, eg.syncable, eg.mount_security)),
+            "option_list": f"{eg.editable},{eg.syncable},{eg.mount_security}",
+            "mnt_pt": export.mount.replace(NFS_EXPORT_ROOT, settings.MNT_PT),
         }
 
-        ci["mnt_pt"] = export.mount.replace(settings.NFS_EXPORT_ROOT, settings.MNT_PT)
         if eg.admin_host is not None:
             if eg.admin_host == eg.host_str:
-                ci["option_list"] = "rw,no_root_squash,%s,%s" % (
-                    eg.syncable,
-                    eg.mount_security,
-                )
+                ci["option_list"] = f"rw,no_root_squash,{eg.syncable},{eg.mount_security}"
             else:
                 ci["admin_host"] = eg.admin_host
         if eg.nohide:
-            ci["option_list"] = "%s,nohide" % ci["option_list"]
+            ci["option_list"] = f"{ci['option_list']},nohide"
         return ci
 
     @staticmethod
@@ -62,26 +60,24 @@ class NFSExportMixin(object):
         for e in exports:
             fields = e.split()
             if len(fields) < 2:
-                e_msg = "Invalid exports input -- ({}).".format(e)
+                e_msg = f"Invalid exports input -- ({e})."
                 handle_exception(Exception(e_msg), request)
             share = fields[0].split("/")[-1]
             s = validate_share(share, request)
-            mnt_pt = "%s%s" % (settings.MNT_PT, s.name)
+            mnt_pt = f"{settings.MNT_PT}{s.name}"
             if not s.is_mounted:
                 mount_share(s, mnt_pt)
             exports_d[fields[0]] = []
             for f in fields[1:]:
                 cf = f.split("(")
                 if len(cf) != 2 or cf[1][-1] != ")":
-                    e_msg = (
-                        "Invalid exports input -- ({}). Offending section: ({})."
-                    ).format(e, f)
+                    e_msg = f"Invalid exports input -- ({e}). Offending section: ({f})."
                     handle_exception(Exception(e_msg), request)
                 exports_d[fields[0]].append(
                     {
                         "client_str": cf[0],
                         "option_list": cf[1][:-1],
-                        "mnt_pt": ("%s%s" % (settings.MNT_PT, share)),
+                        "mnt_pt": f"{settings.MNT_PT}{share}",
                     }
                 )
         return exports_d
@@ -91,10 +87,10 @@ class NFSExportMixin(object):
         exports_d = {}
         for e in exports:
             e_list = []
-            export_pt = "%s%s" % (settings.NFS_EXPORT_ROOT, e.share.name)
+            export_pt = f"{NFS_EXPORT_ROOT}{e.share.name}"
             if e.export_group.nohide:
                 snap_name = e.mount.split("/")[-1]
-                export_pt = "%s/%s" % (export_pt, snap_name)
+                export_pt = f"{export_pt}/{snap_name}"
             if export_pt in exports_d:
                 e_list = exports_d[export_pt]
             e_list.append(cls.client_input(e))
@@ -127,9 +123,7 @@ class NFSExportMixin(object):
             if e.export_group.host_str == host_str:
                 if e.export_group.id == export_id:
                     continue
-                e_msg = ("An export already exists for the host string: ({}).").format(
-                    host_str
-                )
+                e_msg = f"An export already exists for the host string: ({host_str})."
                 handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -137,7 +131,7 @@ class NFSExportMixin(object):
         try:
             return NFSExportGroup.objects.get(id=export_id)
         except:
-            e_msg = ("NFS export with id ({}) does not exist.").format(export_id)
+            e_msg = f"NFS export with id ({export_id}) does not exist."
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -145,9 +139,7 @@ class NFSExportMixin(object):
         try:
             refresh_nfs_exports(exports)
         except Exception as e:
-            e_msg = (
-                "A lower level error occurred while refreshing NFS exports: ({})."
-            ).format(e.__str__())
+            e_msg = f"A lower level error occurred while refreshing NFS exports: ({e.__str__()})."
             handle_exception(Exception(e_msg), request)
 
 
@@ -173,8 +165,8 @@ class NFSExportGroupListView(NFSExportMixin, rfc.GenericView):
             eg.clean_fields(exclude="admin_host")
             eg.save()
             for s in shares:
-                mnt_pt = "%s%s" % (settings.MNT_PT, s.name)
-                export_pt = "%s%s" % (settings.NFS_EXPORT_ROOT, s.name)
+                mnt_pt = f"{settings.MNT_PT}{s.name}"
+                export_pt = f"{NFS_EXPORT_ROOT}{s.name}"
                 mount_share(s, mnt_pt)
                 export = NFSExport(export_group=eg, share=s, mount=export_pt)
                 export.full_clean()
@@ -207,17 +199,21 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
             eg = self.validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
             for e in NFSExport.objects.filter(export_group=eg):
-                export_pt = "%s%s" % (settings.NFS_EXPORT_ROOT, e.share.name)
-                for snaps in NFSExport.objects.all():    # #2995 Iterate through current mounts to find snaps and delete them before deleting base share
-                    if snaps.mount.count(export_pt+"/."):
-                        logger.info("Deleting snapshot export {} ".format(snaps.mount))
-                        nfs4_mount_teardown("%s" % snaps.mount)
+                export_pt = f"{NFS_EXPORT_ROOT}{e.share.name}"
+                for (
+                    snaps
+                ) in (
+                    NFSExport.objects.all()
+                ):  # #2995 Iterate through current mounts to find snaps and delete them before deleting base share
+                    if snaps.mount.count(export_pt + "/."):
+                        logger.info(f"Deleting snapshot export {snaps.mount} ")
+                        nfs4_mount_teardown([f"{snaps.mount}"])
                         cur_exports.remove(snaps)
                         snaps.delete()
                 if e.export_group.nohide:
                     snap_name = e.mount.split(e.share.name + "_")[-1]
-                    export_pt = "%s/%s" % (export_pt, snap_name)
-                nfs4_mount_teardown(export_pt)
+                    export_pt = f"{export_pt}/{snap_name}"
+                nfs4_mount_teardown([export_pt])
                 cur_exports.remove(e)
                 e.delete()
             # Following conditional delete was informed by test_nfs_export.py:
@@ -244,7 +240,9 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
                     s, options["host_str"], request, export_id=int(export_id)
                 )
             NFSExportGroup.objects.filter(id=export_id).update(**options)
-            NFSExportGroup.objects.filter(id=export_id)[0].clean_fields(exclude="admin_host")
+            NFSExportGroup.objects.filter(id=export_id)[0].clean_fields(
+                exclude="admin_host"
+            )
             NFSExportGroup.objects.filter(id=export_id)[0].save()
             cur_exports = list(NFSExport.objects.all())
             for e in NFSExport.objects.filter(export_group=eg):
@@ -254,8 +252,8 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
                 else:
                     shares.remove(e.share)
             for s in shares:
-                mnt_pt = "%s%s" % (settings.MNT_PT, s.name)
-                export_pt = "%s%s" % (settings.NFS_EXPORT_ROOT, s.name)
+                mnt_pt = f"{settings.MNT_PT}{s.name}"
+                export_pt = f"{NFS_EXPORT_ROOT}{s.name}"
                 if not s.is_mounted:
                     mount_share(s, mnt_pt)
                 export = NFSExport(export_group=eg, share=s, mount=export_pt)
@@ -279,18 +277,15 @@ class AdvancedNFSExportView(NFSExportMixin, rfc.GenericView):
         exports_by_share = {}
         for e in NFSExport.objects.all():
             eg = e.export_group
-            export_str = "%s(%s,%s,%s)" % (
-                eg.host_str,
-                eg.editable,
-                eg.syncable,
-                eg.mount_security,
+            export_str = (
+                f"{eg.host_str}({eg.editable},{eg.syncable},{eg.mount_security})"
             )
             if e.mount in exports_by_share:
-                exports_by_share[e.mount] += " %s" % export_str
+                exports_by_share[e.mount] += f" {export_str}"
             else:
-                exports_by_share[e.mount] = "%s %s" % (e.mount, export_str)
+                exports_by_share[e.mount] = f"{e.mount} {export_str}"
         for e in exports_by_share:
-            exports_by_share[e] = "Normally added -- %s" % exports_by_share[e]
+            exports_by_share[e] = f"Normally added -- {exports_by_share[e]}"
             conventional_exports.append(
                 AdvancedNFSExport(export_str=exports_by_share[e])
             )

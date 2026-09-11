@@ -21,7 +21,7 @@
             {{#if (isRoot this.role)}}
                 <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS.
                 You can create Shares in it like in any other pool on the system.
-                However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>
+                However, operations like Resize/ReRaid & compression/mount options are not allowed." rel="tooltip"></i>
             {{/if}}</td>
 
             <td>{{humanReadableSize 'size' this.size this.reclaimable this.free}}
@@ -122,12 +122,9 @@
                     <strong><span style="color:red">(DEV ERRORS DETECTED)</span></strong>
                 {{/unless}}
             </td>
-            <td>{{#if (isRoot this.role)}}
-                    N/A
-                {{else}}
-                    <a id="delete_pool_{{this.id}}" data-id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete pool">
-                    <i class="glyphicon glyphicon-trash"></i></a>
-                {{/if}}
+            <td>
+                <a id="delete_pool_{{this.id}}" data-id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete pool management">
+                <i class="glyphicon glyphicon-trash"></i></a>
             </td>
         </tr>
         <div id="delete-pool-modal-{{this.id}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -135,12 +132,17 @@
           <div class="modal-content">
            <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-            <h3 id="myModalLabel">Delete Pool ({{this.name}})</h3>
+            <h3 id="myModalLabel">Delete Pool management for <strong>{{this.name}}</strong></h3>
            </div>
            <div class="modal-body">
             <div class="messages"></div>
-            <h4>Pool and all associated Shares, Snapshots, NFS/Samba/SFTP exports, and Replicas, will be deleted.</h4>
-            <div class="alert alert-danger">Are you sure? DATA WILL BE LOST!</div>
+            <h4><strong>Web-UI Configuration will be deleted</strong> for Tasks, Shares, & Snapshots; and their NFS / Samba / SFTP exports, Rock-ons, and replication.</h4>
+            <div class="alert alert-danger">
+              Are you sure? DATA ACCESS WILL BE LOST!<br>
+              Creating a <a href="#config-backup" target="_blank">`Config Backup`</a> is recommended before proceeding.<br>
+              See online docs for limitations and procedures: <a href="https://rockstor.com/docs/interface/system/config_backup.html" target="_blank">Configuration Backup and Restore</a>.
+            </div>
+            <div class="alert alert-warning">Re-configuring affected systems will be required to re-establish Web-UI to OS consistency.</div>
             Rockstor managed Shares:
             <ul id="pool-shares"></ul>
            </div>

@@ -14,11 +14,15 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+
 import collections
 import json
 import re
 import time
 import os
+
+# N.B. Cannot import Pool & Share for type-hints as then circular:
+# Pool and Share models use these btrfs procedures via properties etc.
 from system.osi import (
     run_command,
     create_tmp_dir,
@@ -296,16 +300,16 @@ def add_pool(pool, disks):
         out2, err2, rc2 = enable_quota(pool)
         if rc2 != 0:
             e_msg = (
-                "non-zero code ({}) returned by enable_quota() while "
-                "enabling quota on a newly created pool : pool name = {}, "
-                "output: {}, error: {}.".format(rc2, pool.name, out2, err2)
+                f"non-zero code ({rc2}) returned by enable_quota() while "
+                f"enabling quota on a newly created pool : pool name = {pool.name}, "
+                f"output: {out2}, error: {err2}."
             )
             logger.error(e_msg)
             return out2, err2, rc2
     else:
         logger.error(
-            "Unknown state in add_pool() - non-zero code ({}) "
-            "returned by {} with output: {} and error: {}.".format(rc, cmd, out, err)
+            f"Unknown state in add_pool() - non-zero code ({rc}) "
+            f"returned by {cmd} with output: {out} and error: {err}."
         )
     return out, err, rc
 
@@ -322,7 +326,7 @@ def dev_stats_zero(target):
     """
     cmd = [BTRFS, "device", "stats", "-c", target]
     o, e, rc = run_command(cmd, throw=False)
-    # logger.debug('out = {} err = {} rc = {}'.format(o, e, rc))
+    # logger.debug(f"out = {o} err = {e} rc = {rc}")
     if rc & 64:  # bitwise AND for Bit 6
         return False
     return True
@@ -443,6 +447,31 @@ def degraded_pools_found():
     return degraded_pool_count
 
 
+def get_pool_labels():
+    """
+    Wrapper around 'btrfs fi show --raw' to extract all Pool labels. Primarily intended
+    to avoid creating a new Pool when an unmanaged Pool already exists with the same
+    label. We use labels, rather than uuid, to uniquely identify managed Pools. In time
+    we must move to uuid as canonical for identifying Pools.
+    :return: List of all pool labels. E.g. ["rock-pool","none"]
+    """
+    cmd = [BTRFS, "fi", "show", "--raw"]
+    # "Label: 'rock-pool'  uuid: 1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d"
+    # If label set to "" or unset both of the following have been observed:
+    # "Label: none  uuid: 1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d"
+    # "Label: '1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d'  uuid: 1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d"
+    # Ergo we strip single quotes just in case, then grab whatever we find.
+    o, e, rc = run_command(cmd, log=True)
+    labels: list[str] = []
+    for line in o:
+        if line == "":
+            continue
+        fields = line.strip().split()
+        if fields[0] == "Label:":  # Pool header: get label text:
+            labels.append(fields[1].strip("'"))
+    return labels
+
+
 def set_pool_label(label, dev_temp_name, root_pool=False):
     """
     Wrapper around 'btrfs fi label dev|mnt_pt' initially intended to auto label
@@ -468,12 +497,11 @@ def set_pool_label(label, dev_temp_name, root_pool=False):
     cmd = [BTRFS, "fi", "label", accessor, label]
     # Consider udevadm trigger on this device as label changed.
     try:
-        logger.debug("Attempting auto pool label for ({}).".format(accessor))
+        logger.debug(f"Attempting auto pool label for ({accessor}).")
         o, e, rc = run_command(cmd, log=True)
     except CommandException as e:
         logger.error(
-            "Pool label attempt on {} to {} failed with "
-            "error: {}".format(accessor, label, e.err)
+            f"Pool label attempt on {accessor} to {label} failed with error: {e.err}"
         )
         return None
     return label
@@ -522,7 +550,7 @@ def get_dev_pool_info():
                 devid=devid, size=size, allocated=allocated, uuid=uuid, label=label
             )
             sys_pool_info[temp_name] = dp_info
-    # logger.debug('get_dev_pool_info() returning {}'.format(sys_pool_info))
+    # logger.debug(f"get_dev_pool_info() returning {sys_pool_info}")
     return sys_pool_info
 
 
@@ -591,7 +619,7 @@ def get_pool_info(disk):
             pool_info["hasMissingDev"] = True
     pool_info["fullDevCount"] = full_dev_count
     pool_info["missingDevCount"] = full_dev_count - attached_dev_count
-    # logger.debug('get_pool_info() returning {}'.format(pool_info))
+    # logger.debug(f"get_pool_info() returning {pool_info}")
     return pool_info
 
 
@@ -683,9 +711,11 @@ def resize_pool_cmd(pool, dev_list_byid, add=True):
             # list has at least a single element
             # substiture 'missing' for any member matching 'detached-'
             dev_list_byid = [
-                "missing"
-                if re.match("detached-", dev) is not None
-                else get_device_path(dev)
+                (
+                    "missing"
+                    if re.match("detached-", dev) is not None
+                    else get_device_path(dev)
+                )
                 for dev in dev_list_byid
             ]
     else:
@@ -745,7 +775,7 @@ def mount_root(pool):
     # Creates a directory to act as the mount point.
     create_tmp_dir(root_pool_mnt)
     toggle_path_rw(root_pool_mnt, rw=False)
-    mnt_device = "/dev/disk/by-label/{}".format(pool.name)
+    mnt_device = f"/dev/disk/by-label/{pool.name}"
     mnt_cmd = [MOUNT, mnt_device, root_pool_mnt]
     mnt_options = ""
     if pool.mnt_options is not None:
@@ -754,7 +784,7 @@ def mount_root(pool):
         if re.search("compress", mnt_options) is None:
             mnt_options = f"{mnt_options},compress={pool.compression}"
     if pool.role == "root" and root_pool_mnt != "/":  # boot-to-snap - See pool model
-        mnt_options = "{},subvol=/@".format(mnt_options)
+        mnt_options = f"{mnt_options},subvol=/@"
     # Prior to a mount by label attempt we call btrfs device scan on all
     # members of our pool. This call ensures btrfs has up-to-date info on
     # the relevant devices and avoids the potential overkill of a system wide
@@ -770,14 +800,12 @@ def mount_root(pool):
     # until we get our first success. All devices known to our pool object
     # have already been scanned prior to our mount by label attempt above.
     if pool.disk_set.count() < 1:
-        raise Exception(
-            "Cannot mount Pool({}) as it has no disks in it.".format(pool.name)
-        )
+        raise Exception(f"Cannot mount Pool({pool.name}) as it has no disks in it.")
     last_device = pool.disk_set.attached().last()
-    logger.info("Mount by label ({}) failed.".format(mnt_device))
+    logger.info(f"Mount by label ({mnt_device}) failed.")
     for device in pool.disk_set.attached():
         mnt_device = get_device_path(device.target_name)
-        logger.info("Attempting mount by device ({}).".format(mnt_device))
+        logger.info(f"Attempting mount by device ({mnt_device}).")
         if os.path.exists(mnt_device):
             mnt_cmd = [MOUNT, mnt_device, root_pool_mnt]
             if len(mnt_options) > 0:
@@ -790,15 +818,14 @@ def mount_root(pool):
                     # exhausted mounting using all devices in the pool
                     raise e
                 logger.error(
-                    "Error mounting: {}. "
-                    "Will try using another device.".format(mnt_cmd)
+                    f"Error mounting: {mnt_cmd}. Will try using another device."
                 )
                 logger.exception(e)
         else:
-            logger.error("Device ({}) was not found".format(mnt_device))
+            logger.error(f"Device ({mnt_device}) was not found")
     raise Exception(
-        "Failed to mount Pool({}) due to an unknown reason. "
-        "Command used {}".format(pool.name, mnt_cmd)
+        f"Failed to mount Pool({pool.name}) due to an unknown reason. "
+        f"Command used {mnt_cmd}"
     )
 
 
@@ -885,7 +912,7 @@ def mount_share(share, mnt_pt):
     qgroup = share.qgroup
     # share.qgroup = "0/subvolid" use for subvol reference as more
     # flexible than "subvol=share.subvol_name" (prior method).
-    subvol_str = "subvolid={}".format(qgroup[2:])
+    subvol_str = f"subvolid={qgroup[2:]}"
     create_tmp_dir(mnt_pt)
     toggle_path_rw(mnt_pt, rw=False)
     mnt_cmd = [MOUNT, "-t", "btrfs", "-o", subvol_str, pool_device, mnt_pt]
@@ -895,10 +922,10 @@ def mount_share(share, mnt_pt):
 def mount_snap(share, snap_name, snap_qgroup, snap_mnt=None):
     pool_device = get_device_path(share.pool.disk_set.attached().first().target_name)
     share_path = share.mnt_pt
-    rel_snap_path = ".snapshots/{}/{}".format(share.name, snap_name)
-    snap_path = "{}/{}".format(share.pool.mnt_pt, rel_snap_path).replace("//", "/")
+    rel_snap_path = f".snapshots/{share.name}/{snap_name}"
+    snap_path = f"{share.pool.mnt_pt}/{rel_snap_path}".replace("//", "/")
     if snap_mnt is None:
-        snap_mnt = "{}/.{}".format(share_path, snap_name)
+        snap_mnt = f"{share_path}/.{snap_name}"
     if is_mounted(snap_mnt):
         return
     mount_share(share, share_path)
@@ -906,7 +933,7 @@ def mount_snap(share, snap_name, snap_qgroup, snap_mnt=None):
         create_tmp_dir(snap_mnt)
         # snap_qgroup = "0/subvolid" use for subvol reference as more
         # flexible than "subvol=rel_snap_path" (prior method).
-        subvol_str = "subvolid={}".format(snap_qgroup[2:])
+        subvol_str = f"subvolid={snap_qgroup[2:]}"
         return run_command([MOUNT, "-o", subvol_str, pool_device, snap_mnt], log=True)
 
 
@@ -993,9 +1020,7 @@ def shares_info(pool):
             continue
         fields = l.split()
         if fields[-1] in SUBVOL_EXCLUDE:
-            logger.debug(
-                "Skipping system-wide excluded subvol: name=({}).".format(fields[-1])
-            )
+            logger.debug(f"Skipping system-wide excluded subvol: name=({fields[-1]}).")
             continue
         # Exclude root fs (in subvol) to avoid dependence on subvol name to
         # root fs top level dir name collision for normal operation.
@@ -1008,7 +1033,7 @@ def shares_info(pool):
             # Skipped to surface it's subvols as we only surface one layer.
             # Relevant to system rollback by booting from snapshots.
             if fields[-1] in ROOT_SUBVOL_EXCLUDE or fields[1] == default_id:
-                logger.debug("Skipping excluded subvol: name=({}).".format(fields[-1]))
+                logger.debug(f"Skipping excluded subvol: name=({fields[-1]}).")
                 continue
         vol_id = fields[1]
         if vol_id in snap_idmap:
@@ -1039,7 +1064,7 @@ def shares_info(pool):
             # vol/subvol via it's label we have /mnt2/ROOT not /mnt2/@.
             # Remove '@/' from rel path if found ie '@/home' to 'home' as then
             # pool+relative path works.
-            shares_d[fields[-1].replace("@/", "", 1)] = "0/{}".format(vol_id)
+            shares_d[fields[-1].replace("@/", "", 1)] = f"0/{vol_id}"
             share_ids.append(vol_id)
     return shares_d
 
@@ -1116,7 +1141,7 @@ def snaps_info(pool_mnt_pt, share_name):
             )
             # Redundant second clause - defence against 'None' dict index.
             if not is_clone and snap_name is not None:
-                snaps_d[snap_name] = ("0/{}".format(fields[1]), writable)
+                snaps_d[snap_name] = (f"0/{fields[1]}", writable)
                 # we rely on the observation that child snaps are listed after
                 # their parents, so no need to iterate through results
                 # separately. Instead, we add the uuid of a snap to the list
@@ -1125,7 +1150,7 @@ def snaps_info(pool_mnt_pt, share_name):
     return snaps_d
 
 
-def share_id(pool, share_name):
+def share_id(pool, share_name: str) -> str:
     """
     Returns the subvolume id: becomes the share's / snapshots's qgroup.
     @todo: this should be part of add_share -- btrfs create should atomically
@@ -1137,82 +1162,87 @@ def share_id(pool, share_name):
     '257'
     :param pool: a pool object.
     :param share_name: target share name to find
-    :return: the id for the given share_name or an Exception stating no id
-    found
+    :return: the str:id for the given share_name or an Exception stating no id found.
     """
     root_pool_mnt = mount_root(pool)
     # Note: Previous sole remaining user of subvol_list_helper() - removed.
     out, err, rc = run_command([BTRFS, "subvolume", "list", root_pool_mnt])
-    subvol_id = None
+    subvol_id = ""
     for line in out:
         if re.search(share_name + "$", line) is not None:
-            subvol_id = line.split()[1]
+            subvol_id = line.split()[1]  # "ID 263 gen 61 top level 5 path share_name"
             break
-    if subvol_id is not None:
+    if subvol_id != "":
         return subvol_id
-    raise Exception("subvolume id for share: {} not found.".format(share_name))
+    raise Exception(f"subvolume id for share: {share_name} not found.")
 
 
-def remove_share(pool, share_name, pqgroup, force=False):
+def remove_share_subvol(share, force: bool = False):
     """
-    umount share if it's mounted.
-    ensures given pool is mounted.
-    if force flag set then first delete all share's subvolumes.
-    btrfs subvolume delete root_mnt/vol_name.
-    destroy shares qgroup and associated pqgroup.
-    :param pool: pool object
-    :param share_name: Share name as in share.name
-    :param pqgroup: Pqgroup to be removed
-    :param force: Flag used to also remove all subvolumes of the given share.
+    Un mounts dedicated Share.mnt_pt, if mounted.
+    Ensures given pool is mounted to manage qgroups and subvol delete.
+    If force flag set then first delete all share's subvolumes.
+    Remove qgroup to parent qgroup assignment.
+    Run `btrfs subvolume delete subvol-path-in-volume (Share dir in Pool mnt_pt).
+    Destroy Share's qgroup and associated parent (Pools) pqgroup.
+    :param share: Share object reference
+    :param force: Flag used to also remove all subvolumes of the given Share (subvol).
     """
-    if is_share_mounted(share_name):
-        # N.B. we only unmount rockstor managed share points.
-        mnt_pt = "{}{}".format(DEFAULT_MNT_DIR, share_name)
-        umount_root(mnt_pt)
-    root_pool_mnt = mount_root(pool)
-    subvol_mnt_pt = root_pool_mnt + "/" + share_name
+    pool_mnt = share.pool.mnt_pt
+    if share.is_mounted:
+        # N.B. we only unmount rockstor managed share points: "/mnt2/share-name".
+        umount_root(share.mnt_pt)
+    subvol_mnt_pt = pool_mnt + "/" + share.name
     if not is_subvol(subvol_mnt_pt):
-        return
+        return None
     # Remove the immutable flag if set as this will block a subvol delete
     # with an 'Operation not permitted' and leave an unmounted share.
-    # This flag can also break replication as we supplant the transient share.
-    # The immutable flag has been seen to spontaneously appear. Upon this
-    # bug being resolved we might consider promoting to force=True calls only.
-    # TODO: Consider also using the following command to allow delete of the
-    # initial (anomalous) temp replication snap as share; but this also blindly
-    # circumvents ro 'protection' for any other share!
-    # set_property(subvol_mnt_pt, 'ro', 'false', mount=False, force=True)
+    # Immutable flag can also break replication as we supplant the transient share.
     toggle_path_rw(subvol_mnt_pt, rw=True)
     if force:
         o, e, rc = run_command([BTRFS, "subvolume", "list", "-o", subvol_mnt_pt])
         for l in o:
             if re.match("ID ", l) is not None:
-                subvol = root_pool_mnt + "/" + l.split()[-1]
+                subvol = share.pool.mnt_pt + "/" + l.split()[-1]
                 # TODO: consider recursive immutable flag removal.
+                # N.B. There are no Rockstor managed subvol in subvol occurrences
+                # so we have no rockstor native qgroup info to manage here.
                 run_command([BTRFS, "subvolume", "delete", subvol], log=True)
-    qgroup = "0/{}".format(share_id(pool, share_name))
-    delete_cmd = [BTRFS, "subvolume", "delete", subvol_mnt_pt]
-    run_command(delete_cmd, log=True)
-    qgroup_destroy(qgroup, root_pool_mnt)
-    return qgroup_destroy(pqgroup, root_pool_mnt)
+                # TODO: schedule a background `qgroup clear-stale <path>`
+                #  for all level 0 qgroup (0/subvolid) that are now orphaned.
+    # Remove Share's qgroup parent-qgroup association.
+    qgroup_remove(share.qgroup, share.pqgroup, subvol_mnt_pt)
+    # Remove Share's subvolume.
+    run_command([BTRFS, "subvolume", "delete", subvol_mnt_pt], log=True)
+    # Manage auto-created btrfs native subvolid based qgroups i.e. "0/263", and
+    # rockstor created native pqgroup (parent qgroups) i.e. "2015/1".
+    # Auto-created qgroups are auto-removed on subvol delete for modern btrfs, or via
+    # `btrfs qgroup clear-stale <path>`.
+    # Consider scheduled qgroup_destroy and accept failure as may still have
+    # assignments outstanding.
+    qgroup_destroy(share.pqgroup, pool_mnt)
+    return None
 
 
-def remove_snap(pool, share_name, snap_name, snap_qgroup):
-    root_mnt = mount_root(pool)
-    snap_path = "{}/.snapshots/{}/{}".format(root_mnt, share_name, snap_name)
+def remove_snap_subvol(snap):
+    pool_mnt = snap.share.pool.mnt_pt
+    snap_path = f"{pool_mnt}/.snapshots/{snap.share.name}/{snap.name}"
     if is_mounted(snap_path):
         umount_root(snap_path)
     if is_subvol(snap_path):
+        qgroup_remove(snap.qgroup, snap.share.pqgroup, snap_path)
         run_command([BTRFS, "subvolume", "delete", snap_path], log=True)
-        return qgroup_destroy(snap_qgroup, root_mnt)
+        qgroup_destroy(snap.share.pqgroup, pool_mnt)
+        return None
     else:
         # TODO: Consider using snapshot_idmap() for dict of id -> snap-path
-        o, e, rc = run_command([BTRFS, "subvolume", "list", "-s", root_mnt])
+        o, e, rc = run_command([BTRFS, "subvolume", "list", "-s", pool_mnt])
         for l in o:
             # just give the first match.
-            if re.match("ID.*{}$".format(snap_name), l) is not None:
-                snap = "{}/{}".format(root_mnt, l.split()[-1])
-                return run_command([BTRFS, "subvolume", "delete", snap], log=True)
+            if re.match(f"ID.*{snap.name}$", l) is not None:
+                path = f"{pool_mnt}/{l.split()[-1]}"
+                run_command([BTRFS, "subvolume", "delete", path], log=True)
+    return None
 
 
 def add_snap_helper(orig, snap, writable):
@@ -1236,10 +1266,10 @@ def add_clone(pool, share, clone, snapshot=None):
     pool_mnt = mount_root(pool)
     orig_path = pool_mnt
     if snapshot is not None:
-        orig_path = "{}/.snapshots/{}/{}".format(orig_path, share, snapshot)
+        orig_path = f"{orig_path}/.snapshots/{share}/{snapshot}"
     else:
-        orig_path = "{}/{}".format(orig_path, share)
-    clone_path = "{}/{}".format(pool_mnt, clone)
+        orig_path = f"{orig_path}/{share}"
+    clone_path = f"{pool_mnt}/{clone}"
     return add_snap_helper(orig_path, clone_path, True)
 
 
@@ -1248,11 +1278,9 @@ def add_snap(share, snap_name, writable):
     create a snapshot
     """
     share_full_path = share.mnt_pt
-    snap_dir = "{}/.snapshots/{}".format(share.pool.mnt_pt, share.subvol_name).replace(
-        "//", "/"
-    )
+    snap_dir = f"{share.pool.mnt_pt}/.snapshots/{share.subvol_name}".replace("//", "/")
     create_tmp_dir(snap_dir)
-    snap_full_path = "{}/{}".format(snap_dir, snap_name)
+    snap_full_path = f"{snap_dir}/{snap_name}"
     return add_snap_helper(share_full_path, snap_full_path, writable)
 
 
@@ -1267,8 +1295,8 @@ def switch_quota(pool, flag="enable"):
         emsg = "ERROR: quota command failed: Read-only file system"
         if e.err[0] == emsg:
             logger.error(
-                "Failed to {} quotas on pool ({}). To resolve "
-                'run "btrfs quota {} {}".'.format(flag, pool.name, flag, root_mnt_pt)
+                f"Failed to {flag} quotas on pool ({pool.name}). To resolve "
+                f'run "btrfs quota {flag} {root_mnt_pt}".'
             )
             return e.out, e.err, e.rc
         # otherwise we raise an exception as normal.
@@ -1293,16 +1321,13 @@ def rescan_quotas(pool):
         # Catch breaking exception on Read-only filesystem, log and move on.
         emsg = "ERROR: quota rescan failed: Read-only file system"
         if e.err[0] == emsg:
-            logger.info(
-                "Pool: ({}) is Read-only, skipping quota rescan.".format(pool.name)
-            )
+            logger.info(f"Pool: ({pool.name}) is Read-only, skipping quota rescan.")
             return e.out, e.err, e.rc
         # Catch breaking exception for non fatal 'already running' state.
         emsg2 = "ERROR: quota rescan failed: Operation now in progress"
         if e.err[0] == emsg2:
             logger.info(
-                "Pool ({}) has quota rescan in progress, skipping "
-                "rescan request.".format(pool.name)
+                f"Pool ({pool.name}) has quota rescan in progress, skipping rescan request."
             )
             return e.out, e.err, e.rc
         # otherwise we raise an exception as normal.
@@ -1385,8 +1410,7 @@ def qgroup_max(mnt_pt):
         # this is non fatal so we catch this specific error and info log it.
         if e.err[0] == emsg:
             logger.info(
-                "Mount Point: {} has Quotas disabled, skipping qgroup "
-                "show.".format(mnt_pt)
+                f"Mount Point: {mnt_pt} has Quotas disabled, skipping qgroup show output."
             )
             # and return our default res
             return -1
@@ -1399,8 +1423,8 @@ def qgroup_max(mnt_pt):
             len(e.err) > 1 and re.match(emsg2, e.err[1]) is not None
         ):
             logger.info(
-                "Mount Point: {} has indeterminate quota status, skipping "
-                "qgroup show.\nTry 'btrfs quota disable {}'.".format(mnt_pt, mnt_pt)
+                f"Mount Point: {mnt_pt} has indeterminate quota status, skipping "
+                f"qgroup show output.\nTry 'btrfs quota disable {mnt_pt}'."
             )
             return -1
         # otherwise we raise an exception as normal.
@@ -1408,15 +1432,14 @@ def qgroup_max(mnt_pt):
     # Catch quota disabled WARNING (no associated Exception) and info log.
     if e[0] == "WARNING: quota disabled, qgroup data may be out of date":
         logger.info(
-            "Mount Point: {} has Quotas disabled WARNING, skipping "
-            "qgroup show.".format(mnt_pt)
+            f"Mount Point: {mnt_pt} has Quotas disabled WARNING, skipping qgroup show."
         )
         # and return our default res
         return -1
     # if no exception, and no caught WARNING, find the max 2015/qgroup
     res = 0
     for l in o:
-        if re.match("{}/".format(QID), l) is not None:
+        if re.match(f"{QID}/", l) is not None:
             cid = int(l.split()[0].split("/")[1])
             if cid > res:
                 res = cid
@@ -1449,7 +1472,7 @@ def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
     if qgroup != PQGROUP_DEFAULT:
         qid = qgroup
     else:
-        qid = "{}/{}".format(QID, max_native_qgroup + 1)
+        qid = f"{QID}/{max_native_qgroup + 1}"
     try:
         out, err, rc = run_command([BTRFS, "qgroup", "create", qid, mnt_pt], log=False)
     except CommandException as e:
@@ -1457,9 +1480,7 @@ def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
         emsg = "ERROR: unable to create quota group: Read-only file system"
         # this is non fatal so we catch this specific error and info log it.
         if e.err[0] == emsg:
-            logger.info(
-                "Pool: {} is Read-only, skipping qgroup create.".format(pool.name)
-            )
+            logger.info(f"Pool: {pool.name} is Read-only, skipping qgroup create.")
             # We now return PQGROUP_DEFAULT because our proposed next
             # available pqgroup can't be assigned anyway (Read-only file
             # system). This in turn avoids populating share db pqgroup with
@@ -1471,7 +1492,48 @@ def qgroup_create(pool, qgroup=PQGROUP_DEFAULT):
     return qid
 
 
+def qgroup_remove(qid: str, pqid: str, mnt_pt: str) -> bool:
+    """
+    Wrapper to remove parent assignment of rockstor native pqgroup ("2015/*") of subvol
+    qgroup ("0/subvolid") to facilitate associated qgroup destroy commands.
+    :return: True on success, False on; no mnt_pt, no change enacted, or quotas disabled.
+    """
+    # E.g. "btrfs qgroup remove 0/262 2015/2 /mnt2/rock-pool/share-name/"
+    if not os.path.exists(mnt_pt):
+        return False
+    cmd = [BTRFS, "qgroup", "remove", qid, pqid, mnt_pt]
+    try:
+        _, _, _ = run_command(cmd, log=False)
+    except CommandException as ce:
+        # We may have quotas disabled so catch and deal.
+        # N.B. Currently "assign" is confirmed correct at time of testing (Leap 16.0).
+        emsg = "ERROR: unable to assign quota group: quota not enabled"
+        if ce.err[0] == emsg:
+            # Returning False so our caller moves on.
+            return False
+        # Also catch already removed or non-existent child-parent relationship.
+        # As for quotas disabled, this is also non-fatal.
+        emsg = "ERROR: unable to assign quota group: No such file or directory"
+        if ce.err[0] == emsg:
+            logger.info(
+                f"{cmd} reported: `No such file or directory`: "
+                "can reference no existing qgroup; we check for missing path."
+            )
+            return False
+        # otherwise we raise an exception as normal
+        raise ce
+    return True
+
+
 def qgroup_destroy(qid, mnt_pt):
+    """
+    Opportunistically try to destroy a qgroup; usually a parent qgroup (pqgroup).
+    Initially runs `btrfs qgroup show mnt_pt` to establish:
+    1. Are quotas enabled?
+    2. "ERROR: cannot find the qgroup" earlier btfs inconsistency message.
+    3. If qgroup found, try for a `destroy` and log the results.
+    :returns: None in all cases except for uncaught exceptions.
+    """
     cmd = [BTRFS, "qgroup", "show", mnt_pt]
     try:
         o, e, rc = run_command(cmd, log=False)
@@ -1481,7 +1543,7 @@ def qgroup_destroy(qid, mnt_pt):
         if e.err[0] == emsg:
             # we have quotas disabled so can't destroy any anyway so skip
             # and deal by returning False so our caller moves on.
-            return False
+            return None
         # Also catch missing qgroup and log suggestion as per in qgroup_max()
         # confused/indeterminate quota state:
         emsg2 = "ERROR: cannot find the qgroup"
@@ -1492,16 +1554,19 @@ def qgroup_destroy(qid, mnt_pt):
             len(e.err) > 1 and re.match(emsg2, e.err[1]) is not None
         ):
             logger.info(
-                "Mount Point: {} has indeterminate quota status, skipping "
-                "qgroup show.\nTry 'btrfs quota disable {}'.".format(mnt_pt, mnt_pt)
+                f"Mount Point: {mnt_pt} has indeterminate quota status, skipping "
+                f"qgroup destroy.\nTry 'btrfs quota disable {mnt_pt}'."
             )
-            return False
+            return None
         # otherwise we raise an exception as normal
         raise e
     for l in o:
         if re.match(qid, l) is not None and l.split()[0] == qid:
-            return run_command([BTRFS, "qgroup", "destroy", qid, mnt_pt], log=True)
-    return False
+            # Accept failure as parent or child associations may be outstanding.
+            run_command(
+                [BTRFS, "qgroup", "destroy", qid, mnt_pt], log=True, throw=False
+            )
+    return None
 
 
 def qgroup_is_assigned(qid: str, pqid: str, mnt_pt: str) -> bool:
@@ -1570,8 +1635,8 @@ def qgroup_assign(qid, pqid, mnt_pt):
         # this is non-fatal, so we catch this specific error and info log it.
         if e.err[0] == emsg:
             logger.info(
-                "Read-only fs ({}), skipping qgroup assign: "
-                "child ({}), parent ({}).".format(mnt_pt, qid, pqid)
+                f"Read-only fs ({mnt_pt}), skipping qgroup assign: "
+                f"child ({qid}), parent ({pqid})."
             )
             return e.out, e.err, e.rc
         # Under some indeterminate quota states the following error occurs:
@@ -1583,9 +1648,9 @@ def qgroup_assign(qid, pqid, mnt_pt):
         # TODO: considered more stable.
         if e.err[0] == emsg2:
             logger.error(
-                '"{}" received on fs ({}), skipping qgroup assign: '
-                "child ({}), parent ({}). This may be related to an "
-                "undetermined quota state.".format(emsg2, mnt_pt, qid, pqid)
+                f'"{emsg2}" received on fs ({mnt_pt}), skipping qgroup assign: '
+                f"child ({qid}), parent ({pqid}). This may be related to an "
+                "undetermined quota state."
             )
             return e.out, e.err, e.rc
         # N.B. we catch known errors and log to avoid blocking share imports.
@@ -1594,25 +1659,23 @@ def qgroup_assign(qid, pqid, mnt_pt):
         rescan_sched_out = "Quota data changed, rescan scheduled"
         rescan_sched_err = "ERROR: quota rescan failed: Operation now in progress"
         if e.err[0] == rescan_sched_err:
-            self_rescan_error = "--- WARNING: auto quota rescan overlap \n({})".format(
-                rescan_sched_err
+            self_rescan_error = (
+                f"--- WARNING: auto quota rescan overlap \n({rescan_sched_err})"
             )
-            return logger.info(rescan_sched_out + "\n" + self_rescan_error)
+            logger.info(rescan_sched_out + "\n" + self_rescan_error)
+            return None
         wmsg = "WARNING: quotas may be inconsistent, rescan needed"
         if e.err[0] == wmsg:
             # schedule a rescan if one is not currently running.
-            dmsg = "Quota inconsistency while assigning {}. Rescan scheduled.".format(
-                qid
-            )
+            dmsg = f"Quota inconsistency while assigning {qid}. Rescan scheduled."
             try:
                 run_command([BTRFS, "quota", "rescan", mnt_pt])
                 return logger.debug(dmsg)
             except CommandException as e2:
                 emsg = "ERROR: quota rescan failed: Operation now in progress"
                 if e2.err[0] == emsg:
-                    return logger.debug(
-                        "{}.. Another rescan already in progress.".format(dmsg)
-                    )
+                    logger.debug(f"{dmsg}.. Another rescan already in progress.")
+                    return None
                 logger.exception(e2)
                 raise e2
         logger.exception(e)
@@ -1633,7 +1696,7 @@ def update_quota(pool, qgroup, size_bytes):
     if qgroup == PQGROUP_DEFAULT:
         # We have a 'quotas disabled' or 'Read-only' qgroup value flag,
         # log and return blank.
-        logger.info("Pool: {} ignoring update_quota on {}".format(pool.name, qgroup))
+        logger.info(f"Pool: {pool.name,} ignoring update_quota on {qgroup}")
         return out, err, rc
     try:
         out, err, rc = run_command(cmd, log=False)
@@ -1642,9 +1705,7 @@ def update_quota(pool, qgroup, size_bytes):
         emsg = "ERROR: unable to limit requested quota group: Read-only file system"
         # this is non fatal so we catch this specific error and info log it.
         if e.err[0] == emsg:
-            logger.info(
-                "Pool: {} is Read-only, skipping qgroup limit.".format(pool.name)
-            )
+            logger.info(f"Pool: {pool.name} is Read-only, skipping qgroup limit.")
             return out, err, rc
         # quotas disabled results in o = [''], rc = 1 and e[0] =
         emsg2 = "ERROR: unable to limit requested quota group: Invalid argument"
@@ -1654,18 +1715,15 @@ def update_quota(pool, qgroup, size_bytes):
         # TODO: we could for example use if qgroup_max(mnt) == -1
         if e.err[0] == emsg2:
             logger.info(
-                "Pool: {} has encountered a qgroup limit issue, "
-                "skipping qgroup limit. Disabled quotas can cause "
-                "this error".format(pool.name)
+                f"Pool: {pool.name} has encountered a qgroup limit issue, "
+                "skipping qgroup limit. Disabled quotas can cause this error"
             )
             return out, err, rc
         emsg3 = (
             "ERROR: unable to limit requested quota group: No such file or directory"
         )
         if e.err[0] == emsg3:
-            logger.info(
-                "Pool: {} is missing expected qgroup {}".format(pool.name, qgroup)
-            )
+            logger.info(f"Pool: {pool.name} is missing expected qgroup {qgroup}")
             logger.info("Previously disabled quotas can cause this issue")
             return out, err, rc
         # raise an exception as usual otherwise
@@ -1747,7 +1805,7 @@ def shares_usage(pool, share_map, snap_map):
     mnt_pt = None
     for s in share_map.keys():
         if is_share_mounted(share_map[s]):
-            mnt_pt = "{}{}".format(DEFAULT_MNT_DIR, share_map[s])
+            mnt_pt = f"{DEFAULT_MNT_DIR}{share_map[s]}"
             break
     if mnt_pt is None:
         mnt_pt = mount_root(pool)
@@ -2023,7 +2081,7 @@ def start_resize_pool(cmd):
     and retrieve the Django object a-fresh in the task function.
     :param cmd: btrfs dev add/delete command in run_command() format (ie list).
     """
-    logger.debug("Resize pool command ({}).".format(cmd))
+    logger.debug(f"Resize pool command ({cmd}).")
     # N.B. in some instances, such as live disk removal, an attempt to remove missing:
     # btrfs device delete missing /mnt2/pool-label
     # results in rc=1, out=[""], and err=
@@ -2043,9 +2101,7 @@ def start_resize_pool(cmd):
             )
             logger.error(msg)
             raise Exception(
-                "{} Command was ({}). Command Exception was ({}).".format(
-                    msg, " ".join(cmd), emsg
-                )
+                f"{msg} Command was ({' '.join(cmd)}). Command Exception was ({emsg})."
             )
         raise e
 
@@ -2057,15 +2113,15 @@ def balance_pool_cmd(mnt_pt, force=False, convert=None):
     if force:
         cmd.insert(3, "-f")
     if convert is not None:
-        cmd.insert(3, "-dconvert={}".format(PROFILE[convert].data_raid))
-        cmd.insert(3, "-mconvert={}".format(PROFILE[convert].metadata_raid))
+        cmd.insert(3, f"-dconvert={PROFILE[convert].data_raid}")
+        cmd.insert(3, f"-mconvert={PROFILE[convert].metadata_raid}")
     else:
         # As we are running with no convert filters a warning and 10 second
         # countdown with ^C prompt will result unless we use "--full-balance".
         # This warning is now present in the Web-UI "Start a new balance"
         # button tooltip.
         cmd.insert(3, "--full-balance")
-    logger.debug("Balance command ({}).".format(cmd))
+    logger.debug(f"Balance command ({cmd}).")
     return cmd
 
 
@@ -2084,7 +2140,7 @@ def start_balance(cmd):
     :param cmd:
     :return:
     """
-    logger.debug("Balance pool command ({}).".format(cmd))
+    logger.debug(f"Balance pool command ({cmd}).")
     try:
         run_command(cmd)
     except CommandException as e:
@@ -2110,8 +2166,8 @@ def balance_status(pool):
         mnt_pt = mount_root(pool)
     except Exception as e:
         logger.error(
-            "Exception while refreshing balance status for Pool({}). "
-            'Returning "unknown": {}'.format(pool.name, e.__str__())
+            f"Exception while refreshing balance status for Pool({pool.name}). "
+            f'Returning "unknown": {e.__str__()}'
         )
         return stats
     out, err, rc = run_command([BTRFS, "balance", "status", mnt_pt], throw=False)
@@ -2175,7 +2231,7 @@ def get_devid_usage(mnt_pt):
                 temp_name=temp_name, size=size, allocated=allocated
             )
             allocated = 0  # Reset our per device tally prior to next entry.
-    # logger.debug('get_devid_usage() returning {}.'.format(devid_usage_info))
+    # logger.debug(f"get_devid_usage() returning {devid_usage_info}.")
     return devid_usage_info
 
 
@@ -2209,9 +2265,8 @@ def balance_status_internal(pool):
         mnt_pt = mount_root(pool)
     except Exception as e:
         logger.error(
-            "Exception while refreshing internal balance status for"
-            "Pool({}). Returning "
-            '"unknown": {}'.format(pool.name, e.__str__())
+            f"Exception while refreshing internal balance status for Pool({pool.name})."
+            f' Returning "unknown": {e.__str__()}'
         )
         return stats
     cmd = [BTRFS, "dev", "usage", "-b", mnt_pt]
@@ -2257,9 +2312,7 @@ def balance_status_all(pool):
     else:
         active = True
     logger.debug(
-        "Balance active: ({}), Internal: ({}), Live Status: ({})".format(
-            active, internal, status
-        )
+        f"Balance active: ({active}), Internal: ({internal}), Live Status: ({status})"
     )
     return BalanceStatusAll(active=active, internal=internal, status=status)
 
@@ -2323,7 +2376,7 @@ def set_property(mnt_pt, name, val, mount=True, force=False):
         return run_command(cmd)
 
 
-def get_property(mnt_pt: str, prop_name: str | None=None):
+def get_property(mnt_pt: str, prop_name: str | None = None):
     """
     Convenience wrapper around 'btrfs property get prop_name mnt_pt'.
     :param mnt_pt: Vol(pool)/subvol(share/snap) mount point.

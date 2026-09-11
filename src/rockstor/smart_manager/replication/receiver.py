@@ -28,7 +28,7 @@ from contextlib import contextmanager
 from smart_manager.replication.util import ReplicationMixin
 from fs.btrfs import (
     get_oldest_snap,
-    remove_share,
+    remove_share_subvol,
     set_property,
     is_subvol,
     mount_share,
