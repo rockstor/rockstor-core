@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -14,9 +14,16 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
+from typing import Any
+
 from unittest.mock import patch
 
+from django.core.exceptions import ValidationError
+from django.test import SimpleTestCase
+
 from rest_framework import status
+from storageadmin.models.validators import validate_nfs_host_str
 from storageadmin.tests.test_api import APITestMixin
 
 """
@@ -58,6 +65,108 @@ poetry run django-admin test -v 2 -p test_nfs_export.py
 """
 
 
+class NFSValidatorTests(SimpleTestCase):
+    """Direct unit tests for validate_nfs_host_str."""
+
+    def test_valid_nfs_host_strings(self):
+        valid_hosts: list[str] = [
+            # Globally permissive
+            "*",
+            # Single IPs (IPv4 & IPv6)
+            "192.168.0.1",
+            "10.0.0.254",
+            "2001:db8::1",
+            "2001:db8:85a3::8a2e:370:7334",
+            "::1",
+            # CIDR notation (network and host-bit forms)
+            "192.168.0.0/24",
+            "192.168.0.1/24",
+            "10.0.0.0/8",
+            "192.168.0.1/32",
+            "0.0.0.0/0",
+            "2001:db8::/32",
+            "2001:db8::/48",
+            "2001:db8::1/64",
+            "::/0",
+            # IP/netmask pairs
+            "192.168.0.1/255.255.255.0",
+            "192.168.0.0/255.255.0.0",
+            "10.0.0.1/255.0.0.0",
+            "192.168.0.1/255.255.255.255",
+            # Wildcard domains
+            "*.example.com",
+            "*.sub.example.com",
+            "*.edu",
+            "*example.com",
+            # Standard hostnames
+            "build.lan",
+            "Build.LAN",
+            "client01",
+            "my-server.corp.local",
+            "a.b",
+            # Netgroups
+            "@corp_hosts",
+            "@eng-team",
+            "@group.domain",
+            "@123_group",
+        ]
+        for host in valid_hosts:
+            with self.subTest(host=host):
+                validate_nfs_host_str(host)
+
+    def test_invalid_nfs_host_strings(self):
+        invalid_hosts: list[Any] = [
+            # Blank, whitespace, control chars, non-strings
+            "",
+            "   ",
+            None,
+            123,
+            ["192.168.0.1"],
+            "ted fred",
+            " 192.168.0.1",
+            "192.168.0.1 ",
+            "192.168.0.1\n*(rw)",
+            "192.168.0.1\t192.168.0.2",
+            # Malformed IPs (must not fall through to hostname regex)
+            "1.!",
+            "999.999.999.999",
+            "192.168.0.256",
+            "192.168.0",
+            "192.168.0.1.2",
+            # Malformed CIDR prefixes
+            "192.168.0.1/33",
+            "192.168.0.1/-1",
+            "192.168.0.1/",
+            "192.168.0.1/abc",
+            "2001:db8::/129",
+            # Malformed IP/netmask pairs
+            "192.168.0.1/255.0.255.0",
+            "192.168.0.1/255.255.255.256",
+            "192.168.0.1/0.0.0.255",
+            # Malformed hostnames & IPv6 syntax variants
+            "bad_host.lan",
+            "-invalid.lan",
+            "invalid-.lan",
+            "host..lan",
+            ".example.com",
+            "example.com.",
+            "host@domain.com",
+            "fe80::1%eth0",
+            "[2001:db8::1]",
+            # Malformed netgroups
+            "@",
+            "@corp hosts",
+            "@corp@hosts",
+            "corp_hosts@",
+        ]
+        for host in invalid_hosts:
+            with self.subTest(host=host):
+                with self.assertRaises(
+                    ValidationError, msg=f"Expected ValidationError for: {host!r}"
+                ):
+                    validate_nfs_host_str(host)
+
+
 class NFSExportTests(APITestMixin):
     fixtures = ["test_api.json", "test_nfs.json"]
     BASE_URL = "/api/nfs-exports"
@@ -67,6 +176,7 @@ class NFSExportTests(APITestMixin):
         super(NFSExportTests, cls).setUpClass()
 
         # post mocks
+
         cls.patch_mount_share = patch("storageadmin.views.nfs_exports." "mount_share")
         cls.mock_mount_share = cls.patch_mount_share.start()
         cls.mock_mount_share.return_value = ["out"], ["err"], 0
@@ -88,9 +198,11 @@ class NFSExportTests(APITestMixin):
 
     def test_get(self):
         # get base URL
+
         self.get_base(self.BASE_URL)
 
         # get nfs-export with id
+
         nfs_id = 3  # from fixture
         response = self.client.get(f"{self.BASE_URL}/{nfs_id}")
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
@@ -100,6 +212,7 @@ class NFSExportTests(APITestMixin):
         # Clarifies current map re field naming of API vs DB vs Web-UI.
 
         # API / DB / Web-UI field name map:
+
         data = {
             "shares": ("share2",),
             "host_str": "*.edu",  # 'host_str', "NFS Clients"
@@ -118,11 +231,13 @@ class NFSExportTests(APITestMixin):
 
     def test_invalid_get(self):
         # get nfs-export with invalid id
+
         response = self.client.get(f"{self.BASE_URL}/99999")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
 
     def test_post_requests(self):
         # Add nfs-export without providing share names
+
         self.mock_refresh_nfs_exports.side_effect = None
         self.mock_refresh_nfs_exports.return_value = "out", "err", 0
 
@@ -137,6 +252,7 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.data[0], e_msg)
 
         # happy path
+
         data1 = {
             "shares": ("share2",),
             "host_str": "*.edu",
@@ -147,6 +263,7 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Add NFS export - non-existent share
+
         fake_share_name: str = "non-existent"
         data1 = {
             "shares": (f"{fake_share_name}",),
@@ -180,6 +297,7 @@ class NFSExportTests(APITestMixin):
 
     def test_mod_choice_validator_post(self):
         # DB validator should restrict to "ro" or "rw": validate_nfs_modify_str() & model choices
+
         data = {
             "shares": ("share2",),
             "mod_choice": "rr",
@@ -191,11 +309,12 @@ class NFSExportTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = {'editable': ["Value 'rr' is not a valid choice."]}
+        e_msg = {"editable": ["Value 'rr' is not a valid choice."]}
         self.assertEqual(response.data[0], str(e_msg))
 
     def test_mod_choice_validator_put(self):
         # DB validator should restrict to "ro" or "rw": validate_nfs_modify_str() & model choices
+
         data = {
             "shares": ("share-nfs",),
             "mod_choice": "rr",
@@ -208,11 +327,12 @@ class NFSExportTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = {'editable': ["Value 'rr' is not a valid choice."]}
+        e_msg = {"editable": ["Value 'rr' is not a valid choice."]}
         self.assertEqual(response.data[0], str(e_msg))
 
     def test_sync_choice_validator_post(self):
         # DB validator should restrict to "async" or "sync": validate_nfs_sync_choice() & model choices
+
         data = {
             "shares": ("share2",),
             "mod_choice": "ro",
@@ -224,11 +344,12 @@ class NFSExportTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = {'syncable': ["Value 'aaaaa' is not a valid choice."]}
+        e_msg = {"syncable": ["Value 'aaaaa' is not a valid choice."]}
         self.assertEqual(response.data[0], str(e_msg))
 
     def test_sync_choice_validator_put(self):
         # DB validator should restrict to "async" or "sync": validate_nfs_sync_choice() & model choices
+
         data = {
             "shares": ("share-nfs",),
             "mod_choice": "ro",
@@ -241,11 +362,12 @@ class NFSExportTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = {'syncable': ["Value 'aaaaa' is not a valid choice."]}
+        e_msg = {"syncable": ["Value 'aaaaa' is not a valid choice."]}
         self.assertEqual(response.data[0], str(e_msg))
 
     def test_host_str_validator_post(self):
         # DB validator should restrict to valid entry: validate_nfs_host_str
+
         data = {
             "shares": ("share2",),
             "host_str": "1.!",
@@ -258,11 +380,12 @@ class NFSExportTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = {'host_str': ['Invalid host string: 1.!']}
+        e_msg = {"host_str": ["Invalid host string: 1.!"]}
         self.assertEqual(response.data[0], str(e_msg))
 
     def test_host_str_validator_put(self):
         # DB validator should restrict to valid entry: validate_nfs_host_str
+
         data = {
             "shares": ("share-nfs",),
             "host_str": "ted fred",
@@ -276,11 +399,67 @@ class NFSExportTests(APITestMixin):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             msg=response.data,
         )
-        e_msg = {'host_str': ['Invalid host string: ted fred']}
+        e_msg = {"host_str": ["Invalid host string: ted fred"]}
         self.assertEqual(response.data[0], str(e_msg))
+
+    def test_host_str_formats_api_roundtrip(self):
+        # Test CIDR, IP/netmask, wildcard, netgroup host_str values via API
+
+        client_formats = [
+            "192.168.0.1",
+            "192.168.0.1/24",
+            "192.168.0.1/255.255.255.0",
+            "*.example.com",
+            "build.lan",
+            "@corp_hosts",
+        ]
+        for host in client_formats:
+            with self.subTest(method="POST", host=host):
+                data = {
+                    "shares": ("share2",),
+                    "host_str": host,
+                    "mod_choice": "rw",
+                    "sync_choice": "async",
+                }
+                response = self.client.post(self.BASE_URL, data=data)
+                self.assertEqual(
+                    response.status_code, status.HTTP_200_OK, msg=response.data
+                )
+                self.assertEqual(response.data["host_str"], host)
+
+                # Duplicate host_str on the same share should be rejected
+
+                dup_response = self.client.post(self.BASE_URL, data=data)
+                self.assertEqual(
+                    dup_response.status_code,
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    msg=dup_response.data,
+                )
+                self.assertEqual(
+                    dup_response.data[0],
+                    f"An export already exists for the host string: ({host}).",
+                )
+            with self.subTest(method="PUT", host=host):
+                nfs_id = 3  # from fixture (share-nfs)
+                put_data = {
+                    "shares": ("share-nfs",),
+                    "host_str": host,
+                    "mod_choice": "rw",
+                    "sync_choice": "async",
+                }
+                response = self.client.put(f"{self.BASE_URL}/{nfs_id}", data=put_data)
+                self.assertEqual(
+                    response.status_code, status.HTTP_200_OK, msg=response.data
+                )
+                get_response = self.client.get(f"{self.BASE_URL}/{nfs_id}")
+                self.assertEqual(
+                    get_response.status_code, status.HTTP_200_OK, msg=get_response.data
+                )
+                self.assertEqual(get_response.data["host_str"], host)
 
     def test_share_already_exported(self):
         # Add NFS export for share already exported
+
         data = {
             "shares": ("share-nfs",),
             "host_str": "*",
@@ -299,6 +478,7 @@ class NFSExportTests(APITestMixin):
     def test_low_level_error_post(self):
         # Invalid POST request
         # Add NFS export - invalid admin host
+
         ll_error: str = "post low level error"
         self.mock_refresh_nfs_exports.side_effect = Exception(ll_error)
         data = {
@@ -325,6 +505,7 @@ class NFSExportTests(APITestMixin):
     def test_low_level_error_put(self):
         # Invalid PUT request
         # Edit NFS export - invalid admin host
+
         ll_error: str = "put low level error"
         self.mock_refresh_nfs_exports.side_effect = Exception(ll_error)
 
@@ -352,6 +533,7 @@ class NFSExportTests(APITestMixin):
 
     def test_put_requests(self):
         # Edit NFS export without specifying share.
+
         self.mock_refresh_nfs_exports.side_effect = None
         self.mock_refresh_nfs_exports.return_value = "out", "err", 0
         nfs_id = 3  # from fixture
@@ -366,6 +548,7 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.data[0], e_msg)
 
         # Happy path - editing existing NFS export.
+
         nfs_id = 3  # from fixture
         data = {
             "shares": ("share-nfs",),
@@ -377,6 +560,7 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Happy path - editing existing NFS export re adding admin host.
+
         nfs_id = 3  # from fixture
         data = {
             "shares": ("share-nfs",),
@@ -389,6 +573,7 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Edit non-existent NFS export, existing share in fixtures.
+
         nfs_id = 99999
         data = {
             "shares": ("share2",),
@@ -407,11 +592,13 @@ class NFSExportTests(APITestMixin):
 
     def test_delete_requests(self):
         # Happy path
+
         nfs_id = 3  # from fixture
         response = self.client.delete(f"{self.BASE_URL}/{nfs_id}")
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Delete nfs-export that does not exist
+
         nfs_id = 99999
         response = self.client.delete(f"{self.BASE_URL}/{nfs_id}")
         self.assertEqual(
@@ -424,10 +611,12 @@ class NFSExportTests(APITestMixin):
 
     def test_adv_nfs_get(self):
         # Get advanced base URL
+
         self.get_base("/api/adv-nfs-exports")
 
     def test_adv_nfs_post_requests(self):
         # Without specifying entries
+
         data = {}
         response = self.client.post("/api/adv-nfs-exports", data=data)
         self.assertEqual(
@@ -439,11 +628,13 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.data[0], e_msg)
 
         # Happy path
+
         data = {"entries": ["/export/share-nfs *(rw,async,insecure)"]}
         response = self.client.post("/api/adv-nfs-exports", data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # Invalid entries
+
         data = {"entries": ["/export/share2"]}
         response = self.client.post("/api/adv-nfs-exports", data=data)
         self.assertEqual(
@@ -455,6 +646,7 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.data[0], e_msg)
 
         # Invalid entries
+
         data = {"entries": ["/export/share2 *(rw,async,insecure"]}
         response = self.client.post("/api/adv-nfs-exports", data=data)
         self.assertEqual(
@@ -469,6 +661,7 @@ class NFSExportTests(APITestMixin):
         self.assertEqual(response.data[0], e_msg)
 
         # Invalid entries
+
         data = {"entries": ["invalid"]}
         response = self.client.post("/api/adv-nfs-exports", data=data)
         self.assertEqual(
