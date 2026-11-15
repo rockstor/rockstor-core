@@ -318,7 +318,6 @@ LOGGING = {
 }
 
 MNT_PT = "/mnt2/"
-NFS_EXPORT_ROOT = "/export/"
 SFTP_MNT_ROOT = "/mnt3/"
 
 # System volume label when no btrfs volume label is set as per default openSUSE

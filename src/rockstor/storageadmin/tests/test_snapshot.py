@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -77,11 +77,11 @@ class SnapshotTests(APITestMixin):
         cls.mock_mount_snap = cls.patch_mount_snap.start()
         cls.mock_mount_snap.return_value = "out", "err", 0
 
-        cls.patch_umount_root = patch("storageadmin.views.snapshot.umount_root")
+        cls.patch_umount_root = patch("storageadmin.views.snapshot.mount_teardown")
         cls.mock_umount_root = cls.patch_umount_root.start()
         cls.mock_umount_root.return_value = "out", "err", 0
 
-        cls.patch_remove_snap = patch("storageadmin.views.snapshot." "remove_snap")
+        cls.patch_remove_snap = patch("storageadmin.views.snapshot.remove_snap_subvol")
         cls.mock_remove_snap = cls.patch_remove_snap.start()
         cls.mock_remove_snap.return_value = True
 

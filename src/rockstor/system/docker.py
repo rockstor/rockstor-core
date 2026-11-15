@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -76,7 +76,7 @@ def container_list():
     return containers
 
 
-def docker_status():
+def docker_status() -> bool:
     o, e, rc = service_status("docker")
     if rc != 0:
         return False

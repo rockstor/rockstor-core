@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -32,6 +32,7 @@ from system import services
 from system.osi import run_command, md5sum, replace_pattern_inline
 from system.ssh import remove_sftp_server_subsystem, init_sftp_config
 from system.constants import SYSTEMCTL
+from smart_manager.constants import CRONTAB_FILE
 from collections import OrderedDict, namedtuple
 
 
@@ -125,7 +126,7 @@ LOCAL_FILES = {
         path="/etc/samba/smb.conf", mask=None, services=None
     ),
     "rockstor_crontab": LocalFile(
-        path="/etc/cron.d/rockstortab", mask=stat.S_IRUSR | stat.S_IWUSR, services=None
+        path=CRONTAB_FILE, mask=stat.S_IRUSR | stat.S_IWUSR, services=None
     ),
     "replication_crontab": LocalFile(
         path="/etc/cron.d/replicationtab",
@@ -622,18 +623,8 @@ def main():
     run_command(DJANGO_MIGRATE_CMD + ["storageadmin"], log=True)
     run_command(DJANGO_MIGRATE_SMART_MANAGER_CMD, log=True)
 
-    o, e, rc = run_command(
-        [DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True
-    )
-    logger.info(f"Prior migrations for oauth2_provider are: {o}")
-
     # Run all migrations for oauth2_provider
     run_command(DJANGO_MIGRATE_CMD + ["oauth2_provider"], log=True)
-
-    o, e, rc = run_command(
-        [DJANGO, "showmigrations", "--list", "oauth2_provider"], log=True
-    )
-    logger.info(f"Post migrations for oauth2_provider are: {o}")
 
     logger.info("DB Migrations Done")
 

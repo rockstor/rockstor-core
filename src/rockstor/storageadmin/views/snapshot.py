@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -17,7 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
-from django.conf import settings
+
+from settings import MNT_PT, MODEL_DEFS
 from storageadmin.models import (
     Snapshot,
     Share,
@@ -29,16 +30,16 @@ from fs.btrfs import (
     add_snap,
     share_id,
     volume_usage,
-    remove_snap,
-    umount_root,
+    remove_snap_subvol,
+    mount_teardown,
     mount_snap,
     qgroup_assign,
 )
-from system.osi import refresh_nfs_exports
+from system.constants import NFS_EXPORT_ROOT
+from system.nfs_util import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from storageadmin.views.share_helpers import toggle_sftp_visibility
 from storageadmin.views.clone_helpers import create_clone, create_repclone
 from storageadmin.views.nfs_exports import NFSExportMixin
 
@@ -58,7 +59,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 if "sid" not in self.kwargs:
                     return Snapshot.objects.filter().order_by("-id")
 
-                e_msg = ("Share id ({}) does not exist.").format(self.kwargs["sid"])
+                e_msg = f"Share id ({self.kwargs['sid']}) does not exist."
                 handle_exception(Exception(e_msg), self.request)
 
             if "snap_name" in self.kwargs:
@@ -83,8 +84,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         cur_exports = list(NFSExport.objects.all())
         # The following may be buggy when used with system mounted (fstab) /home
         # but we currently don't allow /home to be exported.
-        snap_mnt_pt = "{}{}/.{}".format(settings.MNT_PT, share.name, snap_name)
-        export_pt = snap_mnt_pt.replace(settings.MNT_PT, settings.NFS_EXPORT_ROOT)
+        snap_mnt_pt = f"{MNT_PT}{share.name}/.{snap_name}"
+        export_pt = snap_mnt_pt.replace(MNT_PT, NFS_EXPORT_ROOT)
         if on:
             mount_snap(share, snap_name, snap_qgroup)
             ########################################################
@@ -105,20 +106,24 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                 except Exception as e:
                     logger.exception(e)
                 finally:
-                    umount_root(export_pt)
-                    umount_root(snap_mnt_pt)
+                    # N.B. mount_teardown() can now manage lists of mount points.
+                    # Consider if this now @task needs a .call_local treatment here.
+                    mount_teardown([export_pt])
+                    mount_teardown([snap_mnt_pt])
         exports = self.create_nfs_export_input(cur_exports)
         adv_entries = [x.export_str for x in AdvancedNFSExport.objects.all()]
         exports_d = self.create_adv_nfs_export_input(adv_entries, self.request)
         exports.update(exports_d)
         refresh_nfs_exports(exports)
+        # TODO: We may have some SFTP stand-down to do here.
+        # i.e. remove_sftp_bindmounts(sftpo.share.name, visible_snap_names, chroot_path)
 
     @transaction.atomic
     def _create(self, share, snap_name, request, uvisible, snap_type, writable):
         if Snapshot.objects.filter(share=share, name=snap_name).exists():
             # Note e_msg is consumed by replication/util.py create_snapshot()
-            e_msg = ("Snapshot ({}) already exists for the share ({}).").format(
-                snap_name, share.name
+            e_msg = (
+                f"Snapshot ({snap_name}) already exists for the share ({share.name})."
             )
             handle_exception(Exception(e_msg), request)
 
@@ -128,8 +133,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             writable = False
         add_snap(share, snap_name, writable)
         snap_id = share_id(share.pool, snap_name)
-        qgroup_id = "0/{}".format(snap_id)
-        if share.pqgroup != settings.MODEL_DEFS["pqgroup"]:
+        qgroup_id = f"0/{snap_id}"
+        if share.pqgroup != MODEL_DEFS["pqgroup"]:
             qgroup_assign(qgroup_id, share.pqgroup, share.pool.mnt_pt)
         snap_size, eusage = volume_usage(share.pool, qgroup_id)
         s = Snapshot(
@@ -153,17 +158,13 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             uvisible = request.data.get("uvisible", False)
             if type(uvisible) != bool:
                 # N.B. quote type important - test string involves ('unicode')
-                e_msg = ("Element 'uvisible' must be a boolean, not ({}).").format(
-                    type(uvisible)
-                )
+                e_msg = f"Element 'uvisible' must be a boolean, not ({type(uvisible)})."
                 handle_exception(Exception(e_msg), request)
 
             snap_type = request.data.get("snap_type", "admin")
             writable = request.data.get("writable", False)
             if type(writable) != bool:
-                e_msg = ('Element "writable" must be a boolean, ' "not ({}).").format(
-                    type(writable)
-                )
+                e_msg = f'Element "writable" must be a boolean, not ({type(writable)}).'
                 handle_exception(Exception(e_msg), request)
             if command is None:
                 ret = self._create(
@@ -182,21 +183,9 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                         )
                     except Exception as e:
                         msg = (
-                            "Failed to make the snapshot ({}) visible. "
-                            "Exception: ({})."
-                        ).format(snap_name, e.__str__())
-                        logger.error(msg)
-                        logger.exception(e)
-
-                    try:
-                        toggle_sftp_visibility(
-                            share, ret.data["real_name"], ret.data["qgroup"]
+                            f"Failed to make the snapshot ({snap_name}) visible. "
+                            f"Exception: ({e.__str__()})."
                         )
-                    except Exception as e:
-                        msg = (
-                            "Failed to make the snapshot ({}) visible for "
-                            "SFTP. Exception: ({})."
-                        ).format(snap_name, e.__str__())
                         logger.error(msg)
                         logger.exception(e)
 
@@ -223,11 +212,11 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                     # this quirky share is located as per regular snapshots.
                     # The subvol of our snap-as-share-quirk is as per a snap:
                     # ".snapshots/sharename/snapname"
-                    quirk_snap_share = ".snapshots/{}/{}".format(share.name, snap_name)
+                    quirk_snap_share = f".snapshots/{share.name}/{snap_name}"
                     logger.debug("Fail through for snap-as-share-quirk")
                     snapshot = Share.objects.get(subvol_name=quirk_snap_share)
                 return create_repclone(share, request, logger, snapshot=snapshot)
-            e_msg = "Unknown command: ({}).".format(command)
+            e_msg = f"Unknown command: ({command})."
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
@@ -235,7 +224,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         try:
             return Share.objects.get(id=sid)
         except:
-            e_msg = "Share with id ({}) does not exist.".format(sid)
+            e_msg = f"Share with id ({sid}) does not exist."
             handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -252,20 +241,23 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         except:
             e_msg = ""
             if id is not None:
-                e_msg = "Snapshot id ({}) does not exist.".format(id)
+                e_msg = f"Snapshot id ({id}) does not exist."
             else:
                 # Note e_msg consumed by replication/util.py update_repclone()
                 # and delete_snapshot()
-                e_msg = "Snapshot name ({}) does not exist.".format(snap_name)
+                e_msg = f"Snapshot name ({snap_name}) does not exist."
             handle_exception(Exception(e_msg), request)
 
         if snapshot.uvisible:
             self._toggle_visibility(
                 share, snapshot.real_name, snapshot.qgroup, on=False
             )
-            toggle_sftp_visibility(share, snapshot.real_name, snapshot.qgroup, on=False)
+            # As SFTP is a recursive bind mount (rbind), it reflects all submnt changes.
+            # toggle_sftp_visibility(share, snapshot.real_name, snapshot.qgroup, on=False)
+            # TODO: We may still have to call:
+            #  remove_sftp_bindmounts(sftpo.share.name, visible_snap_names, chroot_path)
 
-        remove_snap(share.pool, share.name, snapshot.name, snapshot.qgroup)
+        remove_snap_subvol(snapshot)
         snapshot.delete()
         return Response()
 

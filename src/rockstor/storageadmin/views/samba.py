@@ -230,13 +230,15 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
         try:
             smbo = SambaShare.objects.get(id=smb_id)
             SambaCustomConfig.objects.filter(smb_share=smbo).delete()
-            smbo.delete()
+            smbo.delete()  # N.B. model.delete overridden to remove share from smb.conf
         except:
             e_msg = ("Samba export for the id ({}) does not exist.").format(smb_id)
             handle_exception(Exception(e_msg), request)
 
         with self._handle_exception(request):
-            refresh_smb_config(list(SambaShare.objects.all()))
+            # Before model.delete override removed share entries from smb.conf,
+            # we reconstructed the entire file's contents via:
+            # refresh_smb_config(list(SambaShare.objects.all()))
             refresh_smb_discovery(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response()

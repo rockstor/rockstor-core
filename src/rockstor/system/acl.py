@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from fs.btrfs import umount_root
+from fs.btrfs import mount_teardown
 from system.constants import CHOWN, CHMOD
 from system.osi import run_command
 from huey.contrib.djhuey import task
@@ -98,7 +98,8 @@ def acl_change_manager(
     chmod_task_handler(blocking=True)  # Wait for task completion.
     # If this subvol was previously unmounted, return it to that state.
     if was_unmounted:
-        umount_root(mnt_pt)
+        # N.B. we have one @task invoking another...
+        mount_teardown([mnt_pt])
 
 
 def chown_or_chmod_active(mnt_pt: str) -> bool:

@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -26,9 +26,9 @@ from tempfile import mkstemp
 from pathlib import Path
 
 import distro
-from django.conf import settings
 
-from system.osi import run_command, get_libs
+from settings import CONFROOT, SFTP_MNT_ROOT
+from system.osi import run_command, get_libs, lazy_unmount
 from system.constants import (
     MKDIR,
     MOUNT,
@@ -119,23 +119,25 @@ def init_sftp_config(sshd_config=None):
             sfo.write(f"{SSHD_HEADER}\n")
             sfo.write(f"{INTERNAL_SFTP_STR}\n")
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
-            if os.path.isfile(f"{settings.CONFROOT}/PermitRootLogin"):
+            if os.path.isfile(f"{CONFROOT}/PermitRootLogin"):
                 sfo.write("AllowUsers root\n")
         logger.info(f"SSHD ({sshd_config}) initialised")
     return sshd_restart
 
 
-def update_sftp_user_share_config(input_map):
+def update_sftp_user_config(input_map):
     """
     Receives sftp-related customization settings and writes them to SSHD_CONFIG files.
+    Performs a sshd reload, or on exception a restart there-after.
     :param input_map: dictionary of chroot directory values keyed by username.
+      e.g. {'sftp-user1': '/mnt3/sftp-user1'}
     :return:
     """
     fo, npath = mkstemp()
     sshd_conf = SshdConfig()
     # TODO: Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
     userstr = "AllowUsers"
-    if os.path.isfile(f"{settings.CONFROOT}/PermitRootLogin"):
+    if os.path.isfile(f"{CONFROOT}/PermitRootLogin"):
         userstr += " root {}".format(" ".join(input_map.keys()))
     else:
         userstr += " {}".format(" ".join(input_map.keys()))
@@ -199,46 +201,90 @@ def toggle_sftp_service(switch=True):
 
 
 def sftp_mount_map(mnt_prefix):
+    """
+    Returns name indexed dictionary of /mnt_prefix/*share_or_snap.name active mounts.
+    For SFTP we mount visible snapshots within the owners chroot, under the parent
+    Share's own bind mount at the top-level of the owners chroot.
+    E.g.: stp_user1 owns and SFTP exports sftp-share1 which has a visible
+    snapshot called sftp-share1-snap1 results in:
+    - Share bind mount: /mnt3/sftp-user1/sftp-share1
+    - Snap bind mount: /mnt3/sftp-user1/sftp-share1/.sftp-share1-snap1
+    Where /mnt3/sftp-user1 is the SFTP chroot created for the share.owner.
+    Ergo we must strip our added leading "." to return the Snapshot name if found
+    already bind mounted in chroot, as we do for the same Share bind mount
+    in user's chroot for SFTP exports.
+    :param mnt_prefix: normally SFTP_MNT_ROOT
+    :return: E.g.: {'sftp-share1a': 'rw', 'sftp-share1': 'rw', 'sftp-share2': 'ro',
+    '.sftp-share1-snap1': 'rw'}
+    or {} if no active mounts found beginning with mnt_prefix.
+    """
     mnt_map = {}
     with open("/proc/mounts") as pfo:
         for line in pfo.readlines():
             if re.search(" " + mnt_prefix, line) is not None:
                 fields = line.split()
-                sname = fields[1].split("/")[-1]
+                share_or_snap_name = (fields[1].split("/")[-1]).strip(".")
                 editable = fields[3][:2]
-                mnt_map[sname] = editable
+                mnt_map[share_or_snap_name] = editable
     return mnt_map
 
 
 def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable="rw"):
-    #  don't mount if already mounted
-    sftp_mnt_pt = "{}{}/{}".format(sftp_mnt_prefix, share.owner, share.name)
-    share_mnt_pt = "{}{}".format(mnt_prefix, share.name)
-    if share.name in mnt_map:
+    """
+    Recursively Bind mounts a Share within passed share.owner's chroot.
+    If already mounted inconsistently to passed editable ("rw"|"ro"), we remount.
+    The use of recursive bind mounts means inheriting visible snapshots from the
+    source: /mnt2/share.name via the snap subvolume mount directoy of .snap.name.
+    :param share: Share object.
+    :param mnt_prefix: e.g. "/mnt2/"
+    :param sftp_mnt_prefix: e.g. "/mnt3/"
+    :param mnt_map: map of existing /mnt3/, or SFTP associated mounts.
+    :param editable: "rw" or "ro" to indicate required mount/remount.
+    :return:
+    """
+    sftp_mnt_pt = f"{sftp_mnt_prefix}{share.owner}/{share.name}"
+    share_mnt_pt = f"{mnt_prefix}{share.name}"
+    if share.name in mnt_map:  # If Share already mounted:
         cur_editable = mnt_map[share.name]
+        # and if editable changed; remount,bind /mnt2/share.name in chroot.
         if cur_editable != editable:
             return run_command(
                 [
                     MOUNT,
                     "-o",
-                    "remount,{},bind".format(editable),
+                    f"remount,{editable},rbind",
                     share_mnt_pt,
                     sftp_mnt_pt,
                 ]
             )
-    else:
+    else:  # Fresh chroot bind mount
         run_command([MKDIR, "-p", sftp_mnt_pt])
-        run_command([MOUNT, "--bind", share_mnt_pt, sftp_mnt_pt])
+        # TODO: Better to initially mounting ro, then rw if editable instructs this way.
+        run_command([MOUNT, "--rbind", share_mnt_pt, sftp_mnt_pt])
         if editable == "ro":
             run_command(
                 [
                     MOUNT,
                     "-o",
-                    "remount,{},bind".format(editable),
+                    f"remount,{editable},rbind",
                     share_mnt_pt,
                     sftp_mnt_pt,
                 ]
             )
+    return None
+
+
+def remove_sftp_share_bindmount(share_name: str, share_owner: str):
+    """
+    Unmount a SFTP Share recursive bind mount within the share.owner's chroot_path.
+    :param share_name: Share.name to unmount from within a given users SFTP chroot.
+    :param share_owner: Required to establish the chroot path of the given share.
+    """
+    chroot_path = f"{SFTP_MNT_ROOT}{share_owner}/"
+    # SFTP exported Share in-chroot bind-mount.
+    sftp_export_path = f"{chroot_path}{share_name}"
+    result:bool = bool(lazy_unmount([sftp_export_path]))
+    return result
 
 
 def rsync_for_sftp(chroot_loc: str | Path):

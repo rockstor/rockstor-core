@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -88,7 +88,7 @@ def task_completed(signal, task):
         case "clear_taskid":
             pass
         case _:
-            logger.error(f"No known task_completed jobs to execute for {task.name}.")
+            logger.info(f"No known task_completed jobs to execute for {task.name}.")
 
 
 @HUEY.signal(SIGNAL_ERROR, SIGNAL_LOCKED)
