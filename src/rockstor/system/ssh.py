@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -26,9 +26,9 @@ from tempfile import mkstemp
 from pathlib import Path
 
 import distro
-from django.conf import settings
 
-from system.osi import run_command, get_libs
+from settings import CONFROOT, SFTP_MNT_ROOT
+from system.osi import run_command, get_libs, lazy_unmount
 from system.constants import (
     MKDIR,
     MOUNT,
@@ -119,23 +119,25 @@ def init_sftp_config(sshd_config=None):
             sfo.write(f"{SSHD_HEADER}\n")
             sfo.write(f"{INTERNAL_SFTP_STR}\n")
             # TODO Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
-            if os.path.isfile(f"{settings.CONFROOT}/PermitRootLogin"):
+            if os.path.isfile(f"{CONFROOT}/PermitRootLogin"):
                 sfo.write("AllowUsers root\n")
         logger.info(f"SSHD ({sshd_config}) initialised")
     return sshd_restart
 
 
-def update_sftp_user_share_config(input_map):
+def update_sftp_user_config(input_map):
     """
     Receives sftp-related customization settings and writes them to SSHD_CONFIG files.
+    Performs a sshd reload, or on exception a restart there-after.
     :param input_map: dictionary of chroot directory values keyed by username.
+      e.g. {'sftp-user1': '/mnt3/sftp-user1'}
     :return:
     """
     fo, npath = mkstemp()
     sshd_conf = SshdConfig()
     # TODO: Split out AllowUsers into SSHD_CONFIG[distro.id()].AllowUsers
     userstr = "AllowUsers"
-    if os.path.isfile(f"{settings.CONFROOT}/PermitRootLogin"):
+    if os.path.isfile(f"{CONFROOT}/PermitRootLogin"):
         userstr += " root {}".format(" ".join(input_map.keys()))
     else:
         userstr += " {}".format(" ".join(input_map.keys()))

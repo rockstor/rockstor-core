@@ -24,12 +24,12 @@ from django.db import transaction
 from rest_framework.response import Response
 
 import rest_framework_custom as rfc
-from fs.btrfs import is_share_mounted, umount_root
+from fs.btrfs import is_share_mounted, mount_teardown
 from storageadmin.views.share_helpers import helper_mount_share, validate_share, sftp_snap_toggle
 from storageadmin.models import SFTP
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.util import handle_exception
-from system.ssh import update_sftp_user_share_config, sftp_mount_map, sftp_mount, rsync_for_sftp
+from system.ssh import update_sftp_user_config, sftp_mount_map, sftp_mount, rsync_for_sftp
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ class SFTPListView(rfc.GenericView):
                     input_map[sftpo.share.owner] = "{}{}".format(
                         settings.SFTP_MNT_ROOT, sftpo.share.owner,
                     )
-            update_sftp_user_share_config(input_map)
+            update_sftp_user_config(input_map)
             return Response()
 
 
@@ -112,7 +112,7 @@ class SFTPDetailView(rfc.GenericView):
             if is_share_mounted(sftpo.share.name, mnt_prefix):
                 sftp_snap_toggle(sftpo.share, mount=False)
                 mnt_pt = "{}{}".format(mnt_prefix, sftpo.share.name)
-                umount_root(mnt_pt)
+                mount_teardown([mnt_pt])
                 if os.path.isdir(mnt_pt):
                     shutil.rmtree(mnt_pt)
             sftpo.delete()
@@ -122,5 +122,5 @@ class SFTPDetailView(rfc.GenericView):
                     input_map[so.share.owner] = "{}{}".format(
                         settings.SFTP_MNT_ROOT, so.share.owner,
                     )
-            update_sftp_user_share_config(input_map)
+            update_sftp_user_config(input_map)
             return Response()

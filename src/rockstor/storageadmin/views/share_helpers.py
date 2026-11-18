@@ -27,7 +27,7 @@ from fs.btrfs import (
     mount_share,
     mount_snap,
     is_mounted,
-    umount_root,
+    mount_teardown,
     shares_info,
     volume_usage,
     snaps_info,
@@ -74,9 +74,9 @@ def sftp_snap_toggle(share, mount=True):
             settings.SFTP_MNT_ROOT, share.owner, share.name, snap.name
         )
         if mount and not is_mounted(mnt_pt):
-            mount_snap(share, snap.name, snap.qgroup, mnt_pt)
+            mount_snap(share, snap.name, snap.qgroup)
         elif is_mounted(mnt_pt) and not mount:
-            umount_root(mnt_pt)
+            mount_teardown([mnt_pt])
 
 
 def toggle_sftp_visibility(share, snap_name, snap_qgroup, on=True):
@@ -88,9 +88,9 @@ def toggle_sftp_visibility(share, snap_name, snap_qgroup, on=True):
     )
     if on:
         if not is_mounted(mnt_pt):
-            mount_snap(share, snap_name, snap_qgroup, mnt_pt)
+            mount_snap(share, snap_name, snap_qgroup)
     else:
-        umount_root(mnt_pt)
+        mount_teardown([mnt_pt])
 
 
 def import_shares(pool, request):
