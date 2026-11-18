@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -31,8 +31,7 @@ from struct import pack
 from tempfile import mkstemp
 from typing import AnyStr, IO
 
-from django.conf import settings
-
+from settings import CONFROOT
 from system.exceptions import CommandException, NonBTRFSRootException
 from system.constants import (
     SYSTEMCTL,
@@ -44,6 +43,9 @@ from system.constants import (
     UDEVADM,
     SHUTDOWN,
     LDD,
+    FINDMNT,
+    UMOUNT,
+    UMOUNT_ERR_WHITELIST,
 )
 
 logger = logging.getLogger(__name__)
@@ -506,17 +508,17 @@ def kernel_info():
     return uname[2]
 
 
-def create_tmp_dir(dirname):
-    # TODO: suggest name change to create_dir
+def create_dir(dirname):
     return run_command([MKDIR, "-p", dirname])
 
 
-def rm_tmp_dir(dirname):
-    # TODO: suggest name change to remove_dir
+def remove_dir(dirname):
     return run_command([RMDIR, dirname])
 
 
 def toggle_path_rw(path, rw=True):
+    if not os.path.exists(path):
+        return None
     attr = "-i"
     if not rw:
         attr = "+i"
@@ -786,11 +788,13 @@ def getdnsdomain():
 
 def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
     mnt_pt = mnt_prefix + sname
-    return mount_status(mnt_pt, RETURN_BOOLEAN)
+    result = mount_status(mnt_pt, RETURN_BOOLEAN)
+    return result
 
 
 def is_mounted(mnt_pt):
-    return mount_status(mnt_pt, RETURN_BOOLEAN)
+    result = mount_status(mnt_pt, RETURN_BOOLEAN)
+    return result
 
 
 def mount_status(mnt_pt, return_boolean=False):
@@ -829,6 +833,34 @@ def mount_status(mnt_pt, return_boolean=False):
     return "unmounted"
 
 
+def findmnt_bool(mnt_pt: str) -> bool:
+    """
+    OS findmnt binary (util-linux-systemd) wrapper: True if active mount at mnt_pt.
+    To potentially supplant mount_status / is_mounted / is_share_mounted using Python
+    parsed output from /proc/mounts.
+    :param mnt_pt: Filesystem path.
+    :return: True if a mount exists, else False.
+    """
+    # For all mounts on a path: `findmnt -o TARGET -n /path` e.g.:
+    # `findmnt -o TARGET -n /mnt2/sftp-share1/.sftp-share1-snap2`
+    # `/mnt2/sftp-share1/.sftp-share1-snap2`
+    # `/mnt2/sftp-share1/.sftp-share1-snap2`
+    # Indicating an inadvertent double mount of this snapshot under its parent share!!
+    #
+    # `--list` output has no tree formatting: one entry per line. For a double mount, as
+    #  above; this would generate two lines each with the same TARGET (column 1).
+    # `--output` comma separated column list: TARGET Column by default is tree format.
+    # `--noheadings` do-not print headings.
+    cmd = [FINDMNT, "--list", "--output", "TARGET", mnt_pt]
+    result: bool = False
+    _, _, rc = run_command(cmd, throw=False)
+    # rc=1 when no mounts exist, or when the mnt_pt does not exist.
+    if rc == 0:  # mount exists
+        result = True
+    logger.debug(f"  ***DEV: findmnt_bool({mnt_pt}) returned: {result}")
+    return result
+
+
 def dev_mount_point(dev_temp_name):
     """
     Parses /proc/mounts to return the first associated mount point for a given
@@ -856,8 +888,47 @@ def dev_mount_point(dev_temp_name):
 
 def remount(mnt_pt, mnt_options):
     if is_mounted(mnt_pt):
-        run_command([MOUNT, "-o", "remount,{}".format(mnt_options), mnt_pt])
+        run_command([MOUNT, "-o", f"remount,{mnt_options}", mnt_pt])
     return True
+
+
+def lazy_unmount(mnt_pts: list[str], max_wait: int = 2) -> list[str]:
+    """
+    Lazy un-mount "umount --lazy mnt_pts" with max_wait follow-up confirmation checks.
+    Uses repeat calls to findmnt, within 'wait' secs, to confirm no mounts exists.
+    Expected runtime limited to around 'max_wait' seconds.
+    N.B. When used with SFTP exports' in-chroot recursive bind mounts, we also unmount
+    all visible snapshots from within the parent Share: bind/rbind is bidirectional.
+    :param mnt_pts: List of mount points to unmount.
+    :param max_wait: Max seconds to confirm all paths unmounted.
+    :return: list of remaining mounted paths (unconfirmed unmounted), after max_wait.
+    """
+    # Filter out non-existent paths, or already unmounted paths.
+    mounted_paths: list[str] = [
+        path for path in mnt_pts if os.path.exists(path) and is_mounted(path)
+    ]
+    if not mounted_paths:  # Empty List so we are done.
+        return mounted_paths
+    start_time = time.time()
+    # Parallel lazy umount on all mounted paths - opportunistic.
+    # -l Lazy: detach fs now, clean-up references to the fs once no longer busy.
+    # Safe for bind/rbind (/mnt3) & btrfs mount options subvol or subvolid (our /mnt2)
+    # - https://btrfs.readthedocs.io/en/latest/Subvolumes.html#subvolumes
+    cmd: list[str] = [UMOUNT, "--lazy", "--recursive"]
+    cmd.extend(mounted_paths)
+    logger.info(f"Executing umount command: {cmd}")
+    run_command(cmd, log=True, throw=False)
+    while (time.time() - start_time) < max_wait and mounted_paths:
+        # Cycle through remaining mounted paths; removing confirmed unmounted members.
+        confirmed_unmounted: list[str] = []
+        for path_index in range(len(mounted_paths)):
+            path: str = mounted_paths[path_index]
+            # N.B is_mounted() timed at 0.003 secs, findmnt_bool() at 0.02 seconds.
+            if not findmnt_bool(path):  # Trusting findmnt as more resourceful.
+                confirmed_unmounted.append(path)
+        for each_path in confirmed_unmounted:
+            mounted_paths.remove(each_path)
+    return mounted_paths
 
 
 def wipe_disk(disk_byid):
@@ -1539,6 +1610,7 @@ def get_disk_APM_level(dev_byid):
             return level
     return 0
 
+
 def hdparm_stderr_ok(stderr: list[str]) -> bool:
     """
     For some hardware, hdparm prints error messages to stderr even when it's
@@ -1550,8 +1622,10 @@ def hdparm_stderr_ok(stderr: list[str]) -> bool:
     message was spurious, and False if there seemed to be a real error.
     """
     spurious = r"SG_IO: bad/missing sense data, sb\[\]: ( [0-9A-Fa-f]{2}){32}"
-    return len(stderr) == 1 or (len(stderr) == 2 and
-                                re.fullmatch(spurious, stderr[0]) is not None)
+    return len(stderr) == 1 or (
+        len(stderr) == 2 and re.fullmatch(spurious, stderr[0]) is not None
+    )
+
 
 def set_disk_spindown(
     dev_byid, spindown_time, apm_value, spindown_message="no comment"
@@ -1986,14 +2060,15 @@ def get_devname(device_name, addPath=False):
 
 # Module level compilation to reduce overhead
 LDD_PATTERN = re.compile(
-    r'^\s*'                                 # Trim leading spaces
-    r'(?:(?P<so_name>\S+)\s+=>\s+)?'        # Shared Object Name (so_name) and arrow
-    r'(?P<path>\S+)\s+'                     # The actual file path (or so_name if no arrow)
-    r'\((?P<address>0x[0-9a-fA-F]+)\)$'     # The memory address
+    r"^\s*"  # Trim leading spaces
+    r"(?:(?P<so_name>\S+)\s+=>\s+)?"  # Shared Object Name (so_name) and arrow
+    r"(?P<path>\S+)\s+"  # The actual file path (or so_name if no arrow)
+    r"\((?P<address>0x[0-9a-fA-F]+)\)$"  # The memory address
 )
 
 # Library exclusion list (easier for future exclusions)
-EXCLUDED_LIBS = ("linux-vdso")
+EXCLUDED_LIBS = "linux-vdso"
+
 
 def get_libs(program_path: str) -> list[str]:
     """
@@ -2002,28 +2077,28 @@ def get_libs(program_path: str) -> list[str]:
     @return: list of OS paths or empty list if error or none found.
     """
     out, err, rc = run_command([LDD, program_path], throw=False)
-    
+
     if rc != 0 or not out:
         return []
-        
+
     libs = []
     for line in out:
         match = LDD_PATTERN.match(line)
         if match:
-            path = match.group('path')
-            so_name = match.group('so_name')
-            
+            path = match.group("path")
+            so_name = match.group("so_name")
+
             # The identifier to check against exclusions (so_name if it exists, otherwise the path itself)
             lib_name = so_name if so_name else path
-            
+
             # Skip any library that starts with an excluded string
             if lib_name.startswith(EXCLUDED_LIBS):
                 continue
-                
+
             # Filter out any remaining virtual libraries that don't have absolute paths
-            if path.startswith('/'):
+            if path.startswith("/"):
                 libs.append(path)
-                
+
     return libs
 
 
@@ -2044,7 +2119,7 @@ def update_hdparm_service(hdparm_command_list, comment):
     clear_line_count = 0
     remove_entry = False
     # Establish our systemd_template, needed when no previous config exists.
-    systemd_template = "{}/{}".format(settings.CONFROOT, HDPARM_SERVICE_NAME)
+    systemd_template = "{}/{}".format(CONFROOT, HDPARM_SERVICE_NAME)
     systemd_target = "{}/{}".format(SYSTEMD_DIR, HDPARM_SERVICE_NAME)
     # Check for the existence of this systemd template file.
     if not os.path.isfile(systemd_template):

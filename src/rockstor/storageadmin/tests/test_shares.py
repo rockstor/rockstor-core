@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -152,7 +152,7 @@ class ShareTests(APITestMixin):
         cls.mock_volume_usage.return_value = (500, 500)
 
         # delete mocks
-        cls.patch_remove_share = patch("storageadmin.views.share.remove_share")
+        cls.patch_remove_share = patch("storageadmin.views.share.remove_share_subvol")
         cls.mock_remove_share = cls.patch_remove_share.start()
         cls.mock_remove_share.return_value = True
 

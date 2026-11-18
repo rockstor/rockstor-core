@@ -28,7 +28,7 @@ from system.ssh import (
     SSHD_HEADER,
     INTERNAL_SFTP_STR,
     toggle_sftp_service,
-    update_sftp_user_share_config,
+    update_sftp_user_config,
     remove_sftp_server_subsystem,
 )
 from settings import CONFROOT
@@ -108,7 +108,7 @@ class SshTests(TestCase):
             contents=f"{SSHD_HEADER}\n{INTERNAL_SFTP_STR}\n",  # No "AllowUsers root\n",
         )
         input_map = {"radmin": "/mnt3/radmin"}  # user radmin creates a SFTP share.
-        update_sftp_user_share_config(input_map)
+        update_sftp_user_config(input_map)
         expected = [
             f"{SSHD_HEADER}\n",
             f"{INTERNAL_SFTP_STR}\n",
