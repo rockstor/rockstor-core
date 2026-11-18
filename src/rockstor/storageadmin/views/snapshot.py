@@ -39,7 +39,6 @@ from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from storageadmin.views.share_helpers import toggle_sftp_visibility
 from storageadmin.views.clone_helpers import create_clone, create_repclone
 from storageadmin.views.nfs_exports import NFSExportMixin
 
@@ -84,7 +83,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         cur_exports = list(NFSExport.objects.all())
         # The following may be buggy when used with system mounted (fstab) /home
         # but we currently don't allow /home to be exported.
-        snap_mnt_pt = "{}{}/.{}".format(MNT_PT, share.name, snap_name)
+        snap_mnt_pt = f"{MNT_PT}{share.name}/.{snap_name}"
         export_pt = snap_mnt_pt.replace(MNT_PT, NFS_EXPORT_ROOT)
         if on:
             mount_snap(share, snap_name, snap_qgroup)
@@ -183,21 +182,9 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                         )
                     except Exception as e:
                         msg = (
-                            "Failed to make the snapshot ({}) visible. "
-                            "Exception: ({})."
-                        ).format(snap_name, e.__str__())
-                        logger.error(msg)
-                        logger.exception(e)
-
-                    try:
-                        toggle_sftp_visibility(
-                            share, ret.data["real_name"], ret.data["qgroup"]
+                            f"Failed to make the snapshot ({snap_name}) visible. "
+                            f"Exception: ({e.__str__()})."
                         )
-                    except Exception as e:
-                        msg = (
-                            "Failed to make the snapshot ({}) visible for "
-                            "SFTP. Exception: ({})."
-                        ).format(snap_name, e.__str__())
                         logger.error(msg)
                         logger.exception(e)
 
@@ -264,7 +251,10 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
             self._toggle_visibility(
                 share, snapshot.real_name, snapshot.qgroup, on=False
             )
-            toggle_sftp_visibility(share, snapshot.real_name, snapshot.qgroup, on=False)
+            # As SFTP is a recursive bind mount (rbind), it reflects all submnt changes.
+            # toggle_sftp_visibility(share, snapshot.real_name, snapshot.qgroup, on=False)
+            # TODO: We may still have to call:
+            #  remove_sftp_bindmounts(sftpo.share.name, visible_snap_names, chroot_path)
 
         remove_snap_subvol(snapshot)
         snapshot.delete()
