@@ -25,12 +25,12 @@ from fs.btrfs import (
     add_pool,
     resize_pool_cmd,
     balance_pool_cmd,
-    umount_root,
+    mount_teardown,
     btrfs_uuid,
     mount_root,
     start_balance,
     usage_bound,
-    remove_share,
+    remove_share_subvol,
     enable_quota,
     disable_quota,
     rescan_quotas,
@@ -406,8 +406,9 @@ class PoolListView(PoolMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if Pool.objects.filter(name=pname).exists():
-                e_msg = ("Pool ({}) already exists. Choose a different name.").format(
-                    pname
+                e_msg = (
+                    f"A managed Pool with the name/label ({pname}) already exists. "
+                    f"Choose a different name."
                 )
                 handle_exception(Exception(e_msg), request)
 
@@ -795,9 +796,9 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     ).format(pool.name)
                     handle_exception(Exception(e_msg), request)
                 for so in Share.objects.filter(pool=pool):
-                    remove_share(so.pool, so.subvol_name, so.pqgroup, force=force)
+                    remove_share_subvol(so, force=force)
             pool_path = "{}{}".format(settings.MNT_PT, pool.name)
-            umount_root(pool_path)
+            mount_teardown([pool_path])
             pool.delete()
             # We may need to update disk state here.
             return Response()

@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -26,6 +26,9 @@ DEFAULT_MNT_DIR = "/mnt2/"
 MOUNT = "/usr/bin/mount"
 UMOUNT = "/usr/bin/umount"
 
+# Error line endings to count as no mount:
+UMOUNT_ERR_WHITELIST: list[str] = [r"not mounted.", "no mount point specified."]
+
 CHOWN = "/usr/bin/chown"
 CHMOD = "/usr/bin/chmod"
 
@@ -33,6 +36,8 @@ USERMOD = "/usr/sbin/usermod"
 LDD = "/usr/bin/ldd"
 
 SYSTEMCTL = "/usr/bin/systemctl"
+
+FINDMNT = "/usr/bin/findmnt"
 
 # Works in Leap 15.4 (systemd-249.16-150400.8.28.3) and Tumbleweed (systemd-253.4-2.1)
 UDEVADM = "/usr/bin/udevadm"

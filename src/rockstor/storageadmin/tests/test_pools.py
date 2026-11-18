@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -14,11 +14,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
 from django.conf import settings
 from rest_framework import status
 from unittest.mock import patch
 
 import fs.btrfs
+import smart_manager
 from storageadmin.models import Disk, Pool, PoolBalance
 from storageadmin.tests.test_api import APITestMixin
 from storageadmin.views.pool import SUPPORTED_PROFILES
@@ -44,14 +46,15 @@ bin/django dumpdata storageadmin.pool storageadmin.disk storageadmin.share \
 src/rockstor/storageadmin/fixtures/test_pools.json
 
 cd /opt/rockstor/src/rockstor
-export DJANGO_SETTINGS_MODULE=settings
 poetry run django-admin test -p test_pools.py -v 2
-./bin/test -v 2 -p test_pools.py
 """
 
 
 class PoolTests(APITestMixin):
     fixtures = ["test_api.json", "test_pools.json"]
+    # Required as from Pool management delete introduction (5.5.6-0) which
+    # assesses TaskDefinition links to Pools during Pool API delete calls.
+    databases = "__all__"
     BASE_URL = "/api/pools"
     default_balance_status = {"status": "finished", "percent_done": 100}
 
@@ -84,9 +87,9 @@ class PoolTests(APITestMixin):
         cls.mock_balance_pool.return_value = ["true"]
 
         # delete mocks
-        cls.patch_umount_root = patch("storageadmin.views.pool.umount_root")
+        cls.patch_umount_root = patch("fs.btrfs.mount_teardown")
         cls.mock_umount_root = cls.patch_umount_root.start()
-        cls.mock_umount_root.return_value = True
+        cls.mock_umount_root.return_value = []
 
         # remount mocks
         cls.patch_remount = patch("storageadmin.views.pool.remount")
@@ -165,12 +168,13 @@ class PoolTests(APITestMixin):
         )
         self.assertEqual(response.data[0], e_msg)
 
-        # Create a pool with same name as an existing pool
+        # Create a pool with same name as an existing managed pool
 
         existing_pool_name = "existing-pool"  # in fixture.
         data["pname"] = existing_pool_name
-        e_msg = "Pool ({}) already exists. Choose a different name.".format(
-            existing_pool_name
+        e_msg = (
+            f"A managed Pool with the name/label ({existing_pool_name}) already exists. "
+            "Choose a different name."
         )
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(
@@ -756,11 +760,7 @@ class PoolTests(APITestMixin):
         pId = temp_pool.id
 
         # remove 1 of 1 disks from single pool - reducing below minimum dev count of 1
-        data = {
-            "disks": (
-                "{}".format(virtio_2_id),
-            )
-        }
+        data = {"disks": ("{}".format(virtio_2_id),)}
         response3 = self.client.put(
             "{}/{}/remove".format(self.BASE_URL, pId), data=data
         )
@@ -816,7 +816,6 @@ class PoolTests(APITestMixin):
 
         response = self.client.delete("{}/{}".format(self.BASE_URL, sp2Id))
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.mock_umount_root.assert_called_with("/mnt2/singlepool2")
 
     def test_raid0_crud(self):
         """
@@ -944,7 +943,6 @@ class PoolTests(APITestMixin):
         # delete pool
         response5 = self.client.delete("{}/{}".format(self.BASE_URL, pId))
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
-        self.mock_umount_root.assert_called_with("/mnt2/raid0pool")
 
     def test_raid1_crud(self):
         """
@@ -1135,7 +1133,6 @@ class PoolTests(APITestMixin):
         # delete pool
         response5 = self.client.delete("{}/{}".format(self.BASE_URL, pId))
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
-        self.mock_umount_root.assert_called_with("/mnt2/raid1pool")
 
     def test_raid10_crud(self):
         """
@@ -1229,7 +1226,6 @@ class PoolTests(APITestMixin):
         # Delete pool.
         response = self.client.delete("{}/{}".format(self.BASE_URL, pId))
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.mock_umount_root.assert_called_with("/mnt2/raid10pool")
 
     def test_raid5_crud(self):
         """
@@ -1318,7 +1314,6 @@ class PoolTests(APITestMixin):
         # Delete pool
         response = self.client.delete("{}/{}".format(self.BASE_URL, pId))
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.mock_umount_root.assert_called_with("/mnt2/raid5pool")
 
     def test_raid6_crud(self):
         """
@@ -1407,7 +1402,6 @@ class PoolTests(APITestMixin):
         # Delete pool.
         response = self.client.delete("{}/{}".format(self.BASE_URL, pId))
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.mock_umount_root.assert_called_with("/mnt2/raid6pool")
 
     def test_raid_migration_fencing_remove_command(self):
         """

@@ -81,7 +81,7 @@ class SFTPTests(APITestMixin):
         cls.mock_rsync_for_sftp.return_value = True
 
         cls.patch_update_sftp_user_share_config = patch(
-            "storageadmin.views.sftp.update_sftp_user_share_config"
+            "storageadmin.views.sftp.update_sftp_user_config"
         )
         cls.mock_update_sftp_user_share_config = (
             cls.patch_update_sftp_user_share_config.start()
