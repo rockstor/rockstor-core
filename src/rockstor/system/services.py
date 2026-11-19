@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -73,6 +73,10 @@ def init_service_op(service_name, command, throw=True):
     )
     if service_name not in supported_services:
         raise Exception("unknown service: {}".format(service_name))
+
+    if service_name == "rpcbind":
+        # rpcbind.socket is the trigger unit for the rpcbind.service
+        service_name = "rpcbind.socket"
 
     arg_list = [SYSTEMCTL, command, service_name]
     if command == "status":
