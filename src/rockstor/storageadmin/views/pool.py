@@ -38,6 +38,7 @@ from fs.btrfs import (
     balance_status_all,
     PROFILE,
 )
+from system.constants import NFS_EXPORT_ROOT
 from system.osi import remount, trigger_udev_update
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -248,7 +249,7 @@ class PoolMixin(object):
                 share_name = None
                 if (
                     re.search(
-                        "{}|{}".format(settings.NFS_EXPORT_ROOT, settings.MNT_PT), l
+                        "{}|{}".format(NFS_EXPORT_ROOT, settings.MNT_PT), l
                     )
                     is not None
                 ):
