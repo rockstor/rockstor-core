@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 
-from settings import MNT_PT, MODEL_DEFS, NFS_EXPORT_ROOT
+from settings import MNT_PT, MODEL_DEFS
 from storageadmin.models import (
     Snapshot,
     Share,
@@ -35,7 +35,8 @@ from fs.btrfs import (
     mount_snap,
     qgroup_assign,
 )
-from system.osi import refresh_nfs_exports
+from system.constants import NFS_EXPORT_ROOT
+from system.nfs_util import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc

@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2025 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -413,6 +413,7 @@ class TaskDefinitionAdmin(admin.ModelAdmin):
         "name",
         "share_name",
         "pool_name",
+        "script",
         "task_type",
         "json_meta",
         "enabled",

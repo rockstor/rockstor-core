@@ -38,14 +38,12 @@ from system.constants import (
     MKDIR,
     RMDIR,
     MOUNT,
-    UMOUNT,
     DEFAULT_MNT_DIR,
     UDEVADM,
     SHUTDOWN,
     LDD,
     FINDMNT,
     UMOUNT,
-    UMOUNT_ERR_WHITELIST,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,7 +52,6 @@ CAT = "/usr/bin/cat"
 CHATTR = "/usr/bin/chattr"
 DD = "/usr/bin/dd"
 DNSDOMAIN = "/usr/bin/dnsdomainname"
-EXPORTFS = "/usr/sbin/exportfs"
 GRUBBY = "/usr/sbin/grubby"
 HDPARM = "/usr/sbin/hdparm"
 HDPARM_SERVICE_NAME = "rockstor-hdparm.service"
@@ -522,94 +519,7 @@ def toggle_path_rw(path, rw=True):
     attr = "-i"
     if not rw:
         attr = "+i"
-    return run_command([CHATTR, attr, path])
-
-
-def nfs4_mount_teardown(export_pt):
-    """
-    reverse of setup. cleanup when there are no more exports
-    """
-    if is_mounted(export_pt):
-        run_command([UMOUNT, "-l", export_pt])
-        for i in range(10):
-            if not is_mounted(export_pt):
-                toggle_path_rw(export_pt, rw=True)
-                return run_command([RMDIR, export_pt])
-            time.sleep(1)
-        run_command([UMOUNT, "-f", export_pt])
-    if os.path.exists(export_pt):
-        toggle_path_rw(export_pt, rw=True)
-        run_command([RMDIR, export_pt])
-    return True
-
-
-def bind_mount(mnt_pt, export_pt):
-    if not is_mounted(export_pt):
-        run_command([MKDIR, "-p", export_pt])
-        toggle_path_rw(export_pt, rw=False)
-        return run_command([MOUNT, "--bind", mnt_pt, export_pt])
-    return True
-
-
-def refresh_nfs_exports(exports):
-    """
-    input format:
-
-    {'export_point': [{'client_str': 'www.example.com',
-                       'option_list': 'rw,insecure,'
-                       'mnt_pt': mnt_pt,},],
-                       ...}
-
-    if 'clients' is an empty list, then unmount and cleanup.
-    """
-    fo, npath = mkstemp()
-    with open(npath, "w") as efo:
-        shares = []
-        for e in exports.keys():
-            if len(exports[e]) == 0:
-                #  do share tear down at the end, only snaps here
-                if len(e.split("/")) == 4:
-                    nfs4_mount_teardown(e)
-                else:
-                    shares.append(e)
-                continue
-
-            if not is_mounted(e):
-                bind_mount(exports[e][0]["mnt_pt"], e)
-            client_str = ""
-            admin_host = None
-            for c in exports[e]:
-                run_command(
-                    [
-                        EXPORTFS,
-                        "-i",
-                        "-o",
-                        c["option_list"],
-                        "{}:{}".format(c["client_str"], e),
-                    ]
-                )
-                client_str = "{}{}({}) ".format(
-                    client_str, c["client_str"], c["option_list"]
-                )
-                if "admin_host" in c:
-                    admin_host = c["admin_host"]
-            if admin_host is not None:
-                run_command(
-                    [
-                        EXPORTFS,
-                        "-i",
-                        "-o",
-                        "rw,no_root_squash",
-                        "{}:{}".format(admin_host, e),
-                    ]
-                )
-                client_str = "{} {}(rw,no_root_squash)".format(client_str, admin_host)
-            export_str = "{} {}\n".format(e, client_str)
-            efo.write(export_str)
-        for s in shares:
-            nfs4_mount_teardown(s)
-    shutil.move(npath, "/etc/exports")
-    return run_command([EXPORTFS, "-ra"])
+    return run_command([CHATTR, attr, path], log=True)
 
 
 def config_network_device(
