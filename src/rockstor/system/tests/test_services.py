@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -86,13 +86,18 @@ class ServicesTests(unittest.TestCase):
             for c in cmds:
                 self.mock_run_command = self.patch_run_command.start()
                 init_service_op(service_name=s, command=c)
+                # Account for our transitioning service calls to "rpcbind" into
+                # explicit calls to the socket at "rpcbind.socket".
+                service_name = s
+                if service_name == "rpcbind":
+                    service_name = "rpcbind.socket"
                 if c == "status":
                     self.mock_run_command.assert_called_once_with(
-                        [SYSTEMCTL, c, s, "--lines=0"], throw=True
+                        [SYSTEMCTL, c, service_name, "--lines=0"], throw=True
                     )
                 else:
                     self.mock_run_command.assert_called_once_with(
-                        [SYSTEMCTL, c, s], throw=True
+                        [SYSTEMCTL, c, service_name], throw=True
                     )
                 self.patch_run_command.stop()
 
