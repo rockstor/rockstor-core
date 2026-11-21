@@ -1,5 +1,5 @@
 """
-Copyright (joint work) 2024 The Rockstor Project <https://rockstor.com>
+Copyright (joint work) 2026 The Rockstor Project <https://rockstor.com>
 
 Rockstor is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -16,8 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+import ipaddress
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_ipv46_address
 
 
 def validate_nfs_host_str(value):
@@ -30,9 +30,9 @@ def validate_nfs_host_str(value):
     if re.match(host_regex, value) is None:
         error_count += 1
 
-    # ip networks
+    # ip networks, validate IP address (ipv4/6), incl. CIDR notation
     try:
-        validate_ipv46_address(value)
+        ipaddress.ip_network(value)
     except ValidationError:
         error_count += 1
 
