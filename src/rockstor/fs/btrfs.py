@@ -19,6 +19,10 @@ import collections
 import json
 import re
 import os
+from dataclasses import field, dataclass
+
+# N.B. Cannot import Pool & Share for type-hints as then circular:
+# Pool and Share models use these btrfs procedures via properties etc.
 from system.osi import (
     run_command,
     create_dir,
@@ -273,6 +277,110 @@ PROFILE = {
 }
 
 
+# Uses forward reference syntax to have recursive type hint.
+# https://peps.python.org/pep-0484/?ref=turingtaco.com#forward-references
+# Avoiding mutable default of "[]" for subvols e.g.: List["UmountTreeNode"] = []
+# as this will then be shared across all instances of this Class!!!
+# Hence, the use of a default_factory: list[type] = field(default_factory=list)
+@dataclass
+class UmountTreeNode:
+    """
+    Recursively defined Class for unmount tree node instantiation.
+    Contains a recursive self.unmount() procedure, default @task execution, to affect
+    both parallel child end-node unmounts, & serialized child mid-node recursive calls.
+    """
+
+    path: str
+    subvols: list["UmountTreeNode"] = field(default_factory=list)
+
+    def has_subvol(self) -> bool:
+        if self.subvols:
+            return True
+        return False
+
+    def child_end_nodes(self) -> list["UmountTreeNode"]:
+        if self.has_subvol():
+            return [child for child in self.subvols if not child.has_subvol()]
+        return []
+
+    def child_mid_nodes(self) -> list["UmountTreeNode"]:
+        if self.has_subvol():
+            return [child for child in self.subvols if child.has_subvol()]
+        return []
+
+    @task()
+    def umount(self, call_depth: int = 0) -> None:
+        """
+        Depth first teardown of mnt_pt (self.path) & associated mount points.
+        I.e. Recurse TreeNode to teardown from the End-Nodes first.
+        N.B. Child end-node teardowns are parallelised via multi-path calls to umount.
+        Python default recursion limit (sys.getrecursionlimit()) should be fine at 1000.
+        """
+        # BASE CASE One:- NO FURTHER RECURSION AS END-NODE.
+        logger.info(f"<-> Unmount tree at depth {call_depth}")
+        # EMERGENCY OUT:
+        if call_depth > 10:
+            logger.error(
+                f"<-> Recursion limit reached! Stopping umount tree treatment."
+            )
+            return None
+        if not self.has_subvol():  # End-node: teardown self.path.
+            # Wipe path as indicator of no failures returned from mount_teardown().
+            if not mount_teardown.call_local([self.path]):
+                self.path = ""
+            return None
+        # RECURSIVE CASE for Mid-nodes.
+        # Child end-node teardowns done in parallel.
+        child_end_nodes = self.child_end_nodes()
+        if child_end_nodes:
+            child_end_node_paths: list[str] = [
+                end_node.path for end_node in child_end_nodes
+            ]
+            failed_paths = mount_teardown.call_local(child_end_node_paths)
+            # Remove now unmounted direct child end-nodes from our tree.
+            self.subvols = [
+                subvol
+                for subvol in self.subvols
+                if subvol not in child_end_nodes
+                and (subvol.path not in failed_paths or subvol.path != "")
+            ]
+        # By now self.subvols should have only Mid-nodes, or failed End-node teardowns.
+        # Recursively call their unmount() functions serially to repeat above for each.
+        # Child mid-node treatment serialized via their unmount() functions.
+        for subvol in self.subvols:
+            subvol.umount.call_local(call_depth + 1)
+        # BASE CASE two:- NO FURTHER RECURSION IF NOT BASE LEVEL SELF TREATMENT.
+        # Final self.unmount after having depth first unmounted entire higher levels.
+        if call_depth == 0:
+            # Needs a tidy as inelegant double call.
+            self.umount.call_local(call_depth + 1)  # final top-level subvol removal.
+            self.umount.call_local(call_depth + 1)  # final top-level self.path removal.
+        return None
+
+    def __format__(self, format_spec: str):
+        if not format_spec:
+            return str(self)
+        parts = format_spec.split(":")
+        if parts[0] == "short":  # usage: f"{instance:short}"
+            prefix: str = "End-"
+            if self.subvols:
+                prefix = "Mid-"
+            return f"{prefix}Node({self.path})"
+        elif parts[0] == "long":  # usage: f"{instance:long}"
+            prefix: str = "End-"
+            if self.subvols:
+                prefix = "Mid-"
+            tn_str: str = ""
+            for element in self.subvols:
+                if not element.subvols:
+                    tn_str += f"End-Node({element.path}: []), "
+                else:
+                    tn_str += f"{element:short}, "
+            return f"{prefix}Node({self.path}, subvols=[{tn_str}])"
+        else:
+            return str(self)
+
+
 def add_pool(pool, disks):
     """
     Makes a btrfs pool (filesystem) of name 'pool' using the by-id disk names
@@ -443,6 +551,31 @@ def degraded_pools_found():
             # pool listings delimited by blank lines
             in_pool = False
     return degraded_pool_count
+
+
+def get_pool_labels():
+    """
+    Wrapper around 'btrfs fi show --raw' to extract all Pool labels. Primarily intended
+    to avoid creating a new Pool when an un-imported/unmanaged Pool already exists with
+    the same label. We use labels, rather than uuid, to uniquely identify managed Pools.
+    In time we must move to uuid as canonical for identifying Pools.
+    :return: List of all pool labels. E.g. ["rock-pool","none"]
+    """
+    cmd = [BTRFS, "fi", "show", "--raw"]
+    # "Label: 'rock-pool'  uuid: 1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d"
+    # If label set to "" or unset both of the following have been observed:
+    # "Label: none  uuid: 1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d"
+    # "Label: '1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d'  uuid: 1ccbebf3-4ef3-4b72-b2cc-7b264fd7693d"
+    # Ergo we strip single quotes just in case, then grab whatever we find.
+    o, e, rc = run_command(cmd, log=True)
+    labels: list[str] = []
+    for line in o:
+        if line == "":
+            continue
+        fields = line.strip().split()
+        if fields[0] == "Label:":  # Pool header: get label text:
+            labels.append(fields[1].strip("'"))
+    return labels
 
 
 def set_pool_label(label, dev_temp_name, root_pool=False):
