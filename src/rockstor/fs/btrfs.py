@@ -20,6 +20,7 @@ import json
 import re
 import os
 from dataclasses import field, dataclass
+from time import time
 
 # N.B. Cannot import Pool & Share for type-hints as then circular:
 # Pool and Share models use these btrfs procedures via properties etc.
@@ -286,8 +287,8 @@ PROFILE = {
 class UmountTreeNode:
     """
     Recursively defined Class for unmount tree node instantiation.
-    Contains a recursive self.unmount() procedure, default @task execution, to affect
-    both parallel child end-node unmounts, & serialized child mid-node recursive calls.
+    Contains a recursive self.unmount() procedure to affect both parallel
+    child end-node unmounts, & serialized child mid-node recursive calls.
     """
 
     path: str
@@ -308,13 +309,13 @@ class UmountTreeNode:
             return [child for child in self.subvols if child.has_subvol()]
         return []
 
-    @task()
     def umount(self, call_depth: int = 0) -> None:
         """
         Depth first teardown of mnt_pt (self.path) & associated mount points.
         I.e. Recurse TreeNode to teardown from the End-Nodes first.
         N.B. Child end-node teardowns are parallelised via multi-path calls to umount.
         Python default recursion limit (sys.getrecursionlimit()) should be fine at 1000.
+        We impose a > 10 call_depth error logged exit just in case.
         """
         # BASE CASE One:- NO FURTHER RECURSION AS END-NODE.
         logger.info(f"<-> Unmount tree at depth {call_depth}")
@@ -348,13 +349,13 @@ class UmountTreeNode:
         # Recursively call their unmount() functions serially to repeat above for each.
         # Child mid-node treatment serialized via their unmount() functions.
         for subvol in self.subvols:
-            subvol.umount.call_local(call_depth + 1)
+            subvol.umount(call_depth + 1)
         # BASE CASE two:- NO FURTHER RECURSION IF NOT BASE LEVEL SELF TREATMENT.
         # Final self.unmount after having depth first unmounted entire higher levels.
         if call_depth == 0:
             # Needs a tidy as inelegant double call.
-            self.umount.call_local(call_depth + 1)  # final top-level subvol removal.
-            self.umount.call_local(call_depth + 1)  # final top-level self.path removal.
+            self.umount(call_depth + 1)  # final top-level subvol removal.
+            self.umount(call_depth + 1)  # final top-level self.path removal.
         return None
 
     def __format__(self, format_spec: str):
@@ -976,6 +977,31 @@ def mount_teardown(mnt_pts: list[str]) -> list[str]:
             logger.info(f"Mount point {mnt_pt} non-existent - we are done.")
     return fail_list
 
+@task()
+def pool_teardown(pool_tree: UmountTreeNode)-> None:
+    """
+    Background (Huey) task to call umount() on the passed Pool tree, which consists of
+    a recursive structure of UmountTreeNode types.
+    N.B. we cannot, as yet, use Django tasks as they are currently unable to handle even
+    a list type as parameter given their need for all parameter types to survive a round
+    trip conversion to and back-from JSON.
+    Future considerations might include this wrapper instigating only an await type call
+    to an already instantiated background task group ordered by our UmountTreeNode.
+    We could then pass only a group identifier.
+    """
+    # https://docs.djangoproject.com/en/6.1/ref/tasks/#task
+    # "Priorities must be between -100 and 100, where larger numbers are higher
+    # priority, and will be run sooner."
+    # @django_task(queue_name="pool_teardown")
+    # Django tasks suspected of not handling complex parameter types such as our self.
+    # "... all arguments must be JSON-serializable and preserve their type after the
+    # round-trip."
+    # I.e. it cannot handle even list types: "TypeError: unhashable type: 'list'".
+    logger.info(f"* POOL unmount tree = {pool_tree:long}.")
+    stime = time()
+    pool_tree.umount()
+    logger.info(f"* Pool unmount teardown took {time() - stime}s.")
+    logger.info(f"* POOL unmount tree now {pool_tree:long}.")
 
 def is_subvol(mnt_pt):
     """

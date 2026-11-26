@@ -16,13 +16,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from time import time
-
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from django.db import transaction
-
 from settings import (
     COMPRESSION_TYPES,
     MNT_PT,
@@ -48,6 +45,7 @@ from fs.btrfs import (
     PROFILE,
     get_pool_labels,
     UmountTreeNode,
+    pool_teardown,
 )
 from storageadmin.views.share_helpers import user_chroot_setup
 from system.constants import NFS_EXPORT_ROOT
@@ -980,13 +978,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     user_chroot_setup()
                     logger.info(sftp_msg)
             # Background unmount via pool_umount_tree.
-            logger.info(f"Beginning Pool ({pool.name}) unmount teardown.")
-            logger.info(f"* POOL unmount tree = {pool_umount_tree:long}.")
-            stime = time()
-            # The following unmount procedural call uses an @task() Huey decorator.
-            pool_umount_tree.umount()
-            logger.info(f"Pool unmount teardown took {time() - stime}s.")
-            logger.info(f"* POOL unmount tree now {pool_umount_tree:long}.")
+            logger.info(f"Background schedule Pool ({pool.name}) unmount teardown.")
+            pool_teardown(pool_umount_tree)
             return Response()
 
 
