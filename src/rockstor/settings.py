@@ -460,9 +460,13 @@ HUEY = SqliteHuey(filename="{}/rockstor-tasks-huey.db".format(BASE_DIR))
 TASK_SCHEDULER = {"max_log": 100}  # max number of task log entries to keep
 
 # Use above Huey task queue backend for running Django.tasks also.
+# We also enable the Django build-in ImmediateBackend.
 TASKS = {
-    'default': {
-        'BACKEND': 'huey.contrib.djhuey.tasks_backend.HueyBackend',
+    "default": {
+        "BACKEND": "huey.contrib.djhuey.tasks_backend.HueyBackend",
+    },
+    "immediate": {
+        "BACKEND": "django.tasks.backends.immediate.ImmediateBackend",
     },
 }
 
@@ -470,7 +474,8 @@ TASKS = {
 # Use id for code path decisions. Others are for Web-UI display purposes.
 # Examples given are for CentOS Rockstor variant, Leap 15, and Tumblweed.
 OS_DISTRO_ID = distro.id()  # rockstor, opensuse, opensuse-slowroll, opensuse-tumbleweed
-OS_DISTRO_NAME = distro.name()  # Rockstor, openSUSE Leap, openSUSE Tumbleweed-Slowroll, openSUSE Tumbleweed
+# Rockstor, openSUSE Leap, openSUSE Tumbleweed-Slowroll, openSUSE Tumbleweed:
+OS_DISTRO_NAME = distro.name()
 # Note that the following will capture the build os version.
 # For live updates (running system) we call distro.version() directly in code.
 OS_DISTRO_VERSION = distro.version()  # 3, 15.6, 20250205
@@ -489,7 +494,7 @@ if (not TESTING) and DEBUG:
         *MIDDLEWARE,
     ]
     INTERNAL_IPS = [
-        "127.0.0.1", # It seems requests always come from this when using DRF
+        "127.0.0.1",  # It seems requests always come from this when using DRF
     ]
 
     # https://django-debug-toolbar.readthedocs.io/en/stable/configuration.html

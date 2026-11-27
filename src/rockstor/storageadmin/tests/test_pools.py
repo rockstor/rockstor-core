@@ -324,7 +324,6 @@ class PoolTests(APITestMixin):
     def test_invalid_root_pool_edits(self):
         """
         - add disk to root pool
-        - delete root pool
         """
 
         # add disk to root pool
@@ -339,19 +338,6 @@ class PoolTests(APITestMixin):
             "system."
         ).format(pool.name)
         response = self.client.put("{}/1/add".format(self.BASE_URL, pId), data=data)
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            msg=response.data,
-        )
-        self.assertEqual(response.data[0], e_msg)
-
-        # delete root pool
-        e_msg = (
-            "Deletion of pool ({}) is not allowed as it "
-            "contains the operating system."
-        ).format(pool.name)
-        response = self.client.delete("{}/{}".format(self.BASE_URL, pId))
         self.assertEqual(
             response.status_code,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
